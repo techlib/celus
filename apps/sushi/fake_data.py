@@ -10,6 +10,7 @@ from logs.fake_data import ReportTypeFactory
 from organizations.fake_data import OrganizationFactory
 from publications.fake_data import PlatformFactory
 from scheduler import signals as scheduler_signals
+
 from sushi.models import (
     COUNTER_VERSIONS,
     AttemptStatus,

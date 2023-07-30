@@ -10,6 +10,7 @@ from organizations.fake_data import OrganizationFactory
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.fake_data import PlatformFactory
 from publications.models import Platform
+
 from sushi.logic.data_import import (
     Perform,
     import_sushi_credentials_from_xlsx,
@@ -110,7 +111,7 @@ class TestLogicDataImportXLSX:
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
             stats = import_sushi_credentials_from_xlsx(file_name, sheet_no=2)
-            stats['added'] == 1
+            assert stats['added'] == 2
             # test sheet empty
             with pytest.raises(ValueError):
                 import_sushi_credentials_from_xlsx(file_name, sheet_no=1)
@@ -123,7 +124,7 @@ class TestLogicDataImportXLSX:
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, [records[0]])
             stats = import_sushi_credentials_from_xlsx(file_name)
-            stats['added'] == 1
+            assert stats['added'] == 1
 
             records[0].pop(header)
             file_name = self.create_xlsx_file(tmp_file, [records[0]])

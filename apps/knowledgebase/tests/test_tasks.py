@@ -6,11 +6,11 @@ from unittest.mock import patch
 
 import pytest
 import requests_mock
-from knowledgebase.models import ImportAttempt
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 
+from knowledgebase.models import ImportAttempt
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

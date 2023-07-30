@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models import Max
 from django.db.transaction import atomic
 from django.utils import timezone
+
 from sushi.models import AttemptStatus, ImportBatch, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)

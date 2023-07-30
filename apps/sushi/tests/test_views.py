@@ -9,11 +9,10 @@ from logs.fake_data import ImportBatchFullFactory
 from organizations.tests.conftest import identity_by_user_type  # noqa
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import Automatic
-from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus
-from sushi.models import BrokenCredentialsMixin as BS
-from sushi.models import CounterReportsToCredentials, SushiCredentials
 
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
+from sushi.models import BrokenCredentialsMixin as BS
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

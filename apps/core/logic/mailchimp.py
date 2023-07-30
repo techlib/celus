@@ -5,10 +5,11 @@ from typing import Dict, List, Optional, Set
 
 import mailchimp_marketing as MailchimpMarketing
 from allauth.account.models import EmailAddress
-from core.models import User
 from django.conf import settings
 from django.db.models import Exists, OuterRef, QuerySet
 from mailchimp_marketing.api_client import ApiClientError
+
+from core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ class Member:
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
-        self.celuses = celuses if celuses else dict()
+        self.celuses = celuses if celuses else {}
         self.should_be_updated = False
         self.tags = tags if tags else []
         self.warnings = []

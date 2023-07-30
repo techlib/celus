@@ -5,9 +5,10 @@ import time
 import urllib
 
 import redis
-from core.tasks import async_mail_admins
 from django.conf import settings
 from requestlogs.storages import BaseStorage
+
+from core.tasks import async_mail_admins
 
 logger = logging.getLogger(__name__)
 
@@ -82,45 +83,47 @@ def entry_to_dict(entry):
     request_url_name = (rm.url_name or '') if rm else ''
     request_view_args = [str(arg) for arg in rm.args] if rm else []
     request_view_kwargs = {k: str(v) for k, v in rm.kwargs.items()} if rm else {}
-    return dict(
-        hostname=entry.django_request.META['SERVER_NAME'],
-        db_server=settings.DATABASES['default']['HOST'],
-        clickhouse_db_server=settings.CLICKHOUSE_HOST,
-        timestamp=entry.timestamp,
-        ipv4=ip_address if isinstance(ip_address, ipaddress.IPv4Address) else '',
-        ipv6=ip_address if isinstance(ip_address, ipaddress.IPv6Address) else '',
-        request_method=request_info.method,
-        request_path=request_path,
-        request_view=request_view,
-        request_url_name=request_url_name,
-        request_view_args=request_view_args,
-        request_view_kwargs=request_view_kwargs,
-        request_query_params={k: str(v) for k, v in request_info.query_params.items()},
-        request_data=request_data,
-        request_headers=request_info.request_headers,
-        request_content_type=request_content_type,
-        ref_path=ref_path,
-        ref_query_params=ref_query_params,
-        response_status_code=response_info.status_code,
-        user_id=user.pk if user and not user.is_anonymous else 0,
-        user_email=user.email if user and not user.is_anonymous else '',
-        user_username=user.username if user and not user.is_anonymous else '',
-        user_is_staff=user.is_staff if user else False,
-        user_is_superuser=user.is_superuser if user else False,
-        user_is_active=user.is_active if user else False,
-        real_user_id=real_user.pk if real_user and not real_user.is_anonymous else 0,
-        real_user_email=real_user.email if real_user and not real_user.is_anonymous else '',
-        real_user_username=real_user.username if real_user and not real_user.is_anonymous else '',
-        impersonified=impersonified,
-        debug=settings.DEBUG,
-        celus_version=settings.CELUS_VERSION,
-        celus_git_hash=settings.SENTRY_RELEASE,
-        clickhouse_query_active=entry.django_request.USE_CLICKHOUSE
+    return {
+        'hostname': entry.django_request.META['SERVER_NAME'],
+        'db_server': settings.DATABASES['default']['HOST'],
+        'clickhouse_db_server': settings.CLICKHOUSE_HOST,
+        'timestamp': entry.timestamp,
+        'ipv4': ip_address if isinstance(ip_address, ipaddress.IPv4Address) else '',
+        'ipv6': ip_address if isinstance(ip_address, ipaddress.IPv6Address) else '',
+        'request_method': request_info.method,
+        'request_path': request_path,
+        'request_view': request_view,
+        'request_url_name': request_url_name,
+        'request_view_args': request_view_args,
+        'request_view_kwargs': request_view_kwargs,
+        'request_query_params': {k: str(v) for k, v in request_info.query_params.items()},
+        'request_data': request_data,
+        'request_headers': request_info.request_headers,
+        'request_content_type': request_content_type,
+        'ref_path': ref_path,
+        'ref_query_params': ref_query_params,
+        'response_status_code': response_info.status_code,
+        'user_id': user.pk if user and not user.is_anonymous else 0,
+        'user_email': user.email if user and not user.is_anonymous else '',
+        'user_username': user.username if user and not user.is_anonymous else '',
+        'user_is_staff': user.is_staff if user else False,
+        'user_is_superuser': user.is_superuser if user else False,
+        'user_is_active': user.is_active if user else False,
+        'real_user_id': real_user.pk if real_user and not real_user.is_anonymous else 0,
+        'real_user_email': real_user.email if real_user and not real_user.is_anonymous else '',
+        'real_user_username': real_user.username
+        if real_user and not real_user.is_anonymous
+        else '',
+        'impersonified': impersonified,
+        'debug': settings.DEBUG,
+        'celus_version': settings.CELUS_VERSION,
+        'celus_git_hash': settings.SENTRY_RELEASE,
+        'clickhouse_query_active': entry.django_request.USE_CLICKHOUSE
         if hasattr(entry.django_request, 'USE_CLICKHOUSE')
         else False,
-        query_count_django=response_info.response.headers.get('X-Django-Query-Count', 0),
-        query_count_clickhouse=response_info.response.headers.get('X-Clickhouse-Query-Count', 0),
-        request_size=request_size,
-        response_size=response_size,
-        execution_time=1000 * entry.execution_time.total_seconds(),
-    )
+        'query_count_django': response_info.response.headers.get('X-Django-Query-Count', 0),
+        'query_count_clickhouse': response_info.response.headers.get('X-Clickhouse-Query-Count', 0),
+        'request_size': request_size,
+        'response_size': response_size,
+        'execution_time': 1000 * entry.execution_time.total_seconds(),
+    }

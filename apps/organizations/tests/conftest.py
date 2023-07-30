@@ -1,6 +1,7 @@
 import pytest
 from core.models import Identity
 from core.tests.conftest import *  # noqa - fixtures
+
 from organizations.fake_data import OrganizationFactory
 
 from ..models import Organization, UserOrganization

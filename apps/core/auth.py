@@ -1,9 +1,10 @@
 import logging
 
-from core.logic.sync import IdentitySyncer, UserSyncer
-from core.models import DataSource, Identity, User
 from django.conf import settings
 from erms.api import ERMS
+
+from core.logic.sync import IdentitySyncer, UserSyncer
+from core.models import DataSource, Identity, User
 
 logger = logging.getLogger(__name__)
 

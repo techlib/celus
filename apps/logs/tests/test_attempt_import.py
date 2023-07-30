@@ -6,11 +6,11 @@ from core.logic.dates import month_end, parse_date
 from core.models import UL_ORG_ADMIN
 from django.core.files.base import ContentFile
 from django.db.models import Sum
-from logs.fake_data import ImportBatchFactory
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, counter_report_type_named  # noqa
 
+from logs.fake_data import ImportBatchFactory
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,

@@ -9,6 +9,7 @@ from core.logic.error_reporting import email_if_fails
 from core.models import TaskProgress
 from django.db.transaction import atomic
 from organizations.models import Organization
+
 from publications.logic.cleanup import clean_obsolete_platform_title_links, delete_platform_data
 from publications.logic.sync import erms_sync_platforms
 from publications.logic.title_management import find_mergeable_titles, merge_titles

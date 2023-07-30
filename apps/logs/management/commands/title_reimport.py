@@ -6,11 +6,12 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Count, Exists, F, OuterRef, Value
 from django.db.models.functions import Concat
 from django.db.transaction import atomic, on_commit
+from publications.logic.title_management import replace_title
+from publications.models import Title
+
 from logs.logic.clickhouse import resync_import_batch_with_clickhouse
 from logs.logic.data_import import TitleManager
 from logs.models import AccessLog, ImportBatch
-from publications.logic.title_management import replace_title
-from publications.models import Title
 
 logger = logging.getLogger(__name__)
 

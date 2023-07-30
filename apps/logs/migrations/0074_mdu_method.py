@@ -11,7 +11,7 @@ def derive_method(apps, schema_editor):
             mdu.method = "raw"
         else:
             try:
-                mdu.report_type.counterreporttype
+                mdu.report_type.counterreporttype  # noqa B018
                 mdu.method = "counter"
             except ObjectDoesNotExist:
                 mdu.method = "celus"

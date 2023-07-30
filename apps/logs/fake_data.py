@@ -7,6 +7,10 @@ from celus_nigiri.counter5 import CounterRecord
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
+from organizations.fake_data import OrganizationFactory
+from publications.fake_data import PlatformFactory, TitleFactory
+from publications.models import PlatformTitle
+
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
@@ -20,9 +24,6 @@ from logs.models import (
     ReportType,
     ReportTypeToDimension,
 )
-from organizations.fake_data import OrganizationFactory
-from publications.fake_data import PlatformFactory, TitleFactory
-from publications.models import PlatformTitle
 
 fake = faker.Faker()
 

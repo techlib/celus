@@ -2,6 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
+
 from tags.logic.scopus_title_list import ScopusTitleListTagger
 from tags.models import TaggingBatch
 

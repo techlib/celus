@@ -7,12 +7,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Exists, F, OuterRef, Q, QuerySet
 from django.db.models.expressions import CombinedExpression
 from django.db.transaction import atomic
+from scheduler.models import FetchIntention
+from sushi.models import AttemptStatus, SushiFetchAttempt
+
 from logs.exceptions import DataStructureError, SourceFileMissingError
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.logic.custom_import import import_custom_data
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, ManualDataUploadImportBatch
-from scheduler.models import FetchIntention
-from sushi.models import AttemptStatus, SushiFetchAttempt
 
 
 @dataclass
@@ -160,7 +161,7 @@ def reimport_import_batch_with_fa(ib: ImportBatch) -> ImportBatch:
     try:
         source_fa = ib.sushifetchattempt
     except ObjectDoesNotExist:
-        raise DataStructureError('Import batch without FA')
+        raise DataStructureError('Import batch without FA') from None
     # check that we have the raw data before we delete anything
     if source_fa and (source_fa.data_file == '' or not os.path.isfile(source_fa.data_file.path)):
         raise SourceFileMissingError(

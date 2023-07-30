@@ -1,9 +1,10 @@
 import factory
-from annotations.models import Annotation
 from core.fake_data import UserFactory
 from faker import Faker
 from organizations.fake_data import OrganizationFactory
 from publications.fake_data import PlatformFactory
+
+from annotations.models import Annotation
 
 fake = Faker()
 

@@ -33,7 +33,7 @@ def extract_field_from_request(request: Request, field_name: str) -> typing.Opti
         # Try to get value from data
         value = request.data.get(field_name)
     except AttributeError:
-        raise ValidationError('Malformed request')
+        raise ValidationError('Malformed request') from None
 
     if not value:
         # Try to get value from query parameters
@@ -43,6 +43,8 @@ def extract_field_from_request(request: Request, field_name: str) -> typing.Opti
         try:
             return int(value)
         except ValueError:
-            raise ValidationError(f"Value of field '{field_name}' is not a valid integer ({value})")
+            raise ValidationError(
+                f"Value of field '{field_name}' is not a valid integer ({value})"
+            ) from None
 
     return None

@@ -2,8 +2,9 @@
 
 import django.core.validators
 import django.db.models.deletion
-import knowledgebase.models
 from django.db import migrations, models
+
+import knowledgebase.models
 
 
 class Migration(migrations.Migration):

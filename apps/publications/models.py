@@ -329,9 +329,7 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
         stats['unique_matched_titles'] = len(unique_title_ids)
         return {
             'stats': stats,
-            'recognized_columns': list(
-                sorted(reader.column_names.values(), key=lambda x: x.lower())
-            ),
+            'recognized_columns': sorted(reader.column_names.values(), key=lambda x: x.lower()),
         }
 
     def process(

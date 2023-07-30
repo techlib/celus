@@ -1,11 +1,11 @@
 import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
-from logs.models import ImportBatch
 from organizations.models import UserOrganization
 from tags.fake_data import TagFactory
 from tags.models import TagScope
 
+from logs.models import ImportBatch
 from test_scenarios.basic import clients, identities, users  # noqa
 
 

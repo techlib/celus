@@ -1,10 +1,11 @@
 import pytest
-from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
-from logs.logic.data_import import import_counter_records
-from logs.models import AccessLog
 from organizations.tests.conftest import organizations  # noqa
 from publications.logic.cleanup import clean_obsolete_platform_title_links
 from publications.models import PlatformTitle
+
+from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
+from logs.logic.data_import import import_counter_records
+from logs.models import AccessLog
 
 
 @pytest.mark.clickhouse

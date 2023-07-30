@@ -6,10 +6,11 @@ from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from django.db.models import Count, Sum
 from django.urls import reverse
-from logs.fake_data import ManualDataUploadFullFactory
-from logs.models import AccessLog, DimensionText, ImportBatch
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.models import PlatformTitle, Title
+
+from logs.fake_data import ManualDataUploadFullFactory
+from logs.models import AccessLog, DimensionText, ImportBatch
 
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
@@ -194,7 +195,7 @@ class TestCounter4Import:
 
         data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
         reader = Counter4BR2Report()
-        records = [e for e in reader.read_report(data)]
+        records = list(reader.read_report(data))
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         assert AccessLog.objects.count() == 0
@@ -233,7 +234,7 @@ class TestCounter4Import:
 
         data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
 
-        records = [e for e in reader.read_report(data)]
+        records = list(reader.read_report(data))
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         assert Title.objects.count() == 0

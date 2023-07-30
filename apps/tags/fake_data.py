@@ -3,6 +3,7 @@ from core.fake_data import UserFactory
 from django.core.files.base import ContentFile
 from publications.fake_data import TitleFactory
 from publications.models import Title
+
 from tags.models import (
     AccessibleBy,
     Tag,

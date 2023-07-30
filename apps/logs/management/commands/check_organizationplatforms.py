@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+
 from logs.logic.cleanup import (
     find_organizationplatform_differences,
     fix_organizationplatform_differences,

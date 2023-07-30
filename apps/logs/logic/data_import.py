@@ -15,12 +15,13 @@ from django.conf import settings
 from django.db.models.functions import Lower
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
-from logs.logic.validation import normalize_isbn, normalize_issn, normalize_title
-from logs.models import ImportBatch
 from organizations.models import Organization
 from postgres_copy import CopyMapping
 from publications.models import Platform, PlatformTitle, Title
 from sushi.models import SushiFetchAttempt
+
+from logs.logic.validation import normalize_isbn, normalize_issn, normalize_title
+from logs.models import ImportBatch
 
 from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
 from ..models import AccessLog, DimensionText, Metric, ReportType
@@ -115,7 +116,7 @@ def get_or_create_metric(mapping, value, controlled_metrics: List[str] = None) -
             # Metric is supposed to exist
             metric = Metric.objects.get(short_name=value)
         except Metric.DoesNotExist:
-            raise UnknownMetric(value)
+            raise UnknownMetric(value) from None
 
         if controlled_metrics:
             # check for controlled metrics
@@ -568,7 +569,7 @@ def import_counter_records(
                 target_ids.add(rec['target_id'])
             if i == 0:
                 # write the CSV header
-                writer.writerow(list(sorted(rec.keys())))
+                writer.writerow(sorted(rec.keys()))
             writer.writerow([v for k, v in sorted(rec.items())])
             stats['new logs'] += 1
         ingest_import_batch_data(ib, csv_data)

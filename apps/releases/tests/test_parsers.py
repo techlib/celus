@@ -1,4 +1,5 @@
 import pytest
+
 from releases.logic.changelog import parse_changelog
 
 changelog_temp = """

@@ -74,8 +74,9 @@ def db_organization_num():
 
 
 def db_user_num():
-    from core.models import User
     from organizations.models import UserOrganization
+
+    from core.models import User
 
     counter = CounterDict()
     for user in User.objects.all().annotate(
@@ -93,8 +94,9 @@ def db_title_num():
 
 
 def db_platform_num():
-    from core.models import DataSource
     from publications.models import Platform
+
+    from core.models import DataSource
 
     out = {}
     for rec in (
@@ -187,9 +189,10 @@ def _db_last_two_years_coverage_data():
     """
     from datetime import timedelta
 
-    from core.logic.dates import last_month, month_start
     from logs.logic.data_coverage import DataCoverageExtractor
     from logs.models import ImportBatch, ReportType
+
+    from core.logic.dates import last_month, month_start
 
     # the end date should be the one month before the last finished month
     # the start date should cover the year of the end date + previous two full years
@@ -365,7 +368,7 @@ class CelusPrometheusAfterMiddleware(PrometheusAfterMiddleware):
             dims = params.get('dims', [])
             value = cache.get(name, {} if dims else 0)
             if dims:
-                for labels, value in value.items():
-                    self.metrics.cached_gauges[name].labels(*labels).set(value)
+                for labels, val in value.items():
+                    self.metrics.cached_gauges[name].labels(*labels).set(val)
             else:
                 self.metrics.cached_gauges[name].set(value)

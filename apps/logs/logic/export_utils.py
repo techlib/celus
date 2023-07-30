@@ -55,7 +55,7 @@ class DictWriter(ABC):
         Mandatory method. Should write one row into the output
         """
 
-    def finalize(self):
+    def finalize(self):  # noqa: B027
         pass
 
     def apply_formula_fn_to_totals(self, formula: Formula) -> Any:
@@ -243,7 +243,7 @@ class ListWriter(ABC):
         Mandatory method. Should write one row into the output
         """
 
-    def finalize(self):
+    def finalize(self):  # noqa: B027
         pass
 
 

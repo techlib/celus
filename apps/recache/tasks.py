@@ -5,6 +5,7 @@ import celery
 import django
 from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
+
 from recache.models import CachedQuery, RenewalError
 
 logger = logging.getLogger(__name__)

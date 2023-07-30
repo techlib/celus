@@ -1,11 +1,11 @@
 import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
-from logs.models import FlexibleReport
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
 from tags.fake_data import TagForTitleFactory
 
+from logs.models import FlexibleReport
 from test_scenarios.basic import users  # noqa
 
 

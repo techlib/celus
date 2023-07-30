@@ -5,6 +5,7 @@ used for storing accesslogs.
 import logging
 
 from django.core.management.base import BaseCommand
+
 from logs.cubes import AccessLogCube, create_ch_backend
 
 logger = logging.getLogger(__name__)

@@ -56,7 +56,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     done = models.DateTimeField(null=True, blank=True)
-    last_error = models.TextField(blank=True, null=True)
+    last_error = models.TextField(blank=True, default='')
 
     @property
     def url(self):
@@ -75,7 +75,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
 
         res = False
         try:
-            self.last_error = None
+            self.last_error = ''
             if self.target == self.Target.PRESENT:
                 resp = requests.put(self.url, headers=self.request_headers)
                 resp.raise_for_status()
@@ -104,7 +104,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
                 sync_attempt, _ = RouterSyncAttempt.objects.get_or_create(
                     prefix=prefix, target=target, source=source
                 )
-                on_commit(lambda: sync_attempt.plan())
+                on_commit(lambda attempt=sync_attempt: attempt.plan())
 
     def plan(self):
         from .tasks import sync_route
@@ -150,11 +150,16 @@ class ImportAttempt(AuthTokenMixin, models.Model):
     downloaded_timestamp = models.DateTimeField(null=True, blank=True)
     processing_timestamp = models.DateTimeField(null=True, blank=True)
     end_timestamp = models.DateTimeField(null=True, blank=True)
-    data_hash = models.CharField(
+    data_hash = models.CharField(  # noqa: DJ001
         max_length=64, help_text="SHA-256 hash of attempt", null=True, blank=True
     )
     stats = models.JSONField(null=True, blank=True)
-    error = models.TextField(blank=True, null=True)
+    error = models.TextField(blank=True, null=True)  # noqa: DJ001
+
+    def save(self, *args, **kwargs):
+        self.kind = self.required_kind
+        self.url = urljoin(self.source.url, ImportAttempt.URL_MAP[self.kind])
+        return super().save(*args, **kwargs)
 
     @property
     def status(self) -> 'ImportAttempt.State':
@@ -188,11 +193,6 @@ class ImportAttempt(AuthTokenMixin, models.Model):
     def running(self):
         """running or to be run"""
         return not self.failed and not self.success
-
-    def save(self, *args, **kwargs):
-        self.kind = self.required_kind
-        self.url = urljoin(self.source.url, ImportAttempt.URL_MAP[self.kind])
-        return super().save(*args, **kwargs)
 
     def perform(self, merge=MergeStrategy.EMPTY_SOURCE):
         """Downloads data from knowledgebase and imports it
@@ -288,20 +288,20 @@ class PlatformImportAttempt(ImportAttempt):
                     & ~models.Q(ext_id=record["pk"])
                 ).update(counter_registry_id=None)
 
-            updatable = dict(
-                short_name=record["short_name"],
-                name=record["name"],
-                provider=record["provider"],
-                url=record["url"],
-                knowledgebase={
+            updatable = {
+                'short_name': record["short_name"],
+                'name': record["name"],
+                'provider': record["provider"],
+                'url': record["url"],
+                'knowledgebase': {
                     "providers": record["providers"],
                     "report_types": record.get("report_types", []),
                     "platform_filter": record.get("platform_filter"),
                     "notes_url": record.get("notes_url"),
                 },
-                counter_registry_id=record["counter_registry_id"],
-                duplicates=record.get("duplicates", []),
-            )
+                'counter_registry_id': record["counter_registry_id"],
+                'duplicates': record.get("duplicates", []),
+            }
 
             if (
                 merge == ImportAttempt.MergeStrategy.NONE
@@ -378,16 +378,15 @@ class PlatformImportAttempt(ImportAttempt):
         self.stats = dict(counter)
 
         # Send notification if there are two platforms with the same name
-        duplicates = [
-            e
-            for e in Platform.objects.filter(
+        duplicates = list(
+            Platform.objects.filter(
                 models.Q(source=None) | models.Q(source__type=DataSource.TYPE_KNOWLEDGEBASE)
             )
             .values('short_name')
             .annotate(count=models.Count('pk'))
             .values('short_name', 'count')
             .filter(count__gt=1)
-        ]
+        )
         if duplicates:
             async_mail_admins.delay(
                 "Duplicated platforms were detected",
@@ -492,7 +491,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 updated = False
 
                 # Compare metrics
-                metrics_differ = set(e.pk for e in report_type.controlled_metrics.all()) != {
+                metrics_differ = {e.pk for e in report_type.controlled_metrics.all()} != {
                     e.pk for e in metrics
                 }
                 if metrics_differ:

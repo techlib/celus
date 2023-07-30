@@ -10,11 +10,10 @@ from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory
 from organizations.fake_data import OrganizationFactory
 from publications.fake_data import PlatformFactory
-from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus
-from sushi.models import BrokenCredentialsMixin as BC
-from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
+from sushi.models import BrokenCredentialsMixin as BC
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,

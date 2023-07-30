@@ -39,8 +39,10 @@ class CoreConfig(AppConfig):
         from django.conf import settings
 
         # noinspection PyUnresolvedReferences
-        from . import db  # noqa - needed to register the ilike lookup
-        from . import signals  # noqa - needed to register the signals
+        from . import (
+            db,  # noqa - needed to register the ilike lookup
+            signals,  # noqa - needed to register the signals
+        )
         from .prometheus import celus_sentry_release, celus_version_num
 
         celus_version_num.set(version_to_int(settings.CELUS_VERSION))
@@ -59,3 +61,15 @@ class CoreConfig(AppConfig):
                     )
                 )
             return errors
+
+        @register()
+        def check_clickhouse_settings(app_configs, **kwargs):
+            if settings.CLICKHOUSE_QUERY_ACTIVE and not settings.CLICKHOUSE_SYNC_ACTIVE:
+                return [
+                    Warning(
+                        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is '
+                        'likely an error as the data will not be up to date in queries.',
+                        id='core.W002',
+                    )
+                ]
+            return []

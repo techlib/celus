@@ -11,6 +11,7 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from organizations.models import Organization
 from publications.models import Platform
+
 from sushi.models import CounterReportType, SushiCredentials
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ class CredentialsDataFrame:
         report_types = CounterReportType.objects.filter(
             counter_version=counter_version
         ).values_list('code', flat=True)
-        report_type_cols = [rep_type for rep_type in report_types]
+        report_type_cols = list(report_types)
         cols += report_type_cols
         return cls(counter_version, cols, report_types)
 
@@ -125,11 +126,10 @@ class CredentialsDataFrame:
             missing_platforms = {
                 p.name_en for p in self.platforms_to_display(accessible_organizations)
             } - platforms_in_sushicred_dict
-            sushicred_dict[Col.PUBLISHER_VENDOR_PLATFORM] += list(missing_platforms)
-            for item in missing_platforms:
+            # create rows for all the missing platforms
+            for mp in missing_platforms:
                 for col in sushicred_dict:
-                    if col != Col.PUBLISHER_VENDOR_PLATFORM:
-                        sushicred_dict[col].append("")
+                    sushicred_dict[col].append(mp if col == Col.PUBLISHER_VENDOR_PLATFORM else "")
         sushicred_dict = {
             (k.value if isinstance(k, Enum) else k): v for k, v in sushicred_dict.items()
         }

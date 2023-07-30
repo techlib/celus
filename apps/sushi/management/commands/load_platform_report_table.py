@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from logs.models import ReportType
 from publications.models import Platform
+
 from sushi.models import CounterReportType
 
 

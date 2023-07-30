@@ -6,6 +6,7 @@ from core.logic.error_reporting import email_if_fails
 from core.models import TaskProgress
 from django.db import DatabaseError
 from django.db.transaction import atomic
+
 from tags.models import TaggingBatch, TaggingBatchState
 
 logger = logging.getLogger(__name__)

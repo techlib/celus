@@ -12,6 +12,7 @@ from django.db.models.functions import Lower
 from logs.logic.clickhouse import resync_import_batch_with_clickhouse
 from logs.logic.data_import import TitleManager
 from logs.models import AccessLog, ImportBatch
+
 from publications.models import PlatformTitle, Title
 
 logger = logging.getLogger(__name__)

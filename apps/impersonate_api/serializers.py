@@ -49,4 +49,4 @@ class ImpersonateListSerializer(serializers.ModelSerializer):
 class ImpersonateSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = tuple()
+        fields = ()

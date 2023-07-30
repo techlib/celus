@@ -12,6 +12,9 @@ from logs.fake_data import ImportBatchFactory
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.models import ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
+
 from scheduler import tasks
 from scheduler.fake_data import (
     AutomaticFactory,
@@ -28,9 +31,6 @@ from scheduler.models import (
     RunResponse,
     Scheduler,
 )
-from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
-
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     credentials,
@@ -1145,7 +1145,7 @@ class TestScheduler:
         assert scheduler1.current_celery_task_id is None
         assert intention1.scheduler == scheduler1
         with pytest.raises(Scheduler.DoesNotExist):
-            intention1.current_scheduler
+            intention1.current_scheduler  # noqa: B018
 
         # Seconds is unlocked
         scheduler2.refresh_from_db()
@@ -1155,7 +1155,7 @@ class TestScheduler:
         assert scheduler2.current_celery_task_id is None
         assert intention2.scheduler is None
         with pytest.raises(Scheduler.DoesNotExist):
-            intention2.current_scheduler
+            intention2.current_scheduler  # noqa: B018
 
         # Third doesn't need to be unlocked
         scheduler3.refresh_from_db()
@@ -1563,21 +1563,21 @@ class TestAutomatic:
 
         # Mock successful report fetching
         def mocked_fetch_report_v5(self, client, counter_report, start_date, end_date, file_data):
-            return dict(
-                credentials=credentials["branch_pr"],
-                counter_report=counter_report,
-                start_date=start_date,
-                end_date=end_date,
-                status=AttemptStatus.IMPORTING,
-                data_file=None,
-                checksum="",
-                file_size=0,
-                log="",
-                error_code="",
-                when_processed=timezone.now(),
-                http_status_code=200,
-                partial_data=False,
-            )
+            return {
+                "credentials": credentials["branch_pr"],
+                "counter_report": counter_report,
+                "start_date": start_date,
+                "end_date": end_date,
+                "status": AttemptStatus.IMPORTING,
+                "data_file": None,
+                "checksum": "",
+                "file_size": 0,
+                "log": "",
+                "error_code": "",
+                "when_processed": timezone.now(),
+                "http_status_code": 200,
+                "partial_data": False,
+            }
 
         monkeypatch.setattr(SushiCredentials, '_fetch_report_v5', mocked_fetch_report_v5)
         credentials["branch_pr"].fetch_report(

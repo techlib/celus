@@ -34,23 +34,23 @@ def create_celery_task_log_dict(
     clickhouse_query_count = cache.get(f'celery_task_ch_query_count_{task_id}', 0)
     cache.delete(f'celery_task_ch_query_count_{task_id}')
 
-    return dict(
-        hostname=settings.ALLOWED_HOSTS[0],
-        db_server=settings.DATABASES['default']['HOST'],
-        clickhouse_db_server=settings.CLICKHOUSE_HOST,
-        timestamp=task_obj.date_created if task_obj else now(),
-        debug=settings.DEBUG,
-        celus_version=settings.CELUS_VERSION,
-        celus_git_hash=settings.SENTRY_RELEASE,
-        clickhouse_query_active=settings.CLICKHOUSE_QUERY_ACTIVE,
-        query_count_django=query_count_django,
-        query_count_clickhouse=clickhouse_query_count,
-        execution_time=duration.total_seconds() * 1000,
-        task_name=task.__name__,
-        task_args=[str(arg) for arg in args],
-        task_kwargs={k: str(v) for k, v in kwargs.items()},
-        status=state,
-    )
+    return {
+        'hostname': settings.ALLOWED_HOSTS[0],
+        'db_server': settings.DATABASES['default']['HOST'],
+        'clickhouse_db_server': settings.CLICKHOUSE_HOST,
+        'timestamp': task_obj.date_created if task_obj else now(),
+        'debug': settings.DEBUG,
+        'celus_version': settings.CELUS_VERSION,
+        'celus_git_hash': settings.SENTRY_RELEASE,
+        'clickhouse_query_active': settings.CLICKHOUSE_QUERY_ACTIVE,
+        'query_count_django': query_count_django,
+        'query_count_clickhouse': clickhouse_query_count,
+        'execution_time': duration.total_seconds() * 1000,
+        'task_name': task.__name__,
+        'task_args': [str(arg) for arg in args],
+        'task_kwargs': {k: str(v) for k, v in kwargs.items()},
+        'status': state,
+    }
 
 
 def celery_task_log(

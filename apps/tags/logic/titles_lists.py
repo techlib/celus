@@ -54,7 +54,7 @@ class TitleListReader(abc.ABC):
     def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
         return {}
 
-    def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):
+    def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):  # noqa: B027
         """
         Override this method to add extra data to the records. This method is called
         after the titles have been matched to the records, so `title_ids` is guaranteed

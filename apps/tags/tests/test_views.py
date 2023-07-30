@@ -2,9 +2,9 @@ import pytest
 from core.models import DataSource
 from django.urls import reverse
 from publications.fake_data import PlatformFactory, TitleFactory
+
 from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
 from tags.models import AccessibleBy, Tag, TagClass, TagScope
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -277,15 +277,15 @@ class TestTagViews:
             can_assign=AccessibleBy.EVERYBODY,
             desc='AAA',
         )
-        new_data = dict(
-            name='B',
-            text_color='#ffeedd',
-            bg_color='#221100',
-            desc='BBB',
-            can_see=AccessibleBy.ORG_ADMINS,
-            can_assign=AccessibleBy.OWNER,
-            owner_org=organizations['standalone'].pk,
-        )
+        new_data = {
+            'name': 'B',
+            'text_color': '#ffeedd',
+            'bg_color': '#221100',
+            'desc': 'BBB',
+            'can_see': AccessibleBy.ORG_ADMINS,
+            'can_assign': AccessibleBy.OWNER,
+            'owner_org': organizations['standalone'].pk,
+        }
         resp = clients['user1'].patch(reverse('tag-detail', args=[tag.pk]), data=new_data)
         assert resp.status_code == 200
         tag.refresh_from_db()

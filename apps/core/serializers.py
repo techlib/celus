@@ -1,7 +1,6 @@
 import typing
 from datetime import datetime
 
-from core.models import TaskProgress, User
 from rest_framework.serializers import (
     BooleanField,
     CharField,
@@ -12,6 +11,8 @@ from rest_framework.serializers import (
     Serializer,
     SerializerMethodField,
 )
+
+from core.models import TaskProgress, User
 
 
 class EmailVerificationSerializer(Serializer):

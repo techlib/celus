@@ -7,6 +7,11 @@ from zipfile import ZipFile
 import openpyxl
 import pytest
 from django.db.models import Q
+from organizations.models import Organization
+from publications.models import Platform, Title
+from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
+from tags.models import AccessibleBy, Tag, TagScope
+
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.materialized_reports import recompute_materialized_reports
 from logs.logic.reporting.export import (
@@ -29,10 +34,6 @@ from logs.models import (
     ReportMaterializationSpec,
     ReportType,
 )
-from organizations.models import Organization
-from publications.models import Platform, Title
-from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
-from tags.models import AccessibleBy, Tag, TagScope
 
 
 def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:

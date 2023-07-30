@@ -13,6 +13,8 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText, Metric, ReportType
 from organizations.models import Organization
 from publications.models import Platform
+from rest_framework.exceptions import ValidationError
+
 from reporting.logic.parsing import (
     ReportDataSourceSerializer,
     ReportPartSerializer,
@@ -20,7 +22,6 @@ from reporting.logic.parsing import (
     ReportSerializer,
     parse_formula,
 )
-from rest_framework.exceptions import ValidationError
 
 
 class ReportingContext:
@@ -177,7 +178,7 @@ class Report:
                 except ValueError:
                     raise ValidationError(
                         f"Could not resolve fallbackFor: {data_source.fallback_for}"
-                    )
+                    ) from None
         for part_def in s.validated_data['parts']:
             part = ReportPart.from_dict(part_def, out)
             out.parts.append(part)
@@ -196,7 +197,7 @@ class Report:
         try:
             return self.sources_by_id[source_id]
         except KeyError:
-            raise ValueError(f"Unknown source ID: {source_id}")
+            raise ValueError(f"Unknown source ID: {source_id}") from None
 
     def register_stage(self, part_id: str, stage: 'ReportPartStage'):
         if stage.id in self.stages_by_part_and_id.get(part_id, {}):
@@ -421,7 +422,7 @@ class ReportDataSource:
     def slicer_result_to_df(self, result: [dict]) -> pd.DataFrame:
         pk_to_row = {row['pk']: row for row in result}
         data = []
-        for i, pk in enumerate(self.report.context.sorted_primary_ids):
+        for _i, pk in enumerate(self.report.context.sorted_primary_ids):
             row = pk_to_row.get(pk, {})
             data.append(
                 [

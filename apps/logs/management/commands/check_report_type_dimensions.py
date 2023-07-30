@@ -4,8 +4,9 @@ from collections import Counter
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-from logs.models import Dimension, ReportType, ReportTypeToDimension
 from sushi.models import COUNTER_REPORTS, CounterReportType
+
+from logs.models import Dimension, ReportType, ReportTypeToDimension
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class Command(BaseCommand):
         stats = Counter()
         fix_it = options['fix_it']
         seen_codes = set()
-        for code, our_name, version, json, reader, sushi in COUNTER_REPORTS:
+        for code, our_name, version, _json, reader, sushi in COUNTER_REPORTS:
             # COUNTER_REPORTS contains more than one record for some reports,
             # we only want the first one
             if code in seen_codes:

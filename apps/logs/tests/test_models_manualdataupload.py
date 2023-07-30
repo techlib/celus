@@ -1,4 +1,6 @@
 import pytest
+from organizations.fake_data import OrganizationAltNameFactory, OrganizationFactory
+
 from logs.fake_data import (
     AccessLogFactory,
     ImportBatchFactory,
@@ -13,8 +15,6 @@ from logs.logic.clickhouse import (
 from logs.logic.custom_import import custom_import_preflight_check
 from logs.models import AccessLog, ManualDataUpload
 from logs.tasks import prepare_preflight
-from organizations.fake_data import OrganizationAltNameFactory, OrganizationFactory
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

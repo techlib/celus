@@ -6,6 +6,7 @@ from typing import Callable, Iterable, Optional, Union
 from django.db.models import Q
 from logs.logic.validation import normalize_issn
 from publications.models import Title
+
 from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TagScope, TitleTag
 
 logger = logging.getLogger(__name__)

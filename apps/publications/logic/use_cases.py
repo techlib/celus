@@ -3,8 +3,9 @@ from functools import reduce
 
 from django.conf import settings
 from django.db.models import Count, F, Max, Q, QuerySet
-from publications.models import Platform
 from sushi.models import AttemptStatus, SushiFetchAttempt
+
+from publications.models import Platform
 
 
 def get_use_cases(platforms: QuerySet[Platform]) -> typing.List[dict]:

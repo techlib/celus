@@ -29,7 +29,7 @@ def check_allow_impersonate(request: Request):
     if check_user(request.user):
         return True
     else:
-        if imp_user := getattr(request, "impersonator"):
+        if imp_user := request.impersonator:
             return check_user(imp_user)
         else:
             return False

@@ -1,6 +1,4 @@
 import pytest
-from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
-from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
     master_admin_client,
@@ -26,6 +24,9 @@ from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fix
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Title
 from publications.tests.conftest import platform  # noqa - fixture
+
+from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
+from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 
 
 @pytest.fixture
@@ -93,9 +94,11 @@ class TestReportViewToChartAPI:
         assert ReportViewToChartType.objects.count() == 0
         resp = master_admin_client.post(
             reverse('report-view-to-chart-list'),
-            dict(
-                report_data_view=simple_report_view.pk, chart_definition=charts[0].pk, position=10
-            ),
+            {
+                'report_data_view': simple_report_view.pk,
+                'chart_definition': charts[0].pk,
+                'position': 10,
+            },
         )
         assert resp.status_code == 201
         assert ReportViewToChartType.objects.count() == 1

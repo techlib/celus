@@ -4,14 +4,6 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
-from core.models import TaskProgress, User
-from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
-from core.serializers import (
-    EmailVerificationSerializer,
-    TaskProgressSerializer,
-    UserExtraDataSerializer,
-    UserSerializer,
-)
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -26,6 +18,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ViewSet
+
+from core.models import TaskProgress, User
+from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
+from core.serializers import (
+    EmailVerificationSerializer,
+    TaskProgressSerializer,
+    UserExtraDataSerializer,
+    UserSerializer,
+)
 
 from .logic.management_commands import CommandManager
 from .logic.type_conversion import to_bool

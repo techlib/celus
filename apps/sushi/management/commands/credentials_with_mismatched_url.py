@@ -5,6 +5,7 @@ from io import StringIO
 
 from django.core.management.base import BaseCommand
 from publications.models import Platform
+
 from sushi.models import SushiCredentials
 
 logger = logging.getLogger(__name__)

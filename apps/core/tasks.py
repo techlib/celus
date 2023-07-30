@@ -6,10 +6,11 @@ from random import randint
 import celery
 import redis
 from celery.signals import task_postrun
-from core.logic.error_reporting import email_if_fails
 from django.core.cache import cache
 from django.core.mail import mail_admins, send_mail
 from django.utils.timezone import now
+
+from core.logic.error_reporting import email_if_fails
 
 from .context_managers import logged_task
 from .logic.mailchimp import SyncTask
@@ -110,7 +111,7 @@ def flush_request_logs_to_clickhouse():
             continue
 
         def popper():
-            while rec := r.lpop(key):
+            while rec := r.lpop(key):  # noqa: B023
                 yield rec
 
         source = popper()

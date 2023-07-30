@@ -5,8 +5,6 @@ from hashlib import blake2b
 from typing import Optional
 
 from allauth.account.models import EmailAddress, EmailConfirmation
-from core.exceptions import FileConsistencyError
-from core.logic.url import extract_organization_id_from_request_query
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
@@ -18,6 +16,9 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
+
+from core.exceptions import FileConsistencyError
+from core.logic.url import extract_organization_id_from_request_query
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ class DataSource(models.Model):
     short_name = models.SlugField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     url = models.URLField(blank=True)
-    token = models.CharField(max_length=64, null=True, blank=True)
+    token = models.CharField(max_length=64, null=True, blank=True)  # noqa: DJ001
     organization = models.OneToOneField(
         'organizations.Organization',
         on_delete=models.CASCADE,

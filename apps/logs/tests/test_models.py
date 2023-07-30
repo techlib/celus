@@ -1,11 +1,11 @@
 import pytest
 from core.models import User
 from django.db import DatabaseError
+from organizations.tests.conftest import organizations  # noqa
+
 from logs.logic.reporting.filters import ExplicitDimensionFilter, ForeignKeyDimensionFilter
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import Dimension, DimensionText, FlexibleReport, ReportType, ReportTypeToDimension
-from organizations.tests.conftest import organizations  # noqa
-
 from test_scenarios.basic import data_sources, report_types  # noqa - fixtures
 
 

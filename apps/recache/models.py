@@ -100,8 +100,6 @@ class CachedQueryQuerySet(models.QuerySet):
 
 class CachedQuery(models.Model):
 
-    objects = CachedQueryQuerySet.as_manager()
-
     origin = models.CharField(
         max_length=32,
         blank=True,
@@ -139,6 +137,8 @@ class CachedQuery(models.Model):
         default=list,
         help_text='Each item is a duration of the query in seconds. It is updated for each renewal',
     )
+
+    objects = CachedQueryQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = 'Cached queries'
@@ -185,7 +185,7 @@ class CachedQuery(models.Model):
             queryset = self.get_fresh_queryset()
         except Exception as exc:
             if catch_refresh_errors:
-                raise RenewalError(f'Could not renew queryset because of error: {exc}')
+                raise RenewalError(f'Could not renew queryset because of error: {exc}') from None
             raise
 
         start = monotonic()
@@ -203,7 +203,7 @@ class CachedQuery(models.Model):
 
             # we restore the original django version in order not to pollute the object at hand
             self.django_version = orig_django_version
-            raise RenewalError('CachedQuery with current django version already exists')
+            raise RenewalError('CachedQuery with current django version already exists') from None
 
     def get_fresh_queryset(self):
         """

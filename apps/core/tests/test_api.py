@@ -5,12 +5,13 @@ from unittest.mock import patch
 
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmation
-from core.fake_data import UserFactory
-from core.models import Identity, User
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.core.files.base import ContentFile
 from django.urls import reverse
 from django.utils import timezone
+
+from core.fake_data import UserFactory
+from core.models import Identity, User
 
 
 @pytest.mark.django_db

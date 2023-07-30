@@ -9,6 +9,7 @@ from django.db.models import Count, Q
 from openpyxl import load_workbook
 from organizations.models import Organization
 from publications.models import Platform
+
 from sushi.logic.export import Col
 
 from ..models import SushiCredentials
@@ -103,8 +104,13 @@ def import_sushi_credentials_new(
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data - new version for xlsx
+    :param update_credentials: method of deciding which credentials should be updated
+    :param log_trivial: log also trivial messages (e.g. skipped empty rows)
+    :param log_diff: log differences between db and imported data
+    :param single_org: if provided, this organization will be used for all imported credentials
+           otherwise, organization will be taken from the data
     :param reversion_comment: comment that will be passed to the reversion version, if None a
-         default will be provided
+           default will be provided
     :param records:
     :return:
     """
@@ -139,7 +145,7 @@ def import_sushi_credentials_new(
             logger.log(level, "row #%03d: " + message, i + 2, *args)
         stats[stat_name] += 1
 
-    for i, record in enumerate(records):
+    for i, record in enumerate(records):  # noqa: B007 - i is used in `log` function
         customer_id = to_clean_str(record.get(Col.CUSTOMER_ID.value))
         if not customer_id:
             log(
@@ -234,22 +240,12 @@ def import_sushi_credentials_new(
                     setattr(cr, key, value)
                     diff[key] = (current_value, value)
             if diff:
-
-                def create_diff_info(status):
-                    info = (
-                        f"{status}: credentials (id: {cr.pk}, organization: {organization.name_en},"
-                        f" platform: {platform.name_en}):"
-                    )
-                    for key, (current_value, value) in diff.items():
-                        info += f"\n          {key}: '{current_value}' -> '{value}'"
-                    return info
-
                 if (update_credentials == Perform.UPDATE_NONE) or (
                     update_credentials == Perform.UPDATE_NOT_VERIFIED and cr.is_verified
                 ):
                     if log_diff:
                         log(
-                            create_diff_info("diff_skipped"),
+                            _create_diff_info("diff_skipped", cr, organization, platform, diff),
                             stat_name='diff_skipped',
                             level=logging.WARNING,
                         )
@@ -262,7 +258,7 @@ def import_sushi_credentials_new(
                     )
                 if log_diff:
                     log(
-                        create_diff_info("diff_updated"),
+                        _create_diff_info("diff_updated", cr, organization, platform, diff),
                         stat_name='diff_updated',
                         level=logging.WARNING,
                     )
@@ -289,6 +285,16 @@ def import_sushi_credentials_new(
                 db_credentials[key] = cr
             log("Credentials created", stat_name='added', level=logging.WARNING)
     return stats
+
+
+def _create_diff_info(status, cr, organization, platform, diff):
+    info = (
+        f"{status}: credentials (id: {cr.pk}, organization: {organization.name_en}, "
+        f"platform: {platform.name_en}):"
+    )
+    for key, (current_value, value) in diff.items():
+        info += f"\n          {key}: '{current_value}' -> '{value}'"
+    return info
 
 
 def import_sushi_credentials_from_csv(

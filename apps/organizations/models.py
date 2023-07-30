@@ -9,7 +9,6 @@ from mptt.models import MPTTModel
 
 
 class Organization(MPTTModel):
-
     ext_id = models.PositiveIntegerField(
         unique=True, help_text='object ID taken from EMRS', null=True, default=None, blank=True
     )
@@ -97,7 +96,7 @@ class Organization(MPTTModel):
         if qs.exists():
             raise ValidationError(
                 _("Organization with short name '%(short_name)s' already exists.")
-                % dict(short_name=self.short_name)
+                % {'short_name': self.short_name}
             )
 
         if altname := OrganizationAltName.objects.filter(
@@ -107,12 +106,11 @@ class Organization(MPTTModel):
         ).last():
             raise ValidationError(
                 _("An alias for organization {org} clashes with one of organization names.")
-                % dict(org=altname.organization)
+                % {'org': altname.organization}
             )
 
 
 class OrganizationAltName(models.Model):
-
     """
     Represents an alternative name for an organization. It is mostly useful for data import when
     trying to match organization with an ID in imported document
@@ -138,6 +136,13 @@ class OrganizationAltName(models.Model):
 
         ordering = ["name"]
 
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
     def validate_unique(self, exclude=None):
         res = super().validate_unique(exclude)
 
@@ -160,16 +165,8 @@ class OrganizationAltName(models.Model):
 
         return res
 
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
 
 class UserOrganization(models.Model):
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)

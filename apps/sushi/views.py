@@ -22,6 +22,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
 from scheduler.models import FetchIntention
 from scheduler.serializers import MonthOverviewSerializer
+
 from sushi.models import SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 

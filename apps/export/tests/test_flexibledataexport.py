@@ -4,8 +4,6 @@ from zipfile import ZipFile
 
 import openpyxl
 import pytest
-from export.enums import FileFormat
-from export.models import FlexibleDataExport
 from logs.fake_data import MetricFactory
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
@@ -23,6 +21,9 @@ from logs.models import DimensionText
 from publications.fake_data import TitleFactory
 from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import TagScope
+
+from export.enums import FileFormat
+from export.models import FlexibleDataExport
 
 
 @pytest.fixture

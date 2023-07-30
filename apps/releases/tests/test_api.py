@@ -3,8 +3,8 @@ import re
 
 import pytest
 from django.urls import reverse
-from releases.logic.releases import get_releases_entries
 
+from releases.logic.releases import get_releases_entries
 from test_scenarios.basic import *  # noqa - fixtures
 
 from ..serializers import ReleaseSerializer

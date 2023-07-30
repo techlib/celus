@@ -4,13 +4,14 @@ fixtures which clash with those for other tests of this view.
 """
 
 import pytest
-from api.models import OrganizationAPIKey
 from django.urls import reverse
 from django.utils.timezone import now
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 from sushi.tests.conftest import counter_report_type, credentials, organizations, platforms  # noqa
+
+from api.models import OrganizationAPIKey
 
 
 @pytest.mark.django_db

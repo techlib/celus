@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 from core.logic.dates import month_end, month_start
-from core.tests.conftest import admin_identity  # noqa - fixtures
 from core.tests.conftest import (  # noqa - fixtures
+    admin_identity,  # noqa - fixtures
     authenticated_client,
     authentication_headers,
     invalid_identity,
@@ -17,13 +17,6 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.db.models import Max, Min
 from django.urls import reverse
-from logs.fake_data import (
-    ImportBatchFactory,
-    ImportBatchFullFactory,
-    ManualDataUploadFactory,
-    ManualDataUploadFullFactory,
-)
-from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
 from organizations.models import UserOrganization
 from publications.fake_data import TitleFactory
 from publications.models import Platform
@@ -31,6 +24,13 @@ from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials
 
+from logs.fake_data import (
+    ImportBatchFactory,
+    ImportBatchFullFactory,
+    ManualDataUploadFactory,
+    ManualDataUploadFullFactory,
+)
+from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     client_by_user_type,

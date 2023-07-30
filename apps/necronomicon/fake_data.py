@@ -1,4 +1,5 @@
 import factory
+
 from necronomicon.models import Batch, Candidate
 
 

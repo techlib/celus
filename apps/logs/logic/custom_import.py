@@ -6,11 +6,12 @@ from core.models import User
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.timezone import now
+from organizations.models import Organization
+
 from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
 from logs.logic.data_import import import_counter_records, import_empty_batches
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload, OrganizationPlatform
-from organizations.models import Organization
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ def import_custom_data(
             try:
                 organization = Organization.objects.get(pk=org_data.get("pk", 0))
             except Organization.DoesNotExist:
-                raise OrganizationNotFound(org_name)
+                raise OrganizationNotFound(org_name) from None
 
             # Filter records
             records = (e for e in records if e.organization == org_name)
@@ -121,7 +122,7 @@ def import_custom_data(
                 organization,
                 mdu.platform,
                 months=list(mdu.preflight["months"].keys()),
-                import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
+                import_batch_kwargs={"user": user, "owner_level": mdu.owner_level},
             )
             new_stats = {}
         else:
@@ -131,7 +132,7 @@ def import_custom_data(
                 mdu.platform,
                 records,
                 months=months,
-                import_batch_kwargs=dict(user=user, owner_level=mdu.owner_level),
+                import_batch_kwargs={"user": user, "owner_level": mdu.owner_level},
             )
 
         # explicitly connect the organization and the platform

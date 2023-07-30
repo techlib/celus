@@ -3,6 +3,7 @@ from itertools import islice
 from django.core.management.base import BaseCommand
 from django.db.models import Exists, OuterRef
 from logs.models import AccessLog
+
 from publications.models import Title
 
 

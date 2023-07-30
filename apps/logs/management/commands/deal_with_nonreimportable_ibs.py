@@ -6,10 +6,11 @@ from core.logic.dates import month_end, parse_date
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.transaction import atomic, on_commit
-from logs.logic.clickhouse import delete_import_batch_from_clickhouse
-from logs.models import ImportBatch
 from scheduler.models import FetchIntention, Harvest
 from sushi.models import CounterReportType, SushiCredentials
+
+from logs.logic.clickhouse import delete_import_batch_from_clickhouse
+from logs.models import ImportBatch
 
 logger = logging.getLogger(__name__)
 

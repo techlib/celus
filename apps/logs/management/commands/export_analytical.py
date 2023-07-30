@@ -2,6 +2,7 @@ import os
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.management.base import BaseCommand
+
 from logs.logic.export_analytical import BACKENDS
 from logs.models import ReportType
 

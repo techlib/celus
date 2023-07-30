@@ -7,9 +7,9 @@ from django.urls import reverse
 from openpyxl import load_workbook
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
+
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import SushiCredentials
-
 from test_scenarios.basic import *  # noqa
 
 

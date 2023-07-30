@@ -1,4 +1,5 @@
 import factory
+
 from nibbler.models import ParserDefinition
 
 

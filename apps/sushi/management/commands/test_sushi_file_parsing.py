@@ -11,6 +11,7 @@ from django.core.files.base import File
 from django.core.management.base import BaseCommand
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
+
 from sushi.models import AttemptStatus, CounterReportType, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ class Command(BaseCommand):
 
             try:
                 records = reader.file_to_records(str(path))
-                for idx, record in enumerate(records):
+                for record in records:
                     log_sum += record.value
             except SushiException as exc:
                 stats["error"] += 1

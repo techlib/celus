@@ -10,6 +10,8 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
+from recache.util import recache_queryset
+
 from logs.logic.remap import remap_dicts
 from logs.models import (
     AccessLog,
@@ -20,7 +22,6 @@ from logs.models import (
     ReportInterestMetric,
     ReportType,
 )
-from recache.util import recache_queryset
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ def interest_annotation_params(
     """
     :param interest_rt: report type 'interest'
     :param accesslog_filter: filter to apply to all access logs in the summation
+    :param prefix: prefix to use for the accesslog fields
     :return:
     """
     interest_type_dim = interest_rt.dimensions_sorted[0]
@@ -304,20 +306,16 @@ class StatsComputer:
         dimensions = self.used_report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:
-                break
-        else:
-            raise BadRequestError(
-                f'Unknown dimension: "{dim_name}" for report type: "{self.used_report_type}"'
-            )
-        return dimension.short_name, f'dim{dim_idx+1}', dimension
+                return dimension.short_name, f'dim{dim_idx + 1}', dimension
+        raise BadRequestError(
+            f'Unknown dimension: "{dim_name}" for report type: "{self.used_report_type}"'
+        )
 
     def get_data(self, user, recache=False):
         """
         This method encapsulates most of the stuff that is done by this view.
         Based on report_type_id and the request object, it loads, post-processes, etc. the data
         and returns it
-        :param report_type:
-        :param params: dict with parameters, usually request.GET
         :param user: the user doing the querying
         :param recache: should recache be used to cache the database query?
         :return:

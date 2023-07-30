@@ -114,13 +114,16 @@ class BrokenCredentialsMixin(models.Model):
         on_delete=models.SET_NULL,
         help_text="Which was the first broken attempt",
     )
-    broken = models.CharField(
+    broken = models.CharField(  # noqa: DJ001
         max_length=20,
         choices=BROKEN_CHOICES,
         null=True,
         blank=True,
-        help_text="Indication that credentails are broken",
+        help_text="Indication that credentials are broken",
     )
+
+    class Meta:
+        abstract = True
 
     def set_broken(self, attempt: 'SushiFetchAttempt', broken_type: str):
         if self.first_broken_attempt is None:
@@ -135,9 +138,6 @@ class BrokenCredentialsMixin(models.Model):
 
     def is_broken(self):
         return True if self.broken is not None else False
-
-    class Meta:
-        abstract = True
 
 
 class CounterReportType(models.Model):
@@ -557,20 +557,20 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             # we don't care if it fails here
             pass
 
-        return dict(
-            status=status,
-            credentials=self,
-            counter_report=counter_report,
-            start_date=start_date,
-            end_date=end_date,
-            data_file=data_file,
-            checksum=checksum,
-            file_size=file_size,
-            log=log,
-            error_code=error_code,
-            when_processed=when_processed,
-            partial_data=partial_data,
-        )
+        return {
+            'status': status,
+            'credentials': self,
+            'counter_report': counter_report,
+            'start_date': start_date,
+            'end_date': end_date,
+            'data_file': data_file,
+            'checksum': checksum,
+            'file_size': file_size,
+            'log': log,
+            'error_code': error_code,
+            'when_processed': when_processed,
+            'partial_data': partial_data,
+        }
 
     def _fetch_report_v5(
         self, client: Sushi5Client, counter_report, start_date, end_date, file_data: IO[bytes]
@@ -674,21 +674,21 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             # we don't care if it fails here
             pass
 
-        return dict(
-            credentials=self,
-            counter_report=counter_report,
-            start_date=start_date,
-            end_date=end_date,
-            status=status,
-            data_file=django_file,
-            checksum=checksum,
-            file_size=file_size,
-            log=log,
-            error_code=error_code,
-            when_processed=when_processed,
-            http_status_code=http_status_code,
-            partial_data=partial_data,
-        )
+        return {
+            'credentials': self,
+            'counter_report': counter_report,
+            'start_date': start_date,
+            'end_date': end_date,
+            'status': status,
+            'data_file': django_file,
+            'checksum': checksum,
+            'file_size': file_size,
+            'log': log,
+            'error_code': error_code,
+            'when_processed': when_processed,
+            'http_status_code': http_status_code,
+            'partial_data': partial_data,
+        }
 
     def broken_report_types(self):
         return CounterReportsToCredentials.objects.filter(
@@ -741,7 +741,7 @@ class AttemptStatus(models.TextChoices):
 
     @classmethod
     def running(cls):
-        return {e for e in cls} - cls.terminated()
+        return set(cls) - cls.terminated()
 
     @classmethod
     def errors(cls):

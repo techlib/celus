@@ -1,5 +1,6 @@
-from core.logic.maximus_sync import sync
 from django.core.management.base import BaseCommand
+
+from core.logic.maximus_sync import sync
 
 
 class Command(BaseCommand):

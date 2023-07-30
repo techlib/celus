@@ -4,10 +4,11 @@ from typing import Dict, Iterable, Optional, Tuple
 
 from core.logic.dates import months_in_range
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum, Value
-from logs.models import AccessLog, ImportBatch, OrganizationPlatform, ReportType
 from organizations.models import Organization
 from publications.models import Platform, PlatformTitle, Title
 from sushi.models import SushiCredentials
+
+from logs.models import AccessLog, ImportBatch, OrganizationPlatform, ReportType
 
 
 @dataclass
@@ -117,9 +118,9 @@ class DataCoverageExtractor:
 
     def get_basic_ib_qs(self) -> QuerySet[ImportBatch]:
         return ImportBatch.objects.filter(
+            *self.extra_filters,
             report_type__in=self.create_rt_qs(),
             organization__in=self.accessible_organizations,
-            *self.extra_filters,
         )
 
     def _check_dates(self) -> bool:

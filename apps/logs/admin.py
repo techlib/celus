@@ -44,7 +44,7 @@ class ReportTypeForm(forms.ModelForm):
 
     class Meta:
         model = models.ReportType
-        fields = '__all__'
+        fields = '__all__'  # noqa: DJ007
 
 
 @admin.register(models.ReportType)

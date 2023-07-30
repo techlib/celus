@@ -1,14 +1,14 @@
 import copy
 
 import pytest
-from core.fake_data import MemberFactory, UserFactory
-from core.models import Identity
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from faker import Faker
 from organizations.models import Organization
 
+from core.fake_data import MemberFactory, UserFactory
+from core.models import Identity
 from test_scenarios.basic import *  # noqa
 
 fake = Faker()
@@ -78,7 +78,7 @@ def celususers(organizations):
     normuser = UserFactory()
     firstnam_lastnam = UserFactory(first_name=fake_first_name, last_name=fake_last_name)
     consman = UserFactory()
-    consman.organizations.add(organizations["master"], through_defaults=dict(is_admin=True))
+    consman.organizations.add(organizations["master"], through_defaults={'is_admin': True})
     consman.save()
     return locals()
 
@@ -471,14 +471,14 @@ def master_admin_identity():
     user.organizations.add(
         Organization.objects.get_or_create(
             internal_id=settings.MASTER_ORGANIZATIONS[0],
-            defaults=dict(
-                ext_id=1235711,
-                parent=None,
-                ico='12345',
-                name_cs='šéf',
-                name_en='boss',
-                short_name='master_admin',
-            ),
+            defaults={
+                'ext_id': 1235711,
+                'parent': None,
+                'ico': '12345',
+                'name_cs': 'šéf',
+                'name_en': 'boss',
+                'short_name': 'master_admin',
+            },
         )[0],
         through_defaults={"is_admin": True},
     )
@@ -493,14 +493,14 @@ def master_user_identity():
     user.organizations.add(
         Organization.objects.get_or_create(
             internal_id=settings.MASTER_ORGANIZATIONS[0],
-            defaults=dict(
-                ext_id=1235712,
-                parent=None,
-                ico='65432',
-                name_cs='pozorovatel',
-                name_en='observer',
-                short_name='master_user',
-            ),
+            defaults={
+                'ext_id': 1235712,
+                'parent': None,
+                'ico': '65432',
+                'name_cs': 'pozorovatel',
+                'name_en': 'observer',
+                'short_name': 'master_user',
+            },
         )[0],
         through_defaults={"is_admin": True},
     )

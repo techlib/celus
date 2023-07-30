@@ -7,6 +7,7 @@ from django.db.transaction import atomic
 from logs.logic.reimport import reimport_import_batch_with_fa
 from logs.models import ImportBatch
 from publications.models import Platform, PlatformInterestReport
+
 from sushi.models import SushiCredentials
 
 logger = logging.getLogger(__name__)

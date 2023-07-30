@@ -16,6 +16,10 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.utils.translation import pgettext
+from mptt.models import MPTTModelBase
+from organizations.models import Organization
+from tags.models import Tag, TagScope
+
 from logs.logic.export_utils import (
     CSVListWriter,
     DictWriter,
@@ -27,9 +31,6 @@ from logs.logic.export_utils import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import AccessLog, DimensionText, ReportType
-from mptt.models import MPTTModelBase
-from organizations.models import Organization
-from tags.models import Tag, TagScope
 
 logger = logging.getLogger(__name__)
 
@@ -531,7 +532,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             # add metadata sheet
             sheet = workbook.add_worksheet("metadata")
             writer = XlsxListWriter(sheet, cell_format=self.base_fmt, header_format=self.header_fmt)
-            for i in range(6):
+            for _i in range(6):
                 # skip some rows - make place for logo
                 writer.writerow([])
             self.create_report_metadata(writer)
@@ -562,9 +563,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 sheetname_parts = [
                     (
                         self.unique_sheetname(
-                            self.column_parts_separator.join(
-                                [p for p in self.translate_part_key(part)]
-                            )
+                            self.column_parts_separator.join(list(self.translate_part_key(part)))
                         ),
                         part,
                     )

@@ -32,6 +32,13 @@ class Batch(models.Model):
     class Meta:
         verbose_name_plural = _("Batches")
 
+    def __str__(self):
+        for candidate in self.candidates.all():
+            return (
+                f"{candidate.content_type.app_label}.{candidate.content_type.model}({self.created})"
+            )
+        return "<MISSING CANDIDATE>"
+
     @property
     def task_result(self) -> typing.Optional[TaskResult]:
         try:
@@ -144,13 +151,6 @@ class Batch(models.Model):
 
         return True
 
-    def __str__(self):
-        for candidate in self.candidates.all():
-            return (
-                f"{candidate.content_type.app_label}.{candidate.content_type.model}({self.created})"
-            )
-        return "<MISSING CANDIDATE>"
-
     @classmethod
     def create_from_queryset(cls, queryset) -> typing.Optional['Batch']:
         if queryset.exists():
@@ -169,6 +169,20 @@ class Candidate(models.Model):
     content_object = GenericForeignKey(ct_field='content_type', fk_field='object_id')
 
     info = models.JSONField(default=dict, blank=True, null=True)
+
+    class Meta:
+        indexes = (models.Index(fields=["content_type", "object_id"], name="content_index"),)
+
+    def __str__(self):
+        return f"{self.content_type.app_label}.{self.content_type.model}({self.object_id})"
+
+    def save(self, *args, **kwargs):
+        # Update info related to the object
+        self.info = {
+            "object": self.serialized_object() or (self.info or {}).get("object", {}),
+            "stats": (self.info or {}).get("stats", {}),
+        }
+        return super().save(*args, **kwargs)
 
     def serialized_object(self) -> typing.Optional[dict]:
         if not self.content_object:
@@ -205,17 +219,3 @@ class Candidate(models.Model):
                     "stats": model_class.objects.filter(pk=self.object_id).delete(),
                 }
             )
-
-    def __str__(self):
-        return f"{self.content_type.app_label}.{self.content_type.model}({self.object_id})"
-
-    def save(self, *args, **kwargs):
-        # Update info related to the object
-        self.info = {
-            "object": self.serialized_object() or (self.info or {}).get("object", {}),
-            "stats": (self.info or {}).get("stats", {}),
-        }
-        return super().save(*args, **kwargs)
-
-    class Meta:
-        indexes = (models.Index(fields=["content_type", "object_id"], name="content_index"),)

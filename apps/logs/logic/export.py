@@ -110,7 +110,7 @@ class CSVExport:
         }
         field_name_map.update({f'target__{attr}': attr for attr in self.title_attrs})
         field_names = list(field_name_map.values())
-        for tr, dims in rt_to_dimensions.items():
+        for dims in rt_to_dimensions.values():
             field_names += [dim.short_name for dim in dims if dim.short_name not in field_names]
         field_names.append('value')
         logger.debug('Finished preparing field names: %.2f s', monotonic() - start)

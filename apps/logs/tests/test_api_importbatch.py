@@ -1,9 +1,6 @@
 import pytest
 from charts.models import ReportDataView
 from django.urls import reverse
-from logs.fake_data import ImportBatchFullFactory, ManualDataUploadFactory, MetricFactory
-from logs.logic.materialized_interest import sync_interest_by_import_batches
-from logs.models import ImportBatch, InterestGroup, OrganizationPlatform, ReportInterestMetric
 from publications.fake_data import TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
@@ -16,6 +13,9 @@ from sushi.models import (
     SushiFetchAttempt,
 )
 
+from logs.fake_data import ImportBatchFullFactory, ManualDataUploadFactory, MetricFactory
+from logs.logic.materialized_interest import sync_interest_by_import_batches
+from logs.models import ImportBatch, InterestGroup, OrganizationPlatform, ReportInterestMetric
 from test_scenarios.basic import (  # noqa
     clients,
     counter_report_types,

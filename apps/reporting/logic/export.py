@@ -4,8 +4,9 @@ from typing import Dict, List, Optional, Tuple, Union
 import xlsxwriter
 from django.utils import timezone
 from logs.logic.export_utils import xslx_scale_column_width
-from reporting.logic.computation import Report, ReportPart, ReportPartStage, ResultRow
 from xlsxwriter.utility import xl_rowcol_to_cell
+
+from reporting.logic.computation import Report, ReportPart, ReportPartStage, ResultRow
 
 
 class XlsxExporter:

@@ -4,8 +4,8 @@ from unittest import mock
 import pytest
 from api.models import OrganizationAPIKey
 from core.models import DataSource, Identity
-from core.tests.conftest import authenticated_client  # noqa - fixtures
 from core.tests.conftest import (  # noqa - fixtures
+    authenticated_client,  # noqa - fixtures
     authentication_headers,
     invalid_identity,
     master_user_client,
@@ -35,11 +35,11 @@ from logs.models import (
 from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
-from publications.fake_data import PlatformFactory, TitleFactory
-from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 
+from publications.fake_data import PlatformFactory, TitleFactory
+from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from test_scenarios.basic import *  # noqa - fixtures
 
 
@@ -1730,5 +1730,5 @@ class TestTitleInterestViewSet:
             values = [(rec['interests'][column], rec['pk']) for rec in data]
         else:
             values = [(rec[column], rec['pk']) for rec in data]
-        resorted = list(sorted(values, reverse=desc == 'true'))
+        resorted = sorted(values, reverse=desc == 'true')
         assert values == resorted

@@ -194,7 +194,7 @@ class HarvestViewSet(
                         credentials.pk: f'Counter report {intention["counter_report"].code} '
                         f'is not active for credentials'
                     }
-                )
+                ) from None
 
             if cr2c.broken:
                 raise ValidationError(

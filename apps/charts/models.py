@@ -108,7 +108,7 @@ class ChartDefinition(models.Model):
         related_name='chart_definitions_primary',
         help_text='The primary dimension when specified by reference',
     )
-    primary_implicit_dimension = models.CharField(
+    primary_implicit_dimension = models.CharField(  # noqa: DJ001
         choices=IMPLICIT_DIMENSION_CHOICES,
         max_length=20,
         null=True,
@@ -123,7 +123,7 @@ class ChartDefinition(models.Model):
         related_name='chart_definitions_secondary',
         help_text='The secondary dimension when specified by reference',
     )
-    secondary_implicit_dimension = models.CharField(
+    secondary_implicit_dimension = models.CharField(  # noqa: DJ001
         choices=IMPLICIT_DIMENSION_CHOICES,
         max_length=20,
         null=True,

@@ -9,10 +9,10 @@ from organizations.models import UserOrganization
 from publications.models import Platform
 from publications.tests.conftest import platforms  # noqa - fixture
 from rest_framework.exceptions import PermissionDenied
+
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.logic.data_import import import_sushi_credentials_new
 from sushi.models import AttemptStatus
-
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
@@ -304,7 +304,7 @@ class TestCredentialsQuerySet:
         # empty
         cr1 = CredentialsFactory()
         assert cr1.is_verified is False
-        SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is False
+        assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is False
 
         # Successful download
         FetchAttemptFactory(
@@ -314,7 +314,7 @@ class TestCredentialsQuerySet:
         assert cr1.is_verified is True
         assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is True
 
-        # after updating credentials credentials should become unverified
+        # after updating credentials, credentials should become unverified
         cr1.requestor_id += "X"
         cr1.save()
         cr1 = SushiCredentials.objects.get(pk=cr1.pk)

@@ -2,6 +2,7 @@ import json
 from unittest import mock
 
 import pytest  # noqa
+
 from core.fake_data import MemberFactory, UserFactory
 from core.logic.mailchimp import (
     Celus,
@@ -15,7 +16,6 @@ from core.logic.mailchimp import (
 )
 from core.models import User
 from core.tasks import sync_mailchimp_contacts_with_celus_task
-
 from test_scenarios.basic import basic1  # noqa
 
 

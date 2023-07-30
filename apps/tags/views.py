@@ -24,6 +24,7 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+
 from tags.filters import TagClassScopeFilter
 from tags.models import ItemTag, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
 from tags.permissions import TagClassPermissions, TagPermissions
@@ -143,8 +144,8 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
             if 'unique_tag_class_for_exclusive' in str(exc):
                 raise BadRequestException(
                     {'error': 'Cannot assign more than one tag from an exclusive class to an item'}
-                )
-            raise BadRequestException({'error': str(exc)})
+                ) from None
+            raise BadRequestException({'error': str(exc)}) from None
         return Response({'pk': tag_item.pk}, status=HTTP_201_CREATED)
 
     @action(detail=False, methods=['delete'])
@@ -159,7 +160,7 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
         try:
             tag_item = tag_item_class.objects.get(tag=tag, target=obj)
         except tag_item_class.DoesNotExist:
-            raise BadRequestException('Object is not tagged by this tag')
+            raise BadRequestException('Object is not tagged by this tag') from None
         else:
             tag_item.delete()
         return Response(status=HTTP_204_NO_CONTENT)
@@ -237,7 +238,7 @@ class TaggingBatchViewSet(ModelViewSet):
         except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'})
+            raise Http404({'error': 'Tagging batch not found'}) from None
         url_base = build_absolute_uri(self.request, '/')
         tb.state = TaggingBatchState.PREPROCESSING
         tb.save()
@@ -261,7 +262,7 @@ class TaggingBatchViewSet(ModelViewSet):
         except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'})
+            raise Http404({'error': 'Tagging batch not found'}) from None
 
         # we need to resolve the IDs before submitting them to the task so that we
         # resolve user access and existence of the tags
@@ -269,7 +270,9 @@ class TaggingBatchViewSet(ModelViewSet):
             try:
                 tag = Tag.objects.user_assignable_tags(request.user).get(pk=tag_ids_str)
             except Tag.DoesNotExist:
-                raise BadRequestException({'error': 'No matching tags to apply were found'})
+                raise BadRequestException(
+                    {'error': 'No matching tags to apply were found'}
+                ) from None
             tb.state = TaggingBatchState.IMPORTING
             tb.tag = tag
             tb.last_updated_by = request.user
@@ -296,7 +299,7 @@ class TaggingBatchViewSet(ModelViewSet):
         except DatabaseError:
             return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'})
+            raise Http404({'error': 'Tagging batch not found'}) from None
 
         tb.state = TaggingBatchState.UNDOING
         tb.save()

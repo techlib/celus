@@ -6,13 +6,14 @@ from django.core.cache import cache
 from django.db import models
 from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.utils.timezone import now
-from export.enums import FileFormat
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
     FlexibleDataExcelExporterNoCharts,
     FlexibleDataZipCSVExporter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+
+from export.enums import FileFormat
 
 
 class AnnotateObsoleteQueryset(models.QuerySet):

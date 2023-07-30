@@ -20,12 +20,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        from django.conf import settings
+
         from core.request_logging.clickhouse import (
             CeleryTaskLogCube,
             RequestLogCube,
             get_logging_backend,
         )
-        from django.conf import settings
 
         for name, cube, condition in (
             ('Request', RequestLogCube, settings.CLICKHOUSE_REQUEST_LOGGING),

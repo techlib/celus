@@ -9,10 +9,11 @@ from django.conf import settings
 from django.db import models
 from django.db.models import QuerySet
 from django.utils.dateparse import parse_date
-from logs.models import AccessLog, DimensionText
 from organizations.models import Organization
 from publications.models import Platform, Title
 from tags.models import Tag
+
+from logs.models import AccessLog, DimensionText
 
 # 10 chars per id should be OK
 CLICKHOUSE_ID_COUNT_LIMIT = settings.CLICKHOUSE_QUERY_SIZE_LIMIT // 10

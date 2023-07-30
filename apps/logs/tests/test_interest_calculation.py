@@ -1,6 +1,9 @@
 import pytest
 from django.db.models import Sum
 from django.utils.timezone import now
+from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.models import Platform, PlatformInterestReport
+
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import (
     _find_metric_interest_changes,
@@ -24,8 +27,6 @@ from logs.models import (
     ReportMaterializationSpec,
     ReportType,
 )
-from organizations.tests.conftest import organizations  # noqa - fixture
-from publications.models import Platform, PlatformInterestReport
 
 
 @pytest.mark.django_db()

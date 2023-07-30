@@ -5,11 +5,11 @@ import pytest
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
+from organizations.fake_data import OrganizationFactory
+
 from logs.fake_data import MetricFactory
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
-from organizations.fake_data import OrganizationFactory
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -396,7 +396,7 @@ class TestManualUploadForCounterData:
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
-        assert months == set(e['date'] for e in response.data["import_batches"])
+        assert months == {e['date'] for e in response.data["import_batches"]}
 
 
 @pytest.mark.django_db
@@ -860,7 +860,7 @@ class TestManualUploadForRaw:
     ):
         # add admin1 as admin for branch organization in this scenario
         users["admin1"].organizations.add(
-            organizations["branch"], through_defaults=dict(is_admin=True)
+            organizations["branch"], through_defaults={'is_admin': True}
         )
 
         with (Path(__file__).parent / "data/custom/custom_data-nibbler-simple.csv").open() as f:

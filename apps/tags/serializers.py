@@ -9,6 +9,7 @@ from rest_framework.fields import (
     SerializerMethodField,
 )
 from rest_framework.serializers import ModelSerializer
+
 from tags.models import Tag, TagClass, TaggingBatch
 
 

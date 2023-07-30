@@ -3,8 +3,9 @@ from typing import Callable, Optional
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Exists, Max, Min, OuterRef
 from organizations.models import Organization
-from publications.models import PlatformTitle, Title
 from tags.logic.titles_lists import CsvReaderMixin, TitleListReader, TitleTaggingRecord
+
+from publications.models import PlatformTitle, Title
 
 
 class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
@@ -61,15 +62,12 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
         for record in records:
             if record.title_ids:
                 title_ids |= record.title_ids
-        title_id_to_platform_names = {
-            title_id: plaform_names
-            for title_id, plaform_names in PlatformTitle.objects.filter(
-                title_id__in=title_ids, **self.org_filter()
-            )
+        title_id_to_platform_names = dict(
+            PlatformTitle.objects.filter(title_id__in=title_ids, **self.org_filter())
             .values('title_id')
             .annotate(platform_names=ArrayAgg('platform__name', distinct=True))
             .values_list('title_id', 'platform_names')
-        }
+        )
         title_id_to_start_end_dates = {
             title_id: (start_date, end_date)
             for title_id, start_date, end_date in PlatformTitle.objects.filter(
@@ -90,7 +88,7 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
                     start_date = min(start_date, sd) if start_date else sd
                     end_date = max(end_date, ed) if end_date else ed
             record.extra_data = {
-                'platforms': list(sorted(platforms)),
+                'platforms': sorted(platforms),
                 'start_date': start_date,
                 'end_date': end_date,
             }

@@ -4,12 +4,13 @@ and an external source
 """
 import logging
 
-from core.models import DataSource
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from erms.api import ERMS
 from erms.sync import ERMSObjectSyncer, ERMSSyncer
 from organizations.models import Organization, UserOrganization
+
+from core.models import DataSource
 
 from ..models import Identity, User
 

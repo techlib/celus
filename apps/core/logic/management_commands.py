@@ -92,7 +92,7 @@ class CommandManager:
     @classmethod
     def _resolve_command(cls, app, command):
         module = import_module(f'{app}.management.commands.{command}')
-        return getattr(module, 'Command')
+        return module.Command
 
     @property
     def commands(self) -> [CommandInfo]:

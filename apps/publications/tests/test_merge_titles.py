@@ -4,6 +4,7 @@ from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import ImportBatchFullFactory
 from logs.models import AccessLog
+
 from publications.logic.title_management import find_mergeable_titles, merge_titles
 from publications.models import PlatformTitle, Title
 

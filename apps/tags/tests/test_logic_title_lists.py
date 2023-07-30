@@ -1,5 +1,6 @@
 import pytest
 from publications.fake_data import TitleFactory
+
 from tags.logic.titles_lists import CsvTitleListReader
 
 

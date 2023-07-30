@@ -2,6 +2,14 @@ import json
 from datetime import date
 
 import pytest
+from django.utils import timezone
+from organizations.fake_data import OrganizationFactory
+from organizations.models import Organization
+from publications.fake_data import PlatformFactory
+from rest_framework.fields import DateTimeField
+from sushi.fake_data import CounterReportTypeFactory
+from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
+
 from core.fake_data import DataSourceFactory, UserFactory
 from core.logic.maximus_sync import (
     get_organizations,
@@ -12,13 +20,6 @@ from core.logic.maximus_sync import (
     get_users_organizations,
 )
 from core.models import UL_ORG_ADMIN, User
-from django.utils import timezone
-from organizations.fake_data import OrganizationFactory
-from organizations.models import Organization
-from publications.fake_data import PlatformFactory
-from rest_framework.fields import DateTimeField
-from sushi.fake_data import CounterReportTypeFactory
-from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
 
 @pytest.mark.django_db

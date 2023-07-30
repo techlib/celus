@@ -8,8 +8,9 @@ from django.core.management.base import BaseCommand
 from django.db import models
 from django.db.models import Count, Q, Sum
 from django.utils.translation import activate
-from logs.models import AccessLog, ImportBatch, ManualDataUpload, ReportType
 from sushi.models import CounterReportType, SushiFetchAttempt
+
+from logs.models import AccessLog, ImportBatch, ManualDataUpload, ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ class Command(BaseCommand):
             stats = Counter()
             max_lens = {key_dim: 0 for key_dim in key}
             seen_grp_ids = set()
-            for i, rec in enumerate(qs):
+            for _i, rec in enumerate(qs):
                 grp_id = tuple(rec[k] for k in query_key)
                 seen_grp_ids.add(grp_id)
                 old_rec = old.get(

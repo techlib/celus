@@ -6,6 +6,7 @@ from itertools import cycle
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from publications.models import Title
+
 from tags.fake_data import TagForTitleFactory, TitleTagFactoryExistingTitles
 from tags.models import TagClass, TitleTag
 
@@ -39,7 +40,7 @@ class Command(BaseCommand):
             else:
                 tc, _ = TagClass.objects.get_or_create(name=tag_class)
             print(f'Using tag class "{tc}" for all created tags')
-        for i in range(options['tag_count']):
+        for _i in range(options['tag_count']):
             tag = TagForTitleFactory.create(tag_class=tc) if tc else TagForTitleFactory.create()
             stats['tags'] += 1
             count = next(size_gen)

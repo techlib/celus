@@ -177,18 +177,18 @@ def clients(identities):
 def basic1(users, organizations, platforms, data_sources, identities, clients):  # noqa
     # link users and organizations
     users["master_admin"].organizations.add(
-        organizations["master"], through_defaults=dict(is_admin=True)
+        organizations["master"], through_defaults={"is_admin": True}
     )
     users["master_user"].organizations.add(
-        organizations["master"], through_defaults=dict(is_admin=False)
+        organizations["master"], through_defaults={"is_admin": False}
     )
-    users["admin1"].organizations.add(organizations["root"], through_defaults=dict(is_admin=True))
+    users["admin1"].organizations.add(organizations["root"], through_defaults={"is_admin": True})
     users["admin2"].organizations.add(
-        organizations["standalone"], through_defaults=dict(is_admin=True)
+        organizations["standalone"], through_defaults={"is_admin": True}
     )
-    users["user1"].organizations.add(organizations["branch"], through_defaults=dict(is_admin=False))
+    users["user1"].organizations.add(organizations["branch"], through_defaults={"is_admin": False})
     users["user2"].organizations.add(
-        organizations["standalone"], through_defaults=dict(is_admin=False)
+        organizations["standalone"], through_defaults={"is_admin": False}
     )
 
     return locals()

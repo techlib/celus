@@ -31,6 +31,27 @@ from django.db.transaction import atomic
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
+from organizations.logic.queries import organization_filter_from_org_id
+from organizations.models import Organization
+from pandas import DataFrame
+from publications.models import Platform, Title
+from rest_framework import mixins, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.fields import BooleanField, CharField, ListField
+from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
+from rest_pandas.views import PandasViewBase
+from scheduler.models import FetchIntention
+from sushi.models import SushiCredentials, SushiFetchAttempt
+from tags.models import Tag
+
 from logs.logic.export import CSVExport
 from logs.logic.queries import StatsComputer, extract_accesslog_attr_query_params
 from logs.models import (
@@ -60,26 +81,6 @@ from logs.serializers import (
     ReportTypeInterestSerializer,
     ReportTypeSerializer,
 )
-from organizations.logic.queries import organization_filter_from_org_id
-from organizations.models import Organization
-from pandas import DataFrame
-from publications.models import Platform, Title
-from rest_framework import mixins, status
-from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
-from rest_framework.fields import BooleanField, CharField, ListField
-from rest_framework.generics import ListAPIView, get_object_or_404
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
-from rest_pandas.views import PandasViewBase
-from scheduler.models import FetchIntention
-from sushi.models import SushiCredentials, SushiFetchAttempt
-from tags.models import Tag
 
 from . import filters
 from .fields import CommaSeparatedPrimaryKeyRelatedField
@@ -109,7 +110,7 @@ class Counter5DataView(APIView):
         # want to cache the data for extra speed using recache
         dashboard_view = 'dashboard' in request.GET
         data = computer.get_data(request.user, recache=dashboard_view)
-        label_attrs = dict(view_type='chart_data_raw', report_type=computer.used_report_type.pk)
+        label_attrs = {'view_type': 'chart_data_raw', 'report_type': computer.used_report_type.pk}
         report_access_total_counter.labels(**label_attrs).inc()
         report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
 
@@ -1054,7 +1055,7 @@ class FlexibleSlicerBaseView(APIView):
         except SlicerConfigError as e:
             raise BadRequestException(
                 {'error': {'message': str(e), 'code': e.code, 'details': e.details}}
-            )
+            ) from None
 
 
 class FlexibleSlicerView(FlexibleSlicerBaseView):

@@ -97,11 +97,11 @@ class Scheduler(models.Model):
     current_celery_task_id = models.UUIDField(null=True, blank=True)
     current_start = models.DateTimeField(null=True, blank=True)
 
-    def __repr__(self):
-        return f'Scheduler #{self.pk} for "{self.url}"'
-
     def __str__(self):
         return self.url
+
+    def __repr__(self):
+        return f'Scheduler #{self.pk} for "{self.url}"'
 
     @property
     def last_time(self) -> typing.Optional[datetime]:
@@ -366,8 +366,6 @@ class FetchIntention(models.Model):
     PRIORITY_NOW = 100
     PRIORITY_NORMAL = 50
 
-    objects = FetchIntentionQuerySet.as_manager()
-
     duplicate_of = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="duplicates"
     )
@@ -407,6 +405,8 @@ class FetchIntention(models.Model):
     service_not_available_retry = models.SmallIntegerField(default=0)
     service_busy_retry = models.SmallIntegerField(default=0)
 
+    objects = FetchIntentionQuerySet.as_manager()
+
     class Meta:
         constraints = (
             CheckConstraint(check=models.Q(start_date__lt=models.F('end_date')), name='timeline'),
@@ -420,7 +420,7 @@ class FetchIntention(models.Model):
     @property
     def fetching_data(self) -> bool:
         try:
-            self.current_scheduler
+            self.current_scheduler  # noqa: B018
             return True
         except Scheduler.DoesNotExist:
             return False

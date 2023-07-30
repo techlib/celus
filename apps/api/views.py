@@ -1,5 +1,3 @@
-from api.auth import extract_org_from_request_api_key
-from api.permissions import HasOrganizationAPIKey
 from core.logic.dates import parse_month
 from core.validators import month_validator
 from django.db.models import Sum
@@ -17,6 +15,9 @@ from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
+
+from api.auth import extract_org_from_request_api_key
+from api.permissions import HasOrganizationAPIKey
 
 
 class RedocView(TemplateView):
@@ -89,9 +90,9 @@ class PlatformReportView(APIView):
                     )
                 )
             )
-            title_ids = set(
+            title_ids = {
                 rec.target_id for rec in ch_backend.get_records(query.group_by('target_id'))
-            )
+            }
 
         else:
             # possibly replace the report type with a materialized version

@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from publications.fake_data import TitleFactory
 from publications.tests.test_api import MockTask
 from rest_framework.reverse import reverse
+
 from tags.fake_data import TagClassFactory, TagForTitleFactory, TaggingBatchFactory
 from tags.models import TaggingBatch, TaggingBatchState, TagScope
 from tags.tasks import (
@@ -15,7 +16,6 @@ from tags.tasks import (
     tagging_batch_preflight_task,
     tagging_batch_unassign_task,
 )
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

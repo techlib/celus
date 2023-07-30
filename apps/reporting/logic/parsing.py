@@ -27,7 +27,7 @@ def parse_formula(formula):
     try:
         return formula_parser().parse_string(formula).as_list()
     except Exception as e:
-        raise s.ValidationError(f'Invalid formula: {e}')
+        raise s.ValidationError(f'Invalid formula: {e}') from e
 
 
 class ReportDataSourceSerializer(s.Serializer):

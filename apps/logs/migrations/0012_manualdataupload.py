@@ -2,9 +2,10 @@
 
 import django.contrib.postgres.fields.jsonb
 import django.db.models.deletion
-import logs.models
 from django.conf import settings
 from django.db import migrations, models
+
+import logs.models
 
 
 class Migration(migrations.Migration):

@@ -8,8 +8,9 @@ from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.models import Exists, OuterRef
 from logs.models import AccessLog
-from publications.models import Platform
 from sushi.models import SushiCredentials
+
+from publications.models import Platform
 
 logger = logging.getLogger(__name__)
 

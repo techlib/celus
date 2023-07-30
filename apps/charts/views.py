@@ -1,11 +1,5 @@
 from time import monotonic
 
-from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
-from charts.serializers import (
-    ChartDefinitionSerializer,
-    ReportDataViewSerializer,
-    ReportViewToChartTypeSerializer,
-)
 from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
@@ -17,6 +11,13 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+
+from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
+from charts.serializers import (
+    ChartDefinitionSerializer,
+    ReportDataViewSerializer,
+    ReportViewToChartTypeSerializer,
+)
 
 
 class ChartDefinitionViewSet(ReadOnlyModelViewSet):
@@ -77,7 +78,7 @@ class ChartDataView(APIView):
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         # prometheus stats
-        label_attrs = dict(view_type='chart_data', report_type=computer.used_report_type.pk)
+        label_attrs = {'view_type': 'chart_data', 'report_type': computer.used_report_type.pk}
         report_access_total_counter.labels(**label_attrs).inc()
         report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
 

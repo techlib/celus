@@ -5,6 +5,7 @@ from core.middleware import QueryCounter
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connection
+
 from logs.logic.materialized_reports import sync_materialized_reports
 from logs.models import AccessLog, ImportBatch
 

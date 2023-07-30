@@ -5,10 +5,11 @@ import pytest
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
 from core.tests.conftest import *  # noqa  - test fixtures
 from django.urls import reverse
-from logs.fake_data import ManualDataUploadFullFactory
-from logs.models import ManualDataUpload, MduMethod, MduState
 from organizations.tests.conftest import *  # noqa  - test fixtures
 from publications.tests.conftest import *  # noqa  - test fixtures
+
+from logs.fake_data import ManualDataUploadFullFactory
+from logs.models import ManualDataUpload, MduMethod, MduState
 
 
 @pytest.fixture()

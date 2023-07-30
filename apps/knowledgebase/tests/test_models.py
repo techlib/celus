@@ -12,17 +12,17 @@ from api.fake_data import OrganizationAPIKeyFactory
 from core.fake_data import DataSourceFactory
 from core.models import DataSource
 from django.utils.timezone import now
+from logs.fake_data import ImportBatchFactory, MetricFactory
+from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
+from publications.fake_data import PlatformFactory
+from publications.models import Platform, PlatformInterestReport
+
 from knowledgebase.models import (
     ParserDefinitionImportAttempt,
     PlatformImportAttempt,
     ReportTypeImportAttempt,
     RouterSyncAttempt,
 )
-from logs.fake_data import ImportBatchFactory, MetricFactory
-from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
-from publications.fake_data import PlatformFactory
-from publications.models import Platform, PlatformInterestReport
-
 from test_scenarios.basic import (  # noqa - fixtures
     data_sources,
     interests,

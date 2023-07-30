@@ -11,9 +11,10 @@ from django.conf import settings
 from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
+from publications.models import Platform
+
 from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
 from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metric, ReportType
-from publications.models import Platform
 
 logger = logging.getLogger(__name__)
 

@@ -19,8 +19,6 @@ from django.http import HttpResponseBadRequest
 from django.urls import reverse
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import AccessLog, ReportType
-from organizations.logic.queries import organization_filter_from_org_id
-from organizations.tasks import erms_sync_organizations_task
 from publications.models import PlatformTitle
 from recache.util import recache_queryset
 from rest_framework import status
@@ -29,6 +27,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from sushi.models import SushiCredentials
+
+from organizations.logic.queries import organization_filter_from_org_id
+from organizations.tasks import erms_sync_organizations_task
 
 from .models import Organization, UserOrganization
 from .serializers import (
@@ -99,7 +100,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             result[rec['platform']].append(
                 {'version': rec['counter_version'], 'outside_consortium': rec['outside_consortium']}
             )
-        for key, value in result.items():
+        for value in result.values():
             value.sort(key=lambda x: x['version'])
         return Response(result)
 

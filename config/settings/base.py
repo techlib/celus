@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import socket
 import sys
-import warnings
 from datetime import timedelta
 from pathlib import Path
 from random import randint, seed
@@ -292,11 +291,6 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
 CLICKHOUSE_SYNC_ACTIVE = config('CLICKHOUSE_SYNC_ACTIVE', cast=bool, default=False)
 # should data from clickhouse be used when answering queries?
 CLICKHOUSE_QUERY_ACTIVE = config('CLICKHOUSE_QUERY_ACTIVE', cast=bool, default=False)
-if CLICKHOUSE_QUERY_ACTIVE and not CLICKHOUSE_SYNC_ACTIVE:
-    warnings.warn(
-        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is likely an '
-        'error as the data will not be up to date in queries.'
-    )
 CLICKHOUSE_DB = config('CLICKHOUSE_DB', default='celus')
 CLICKHOUSE_USER = config('CLICKHOUSE_USER', default='celus')
 CLICKHOUSE_PASSWORD = config('CLICKHOUSE_PASSWORD', default='celus')

@@ -4,10 +4,11 @@ from time import time
 
 from django.core.management.base import BaseCommand
 from django.db.models import Exists, OuterRef
-from logs.models import AccessLog, ImportBatch, ManualDataUploadImportBatch, ReportType
 from organizations.models import Organization
 from publications.models import Platform
 from sushi.models import SushiFetchAttempt
+
+from logs.models import AccessLog, ImportBatch, ManualDataUploadImportBatch, ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class Command(BaseCommand):
             ),
             has_als=Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))),
         )
-        for i, ib in enumerate(ibs):
+        for _i, ib in enumerate(ibs):
             if ib.has_als:
                 stats['not solvable'] += 1
                 logger.error(

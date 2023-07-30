@@ -20,6 +20,7 @@ from logs.logic.data_import import TitleManager
 from organizations.models import Organization
 from publications.models import Platform, Title
 from rest_framework.exceptions import PermissionDenied, ValidationError
+
 from tags.logic.titles_lists import CsvTitleListReader
 
 
@@ -437,6 +438,11 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
             )
         ]
 
+    def save(self, **kwargs):
+        self._tag_class_id = self.tag.tag_class_id
+        self._exclusive = self.tag.tag_class.exclusive
+        super().save(**kwargs)
+
     @classmethod
     def get_subclass_by_item_type(cls, item_type: TagScope) -> Type['ItemTag']:
         if item_type == TagScope.TITLE:
@@ -446,11 +452,6 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
         elif item_type == TagScope.ORGANIZATION:
             return OrganizationTag
         raise ValueError(f'Unexpected item type "{item_type}"')
-
-    def save(self, **kwargs):
-        self._tag_class_id = self.tag.tag_class_id
-        self._exclusive = self.tag.tag_class.exclusive
-        super().save(**kwargs)
 
 
 class TitleTag(ItemTag):
@@ -618,9 +619,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         return {
             'stats': stats,
             'explicit_tags': reader.has_explicit_tags,
-            'recognized_columns': list(
-                sorted(reader.column_names.values(), key=lambda x: x.lower())
-            ),
+            'recognized_columns': sorted(reader.column_names.values(), key=lambda x: x.lower()),
         }
 
     def do_preflight(

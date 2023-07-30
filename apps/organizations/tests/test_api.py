@@ -2,18 +2,18 @@ from unittest.mock import patch
 
 import pytest
 from core.models import Identity, User
-from core.tests.conftest import authenticated_client  # noqa - fixtures
 from core.tests.conftest import (  # noqa - fixtures
+    authenticated_client,  # noqa - fixtures
     authentication_headers,
     invalid_identity,
     valid_identity,
 )
 from django.urls import reverse
 from logs.models import AccessLog, ImportBatch, Metric
-from organizations.fake_data import OrganizationAltNameFactory
-from organizations.models import Organization, UserOrganization
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
+from organizations.fake_data import OrganizationAltNameFactory
+from organizations.models import Organization, UserOrganization
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

@@ -1,9 +1,9 @@
 import pytest
 from logs.fake_data import ImportBatchFactory
+
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import ImportBatch, SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
-
 from test_scenarios.basic import *  # noqa
 
 

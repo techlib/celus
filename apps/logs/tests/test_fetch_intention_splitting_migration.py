@@ -1,9 +1,10 @@
 import faker
 import pytest
 from django.db.models import Count, F, Sum
-from logs.logic.split_fetch_intentions import split_fetch_intentions
 from scheduler.fake_data import FetchIntentionQueueFactory
 from sushi.fake_data import FetchAttemptFactory
+
+from logs.logic.split_fetch_intentions import split_fetch_intentions
 
 
 @pytest.mark.django_db
@@ -166,11 +167,12 @@ class TestFetchIntentionSplittingMigration:
         This code should probably be removed if it starts failing because it is not needed
         for testing all the time - just for migration logs.0046
         """
-        from logs.models import AccessLog, ImportBatch, Metric, ReportType
         from organizations.models import Organization
         from publications.models import Platform
         from scheduler.models import FetchIntention, Harvest
         from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
+
+        from logs.models import AccessLog, ImportBatch, Metric, ReportType
 
         # prepare some shared instances
         report_type = ReportType.objects.create(short_name="foo_rt")

@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 from organizations.fake_data import OrganizationFactory
+
 from publications.fake_data import (
     PlatformFactory,
     PlatformTitleFactory,
@@ -17,7 +18,6 @@ from publications.logic.title_list_overlap import CsvTitleListOverlapReader
 from publications.models import TitleOverlapBatch, TitleOverlapBatchState
 from publications.tasks import process_title_overlap_batch_task
 from publications.tests.test_api import MockTask
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

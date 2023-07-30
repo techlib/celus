@@ -1,6 +1,7 @@
 import factory
-from charts.models import ChartDefinition, ReportDataView
 from logs.fake_data import ReportTypeFactory
+
+from charts.models import ChartDefinition, ReportDataView
 
 
 class ChartDefinitionFactory(factory.django.DjangoModelFactory):

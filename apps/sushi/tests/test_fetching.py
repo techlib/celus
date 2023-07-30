@@ -6,6 +6,7 @@ from celus_nigiri.counter5 import Counter5ReportBase
 from logs.tests.conftest import report_type_nd  # noqa - fixture
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform
+
 from sushi.logic.data_import import import_sushi_credentials_new
 from sushi.models import CounterReportType, SushiCredentials
 

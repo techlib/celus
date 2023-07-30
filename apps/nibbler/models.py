@@ -49,12 +49,21 @@ class ParserDefinition(models.Model):
 
     objects = ParserDefinitionQuerySet.as_manager()
 
+    class Meta:
+        verbose_name = _('Parser Definition')
+        verbose_name_plural = _('Parser Definitions')
+        constraints = (
+            models.UniqueConstraint(
+                fields=['short_name', 'source'], name='parser_def_short_name_source_not_null'
+            ),
+        )
+
     def save(self, *args, **kwargs):
         # try to parse
         try:
             nibbler_definition = Definition.parse(self.definition)
         except PydantidValidationError as e:
-            raise ValidationError({"definition": str(e)})
+            raise ValidationError({"definition": str(e)}) from None
 
         # Extract some fields from JSON
         self.version = nibbler_definition.__root__.version
@@ -69,15 +78,6 @@ class ParserDefinition(models.Model):
         )
 
         return super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = _('Parser Definition')
-        verbose_name_plural = _('Parser Definitions')
-        constraints = (
-            models.UniqueConstraint(
-                fields=['short_name', 'source'], name='parser_def_short_name_source_not_null'
-            ),
-        )
 
     def to_nibbler_definition(self) -> Definition:
         return Definition.parse(self.definition)

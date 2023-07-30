@@ -14,13 +14,13 @@ from logs.models import AccessLog, ImportBatch
 from organizations.models import UserOrganization
 from rest_framework.fields import DateTimeField
 from rest_framework.serializers import Serializer
-from scheduler import tasks
-from scheduler.fake_data import FetchIntentionFactory
-from scheduler.models import Automatic, FetchIntention, Harvest
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import BrokenCredentialsMixin as BS
 from sushi.models import CounterReportsToCredentials, SushiFetchAttempt
 
+from scheduler import tasks
+from scheduler.fake_data import FetchIntentionFactory
+from scheduler.models import Automatic, FetchIntention, Harvest
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -110,7 +110,7 @@ class TestHarvestAPI:
             values = [(rec['stats'][column], rec['pk']) for rec in data]
         else:
             values = [(rec[column], rec['pk']) for rec in data]
-        resorted = list(sorted(values, reverse=desc == 'true'))
+        resorted = sorted(values, reverse=desc == 'true')
         assert values == resorted
 
     def test_list_filter_finished(self, basic1, clients, harvests):
@@ -1013,7 +1013,7 @@ class TestFetchIntentionAPI:
             values = [(x['attempt'][order_by], x['pk']) for x in records]
         else:
             values = [(x[order_by], x['pk']) for x in records]
-        assert values == list(sorted(values, reverse=bool(desc)))
+        assert values == sorted(values, reverse=bool(desc))
 
     @pytest.mark.parametrize(
         ['order_by', 'path'],
@@ -1036,7 +1036,7 @@ class TestFetchIntentionAPI:
         assert len(records) == 30
         for part in path:
             records = [x[part] for x in records]
-        assert records == list(sorted(records, reverse=bool(desc)))
+        assert records == sorted(records, reverse=bool(desc))
 
     @pytest.mark.parametrize(['page_size'], ((5,), (10,), (25,)))
     def test_list_page_size(self, admin_client, page_size):

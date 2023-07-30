@@ -10,9 +10,10 @@ from django.db.transaction import atomic
 from logs.cubes import AccessLogCube, ch_backend
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
 from organizations.models import Organization
-from publications.models import Platform, PlatformTitle
 from scheduler.models import FetchIntention
 from sushi.models import SushiFetchAttempt
+
+from publications.models import Platform, PlatformTitle
 
 logger = logging.getLogger(__name__)
 

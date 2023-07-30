@@ -1,9 +1,10 @@
 import pytest
-from annotations.fake_data import AnnotationFactory
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN
 from core.tests.conftest import *  # noqa - fixtures
 from django.urls import reverse
 from organizations.tests.conftest import organizations  # noqa - fixtures
+
+from annotations.fake_data import AnnotationFactory
 
 
 @pytest.mark.django_db

@@ -24,6 +24,10 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Concat, NullIf
 from hcube.api.models.aggregation import Sum as HSum
+from organizations.logic.queries import extend_query_filter
+from organizations.models import Organization
+from tags.models import Tag, TagClass
+
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.data_coverage import DataCoverageExtractor
 from logs.logic.queries import find_best_materialized_view, logger
@@ -37,9 +41,6 @@ from logs.logic.reporting.filters import (
     TagDimensionFilter,
 )
 from logs.models import AccessLog, DimensionText, ReportType
-from organizations.logic.queries import extend_query_filter
-from organizations.models import Organization
-from tags.models import Tag, TagClass
 
 
 class FlexibleDataSlicer:
@@ -256,7 +257,7 @@ class FlexibleDataSlicer:
                 # an extremely slow query (at least on K1), maybe because joins with organization
                 # created for organization specific tags
                 # If we resolve the tags beforehand and use the pks, the query is much faster
-                tag_ids = Tag.objects.filter(tag_class__scope=tag_scope, *tag_filters).values_list(
+                tag_ids = Tag.objects.filter(*tag_filters, tag_class__scope=tag_scope).values_list(
                     'pk', flat=True
                 )
                 qs = (
@@ -699,7 +700,7 @@ class FlexibleDataSlicer:
                 # find all untagged objects
                 # tag_scope.value is used to enforce string value - cachalot does not like enums
                 qs = primary_cls.objects.exclude(
-                    tags__in=Tag.objects.filter(tag_class__scope=tag_scope.value, *tag_filters)
+                    tags__in=Tag.objects.filter(*tag_filters, tag_class__scope=tag_scope.value)
                 )
                 # apply the same filters that are used for the main query
                 if primary_cls is Organization and self.organization_filter is not None:

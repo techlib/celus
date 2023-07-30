@@ -6,6 +6,7 @@ from datetime import date
 import pytest
 from logs.models import ImportBatch
 from publications.fake_data import PlatformFactory
+
 from reporting.logic.computation import Report
 
 

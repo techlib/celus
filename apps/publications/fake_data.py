@@ -6,6 +6,7 @@ import faker
 from core.fake_data import UserFactory
 from django.core.files.base import ContentFile
 from organizations.fake_data import OrganizationFactory
+
 from publications.models import (
     Platform,
     PlatformTitle,

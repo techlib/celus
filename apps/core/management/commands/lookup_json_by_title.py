@@ -1,7 +1,8 @@
 import json
 
-from core.logic.lookup_json_by_title import lookup_json_by_title
 from django.core.management.base import BaseCommand
+
+from core.logic.lookup_json_by_title import lookup_json_by_title
 
 
 class Command(BaseCommand):

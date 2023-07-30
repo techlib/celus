@@ -6,6 +6,8 @@ from time import monotonic
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Min, Q
+from sushi.models import SushiCredentials
+
 from logs.logic.reimport import (
     SourceFileMissingError,
     find_import_batches_to_reimport,
@@ -14,7 +16,6 @@ from logs.logic.reimport import (
     reimport_mdu_batch,
 )
 from logs.models import ImportBatch
-from sushi.models import SushiCredentials
 
 logger = logging.getLogger(__name__)
 

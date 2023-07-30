@@ -33,6 +33,18 @@ from organizations.logic.queries import extend_query_filter, organization_filter
 from organizations.models import Organization, OrganizationAltName
 from organizations.serializers import OrganizationAltNameSerializer
 from pandas import DataFrame
+from recache.util import recache_queryset
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import HTTP_202_ACCEPTED
+from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
+from tags.models import Tag
+
 from publications.models import (
     Platform,
     PlatformTitle,
@@ -48,17 +60,6 @@ from publications.serializers import (
     TitleOverlapBatchSerializer,
     UseCaseSerializer,
 )
-from recache.util import recache_queryset
-from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.generics import get_object_or_404
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.status import HTTP_202_ACCEPTED
-from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
-from tags.models import Tag
 
 from .filters import PlatformFilter
 from .logic.use_cases import get_use_cases
@@ -90,7 +91,9 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         try:
             organization_pk = int(organization_pk)
         except ValueError as exc:
-            raise ValidationError(detail=f'Bad value for the "organization_pk" param: "{str(exc)}"')
+            raise ValidationError(
+                detail=f'Bad value for the "organization_pk" param: "{str(exc)}"'
+            ) from None
         if organization_pk and organization_pk != -1:
             return Organization.objects.get(pk=organization_pk)
         else:
@@ -652,7 +655,7 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
             search_filters.append(Q(target__pub_type__in=pub_type_arg.split(',')))
         queryset = (
             AccessLog.objects.filter(
-                report_type=interest_rt, *search_filters, **date_filter, **org_filter
+                *search_filters, report_type=interest_rt, **date_filter, **org_filter
             )
             .values('target_id')
             .exclude(target_id__isnull=True)
@@ -895,7 +898,9 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         try:
             interest_type_id = interest_type_dim.dimensiontext_set.get(text=interest_type_name).pk
         except DimensionText.DoesNotExist:
-            raise BadRequestException(detail=f'Interest type "{interest_type_name}" does not exist')
+            raise BadRequestException(
+                detail=f'Interest type "{interest_type_name}" does not exist'
+            ) from None
         # date filter
         date_filter = date_filter_from_params(self.request.GET)
 
@@ -1154,4 +1159,4 @@ class OrganizationAltNameViewSet(CreateModelMixin, DestroyModelMixin, GenericVie
             )
         except DjangoValidationError as e:
             # Rewrap django exception (used in django admin) to drf exception (API)
-            raise ValidationError(e.message_dict)
+            raise ValidationError(e.message_dict) from None

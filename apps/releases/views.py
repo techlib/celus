@@ -1,10 +1,11 @@
 import logging
 
-from releases.logic.releases import add_dates_to_releases_from_changelog, get_releases_entries
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+
+from releases.logic.releases import add_dates_to_releases_from_changelog, get_releases_entries
 
 from .logic.changelog import get_changelog_entries
 from .serializers import ReleaseSerializer

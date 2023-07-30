@@ -4,6 +4,7 @@ from collections import Counter
 from django.core.management.base import BaseCommand
 from django.db import DatabaseError
 from logs.logic.validation import normalize_isbn, normalize_issn, normalize_title
+
 from publications.models import Title
 
 logger = logging.getLogger(__name__)

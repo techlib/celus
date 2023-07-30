@@ -5,6 +5,7 @@ from functools import partial
 
 import zstandard
 from django.core.exceptions import MultipleObjectsReturned
+
 from logs.models import AccessLog, DimensionText, ReportType
 
 

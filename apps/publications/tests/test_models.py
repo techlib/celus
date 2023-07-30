@@ -2,6 +2,7 @@ import pytest
 from core.fake_data import DataSourceFactory
 from core.models import DataSource
 from organizations.fake_data import OrganizationFactory
+
 from publications.fake_data import PlatformFactory
 
 

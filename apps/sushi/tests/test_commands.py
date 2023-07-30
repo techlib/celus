@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 from django.core.management import call_command
 from django.utils.timezone import now
+
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import SushiFetchAttempt
 

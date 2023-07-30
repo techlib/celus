@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import migrations
 from django.db.models import Count
 from django.db.transaction import on_commit
+
 from logs.logic.clickhouse import resync_import_batch_with_clickhouse
 
 logger = logging.getLogger(__name__)

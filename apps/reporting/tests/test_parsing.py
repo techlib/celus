@@ -2,9 +2,10 @@ from datetime import date
 
 import pytest
 from organizations.fake_data import OrganizationFactory
+from rest_framework.exceptions import ValidationError
+
 from reporting.logic.computation import Report, ReportDataSource
 from reporting.logic.parsing import ReportSerializer, parse_formula
-from rest_framework.exceptions import ValidationError
 
 
 class TestFormulaParsing:

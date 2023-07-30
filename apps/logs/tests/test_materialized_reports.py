@@ -2,6 +2,10 @@ import pytest
 from celus_nigiri.counter5 import CounterRecord
 from django.core.management import call_command
 from django.utils.timezone import now
+from organizations.tests.conftest import organizations  # noqa - fixture
+from publications.models import PlatformInterestReport
+from publications.tests.conftest import platform  # noqa - fixture
+
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch
 from logs.logic.materialized_reports import (
@@ -17,9 +21,6 @@ from logs.models import (
     ReportMaterializationSpec,
     ReportType,
 )
-from organizations.tests.conftest import organizations  # noqa - fixture
-from publications.models import PlatformInterestReport
-from publications.tests.conftest import platform  # noqa - fixture
 
 
 @pytest.mark.django_db()

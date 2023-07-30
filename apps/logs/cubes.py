@@ -5,6 +5,7 @@ from hcube.api.models.dimensions import DateDimension, IntDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
+
 from logs.models import AccessLog, ImportBatch, ReportType
 
 

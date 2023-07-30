@@ -10,6 +10,8 @@ from celus_nigiri.counter5 import Counter5ReportBase, TransportError
 from core.exceptions import FileConsistencyError
 from django.conf import settings
 from django.db.transaction import atomic
+from sushi.models import AttemptStatus, SushiFetchAttempt
+
 from logs.exceptions import DataStructureError
 from logs.logic.data_import import (
     create_import_batch_or_crash,
@@ -17,7 +19,6 @@ from logs.logic.data_import import (
     wipe_empty_or_partial_import_batches,
 )
 from logs.models import OrganizationPlatform
-from sushi.models import AttemptStatus, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 

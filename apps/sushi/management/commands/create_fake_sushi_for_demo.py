@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 from django.db.transaction import atomic
 from organizations.models import Organization
 from publications.models import Platform
+
 from sushi.models import CounterReportsToCredentials, CounterReportType, SushiCredentials
 
 logger = logging.getLogger(__name__)

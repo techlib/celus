@@ -1,4 +1,5 @@
 import pytest
+
 from organizations.fake_data import OrganizationFactory
 
 from ..models import Organization

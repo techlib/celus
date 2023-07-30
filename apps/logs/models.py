@@ -10,7 +10,6 @@ from datetime import date
 from enum import Enum
 from pathlib import Path
 
-import logs
 import magic
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
@@ -58,6 +57,8 @@ from nibbler.logic.processing import (
 from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
+
+import logs
 
 from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
@@ -444,7 +445,6 @@ class ImportBatch(models.Model):
     """
 
     PREPROCESSED_DATA_DIR = Path('/tmp/')
-    objects = ImportBatchQuerySet.as_manager()
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -472,6 +472,8 @@ class ImportBatch(models.Model):
     last_clickhoused = models.DateTimeField(
         null=True, help_text='When was the import batch last synced with clickhouse'
     )
+
+    objects = ImportBatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "Import batches"
@@ -524,6 +526,8 @@ class AccessLog(models.Model):
     )
     import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE)
 
+    objects = AccessLogQuerySet.as_manager()
+
     class Meta:
         indexes = (
             BrinIndex(fields=('report_type',)),
@@ -538,8 +542,6 @@ class AccessLog(models.Model):
             # it takes about 5 % of the table size
             Index(fields=('platform', 'organization', 'report_type')),
         )
-
-    objects = AccessLogQuerySet.as_manager()
 
     def delete(self, using=None, keep_parents=False):
         raise ModelUsageError(
@@ -661,7 +663,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         validators=[validate_mime_type],
     )
     log = models.TextField(blank=True)
-    error = models.CharField(max_length=50, null=True, blank=True)
+    error = models.CharField(max_length=50, null=True, blank=True)  # noqa: DJ001
     error_details = models.JSONField(blank=True, null=True)
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batches = models.ManyToManyField(
@@ -927,7 +929,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                     report_type=self.report_type,
                     platform=self.platform,
                     organization__in=organizations,
-                    date__in=[e for e in self.preflight["months"]],
+                    date__in=list(self.preflight["months"]),
                 )
             }
         )

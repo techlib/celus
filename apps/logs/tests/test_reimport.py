@@ -4,6 +4,12 @@ from datetime import date, timedelta
 import pytest
 from core.logic.dates import month_start
 from hcube.api.models.aggregation import Sum as HSum
+from organizations.tests.conftest import organizations  # noqa  - used as fixture
+from scheduler.fake_data import FetchIntentionFactory
+from scheduler.models import FetchIntention
+from sushi.fake_data import FetchAttemptFactory
+from sushi.models import AttemptStatus, SushiFetchAttempt
+
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import ImportBatchFullFactory, ManualDataUploadFullFactory
 from logs.logic.reimport import (
@@ -12,11 +18,6 @@ from logs.logic.reimport import (
     reimport_mdu_batch,
 )
 from logs.models import ImportBatch, ManualDataUpload, MduState
-from organizations.tests.conftest import organizations  # noqa  - used as fixture
-from scheduler.fake_data import FetchIntentionFactory
-from scheduler.models import FetchIntention
-from sushi.fake_data import FetchAttemptFactory
-from sushi.models import AttemptStatus, SushiFetchAttempt
 
 
 def fi_for_fa(fa: SushiFetchAttempt) -> FetchIntention:
@@ -187,6 +188,7 @@ class TestReimport:
         import os.path
 
         import django.db.models.fields.files
+
         import logs.logic.reimport as reimport_module
 
         monkeypatch.setattr(reimport_module, 'import_one_sushi_attempt', import_one_attempt_mock)
@@ -226,6 +228,7 @@ class TestReimport:
         import os.path
 
         import django.db.models.fields.files
+
         import logs.logic.custom_import as module
 
         monkeypatch.setattr(module, 'import_counter_records', import_counter_records_mock)
@@ -266,6 +269,7 @@ class TestReimport:
         import os.path
 
         import django.db.models.fields.files
+
         import logs.logic.reimport as reimport_module
 
         monkeypatch.setattr(reimport_module, 'import_one_sushi_attempt', import_one_attempt_mock)
@@ -380,6 +384,7 @@ class TestReimport:
         import os.path
 
         import django.db.models.fields.files
+
         import logs.logic.custom_import as module
 
         monkeypatch.setattr(module, 'import_counter_records', import_counter_records_mock)

@@ -2,9 +2,9 @@ import pytest
 from core.fake_data import UserFactory
 from django.db import DatabaseError, IntegrityError
 from publications.fake_data import TitleFactory
+
 from tags.fake_data import TagClassFactory, TagFactory
 from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
-
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,

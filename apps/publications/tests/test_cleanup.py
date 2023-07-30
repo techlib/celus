@@ -8,13 +8,14 @@ from logs.fake_data import ImportBatchFullFactory
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform
 from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
-from publications.fake_data import PlatformFactory
-from publications.logic.cleanup import delete_platform_data
-from publications.models import Platform, PlatformTitle
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
 from sushi.fake_data import CredentialsFactory
 from sushi.models import SushiCredentials, SushiFetchAttempt
+
+from publications.fake_data import PlatformFactory
+from publications.logic.cleanup import delete_platform_data
+from publications.models import Platform, PlatformTitle
 
 
 @pytest.mark.django_db
@@ -65,8 +66,8 @@ class TestDeletePlatformData:
         # fetch intention without attempt - it will be kept for future
         FetchIntentionFactory(attempt=None, credentials=fi.credentials)
         # check the data before delete
-        fltr = dict(organization=ib.organization, platform=ib.platform)
-        cr_fltr = dict(credentials=fi.credentials)
+        fltr = {'organization': ib.organization, 'platform': ib.platform}
+        cr_fltr = {'credentials': fi.credentials}
         assert AccessLog.objects.filter(**fltr).count() > 0
         assert ImportBatch.objects.filter(**fltr).count() > 0
         assert PlatformTitle.objects.filter(**fltr).count() > 0
@@ -126,7 +127,7 @@ class TestDeletePlatformData:
         ib = ImportBatchFullFactory.create()
         org2 = OrganizationFactory.create()
         ImportBatchFullFactory.create(organization=org2)
-        fltr = dict(organization__in=[ib.organization, org2], platform=ib.platform)
+        fltr = {'organization__in': [ib.organization, org2], 'platform': ib.platform}
         assert AccessLog.objects.filter(**fltr).count() > 0
         assert ImportBatch.objects.filter(**fltr).count() > 0
         assert PlatformTitle.objects.filter(**fltr).count() > 0
