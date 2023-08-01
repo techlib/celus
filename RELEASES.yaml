@@ -1,3 +1,33 @@
+- version: 5.6.0
+  title:
+    en: Trend analysis, data coverage in reporting, topic tags and meeting in Charleston - read what's new in Celus 5.6.0
+    cs: Analýza trendů, pokrytí dat v reportech, štítky témat a setkání v Charlestonu - přečtěte si, co je nového v Celusu 5.6.0
+  text:
+    en: |
+      - Reporting newly contains a **trend analysis** mode where you can compare data from two time periods
+      - **Reporting now shows data coverage** so that you know how complete the analyzed data are
+      - We added topic tags from the Scopus title list to titles in Celus
+      - The Celus user interface was slightly cleaned up and improved
+      - Come have a **chat with us at the Charleston conference 2023** at booth #16 on the Vendor Showcase Day (7 Nov) or [schedule a meeting with us](https://calendly.com/support-lj8/charleston-conference?month=2023-11)
+      - Celus is now processing **even more non-COUNTER reports**: Hanwen, Embase, Calis, Airiti, Lexis Plus and HeinOnline. See the full list of available non-COUNTER reports [here](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
+      - user email validation is now enforced before working with the system
+      - many other small and larger improvements and fixes
+    cs: |
+      - Reporting nově obsahuje mód **analýzy trendu**, ve kterém můžete porovnávat data ze dvou časových období
+      - **Reporting nyní zobrazuje pokrytí dat**, takže víte, jak kompletní jsou analyzovaná data
+      - Přidali jsme do Celusu štítky témat z titulového seznamu Scopus
+      - Uživatelské rozhraní Celusu bylo mírně vyčištěno a vylepšeno
+      - Přijďte si s námi popovídat na **Charleston conference 2023** na stánek #16 na Vendor Showcase Day (7. listopadu) nebo [si s námi domluvte schůzku](https://calendly.com/support-lj8/charleston-conference?month=2023-11)
+      - Celus nyní zpracovává **ještě více non-COUNTER reportů**: Hanwen, Embase, Calis, Airiti, Lexis Plus a HeinOnline. Seznam všech dostupných non-COUNTER reportů najdete [zde](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
+      - validace uživatelského emailu je nyní vyžadována před prací se systémem
+      - mnoho dalších menších i větších vylepšení a oprav
+
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
+
+
 - version: 5.5.2
   title:
     en: Bugfix release 5.5.2

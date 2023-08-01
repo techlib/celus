@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0]  - 2023-08-03
+
+### Added
+
+#### Frontend
+
+- "trend mode" allowing comparison of usage data between two periods was added to the reporting
+  interface
+- data coverage widget was added to the reporting interface
+- interface for superusers to run CLI commands from the UI was added
+- row and column totals were added to CSV exports from reporting
+
+#### Backend
+
+- import of SUSHI credentials from a XLSX file was implemented as a CLI script
+- a CLI script for exporting all usage data into a CSV file for ingestion into an analytical
+  database was added
+
+
+### Changes
+
+#### Frontend
+
+- the UI was slightly reworked - some unused elements were removed, menu icons were made smaller,
+  the color scheme was changed and many small improvements were made
+- when a COUNTER report is uploaded using the non-COUNTER upload interface, the proper report
+  is auto-detected and the method switched to COUNTER
+- the setting for including totals into reporting output newly influences the exports, not only the
+  UI
+- on small screens a pointer is shown to navigate user to the details on the coverage overview
+  page
+- do not allow the user to do anything in the UI until he has verified his email address
+- it is now possible to change the organization during a preflight of manually importing data
+- naming of stored reports was moved into a dialog to make it more obvious
+
+
+#### Backend
+
+- handling of the 3040 SUSHI exception was changed - data get ingested immediately and re-harvest
+  is scheduled for the future (previously Celus made several retries before accepting the data)
+- SUSHI exception 3060 no longer causes the whole credentials to be marked as broken - only the
+  problematic report is disabled
+- Clickhouse support was added to the external API `PlatformReportView` endpoint
+- performance of the `clean_obsolete_platform_title_links` celery task was improved
+
+
+### Fixed
+
+#### Frontend
+
+- error causing charts of manually uploaded data for the TR report being empty was fixed
+- validation of SUSHI URL in the credentials magement dialog was relaxed to allow `/report/`
+  in the path as long as it is not the last part of the URL
+
+#### Backend
+
+- error in the external API endpoint `api_platform_report_data` when attempt had no intention object
+  associated was fixed
+- a crash in Django admin for `SushiFetchAttempts` when credentials link was missing was fixed
+- a fix for deadlock occurring during deleting of data in Celery was introduced
+- several random failures in the test suite were fixed
+- a crash was fixed in the preflight process of importing multi-organization non-COUNTER reports
+- cachalot caching was disabled during exports from reporting to prevent large memory consumption
+- memory consumption of reporting exports was reduced
+
+
 ## [5.5.2]  - 2023-06-12
 
 ### Added
