@@ -946,24 +946,36 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return
 
         if self.status == AttemptStatus.DOWNLOAD_FAILED:
-            self.update_broken_credentials()
-            self.update_broken_report_type()
+            if not self.update_broken_credentials():
+                # entire sushi credentials were not marked as broken
+                # lets check whether is can't be marked as broken per report type
+                self.update_broken_report_type()
 
     def any_success_lately(self, days: int = 15) -> bool:
         return self.credentials.current_successful_attempts.filter(
             when_processed__gte=now() - timedelta(days=days)
         ).exists()
 
-    def update_broken_credentials(self):
+    def update_broken_credentials(self) -> bool:
+        """updates broken status of credentials
+
+        return True if the credetials become broken, False otherwise
+        """
+
         # Check http status code
         if self.http_status_code in (401, 403):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
-            return
+            return True
 
         if self.http_status_code in (500, 400):
             if not self.any_success_lately():
-                self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
-                return
+                # some error occurs with 400 http status, but it should not break
+                # the entire credentials and are handled when update_broken_report_type
+                # is triggered
+                if str(self.error_code) not in (str(ErrorCode.INVALID_REPORT_FILTER.value),):
+
+                    self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
+                    return True
 
         # Check for sushi error
         if str(self.error_code) in (
@@ -973,7 +985,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             str(ErrorCode.INSUFFICIENT_DATA.value),
         ):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_SUSHI)
-            return
+            return True
+
+        return False
 
     def update_broken_report_type(self):
         def mark_broken(broken_type: str):
@@ -994,6 +1008,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         if str(self.error_code) in (
             str(ErrorCode.REPORT_NOT_SUPPORTED.value),
             str(ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value),
+            str(ErrorCode.INVALID_REPORT_FILTER.value),
         ):
             mark_broken(SushiCredentials.BROKEN_SUSHI)
             return
