@@ -341,6 +341,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
     'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
     'core.tasks.sync_with_maximus_task': {'queue': 'celery'},
+    'export.tasks.delete_expired_flexible_data_exports_task': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
     'knowledgebase.tasks.sync_route': {'queue': 'celery'},
@@ -371,8 +372,11 @@ CELERY_TASK_ROUTES = {
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
     'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
-    'export.tasks.delete_expired_flexible_data_exports_task': {'queue': 'celery'},
     'sushi.tasks.delete_fetchattempts_and_related_importbatches_task': {'queue': 'import'},
+    'tags.tasks.reprocess_due_tagging_batches_task': {'queue': 'celery'},
+    'tags.tasks.tagging_batch_preflight_task': {'queue': 'celery'},
+    'tags.tasks.tagging_batch_assign_tag_task': {'queue': 'celery'},
+    'tags.tasks.tagging_batch_unassign_task': {'queue': 'celery'},
 }
 
 # FlexibleDataExport settings
@@ -483,6 +487,11 @@ CELERY_BEAT_SCHEDULE = {
     'delete_expired_flexible_data_exports_task': {
         'task': 'export.tasks.delete_expired_flexible_data_exports_task',
         'schedule': crontab(hour=3, minute=0),  # every day at 3:00
+        'options': {'expires': 24 * 60 * 60},
+    },
+    'reprocess_due_tagging_batches_task': {
+        'task': 'tags.tasks.reprocess_due_tagging_batches_task',
+        'schedule': crontab(hour=3, minute=randint(0, 59)),  # every day between 3:00 and 3:59
         'options': {'expires': 24 * 60 * 60},
     },
 }

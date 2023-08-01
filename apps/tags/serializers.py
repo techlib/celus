@@ -1,17 +1,18 @@
 from functools import cached_property
 
+from core.serializers import UserSimpleSerializer
 from django.core.exceptions import BadRequest
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.fields import (
     BooleanField,
     CurrentUserDefault,
     HiddenField,
-    ReadOnlyField,
+    IntegerField,
     SerializerMethodField,
 )
 from rest_framework.serializers import ModelSerializer
 
-from tags.models import Tag, TagClass, TaggingBatch
+from tags.models import Tag, TagClass, TaggingAttempt, TaggingBatch, TagScope
 
 
 class TagClassSerializer(ModelSerializer):
@@ -71,8 +72,7 @@ class TagClassSerializer(ModelSerializer):
                     )
         if 'owner' not in validated_data:
             validated_data['owner'] = self.context['request'].user
-        tag = super().create(validated_data)
-        return tag
+        return super().create(validated_data)
 
     def update(self, instance: TagClass, validated_data):
         if 'owner' not in validated_data:
@@ -102,8 +102,7 @@ class TagClassSerializer(ModelSerializer):
                     organization=validated_data.get('owner_org', instance.owner_org),
                 ):
                     raise PermissionDenied(f'User cannot change tag class access level to "{cat}"')
-        tag = super().update(instance, validated_data)
-        return tag
+        return super().update(instance, validated_data)
 
     def get_user_score(self, tc: TagClass):
         return self._tag_class_user_scores.get(tc.pk, 0)
@@ -177,8 +176,7 @@ class TagSerializer(ModelSerializer):
             raise BadRequest('Changing tag_class of existing tag is not supported')
         # the CurrentUserDefault() does not seem to be used for updates
         validated_data['owner'] = self.context['request'].user
-        tag = super().update(instance, validated_data)
-        return tag
+        return super().update(instance, validated_data)
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -187,8 +185,7 @@ class TagSerializer(ModelSerializer):
             user
         ):
             raise PermissionDenied(f'User cannot add tags to class "{tc}"')
-        tag = super().create(validated_data)
-        return tag
+        return super().create(validated_data)
 
     def to_representation(self, instance):
         # this is a trick how to ensure that the serializer will support primary keys
@@ -205,9 +202,32 @@ class TagSerializer(ModelSerializer):
         return data
 
 
-class _TaggingBatchBaseSerializer(ModelSerializer):
+class TaggingAttemptSerializer(ModelSerializer):
+    class Meta:
+        model = TaggingAttempt
+        fields = (
+            'pk',
+            'operation',
+            'recognized_columns',
+            'rows_total',
+            'rows_no_match',
+            'rows_no_tag',
+            'tag_stats',
+            'unique_matched_titles',
+            'already_tagged_titles',
+            'tagged_titles',
+            'exclusively_tagged_titles',
+            'created',
+            'last_updated',
+        )
 
-    preflight = ReadOnlyField()
+
+class TaggingBatchSerializer(ModelSerializer):
+
+    preflight = TaggingAttemptSerializer(source='last_preflight', read_only=True)
+    postflight = TaggingAttemptSerializer(source='last_import', read_only=True)
+    last_updated_by = UserSimpleSerializer(read_only=True)
+    import_count = IntegerField(read_only=True)
 
     class Meta:
         model = TaggingBatch
@@ -223,15 +243,56 @@ class _TaggingBatchBaseSerializer(ModelSerializer):
             'last_updated_by',
             'created',
             'last_updated',
+            'import_count',
+            'reprocess_after',
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # we need to cache the serializers to avoid repeated db queries created by to_representation
+        # the reason is that the serializers cache some values, but if we create a new serializer
+        # for each object, the cache is not used
+        self.tag_serializer = None
+        self.tc_serializer = None
 
-class TaggingBatchSerializer(_TaggingBatchBaseSerializer):
+    def validate(self, attrs):
+        result = super().validate(attrs)
+        if not self.partial:
+            # when partial is true, only some attrs are given, so we cannot expect tag or tag_class
+            # to be present
+            if attrs.get('tag') and attrs.get('tag_class'):
+                raise ValidationError('Cannot set both tag and tag_class')
+            if not attrs.get('tag') and not attrs.get('tag_class'):
+                raise ValidationError('Either tag or tag_class must be set')
+        user = self.context['request'].user
+        if tag := attrs.get('tag'):
+            if not tag.can_user_assign(user):
+                raise PermissionDenied(f'User cannot assign tag "{tag}"')
+            if tag.tag_class.scope != TagScope.TITLE:
+                raise ValidationError('Tag must have scope "title"')
+        elif tc := attrs.get('tag_class'):  # type: TagClass
+            if not TagClass.objects.user_assignable_tag_classes(user).filter(pk=tc.pk).exists():
+                raise PermissionDenied(f'User cannot assign tags from tag class "{tc}"')
+            if tc.scope != TagScope.TITLE:
+                raise ValidationError('Tag class must have scope "title"')
+        return result
 
-    tag = TagSerializer(read_only=True)
-    tag_class = TagClassSerializer(read_only=True)
+    def to_representation(self, instance):
+        # this is a trick how to ensure that the serializer will support primary keys
+        # for tag and tag_class on input, but will always return full objects on output
+        data = super().to_representation(instance)
+        # here we cache the serializers to avoid repeated db queries
+        if not self.tag_serializer:
+            self.tag_serializer = TagSerializer(context=self.context)
+        if not self.tc_serializer:
+            self.tc_serializer = TagClassSerializer(context=self.context)
+        if instance.tag:
+            data['tag'] = self.tag_serializer.to_representation(instance.tag)
+        if instance.tag_class:
+            data['tag_class'] = self.tc_serializer.to_representation(instance.tag_class)
+        return data
 
 
-class TaggingBatchCreateSerializer(_TaggingBatchBaseSerializer):
+class TaggingBatchCreateSerializer(TaggingBatchSerializer):
 
     last_updated_by = HiddenField(default=CurrentUserDefault())

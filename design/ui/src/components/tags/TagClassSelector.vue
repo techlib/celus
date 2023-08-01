@@ -48,6 +48,10 @@
         </v-list-item-title>
       </v-list-item-content>
     </template>
+
+    <template #prepend v-if="showIcon">
+      <v-icon small>fa-tags fa-fw</v-icon>
+    </template>
   </v-autocomplete>
 </template>
 <script>
@@ -76,6 +80,7 @@ export default {
     placeholder: { type: String, default: "" },
     allowCreate: { type: Boolean, default: false },
     withVisibleTags: { type: Boolean, default: false },
+    showIcon: { type: Boolean, default: false },
     tooltip: { type: String, default: "" },
   },
 

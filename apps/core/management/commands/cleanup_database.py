@@ -34,6 +34,8 @@ from scheduler.models import FetchIntentionQueue, Harvest, Scheduler
 from sushi.models import SushiFetchAttempt
 from tags.models import Tag, TagClass, TaggingBatch
 
+from core.logic.util import this_celus_domain
+
 logger = logging.getLogger(__name__)
 
 
@@ -113,7 +115,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.WARNING(f'  {key}: {value}'))
         # fix other things
         site = Site.objects.get(pk=settings.SITE_ID)
-        host_name = settings.ALLOWED_HOSTS[0]
+        host_name = this_celus_domain()
         if site.name != host_name or site.domain != host_name:
             site.name = host_name
             site.domain = host_name

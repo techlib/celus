@@ -146,6 +146,7 @@ en:
     http_authentication: HTTP authentication
     http_password: Password
     http_username: Username
+    last_updated_by: Last updated by
     loading: Loading
     metadata: Metadata
     metric: Metric
@@ -155,6 +156,8 @@ en:
     new_tag_class: New tag class
     no_tags: Click edit to add a tag.
     no_tags_available: No tags available
+    off: Off
+    on: On
     organization: Organization
     overlap: Overlap
     platform: Platform
@@ -242,6 +245,7 @@ en:
     add_tag: Add tag
     create: Create
     assign_tag: Assign tag
+    assign_tags: Assign tags
     select_all: Select all
     clear_selection: Clear selection
   in_czech: Czech
@@ -288,6 +292,18 @@ en:
     batch_delete_success: Title list was successfully deleted
     unassign_tag: Unassign tag
     unassign_tag_tt: Unassign tag from all titles in the list
+    reassign_tag: Reassign tag
+    reassign_tag_tt: Process the title list once again and tag newly matched titles
+    tag_stats: Found tags
+    tags_read_from_file: Tags are read from file
+    show_only_my: Show only my own
+    multi_import_tt: This title list was re-imported multiple times. Statistics show the results of the last import only.
+    imports: Imports
+    import_count: Import count
+    import_count_tt: A title list may be imported multiple times to assign tags to newly arrived titles. This number shows the total number of imports.
+    manage: Manage title list - process, undo, re-apply tags
+    automatic_reprocessing: Automatic regular re-processing
+    automatic_reprocessing_tt: If enabled, the title list will be re-processed automatically each 30 days to assign tags to newly arrived titles.
   tag_state:
     initial: Just uploaded
     preprocessing: Preprocessing
@@ -457,6 +473,7 @@ cs:
     http_authentication: HTTP autentizace
     http_password: Heslo
     http_username: Uživatelské jméno
+    last_updated_by: Naposledy upravil
     loading: Načítání
     metadata: Metadata
     metric: Metrika
@@ -466,6 +483,8 @@ cs:
     new_tag_class: Nový typ štítku
     no_tags: Klikněte na editaci k přidání štítku.
     no_tags_available: Nejsou dostupné žádné štítky
+    off: vypnuto
+    on: Zapnuto
     organization: Organizace
     overlap: Překryv
     platform: Platforma
@@ -553,6 +572,7 @@ cs:
     add_tag: Přidat štítek
     create: Vytvořit
     assign_tag: Oštítkovat
+    assign_tags: Oštítkovat
     select_all: Vybrat vše
     clear_selection: Zrušit výběr
   in_czech: česky
@@ -599,6 +619,18 @@ cs:
     batch_delete_success: Seznam titulů byl úspěšně smazán
     unassign_tag: Odstranit štítky
     unassign_tag_tt: Odstraní odpovídající štítky z nalezených titulů
+    reassign_tag: Opakovat přiřazení
+    reassign_tag_tt: Zpracuje seznam titulů znovu a přiřadí štítky nově nalezeným titulům
+    tag_stats: Nalezené štítky
+    tags_read_from_file: Štítky jsou načteny ze souboru
+    show_only_my: Zobrazit jen moje
+    multi_import_tt: Tento seznam titulů byl nahrán vícekrát. Statistiky zobrazují pouze výsledky posledního importu.
+    imports: Importy
+    import_count: Počet importů
+    import_count_tt: Seznam titulů může být opakovaně nahrán, aby došlo k přiřazení štítků k novým titulům. Toto číslo zobrazuje celkový počet importů.
+    manage: Správa seznamu titulů - zpracování, odstranění štítků, opětovné přiřazení štítků
+    automatic_reprocessing: Automatické pravidelné zpracování
+    automatic_reprocessing_tt: Pokud je zapnuto, seznam titulů bude vždy po 30 dnech automaticky zpracován, aby byly přiřazeny štítky k novým titulům.
   tag_state:
     initial: Právě nahráno
     preprocessing: Probíhá předzpracování

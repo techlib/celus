@@ -1,4 +1,5 @@
 import factory.fuzzy
+import faker
 from core.fake_data import UserFactory
 from django.core.files.base import ContentFile
 from publications.fake_data import TitleFactory
@@ -8,11 +9,15 @@ from tags.models import (
     AccessibleBy,
     Tag,
     TagClass,
+    TaggingAttempt,
+    TaggingAttemptOperation,
     TaggingBatch,
     TaggingBatchState,
     TagScope,
     TitleTag,
 )
+
+fake = faker.Faker()
 
 
 class TagClassFactory(factory.django.DjangoModelFactory):
@@ -82,23 +87,10 @@ class TaggingBatchFactory(factory.django.DjangoModelFactory):
         model = TaggingBatch
 
     state = TaggingBatchState.INITIAL
-    preflight = factory.LazyFunction(dict)
     tag_class = None
+    tag = factory.LazyAttribute(lambda obj: TagForTitleFactory() if not obj.tag_class else None)
     last_updated_by = factory.SubFactory(UserFactory)
-
-    @factory.post_generation
-    def tag(obj, create, extracted, **kwargs):  # noqa - name obj is ok here
-        # create tag if it should be there
-        if (
-            obj.state
-            in (TaggingBatchState.IMPORTED, TaggingBatchState.IMPORTING, TaggingBatchState.FAILED)
-            and not extracted
-            and not obj.tag_class
-        ):
-            obj.tag = TagForTitleFactory.create()
-        else:
-            obj.tag = extracted
-        return obj.tag
+    reprocess_after = None
 
     @factory.post_generation
     def source_file(obj, create, extracted, **kwargs):  # noqa - name obj is ok here
@@ -113,3 +105,50 @@ class TaggingBatchFactory(factory.django.DjangoModelFactory):
             data_file.name = "test.csv"
         obj.source_file = data_file
         return data_file
+
+
+class TaggingAttemptFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TaggingAttempt
+
+    batch = factory.SubFactory(TaggingBatchFactory)
+    operation = factory.fuzzy.FuzzyChoice(TaggingAttemptOperation.values)
+    success = True
+    error = ''
+    recognized_columns = factory.LazyFunction(list)
+    tag_stats = factory.LazyFunction(dict)
+    rows_total = 0
+    rows_no_match = 0
+    rows_no_tag = 0
+    unique_matched_titles = 0
+    already_tagged_titles = 0
+    tagged_titles = 0
+    exclusively_tagged_titles = 0
+
+
+class TaggingAttemptFuzzyFactory(TaggingAttemptFactory):
+
+    recognized_columns = factory.fuzzy.FuzzyChoice(['issn', 'eissn', 'isbn'])
+    tag_stats = factory.lazy_attribute(
+        lambda obj: {
+            word: {
+                'matched_lines': fake.random_int(0, 1000),
+                'matched_titles': fake.random_int(0, 1000),
+                **(
+                    {'tagged_titles': fake.random_int(0, 1000)}
+                    if obj.operation == TaggingAttemptOperation.IMPORT
+                    else {}
+                ),
+            }
+            for word in fake.words(nb=5)
+        }
+    )
+    rows_total = factory.fuzzy.FuzzyInteger(0, 1000)
+    rows_no_match = factory.lazy_attribute(lambda obj: fake.random_int(0, obj.rows_total))
+    rows_no_tag = factory.lazy_attribute(lambda obj: fake.random_int(0, obj.rows_total))
+    unique_matched_titles = factory.lazy_attribute(lambda obj: fake.random_int(0, obj.rows_total))
+    already_tagged_titles = factory.lazy_attribute(lambda obj: fake.random_int(0, obj.rows_total))
+    tagged_titles = factory.lazy_attribute(lambda obj: fake.random_int(0, obj.rows_total))
+    exclusively_tagged_titles = factory.lazy_attribute(
+        lambda obj: fake.random_int(0, obj.rows_total)
+    )

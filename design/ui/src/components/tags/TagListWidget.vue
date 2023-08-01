@@ -170,6 +170,7 @@ cs:
           >
             <v-icon small>fa-edit</v-icon>
           </v-btn>
+
           <v-btn
             v-if="
               classIdToObj.has(group) && classIdToObj.get(group).user_can_modify
@@ -181,7 +182,7 @@ cs:
             <v-icon small>fa-trash</v-icon>
           </v-btn>
 
-          <v-tooltip bottom max-width="600px">
+          <v-tooltip bottom max-width="600px" :key="'group-' + group">
             <template #activator="{ on }">
               <v-btn small icon @click="hideClass(group)" v-on="on">
                 <v-icon small

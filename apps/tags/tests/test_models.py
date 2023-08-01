@@ -1,13 +1,17 @@
+from datetime import timedelta
+
 import pytest
 from core.fake_data import UserFactory
 from django.db import DatabaseError, IntegrityError
+from freezegun import freeze_time
 from publications.fake_data import TitleFactory
 
-from tags.fake_data import TagClassFactory, TagFactory
+from tags.fake_data import TagClassFactory, TagFactory, TaggingAttemptFactory, TaggingBatchFactory
 from tags.models import (
     AccessibleBy,
     Tag,
     TagClass,
+    TaggingAttemptOperation,
     TaggingBatch,
     TaggingBatchState,
     TagScope,
@@ -624,3 +628,73 @@ class TestTaggingBatchConstraints:
         else:
             with pytest.raises(IntegrityError):
                 TaggingBatch.objects.create(**data)
+
+
+@pytest.mark.django_db
+class TestTaggingBatchModel:
+    def test_last_preflight(self, django_assert_max_num_queries):
+        batch = TaggingBatchFactory.create()
+        TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.PREFLIGHT)
+        pa2 = TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.PREFLIGHT)
+        # add a newer import to make sure it does not get mixed up with preflights
+        TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.IMPORT)
+        with django_assert_max_num_queries(1):
+            assert batch.last_preflight == pa2
+        batch_annotated = TaggingBatch.objects.prefetch_attempts().filter(pk=batch.pk).get()
+        with django_assert_max_num_queries(0):
+            # when the batch is annotated, the last_preflight should make no queries
+            assert batch_annotated.last_preflight == pa2
+
+    def test_last_import(self, django_assert_max_num_queries):
+        batch = TaggingBatchFactory.create()
+        TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.IMPORT)
+        pa2 = TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.IMPORT)
+        # add a newer preflight to make sure it does not get mixed up with imports
+        TaggingAttemptFactory.create(batch=batch, operation=TaggingAttemptOperation.PREFLIGHT)
+        with django_assert_max_num_queries(1):
+            assert batch.last_import == pa2
+        batch_annotated = TaggingBatch.objects.prefetch_attempts().filter(pk=batch.pk).get()
+        with django_assert_max_num_queries(0):
+            # when the batch is annotated, the last_preflight should make no queries
+            assert batch_annotated.last_import == pa2
+
+    def test_to_reprocess_query_filter(self):
+        """
+        Tests that the `to_reprocess` queryset filter works as expected and returns only objects
+        which have the `reprocess_after` set and the last attempt is older than `reprocess_after`.
+        """
+        with freeze_time('2023-01-01'):
+            tb1 = TaggingBatchFactory.create(
+                reprocess_after=timedelta(days=1), state=TaggingBatchState.IMPORTED
+            )
+            TaggingAttemptFactory.create(batch=tb1)
+            TaggingBatchFactory.create(
+                reprocess_after=timedelta(days=1), state=TaggingBatchState.PREFLIGHT
+            )  # not imported yet, no reprocess
+            TaggingBatchFactory.create(reprocess_after=None)  # no reprocess
+        with freeze_time('2023-01-03'):
+            assert TaggingBatch.objects.to_reprocess().count() == 1
+            assert TaggingBatch.objects.to_reprocess().first() == tb1
+
+    @pytest.mark.parametrize(
+        ['state', 'reprocess'],
+        [
+            (TaggingBatchState.INITIAL, False),
+            (TaggingBatchState.PREPROCESSING, False),
+            (TaggingBatchState.PREFLIGHT, False),
+            (TaggingBatchState.IMPORTING, False),
+            (TaggingBatchState.IMPORTED, True),
+            (TaggingBatchState.PREFAILED, False),
+            (TaggingBatchState.FAILED, False),
+            (TaggingBatchState.UNDOING, False),
+        ],
+    )
+    def test_reprocess_query_filter_vs_batch_state(self, state, reprocess):
+        """
+        Tests that only the `IMPORTED` state may be reprocesed.
+        """
+        with freeze_time('2023-01-01'):
+            tb1 = TaggingBatchFactory.create(reprocess_after=timedelta(days=1), state=state)
+            TaggingAttemptFactory.create(batch=tb1)
+        with freeze_time('2023-01-03'):
+            assert TaggingBatch.objects.to_reprocess().first() == (tb1 if reprocess else None)

@@ -31,6 +31,7 @@ from tags.models import (
     ItemTag,
     Tag,
     TagClass,
+    TaggingAttemptOperation,
     TaggingBatch,
     TaggingBatchState,
     TagScope,
@@ -39,6 +40,7 @@ from tags.models import (
 from tags.permissions import TagClassPermissions, TagPermissions
 from tags.serializers import (
     TagClassSerializer,
+    TaggingAttemptSerializer,
     TaggingBatchCreateSerializer,
     TaggingBatchSerializer,
     TagSerializer,
@@ -254,8 +256,14 @@ class TaggingBatchViewSet(ModelViewSet):
         return TaggingBatchSerializer
 
     def get_queryset(self):
-        return TaggingBatch.objects.filter(last_updated_by=self.request.user).select_related(
-            'tag', 'tag__tag_class', 'tag_class'
+        return (
+            TaggingBatch.objects.filter(
+                Q(tag__in=Tag.objects.user_assignable_tags(self.request.user))
+                | Q(tag_class__in=TagClass.objects.user_assignable_tag_classes(self.request.user))
+            )
+            .prefetch_attempts()
+            .annotate_import_count()
+            .select_related('tag', 'tag__tag_class', 'tag_class', 'last_updated_by')
         )
 
     @action(methods=['post'], detail=True, url_name='preflight', url_path='preflight')
@@ -286,7 +294,7 @@ class TaggingBatchViewSet(ModelViewSet):
     def assign_tags(self, request, pk):
         try:
             tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
-            if tb.state != TaggingBatchState.PREFLIGHT:
+            if tb.state not in (TaggingBatchState.PREFLIGHT, TaggingBatchState.IMPORTED):
                 raise BadRequestException(
                     {'error': f'Cannot use batch with state "{tb.state}" to assign tags'}
                 )
@@ -295,29 +303,18 @@ class TaggingBatchViewSet(ModelViewSet):
         except TaggingBatch.DoesNotExist:
             raise Http404({'error': 'Tagging batch not found'}) from None
 
-        # we need to resolve the IDs before submitting them to the task so that we
-        # resolve user access and existence of the tags
-        if tag_ids_str := request.data.get('tag', ''):
-            try:
-                tag = Tag.objects.user_assignable_tags(request.user).get(pk=tag_ids_str)
-            except Tag.DoesNotExist:
-                raise BadRequestException(
-                    {'error': 'No matching tags to apply were found'}
-                ) from None
-            tb.state = TaggingBatchState.IMPORTING
-            tb.tag = tag
-            tb.last_updated_by = request.user
-            tb.save()
-            url_base = build_absolute_uri(self.request, '/')
-            task = tagging_batch_assign_tag_task.apply_async(args=(tb.pk, url_base), countdown=2)
-            return Response(
-                {
-                    'task_id': task.id,
-                    'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
-                },
-                status=HTTP_202_ACCEPTED,
-            )
-        raise BadRequestException({'error': 'Parameter `tag` with tag ID is required'})
+        tb.state = TaggingBatchState.IMPORTING
+        tb.last_updated_by = request.user
+        tb.save()
+        url_base = build_absolute_uri(self.request, '/')
+        task = tagging_batch_assign_tag_task.apply_async(args=(tb.pk, url_base), countdown=2)
+        return Response(
+            {
+                'task_id': task.id,
+                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+            },
+            status=HTTP_202_ACCEPTED,
+        )
 
     @action(methods=['post'], detail=True, url_name='unassign', url_path='unassign')
     def unassign(self, request, pk):
@@ -341,4 +338,14 @@ class TaggingBatchViewSet(ModelViewSet):
                 'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
             },
             status=HTTP_202_ACCEPTED,
+        )
+
+    @action(methods=['get'], detail=True, url_name='imports', url_path='imports')
+    def imports(self, request, pk):
+        batch = get_object_or_404(self.get_queryset(), pk=pk)
+        attempts = batch.taggingattempts.filter(operation=TaggingAttemptOperation.IMPORT).order_by(
+            'created'
+        )
+        return Response(
+            TaggingAttemptSerializer(attempts, many=True, context={"request": request}).data
         )

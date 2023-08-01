@@ -10,7 +10,6 @@ from publications.models import PlatformTitle, Title
 
 class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
 
-    has_explicit_tags = False
     match_column = '_Matched titles_'
     platform_list_column = '_Found on platforms_'
     start_date_column = '_First usage data_'

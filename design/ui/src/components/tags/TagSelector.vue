@@ -51,6 +51,9 @@
         {{ tooltip }}
       </v-tooltip>
     </template>
+    <template #prepend v-else-if="showIcon">
+      <v-icon small>fa-tag fa-fw</v-icon>
+    </template>
 
     <template #append-item v-if="allowCreate">
       <v-list-item-content>
@@ -98,6 +101,7 @@ export default {
     },
     singleTag: { type: Boolean, default: false },
     allowCreate: { type: Boolean, default: false },
+    showIcon: { type: Boolean, default: false },
   },
 
   data() {

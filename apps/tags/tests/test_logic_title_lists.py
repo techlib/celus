@@ -1,3 +1,5 @@
+from io import StringIO
+
 import pytest
 from publications.fake_data import TitleFactory
 
@@ -12,12 +14,10 @@ class TestCsvTitleListReader:
             # we just need parsing of the column names, so we do just one iteration
             next(reader.parse_data(infile))
             assert reader.column_names == {
-                'name': 'Name',
                 'isbn': 'ISBN',
                 'issn': 'issn',
                 'eissn': 'eISSN',
             }, 'column names are correctly extracted from data'
-            assert not reader.has_explicit_tags, 'there are no explicit tags in the file'
 
     def test_record_generation(self):
         reader = CsvTitleListReader()
@@ -25,7 +25,6 @@ class TestCsvTitleListReader:
             data = list(reader.parse_data(infile))
         assert len(data) == 6
         assert data[0].title_rec.isbn == '9780787960186'
-        assert data[5].title_rec.name == 'Maz'
         assert data[0].tag_names == []
 
     @pytest.mark.parametrize(
@@ -48,3 +47,30 @@ class TestCsvTitleListReader:
                 )
         assert len(data) == 6
         assert [len(rec.title_ids) for rec in data] == expected_counts
+
+    def test_explicit_tags_extraction(self):
+        reader = CsvTitleListReader(tag_name_column='tag')
+        with open('test-data/tagging_batch/plain-title-list-with-tags.csv', 'r') as infile:
+            data = list(reader.parse_data(infile))
+        assert len(data) == 7
+        assert data[0].title_rec.isbn == '9780787960186'
+        assert data[0].tag_names == ['prase']
+
+    @pytest.mark.parametrize(
+        'tag_col', ['tag', 'tag ', ' TAG', ' tAg\t', 'TaG\n', 'TAG\r\n', '\ntag']
+    )
+    def test_explicit_tags_extraction_with_mangled_col_name(self, tag_col):
+        infile = StringIO(f'ISSN,"{tag_col}"\n1234-5678,prase')
+        reader = CsvTitleListReader(tag_name_column='tag')
+        infile.seek(0)
+        data = list(reader.parse_data(infile))
+        assert len(data) == 1
+        assert data[0].title_rec.issn == '1234-5678'
+        assert data[0].tag_names == ['prase']
+
+    def test_explicit_tags_extraction_nonexistent_col_name(self):
+        infile = StringIO('ISSN,tags\n1234-5678,prase')
+        infile.seek(0)
+        reader = CsvTitleListReader(tag_name_column='tag')
+        with pytest.raises(ValueError):
+            list(reader.parse_data(infile))

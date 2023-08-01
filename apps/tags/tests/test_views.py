@@ -3,8 +3,14 @@ from core.models import DataSource
 from django.urls import reverse
 from publications.fake_data import PlatformFactory, TitleFactory
 
-from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
-from tags.models import AccessibleBy, Tag, TagClass, TagScope
+from tags.fake_data import (
+    TagClassFactory,
+    TagFactory,
+    TagForTitleFactory,
+    TaggingAttemptFactory,
+    TaggingBatchFactory,
+)
+from tags.models import AccessibleBy, Tag, TagClass, TaggingAttemptOperation, TagScope
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -906,3 +912,14 @@ class TestTagItemsLinksView:
         assert (
             len(resp.json()) == 4 * platform_count
         ), 'there should be 4 links per visible platform'
+
+
+@pytest.mark.django_db
+class TestTaggingBatchAttempts:
+    def test_tagging_batch_imports(self, clients, users):
+        tag = TagFactory.create(owner=users['user1'])
+        batch = TaggingBatchFactory.create(tag=tag)
+        TaggingAttemptFactory.create_batch(5, batch=batch, operation=TaggingAttemptOperation.IMPORT)
+        resp = clients['user1'].get(reverse('tagging-batch-imports', args=[batch.pk]))
+        assert resp.status_code == 200
+        assert len(resp.json()) == 5

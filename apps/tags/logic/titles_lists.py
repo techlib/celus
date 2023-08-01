@@ -145,11 +145,13 @@ class CsvReaderMixin:
         'issn': {'normalize': lambda x: normalize_issn(x, raise_error=False)},
         'eissn': {'normalize': lambda x: normalize_issn(x, raise_error=False)},
         'doi': {'normalize': None},
-        'name': {'normalize': None},
     }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, tag_name_column: Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.tag_name_column = tag_name_column
+        # the following will hold the column name that contains the tag name as seen in the data
+        self._used_tag_name_column = None
         # the following will hold the column names found in the data. The key is always one of
         # `self.attrs`, the value is the actual column name
         self.column_names = {}
@@ -158,9 +160,15 @@ class CsvReaderMixin:
         reader = csv.DictReader(source)
         # find which columns are present and find the actual form of the name (case and whitespace)
         for column_name in reader.fieldnames:
-            for attr_name in self.attrs:
-                if column_name.strip().lower() == attr_name:
-                    self.column_names[attr_name] = column_name
+            if (column_name_clean := column_name.strip().lower()) in self.attrs:
+                self.column_names[column_name_clean] = column_name
+            elif self.tag_name_column and column_name_clean == self.tag_name_column:
+                self._used_tag_name_column = column_name
+        if self.tag_name_column and not self._used_tag_name_column:
+            raise ValueError(
+                f'The tag name column "{self.tag_name_column}" was not found in the data'
+            )
+        rec: dict
         for rec in reader:
             data = {}
             for attr_name, column_name in self.column_names.items():
@@ -168,16 +176,25 @@ class CsvReaderMixin:
                     if normalizer := self.attrs[attr_name].get('normalize'):
                         value = normalizer(value)
                 data[attr_name] = value
-            yield TitleTaggingRecord(title_rec=TitleRec(**data), tag_names=[], source_data=rec)
+            tag_names = []
+            if self._used_tag_name_column:
+                if tag_name := rec.get(self._used_tag_name_column):
+                    tag_names = [tag_name.strip()]
+            yield TitleTaggingRecord(
+                title_rec=TitleRec(**data), tag_names=tag_names, source_data=rec
+            )
 
 
 class CsvTitleListReader(CsvReaderMixin, TitleListReader):
 
-    has_explicit_tags = False
     annotation_column = '_Celus info_'
 
-    def __init__(self, dump_id_formatter: Callable[[int], str] = str):
-        super().__init__()
+    def __init__(
+        self,
+        dump_id_formatter: Callable[[int], str] = str,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
         self.dump_id_formatter = dump_id_formatter
 
     def extra_column_names(self) -> [str]:

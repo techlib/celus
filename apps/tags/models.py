@@ -1,11 +1,12 @@
 import codecs
 import csv
+import logging
 import operator
 import os
 import tempfile
-from collections import Counter
+from collections import Counter, defaultdict
 from functools import reduce
-from typing import BinaryIO, Callable, Optional, Tuple, Type, Union
+from typing import BinaryIO, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import magic
 from celus_nigiri.csv_detect import detect_file_encoding
@@ -14,15 +15,17 @@ from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
 from django.core.files.base import File
 from django.db import models
-from django.db.models import Exists, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q, QuerySet, Subquery, Value
+from django.db.transaction import atomic
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from logs.logic.data_import import TitleManager
 from organizations.models import Organization
 from publications.models import Platform, Title
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from tags.logic.titles_lists import CsvTitleListReader
+
+logger = logging.getLogger(__name__)
 
 
 class AccessibleBy(models.IntegerChoices):
@@ -42,6 +45,11 @@ class TagScope(models.TextChoices):
     TITLE = 'title', _("Title")
     PLATFORM = 'platform', _("Platform")
     ORGANIZATION = 'organization', _('Organization')
+
+
+class TaggingAttemptOperation(models.TextChoices):
+    PREFLIGHT = 'preflight', _("Preflight")
+    IMPORT = 'import', _("Import")
 
 
 def access_filters(attr_name: str, user: User) -> Q:
@@ -70,6 +78,12 @@ class TagClassQuerySet(models.QuerySet):
 
     def user_modifiable_tag_classes(self, user: User) -> QuerySet['TagClass']:
         return self.filter(access_filters('can_modify', user))
+
+    def user_assignable_tag_classes(self, user: User) -> QuerySet['TagClass']:
+        """
+        These are the tag classes to which the user can add tags
+        """
+        return self.filter(access_filters('default_tag_can_assign', user))
 
     def with_user_visible_tags(self, user: User) -> QuerySet['TagClass']:
         in_visible_tags = Tag.objects.user_accessible_tags(user).values('tag_class_id').distinct()
@@ -297,6 +311,28 @@ class TagClass(CreatedUpdatedMixin, models.Model):
             user=user, tag_class=self, defaults={'hidden': hidden}
         )
 
+    def get_or_create_tags(self, tag_names: Iterable[str], owner: User) -> Dict[str, 'Tag']:
+        """
+        Returns a dictionary of tags with keys being the tag names. If a tag with the name
+        already exists, it is returned, otherwise it is created.
+        """
+        out = {tag.name: tag for tag in Tag.objects.filter(tag_class=self, name__in=tag_names)}
+        missing_names = set(tag_names) - set(out.keys())
+        to_insert = [
+            Tag(
+                tag_class=self,
+                name=name,
+                owner=owner,
+                can_assign=self.default_tag_can_assign,
+                can_see=self.default_tag_can_see,
+            )
+            for name in missing_names
+        ]
+        if to_insert:
+            inserted = Tag.objects.bulk_create(to_insert)
+            out.update({tag.name: tag for tag in inserted})
+        return out
+
 
 class TagQuerySet(models.QuerySet):
     def user_accessible_tags(self, user: User) -> QuerySet['Tag']:
@@ -470,6 +506,14 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
         blank=True,
         help_text='If the tagging was done in a batch, this is the batch',
     )
+    tagging_attempt = models.ForeignKey(
+        'TaggingAttempt',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text='If the tagging was done in a batch, this is the specific attempt',
+        limit_choices_to=Q(operation=TaggingAttemptOperation.IMPORT),
+    )
     # the following is redundant, but we need it for a constraint
     _tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
     _exclusive = models.BooleanField()
@@ -482,7 +526,7 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
                 fields=('target', '_tag_class'),
                 condition=Q(_exclusive=True),
                 name='%(class)s_unique_tag_class_for_exclusive',
-            )
+            ),
         ]
 
     def save(self, **kwargs):
@@ -560,7 +604,69 @@ def validate_mime_type(fileobj):
         )
 
 
+class TaggingBatchQuerySet(models.QuerySet):
+    def prefetch_attempts(self) -> QuerySet:
+        """
+        Annotates the queryset with the last preflight and import attempts
+        """
+        return self.prefetch_related(
+            Prefetch(
+                'taggingattempts',
+                to_attr='_last_preflights',
+                queryset=TaggingAttempt.objects.filter(
+                    operation=TaggingAttemptOperation.PREFLIGHT
+                ).order_by('-created'),
+            ),
+            Prefetch(
+                'taggingattempts',
+                to_attr='_last_imports',
+                queryset=TaggingAttempt.objects.filter(
+                    operation=TaggingAttemptOperation.IMPORT
+                ).order_by('-created'),
+            ),
+        )
+
+    def annotate_import_count(self) -> QuerySet['TaggingBatch']:
+        """
+        Annotates the queryset with the number of imported tags
+        """
+        # we do not use simple Count annotation because it would then do GROUP BY id
+        # on the query and this could then interfere with other queries which do locking, etc.
+        # which is not compatible with GROUP BY
+        return self.annotate(
+            import_count=Subquery(
+                TaggingAttempt.objects.filter(
+                    batch=OuterRef('id'),
+                    operation=TaggingAttemptOperation.IMPORT,
+                )
+                .annotate(x=Value(7))  # to ensure all sub-rows have the same value
+                .values('x')
+                .annotate(c=Count('id'))  # aggregating all sub-rows into one value
+                .values('c')
+            )
+        )
+
+    def to_reprocess(self) -> QuerySet['TaggingBatch']:
+        """
+        Returns the batches which should be reprocessed
+        """
+        return self.filter(
+            state=TaggingBatchState.IMPORTED,
+            reprocess_after__isnull=False,
+        ).exclude(
+            Exists(  # check if recent import exists
+                TaggingAttempt.objects.filter(
+                    batch=OuterRef('pk'),
+                    operation=TaggingAttemptOperation.IMPORT,
+                    last_updated__gt=now() - OuterRef('reprocess_after'),
+                )
+            )
+        )
+
+
 class TaggingBatch(CreatedUpdatedMixin, models.Model):
+
+    TAG_COLUMN_NAME = 'tag'
 
     source_file = models.FileField(
         upload_to=where_to_store,
@@ -576,17 +682,6 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         max_length=256,
         help_text='File with additional data added during pre-flight or import',
     )
-    preflight = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text='Information gathered during the preflight check of the source',
-    )
-    postflight = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text='Information gathered during the actual processing of the source and '
-        'application of tags',
-    )
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, blank=True, null=True)
     tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE, blank=True, null=True)
     state = models.CharField(
@@ -598,6 +693,14 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         help_text='When given, it marks the batch as internal. Such batches are not shown in the '
         'UI. It also serves as identification of such batches internally.',
     )
+    reprocess_after = models.DurationField(
+        null=True,
+        blank=True,
+        help_text='When not null, it specifies the interval after which the tagging batch will be '
+        're-imported (new attempt will be created).',
+    )
+
+    objects = TaggingBatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = 'Tagging batches'
@@ -628,6 +731,67 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             ),
         ]
 
+    @property
+    def needs_tag_column(self) -> bool:
+        """
+        Returns true if `tag_class` is set, but `tag` is not. This means that the info about
+        tags should be in the source file.
+        """
+        return bool(not self.tag and self.tag_class)
+
+    @property
+    def file_columns(self) -> List[str]:
+        """
+        Returns list of column names of the source file.
+        """
+        orig_pos = self.source_file.tell()
+        self.source_file.seek(0)
+        reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
+        columns = next(reader)
+        self.source_file.seek(orig_pos)
+        return columns
+
+    @property
+    def preflights(self):
+        return self.taggingattempts.filter(operation=TaggingAttemptOperation.PREFLIGHT).order_by(
+            'created'
+        )
+
+    @property
+    def imports(self):
+        return self.taggingattempts.filter(operation=TaggingAttemptOperation.IMPORT).order_by(
+            'created'
+        )
+
+    @property
+    def misses_tag_column(self) -> bool:
+        """
+        Returns true if the source file does not contain the column with the tag.
+        """
+        if not self.needs_tag_column:
+            return False
+        return not any(c.lower().strip() == self.TAG_COLUMN_NAME for c in self.file_columns)
+
+    @property
+    def last_preflight(self) -> Optional['TaggingAttempt']:
+        """
+        Returns the last preflight attempt
+        """
+        if hasattr(self, '_last_preflights'):
+            # we have the preflights already prefetched
+            return self._last_preflights[0] if self._last_preflights else None
+        return self.preflights.last()
+
+    @property
+    def last_import(self) -> Optional['TaggingAttempt']:
+        """
+        Returns the last import attempt
+        """
+        if hasattr(self, '_last_imports'):
+            # we have the imports already prefetched
+            return self._last_imports[0] if self._last_imports else None
+        return self.imports.last()
+
     def file_row_count(self):
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)
@@ -636,12 +800,27 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         self.source_file.seek(orig_pos)
         return total
 
+    def get_used_tags(self) -> Optional[QuerySet['Tag']]:
+        """
+        Returns a queryset of tags which are used in this batch - only makes sense after
+        tagging was finished
+        """
+        if self.state not in [TaggingBatchState.IMPORTED, TaggingBatchState.UNDOING]:
+            return None
+        if self.tag:
+            return Tag.objects.filter(pk=self.tag.pk)
+        elif self.tag_class:
+            tag_ids = set(self.titletag_set.distinct('tag_id').values_list('tag_id', flat=True))
+            return Tag.objects.filter(pk__in=tag_ids)
+        else:
+            raise ValueError('We should never get here in imported state')
+
     def compute_preflight(
         self,
         dump_file: Optional[BinaryIO] = None,
         title_id_formatter: Callable[[int], str] = str,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ) -> dict:
+    ) -> 'TaggingAttempt':
         """
         :param dump_file: opened file where a copy of input will be written with extra data from
                           the processing
@@ -649,11 +828,16 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
-        reader = CsvTitleListReader(dump_id_formatter=title_id_formatter)
+        reader = CsvTitleListReader(
+            tag_name_column=self.TAG_COLUMN_NAME if self.needs_tag_column else None,
+            dump_id_formatter=title_id_formatter,
+        )
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
         encoding = detect_file_encoding(self.source_file)
+        tag_to_matched_lines = Counter()
+        tag_to_unique_title_ids = defaultdict(set)
         for rec in reader.process_source(
             codecs.getreader(encoding)(self.source_file), dump_file=dump_file
         ):
@@ -663,12 +847,36 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                 stats['no_match'] += 1
             if progress_monitor:
                 progress_monitor(stats['row_count'], total)
-        stats['unique_matched_titles'] = len(unique_title_ids)
-        return {
-            'stats': stats,
-            'explicit_tags': reader.has_explicit_tags,
-            'recognized_columns': sorted(reader.column_names.values(), key=lambda x: x.lower()),
-        }
+            if self.needs_tag_column:
+                # stats related to explicit tags in file
+                tags = {name for name in rec.tag_names}
+                if not tags:
+                    stats['rows_no_tag'] += 1
+                else:
+                    for tag in tags:
+                        tag_to_matched_lines[tag] += 1
+                        if rec.title_ids:
+                            tag_to_unique_title_ids[tag] |= rec.title_ids
+
+        tag_stats = {}
+        if self.needs_tag_column:
+            tag_stats = {
+                key: {
+                    'matched_lines': value,
+                    'matched_titles': len(tag_to_unique_title_ids[key]),
+                }
+                for key, value in tag_to_matched_lines.items()
+            }
+        return TaggingAttempt(
+            batch=self,
+            operation=TaggingAttemptOperation.PREFLIGHT,
+            recognized_columns=sorted(reader.column_names.values(), key=lambda x: x.lower()),
+            rows_total=stats['row_count'],
+            rows_no_match=stats['no_match'],
+            rows_no_tag=stats['rows_no_tag'],
+            unique_matched_titles=len(unique_title_ids),
+            tag_stats=tag_stats,
+        )
 
     def do_preflight(
         self,
@@ -680,9 +888,13 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
+        if not self.tag and not self.tag_class:
+            raise ValueError('Either tag or tag_class must be set')
+        if self.misses_tag_column:
+            raise ValueError('The source file does not contain the `tag` column')
         try:
             with tempfile.NamedTemporaryFile('r+b') as dump_file:
-                self.preflight = self.compute_preflight(
+                preflight = self.compute_preflight(
                     dump_file=dump_file,
                     title_id_formatter=title_id_formatter,
                     progress_monitor=progress_monitor,
@@ -690,43 +902,59 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                 self.state = TaggingBatchState.PREFLIGHT
                 dump_file.seek(0)
                 self.annotated_file = File(dump_file, name=self.create_annotated_file_name())
+                preflight.save()
                 self.save()
         except Exception as e:
-            self.preflight['error'] = str(e)
+            logger.error('Error during preflight', exc_info=True)
+            preflight = TaggingAttempt.objects.create(
+                batch=self, operation=TaggingAttemptOperation.PREFLIGHT, success=False, error=str(e)
+            )
             self.state = TaggingBatchState.PREFAILED
             self.save()
+        if hasattr(self, '_last_preflights'):
+            # we have the preflights already prefetched and need to update them
+            self._last_preflights.insert(0, preflight)
 
+    @atomic
     def assign_tag(
         self,
-        create_missing_titles=False,
         title_id_formatter: Callable[[int], str] = str,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
     ) -> None:
         """
-        :param create_missing_titles: if True, titles which are not found in the database will
-                                      be created
         :param title_id_formatter: converts title ids to string in the annotated file
         :param progress_monitor: callback to report progress, should send (current, total) ints
         """
         if self.state != TaggingBatchState.IMPORTING:
             raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
-        if not self.tag.can_user_assign(self.last_updated_by):
+        if self.tag and not self.tag.can_user_assign(self.last_updated_by):
             raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
-        reader = CsvTitleListReader(dump_id_formatter=title_id_formatter)
+        if self.tag_class and self.tag_class not in TagClass.objects.user_accessible_tag_classes(
+            self.last_updated_by
+        ):
+            raise PermissionDenied(f'User cannot add tags to class #{self.tag_class}')
+        reader = CsvTitleListReader(
+            dump_id_formatter=title_id_formatter,
+            tag_name_column=self.TAG_COLUMN_NAME if self.needs_tag_column else None,
+        )
         stats = Counter()
-        unique_title_ids = set()
-        unmatched_title_recs = []
         rows_total = self.file_row_count()
+        tag_to_unique_title_ids = defaultdict(set)
+        tag_to_matched_lines = Counter()
         with tempfile.NamedTemporaryFile('wb') as dump_file:
             for rec in reader.process_source(
                 codecs.iterdecode(self.source_file, 'utf-8'), dump_file=dump_file
             ):
                 stats['row_count'] += 1
-                unique_title_ids |= rec.title_ids
+                tag_names = [None] if self.tag else rec.tag_names
                 if not rec.title_ids:
                     stats['no_match'] += 1
-                    if create_missing_titles:
-                        unmatched_title_recs.append(rec.title_rec)
+                else:
+                    for tag_name in tag_names:
+                        tag_to_unique_title_ids[tag_name] |= rec.title_ids
+                if self.needs_tag_column:
+                    for tag_name in rec.tag_names:
+                        tag_to_matched_lines[tag_name] += 1
                 if progress_monitor:
                     # report only half of the progress, because we are doing the insertion into
                     # the database later
@@ -739,28 +967,35 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                     self.annotated_file.delete(save=False)
                 self.annotated_file = File(infile, name=self.create_annotated_file_name())
                 self.save()
-        stats['unique_matched_titles'] = len(unique_title_ids)
-        if unmatched_title_recs:
-            tm = TitleManager()
-            tm.prefetch_titles(unmatched_title_recs)
-            stats['created_titles'] = -len(unique_title_ids)  # we need the difference after-before
-            for title_rec in unmatched_title_recs:
-                if title_id := tm.get_or_create(title_rec):
-                    unique_title_ids.add(title_id)
-            stats['created_titles'] += len(unique_title_ids)
 
         # do the actual tagging
-        to_insert = [
-            TitleTag(
-                tag_id=self.tag_id,
-                target_id=title_id,
-                tagging_batch=self,
-                _tag_class=self.tag.tag_class,
-                _exclusive=self.tag.tag_class.exclusive,
-                last_updated_by=self.last_updated_by,
+        # postflight (import) is referenced in TitleTag, so we need to create it first
+        postflight = TaggingAttempt.objects.create(
+            batch=self, operation=TaggingAttemptOperation.IMPORT
+        )
+        to_insert = []
+        if self.tag:
+            tag_name_to_tag = {None: self.tag}
+            tc = self.tag.tag_class
+        else:
+            tag_name_to_tag = self.tag_class.get_or_create_tags(
+                tag_to_unique_title_ids.keys(), self.last_updated_by
             )
-            for title_id in unique_title_ids
-        ]
+            tc = self.tag_class
+        for tag_name, title_ids in tag_to_unique_title_ids.items():
+            tag = tag_name_to_tag[tag_name]
+            to_insert += [
+                TitleTag(
+                    tag_id=tag.pk,
+                    target_id=title_id,
+                    tagging_batch=self,
+                    tagging_attempt=postflight,
+                    _tag_class=tc,
+                    _exclusive=tc.exclusive,
+                    last_updated_by=self.last_updated_by,
+                )
+                for title_id in title_ids
+            ]
         if progress_monitor:
             # report another part of the progress
             progress_monitor(2 * stats['row_count'] // 3, rows_total)
@@ -768,30 +1003,67 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         # were not inserted because of a conflict. This is why we use the actual count of
         # titletags as count of tagged titles
         TitleTag.objects.bulk_create(to_insert, ignore_conflicts=True)
-        stats['tagged_titles'] = self.titletag_set.count()
+        # postflight is connected only to currently tagged items (self is to all)
+        tagged_titles_count = postflight.titletag_set.values('target_id').distinct().count()
+        # compute unique titles matched for all tags
+        unique_title_ids = reduce(operator.or_, tag_to_unique_title_ids.values(), set())
         # we want to count what was already tagged before and what is tagged with a different
         # exclusive tag
-        stats['exclusively_tagged_titles'] = (
-            0
-            if not self.tag.tag_class.exclusive
-            else (
-                TitleTag.objects.filter(
-                    tag__tag_class=self.tag.tag_class, target_id__in=unique_title_ids
-                )
-                .exclude(tag=self.tag)
-                .count()
+        if tc.exclusive:
+            qs = TitleTag.objects.filter(tag__tag_class=tc, target_id__in=unique_title_ids).exclude(
+                tagging_attempt=postflight
             )
-        )
+            if self.tag:
+                # if we are tagging with a single tag, we need to exclude it from the count
+                # because it should fall to the `already_tagged_titles` count which is computed
+                # later
+                qs = qs.exclude(tag=self.tag)
+            exclusively_tagged_titles_count = qs.count()
+        else:
+            exclusively_tagged_titles_count = 0
         # if it is not exclusively tagged and was not tagged, it must have been tagged before
-        stats['already_tagged_titles'] = (
-            len(unique_title_ids) - stats['tagged_titles'] - stats['exclusively_tagged_titles']
+        unique_matched_titles = len(unique_title_ids)
+        already_tagged_titles = (
+            unique_matched_titles - tagged_titles_count - exclusively_tagged_titles_count
         )
         if progress_monitor:
             # report the rest of the progress
             progress_monitor(stats['row_count'], rows_total)
-        self.postflight = {'stats': stats}
+        # update postflight
+        postflight.rows_total = stats['row_count']
+        postflight.rows_no_match = stats['no_match']
+        postflight.unique_matched_titles = unique_matched_titles
+        postflight.already_tagged_titles = already_tagged_titles
+        postflight.tagged_titles = tagged_titles_count
+        postflight.exclusively_tagged_titles = exclusively_tagged_titles_count
+        postflight.recognized_columns = sorted(
+            reader.column_names.values(), key=lambda x: x.lower()
+        )
+        # tag statistics
+        tag_stats = {}
+        if self.needs_tag_column:
+            tag_usage = {
+                rec['tag__name']: rec['c']
+                for rec in postflight.titletag_set.values('tag__name').annotate(
+                    c=Count('target_id')
+                )
+            }
+            tag_stats = {
+                key: {
+                    'matched_lines': value,
+                    'matched_titles': len(tag_to_unique_title_ids[key]),
+                    'tagged_titles': tag_usage.get(key, 0),
+                }
+                for key, value in tag_to_matched_lines.items()
+            }
+        postflight.tag_stats = tag_stats
+        postflight.save()
+        # update batch
         self.state = TaggingBatchState.IMPORTED
         self.save()
+        if hasattr(self, '_last_imports'):
+            # we have the imports already prefetched and need to update them
+            self._last_imports.insert(0, postflight)
 
     def unassign_tag(self, progress_monitor: Optional[Callable[[int, int], None]] = None) -> None:
         """
@@ -800,8 +1072,14 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         """
         if self.state != TaggingBatchState.UNDOING:
             raise ValueError(f'Cannot un-assign tag for batch in state "{self.state}"')
-        if not self.tag.can_user_assign(self.last_updated_by):
-            raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
+        if self.tag and not self.tag.can_user_assign(self.last_updated_by):
+            raise PermissionDenied(f'User cannot (un)assing tag #{self.tag_id}')
+        elif self.tag_class:
+            # we need to get all the tags for this batch and check all of them
+            used_tags = self.get_used_tags()
+            used_tags_count = used_tags.count()
+            if used_tags.user_assignable_tags(self.last_updated_by).count() < used_tags_count:
+                raise PermissionDenied('User cannot (un)assing some tags assigned in this batch')
         # we report progress just to be compatible with the other operations, but the way
         # we do it, the operation is almost immediate
         rows_total = self.titletag_set.count()
@@ -809,6 +1087,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             # report start
             progress_monitor(0, rows_total)
         self.titletag_set.all().delete()
+        self.taggingattempts.all().delete()
         if progress_monitor:
             progress_monitor(rows_total, rows_total)
 
@@ -820,6 +1099,56 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         return base + '-annotated' + ext
 
 
+class TaggingAttempt(CreatedUpdatedMixin, models.Model):
+    """
+    Represents one attempt to process a tagging batch. It can represent either a preflight
+    or actual tagging operation.
+    Each `TaggingBatch` may have a number of `TaggingAttempt`s because both preflight and import
+    may be repreated multiple times (after new titles were added to the database, etc.)
+    """
+
+    batch = models.ForeignKey(
+        TaggingBatch, on_delete=models.CASCADE, related_name='taggingattempts'
+    )
+    operation = models.CharField(choices=TaggingAttemptOperation.choices, max_length=10)
+    success = models.BooleanField(
+        default=True,
+        help_text='Whether the operation was successful. If not `error` should have more info',
+    )
+    error = models.TextField(
+        blank=True, help_text='In case of failure contains info about the error'
+    )
+    # stats
+    recognized_columns = models.JSONField(default=list, help_text='List of column names')
+    tag_stats = models.JSONField(
+        default=dict, help_text='Dict with tags as keys and dicts with different counts as values'
+    )
+    rows_total = models.PositiveIntegerField(
+        default=0, help_text='Total number of rows in the source file'
+    )
+    rows_no_match = models.PositiveIntegerField(default=0, help_text='Rows with no matched title')
+    rows_no_tag = models.PositiveIntegerField(default=0, help_text='Rows with no tag information')
+    unique_matched_titles = models.PositiveIntegerField(
+        default=0, help_text='Number of unique matched titles'
+    )
+    already_tagged_titles = models.PositiveIntegerField(
+        default=0,
+        help_text='Titles already tagged with the tag(s) as hand - these will not be tagged again',
+    )
+    tagged_titles = models.PositiveIntegerField(
+        default=0, help_text="In preflight means 'to be tagged'"
+    )
+    # the following are only for import
+    exclusively_tagged_titles = models.PositiveIntegerField(
+        default=0,
+        help_text='Number of titles which were already tagged with another tag from a mutually '
+        'exclusive tag class and thus were not tagged with the tag(s) as hand',
+    )
+
+    class Meta:
+        ordering = ('batch_id', 'created')
+
+
 class UserTagClass(models.Model):
     """
     Intermediate model for many-to-many relationship between User and TagClass.
@@ -829,6 +1158,8 @@ class UserTagClass(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
     hidden = models.BooleanField(default=True)
+    created = models.DateTimeField(default=now)
+    last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'tag_class')

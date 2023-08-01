@@ -9,6 +9,8 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 
+from core.logic.util import this_celus_domain
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +42,7 @@ def create_celery_task_log_dict(
     cache.delete(f'celery_task_ch_query_count_{task_id}')
 
     return {
-        'hostname': settings.ALLOWED_HOSTS[0],
+        'hostname': this_celus_domain(),
         'db_server': settings.DATABASES['default']['HOST'],
         'clickhouse_db_server': settings.CLICKHOUSE_HOST,
         'timestamp': task_obj.date_created if task_obj else now(),

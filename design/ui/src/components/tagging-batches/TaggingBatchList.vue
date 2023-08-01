@@ -6,7 +6,7 @@
     <v-skeleton-loader v-if="loading" type="table" />
     <v-data-table
       v-else
-      :items="taggingBatches"
+      :items="visibleTaggingBatches"
       :headers="headers"
       item-key="pk"
       :sort-by.sync="orderBy"
@@ -19,10 +19,14 @@
       expand-icon="fa fa-caret-down"
     >
       <template #top>
-        <v-btn color="primary" @click="uploadNew()">
-          <v-icon small class="pr-2">fa fa-upload</v-icon>
-          {{ $t("tagging.create_new_title_list") }}
-        </v-btn>
+        <div class="d-flex px-2">
+          <v-btn color="primary" @click="uploadNew()">
+            <v-icon small class="pr-2">fa fa-upload</v-icon>
+            {{ $t("tagging.create_new_title_list") }}
+          </v-btn>
+          <v-spacer />
+          <v-switch v-model="onlyMy" :label="$t('tagging.show_only_my')" />
+        </div>
       </template>
 
       <template #item.created="{ item }">
@@ -35,24 +39,38 @@
 
       <template #item.tag="{ item }">
         <TagChip v-if="item.tag" :tag="item.tag" show-class link />
+        <span v-else-if="item.tag_class">{{
+          $t("tagging.tags_read_from_file")
+        }}</span>
       </template>
 
-      <template #item.preflight.stats.row_count="{ item, value }">
+      <template #item.preflight.rows_total="{ item, value }">
         <v-tooltip bottom>
           <template #activator="{ on }">
-            <span v-on="on">{{ value }}</span>
+            <span v-on="on">{{ formatInteger(value) }}</span>
           </template>
           {{ $t("tagging.data_rows_tt") }}
         </v-tooltip>
       </template>
 
-      <template #item.preflight.stats.unique_matched_titles="{ item }">
+      <template #item.preflight.unique_matched_titles="{ item }">
+        <v-tooltip v-if="item.import_count > 1" bottom max-width="600px">
+          <template #activator="{ on }">
+            <v-icon v-on="on" x-small color="info" class="mr-2"
+              >fa fa-info-circle</v-icon
+            >
+          </template>
+          {{ $t("tagging.multi_import_tt") }}
+        </v-tooltip>
+
         <v-tooltip bottom>
           <template #activator="{ on }">
             <span v-on="on">{{
-              item.state === "imported"
-                ? item.postflight?.stats?.tagged_titles
-                : item.preflight?.stats?.unique_matched_titles
+              formatInteger(
+                item.state === "imported"
+                  ? item.postflight?.tagged_titles
+                  : item.preflight?.unique_matched_titles
+              )
             }}</span>
           </template>
           <div>
@@ -65,8 +83,8 @@
           <div>
             {{
               item.state === "imported" &&
-              (item.postflight?.stats?.tagged_titles || 0) <
-                (item.postflight?.stats?.unique_matched_titles || 0)
+              (item.postflight?.tagged_titles || 0) <
+                (item.postflight?.unique_matched_titles || 0)
                 ? $t("tagging.tagged_titles_note")
                 : $t("tagging.title_number_note")
             }}
@@ -78,10 +96,10 @@
         <v-tooltip bottom>
           <template #activator="{ on }">
             <v-btn @click="openBatch(item)" icon small v-on="on">
-              <v-icon small>fa fa-edit</v-icon>
+              <v-icon small>fa fa-cog</v-icon>
             </v-btn>
           </template>
-          {{ $t("actions.edit") }}
+          {{ $t("tagging.manage") }}
         </v-tooltip>
 
         <v-tooltip bottom>
@@ -97,9 +115,17 @@
       <template #expanded-item="{ item, headers }">
         <td :colspan="headers.length" class="px-0">
           <v-sheet class="ma-2 text--secondary">
-            <TaggingBatchStats :tagging-batch="item" show-file-name />
+            <TaggingBatchStats
+              :tagging-batch="item"
+              show-file-name
+              show-attempts
+            />
           </v-sheet>
         </td>
+      </template>
+
+      <template #item.last_updated_by="{ item }">
+        {{ userToString(item.last_updated_by) }}
       </template>
     </v-data-table>
     <v-dialog v-model="showDialog" v-if="showDialog" max-width="720px">
@@ -117,9 +143,11 @@ import TaggingBatchProcessingWidget from "@/components/tagging-batches/TaggingBa
 import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import TagChip from "@/components/tags/TagChip";
 import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
-import { mapActions } from "vuex";
+import { mapActions, mapState } from "vuex";
 import stateTracking from "@/mixins/stateTracking";
 import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
+import { formatInteger } from "@/libs/numbers";
+import { userToString } from "../../libs/user";
 
 export default {
   name: "TaggingBatchList",
@@ -138,6 +166,7 @@ export default {
       showDialog: false,
       expanded: [],
       loading: false,
+      onlyMy: false,
       // table state
       orderBy: "created",
       orderDesc: true,
@@ -162,16 +191,27 @@ export default {
           type: Number,
           var: "ipp",
         },
+        {
+          name: "onlyMy",
+          type: Boolean,
+        },
       ],
     };
   },
 
   computed: {
+    ...mapState({
+      user: "user",
+    }),
     headers() {
       return [
         {
           text: this.$i18n.t("labels.created"),
           value: "created",
+        },
+        {
+          text: this.$i18n.t("labels.last_updated_by"),
+          value: "last_updated_by",
         },
         {
           text: this.$i18n.t("labels.state"),
@@ -183,11 +223,13 @@ export default {
         },
         {
           text: this.$i18n.t("labels.rows"),
-          value: "preflight.stats.row_count",
+          value: "preflight.rows_total",
+          align: "right",
         },
         {
           text: this.$i18n.t("titles"),
-          value: "preflight.stats.unique_matched_titles",
+          value: "preflight.unique_matched_titles",
+          align: "right",
         },
         {
           text: this.$i18n.t("title_fields.actions"),
@@ -196,12 +238,23 @@ export default {
         },
       ];
     },
+    visibleTaggingBatches() {
+      let batches = this.taggingBatches;
+      if (this.onlyMy) {
+        batches = batches.filter(
+          (batch) => batch.last_updated_by.pk === this.user.pk
+        );
+      }
+      return batches;
+    },
   },
 
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    formatInteger,
+    userToString,
     async fetchTaggingBatches() {
       this.loading = true;
       const result = await this.http({ url: "/api/tags/tagging-batch/" });

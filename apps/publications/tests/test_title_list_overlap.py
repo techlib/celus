@@ -169,7 +169,7 @@ class TestTitleOverlapBatchModel:
         assert batch.processing_info['stats']['row_count'] == 6
         assert batch.processing_info['stats']['no_match'] == 6
         assert batch.processing_info['stats']['unique_matched_titles'] == 0
-        assert batch.processing_info['recognized_columns'] == ['eISSN', 'ISBN', 'issn', 'Name']
+        assert batch.processing_info['recognized_columns'] == ['eISSN', 'ISBN', 'issn']
         assert batch.annotated_file.name.endswith('-annotated.csv')
         reader = DictReader(codecs.getreader('utf-8')(batch.annotated_file))
         assert '_Matched titles_' in reader.fieldnames

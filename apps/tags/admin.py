@@ -46,3 +46,34 @@ class TaggingBatchAdmin(admin.ModelAdmin):
 
     list_display = ['pk', 'state', 'created', 'last_updated_by', 'tag', 'tag_class']
     list_filter = ['state', 'last_updated_by', 'tag', 'tag_class']
+
+
+@admin.register(models.TaggingAttempt)
+class TaggingAttemptAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'batch_id',
+        'operation',
+        'created',
+        'rows_total',
+        'unique_matched_titles',
+        'tagged_titles',
+        'already_tagged_titles',
+    ]
+    list_filter = ['operation', 'created']
+    readonly_fields = [
+        'batch',
+        'operation',
+        'recognized_columns',
+        'rows_total',
+        'rows_no_match',
+        'rows_no_tag',
+        'tag_stats',
+        'unique_matched_titles',
+        'already_tagged_titles',
+        'tagged_titles',
+        'exclusively_tagged_titles',
+        'created',
+        'last_updated',
+        'last_updated_by',
+    ]
