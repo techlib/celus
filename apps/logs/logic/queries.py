@@ -126,7 +126,7 @@ def extract_accesslog_attr_query_params(
             if mdu.organization:
                 query_params['organization'] = mdu.organization
             query_params['platform_id'] = mdu.platform_id
-            query_params['report_type_id'] = mdu.report_type_id
+            query_params['report_type'] = mdu.report_type
         query_params['import_batch__mdu__pk'] = mdu_id
     return query_params
 

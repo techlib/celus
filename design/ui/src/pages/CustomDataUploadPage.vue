@@ -5,7 +5,7 @@
 en:
   description: |
     On this page, you can upload data for platforms which do not offer a SUSHI interface,
-    older data which are not longer available through SUSHI or for non-COUNTER platforms.
+    older data which are no longer available through SUSHI or for non-COUNTER platforms.
   data_file: Data file to upload
   data_file_placeholder: Upload a file containing data.
   dismiss: Dismiss
@@ -251,7 +251,9 @@ cs:
                 <v-alert type="info" text>
                   <i18n path="notes_url_description">
                     <template #link>
-                      <a :href="notesUrl" target="_blank">{{ $t("notes_url_href") }}</a>
+                      <a :href="notesUrl" target="_blank">{{
+                        $t("notes_url_href")
+                      }}</a>
                     </template>
                   </i18n>
                 </v-alert>

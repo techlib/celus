@@ -7,13 +7,16 @@ from core.tests.conftest import (  # noqa - fixtures
     master_admin_identity,
     valid_identity,
 )
+from django.db.models import Sum
 from django.urls import reverse
+from logs.fake_data import ManualDataUploadFullFactory
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports
 from logs.models import (
     AccessLog,
     ImportBatch,
+    MduState,
     Metric,
     OrganizationPlatform,
     ReportMaterializationSpec,
@@ -435,3 +438,40 @@ class TestChartDataAPIView:
         data = resp.json()
         assert len(data) == 1
         assert data[0]['pk'] == metric.pk
+
+    @pytest.mark.parametrize('use_materialized', [True, False])
+    def test_with_mdu_filter(self, admin_client, use_materialized):
+        """
+        Test that MDU filter works properly when other data is present. Because of an issue
+        we found with materialized report types, we are testing both with and without the use
+        of materialized report types.
+        """
+        mdu1 = ManualDataUploadFullFactory.create(state=MduState.IMPORTED)
+        ManualDataUploadFullFactory.create(state=MduState.IMPORTED, report_type=mdu1.report_type)
+        if use_materialized:
+            ms = ReportMaterializationSpec.objects.create(
+                base_report_type=mdu1.report_type, name='mr', keep_target=False
+            )
+            mr = ReportType.objects.create(materialization_spec=ms, name='mr', short_name='mr')
+            sync_materialized_reports()
+            assert (
+                AccessLog.objects.filter(report_type=mr).aggregate(Sum('value'))['value__sum']
+                == AccessLog.objects.filter(report_type=mdu1.report_type).aggregate(Sum('value'))[
+                    'value__sum'
+                ]
+            ), "the materialized report should have the same data as the original report"
+
+        report_view = ReportDataView.objects.create(base_report_type=mdu1.report_type)
+        resp = admin_client.get(
+            reverse('chart_data', args=(report_view.pk,)),
+            {'prim_dim': 'date', 'mdu': mdu1.pk},
+        )
+        assert resp.status_code == 200
+        assert 'data' in resp.json()
+        assert len(resp.json()['data']) > 0
+        assert (
+            sum(rec['count'] for rec in resp.json()['data'])
+            == AccessLog.objects.filter(
+                import_batch__mdu=mdu1, report_type=mdu1.report_type
+            ).aggregate(Sum('value'))['value__sum']
+        )
