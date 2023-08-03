@@ -242,4 +242,8 @@ th.auto-width {
     text-align: left !important;
   }
 }
+
+.v-tab {
+  text-transform: uppercase;
+}
 </style>
