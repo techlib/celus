@@ -518,6 +518,7 @@ cs:
             </v-card>
           </v-col>
           <v-col
+            v-if="coverageGaugeCount"
             :cols="6 * coverageGaugeCount"
             :sm="4 * coverageGaugeCount"
             :md="3 * coverageGaugeCount"
@@ -847,6 +848,7 @@ export default {
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
       showNameEditDialog: false,
       coverageData: null,
+      reportsWithoutCoverage: ["interest"],
     };
   },
 
@@ -1094,6 +1096,11 @@ export default {
       return 0;
     },
     coverageGaugeCount() {
+      // if any of the selected report types do not support coverage,
+      // we do not show it
+      for (let rt of this.selectedReportTypeObjs) {
+        if (this.reportsWithoutCoverage.includes(rt.short_name)) return 0;
+      }
       return this.trendMode ? 2 : 1;
     },
   },
@@ -1369,7 +1376,7 @@ export default {
       }
     },
     async fetchCoverageData() {
-      if (this.selectedReportTypes.length)
+      if (this.selectedReportTypes.length && this.coverageGaugeCount > 0)
         this.coverageData = await this.reportObject.getCoverage();
     },
   },
