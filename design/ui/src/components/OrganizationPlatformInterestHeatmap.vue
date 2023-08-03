@@ -114,6 +114,7 @@ export default {
         type: "category",
         axisLabel: {
           rotate: 90,
+          fontSize: 10,
         },
         splitArea: {
           show: true,
@@ -123,15 +124,22 @@ export default {
         ].sort(),
       };
     },
+    yValues() {
+      return [
+        ...new Set(this.dataRaw.map((item) => item[this.secondaryDim])),
+      ].sort((a, b) => -a.localeCompare(b));
+    },
     yAxis() {
       return {
         type: "category",
         splitArea: {
           show: true,
         },
-        data: [
-          ...new Set(this.dataRaw.map((item) => item[this.secondaryDim])),
-        ].sort((a, b) => -a.localeCompare(b)),
+        data: this.yValues,
+        axisLabel: {
+          fontSize: 10,
+          overflow: "truncate",
+        },
       };
     },
     option() {
@@ -139,9 +147,10 @@ export default {
         xAxis: [{ ...this.xAxis }, { ...this.xAxis, position: "top" }],
         yAxis: this.yAxis,
         grid: {
-          top: "10%",
-          bottom: "15%",
-          left: "30%",
+          top: 150,
+          bottom: 200,
+          left: this.yValuesWidth,
+          right: 20,
         },
         series: [
           {
@@ -159,7 +168,7 @@ export default {
           calculable: true,
           orient: "horizontal",
           left: "center",
-          bottom: "5%",
+          bottom: "bottom",
           formatter: (value) => formatInteger(value),
         },
         tooltip: {
@@ -192,6 +201,12 @@ export default {
         97,
         this.dataRaw.map((item) => item.count)
       );
+    },
+    yValuesWidth() {
+      const maxLen = Math.max(
+        ...this.yValues.map((item) => item.toString().length)
+      );
+      return maxLen * 5 + 20;
     },
   },
   methods: {
