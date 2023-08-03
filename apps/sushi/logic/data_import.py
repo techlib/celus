@@ -52,7 +52,7 @@ def import_sushi_credentials_from_xlsx(
         Col.PLATFORM_FILTER,
     }
     if single_org:
-        if type(single_org) == int or single_org.isdigit():
+        if type(single_org) is int or single_org.isdigit():
             single_org = Organization.objects.get(pk=single_org)
         else:
             single_org = Organization.objects.get(Q(name_en=single_org) | Q(short_name=single_org))

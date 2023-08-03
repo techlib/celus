@@ -858,7 +858,7 @@ class TestAccessLogListView:
         locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
         for rec in data['results']:
             value = rec[order_by]
-            if type(value) == str:
+            if type(value) is str:
                 # database uses unicode collation, which sorts differently than python
                 # in presence of spaces. So we need to use unicode sort order as well
                 value = locale.strxfrm(value)
@@ -975,7 +975,7 @@ class TestAccessLogListView:
             last_value = None
             for rec in data['results']:
                 value = rec[order_by]
-                if type(value) == str:
+                if type(value) is str:
                     # database uses unicode collation, which sorts differently than python
                     # in presence of spaces. So we need to use unicode sort order as well
                     value = locale.strxfrm(value)
