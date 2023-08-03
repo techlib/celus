@@ -32,7 +32,7 @@ target-version = "py38"  # same as black
 
 [tool.poetry]
 name = "celus"
-version = "5.5.2"
+version = "5.6.0"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
 license = "MIT"
