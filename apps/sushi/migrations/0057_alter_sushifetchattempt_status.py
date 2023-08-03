@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
                     ('downloading', 'Downloading'),
                     ('importing', 'Importing'),
                     ('success', 'Success'),
-                    ('unprocessed', 'Unprocessed'),
                     ('no_data', 'No data'),
                     ('import_failed', 'Import failed'),
                     ('parsing_failed', 'Parsing failed'),
