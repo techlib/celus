@@ -257,8 +257,10 @@ class FlexibleDataSlicer:
                 # an extremely slow query (at least on K1), maybe because joins with organization
                 # created for organization specific tags
                 # If we resolve the tags beforehand and use the pks, the query is much faster
-                tag_ids = Tag.objects.filter(*tag_filters, tag_class__scope=tag_scope).values_list(
-                    'pk', flat=True
+                tag_ids = set(
+                    Tag.objects.filter(*tag_filters, tag_class__scope=tag_scope).values_list(
+                        'pk', flat=True
+                    )
                 )
                 qs = (
                     Tag.objects.filter(pk__in=tag_ids)
