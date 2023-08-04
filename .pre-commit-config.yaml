@@ -20,7 +20,7 @@ repos:
 
       - id: ruff
         name: ruff linter
-        entry: ruff
+        entry: ruff --fix
         language: system
         types: [python]
 

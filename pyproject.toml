@@ -26,6 +26,7 @@ select = [
     'W',  # pycodestyle - warnings
 ]
 target-version = "py38"  # same as black
+fixable = ['I001']  # isort: imports are incorrectly sorted
 
 [tool.ruff.per-file-ignores]
 "test_*.py" = ["B011"]  # test files should have asserts
