@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from api.models import OrganizationAPIKey
+from api.throttling import APIKeyBasedThrottle
 
 
 @pytest.mark.django_db
@@ -239,3 +240,36 @@ class TestAPI:
         )
         assert resp.status_code == 400
         assert b'Unknown dimensions' in resp.content
+
+    @pytest.mark.parametrize('throttling', [True, False])
+    def test_platform_report_view_throttling(
+        self, client, root_platform, tr_report, organizations, throttling
+    ):
+        """
+        Test throttling of the platform report view
+        """
+        # at this point, it is not possible to adjust the throttling rate via settings
+        # so we have to set it on the class directly
+        APIKeyBasedThrottle.rate = '1/minute' if throttling else '2/minute'
+        api_key, key_val = OrganizationAPIKey.objects.create_key(
+            organization=organizations['root'], name='test'
+        )
+
+        def make_request():
+            return client.get(
+                reverse(
+                    'api_platform_report_data',
+                    kwargs={'platform_id': root_platform.pk, 'report_type': tr_report.short_name},
+                ),
+                {'month': '2020-01', 'dims': ''},
+                HTTP_AUTHORIZATION=f'Api-Key {key_val}',
+            )
+
+        # first request should always succeed
+        resp = make_request()
+        assert resp.status_code == 200
+        # second request should fail if throttling is enabled
+        resp2 = make_request()
+        assert resp2.status_code == (429 if throttling else 200)
+        # remove the rate attr from APIKeyBasedThrottle so that it doesn't affect other tests
+        del APIKeyBasedThrottle.rate

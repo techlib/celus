@@ -18,6 +18,7 @@ from sushi.models import SushiCredentials, SushiFetchAttempt
 
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
+from api.throttling import APIKeyBasedThrottle
 
 
 class RedocView(TemplateView):
@@ -36,6 +37,7 @@ class PlatformReportView(APIView):
         complete_data = BooleanField(default=False)
 
     permission_classes = [HasOrganizationAPIKey]
+    throttle_classes = [APIKeyBasedThrottle]
 
     def get(self, request, platform_id, report_type):
         organization = extract_org_from_request_api_key(self.request)

@@ -234,6 +234,11 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 10
+    'DEFAULT_THROTTLE_RATES': {
+        # 'remote_api' - number of calls per API key per the specified period
+        # used by the APIKeyBasedThrottle
+        'remote_api': config('REMOTE_API_THROTTLE_RATE', cast=str, default='20/minute'),
+    },
 }
 
 # CACHE
