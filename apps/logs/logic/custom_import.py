@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 def custom_import_preflight_check(mdu: ManualDataUpload):
     histograms, counts, dimensions = mdu.histograms_with_stats()
     months = {
-        k: {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
-        for k, v in histograms["start"].items()
+        f"{k}-01": {"new": v, "this_month": None, "prev_year_avg": None, "prev_year_month": 0}
+        for k, v in histograms["months"].items()
     }
-    if len(histograms["organization"]) <= 1:
+    if len(histograms["organizations"]) <= 1:
         # Only a single organization is present
         # don't export organizations to preflight
         # organization is picked by the user
         organizations = None
     else:
-        organizations = histograms["organization"]
+        organizations = histograms["organizations"]
         resolved_organizations = dict(
             ManualDataUpload.organizations_from_data_cls(organizations.keys())
         )
@@ -70,9 +70,9 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         'log_count': counts["count"],
         'hits_total': counts["sum"],
         'months': months,
-        'metrics': histograms["metric"],
+        'metrics': histograms["metrics"],
         'used_metrics': used_metrics,
-        'title_count': len(histograms["title"]),
+        'title_count': len(histograms["titles"]),
         'organizations': organizations,
         'dimensions': dimensions,
     }

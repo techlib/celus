@@ -11,6 +11,7 @@ from enum import Enum
 from pathlib import Path
 
 import magic
+from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
 from celus_nigiri.csv_detect import detect_file_encoding
@@ -769,30 +770,21 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     def histograms_with_stats(
         self,
     ) -> typing.Tuple[typing.Dict[str, Counter], Counter, typing.List[str]]:
-        attrs = ['start', 'metric', 'title', 'organization']
-        histograms = {e: {} for e in attrs}
-        dimensions = set()
-        cnt = Counter()
-        for x in self.data_to_records():
-            dimensions |= set(x.dimension_data.keys())
-            for attr in attrs:
-                value = str(getattr(x, attr) or "")
-                rec = histograms[attr].get(value, {"sum": 0, "count": 0})
-                rec["sum"] += x.value
-                rec["count"] += 1
-                histograms[attr][value] = rec
-            cnt["sum"] += x.value
-            cnt["count"] += 1
+        stats = PoopStats()
+        for record in self.data_to_records():
+            stats.process_record(record)
 
-        if cnt["count"] == 0 and self.using_nibbler:
-            # Fill in months if no records are present
+        stats_dict = stats.dict()
+
+        # Fill in empty months from nibbler output when no data are present
+        if stats_dict["total"]["count"] == 0 and self.using_nibbler:
             nibbler_output, _ = self.get_nibbler_output()
-            histograms["start"] = {
-                m.strftime("%Y-%m-01"): {"sum": 0, "count": 0}
+            stats_dict["months"] = {
+                m.strftime("%Y-%m"): {"sum": 0, "count": 0}
                 for m in get_months_from_nibbler_output(nibbler_output)
             }
 
-        return histograms, cnt, list(dimensions)
+        return (stats_dict, Counter(stats_dict["total"]), list(stats_dict["dimensions"].keys()))
 
     def get_nibbler_output(self) -> (NibblerOutput, MduMethod):
         if self.method == MduMethod.RAW:
