@@ -263,6 +263,68 @@ class TestManualUploadForCounterData:
             assert response.status_code == 200
 
     @pytest.mark.parametrize(
+        ['filename', 'from_report_type', 'to_report_type'],
+        (
+            pytest.param(
+                'counter5/counter5_table_pr.csv',
+                'tr',
+                'pr',
+                id="csv-TR-to-PR",
+            ),
+            pytest.param(
+                'counter5/counter5_tr_test1.json',
+                'dr',
+                'tr',
+                id="json-DR-to-TR",
+            ),
+        ),
+    )
+    def test_report_type_override(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        report_types,
+        counter_report_types,
+        clients,
+        tmp_path,
+        settings,
+        filename,
+        from_report_type,
+        to_report_type,
+    ):
+        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = True
+
+        with (Path(__file__).parent / "data" / filename).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = f"something.{filename.split('.')[-1]}"
+
+        organization = organizations['master']
+        platform = platforms['master']
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'report_type_id': report_types[from_report_type].pk,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # calculate preflight in celery
+        prepare_preflight(mdu.pk)
+
+        mdu.refresh_from_db()
+        assert mdu.state == MduState.PREFLIGHT
+        assert mdu.report_type == report_types[to_report_type]
+
+    @pytest.mark.parametrize(
         ['filename', 'report_code', 'use_nibbler', 'months'],
         (
             pytest.param(

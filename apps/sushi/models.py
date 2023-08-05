@@ -173,7 +173,12 @@ class CounterReportType(models.Model):
 
     def get_nibbler_parser(self, json_format: bool = False):
         name = 'Json' if json_format else 'Tabular'
-        return f"static.counter{self.counter_version}.{self.code}.{name}"
+        return f"static\\.counter{self.counter_version}\\.{self.code}\\.{name}"
+
+    @classmethod
+    def all_nibbler_counter_parsers(cls, json_format: bool = False) -> str:
+        name = 'Json' if json_format else 'Tabular'
+        return f"static\\.counter[^\\.]+\\.[^\\.]+.{name}"
 
 
 class SushiCredentialsQuerySet(models.QuerySet):
