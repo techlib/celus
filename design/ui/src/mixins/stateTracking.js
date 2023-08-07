@@ -21,7 +21,7 @@ export default {
       // an empty value will not be stored in the URL and when loaded,
       // the default value will be used instead.
       //
-      // It is also possibile to rename the attribute in the URL by
+      // It is also possible to rename the attribute in the URL by
       // providing the `var` attribute in the `watchedAttrs` list.
       // This is useful when you want to use a shorter name in the URL
       // or when you do not want to expose the internal name of the attribute.

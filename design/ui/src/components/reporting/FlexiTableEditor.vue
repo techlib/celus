@@ -536,7 +536,8 @@ cs:
                       :tooltip="$t('coverage_base_tt')"
                       :coverage-data="coverageData.base"
                       :elevation="0"
-                      :clickable="false"
+                      clickable
+                      @click="goToCoverageOverview"
                     />
                   </v-col>
                   <v-col>
@@ -545,7 +546,8 @@ cs:
                       :tooltip="$t('coverage_compared_tt')"
                       :coverage-data="coverageData.compared"
                       :elevation="0"
-                      :clickable="false"
+                      clickable
+                      @click="goToCoverageOverview"
                     />
                   </v-col>
                 </v-row>
@@ -556,7 +558,8 @@ cs:
                       :tooltip="$t('coverage_tt')"
                       :coverage-data="coverageData.overall"
                       :elevation="0"
-                      :clickable="false"
+                      clickable
+                      @click="goToCoverageOverview"
                     />
                   </v-col>
                 </v-row>
@@ -760,6 +763,7 @@ import differenceInCalendarMonths from "date-fns/differenceInCalendarMonths";
 import lastDayOfYear from "date-fns/lastDayOfYear";
 import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
+import goTo from "vuetify/lib/services/goto";
 
 export default {
   name: "FlexiTableEditor",
@@ -1106,6 +1110,9 @@ export default {
   },
 
   methods: {
+    goTo() {
+      return goTo;
+    },
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
@@ -1378,6 +1385,17 @@ export default {
     async fetchCoverageData() {
       if (this.selectedReportTypes.length && this.coverageGaugeCount > 0)
         this.coverageData = await this.reportObject.getCoverage();
+    },
+    goToCoverageOverview() {
+      this.$router.push({
+        name: "data-coverage-overview",
+        query: {
+          rtid:
+            this.selectedReportTypes.length === 1
+              ? this.selectedReportTypes[0]
+              : undefined,
+        },
+      });
     },
   },
 

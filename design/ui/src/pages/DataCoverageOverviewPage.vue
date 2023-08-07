@@ -162,14 +162,9 @@ cs:
                 <CoverageCard
                   :report-type="reportType"
                   :coverage-data="coverageData[reportType.pk]"
-                  :selected="
-                    selectedReportType &&
-                    selectedReportType.pk === reportType.pk
-                  "
+                  :selected="selectedReportTypeId === reportType.pk"
                   :refreshing="
-                    refreshingSelected &&
-                    selectedReportType &&
-                    selectedReportType.pk === reportType.pk
+                    refreshingSelected && selectedReportTypeId === reportType.pk
                   "
                   show-platform-count
                   :show-organization-count="showingAllOrganizations"
@@ -411,11 +406,12 @@ import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
 import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
 import CoverageCard from "@/components/coverage/CoverageCard.vue";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "DataCoverageOverviewPage",
 
-  mixins: [cancellation],
+  mixins: [cancellation, stateTracking],
 
   components: {
     CoverageCard,
@@ -430,7 +426,7 @@ export default {
       reportTypes: [],
       coverageData: {},
       loading: false,
-      selectedReportType: null,
+      selectedReportTypeId: null,
       openedPanel: null,
       harvestInfo: null,
       showDetailByOrganization: false,
@@ -440,6 +436,18 @@ export default {
       harvestId: null,
       refreshingSelected: false,
       isDetailVisible: false,
+      // state tracking support
+      watchedAttrs: [
+        {
+          name: "selectedReportTypeId",
+          type: Number,
+          var: "rtid",
+        },
+        {
+          name: "openedPanel",
+          type: Number,
+        },
+      ],
     };
   },
 
@@ -455,8 +463,11 @@ export default {
     showingAllOrganizations() {
       return this.organizationId <= 0;
     },
-    selectedReportTypeId() {
-      return this.selectedReportType?.pk;
+    selectedReportType() {
+      return (
+        this.reportTypes.find((rt) => rt.pk === this.selectedReportTypeId) ||
+        null
+      );
     },
     visibleReportTypes() {
       return this.reportTypes
@@ -704,7 +715,6 @@ export default {
     async prepare() {
       this.loading = true;
       this.coverageData = {};
-      this.selectedReportType = null;
       await this.fetchReportTypes();
       for (let reportType of this.visibleReportTypes) {
         // we do this iteratively to avoid overloading the server
@@ -715,6 +725,15 @@ export default {
       }
       if (this.counterVersions.length > 0) {
         this.openedPanel = 0;
+      }
+      if (
+        this.visibleReportTypes
+          .map((rt) => rt.pk)
+          .includes(this.selectedReportTypeId)
+      ) {
+        await this.refreshSelectedReportType();
+      } else {
+        this.selectedReportTypeId = null;
       }
       this.loading = false;
     },
@@ -781,7 +800,7 @@ export default {
       ) {
         this.refreshSelectedReportType();
       } else {
-        this.selectedReportType = reportType;
+        this.selectedReportTypeId = reportType.pk;
       }
     },
     onDetailIntersect(entries, observer) {
