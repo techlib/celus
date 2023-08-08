@@ -148,8 +148,9 @@ class TestFlexibleDataExport:
                 '-- untagged remainder --,51894,52866,53838',
             ]
 
+    @pytest.mark.parametrize('hide_tag_class', [True, False])
     def test_create_output_file_with_tag_filter(
-        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
+        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output, hide_tag_class
     ):
         tag1 = tagged_titles['tag1']
         slicer = FlexibleDataSlicer(primary_dimension='platform')
@@ -159,13 +160,18 @@ class TestFlexibleDataExport:
         slicer.primary_dimension = 'target'
         slicer.add_group_by('metric')
         t1, t2, _ = tagged_titles['titles']
+        if hide_tag_class:
+            # if we hide the tag class, the filtering by tag should still work
+            # but the output should not include the tag name
+            tag1.tag_class.change_hidden_for_user(admin_user, True)
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
+        tag_value = tag1.full_name if not hide_tag_class else ''
         assert data.splitlines() == [
             'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
-            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag1.full_name},51246,52218,53190',
-            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag1.full_name},51570,52542,53514',
+            f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag_value},51246,52218,53190',
+            f'Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag_value},51570,52542,53514',
         ]
 
     def test_tagged_output_query_count(

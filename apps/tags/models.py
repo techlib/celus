@@ -13,7 +13,7 @@ from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
 from django.core.files.base import File
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Exists, Q, QuerySet
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from logs.logic.data_import import TitleManager
@@ -69,6 +69,23 @@ class TagClassQuerySet(models.QuerySet):
 
     def user_modifiable_tag_classes(self, user: User) -> QuerySet['TagClass']:
         return self.filter(access_filters('can_modify', user))
+
+    def with_user_visible_tags(self, user: User) -> QuerySet['TagClass']:
+        in_visible_tags = Tag.objects.user_accessible_tags(user).values('tag_class_id').distinct()
+        return self.filter(Q(id__in=in_visible_tags))
+
+    def annotate_hidden(self, user: User) -> QuerySet['TagClass']:
+        """
+        Annotates the queryset with a boolean field `hidden` which is True if the user has
+        marked the tag class as hidden
+        """
+        return self.annotate(
+            hidden=Exists(
+                UserTagClass.objects.filter(
+                    user=user, tag_class_id=models.OuterRef('id'), hidden=True
+                )
+            )
+        )
 
 
 class TagClass(CreatedUpdatedMixin, models.Model):
@@ -249,6 +266,11 @@ class TagClass(CreatedUpdatedMixin, models.Model):
             if user.organization_relationship(organization.pk) == REL_ORG_ADMIN:
                 return True
         return False
+
+    def change_hidden_for_user(self, user: User, hidden: bool):
+        UserTagClass.objects.update_or_create(
+            user=user, tag_class=self, defaults={'hidden': hidden}
+        )
 
 
 class TagQuerySet(models.QuerySet):
@@ -770,3 +792,17 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         _folder, fname = os.path.split(self.source_file.name)
         base, ext = os.path.splitext(fname)
         return base + '-annotated' + ext
+
+
+class UserTagClass(models.Model):
+    """
+    Intermediate model for many-to-many relationship between User and TagClass.
+    Currently only serves to store `hidden` flag.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
+    hidden = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('user', 'tag_class')

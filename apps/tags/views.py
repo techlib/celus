@@ -3,6 +3,7 @@ from typing import Optional
 from allauth.utils import build_absolute_uri
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
+from core.logic.type_conversion import to_bool
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.http import Http404
@@ -26,7 +27,15 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from tags.filters import TagClassScopeFilter
-from tags.models import ItemTag, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
+from tags.models import (
+    ItemTag,
+    Tag,
+    TagClass,
+    TaggingBatch,
+    TaggingBatchState,
+    TagScope,
+    UserTagClass,
+)
 from tags.permissions import TagClassPermissions, TagPermissions
 from tags.serializers import (
     TagClassSerializer,
@@ -50,19 +59,39 @@ class TagClassViewSet(ModelViewSet):
     filter_backends = [TagClassScopeFilter]
 
     def get_queryset(self):
-        return TagClass.objects.user_accessible_tag_classes(self.request.user)
+        return TagClass.objects.user_accessible_tag_classes(self.request.user).annotate_hidden(
+            self.request.user
+        )
 
     @action(detail=False, methods=['get'], url_name='visible-tags', url_path='visible-tags')
     def with_visible_tags(self, request):
         """
         Return a list of tag classes with visible tags for the current user.
         """
-        in_visible_tags = (
-            Tag.objects.user_accessible_tags(self.request.user).values('tag_class_id').distinct()
+        qs = self.filter_queryset(
+            TagClass.objects.with_user_visible_tags(request.user).annotate_hidden(request.user)
         )
-        qs = self.filter_queryset(TagClass.objects.filter(Q(id__in=in_visible_tags)))
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_name='hide', url_path='hide')
+    def hide(self, request, pk=None):
+        """
+        Mark the tag class a hidden/visible for the current user based on the `hidden` param.
+        """
+        hidden = to_bool(request.data.get('hidden', 'true'))
+        tag_class = get_object_or_404(
+            (
+                self.get_queryset() | TagClass.objects.with_user_visible_tags(request.user)
+            ).annotate_hidden(request.user),
+            pk=pk,
+        )
+        tag_class.change_hidden_for_user(request.user, hidden)
+
+        # refresh the tag class instance
+        tag_class = TagClass.objects.annotate_hidden(request.user).get(pk=pk)
+
+        return Response(self.get_serializer(tag_class).data)
 
 
 class TagViewSet(ModelViewSet):
@@ -201,11 +230,18 @@ class TagItemLinksView(APIView):
         params = param_serializer.validated_data
         item_type = params['item_type']
         obj_cls = ItemTag.get_subclass_by_item_type(item_type)
-        data = obj_cls.objects.filter(
-            tag__in=Tag.objects.user_accessible_tags(request.user),
-            tag__tag_class__scope=item_type,
-            target_id__in=params['item_id'],
-        ).values('tag_id', 'target_id')
+        hidden_classes = UserTagClass.objects.filter(
+            user=request.user, tag_class__scope=item_type, hidden=True
+        ).values_list('tag_class_id', flat=True)
+        data = (
+            obj_cls.objects.filter(
+                tag__in=Tag.objects.user_accessible_tags(request.user),
+                tag__tag_class__scope=item_type,
+                target_id__in=params['item_id'],
+            )
+            .exclude(tag__tag_class__in=hidden_classes)  # hide tags from hidden classes
+            .values('tag_id', 'target_id')
+        )
         if item_type == TagScope.ORGANIZATION:
             data = data.filter(target_id__in=request.user.accessible_organizations())
         elif item_type == TagScope.PLATFORM:

@@ -3,6 +3,7 @@ from functools import cached_property
 from django.core.exceptions import BadRequest
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import (
+    BooleanField,
     CurrentUserDefault,
     HiddenField,
     ReadOnlyField,
@@ -16,6 +17,7 @@ from tags.models import Tag, TagClass, TaggingBatch
 class TagClassSerializer(ModelSerializer):
 
     user_can_modify = SerializerMethodField()
+    hidden = BooleanField(default=False, read_only=True)
 
     class Meta:
         model = TagClass
@@ -34,6 +36,7 @@ class TagClassSerializer(ModelSerializer):
             'default_tag_can_see',
             'default_tag_can_assign',
             'user_can_modify',
+            'hidden',
         )
 
     def get_user_can_modify(self, tc: TagClass):

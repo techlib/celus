@@ -4,7 +4,15 @@ from django.db import DatabaseError, IntegrityError
 from publications.fake_data import TitleFactory
 
 from tags.fake_data import TagClassFactory, TagFactory
-from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TaggingBatchState, TagScope
+from tags.models import (
+    AccessibleBy,
+    Tag,
+    TagClass,
+    TaggingBatch,
+    TaggingBatchState,
+    TagScope,
+    UserTagClass,
+)
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -152,6 +160,19 @@ class TestTagClassVisibility:
             TagClass.can_set_access_level(users[user_key], access_permission, organization=org)
             == can_create
         )
+
+    def test_explicit_user_hiding(self, users):
+        user = users['user1']
+        tc = TagClassFactory.create(can_create_tags=AccessibleBy.OWNER, owner=user)
+        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 0
+        tc.change_hidden_for_user(user, True)
+        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1
+        tc.change_hidden_for_user(user, True)
+        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1, 'no duplicates'
+        assert UserTagClass.objects.filter(user=user, tag_class=tc, hidden=True).count() == 1
+        tc.change_hidden_for_user(user, False)
+        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1
+        assert UserTagClass.objects.filter(user=user, tag_class=tc, hidden=True).count() == 0
 
 
 @pytest.mark.django_db

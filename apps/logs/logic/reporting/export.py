@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import pgettext
 from mptt.models import MPTTModelBase
 from organizations.models import Organization
-from tags.models import Tag, TagScope
+from tags.models import Tag, TagScope, UserTagClass
 
 from logs.logic.export_utils import (
     CSVListWriter,
@@ -233,10 +233,18 @@ class FlexibleDataExporter(ABC):
                 self._tag_cache = {}
                 tag_spec = self.taggable_rows[self.slicer.primary_dimension]
                 link_class = Tag.link_class_from_scope(tag_spec['scope'])
-                for link in link_class.objects.filter(
-                    tag__in=Tag.objects.user_accessible_tags(self.report_owner),
-                    target_id__in=batch_pks,
-                ).select_related('tag', 'tag__tag_class'):
+                # the user does not want to see following tag classes in output
+                hidden_tag_classes = UserTagClass.objects.filter(
+                    user=self.report_owner, hidden=True
+                ).values_list('tag_class_id', flat=True)
+                for link in (
+                    link_class.objects.filter(
+                        tag__in=Tag.objects.user_accessible_tags(self.report_owner),
+                        target_id__in=batch_pks,
+                    )
+                    .exclude(tag__tag_class__in=hidden_tag_classes)
+                    .select_related('tag', 'tag__tag_class')
+                ):
                     self._tag_cache.setdefault(link.target_id, []).append(link.tag)
 
             self.prepare_primary_remap(batch_pks)

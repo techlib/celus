@@ -9,6 +9,8 @@ en:
   tag_class_delete_success: Tag class "{tag_class}" was successfully deleted
   performance_warning: In order to optimize performance when many tags are shown, only the text of the tags is shown, not a full preview.
   show_system_tags: Show system tags
+  tag_class_hidden: Tags from this class will not be shown when listing tagged items, such as titles. Click to toggle.
+  tag_class_visible: Tags from this class will be shown when listing tagged items, such as titles. Click to toggle.
 
 cs:
   confirm_tag_delete: Potvrzení smazání štítku
@@ -19,6 +21,8 @@ cs:
   tag_class_delete_success: Typ štítků "{name}" byl úspěšně smazán
   performance_warning: Pro optimalizaci výkonu, když je zobrazeno mnoho štítků, je zobrazen pouze text štítku, nikoliv plný náhled.
   show_system_tags: Zobrazit systémové štítky
+  tag_class_hidden: Tento typ štítků nebude zobrazen při výpisu položek se štítky, například titulů. Kliknutím přepnete.
+  tag_class_visible: Tento typ štítků bude zobrazen při výpisu položek se štítky, například titulů. Kliknutím přepnete.
 </i18n>
 
 <template>
@@ -176,6 +180,24 @@ cs:
           >
             <v-icon small>fa-trash</v-icon>
           </v-btn>
+          <v-tooltip bottom max-width="600px">
+            <template #activator="{ on }">
+              <v-btn small icon @click="hideClass(group)" v-on="on">
+                <v-icon small
+                  >{{
+                    classIdToObj.has(group) && classIdToObj.get(group).hidden
+                      ? "fa-eye-slash"
+                      : "fa-eye"
+                  }}
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>{{
+              classIdToObj.has(group) && classIdToObj.get(group).hidden
+                ? $t("tag_class_hidden")
+                : $t("tag_class_visible")
+            }}</span>
+          </v-tooltip>
         </td>
       </template>
     </v-data-table>
@@ -335,6 +357,16 @@ export default {
       }
       return out;
     },
+    visibleTagClasses() {
+      let out = this.tagClasses;
+      if (this.tagScope) {
+        out = out.filter((tc) => tc.scope === this.tagScope);
+      }
+      if (!this.showSystemTags) {
+        out = out.filter((tc) => tc.can_create_tags !== accessLevels.SYSTEM);
+      }
+      return out;
+    },
     tagScopes() {
       return [
         { value: "", text: this.$t("labels.all_tags") },
@@ -371,10 +403,24 @@ export default {
     },
     async fetchTagClasses() {
       this.tagClassesLoading = true;
+      // load tag classes which the user can edit or create tags
       const reply = await this.http({ url: "/api/tags/tag-class/" });
+      // load tag classes from which the user can see tags
+      // e.g. system tags will be here but not in the first reply
+      const reply2 = await this.http({
+        url: "/api/tags/tag-class/visible-tags/",
+      });
       this.tagClassesLoading = false;
+      let inReply = new Set();
       if (!reply.error) {
+        // merge the two replies
         this.tagClasses = reply.response.data;
+        this.tagClasses.forEach((item) => inReply.add(item.pk));
+        for (let rec2 of reply2.response.data) {
+          if (!inReply.has(rec2.pk)) {
+            this.tagClasses.push(rec2);
+          }
+        }
       }
     },
     editTag(tag) {
@@ -466,7 +512,7 @@ export default {
           groups.get(tag.tag_class.pk).push(tag);
         }
       });
-      this.tagClasses.forEach((tc) => {
+      this.visibleTagClasses.forEach((tc) => {
         if (
           !groups.has(tc.pk) &&
           (this.tagScope === "" || tc.scope === this.tagScope)
@@ -482,6 +528,22 @@ export default {
         })
       );
       return out;
+    },
+    async hideClass(clsId) {
+      const nowHidden = this.classIdToObj.get(clsId).hidden;
+      let result = await this.http({
+        url: `/api/tags/tag-class/${clsId}/hide/`,
+        method: "post",
+        data: { hidden: !nowHidden },
+      });
+      if (!result.error) {
+        for (let tc of this.tagClasses) {
+          if (tc.pk === clsId) {
+            tc.hidden = result.response.data.hidden;
+            break;
+          }
+        }
+      }
     },
   },
 

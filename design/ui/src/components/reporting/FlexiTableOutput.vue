@@ -593,6 +593,7 @@ export default {
       this.dataComputing = true;
       await this.updateTranslators();
       if (this.taggableRow) {
+        this.cleanTagCache(); // clear the cache because taggings may have changed
         await this.getTagsForObjectsById(
           this.rowToTagScope[this.row],
           this.data.map((item) => item.pk)

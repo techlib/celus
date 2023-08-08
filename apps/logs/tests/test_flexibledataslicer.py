@@ -974,6 +974,175 @@ class TestFlexibleDataSlicerOther:
         data = list(slicer.get_data())
         assert len(data) == row_count
 
+    @pytest.mark.parametrize(
+        [
+            'organization_idx',
+            'platform_idx',
+            'report_type_idx',
+            'start_month',
+            'end_month',
+            'exp_ib_count',
+            'exp_ib_max',
+        ],
+        [
+            (None, None, 0, '2019-12-01', '2020-03-31', 35, 36),
+            (None, None, 1, '2019-12-01', '2020-03-31', 36, 36),
+            (0, 0, 0, '2019-12-01', '2020-03-31', 3, 4),
+            (0, 0, 0, '2019-12-01', '2020-01-31', 1, 2),
+            (0, 0, 1, '2019-12-01', '2020-03-31', 4, 4),
+            (0, 0, 0, None, None, 3, 4),
+            (None, None, 0, None, None, 35, 36),
+            (None, None, 1, None, None, 36, 36),
+            (0, 1, 0, '2019-12-01', '2020-03-31', 4, 4),
+        ],
+    )
+    def test_report_coverage(
+        self,
+        flexible_slicer_test_data,
+        organization_idx,
+        platform_idx,
+        report_type_idx,
+        start_month,
+        end_month,
+        exp_ib_count,
+        exp_ib_max,
+    ):
+        """
+        Test the `get_coverage` method of the slicer in different scenarios.
+        """
+        # we need to remove some data to create some holes
+        assert ImportBatch.objects.count() == 72
+        orgs = flexible_slicer_test_data['organizations']
+        platforms = flexible_slicer_test_data['platforms']
+        rts = flexible_slicer_test_data['report_types']
+        ImportBatch.objects.filter(
+            organization=orgs[0], platform=platforms[0], report_type=rts[0], date='2020-01-01'
+        ).delete()
+        # create the slicer
+        rt = rts[report_type_idx]
+        pl = platforms[platform_idx] if platform_idx is not None else None
+        org = orgs[organization_idx] if organization_idx is not None else None
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(DateDimensionFilter('date', start_month, end_month))
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt))
+        if pl:
+            slicer.add_filter(ForeignKeyDimensionFilter('platform', pl))
+        if org:
+            slicer.add_filter(ForeignKeyDimensionFilter('organization', org))
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == exp_ib_count
+        assert coverage['ib_max'] == exp_ib_max
+
+    def test_report_coverage_with_multiple_report_types(self, flexible_slicer_test_data):
+        # delete 3 import batches
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=flexible_slicer_test_data['report_types'][0],
+            date='2020-01-01',
+        ).delete()
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'])
+        )
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == 69
+        assert coverage['ib_max'] == 72
+
+    @pytest.mark.parametrize(
+        ('org_idx', 'exp_ib_count', 'exp_ib_max'),
+        [(None, 14, 16), (0, 14, 16), (1, 14, 16), (2, 22, 24)],
+    )
+    def test_report_coverage_with_tag_based_filter(
+        self, flexible_slicer_test_data, admin_user, org_idx, exp_ib_count, exp_ib_max
+    ):
+        """
+        Test that the coverage computation can deal with tag-based filters instead of FK-based
+        filters. And also that it works together with FK-based filters.
+
+        The filters should be "ored" together.
+        """
+        # delete 3 import batches
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=flexible_slicer_test_data['report_types'][0],
+            date='2020-01-01',
+        ).delete()
+        # add tags to platforms and organizations
+        platforms = flexible_slicer_test_data['platforms']
+        tag1 = TagFactory(tag_class__scope=TagScope.PLATFORM, tag_class__name='cls1', name='tag1')
+        tag1.tag(platforms[0], admin_user)
+        tag1.tag(platforms[1], admin_user)
+        orgs = flexible_slicer_test_data['organizations']
+        tag2 = TagFactory(
+            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag2'
+        )
+        tag3 = TagFactory(
+            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag3'
+        )
+        tag2.tag(orgs[0], admin_user)
+        tag2.tag(orgs[1], admin_user)
+        tag3.tag(orgs[1], admin_user)  # double tag org[1] to make sure it does not mess things up
+        # create the slicer
+        slicer = FlexibleDataSlicer(primary_dimension='platform')
+        slicer.add_group_by('metric')
+        slicer.add_filter(
+            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'][0])
+        )
+        slicer.add_filter(TagDimensionFilter('platform', tag1))
+        slicer.add_filter(TagDimensionFilter('organization', [tag2, tag3]))
+        if org_idx:
+            slicer.add_filter(ForeignKeyDimensionFilter('organization', orgs[org_idx].pk))
+        coverage = slicer.get_coverage()['overall']
+        assert coverage['ib_count'] == exp_ib_count
+        assert coverage['ib_max'] == exp_ib_max
+
+    def test_report_coverage_in_trend_mode(self, flexible_slicer_test_data):
+        # delete 3 import batches
+        rt1 = flexible_slicer_test_data['report_types'][0]
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data['organizations'][0],
+            report_type=rt1,
+            date='2020-01-01',
+        ).delete()
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
+        )
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
+        coverage = slicer.get_coverage()
+        assert 'base' in coverage
+        assert 'compared' in coverage
+        assert coverage['base']['ib_count'] == 6
+        assert coverage['base']['ib_max'] == 9
+        assert coverage['compared']['ib_count'] == 9
+        assert coverage['compared']['ib_max'] == 9
+
+    def test_report_coverage_in_trend_mode_with_global_date_filter(self, flexible_slicer_test_data):
+        """
+        Test that when date filter is applied globally, it is ignored in the trend mode
+        and does not cause an error
+        """
+        rt1 = flexible_slicer_test_data['report_types'][0]
+        slicer = FlexibleDataSlicer(
+            primary_dimension='platform',
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
+            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
+        )
+        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
+        slicer.add_filter(DateDimensionFilter('date', '2018-01', '2018-02'))
+        coverage = slicer.get_coverage()
+        # test that there is complete coverage, if global date filter was not ignored
+        # the coverage data would be just zeros
+        assert coverage['base']['ib_count'] == 9
+        assert coverage['base']['ib_max'] == 9
+        assert coverage['compared']['ib_count'] == 9
+        assert coverage['compared']['ib_max'] == 9
+
 
 @pytest.mark.django_db
 class TestFlexibleDataSimpleCSVExporter:
@@ -1443,175 +1612,6 @@ class TestFlexibleDataSimpleCSVExporter:
                 assert data[6] == ['Rows', 'Platform']
                 assert data[7] == ['Columns', 'Trend analysis: 2020-01 vs 2020-02']
                 assert data[8] == ['Applied filters', f'Report type: {report_type.name}']
-
-    @pytest.mark.parametrize(
-        [
-            'organization_idx',
-            'platform_idx',
-            'report_type_idx',
-            'start_month',
-            'end_month',
-            'exp_ib_count',
-            'exp_ib_max',
-        ],
-        [
-            (None, None, 0, '2019-12-01', '2020-03-31', 35, 36),
-            (None, None, 1, '2019-12-01', '2020-03-31', 36, 36),
-            (0, 0, 0, '2019-12-01', '2020-03-31', 3, 4),
-            (0, 0, 0, '2019-12-01', '2020-01-31', 1, 2),
-            (0, 0, 1, '2019-12-01', '2020-03-31', 4, 4),
-            (0, 0, 0, None, None, 3, 4),
-            (None, None, 0, None, None, 35, 36),
-            (None, None, 1, None, None, 36, 36),
-            (0, 1, 0, '2019-12-01', '2020-03-31', 4, 4),
-        ],
-    )
-    def test_report_coverage(
-        self,
-        flexible_slicer_test_data,
-        organization_idx,
-        platform_idx,
-        report_type_idx,
-        start_month,
-        end_month,
-        exp_ib_count,
-        exp_ib_max,
-    ):
-        """
-        Test the `get_coverage` method of the slicer in different scenarios.
-        """
-        # we need to remove some data to create some holes
-        assert ImportBatch.objects.count() == 72
-        orgs = flexible_slicer_test_data['organizations']
-        platforms = flexible_slicer_test_data['platforms']
-        rts = flexible_slicer_test_data['report_types']
-        ImportBatch.objects.filter(
-            organization=orgs[0], platform=platforms[0], report_type=rts[0], date='2020-01-01'
-        ).delete()
-        # create the slicer
-        rt = rts[report_type_idx]
-        pl = platforms[platform_idx] if platform_idx is not None else None
-        org = orgs[organization_idx] if organization_idx is not None else None
-        slicer = FlexibleDataSlicer(primary_dimension='platform')
-        slicer.add_group_by('metric')
-        slicer.add_filter(DateDimensionFilter('date', start_month, end_month))
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt))
-        if pl:
-            slicer.add_filter(ForeignKeyDimensionFilter('platform', pl))
-        if org:
-            slicer.add_filter(ForeignKeyDimensionFilter('organization', org))
-        coverage = slicer.get_coverage()['overall']
-        assert coverage['ib_count'] == exp_ib_count
-        assert coverage['ib_max'] == exp_ib_max
-
-    def test_report_coverage_with_multiple_report_types(self, flexible_slicer_test_data):
-        # delete 3 import batches
-        ImportBatch.objects.filter(
-            organization=flexible_slicer_test_data['organizations'][0],
-            report_type=flexible_slicer_test_data['report_types'][0],
-            date='2020-01-01',
-        ).delete()
-        slicer = FlexibleDataSlicer(primary_dimension='platform')
-        slicer.add_group_by('metric')
-        slicer.add_filter(
-            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'])
-        )
-        coverage = slicer.get_coverage()['overall']
-        assert coverage['ib_count'] == 69
-        assert coverage['ib_max'] == 72
-
-    @pytest.mark.parametrize(
-        ('org_idx', 'exp_ib_count', 'exp_ib_max'),
-        [(None, 14, 16), (0, 14, 16), (1, 14, 16), (2, 22, 24)],
-    )
-    def test_report_coverage_with_tag_based_filter(
-        self, flexible_slicer_test_data, admin_user, org_idx, exp_ib_count, exp_ib_max
-    ):
-        """
-        Test that the coverage computation can deal with tag-based filters instead of FK-based
-        filters. And also that it works together with FK-based filters.
-
-        The filters should be "ored" together.
-        """
-        # delete 3 import batches
-        ImportBatch.objects.filter(
-            organization=flexible_slicer_test_data['organizations'][0],
-            report_type=flexible_slicer_test_data['report_types'][0],
-            date='2020-01-01',
-        ).delete()
-        # add tags to platforms and organizations
-        platforms = flexible_slicer_test_data['platforms']
-        tag1 = TagFactory(tag_class__scope=TagScope.PLATFORM, tag_class__name='cls1', name='tag1')
-        tag1.tag(platforms[0], admin_user)
-        tag1.tag(platforms[1], admin_user)
-        orgs = flexible_slicer_test_data['organizations']
-        tag2 = TagFactory(
-            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag2'
-        )
-        tag3 = TagFactory(
-            tag_class__scope=TagScope.ORGANIZATION, tag_class__name='cls2', name='tag3'
-        )
-        tag2.tag(orgs[0], admin_user)
-        tag2.tag(orgs[1], admin_user)
-        tag3.tag(orgs[1], admin_user)  # double tag org[1] to make sure it does not mess things up
-        # create the slicer
-        slicer = FlexibleDataSlicer(primary_dimension='platform')
-        slicer.add_group_by('metric')
-        slicer.add_filter(
-            ForeignKeyDimensionFilter('report_type', flexible_slicer_test_data['report_types'][0])
-        )
-        slicer.add_filter(TagDimensionFilter('platform', tag1))
-        slicer.add_filter(TagDimensionFilter('organization', [tag2, tag3]))
-        if org_idx:
-            slicer.add_filter(ForeignKeyDimensionFilter('organization', orgs[org_idx].pk))
-        coverage = slicer.get_coverage()['overall']
-        assert coverage['ib_count'] == exp_ib_count
-        assert coverage['ib_max'] == exp_ib_max
-
-    def test_report_coverage_in_trend_mode(self, flexible_slicer_test_data):
-        # delete 3 import batches
-        rt1 = flexible_slicer_test_data['report_types'][0]
-        ImportBatch.objects.filter(
-            organization=flexible_slicer_test_data['organizations'][0],
-            report_type=rt1,
-            date='2020-01-01',
-        ).delete()
-        slicer = FlexibleDataSlicer(
-            primary_dimension='platform',
-            trend_mode=True,
-            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
-            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
-        )
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
-        coverage = slicer.get_coverage()
-        assert 'base' in coverage
-        assert 'compared' in coverage
-        assert coverage['base']['ib_count'] == 6
-        assert coverage['base']['ib_max'] == 9
-        assert coverage['compared']['ib_count'] == 9
-        assert coverage['compared']['ib_max'] == 9
-
-    def test_report_coverage_in_trend_mode_with_global_date_filter(self, flexible_slicer_test_data):
-        """
-        Test that when date filter is applied globally, it is ignored in the trend mode
-        and does not cause an error
-        """
-        rt1 = flexible_slicer_test_data['report_types'][0]
-        slicer = FlexibleDataSlicer(
-            primary_dimension='platform',
-            trend_mode=True,
-            base_subset_filters=[DateDimensionFilter('date', '2020-01', '2020-01')],
-            compared_subset_filters=[DateDimensionFilter('date', '2020-02', '2020-02')],
-        )
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', rt1))
-        slicer.add_filter(DateDimensionFilter('date', '2018-01', '2018-02'))
-        coverage = slicer.get_coverage()
-        # test that there is complete coverage, if global date filter was not ignored
-        # the coverage data would be just zeros
-        assert coverage['base']['ib_count'] == 9
-        assert coverage['base']['ib_max'] == 9
-        assert coverage['compared']['ib_count'] == 9
-        assert coverage['compared']['ib_max'] == 9
 
 
 @pytest.mark.django_db

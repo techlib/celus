@@ -20,6 +20,9 @@ export default {
   },
 
   methods: {
+    cleanTagCache() {
+      this.objIdToTags.clear();
+    },
     async getTagsForObjectsById(objectType, objectIds) {
       let cleanObjectIds = objectIds.filter((x) => !this.objIdToTags.has(x));
       if (cleanObjectIds.length === 0) {

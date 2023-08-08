@@ -487,6 +487,7 @@ class TestTagClassViews:
         resp = clients['user1'].get(reverse('tag-class-list'))
         assert resp.status_code == 200
         assert len(resp.json()) == 6, 'everybody + self owned'
+        assert 'hidden' in resp.json()[0], 'hidden field is present'
 
     @pytest.mark.parametrize(
         ['scope', 'count'],
@@ -572,6 +573,8 @@ class TestTagClassViews:
         resp = clients['user1'].get(reverse('tag-class-visible-tags'))
         assert resp.status_code == 200
         assert len(resp.json()) == count
+        if count:
+            assert 'hidden' in resp.json()[0], 'the `hidden` attr should be present'
 
     @pytest.mark.parametrize(['permission_type'], [('can_modify',), ('can_create_tags',)])
     @pytest.mark.parametrize(
@@ -655,9 +658,9 @@ class TestTagClassViews:
             'can_modify': AccessibleBy.OWNER,
             'can_create_tags': AccessibleBy.OWNER,
             'owner': user,
+            attr: old_value,
         }
         # overwrite the currently tested attr
-        params[attr] = old_value
         tc = TagClassFactory.create(**params)
         new_data = {attr: new_value}
         resp = clients['master_admin'].patch(reverse('tag-class-detail', args=[tc.pk]), new_data)
@@ -789,6 +792,44 @@ class TestTagClassViews:
         else:
             assert TagClass.objects.filter(pk=tc.pk).exists(), 'tag class was not deleted'
 
+    def test_tag_class_hide(self, basic1, clients, users):
+        org = basic1['organizations']['branch']
+        tc = TagClassFactory.create(
+            scope='title', can_create_tags=AccessibleBy.ORG_USERS, owner_org=org
+        )
+        resp = clients['user1'].post(reverse('tag-class-hide', args=[tc.pk]), {'hidden': True})
+        assert resp.status_code == 200
+        assert resp.json()['hidden'] is True
+
+        resp = clients['user1'].post(reverse('tag-class-hide', args=[tc.pk]), {'hidden': False})
+        assert resp.status_code == 200
+        assert resp.json()['hidden'] is False
+
+    @pytest.mark.parametrize(
+        ['user_name', 'owner_org', 'status_code'],
+        [
+            ('user1', 'root', 404),
+            ('user1', 'branch', 200),
+            ('user1', 'standalone', 404),
+            (None, 'root', 401),
+            (None, 'branch', 401),
+        ],
+    )
+    def test_tag_class_hide_permissions(
+        self, basic1, client, clients, users, user_name, owner_org, status_code
+    ):
+        # user1 belongs to branch org, so he can see the tag class associated with it
+        # but he cannot see (and thus hide) the tag class associated with the other orgs
+        org = basic1['organizations'][owner_org]
+        tc = TagClassFactory.create(
+            scope='title', can_create_tags=AccessibleBy.ORG_USERS, owner_org=org
+        )
+        client_obj = clients[user_name] if user_name else client
+        resp = client_obj.post(reverse('tag-class-hide', args=[tc.pk]), {'hidden': True})
+        assert resp.status_code == status_code
+        if status_code == 200:
+            assert resp.json()['hidden'] is True
+
 
 @pytest.mark.django_db
 class TestTagItemsLinksView:
@@ -796,7 +837,8 @@ class TestTagItemsLinksView:
     Tests a view which allows listing all item-tag links for a specific item type.
     """
 
-    def test_list_tags_for_titles(self, clients, users):
+    @pytest.mark.parametrize('hide_first_class', [True, False])
+    def test_list_tags_for_titles(self, clients, users, hide_first_class):
         user = users['user1']
         titles = TitleFactory.create_batch(10)
         tags = TagForTitleFactory.create_batch(4, can_see=AccessibleBy.EVERYBODY)
@@ -805,11 +847,17 @@ class TestTagItemsLinksView:
         for i, tag in enumerate(tags):
             for title in titles[: i + 1]:
                 tag.tag(title, user)
+        if hide_first_class:
+            tags[0].tag_class.change_hidden_for_user(user, True)
+
         resp = clients['user1'].get(
             reverse('tag-item-links'), {'item_type': 'title', 'item_id': [t.pk for t in titles]}
         )
         assert resp.status_code == 200
-        assert len(resp.json()) == 4 + 3 + 2 + 1, 'there should be 10 links'
+        if hide_first_class:
+            assert len(resp.json()) == 4 + 3 + 2, 'there should be 9 links, 1 is hidden'
+        else:
+            assert len(resp.json()) == 4 + 3 + 2 + 1, 'there should be 10 links'
 
     @pytest.mark.parametrize(
         ['user_key', 'org_count'],

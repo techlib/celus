@@ -9,7 +9,7 @@ class TagClassPermissions(BasePermission):
     Checks tag_class object level permissions
     """
 
-    def has_object_permission(self, request, view, obj: Tag):
+    def has_object_permission(self, request, view, obj: TagClass):
         if request.method in SAFE_METHODS:
             return obj in TagClass.objects.user_accessible_tag_classes(request.user)
 

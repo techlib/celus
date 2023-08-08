@@ -608,6 +608,7 @@ LOGGING = {
         'postgres_copy': {'level': 'ERROR'},
         'django_cachalot': {'level': 'DEBUG'},
         'core.middleware': {'level': 'DEBUG'},
+        'celus_nibbler': {'level': 'INFO'},
     },
     'formatters': {
         'colored': {'()': 'colorlog.ColoredFormatter', 'format': "%(log_color)s%(message)s"}
