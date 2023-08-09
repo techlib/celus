@@ -66,15 +66,15 @@ class ParserDefinition(models.Model):
             raise ValidationError({"definition": str(e)}) from None
 
         # Extract some fields from JSON
-        self.version = nibbler_definition.__root__.version
-        self.short_name = nibbler_definition.__root__.parser_name
-        self.report_type_short_name = nibbler_definition.__root__.data_format.name
-        self.report_type_ext_id = nibbler_definition.__root__.data_format.id
+        self.version = nibbler_definition.root.version
+        self.short_name = nibbler_definition.root.parser_name
+        self.report_type_short_name = nibbler_definition.root.data_format.name
+        self.report_type_ext_id = nibbler_definition.root.data_format.id
 
         # Read platform short_name
         # should accept `"AAA"` and `{"name": "AAA", ...}` formats
         self.platforms = sorted(
-            [e["name"] if isinstance(e, dict) else e for e in nibbler_definition.__root__.platforms]
+            [e["name"] if isinstance(e, dict) else e for e in nibbler_definition.root.platforms]
         )
 
         return super().save(*args, **kwargs)

@@ -80,7 +80,7 @@ def get_records_from_nibbler_output(
     nibbler_output: NibblerOutput,
 ) -> typing.Generator[CounterRecord, None, None]:
     for poop in [e for e in nibbler_output if isinstance(e, Poop)]:
-        for record in poop.records():
+        for _idx, record in poop.records_basic():
             yield record
 
 

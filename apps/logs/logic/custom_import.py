@@ -28,7 +28,15 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         # organization is picked by the user
         organizations = None
     else:
-        organizations = histograms["organizations"]
+        # TODO remove when we are going to display per organization data in preflight view
+        organizations = {
+            k: {
+                "count": v["total"]["count"],
+                "sum": v["total"]["sum"],
+            }
+            for k, v in histograms["organizations"].items()
+        }
+
         resolved_organizations = dict(
             ManualDataUpload.organizations_from_data_cls(organizations.keys())
         )
