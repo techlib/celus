@@ -480,6 +480,7 @@ class ImportBatch(models.Model):
         verbose_name_plural = "Import batches"
         indexes = (BrinIndex(fields=('date',)),)
         ordering = ('id',)
+        unique_together = ('report_type', 'organization', 'platform', 'date')
 
     @cached_property
     def accesslog_count(self):
