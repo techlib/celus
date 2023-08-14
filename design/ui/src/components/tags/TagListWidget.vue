@@ -5,7 +5,7 @@ en:
   delete_tag_item_count: Do you want to delete tag "{tag}" used by {count} item? | Do you wan't to delete tag "{tag}" used by {count} items?
   tag_delete_success: Tag "{tag}" was successfully deleted
   confirm_tag_class_delete: Confirm tag class delete
-  delete_tag_class_tag_count: Do you want to delete tag class "{tag_class}" with {count} tag? | Do you want to delete tag class "{tag_class}" with {count} tags?
+  delete_tag_class_tag_count: Do you want to delete tag class "{name}" with {count} tag? | Do you want to delete tag class "{name}" with {count} tags?
   tag_class_delete_success: Tag class "{tag_class}" was successfully deleted
   performance_warning: In order to optimize performance when many tags are shown, only the text of the tags is shown, not a full preview.
   show_system_tags: Show system tags

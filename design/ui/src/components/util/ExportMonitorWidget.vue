@@ -7,7 +7,7 @@ en:
   download: Download
 
 cs:
-  progress_tt: "Zatím bylo vyexportováno {current} z {total} sloupce|Zatím bylo vyexportováno {current} ze {total} sloupců|Zatím bylo vyexportováno {current} z {total} sloupců"
+  progress_tt: "Zatím bylo vyexportováno {current} z {total} řádku|Zatím bylo vyexportováno {current} ze {total} řádků|Zatím bylo vyexportováno {current} z {total} řádků"
   waiting_for_start: Čekám na spuštění exportu
   exporting: Exportuji
   download: Stáhnout
