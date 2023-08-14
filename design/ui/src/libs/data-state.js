@@ -7,7 +7,7 @@ const DATA_SUCCESS = "success";
 function dataStateToIcon(state) {
   switch (state) {
     case DATA_UNTRIED:
-      return { color: "secondary", icon: "far fa-circle" };
+      return { color: "grey", icon: "far fa-circle" };
     case DATA_FAILED:
       return { color: "error", icon: "fas fa-exclamation-circle" };
     case DATA_NO_DATA:

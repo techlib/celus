@@ -110,7 +110,7 @@ cs:
             :disabled="loading"
             >{{ $t("delete") }}</v-btn
           >
-          <v-btn color="secondary" @click="closeDialog">
+          <v-btn @click="closeDialog">
             <v-icon v-if="success || error" small class="mr-1"
               >fa fa-times</v-icon
             >

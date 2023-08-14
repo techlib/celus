@@ -598,9 +598,12 @@ cs:
                 class="mr-8"
                 :credentials="credentials"
                 :platform="activePlatform"
-                @deleted="$emit('deleted', { id: credentials.pk }) ; $emit('input', false)"
+                @deleted="
+                  $emit('deleted', { id: credentials.pk });
+                  $emit('input', false);
+                "
               />
-              <v-btn color="secondary" @click="closeDialog()" class="mr-2">
+              <v-btn @click="closeDialog()" class="mr-2">
                 <v-icon small class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>
@@ -649,9 +652,7 @@ cs:
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="secondary" @click="stopTestDialog()">{{
-              $t("close")
-            }}</v-btn>
+            <v-btn @click="stopTestDialog()">{{ $t("close") }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

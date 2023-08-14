@@ -34,8 +34,7 @@ cs:
         </v-card-text>
         <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
-          <v-btn color="secondary" @click="show = false" v-text="$t('cancel')">
-          </v-btn>
+          <v-btn @click="show = false" v-text="$t('cancel')"> </v-btn>
           <v-btn
             color="primary"
             :disabled="!valid || requestInProgress"

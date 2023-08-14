@@ -68,7 +68,7 @@ export default {
           }
         }
       }
-      return "secondary";
+      return "grey";
     },
     diff() {
       if (this.value != null && this.otherValue != null) {

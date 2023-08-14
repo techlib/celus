@@ -109,12 +109,9 @@ cs:
                 <v-icon left>fa-download</v-icon>
                 {{ $t("download_data") }}
               </v-btn>
-              <v-btn
-                @click="showDialog = false"
-                color="secondary"
-                class="ml-2"
-                >{{ $t("close") }}</v-btn
-              >
+              <v-btn @click="showDialog = false" class="ml-2">{{
+                $t("close")
+              }}</v-btn>
             </div>
           </div>
           <!-- buttons to start export -->
@@ -126,7 +123,7 @@ cs:
               color="primary"
               >{{ $t("start_export") }}</v-btn
             >
-            <v-btn @click="showDialog = false" color="secondary" class="ml-2">{{
+            <v-btn @click="showDialog = false" class="ml-2">{{
               $t("cancel")
             }}</v-btn>
           </div>

@@ -153,7 +153,7 @@ cs:
               <v-spacer></v-spacer>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="secondary" @click="closeDialog()" class="mr-2">
+              <v-btn @click="closeDialog()" class="mr-2">
                 <v-icon small class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>

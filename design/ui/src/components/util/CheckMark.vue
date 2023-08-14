@@ -30,8 +30,8 @@ export default {
   props: {
     value: { required: true, type: Boolean },
     extraClasses: { required: false, type: String },
-    trueColor: { default: "secondary darken-2" },
-    falseColor: { default: "secondary" },
+    trueColor: { default: "grey darken-2" },
+    falseColor: { default: "grey" },
     trueIcon: { default: "far fa-check-square" },
     falseIcon: { default: "far fa-square" },
     trueTooltip: { default: null },

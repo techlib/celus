@@ -283,11 +283,7 @@ cs:
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            color="secondary"
-            @click="showDetailByOrganization = false"
-            class="mb-3 me-3"
-          >
+          <v-btn @click="showDetailByOrganization = false" class="mb-3 me-3">
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>
@@ -309,11 +305,7 @@ cs:
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            color="secondary"
-            @click="showHarvestDialog = false"
-            class="mb-3 me-3"
-          >
+          <v-btn @click="showHarvestDialog = false" class="mb-3 me-3">
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>
@@ -364,11 +356,7 @@ cs:
           >
             {{ $t("harvest_selected") }}
           </v-btn>
-          <v-btn
-            color="secondary"
-            @click="showHarvestDialog = false"
-            class="mb-3 me-3"
-          >
+          <v-btn @click="showHarvestDialog = false" class="mb-3 me-3">
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>

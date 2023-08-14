@@ -36,7 +36,7 @@ cs:
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn @click="close" color="secondary">{{ $t("cancel") }}</v-btn>
+      <v-btn @click="close">{{ $t("cancel") }}</v-btn>
       <v-btn @click="save" color="primary">{{ $t("save") }}</v-btn>
       <v-spacer></v-spacer>
     </v-card-actions>

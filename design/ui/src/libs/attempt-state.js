@@ -46,7 +46,7 @@ function attemptState(attempt) {
 function attemptStateToIcon(state) {
   switch (state) {
     case ATTEMPT_NOT_MADE:
-      return { color: "secondary", icon: "far fa-clock" };
+      return { color: "grey", icon: "far fa-clock" };
     case ATTEMPT_SUCCESS:
       return { color: "success", icon: "far fa-check-circle" };
     case ATTEMPT_EMPTY_DATA:
@@ -60,7 +60,7 @@ function attemptStateToIcon(state) {
     case ATTEMPT_PARTIAL_DATA:
       return { color: "warning", icon: "fas fa-exclamation-triangle" };
     case ATTEMPT_NOT_USED:
-      return { color: "secondary", icon: "far fa-times-circle" };
+      return { color: "grey", icon: "far fa-times-circle" };
     default:
       return { color: "warning", icon: "far fa-question-circle" };
   }

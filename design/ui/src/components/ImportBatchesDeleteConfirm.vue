@@ -48,7 +48,7 @@ cs:
         {{ $t("actions.delete") }}
       </v-btn>
       <v-spacer />
-      <v-btn color="secondary" @click="cancelDialog()" class="mr-2">
+      <v-btn @click="cancelDialog()" class="mr-2">
         <v-icon small class="mr-1">fa fa-times</v-icon>
         {{ $t("actions.cancel") }}
       </v-btn>

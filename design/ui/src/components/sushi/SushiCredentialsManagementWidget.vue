@@ -541,12 +541,9 @@ cs:
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn
-            color="secondary"
-            @click="stopTestDialog()"
-            class="mb-5 mr-5"
-            >{{ $t("close") }}</v-btn
-          >
+          <v-btn @click="stopTestDialog()" class="mb-5 mr-5">{{
+            $t("close")
+          }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
