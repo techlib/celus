@@ -188,7 +188,7 @@ class TestFlexibleDataExport:
         slicer.add_group_by('metric')
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
-        with django_assert_max_num_queries(20):
+        with django_assert_max_num_queries(25):
             # we want to avoid the n+1 query problem, so the number of queries should
             # be much lower than the number of titles
             data = export_output(export)

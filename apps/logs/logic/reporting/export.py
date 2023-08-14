@@ -3,7 +3,7 @@ import logging
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
-from typing import Any, Callable, List, Optional, TextIO, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Set, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import xlsxwriter
@@ -70,26 +70,14 @@ class FlexibleDataExporter(ABC):
 
         self.involved_report_types = self.slicer.involved_report_types()
         self.column_parts_separator = column_parts_separator
-        self.explicit_prim_dim, self.remapped_prim_dim, prim_dim = self.resolve_dimension(
+        self.explicit_prim_dim, self.remapped_prim_dim, self.prim_dim = self.resolve_dimension(
             self.slicer.primary_dimension
         )
         # how the primary dimension is called in the query output
         self.prim_dim_key = self.slicer.primary_dimension
-        if self.remapped_prim_dim:
-            if self.explicit_prim_dim:
-                log_memory('FlexibleDataExporter - before creating remap for explicit')
-                self.prim_dim_remap = {
-                    obj['pk']: obj['text']
-                    for obj in DimensionText.objects.filter(dimension=prim_dim).values('pk', 'text')
-                }
-                log_memory('FlexibleDataExporter - after creating remap for explicit')
-            else:
-                log_memory('FlexibleDataExporter - before creating remap for implicit')
-                self.prim_dim_remap = self.prepare_implicit_remap(prim_dim.objects.all())
-                self.prim_dim_key = 'pk'
-                log_memory('FlexibleDataExporter - after creating remap for implicit')
-        else:
-            self.prim_dim_remap = {}
+        if self.remapped_prim_dim and not self.explicit_prim_dim:
+            self.prim_dim_key = 'pk'
+        self.prim_dim_remap = {}  # always prepared for one output batch
         self._fields = []
         # mapping between primary dim value and connected tags, used in batch processing
         # inside write_qs_to_output
@@ -113,7 +101,28 @@ class FlexibleDataExporter(ABC):
     def remapped_keys(self):
         return self.object_remapped_dims.get(self.effective_prim_dim, {}).get('columns', ['name'])
 
-    def prepare_implicit_remap(self, qs: QuerySet) -> dict:
+    def prepare_primary_remap(self, batch: Set):
+        """
+        :param batch: set of primary dimension values to remap
+        """
+        if self.remapped_prim_dim:
+            if self.explicit_prim_dim:
+                log_memory('FlexibleDataExporter - before creating remap for explicit')
+                self.prim_dim_remap = dict(
+                    rec
+                    for rec in DimensionText.objects.filter(
+                        dimension=self.prim_dim, pk__in=batch
+                    ).values_list('pk', 'text')
+                )
+                log_memory('FlexibleDataExporter - after creating remap for explicit')
+            else:
+                log_memory('FlexibleDataExporter - before creating remap for implicit')
+                self.prim_dim_remap = self._prepare_implicit_remap(
+                    self.prim_dim.objects.filter(pk__in=batch)
+                )
+                log_memory('FlexibleDataExporter - after creating remap for implicit')
+
+    def _prepare_implicit_remap(self, qs: QuerySet) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
         with cachalot_disabled():
             remapped_keys = self.remapped_keys()
@@ -156,7 +165,7 @@ class FlexibleDataExporter(ABC):
         qs: QuerySet,
         extra_row_fn: Optional[Callable[[], dict]] = None,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
-        batch_size=100,
+        batch_size=1000,
         **kwargs,
     ) -> int:
         """
@@ -213,20 +222,24 @@ class FlexibleDataExporter(ABC):
         count = 0
 
         # we need to get the first row back into the data
-        all_data = chain([row], data, [extra_row_fn()] if extra_row_fn else [])
+        all_data = chain(
+            [row], data, [{'no_remap': True, **extra_row_fn()}] if extra_row_fn else []
+        )
         while batch := list(islice(all_data, batch_size)):
+            batch_pks = {obj[self.prim_dim_key] for obj in batch if not obj.get('no_remap')}
+
             # potentially prefetch tags
             if self.include_tags:
                 self._tag_cache = {}
                 tag_spec = self.taggable_rows[self.slicer.primary_dimension]
                 link_class = Tag.link_class_from_scope(tag_spec['scope'])
-                batch_pks = [obj[self.prim_dim_key] for obj in batch]
                 for link in link_class.objects.filter(
                     tag__in=Tag.objects.user_accessible_tags(self.report_owner),
                     target_id__in=batch_pks,
                 ).select_related('tag', 'tag__tag_class'):
                     self._tag_cache.setdefault(link.target_id, []).append(link.tag)
 
+            self.prepare_primary_remap(batch_pks)
             for row in batch:
                 self.writerow(writer, row)
                 count += 1
