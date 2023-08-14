@@ -38,6 +38,7 @@ en:
   coverage_tt: Data coverage for the selected report(s) and applied filters.
   coverage_base_tt: Data coverage in the base period.
   coverage_compared_tt: Data coverage in the compared period.
+  coverage_title_tt: Data coverage shows how many months of data from a possible maximum are available for the selected report(s) and applied filters. Numbers below 100% indicate that some data is missing. Click on the number to go to a detailed breakdown.
 
 cs:
   run_report: Spustit report
@@ -75,6 +76,7 @@ cs:
   coverage_tt: Pokrytí daty pro zvolené reporty a aplikované filtry.
   coverage_base_tt: Pokrytí daty v základním období.
   coverage_compared_tt: Pokrytí daty v porovnávaném období.
+  coverage_title_tt: Pokrytí daty ukazuje, kolik měsíců dat z možného maxima je k dispozici pro zvolené reporty a aplikované filtry. Číslo pod 100% značí, že některá data chybí. Kliknutí na číslo vás přenese na podrobný rozpis.
 </i18n>
 
 <template>
@@ -267,9 +269,9 @@ cs:
 
           <v-col>
             <v-card class="pa-2">
-              <v-card-title class="pt-2">{{
-                $t("labels.filters")
-              }}</v-card-title>
+              <v-card-title class="pt-2"
+                >{{ $t("labels.filters") }}
+              </v-card-title>
               <v-card-text>
                 <div v-for="row in possibleRows" :key="row.id">
                   <v-checkbox
@@ -314,9 +316,9 @@ cs:
         <v-row v-if="tagRollUpPossible">
           <v-col>
             <v-card class="pa-2">
-              <v-card-title class="pt-2 float-left">{{
-                $t("labels.tags")
-              }}</v-card-title>
+              <v-card-title class="pt-2 float-left"
+                >{{ $t("labels.tags") }}
+              </v-card-title>
               <v-card-text class="pt-1">
                 <v-row class="align-baseline">
                   <v-col cols="auto" md="3" lg="auto" sm="5">
@@ -525,9 +527,19 @@ cs:
             :xl="2 * coverageGaugeCount"
           >
             <v-card v-if="coverageData" class="fill-height">
-              <v-card-title>{{
-                $t("title_fields.data_coverage")
-              }}</v-card-title>
+              <v-card-title>
+                <v-tooltip bottom max-width="600px">
+                  <template #activator="{ on }">
+                    <span v-on="on">
+                      {{ $t("title_fields.data_coverage") }}
+                      <v-icon color="info" class="pl-2"
+                        >fa fa-info-circle</v-icon
+                      >
+                    </span>
+                  </template>
+                  <span>{{ $t("coverage_title_tt") }}</span>
+                </v-tooltip>
+              </v-card-title>
               <v-card-text>
                 <v-row v-if="trendMode">
                   <v-col>
@@ -617,14 +629,14 @@ cs:
               </template>
               <v-list>
                 <v-list-item @click="runExport('XLSX')">
-                  <v-list-item-title>{{
-                    $t("format.excel")
-                  }}</v-list-item-title>
+                  <v-list-item-title
+                    >{{ $t("format.excel") }}
+                  </v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="runExport('XLSX_NO_CHARTS')">
-                  <v-list-item-title>{{
-                    $t("format.excel_no_charts")
-                  }}</v-list-item-title>
+                  <v-list-item-title
+                    >{{ $t("format.excel_no_charts") }}
+                  </v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="runExport('ZIP_CSV')">
                   <v-list-item-title>{{ $t("format.csv") }}</v-list-item-title>
@@ -640,9 +652,9 @@ cs:
             <v-alert v-else-if="exportHint" type="info" outlined dismissible>
               <i18n path="download_on_separate_page">
                 <template #exports_page>
-                  <router-link :to="{ name: 'exports' }">{{
-                    $t("pages.exports")
-                  }}</router-link>
+                  <router-link :to="{ name: 'exports' }"
+                    >{{ $t("pages.exports") }}
+                  </router-link>
                 </template>
               </i18n>
             </v-alert>
@@ -652,8 +664,8 @@ cs:
               type="warning"
               v-if="!hasGroupBy && selectedReportTypes.length"
               outlined
-              >{{ $t("select_at_least_one_column_dim") }}</v-alert
-            >
+              >{{ $t("select_at_least_one_column_dim") }}
+            </v-alert>
           </v-col>
           <v-col cols="auto">
             <v-tooltip top max-width="600px">
@@ -1561,6 +1573,7 @@ export default {
   &::after {
     content: ", ";
   }
+
   &:last-child {
     &::after {
       content: "";
