@@ -283,6 +283,9 @@ export default new Vuex.Store({
     exportDeletingPeriodInSec(state) {
       return state.basicInfo.EXPORT_DELETING_PERIOD;
     },
+    reportTypesWithoutCoverage(state) {
+      return state.basicInfo.REPORT_TYPES_WITHOUT_COVERAGE || [];
+    },
     letAxiosThrough(state) {
       /*
         when true, all requests by axios will be put through,

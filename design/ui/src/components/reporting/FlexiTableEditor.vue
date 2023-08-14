@@ -864,7 +864,6 @@ export default {
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
       showNameEditDialog: false,
       coverageData: null,
-      reportsWithoutCoverage: ["interest"],
     };
   },
 
@@ -881,6 +880,7 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       enableTags: "enableTags",
+      reportsWithoutCoverage: "reportTypesWithoutCoverage",
     }),
     watchedRow: {
       get() {
