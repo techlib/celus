@@ -202,6 +202,7 @@ class TestSlicerAPI:
                 'groups': b64json(['metric']),
                 'tag_roll_up': 'true',
                 'zero_rows': str(show_zero).lower(),
+                'order_by': 'tag',
             },
         )
         assert resp.status_code == 200
