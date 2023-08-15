@@ -793,6 +793,19 @@ SENTRY_RELEASE = config('SENTRY_RELEASE', default='')
 SENTRY_URL = config('SENTRY_URL', default='')
 if SENTRY_URL:
 
+    # by default, we take the most frequent transactions and sample them at 1% because they are
+    # also one of the most boring ones
+    SENTRY_TRANSACTION_SAMPLE_RATES = config(
+        'SENTRY_TRANSACTION_SAMPLE_RATES',
+        cast=Csv(cast=Csv(post_process=tuple), delimiter=';'),
+        default='scheduler.tasks.trigger_scheduler,0.01;'
+        'scheduler.tasks.plan_schedulers_triggering,0.01;'
+        'core.tasks.flush_request_logs_to_clickhouse,0.01',
+    )
+    transaction_rates = {
+        transaction.strip(): float(rate) for transaction, rate in SENTRY_TRANSACTION_SAMPLE_RATES
+    }
+
     def filter_events(event, hint):
         """
         The /metrics endpoint is called very often and it is not necessary to send all of them
@@ -804,13 +817,21 @@ if SENTRY_URL:
             return None
         return event
 
+    def traces_sampler(sampling_context):
+        """
+        This function is used to sample traces. For some very often occuring transactions,
+         we only want a very small sample rate to reduce the overhead.
+        """
+        name = sampling_context.get("transaction_context", {}).get("name")
+        return transaction_rates.get(name, 1)
+
     sentry_sdk.init(
         dsn=SENTRY_URL,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
         send_default_pii=True,
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
-        traces_sample_rate=config('SENTRY_TRACE_SAMPLE_RATE', cast=float, default=1.0),
+        traces_sampler=traces_sampler,
         before_send_transaction=filter_events,
     )
     # ignore pycounter errors
