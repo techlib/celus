@@ -988,9 +988,10 @@ class FlexibleDataSlicer:
         coverage = {}
         for rt in self.involved_report_types():
             comp = DataCoverageExtractor(report_type=rt, split_by_date=False, **fltrs)
-            rt_cov = comp.get_coverage_data()[()]  # empty tuple for no split-by
-            coverage['ib_count'] = coverage.get('ib_count', 0) + rt_cov['ib_count']
-            coverage['ib_max'] = coverage.get('ib_max', 0) + rt_cov['ib_max']
+            cov_data = comp.get_coverage_data()
+            rt_cov = cov_data.get((), {})  # empty tuple for no split-by
+            coverage['ib_count'] = coverage.get('ib_count', 0) + rt_cov.get('ib_count', 0)
+            coverage['ib_max'] = coverage.get('ib_max', 0) + rt_cov.get('ib_max', 0)
         coverage['ratio'] = (
             coverage['ib_count'] / coverage['ib_max'] if coverage['ib_max'] else None
         )

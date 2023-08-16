@@ -2,11 +2,20 @@ import pytest
 from core.logic.serialization import b64json
 from django.urls import reverse
 from organizations.models import UserOrganization
+from publications.fake_data import PlatformFactory
+from sushi.fake_data import CredentialsFactory
 from tags.fake_data import TagFactory
 from tags.models import TagScope
 
-from logs.models import ImportBatch
-from test_scenarios.basic import clients, identities, users  # noqa
+from logs.models import ImportBatch, OrganizationPlatform
+from test_scenarios.basic import (  # noqa
+    clients,
+    data_sources,
+    identities,
+    organizations,
+    report_types,
+    users,
+)
 
 
 @pytest.mark.django_db
@@ -397,6 +406,36 @@ class TestSlicerAPI:
         assert resp.status_code == 200
         data = resp.json()['overall']
         assert data['ib_count'] == exp_ib_count
+        assert data['ib_max'] == exp_ib_max
+
+    @pytest.mark.parametrize(['end_date', 'exp_ib_max'], (('2020-02-28', 2), (None, 0)))
+    def test_report_coverage_no_data(
+        self, clients, organizations, report_types, end_date, exp_ib_max
+    ):
+        pl = PlatformFactory.create()  # create one platform
+        org = organizations['branch']
+        report_type = report_types['tr']
+        start_date = '2020-01-01'
+        # connect the platform to the organization
+        OrganizationPlatform.objects.create(platform=pl, organization=org)
+        CredentialsFactory.create(organization=org, platform=pl, report_types=[report_type])
+        resp = clients['su'].get(
+            reverse('flexible-slicer-coverage'),
+            {
+                'primary_dimension': 'platform',
+                'groups': b64json(['metric']),
+                'filters': b64json(
+                    {
+                        'report_type': [report_type.pk],
+                        'organization': [org.pk],
+                        'date': {'start': start_date, 'end': end_date},
+                    }
+                ),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()['overall']
+        assert data['ib_count'] == 0
         assert data['ib_max'] == exp_ib_max
 
     def test_report_coverage_trend_mode(self, flexible_slicer_test_data, clients):

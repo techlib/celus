@@ -878,7 +878,7 @@ export default {
       organizationSelected: "organizationSelected",
       globallySelectedOrganization: "selectedOrganization",
       dateRangeStart: "dateRangeStartText",
-      dateRangeEnd: "dateRangeEndText",
+      dateRangeCoverageEnd: "dateRangeCoverageEndText",
       enableTags: "enableTags",
       reportsWithoutCoverage: "reportTypesWithoutCoverage",
     }),
@@ -1437,11 +1437,11 @@ export default {
             this.filters.push("date");
             this.selectedDateRange.start = this.dateRangeStart;
           }
-          if (this.dateRangeEnd) {
+          if (this.dateRangeCoverageEnd) {
             if (!this.filters.includes("date")) {
               this.filters.push("date");
             }
-            this.selectedDateRange.end = this.dateRangeEnd;
+            this.selectedDateRange.end = this.dateRangeCoverageEnd;
           }
           // this change has to be done after all watchers, etc. have run
           this.$nextTick(() => (this.columns = ["metric"]));
