@@ -13,6 +13,7 @@ en:
   row_total: Row total
   change: Change
   change_percent: Change %
+  pop_out: Expand to full screen
 
 cs:
   detail: Detail
@@ -26,6 +27,7 @@ cs:
   row_total: Celkem
   change: Změna
   change_percent: Změna %
+  pop_out: Roztáhnout na celou obrazovku
 </i18n>
 
 <template>
@@ -93,6 +95,20 @@ cs:
         :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
         :options.sync="options"
         :server-items-length="totalRowCount"
+        :fixed-header="popped"
+        :height="popped ? 'calc(100vh - 72px)' : null"
+        :style="
+          popped
+            ? {
+                position: 'fixed',
+                top: '8px',
+                left: '8px',
+                width: 'calc(100vw - 16px)',
+                zIndex: 1000,
+                boxShadow: '0 0 0 20px rgba(0, 0, 0, 0.7)',
+              }
+            : {}
+        "
       >
         <template #loading>
           <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
@@ -150,6 +166,21 @@ cs:
               </span>
             </td>
           </tr>
+        </template>
+
+        <template #footer.prepend>
+          <v-btn
+            @click="togglePopOut"
+            text
+            small
+            color="secondary"
+            id="popOutButton"
+          >
+            <v-icon small class="pr-2">{{
+              popped ? "fa-times" : "fa-external-link-alt"
+            }}</v-icon>
+            {{ popped ? $t("close") : $t("pop_out") }}
+          </v-btn>
         </template>
       </v-data-table>
 
@@ -254,6 +285,7 @@ export default {
         platform: "platform",
         organization: "organization",
       },
+      popped: false,
     };
   },
 
@@ -728,6 +760,18 @@ export default {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
       });
+    },
+    togglePopOut() {
+      this.popped = !this.popped;
+      if (!this.popped) {
+        this.$nextTick(() =>
+          // scroll to the bottom where the button is
+          // this returns the user to where he popped out from which seems
+          // to be the most intuitive - by default he would end up on top
+          // of the page which is confusing
+          this.$vuetify.goTo("#popOutButton", { duration: 0 })
+        );
+      }
     },
   },
 
