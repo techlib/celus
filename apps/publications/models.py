@@ -6,6 +6,7 @@ from collections import Counter
 from typing import BinaryIO, Callable, Optional
 
 import magic
+from celus_nigiri.csv_detect import detect_file_encoding
 from core.models import CreatedUpdatedMixin, DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -317,8 +318,9 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
+        encoding = detect_file_encoding(self.source_file)
         for rec in reader.process_source(
-            codecs.getreader('utf-8')(self.source_file), dump_file=dump_file
+            codecs.getreader(encoding)(self.source_file), dump_file=dump_file
         ):
             stats['row_count'] += 1
             unique_title_ids |= rec.title_ids

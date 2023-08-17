@@ -27,6 +27,9 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 plain_test_file = Path(__file__).parent / '../../../test-data/tagging_batch/plain-title-list.csv'
+bom_test_file = (
+    Path(__file__).parent / '../../../test-data/tagging_batch/simple-title-list-with-bom.csv'
+)
 
 
 @pytest.mark.django_db
@@ -43,6 +46,15 @@ class TestBatchTagging:
         assert tb.preflight['stats'] == {'row_count': 6, 'no_match': 3, 'unique_matched_titles': 2}
         assert tb.preflight['explicit_tags'] is False
         assert tb.preflight['recognized_columns'] == ['eISSN', 'ISBN', 'issn', 'Name']
+
+    def test_tagging_batch_preflight_with_bom(self, inmemory_media):
+        tb = TaggingBatchFactory.create(
+            source_file=bom_test_file, state=TaggingBatchState.PREPROCESSING
+        )
+        tb.do_preflight()
+        assert tb.state == TaggingBatchState.PREFLIGHT
+        assert tb.preflight != {}
+        assert tb.preflight['recognized_columns'] == ['ISSN']
 
     @pytest.mark.parametrize(
         ['create_missing_titles', 'title_count'],

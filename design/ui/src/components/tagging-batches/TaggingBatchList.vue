@@ -30,8 +30,20 @@
       </template>
 
       <template #item.state="{ item }">
-        <TaggingBatchStateIcon :batch="item" />
-        <span>{{ $t("tag_state." + item.state) }}</span>
+        <span
+          v-if="
+            item.preflight &&
+            item.preflight.recognized_columns &&
+            item.preflight.recognized_columns.length === 0
+          "
+        >
+          <v-icon small color="error" class="pr-2">fa-times</v-icon>
+          {{ $t("tag_state.no_matched_titles") }}
+        </span>
+        <span v-else>
+          <TaggingBatchStateIcon :batch="item" />
+          {{ $t("tag_state." + item.state) }}
+        </span>
       </template>
 
       <template #item.tag="{ item }">

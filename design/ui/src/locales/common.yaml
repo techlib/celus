@@ -265,6 +265,7 @@ en:
     exclusively_tagged_titles_tt: Number of titles which had already been tagged with a clashing exclusive tag
     recognized_columns: Recognized columns
     recognized_columns_tt: Names of columns from the uploaded sheet which were recognized as containing title identifiers
+    no_recognized_columns: No columns were recognized as containing title identifiers
     create_new_title_list: Upload a new list
     title_list: Title list
     preprocessing_data: Preprocessing
@@ -283,6 +284,7 @@ en:
     importing: Tagging in progress
     imported: Tag assigned
     undoing: Unassigning tags
+    no_matched_titles: No matched titles
   release:
     bug_fix: Bug fix
     new_feature: New feature
@@ -561,6 +563,7 @@ cs:
     exclusively_tagged_titles_tt: Počet titulů, které odpovídají nahranému souboru, ale byly již dříve označeny jiným exklusivním štítkem
     recognized_columns: Rozeznané sloupce
     recognized_columns_tt: Názvy sloupců z nahrané tabulky, které byly rozeznány jako použitelné pro identifikaci titulů
+    no_recognized_columns: Nebyl nalezen žádný sloupec s identifikátory
     create_new_title_list: Nahrát nový seznam
     title_list: Seznam titulů
     preprocessing_data: Probíhá předzpracování
@@ -579,6 +582,7 @@ cs:
     importing: Probíhá štítkování
     imported: Štítkování dokončeno
     undoing: Odstraňování štítků
+    no_matched_titles: Žádné odpovídající tituly
   release:
     bug_fix: Oprava chyby
     new_feature: Nová funkce

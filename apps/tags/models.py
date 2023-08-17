@@ -8,6 +8,7 @@ from functools import reduce
 from typing import BinaryIO, Callable, Optional, Tuple, Type, Union
 
 import magic
+from celus_nigiri.csv_detect import detect_file_encoding
 from colorfield.fields import ColorField
 from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
@@ -628,8 +629,9 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
+        encoding = detect_file_encoding(self.source_file)
         for rec in reader.process_source(
-            codecs.getreader('utf-8')(self.source_file), dump_file=dump_file
+            codecs.getreader(encoding)(self.source_file), dump_file=dump_file
         ):
             stats['row_count'] += 1
             unique_title_ids |= rec.title_ids

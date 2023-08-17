@@ -191,7 +191,10 @@
         </v-tooltip>
       </th>
       <td class="text-right">
-        <v-tooltip bottom>
+        <v-tooltip
+          bottom
+          v-if="taggingBatch.preflight.recognized_columns.length"
+        >
           <template #activator="{ on }">
             <span v-on="on">
               <v-chip
@@ -205,6 +208,10 @@
           </template>
           {{ $t("tagging.recognized_columns_tt") }}
         </v-tooltip>
+        <span v-else>
+          <v-icon color="warning" small>fa-exclamation-triangle</v-icon>
+          {{ $t("tagging.no_recognized_columns") }}
+        </span>
       </td>
     </tr>
     <tr
