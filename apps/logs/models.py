@@ -61,7 +61,12 @@ from publications.models import Platform, Title
 
 import logs
 
-from .exceptions import NibblerErrors, OrganizationHasToBeSelected, WrongOrganizations, WrongState
+from .exceptions import (
+    MultipleReportType,
+    OrganizationHasToBeSelected,
+    WrongOrganizations,
+    WrongState,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -769,7 +774,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         if self.method == MduMethod.RAW:
             return True
         elif self.method == MduMethod.COUNTER:
-            return settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT
+            return True
         elif self.method == MduMethod.CELUS:
             return settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT
         else:
@@ -814,50 +819,29 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
             return nibbler_output, self.method
 
-        elif crt := self.crt:
+        elif self.method == MduMethod.COUNTER:
+            from sushi.models import CounterReportType
+
             is_json = self.file_is_json()
-            # Parsing counter reports using nibbler (user can pick report type)
-            nibbler_parser = crt.get_nibbler_parser(json_format=is_json)
-            try:
-                return (
-                    counter_format_poops(
-                        os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                        nibbler_parser,
-                        self.platform,
-                    ),
-                    self.method,
-                )
-            except NibblerErrors as e:
-                # fallback when user selected wrong report type
-                nibbler_parser = crt.all_nibbler_counter_parsers(is_json)
-                try:
-                    poops = counter_format_poops(
-                        os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                        nibbler_parser,
-                        self.platform,
-                    )
-                    report_types, rt_names = get_report_types_from_nibbler_output(poops)
-                    if not report_types or len({e.pk for e in report_types}) > 1:
-                        # Multiple report types should not be present here
-                        # that would indicate that the user uploaded e.g. xlsx file
-                        # with different report type on each sheet
-                        # => raise original exception
-                        raise e from None
 
-                    # Update detected report type
-                    logger.warning(
-                        "Changing report type for MDU %d ('%s' -> '%s')",
-                        self.pk,
-                        self.report_type and self.report_type.short_name,
-                        report_types[0].short_name,
-                    )
-                    self.report_type = report_types[0]
-                    self.save()
+            nibbler_parser = CounterReportType.all_nibbler_counter_parsers(is_json)
+            poops = counter_format_poops(
+                os.path.join(settings.MEDIA_ROOT, self.data_file.name),
+                nibbler_parser,
+                self.platform,
+            )
+            report_types, rt_names = get_report_types_from_nibbler_output(poops)
+            if not report_types or len({e.pk for e in report_types}) > 1:
+                # Multiple report types should not be present here
+                # that would indicate that the user uploaded e.g. xlsx file
+                # with different report type on each sheet
+                # => raise original exception
+                raise MultipleReportType(f"Multiple ReportTypes found in the data: {rt_names}")
 
-                    return poops, self.method
-                except NibblerErrors:
-                    # raise the original exception
-                    raise e from None
+            self.report_type = report_types[0]
+            self.save()
+
+            return poops, self.method
 
         else:
             # Parsing data in "celus format" using nibbler (user can pick report type)
@@ -880,21 +864,13 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             yield from get_records_from_nibbler_output(nibbler_output)
 
         else:
-            if crt := self.crt:
-                # Parsing counter reports using pycounter/nigiri (user can pick report type)
-                reader = crt.get_reader_class(json_format=self.file_is_json())()
-                yield from reader.file_to_records(
-                    os.path.join(settings.MEDIA_ROOT, self.data_file.name)
-                )
-
-            else:
-                # Parsing data in "celus format" using nibbler (user can pick report type)
-                default_metric = self.prepare_default_metric()
-                yield from custom_data_to_records(
-                    self.to_record_dicts(),
-                    extra_dims=self.report_type.dimension_short_names,
-                    initial_data={'metric': default_metric.pk},
-                )
+            # Parsing data in "celus format" without nibbler (user can pick report type)
+            default_metric = self.prepare_default_metric()
+            yield from custom_data_to_records(
+                self.to_record_dicts(),
+                extra_dims=self.report_type.dimension_short_names,
+                initial_data={'metric': default_metric.pk},
+            )
 
     def file_is_json(self) -> bool:
         """

@@ -28,7 +28,6 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestManualUploadForCounterData:
     @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
-    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     @pytest.mark.parametrize(
         ['filename', 'report_code'],
         (
@@ -51,9 +50,7 @@ class TestManualUploadForCounterData:
         filename,
         report_code,
         hash_matches,
-        use_nibbler,
     ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
 
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -105,7 +102,6 @@ class TestManualUploadForCounterData:
             assert mail_mock.called, 'email to admin was sent'
 
     @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
-    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     @pytest.mark.parametrize(
         ['filename', 'report_code'],
         (
@@ -128,9 +124,7 @@ class TestManualUploadForCounterData:
         filename,
         report_code,
         hash_matches,
-        use_nibbler,
     ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
 
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -186,21 +180,13 @@ class TestManualUploadForCounterData:
             assert mail_mock.called, 'email to admin was sent'
 
     @pytest.mark.parametrize(
-        ['filename', 'report_code', 'use_nibbler', 'fails'],
+        ['filename', 'report_code', 'fails'],
         (
             pytest.param(
                 'counter5/counter5_tr_test1_wrong_id.json',
                 'tr',
                 True,
-                True,
                 id="Nibbler fails on wrong report ID",
-            ),
-            pytest.param(
-                'counter5/counter5_tr_test1_wrong_id.json',
-                'tr',
-                False,
-                False,
-                id="File with wrong report ID passes when nibbler is not used",
             ),
         ),
     )
@@ -215,10 +201,8 @@ class TestManualUploadForCounterData:
         settings,
         filename,
         report_code,
-        use_nibbler,
         fails,
     ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
 
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -325,12 +309,11 @@ class TestManualUploadForCounterData:
         assert mdu.report_type == report_types[to_report_type]
 
     @pytest.mark.parametrize(
-        ['filename', 'report_code', 'use_nibbler', 'months'],
+        ['filename', 'report_code', 'months'],
         (
             pytest.param(
                 'counter5/counter5_table_tr_empty.csv',
                 'tr',
-                True,
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -339,19 +322,11 @@ class TestManualUploadForCounterData:
                     "2017-05-01",
                     "2017-06-01",
                 },
-                id="Months are show from header of TR report (nibbler)",
-            ),
-            pytest.param(
-                'counter5/counter5_table_tr_empty.csv',
-                'tr',
-                False,
-                set(),
-                id="No months are not shown from empty TR report (no nibbler)",
+                id="Months are show from header of TR report",
             ),
             pytest.param(
                 'counter5/counter5_table_dr_empty.csv',
                 'dr',
-                True,
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -360,19 +335,11 @@ class TestManualUploadForCounterData:
                     "2017-05-01",
                     "2017-06-01",
                 },
-                id="Months are show from header of DR report (nibbler)",
-            ),
-            pytest.param(
-                'counter5/counter5_table_dr_empty.csv',
-                'dr',
-                False,
-                set(),
-                id="No months are not shown from empty DR report (no nibbler)",
+                id="Months are show from header of DR report",
             ),
             pytest.param(
                 'counter5/counter5_table_pr_empty.csv',
                 'pr',
-                True,
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -381,14 +348,7 @@ class TestManualUploadForCounterData:
                     "2017-05-01",
                     "2017-06-01",
                 },
-                id="Months are show from header of TR report (nibbler)",
-            ),
-            pytest.param(
-                'counter5/counter5_table_pr_empty.csv',
-                'pr',
-                False,
-                set(),
-                id="No months are not shown from empty PR report (no nibbler)",
+                id="Months are show from header of TR report",
             ),
         ),
     )
@@ -403,10 +363,8 @@ class TestManualUploadForCounterData:
         settings,
         filename,
         report_code,
-        use_nibbler,
         months,
     ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
 
         cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -560,7 +518,6 @@ class TestManualUploadControlledMetrics:
 
 @pytest.mark.django_db
 class TestManualUploadConflicts:
-    @pytest.mark.parametrize('use_nibbler', [(True,), (False,)])
     def test_import_same_file_twice(
         self,
         organizations,
@@ -571,10 +528,7 @@ class TestManualUploadConflicts:
         report_types,
         clients,
         basic1,
-        use_nibbler,
     ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = use_nibbler
-
         with (Path(__file__).parent / "data/counter4/counter4_br2.tsv").open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "something.tsv"

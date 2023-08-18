@@ -101,7 +101,7 @@ class UnknownReportTypeInPreflight(PreflightFailed):
     """
 
 
-class MultipleReportTypeInPreflight(PreflightFailed):
+class MultipleReportType(PreflightFailed):
     """
     ReportType from nibbler matches multiple reportype in this Celus
     """

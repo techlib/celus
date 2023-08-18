@@ -309,6 +309,7 @@ class TestCustomImport:
             file_size=size,
             data_file=file,
             user=users[user],
+            method=MduMethod.CELUS,
         )
         assert mdu.import_batches.count() == 0
         import_custom_data(mdu, users[user])
@@ -408,6 +409,7 @@ class TestCustomImport:
             data_file=file,
             checksum=checksum,
             file_size=size,
+            method=MduMethod.CELUS,
         )
         assert len(list(mdu.data_to_records())) == 6
 

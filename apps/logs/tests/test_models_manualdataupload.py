@@ -6,14 +6,13 @@ from logs.fake_data import (
     ImportBatchFactory,
     ImportBatchFullFactory,
     ManualDataUploadFactory,
-    MduState,
 )
 from logs.logic.clickhouse import (
     sync_accesslogs_with_clickhouse_superfast,
     sync_import_batch_with_clickhouse,
 )
 from logs.logic.custom_import import custom_import_preflight_check
-from logs.models import AccessLog, ManualDataUpload
+from logs.models import AccessLog, ManualDataUpload, MduMethod, MduState
 from logs.tasks import prepare_preflight
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
@@ -85,6 +84,7 @@ C,Metric2,4,8,12,18
             data_file__data=DATA,
             data_file__filename="something.csv",
             state=MduState.INITIAL,
+            method=MduMethod.CELUS,
         )
 
         assert mdu.related_months_data() == (
@@ -242,6 +242,7 @@ A,Metric1,unresolved,0,0,0,20
             data_file__data=DATA,
             data_file__filename="something.csv",
             state=MduState.INITIAL,
+            method=MduMethod.CELUS,
         )
 
         prepare_preflight(mdu.pk)
