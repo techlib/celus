@@ -30,20 +30,7 @@
       </template>
 
       <template #item.state="{ item }">
-        <span
-          v-if="
-            item.preflight &&
-            item.preflight.recognized_columns &&
-            item.preflight.recognized_columns.length === 0
-          "
-        >
-          <v-icon small color="error" class="pr-2">fa-times</v-icon>
-          {{ $t("tag_state.no_matched_titles") }}
-        </span>
-        <span v-else>
-          <TaggingBatchStateIcon :batch="item" />
-          {{ $t("tag_state." + item.state) }}
-        </span>
+        <TaggingBatchStateWidget :batch="item" />
       </template>
 
       <template #item.tag="{ item }">
@@ -130,14 +117,14 @@ import TaggingBatchProcessingWidget from "@/components/tagging-batches/TaggingBa
 import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import TagChip from "@/components/tags/TagChip";
 import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
-import TaggingBatchStateIcon from "@/components/tagging-batches/TaggingBatchStateIcon";
 import { mapActions } from "vuex";
 import stateTracking from "@/mixins/stateTracking";
+import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
 
 export default {
   name: "TaggingBatchList",
   components: {
-    TaggingBatchStateIcon,
+    TaggingBatchStateWidget,
     TaggingBatchStats,
     TagChip,
     TaggingBatchProcessingWidget,

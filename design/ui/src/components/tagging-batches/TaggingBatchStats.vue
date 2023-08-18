@@ -5,8 +5,7 @@
     <tr>
       <th>{{ $t("labels.state") }}</th>
       <td class="text-right">
-        <TaggingBatchStateIcon :batch="taggingBatch" />
-        {{ $t("tag_state." + taggingBatch.state) }}
+        <TaggingBatchStateWidget :batch="taggingBatch" />
       </td>
     </tr>
     <tr v-if="taggingBatch.tag">
@@ -225,11 +224,11 @@
   </table>
 </template>
 <script>
-import TaggingBatchStateIcon from "@/components/tagging-batches/TaggingBatchStateIcon";
 import TagChip from "@/components/tags/TagChip";
+import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
 export default {
   name: "TaggingBatchStats",
-  components: { TagChip, TaggingBatchStateIcon },
+  components: { TagChip, TaggingBatchStateWidget },
   props: {
     taggingBatch: { type: Object, required: true },
     showFileName: { type: Boolean, default: false },
