@@ -52,7 +52,6 @@ class TestManualUploadForCounterData:
         hash_matches,
     ):
 
-        cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -67,13 +66,20 @@ class TestManualUploadForCounterData:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
+
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
         if not hash_matches:
             mdu.checksum = 'foobarbaz'
             mdu.save()
@@ -117,7 +123,7 @@ class TestManualUploadForCounterData:
         basic1,
         organizations,
         platforms,
-        counter_report_types,
+        report_types,
         clients,
         tmp_path,
         settings,
@@ -126,7 +132,6 @@ class TestManualUploadForCounterData:
         hash_matches,
     ):
 
-        cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -141,7 +146,6 @@ class TestManualUploadForCounterData:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
@@ -149,7 +153,18 @@ class TestManualUploadForCounterData:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
-        # calculate preflight in celery
+        # check report type
+        response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        assert response.status_code == 200
+        assert response.json()["report_type"]["pk"] == report_types[report_code].id
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
+        # Calculate preflight in celery
         prepare_preflight(mdu.pk)
 
         mdu.refresh_from_db()
@@ -180,31 +195,36 @@ class TestManualUploadForCounterData:
             assert mail_mock.called, 'email to admin was sent'
 
     @pytest.mark.parametrize(
-        ['filename', 'report_code', 'fails'],
+        ['filename', 'create_fails', 'preflight_fails'],
         (
             pytest.param(
                 'counter5/counter5_tr_test1_wrong_id.json',
-                'tr',
+                True,
                 True,
                 id="Nibbler fails on wrong report ID",
             ),
+            pytest.param(
+                'counter5/counter5_table_pr_wrong_value.csv',
+                False,
+                True,
+                id="Nibbler fails during preflight",
+            ),
         ),
     )
-    def test_failed_preflights(
+    def test_failures(
         self,
         basic1,
+        counter_report_types,
         organizations,
         platforms,
-        counter_report_types,
         clients,
         tmp_path,
         settings,
         filename,
-        report_code,
-        fails,
+        create_fails,
+        preflight_fails,
     ):
 
-        cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -219,19 +239,29 @@ class TestManualUploadForCounterData:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
-        assert response.status_code == 201
+        if create_fails:
+            assert response.status_code == 400
+            return
+        else:
+            assert response.status_code == 201
+
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
         mdu.refresh_from_db()
-        if fails:
+        if preflight_fails:
             assert mdu.state == MduState.PREFAILED
         else:
             assert mdu.state == MduState.PREFLIGHT
@@ -241,72 +271,10 @@ class TestManualUploadForCounterData:
             reverse('manual-data-upload-import-data', args=(mdu.pk,))
         )
 
-        if fails:
+        if preflight_fails:
             assert response.status_code == 400
         else:
             assert response.status_code == 200
-
-    @pytest.mark.parametrize(
-        ['filename', 'from_report_type', 'to_report_type'],
-        (
-            pytest.param(
-                'counter5/counter5_table_pr.csv',
-                'tr',
-                'pr',
-                id="csv-TR-to-PR",
-            ),
-            pytest.param(
-                'counter5/counter5_tr_test1.json',
-                'dr',
-                'tr',
-                id="json-DR-to-TR",
-            ),
-        ),
-    )
-    def test_report_type_override(
-        self,
-        basic1,
-        organizations,
-        platforms,
-        report_types,
-        counter_report_types,
-        clients,
-        tmp_path,
-        settings,
-        filename,
-        from_report_type,
-        to_report_type,
-    ):
-        settings.ENABLE_NIBBLER_FOR_COUNTER_FORMAT = True
-
-        with (Path(__file__).parent / "data" / filename).open() as f:
-            data_file = ContentFile(f.read())
-            data_file.name = f"something.{filename.split('.')[-1]}"
-
-        organization = organizations['master']
-        platform = platforms['master']
-        settings.MEDIA_ROOT = tmp_path
-
-        # upload the data
-        response = clients["master_admin"].post(
-            reverse('manual-data-upload-list'),
-            data={
-                'platform': platform.id,
-                'organization': organization.pk,
-                'report_type_id': report_types[from_report_type].pk,
-                'data_file': data_file,
-                'method': MduMethod.COUNTER,
-            },
-        )
-        assert response.status_code == 201
-        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
-
-        # calculate preflight in celery
-        prepare_preflight(mdu.pk)
-
-        mdu.refresh_from_db()
-        assert mdu.state == MduState.PREFLIGHT
-        assert mdu.report_type == report_types[to_report_type]
 
     @pytest.mark.parametrize(
         ['filename', 'report_code', 'months'],
@@ -356,8 +324,8 @@ class TestManualUploadForCounterData:
         self,
         basic1,
         organizations,
-        platforms,
         counter_report_types,
+        platforms,
         clients,
         tmp_path,
         settings,
@@ -366,7 +334,6 @@ class TestManualUploadForCounterData:
         months,
     ):
 
-        cr_type = counter_report_types[report_code]
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -381,13 +348,18 @@ class TestManualUploadForCounterData:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -449,13 +421,18 @@ class TestManualUploadControlledMetrics:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': cr_type.report_type_id,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         response = clients["master_admin"].post(
             reverse('manual-data-upload-preflight', args=(mdu.pk,)),
@@ -542,13 +519,18 @@ class TestManualUploadConflicts:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -575,13 +557,18 @@ class TestManualUploadConflicts:
             data={
                 'platform': platform.id,
                 'organization': organization.pk,
-                'report_type_id': report_types['br2'].pk,
                 'data_file': data_file,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -634,6 +621,12 @@ class TestManualUploadForRaw:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["admin2"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -689,6 +682,12 @@ class TestManualUploadForRaw:
         response = clients["master_admin"].post(reverse('manual-data-upload-list'), data=post_data)
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -767,6 +766,12 @@ class TestManualUploadForRaw:
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
 
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
@@ -821,6 +826,12 @@ class TestManualUploadForRaw:
             return
 
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["admin2"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -879,7 +890,7 @@ class TestManualUploadForRaw:
             organizations["branch"], through_defaults={'is_admin': True}
         )
 
-        with (Path(__file__).parent / "data/custom/custom_data-nibbler-simple.csv").open() as f:
+        with (Path(__file__).parent / "data/counter5/counter5_table_dr.csv").open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "nibbler.csv"
 
@@ -892,11 +903,17 @@ class TestManualUploadForRaw:
                 'platform': platform.pk,
                 'organization': organizations[from_organization].pk,
                 'data_file': data_file,
-                'method': MduMethod.RAW,
+                'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients[owner].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -945,7 +962,6 @@ class TestManualUploadForRaw:
             data_file = ContentFile(f.read())
             data_file.name = "counter.csv"
 
-        cr_type = counter_report_types["dr"]
         organization = organizations[organization]
         platform = platforms['standalone']  # doesn't matter which platform is used
         settings.MEDIA_ROOT = tmp_path
@@ -956,12 +972,17 @@ class TestManualUploadForRaw:
                 'platform': platform.pk,
                 'organization': organization.pk,
                 'data_file': data_file,
-                'report_type_id': cr_type.report_type_id,
                 'method': MduMethod.COUNTER,
             },
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients[owner].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # generate preflight
         response = clients[owner].post(
@@ -1024,6 +1045,12 @@ class TestManualUploadForRaw:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)

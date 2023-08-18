@@ -10,7 +10,6 @@ from logs.models import (
     ImportBatch,
     ImportBatchSyncLog,
     LastAction,
-    ManualDataUpload,
     OrganizationPlatform,
     ReportInterestMetric,
 )
@@ -42,12 +41,6 @@ def import_batch_create_organization_platform_link(sender, instance: ImportBatch
         OrganizationPlatform.objects.get_or_create(
             organization_id=instance.organization_id, platform_id=instance.platform_id
         )
-
-
-@receiver(post_save, sender=ManualDataUpload)
-def mdu_prepare_preflight(sender, instance: ManualDataUpload, using, created, **kwargs):
-    if created:
-        on_commit(instance.plan_preflight)
 
 
 @receiver([post_delete, post_save], sender=PlatformInterestReport)

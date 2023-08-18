@@ -27,7 +27,7 @@ from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, prefetch_related_objects
-from django.db.transaction import atomic
+from django.db.transaction import atomic, on_commit
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
@@ -83,6 +83,7 @@ from logs.serializers import (
 )
 
 from . import filters
+from .exceptions import NibblerErrors
 from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
@@ -856,9 +857,7 @@ class ManualDataUploadViewSet(
 
     serializer_class = ManualDataUploadSerializer
 
-    @action(methods=['POST'], detail=True, url_path='preflight')
-    def preflight(self, request, pk):
-        """triggers preflight computation"""
+    def _action_permission_check(self, pk, request) -> ManualDataUpload:
         # Permissions to get this MDU should be checked in
         # extra_actions_permission_classes, so we don't need to limit query here
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
@@ -867,6 +866,30 @@ class ManualDataUploadViewSet(
         permissions = self.get_permissions()
         if not all(p.has_object_permission(request, self, mdu) for p in permissions):
             raise PermissionDenied(f'Not allowed change mdu {pk}')
+
+        return mdu
+
+    @atomic
+    @action(methods=['POST'], detail=True, url_path='confirm')
+    def confirm(self, request, pk):
+        """confirms selected report type"""
+        mdu = self._action_permission_check(pk, request)
+
+        if mdu.state == MduState.INITIAL:
+            mdu.state = MduState.CONFIRMED
+            mdu.save()
+
+            # Plan preflight generation
+            on_commit(mdu.plan_preflight)
+
+            return Response({"msg": "confirmed"})
+        else:
+            return Response({"error": "already-confirmed"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST'], detail=True, url_path='preflight')
+    def preflight(self, request, pk):
+        """triggers preflight computation"""
+        mdu = self._action_permission_check(pk, request)
 
         # Update org
         if org_id := request.data.get("organization_id"):
@@ -878,9 +901,7 @@ class ManualDataUploadViewSet(
             mdu.organization = None
         mdu.save()
 
-        if mdu.state == MduState.INITIAL:
-            # already should be already planned
-            # just start it in celery right now
+        if mdu.state == MduState.CONFIRMED:
             mdu.plan_preflight()
             return Response({"msg": "generating preflight"})
 
@@ -960,6 +981,14 @@ class ManualDataUploadViewSet(
             return [permission() for permission in self.extra_actions_permission_classes]
         else:
             return super().get_permissions()
+
+    def perform_create(self, serializer):
+        try:
+            return super().perform_create(serializer)
+        except NibblerErrors as e:
+            raise BadRequestException(
+                {"nibbler_errors": [err.dict() for err in e.errors]},
+            ) from e
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):

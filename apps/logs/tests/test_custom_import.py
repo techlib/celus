@@ -85,6 +85,12 @@ class TestCustomImport:
         assert mdu.organization == organization
         assert mdu.import_batches.count() == 0, 'no import batches yet'
 
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
@@ -130,6 +136,12 @@ class TestCustomImport:
         assert response.status_code == 201
 
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
@@ -179,6 +191,13 @@ class TestCustomImport:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
         assert mdu.import_batches.count() == 0
         # let's process the mdu
         assert AccessLog.objects.count() == 0 + access_log_orig_count
@@ -259,6 +278,9 @@ class TestCustomImport:
         assert response.status_code == 201 if allowed else 403
         if allowed:
             mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+            response = clients[client].post(reverse('manual-data-upload-confirm', args=(mdu.pk,)))
+            assert response.status_code == 200
 
             # calculate preflight in celery
             prepare_preflight(mdu.pk)

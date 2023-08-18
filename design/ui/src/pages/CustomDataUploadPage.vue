@@ -16,10 +16,11 @@ en:
   input_rows: Read input data rows
   overview: Overview
   upload: Upload
-  add_report_type: Add new report type
   tab_chart: Chart
   tab_data: Data
   import: Import
+  confirm: Confirm
+  report_type: Report type
   thats_all: That is all. The data were imported.
   return_to_platform: Go to platform page
   upload_more_files: Upload more files
@@ -71,10 +72,11 @@ cs:
   input_rows: Načtené datové řádky
   overview: Přehled
   upload: Nahrát
-  add_report_type: Vytvořit nový typ reportu
   tab_chart: Graf
   tab_data: Data
   import: Importovat
+  confirm: Potvrdit
+  report_type: Typ reportu
   thats_all: To je vše. Data byla úspěšně importována.
   return_to_platform: Přejít na stránku platformy
   upload_more_files: Nahrát další data
@@ -234,14 +236,11 @@ cs:
         </v-sheet>
       </v-stepper-content>
 
-      <v-stepper-step
-        :step="steps.upload"
-        :complete="!!uploadObjectId || step > steps.upload"
-      >
+      <v-stepper-step :step="steps.upload" :complete="step > steps.upload">
         {{ $t("step_upload") }}
       </v-stepper-step>
       <v-stepper-content :step="steps.upload">
-        <v-form ref="form" v-model="valid">
+        <v-form ref="form" v-model="valid" v-if="!uploadObjectId">
           <v-container fluid class="pb-5 pt-0">
             <v-row>
               <v-col>
@@ -352,6 +351,33 @@ cs:
             </v-row>
           </v-container>
         </v-form>
+        <v-form v-else>
+          <v-row no-gutters class="pt-2">
+            <h2>{{ $t("report_type") }}</h2>
+            <v-col cols="12">
+              <ReportTypeInfoWidget :report-type="uploadObject.report_type" />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <v-btn
+                class="mr-2"
+                v-if="canConfirm"
+                @click="confirmReportType()"
+                color="info"
+                :loading="confirming"
+              >
+                <v-icon small class="pr-2">fa-solid fa-check</v-icon>
+                {{ $t("confirm") }}
+              </v-btn>
+              <v-btn
+                @click="backToStart()"
+                v-text="$t('back_to_start')"
+                color="secondary"
+              ></v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
       </v-stepper-content>
 
       <v-stepper-step
@@ -364,7 +390,7 @@ cs:
         <v-card>
           <v-card-title>{{ $t("overview") }}</v-card-title>
           <v-card-text>
-            <LargeSpinner v-if="state === 'initial' || spinnerOn || !state" />
+            <LargeSpinner v-if="state === 'confirmed' || spinnerOn || !state" />
             <v-alert
               v-else-if="state === 'preflight' && !preflightDataFormatValid"
               type="warning"
@@ -657,6 +683,7 @@ export default {
       uploading: false,
       importing: false,
       preflighting: false,
+      confirming: false,
       uploadProgress: 0,
       steps: {
         method: 1,
@@ -806,6 +833,12 @@ export default {
       }
       return false; // not uploaded yet
     },
+    canConfirm() {
+      if (this.uploadObject?.state === "initial") {
+        return true;
+      }
+      return false; // not uploaded yet
+    },
     canUpload() {
       return this.valid;
     },
@@ -877,7 +910,7 @@ export default {
       }
     },
     canSelectReportType() {
-      return this.method === "counter" || this.method === "celus";
+      return this.method === "celus";
     },
     notesUrl() {
       if (this.method === "raw") {
@@ -953,13 +986,28 @@ export default {
 
       this.uploading = true;
       this.uploadProgress = 0;
+      this.showErrorDialog = false;
       try {
         let response = await axios.post("/api/manual-data-upload/", formData, {
           headers: { "Content-Type": "multipart/form-data" },
           onUploadProgress: (e) => this.setProgress(e.total, e.loaded),
         });
-        // this.showSnackbar({content: 'Data successfully sent', color: 'success'})
         this.uploadObject = response.data;
+
+        // Method could be updated
+        if (this.method != this.uploadObject.method) {
+          if (this.step == this.steps.upload) {
+            this.methodChanged = true;
+            this.showSnackbar({
+              content: this.$t(`method_changed_to_${this.uploadObject.method}`),
+              color: "warning",
+            });
+          }
+          this.method = this.uploadObject.method;
+        } else {
+          this.methodChanged = false;
+        }
+
         this.step = this.steps.preflight;
         await this.$router.push({
           name: "platform-upload-data-step-preflight",
@@ -972,9 +1020,14 @@ export default {
         if (error.response?.status === 400) {
           let info = error.response.data;
           if ("data_file" in info) {
-            // this.showSnackbar({content: 'Data file error: ' + info.data_file[0], color: 'error'})
             this.showErrorDialog = true;
             this.errors = info.data_file;
+          }
+          if ("nibbler_errors" in info) {
+            this.showErrorDialog = true;
+            this.errors = info.nibbler_errors.map((e) =>
+              this.$t(this.nibblerErrorText(e.sheet_idx, e.name))
+            );
           }
           this.showSnackbar({ content: "Error sending data: " + error });
         } else {
@@ -1092,6 +1145,24 @@ export default {
         this.loadMdu();
       }
     },
+    async confirmReportType() {
+      if (this.uploadObject?.state === "initial") {
+        this.confirming = true;
+        let url = `/api/manual-data-upload/${this.uploadObject.pk}/confirm/`;
+        try {
+          await axios.post(url);
+        } catch (error) {
+          this.showSnackbar({
+            content: "Error can't confirm report type: " + error,
+          });
+        } finally {
+          this.confirming = false;
+        }
+        // reload object
+        this.spinnerOn = true;
+        this.loadMdu();
+      }
+    },
     async loadMdu() {
       this.cancelRefreshTimeout();
 
@@ -1107,24 +1178,11 @@ export default {
           );
           this.uploadObject = response.data;
 
-          // Method could be updated during preflight processing
-          if (this.method != this.uploadObject.method) {
-            if (this.step > this.steps.upload) {
-              this.methodChanged = true;
-              this.showSnackbar({
-                content: this.$t(
-                  `method_changed_to_${this.uploadObject.method}`
-                ),
-                color: "warning",
-              });
-            }
-            this.method = this.uploadObject.method;
-          } else {
-            this.methodChanged = false;
-          }
-
           switch (this.uploadObject.state) {
             case "initial":
+              this.step = this.steps.upload;
+              break;
+            case "confirmed":
             case "prefailed":
               this.step = this.steps.preflight;
               break;
@@ -1141,7 +1199,7 @@ export default {
               this.step = this.steps.done;
               break;
           }
-          if (["initial", "importing"].includes(this.uploadObject.state)) {
+          if (["confirmed", "importing"].includes(this.uploadObject.state)) {
             this.cancelRefreshTimeout();
             this.refreshTimeout = setTimeout(() => this.loadMdu(), 5000); // every 5 seconds
           }
@@ -1188,6 +1246,11 @@ export default {
       this.loadOrganizations();
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
       this.globalSpinnerOn = false;
+    },
+    nibblerErrorText(sheet_idx, name, extra) {
+      // TODO extract more info about failed parsing
+      // e.g. cells which are not correct
+      return "errors.no_parser_found";
     },
     nibblerReason(errors, preflight) {
       if (errors.every((e) => e.name.startsWith("NoParser"))) {

@@ -1,6 +1,12 @@
+from pathlib import Path
+
 from core.models import UL_CONS_STAFF, DataSource, SourceFileMixin
 from core.serializers import UserSimpleSerializer
+from django.conf import settings
+from django.db import transaction
 from django.utils.translation import gettext as _
+from nibbler.logic.processing import get_errors, output_to_poops
+from nibbler.models import get_report_types_from_nibbler_output
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
@@ -22,6 +28,7 @@ from rest_framework.serializers import (
 )
 from sushi.serializers import SushiFetchAttemptFlatSerializer
 
+from .exceptions import MultipleReportType, NibblerErrors
 from .models import (
     AccessLog,
     Dimension,
@@ -365,10 +372,13 @@ class ManualDataUploadSerializer(ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         if self.context['view'].action == "create":
-            if attrs["method"] == MduMethod.RAW:
+            if attrs["method"] in [MduMethod.RAW, MduMethod.COUNTER]:
                 if "report_type_id" in attrs:
                     raise ValidationError(
-                        {"report_type_id": "should not be present when `method='raw'`"}
+                        {
+                            "report_type_id": "should not be present when "
+                            f"`method='{attrs['method']}'`"
+                        }
                     )
             else:
                 if "report_type_id" not in attrs:
@@ -389,7 +399,56 @@ class ManualDataUploadSerializer(ModelSerializer):
         checksum, size = SourceFileMixin.checksum_fileobj(validated_data['data_file'])
         validated_data['checksum'] = checksum
         validated_data['file_size'] = size
-        result = super().create(validated_data)
+
+        with transaction.atomic():
+            # we put create into transaction so that when nibbler checks fails
+            # nothing is created in db
+
+            result = super().create(validated_data)
+            try:
+                if ManualDataUpload.using_nibbler_cls(validated_data["method"]):
+                    # Try to parse
+                    nibbler_output, method = result.get_nibbler_output()
+
+                    # test whether parsing passes
+                    # (should raise exception when nothing is found)
+                    poops = output_to_poops(nibbler_output)
+
+                    # update report type in it wasn't set before
+                    if not result.report_type:
+
+                        # update method for raw => counter transition
+                        result.method = method
+
+                        # get report type
+                        report_types, rt_names = get_report_types_from_nibbler_output(poops)
+
+                        if not rt_names:
+                            # No suitable parser found
+                            raise NibblerErrors(get_errors(nibbler_output))
+
+                        if not report_types:
+                            # can't resolve report type name to report type
+                            # this should not happen and admin should be notified
+                            # to fix the situation
+                            raise RuntimeError(f"Can't resolve {rt_names} to ReportType")
+
+                        if len({e.pk for e in report_types}) > 1:
+                            # Multiple report types should not be present here
+                            # that would indicate that the user uploaded e.g. xlsx file
+                            # with different report type on each sheet
+                            # => raise original exception
+                            raise MultipleReportType(
+                                f"Multiple ReportTypes found in the data: {rt_names}"
+                            )
+                        result.report_type = report_types[0]
+                        result.save()
+            except Exception:
+                # remove file which won't be linked with a db model due to exception
+                filepath = Path(settings.MEDIA_ROOT) / result.data_file.name
+                filepath.unlink(missing_ok=True)
+                raise
+
         return self._adjust_permissions(result)
 
     @classmethod

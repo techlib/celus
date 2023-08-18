@@ -286,7 +286,7 @@ def prepare_preflight(mdu_id: int):
             )
             return
 
-        elif mdu.state == MduState.INITIAL:
+        elif mdu.state == MduState.CONFIRMED:
 
             if mdu.method == MduMethod.RAW:
                 # update method if it was updated
@@ -395,7 +395,7 @@ Traceback: {traceback.format_exc()}
 def prepare_preflights():
     """This should unstuck MDUs without preflight"""
     for mdu in ManualDataUpload.objects.select_for_update(skip_locked=True).filter(
-        Q(state=MduState.INITIAL)
+        Q(state=MduState.CONFIRMED)
         & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
     ):
         mdu.plan_preflight()

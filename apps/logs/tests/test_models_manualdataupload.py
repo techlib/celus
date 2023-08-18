@@ -83,7 +83,7 @@ C,Metric2,4,8,12,18
             platform=platforms["standalone"],
             data_file__data=DATA,
             data_file__filename="something.csv",
-            state=MduState.INITIAL,
+            state=MduState.CONFIRMED,
             method=MduMethod.CELUS,
         )
 
@@ -241,7 +241,7 @@ A,Metric1,unresolved,0,0,0,20
             platform=platform,
             data_file__data=DATA,
             data_file__filename="something.csv",
-            state=MduState.INITIAL,
+            state=MduState.CONFIRMED,
             method=MduMethod.CELUS,
         )
 

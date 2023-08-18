@@ -55,14 +55,13 @@ from nibbler.logic.processing import (
     get_records_from_nibbler_output,
     is_success,
 )
-from nibbler.models import NibblerOutput, ParserDefinition, get_report_types_from_nibbler_output
+from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
 
 import logs
 
 from .exceptions import (
-    MultipleReportType,
     OrganizationHasToBeSelected,
     WrongOrganizations,
     WrongState,
@@ -641,6 +640,7 @@ def validate_mime_type(fileobj):
 
 class MduState(models.TextChoices):
     INITIAL = 'initial', _("Initial")
+    CONFIRMED = 'confirmed', _("Confirmed")
     PREFLIGHT = 'preflight', _("Preflight")
     IMPORTING = 'importing', _("Importing")
     IMPORTED = 'imported', _("Imported")
@@ -692,13 +692,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     class Meta:
         constraints = (
             models.CheckConstraint(
-                check=~(
-                    (
-                        models.Q(method__in=[MduMethod.COUNTER, MduMethod.CELUS])
-                        & models.Q(report_type__isnull=True)
-                    )
-                ),
-                name='non-raw-needs-report-type',
+                check=~(models.Q(method=MduMethod.CELUS) & models.Q(report_type__isnull=True)),
+                name='celus-needs-report-type',
             ),
         )
 
@@ -769,16 +764,20 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         except ObjectDoesNotExist:
             return None
 
-    @property
-    def using_nibbler(self) -> bool:
-        if self.method == MduMethod.RAW:
+    @classmethod
+    def using_nibbler_cls(cls, method: MduMethod) -> bool:
+        if method == MduMethod.RAW:
             return True
-        elif self.method == MduMethod.COUNTER:
+        elif method == MduMethod.COUNTER:
             return True
-        elif self.method == MduMethod.CELUS:
+        elif method == MduMethod.CELUS:
             return settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT
         else:
             raise NotImplementedError()
+
+    @property
+    def using_nibbler(self) -> bool:
+        return self.using_nibbler_cls(self.method)
 
     def histograms_with_stats(
         self,
@@ -830,16 +829,6 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                 nibbler_parser,
                 self.platform,
             )
-            report_types, rt_names = get_report_types_from_nibbler_output(poops)
-            if not report_types or len({e.pk for e in report_types}) > 1:
-                # Multiple report types should not be present here
-                # that would indicate that the user uploaded e.g. xlsx file
-                # with different report type on each sheet
-                # => raise original exception
-                raise MultipleReportType(f"Multiple ReportTypes found in the data: {rt_names}")
-
-            self.report_type = report_types[0]
-            self.save()
 
             return poops, self.method
 
@@ -1055,14 +1044,14 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         return True
 
     def plan_preflight(self):
-        if self.pk and self.state == MduState.INITIAL:
+        if self.pk and self.state == MduState.CONFIRMED:
             from .tasks import prepare_preflight
 
             transaction.on_commit(lambda: prepare_preflight.delay(self.pk))
 
     def regenerate_preflight(self) -> bool:
         if self.state in (MduState.PREFLIGHT, MduState.PREFAILED):
-            self.state = MduState.INITIAL
+            self.state = MduState.CONFIRMED
             self.save()
             transaction.on_commit(self.plan_preflight)
             return True
