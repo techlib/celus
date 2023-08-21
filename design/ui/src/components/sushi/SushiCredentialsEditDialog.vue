@@ -50,6 +50,10 @@ en:
   cannot_create_duplicated: Celus does not support multiple sets of credentials for the same organization, platform and COUNTER version.
   multiple_credentials_info_link: To get more information about duplicated credentials, please see {link}.
   this_article: this article
+  show_debug: Show debugging information
+  sushi_debug_links: SUSHI debugging links
+  no_report_selected: No report selected
+
 cs:
   add_custom_param: Přidat vlastní parametr
   add_custom_param_tooltip: Použijte toto tlačítko pro data, pro která nenajdete odpovídající políčko jinde.
@@ -99,15 +103,54 @@ cs:
   cannot_create_duplicated: Celus nepodporuje více přihlašovacích údajů pro stejnou organizaci, platformu a verzi COUNTER.
   multiple_credentials_info_link: Více informací o zdvojených přihlašovacích údajích najdete v {link}.
   this_article: tomto článku
+  show_debug: Zobrazit debug informace
+  sushi_debug_links: Sushi debug odkazy
+  no_report_selected: Nebyl vybrán žádný report
 </i18n>
 
 <template>
   <v-form v-model="valid" ref="form">
     <v-card>
-      <v-card-title class="headline">{{
-        $t("title.edit_sushi_credentials")
-      }}</v-card-title>
+      <v-card-title class="headline"
+        >{{ $t("title.edit_sushi_credentials") }}
+        <v-spacer />
+        <v-tooltip bottom max-width="600px" v-if="showManagementStuff">
+          <template #activator="{ on }">
+            <v-icon
+              small
+              color="grey"
+              class="mr-2"
+              @click="toggleDebug"
+              v-on="on"
+            >
+              {{ showDebug ? "fa-angle-up" : "fa-angle-down" }}
+            </v-icon>
+          </template>
+          <span>{{ $t("show_debug") }}</span>
+        </v-tooltip>
+      </v-card-title>
       <v-card-text>
+        <!-- debug info -->
+        <v-sheet v-if="showDebug" class="text-right mx-2">
+          <span>{{ $t("sushi_debug_links") }}:</span>
+          <v-chip
+            v-for="rt in selectedReportTypeObjs"
+            :key="rt.id"
+            :href="sushiUrl(rt)"
+            target="_blank"
+            color="info"
+            class="ml-2"
+            label
+          >
+            {{ rt.code }}
+            <v-icon x-small class="ml-2">fa-external-link-alt</v-icon>
+          </v-chip>
+          <span v-if="selectedReportTypes.length === 0" class="pl-1">{{
+            $t("no_report_selected")
+          }}</span>
+        </v-sheet>
+
+        <!-- alert about conflicting credentials -->
         <v-alert v-if="conflictingCredentials" type="error" outlined>
           <p v-if="credentials">{{ $t("cannot_edit_duplicated") }}</p>
           <p v-else>{{ $t("cannot_create_duplicated") }}</p>
@@ -738,6 +781,7 @@ export default {
       prefixApiKey: "",
       prefixPlatform: "",
       initializing: true,
+      showDebug: false,
     };
   },
   computed: {
@@ -747,6 +791,8 @@ export default {
       userIsManager: "showManagementStuff",
       consortialInstall: "consortialInstall",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+      debugMonth: "dateRangeCoverageEndText",
+      showManagementStuff: "showManagementStuff",
     }),
     credentials() {
       if (this.credentialsObject) {
@@ -983,6 +1029,11 @@ export default {
       // after the user clicks it. But in some cases we can disable it
       // completely because the warning is already shown
       return this.conflictingCredentials;
+    },
+    selectedReportTypeObjs() {
+      return this.allReportTypes.filter((item) =>
+        this.selectedReportTypes.includes(item.id)
+      );
     },
   },
 
@@ -1394,8 +1445,28 @@ export default {
         }
       }
     },
+    toggleDebug() {
+      this.showDebug = !this.showDebug;
+    },
+    sushiUrl(rt) {
+      const base = this.url.endsWith("/") ? this.url : this.url + "/";
+      const searchParams = new URLSearchParams({
+        customer_id: this.customerId,
+        begin_date: this.debugMonth,
+        end_date: this.debugMonth,
+      });
+      if (this.requestorId) {
+        searchParams.append("requestor_id", this.requestorId);
+      }
+      if (this.apiKey) {
+        searchParams.append("api_key", this.apiKey);
+      }
+      if (this.platformFilter) {
+        searchParams.append("platform", this.platformFilter);
+      }
+      return `${base}reports/${rt.code}/?${searchParams.toString()}`;
+    },
   },
-
   async mounted() {
     try {
       let promises = [this.loadReportTypes()];
