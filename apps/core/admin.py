@@ -1,9 +1,9 @@
 from allauth.account.adapter import get_adapter
 from django.conf import settings
 from django.contrib import admin, messages
-from django.contrib.admin import TabularInline
+from django.contrib.admin import RelatedOnlyFieldListFilter, TabularInline
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef
 from django.utils.translation import gettext_lazy as _
 from import_export import fields
 from import_export.admin import ExportActionMixin
@@ -110,6 +110,7 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
         'is_staff',
         'source',
         'email_verified',
+        'org_count',
     )
 
     custom_fields = ('ext_id', 'source', 'language', 'extra_data')
@@ -120,7 +121,7 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (("Celus", {'fields': custom_fields}),)
 
     list_filter = (
-        'source',
+        ('source', RelatedOnlyFieldListFilter),
         HasEmailVerified,
         IsAdminInAtLeastOneOrganization,
         IsAdminOfMasterOrganization,
@@ -131,13 +132,22 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
     resource_class = MyUserResource  # for django-import-export
 
     def get_queryset(self, request):
-        return User.objects.annotate_email_verified()
+        return (
+            User.objects.annotate_email_verified()
+            .annotate(org_count=Count('organizations'))
+            .select_related('source__organization')
+        )
 
     def email_verified(self, user):
         return user.email_verified
 
     email_verified.boolean = True
     email_verified.admin_order_field = '_email_verified'
+
+    def org_count(self, user):
+        return user.org_count
+
+    org_count.admin_order_field = 'org_count'
 
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         res = super().formfield_for_choice_field(db_field, request, **kwargs)

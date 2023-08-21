@@ -106,7 +106,7 @@ class DataSource(models.Model):
         )
 
     def __str__(self):
-        if self.organization and self.type == self.TYPE_ORGANIZATION:
+        if self.type == self.TYPE_ORGANIZATION and self.organization_id:
             return f'Org: {self.organization}'
         return f'{self.short_name}: {self.get_type_display()}'
 
