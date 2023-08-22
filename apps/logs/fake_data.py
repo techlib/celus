@@ -125,6 +125,8 @@ class ImportBatchFullFactory(ImportBatchFactory):
             ]
         AccessLog.objects.bulk_create(als)
 
+        # compute interest
+
         # create OrganizationPlatform link which would be expected if the data were loaded
         # from a file
         OrganizationPlatform.objects.get_or_create(

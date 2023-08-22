@@ -3,7 +3,7 @@ from time import monotonic, time
 from typing import Callable, Iterable, Optional
 
 from django.db.models import Count, FloatField, Q, QuerySet, Sum
-from django.db.models.expressions import RawSQL
+from django.db.models.expressions import F, RawSQL
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
 
@@ -20,19 +20,24 @@ def sync_materialized_reports(report_type_qs: Optional[QuerySet[ReportType]] = N
     """
     qs = report_type_qs if report_type_qs is not None else ReportType.objects.all()
     for mat_rt in qs.only_materialized():
-        create_materialized_accesslogs(mat_rt)
-        mat_rt.approx_record_count = AccessLog.objects.filter(report_type=mat_rt).count()
-        mat_rt.save()
+        if added := create_materialized_accesslogs(mat_rt):
+            ReportType.objects.filter(pk=mat_rt.pk).update(
+                approx_record_count=F('approx_record_count') + added
+            )
 
 
 def sync_materialized_reports_for_import_batch(ib: ImportBatch):
     """
     Create AccessLogs for all materialized report types for one import batch
     """
+    interest_rt = ReportType.objects.get_interest_rt()
     for mat_rt in ReportType.objects.only_materialized().filter(
-        materialization_spec__base_report_type=ib.report_type
+        materialization_spec__base_report_type__in=[ib.report_type, interest_rt]
     ):
-        create_materialized_accesslogs_for_importbatches(mat_rt, [ib])
+        if added := create_materialized_accesslogs_for_importbatches(mat_rt, [ib]):
+            ReportType.objects.filter(pk=mat_rt.pk).update(
+                approx_record_count=F('approx_record_count') + added
+            )
 
 
 def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:

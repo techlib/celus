@@ -25,6 +25,12 @@ from logs.models import ImportBatch
 
 from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
 from ..models import AccessLog, DimensionText, Metric, ReportType
+from .materialized_interest import (
+    find_superseeded_import_batches,
+    recompute_interest_by_batch,
+    sync_interest_for_import_batch,
+)
+from .materialized_reports import sync_materialized_reports_for_import_batch
 
 logger = logging.getLogger(__name__)
 
@@ -479,7 +485,7 @@ def import_counter_records(
     report_type: ReportType,
     organization: Organization,
     platform: Platform,
-    records: Generator[CounterRecord, None, None],
+    records: Union[Generator[CounterRecord, None, None], Iterable[CounterRecord]],
     months: Optional[Iterable[str]] = None,
     import_batch_kwargs: Optional[dict] = None,
     skip_clickhouse_sync: bool = False,
@@ -558,6 +564,8 @@ def import_counter_records(
 
     # after this, the ib_id_to_key_to_value is full and we can process it
     import_batches = list(month_to_ib.values())
+    interest_rt = ReportType.objects.get_interest_rt()
+    ibs_for_interest_recompute = set()
     for ib in import_batches:
         csv_data = StringIO()
         writer = csv.writer(csv_data)
@@ -575,8 +583,23 @@ def import_counter_records(
         ingest_import_batch_data(ib, csv_data)
         # and insert the PlatformTitle links
         stats += create_platformtitle_links_from_import_batch(ib, target_ids)
+        # sync interest
+        sync_interest_for_import_batch(ib, interest_rt, skip_clickhouse_sync=True)
+        # if interest of this ib supersedes interest of other ibs, then we need to recompute
+        # but we only do it in `on_commit` to leave it after the current transaction
+        ibs_for_interest_recompute.update(
+            set(find_superseeded_import_batches(ib).values_list('pk', flat=True))
+        )
+        # compute materialized report types
+        sync_materialized_reports_for_import_batch(ib)
 
     log_memory('XX3')
+
+    def sync_interest():
+        recompute_interest_by_batch(ImportBatch.objects.filter(pk__in=ibs_for_interest_recompute))
+
+    if ibs_for_interest_recompute:
+        on_commit(sync_interest)
 
     if not skip_clickhouse_sync and settings.CLICKHOUSE_SYNC_ACTIVE:
         from .clickhouse import sync_import_batch_with_clickhouse

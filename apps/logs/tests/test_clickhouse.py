@@ -10,7 +10,7 @@ from organizations.tests.conftest import organizations  # noqa  - used as fixtur
 from publications.models import Platform, PlatformInterestReport
 
 from logs.cubes import AccessLogCube, ch_backend
-from logs.fake_data import ImportBatchFullFactory
+from logs.fake_data import ImportBatchFullFactory, MetricFactory
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
@@ -20,7 +20,7 @@ from logs.logic.clickhouse import (
     sync_import_batch_with_clickhouse,
 )
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import smart_interest_sync, sync_interest_by_import_batches
+from logs.logic.materialized_interest import smart_interest_sync
 from logs.models import (
     AccessLog,
     ImportBatch,
@@ -28,6 +28,7 @@ from logs.models import (
     InterestGroup,
     Metric,
     ReportInterestMetric,
+    ReportType,
 )
 from logs.tasks import (
     compare_db_with_clickhouse_task,
@@ -117,6 +118,15 @@ class TestClickhouseSync:
         organization = organizations[0]
         if not report_type:
             report_type = report_type_nd(3)
+        # prepare interest
+        report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ReportInterestMetric.objects.create(
+            report_type=report_type,
+            metric=MetricFactory.create(short_name='Hits'),
+            interest_group=InterestGroup.objects.create(short_name='aaa', position=1),
+        )
+        # import the data
         import_batches, _stats = import_counter_records(
             report_type, organization, platform, crs, skip_clickhouse_sync=lowlevel
         )
@@ -124,9 +134,9 @@ class TestClickhouseSync:
 
     def test_one_import_batch_sync(self, counter_records, organizations, report_type_nd):
         *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 6
+        assert len(ch_recs) == 11
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         for ib in ibs:
             assert (
@@ -139,47 +149,34 @@ class TestClickhouseSync:
 
     def test_general_accesslog_sync(self, counter_records, organizations, report_type_nd):
         self._prepare_counter_records(counter_records, organizations, report_type_nd, lowlevel=True)
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
+        assert ch_backend.get_count(AccessLogCube.query()) == 0
         count = sync_accesslogs_with_clickhouse_superfast()
-        ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 6
-        assert count == 6
+        assert count == 11
+        assert ch_backend.get_count(AccessLogCube.query()) == 11
+
         # retry to check no more syncs will be done
         assert sync_accesslogs_with_clickhouse_superfast() == 0, 'no more syncs'
 
     def test_one_import_batch_sync_interest_calculation(
         self, counter_records, organizations, report_type_nd
     ):
-        platform, report_type, _ibs = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
-        assert AccessLog.objects.count() == 6
-        ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 6
-        assert ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum == 63
-        # prepare interest
-        report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ReportInterestMetric.objects.create(
-            report_type=report_type,
-            metric=Metric.objects.get(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='aaa', position=1),
-        )
-        sync_interest_by_import_batches()
+        """
+        Interest is calculated as part of data ingestion
+        """
+        self._prepare_counter_records(counter_records, organizations, report_type_nd)
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
-        assert (
-            ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum == 126
-        ), 'sum must be twice what it was before as interest will double it'
+        assert ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum == 126
 
     def test_import_batch_delete_from_model_instance(
         self, counter_records, organizations, report_type_nd
     ):
         *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 6
+        assert len(ch_recs) == 11
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         # delete the import batch
         for ib in ibs:
@@ -192,9 +189,9 @@ class TestClickhouseSync:
         self, counter_records, organizations, report_type_nd
     ):
         *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 6
+        assert len(ch_recs) == 11
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         for ib in ibs:
             ImportBatch.objects.filter(pk=ib.pk).delete()
@@ -210,7 +207,7 @@ class TestClickhouseSync:
         *_, ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd, lowlevel=True
         )
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         ib = ibs[0]
@@ -235,11 +232,11 @@ class TestClickhouseSync:
         *_, ibs = self._prepare_counter_records(
             counter_records, organizations, report_type_nd, lowlevel=True
         )
-        assert AccessLog.objects.count() == 6
+        assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         ibs.sort(key=lambda obj: obj.date)
-        for ib, al_count in zip(ibs, [3, 5, 6]):
+        for ib, al_count in zip(ibs, [3 + 2, 5 + 4, 6 + 5]):
             sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
             sync_log.state = ImportBatchSyncLog.STATE_SYNC
             sync_log.save()
@@ -253,24 +250,12 @@ class TestClickhouseSync:
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
-        platform, report_type, _ibs = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd
-        )
-        assert AccessLog.objects.count() == 6
-        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6
-        # prepare interest
-        report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        rim = ReportInterestMetric.objects.create(
-            report_type=report_type,
-            metric=Metric.objects.get(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='aaa', position=1),
-        )
-        sync_interest_by_import_batches()
+        self._prepare_counter_records(counter_records, organizations, report_type_nd)
         # check result
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 11
         # redefine interest by dropping the ReportInterestMetric - it will remove all the interest
+        rim = ReportInterestMetric.objects.get()
         rim.delete()
         smart_interest_sync()
         # check again
@@ -284,20 +269,10 @@ class TestClickhouseSync:
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
-        platform, report_type, _ibs = self._prepare_counter_records(
+        self._prepare_counter_records(
             counter_records, organizations, report_type_nd, metric={'Hits': 1, 'Visits': 2}
         )
-        assert AccessLog.objects.count() == 12
-        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 12
-        # prepare interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        rim = ReportInterestMetric.objects.create(
-            report_type=report_type,
-            metric=Metric.objects.get(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='aaa', position=1),
-        )
-        sync_interest_by_import_batches()
+        interest_rt = ReportType.objects.get_interest_rt()
         # check result
         assert AccessLog.objects.count() == 17, "12 orig + 5 interest"
         interest_al_pks = set(
@@ -312,6 +287,7 @@ class TestClickhouseSync:
         ).sum
         assert old_sum_cube == old_sum_db
         # redefine interest by dropping the ReportInterestMetric - it will remove all the interest
+        rim = ReportInterestMetric.objects.get()
         rim.metric = Metric.objects.get(short_name='Visits')
         rim.save()
         smart_interest_sync()
@@ -428,7 +404,7 @@ class TestClickhouseCompare:
             ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
             ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
-        crs = list(counter_records(data, metric='hits', platform='Platform1'))
+        crs = counter_records(data, metric='hits', platform='Platform1')
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_batches, _stats = import_counter_records(
@@ -446,7 +422,6 @@ class TestClickhouseCompare:
             if ib_idx not in in_ch:
                 ch_backend.delete_records(AccessLogCube.query().filter(import_batch_id=ib.pk))
         result = compare_db_with_clickhouse()
-        print(result.stats)
         assert len(result.import_batches_to_resync) == len(set(in_db) - set(in_ch))
         assert len(result.import_batches_to_delete) == len(set(in_ch) - set(in_db))
 

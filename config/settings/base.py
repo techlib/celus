@@ -416,8 +416,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     'sync_materialized_reports_task': {
         'task': 'logs.tasks.sync_materialized_reports_task',
-        'schedule': schedule(run_every=timedelta(minutes=7)),
-        'options': {'expires': 7 * 60},
+        'schedule': schedule(run_every=timedelta(minutes=37)),
+        'options': {'expires': 37 * 60},
     },
     'import_new_sushi_attempts_task': {
         'task': 'logs.tasks.import_new_sushi_attempts_task',

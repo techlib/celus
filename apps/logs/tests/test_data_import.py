@@ -6,12 +6,23 @@ from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from django.db.models import Count, Sum
 from django.urls import reverse
+from hcube.api.models.aggregation import Sum as HSum
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
-from publications.models import PlatformTitle, Title
+from publications.fake_data import PlatformFactory
+from publications.models import PlatformInterestReport, PlatformTitle, Title
 
-from logs.fake_data import ManualDataUploadFullFactory
-from logs.models import AccessLog, DimensionText, ImportBatch
+from logs.fake_data import ManualDataUploadFullFactory, MetricFactory
+from logs.models import (
+    AccessLog,
+    DimensionText,
+    ImportBatch,
+    InterestGroup,
+    ReportInterestMetric,
+    ReportMaterializationSpec,
+    ReportType,
+)
 
+from ..cubes import AccessLogCube, ch_backend
 from ..exceptions import DataStructureError
 from ..logic.data_import import import_counter_records
 
@@ -47,7 +58,7 @@ class TestDataImport:
         """
         assert AccessLog.objects.count() == 0
         record_number = 10
-        crs = list(counter_records_nd(1, record_number=record_number))
+        crs = counter_records_nd(1, record_number=record_number)
         report_type = report_type_nd(1)
         import_counter_records(report_type, organizations[0], platform, crs, buffer_size=1)
         assert AccessLog.objects.count() == record_number
@@ -113,7 +124,7 @@ class TestDataImport:
             [None, '2018-02-01', '1v1', '2v2', '3v2', 16],
             [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
-        crs = list(counter_records(data, metric='Hits', platform=platform.name))
+        crs = counter_records(data, metric='Hits', platform=platform.name)
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs, months=months)
@@ -185,6 +196,79 @@ class TestDataImport:
         assert Title.objects.count() == 1
         assert stats['new logs'] == 1
         assert stats['new platformtitles'] == 1
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_interest_and_materialization_are_done_during_import(
+        self, counter_records, organizations, report_type_nd, clickhouse_on_off
+    ):
+        """
+        Test that when records are imported, interest and materialization are done
+        directly with the import
+        """
+        platform = PlatformFactory.create()
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ReportInterestMetric.objects.create(
+            report_type=report_type,
+            metric=MetricFactory.create(short_name='Hits'),
+            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
+        )
+        # and materialized view
+        rt_no_title_spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_target=False
+        )
+        rt_no_title = ReportType.objects.create(
+            materialization_spec=rt_no_title_spec, short_name='no_title', name='no_title'
+        )
+        # and materialized interest to cover all possible cases
+        int_no_title_spec = ReportMaterializationSpec.objects.create(
+            base_report_type=interest_rt, keep_target=False
+        )
+        int_no_title = ReportType.objects.create(
+            materialization_spec=int_no_title_spec, short_name='int_no_title', name='int_no_title'
+        )
+        assert rt_no_title.approx_record_count == 0
+        # import the data
+        data1 = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        crs1 = counter_records(data1, metric='Hits', platform='Platform1')
+        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
+        assert len(ibs) == 1, 'only one import batch created'
+        assert (
+            AccessLog.objects.count() == 3 + 3 + 2 + 1
+        ), '3 normal, 3 interest, 2 materialized, 1 materialized interest'
+        assert report_type.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        assert interest_rt.accesslog_set.count() == 3, '3 interest logs created'
+        assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        assert rt_no_title.accesslog_set.count() == 2, '2 materialized logs created (1 per dim1)'
+        assert rt_no_title.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        assert int_no_title.accesslog_set.count() == 1, '1 materialized interest log created'
+        assert int_no_title.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        rt_no_title.refresh_from_db()
+        assert rt_no_title.approx_record_count == 2, 'approx count was updated'
+        if clickhouse_on_off:
+            # clickhouse it turned on, so we should have the same results in clickhouse
+            for i, rt in enumerate([report_type, interest_rt]):
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum('value'))
+                    ).sum
+                    == 7
+                ), f'rt {i} should have sum of hits == 7'
+            for i, rt in enumerate([rt_no_title, int_no_title]):
+                assert (
+                    ch_backend.get_one_record(
+                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum('value'))
+                    ).sum
+                    is None
+                ), f'mrt {i} should have sum of hits == None as it is materialized'
 
 
 @pytest.mark.django_db

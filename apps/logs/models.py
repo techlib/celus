@@ -77,7 +77,11 @@ class OrganizationPlatform(models.Model):
 
 class ReportTypeQuerySet(models.QuerySet):
     def get_interest_rt(self):
-        return self.get(short_name='interest', source__isnull=True)
+        # we use get_or_create to make sure interest is always present
+        # this is mostly for tests, because in production it should be always present
+        return self.get_or_create(
+            short_name='interest', source__isnull=True, defaults={'name': 'Interest'}
+        )[0]
 
     def only_materialized(self):
         return self.filter(materialization_spec__isnull=False)

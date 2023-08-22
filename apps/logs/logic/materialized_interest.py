@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Set
 
 from core.task_support import cache_based_lock
 from django.conf import settings
-from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from publications.models import Platform
@@ -46,7 +46,9 @@ def sync_interest_by_import_batches(queryset=None) -> Counter:
 
 
 @atomic
-def sync_interest_for_import_batch(import_batch: ImportBatch, interest_rt: ReportType) -> Counter:
+def sync_interest_for_import_batch(
+    import_batch: ImportBatch, interest_rt: ReportType, skip_clickhouse_sync=False
+) -> Counter:
     start = time()
     stats = Counter()
     # prepare the data
@@ -75,7 +77,22 @@ def sync_interest_for_import_batch(import_batch: ImportBatch, interest_rt: Repor
     stats['removed'] = len(to_delete_pks)
     logger.debug('Import took: %.2f s; Stats: %s', time() - start, stats)
     # sync with clickhouse
-    if settings.CLICKHOUSE_SYNC_ACTIVE and (really_new or to_delete_pks):
+    if (
+        settings.CLICKHOUSE_SYNC_ACTIVE
+        and (really_new or to_delete_pks)
+        and not skip_clickhouse_sync
+    ):
+        # we only sync with clickhouse if skip_clickhouse_sync is not set
+        # It is used during data import is because it goes like this:
+        #
+        # 1. import normal data
+        # 2. calculate interest
+        # 3. prepare materialized reports
+        # 4. sync with clickhouse
+        #
+        # so if we are in step 2, we do not want to sync interest with clickhouse
+        # because it will be done later in step 4
+
         from .clickhouse import sync_import_batch_interest_with_clickhouse
 
         on_commit(lambda: sync_import_batch_interest_with_clickhouse(import_batch))
@@ -199,6 +216,19 @@ def extract_interest_from_import_batch(
         new_log_dict['metric_id'] = metric_remap.get(metric_id, metric_id)
         new_logs.append(new_log_dict)
     return new_logs
+
+
+def find_superseeded_import_batches(import_batch: ImportBatch) -> QuerySet[ImportBatch]:
+    """
+    Find all import batches for which interest is superseeded by the given import batch
+    and thus need recomputation
+    """
+    return ImportBatch.objects.filter(
+        organization_id=import_batch.organization_id,
+        platform_id=import_batch.platform_id,
+        report_type__superseeded_by=import_batch.report_type,
+        date=import_batch.date,
+    )
 
 
 def remove_interest(queryset=None) -> Counter:

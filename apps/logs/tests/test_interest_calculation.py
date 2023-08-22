@@ -4,6 +4,7 @@ from django.utils.timezone import now
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform, PlatformInterestReport
 
+from logs.fake_data import MetricFactory
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import (
     _find_metric_interest_changes,
@@ -13,7 +14,6 @@ from logs.logic.materialized_interest import (
     _find_superseeded_import_batches,
     _find_unprocessed_batches,
     fast_compare_existing_and_new_records,
-    smart_interest_sync,
     sync_interest_for_import_batch,
 )
 from logs.logic.materialized_reports import create_materialized_accesslogs
@@ -35,66 +35,60 @@ class TestInterestCalculation:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        # define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
+        ReportInterestMetric.objects.create(
+            report_type=report_type,
+            metric=MetricFactory.create(short_name='Hits'),
+            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
+        )
+        # import data
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
-        report_type = report_type_nd(1)
-        organization = organizations[0]
+        crs1 = counter_records(data1, metric='Hits', platform='Platform1')
         ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
-        assert AccessLog.objects.count() == 3
+        # check
         assert len(ibs) == 1, 'only one import batch created'
-        # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        sync_interest_for_import_batch(ibs[0], interest_rt)
-        assert interest_rt.accesslog_set.count() == 0, 'no interest platform and metric yet'
-        # now improve it and retry
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ReportInterestMetric.objects.create(
-            report_type=report_type,
-            metric=Metric.objects.get(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
-        )
-        sync_interest_for_import_batch(ibs[0], interest_rt)
-        assert interest_rt.accesslog_set.count() == 3, 'now it should work'
+        assert AccessLog.objects.count() == 6, '3 normal + 3 interest'
+        assert report_type.accesslog_set.count() == 3, '3 normal logs'
+        assert report_type.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        assert interest_rt.accesslog_set.count() == 3, '3 interest logs'
         assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
 
-    def test_superseeded_report_types(self, counter_records, organizations, report_type_nd):
+    @pytest.mark.parametrize(['new_before_old'], [[True], [False]])
+    @pytest.mark.django_db(transaction=True)
+    def test_superseeded_report_types(
+        self, counter_records, organizations, report_type_nd, new_before_old
+    ):
         """
         Test that when there are data for two report types from which one obsoletes the other,
         the newer data get precedence in interest values. On the other hand, if there are only
-        data for that date in the old batch, take the data from there
+        data for that date in the old batch, take the data from there.
+
+        The `new_before_old` parameter controls for which RT the data are loaded first.
+        If old is loaded later, it will simply not create the extra interest logs. If new is
+        loaded later, it will also need to remove the corresponding interest logs from old.
+        This way we test both scenarios in one test. Both should end up with the same result.
         """
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
-        data_old = [
-            ['Title1', '2018-01-01', '1v1', 1],
-            ['Title2', '2018-01-01', '1v2', 2],
-            ['Title3', '2018-02-01', '1v2', 4],  # this is extra - has different date
-        ]
-        data_new = [
-            ['Title1', '2018-01-01', '1v1', 8],
-            ['Title2', '2018-01-01', '1v2', 16],
-            ['Title3', '2018-01-01', '1v2', 32],  # date differs
-        ]
-        crs_old = list(counter_records(data_old, metric='Hits', platform='Platform1'))
-        crs_new = list(counter_records(data_new, metric='Hits', platform='Platform1'))
         report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
         report_type_new = report_type_nd(1, short_name='new')
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
-        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
-        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
-        assert AccessLog.objects.count() == 6
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
-        hit_metric = Metric.objects.get(short_name='Hits')
+        hit_metric = MetricFactory.create(short_name='Hits')
         ig = InterestGroup.objects.create(short_name='ig1', position=1)
         ReportInterestMetric.objects.create(
             report_type=report_type_old, metric=hit_metric, interest_group=ig
@@ -102,13 +96,38 @@ class TestInterestCalculation:
         ReportInterestMetric.objects.create(
             report_type=report_type_new, metric=hit_metric, interest_group=ig
         )
-        # sync and count
-        for ib_old in ibs_old:
-            sync_interest_for_import_batch(ib_old, interest_rt)
-        assert interest_rt.accesslog_set.count() == 1, '1 of 3 should make it to interest'
-        for ib_new in ibs_new:
-            sync_interest_for_import_batch(ib_new, interest_rt)
-        assert interest_rt.accesslog_set.count() == 4, '3 of 3 should make it to interest'
+        # prepare data
+        data_old = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-02-01', '1v2', 4],  # this is extra - has different date
+        ]
+        crs_old = counter_records(data_old, metric='Hits', platform='Platform1')
+        data_new = [
+            ['Title1', '2018-01-01', '1v1', 8],
+            ['Title2', '2018-01-01', '1v2', 16],
+            ['Title3', '2018-01-01', '1v2', 32],  # date differs
+        ]
+        crs_new = counter_records(data_new, metric='Hits', platform='Platform1')
+        # import and check
+        if new_before_old:
+            ibs_new, _stats = import_counter_records(
+                report_type_new, organization, platform, crs_new
+            )
+        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
+        if not new_before_old:
+            ibs_new, _stats = import_counter_records(
+                report_type_new, organization, platform, crs_new
+            )
+        assert len(ibs_old) == 2, 'one import batch per month'
+        old_ib1, old_ib2 = ibs_old
+        assert old_ib1.accesslog_set.count() == 2, '2 normal + no interest logs in first batch'
+        assert old_ib2.accesslog_set.count() == 2, '1 normal + 1 interest logs in second batch'
+
+        assert len(ibs_new) == 1, 'only one import batch created for one month'
+        new_ib = ibs_new[0]
+        assert new_ib.accesslog_set.count() == 6, '3 normal logs + 3 interest logs'
+        assert interest_rt.accesslog_set.count() == 4, '3 new interest logs + 1 remaining old'
 
     def test_two_report_types_with_the_same_metric(
         self, counter_records, organizations, report_type_nd
@@ -121,6 +140,22 @@ class TestInterestCalculation:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+        report_type_1 = report_type_nd(1, short_name='old')  # type: ReportType
+        report_type_2 = report_type_nd(1, short_name='new')
+        # now define the interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_1)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_2)
+        hit_metric = MetricFactory.create(short_name='Hits')
+        ig1 = InterestGroup.objects.create(short_name='ig1', position=1)
+        ig2 = InterestGroup.objects.create(short_name='ig2', position=2)
+        ReportInterestMetric.objects.create(
+            report_type=report_type_1, metric=hit_metric, interest_group=ig1
+        )
+        ReportInterestMetric.objects.create(
+            report_type=report_type_2, metric=hit_metric, interest_group=ig2
+        )
+        # prepare data
         data_1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
@@ -131,33 +166,14 @@ class TestInterestCalculation:
             ['Title2', '2018-01-01', '1v2', 16],
             ['Title3', '2018-01-01', '1v2', 32],  # date differs
         ]
-        crs_1 = list(counter_records(data_1, metric='Hits', platform='Platform1'))
-        crs_2 = list(counter_records(data_2, metric='Hits', platform='Platform1'))
-        report_type_1 = report_type_nd(1, short_name='old')  # type: ReportType
-        report_type_2 = report_type_nd(1, short_name='new')
-        ibs_1, _stats = import_counter_records(report_type_1, organization, platform, crs_1)
-        ibs_2, _stats = import_counter_records(report_type_2, organization, platform, crs_2)
-        assert AccessLog.objects.count() == 6
-        # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_1)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_2)
-        hit_metric = Metric.objects.get(short_name='Hits')
-        ig1 = InterestGroup.objects.create(short_name='ig1', position=1)
-        ig2 = InterestGroup.objects.create(short_name='ig2', position=2)
-        ReportInterestMetric.objects.create(
-            report_type=report_type_1, metric=hit_metric, interest_group=ig1
-        )
-        ReportInterestMetric.objects.create(
-            report_type=report_type_2, metric=hit_metric, interest_group=ig2
-        )
-        # sync and count
-        for ib in ibs_1:
-            sync_interest_for_import_batch(ib, interest_rt)
-        assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
-        for ib in ibs_2:
-            sync_interest_for_import_batch(ib, interest_rt)
-        assert interest_rt.accesslog_set.count() == 6, '3 of 3 should make it to interest'
+        crs_1 = counter_records(data_1, metric='Hits', platform='Platform1')
+        crs_2 = counter_records(data_2, metric='Hits', platform='Platform1')
+        # import and check
+        import_counter_records(report_type_1, organization, platform, crs_1)
+        import_counter_records(report_type_2, organization, platform, crs_2)
+        assert report_type_1.accesslog_set.count() == 3
+        assert report_type_2.accesslog_set.count() == 3
+        assert interest_rt.accesslog_set.count() == 6
         # check that the interest values are correct
         dim1 = interest_rt.dimensions_sorted[0]
         dim1_values = {
@@ -171,58 +187,6 @@ class TestInterestCalculation:
             sum=Sum('value')
         ) == {'sum': 56}
 
-    def test_superseeded_report_types_with_different_titles(
-        self, counter_records, organizations, report_type_nd
-    ):
-        """
-        Test that when there are data for two report types from which one obsoletes the other,
-        the newer data get precedence in interest values.
-        This should also work if there are different titles in the two batches because the
-        detection should not work on title level
-        """
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
-        )
-        data_old = [
-            ['Title1', '2018-01-01', '1v1', 1],
-            ['Title2', '2018-01-01', '1v2', 2],
-            ['Title3', '2018-01-01', '1v2', 4],
-        ]
-        data_new = [
-            ['Title1', '2018-01-01', '1v1', 8],
-            ['Title4', '2018-01-01', '1v2', 16],  # new title
-            ['Title5', '2018-01-01', '1v2', 32],  # new title
-        ]
-        crs_old = list(counter_records(data_old, metric='Hits', platform='Platform1'))
-        crs_new = list(counter_records(data_new, metric='Hits', platform='Platform1'))
-        report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
-        report_type_new = report_type_nd(1, short_name='new')
-        report_type_old.superseeded_by = report_type_new
-        report_type_old.save()
-        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
-        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
-        assert AccessLog.objects.count() == 6
-        # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
-        hit_metric = Metric.objects.get(short_name='Hits')
-        ig = InterestGroup.objects.create(short_name='ig1', position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type_old, metric=hit_metric, interest_group=ig
-        )
-        ReportInterestMetric.objects.create(
-            report_type=report_type_new, metric=hit_metric, interest_group=ig
-        )
-        # sync and count
-        for ib_old in ibs_old:
-            sync_interest_for_import_batch(ib_old, interest_rt)
-        assert interest_rt.accesslog_set.count() == 0, '0 of 3 should make it to interest'
-        for ib_new in ibs_new:
-            sync_interest_for_import_batch(ib_new, interest_rt)
-        assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
-
     def test_with_materialized_reports(self, counter_records, organizations, report_type_nd):
         """
         Test that when there are materialized report data present in import batch that they
@@ -231,14 +195,17 @@ class TestInterestCalculation:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        # define interest
+        interest_rt = report_type_nd(1, short_name='interest')
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform='Platform1'))
-        report_type = report_type_nd(1)
-        organization = organizations[0]
+        crs1 = counter_records(data1, metric='Hits', platform='Platform1')
+
         ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         assert len(ibs) == 1, 'only one import batch'
@@ -251,11 +218,7 @@ class TestInterestCalculation:
         assert mat_rec_count == 3
         ib = ibs[0]
         assert ib.accesslog_set.count() == 6
-        # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        sync_interest_for_import_batch(ib, interest_rt)
-        assert interest_rt.accesslog_set.count() == 0, 'no interest platform and metric yet'
-        # now improve it and retry
+        # connect the interest with report type and platform
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
@@ -263,7 +226,7 @@ class TestInterestCalculation:
             interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
         )
         sync_interest_for_import_batch(ib, interest_rt)
-        assert interest_rt.accesslog_set.count() == 3, 'now it should work'
+        assert interest_rt.accesslog_set.count() == 3, '3 interest logs'
         assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
 
 
@@ -584,6 +547,7 @@ class TestInterestRecomputationDetection:
         qs = _find_superseeded_import_batches()
         assert {obj.pk for obj in qs} == {ib_old.pk}
 
+    @pytest.mark.django_db(transaction=True)
     def test_superseeded_interest_deleted_with_different_titles(
         self, counter_records, organizations, report_type_nd
     ):
@@ -595,6 +559,23 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
         )
+        report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
+        report_type_new = report_type_nd(1, short_name='new')
+        report_type_old.superseeded_by = report_type_new
+        report_type_old.save()
+        # define interest
+        interest_rt = report_type_nd(1, short_name='interest')
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
+        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
+        hit_metric = MetricFactory.create(short_name='Hits')
+        ig = InterestGroup.objects.create(short_name='ig1', position=1)
+        ReportInterestMetric.objects.create(
+            report_type=report_type_old, metric=hit_metric, interest_group=ig
+        )
+        ReportInterestMetric.objects.create(
+            report_type=report_type_new, metric=hit_metric, interest_group=ig
+        )
+        # prepare data
         data_old = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
@@ -605,42 +586,22 @@ class TestInterestRecomputationDetection:
             ['Title4', '2018-01-01', '1v2', 16],  # new title
             ['Title5', '2018-01-01', '1v2', 32],  # new title
         ]
-        crs_old = list(counter_records(data_old, metric='Hits', platform='Platform1'))
-        crs_new = list(counter_records(data_new, metric='Hits', platform='Platform1'))
-        report_type_old = report_type_nd(1, short_name='old')  # type: ReportType
-        report_type_new = report_type_nd(1, short_name='new')
-        report_type_old.superseeded_by = report_type_new
-        report_type_old.save()
+        crs_old = counter_records(data_old, metric='Hits', platform='Platform1')
+        crs_new = counter_records(data_new, metric='Hits', platform='Platform1')
+
         ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
-        assert AccessLog.objects.count() == 3
+        assert AccessLog.objects.count() == 6, '3 normal + 3 interest'
         assert len(ibs_old) == 1
         ib_old = ibs_old[0]
-        # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
-        hit_metric = Metric.objects.get(short_name='Hits')
-        ig = InterestGroup.objects.create(short_name='ig1', position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type_old, metric=hit_metric, interest_group=ig
-        )
-        ReportInterestMetric.objects.create(
-            report_type=report_type_new, metric=hit_metric, interest_group=ig
-        )
-        # sync old data
-        sync_interest_for_import_batch(ib_old, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, '3 of 3 should make it to interest'
         assert (
             ib_old.accesslog_set.filter(report_type=interest_rt).count() == 3
-        ), '3 new interest records'
+        ), '3 interest records'
+        # import new data
         ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
         assert len(ibs_new) == 1
         ib_new = ibs_new[0]
-        sync_interest_for_import_batch(ib_new, interest_rt)
-        assert interest_rt.accesslog_set.count() == 6, '3 of 3 should make it to interest'
-        # let's run the detection code and see if it removes the old stuff
-        smart_interest_sync()
-        assert interest_rt.accesslog_set.count() == 3, 'only 3 of 6 should remain'
+        assert interest_rt.accesslog_set.count() == 3, 'still 3 interest records, but new ones'
         assert (
             ib_new.accesslog_set.filter(report_type=interest_rt).count() == 3
         ), '# new interest records from new data'

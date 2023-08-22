@@ -6,6 +6,7 @@ from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import platform  # noqa - fixture
 
+from logs.fake_data import MetricFactory
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import sync_interest_for_import_batch
 from logs.logic.materialized_reports import (
@@ -31,7 +32,7 @@ class TestMaterializedReport:
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
         report_type = report_type_nd(1)
         organization = organizations[0]
         import_counter_records(report_type, organization, platform, crs1)
@@ -48,13 +49,37 @@ class TestMaterializedReport:
         assert mat_report.accesslog_set.count() == 2
         assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 6}
 
+    def test_not_title_predefined_mat(
+        self, counter_records, organizations, report_type_nd, platform
+    ):
+        """
+        Test that predefined materialized report is populated automatically during data import
+        """
+        data1 = [
+            ['Title1', '2018-01-01', '1v1', 1],
+            ['Title2', '2018-01-01', '1v2', 2],
+            ['Title3', '2018-01-01', '1v2', 4],
+        ]
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        # define materialized report before importing data
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_target=False
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
+        import_counter_records(report_type, organization, platform, crs1)
+        assert AccessLog.objects.count() == 3 + 2, '2 records for materialized report'
+        assert mat_report.accesslog_set.count() == 2
+        assert {rec['value'] for rec in mat_report.accesslog_set.values('value')} == {1, 6}
+
     def test_no_dim1(self, counter_records, organizations, report_type_nd, platform):
         data1 = [
             ['Title1', '2018-01-01', '1v1', 1],
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
         report_type = report_type_nd(1)
         organization = organizations[0]
         import_counter_records(report_type, organization, platform, crs1)
@@ -77,7 +102,7 @@ class TestMaterializedReport:
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
         report_type = report_type_nd(1)
         organization = organizations[0]
         import_counter_records(report_type, organization, platform, crs1)
@@ -133,36 +158,32 @@ class TestMaterializedReport:
         When interest definition changes and interest is thus recomputed after materialization
         occurs, we need to recompute materialized reports as well.
         """
-        cr = CounterRecord
-        crs1 = [
-            cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1'),
-            cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2'),
-            cr(start='2018-03-01', end='2018-03-31', metric='m2', value=4, title='Title3'),
-        ]
         report_type = report_type_nd(1)
         organization = organizations[0]
-        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
-        assert AccessLog.objects.count() == 3
-
         # now define the interest
         interest_rt = report_type_nd(1, short_name='interest')
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         # we use metric m1 with one record - we will switch to m2 later
         rim = ReportInterestMetric.objects.create(
             report_type=report_type,
-            metric=Metric.objects.get(short_name='m1'),
+            metric=MetricFactory.create(short_name='m1'),
             interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
         )
-        for ib in ibs:
-            sync_interest_for_import_batch(ib, interest_rt)
-        assert interest_rt.accesslog_set.count() == 1, '1 record for metric m1'
-
-        # now define materialized report for interest
+        # define materialized report for interest
         spec = ReportMaterializationSpec.objects.create(
             base_report_type=interest_rt, keep_target=False
         )
         mat_report = ReportType.objects.create(materialization_spec=spec, short_name='m', name='m')
-        sync_materialized_reports()
+        # prepare data
+        cr = CounterRecord
+        crs1 = [
+            cr(start='2018-01-01', end='2018-01-31', metric='m1', value=1, title='Title1'),
+            cr(start='2018-01-01', end='2018-01-31', metric='m2', value=2, title='Title2'),
+            cr(start='2018-03-01', end='2018-03-31', metric='m2', value=4, title='Title3'),
+        ]
+        ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
+        assert report_type.accesslog_set.count() == 3, '3 normal records'
+        assert interest_rt.accesslog_set.count() == 1, '1 record for metric m1'
         assert mat_report.accesslog_set.count() == 1, '1 record for interest in metric m1'
         old_mat_pks = {al.pk for al in mat_report.accesslog_set.all()}
 
@@ -190,7 +211,7 @@ class TestMaterializedReport:
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
         report_type = report_type_nd(1)
         organization = organizations[0]
         import_counter_records(report_type, organization, platform, crs1)
@@ -222,7 +243,7 @@ class TestMaterializedReportManagementCommands:
             ['Title2', '2018-01-01', '1v2', 2],
             ['Title3', '2018-01-01', '1v2', 4],
         ]
-        crs1 = list(counter_records(data1, metric='Hits', platform=platform.short_name))
+        crs1 = counter_records(data1, metric='Hits', platform=platform.short_name)
         report_type = report_type_nd(1)
         organization = organizations[0]
         import_counter_records(report_type, organization, platform, crs1)

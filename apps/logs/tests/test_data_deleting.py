@@ -21,7 +21,7 @@ class TestDataDeleting:
             ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
             ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
-        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        crs = counter_records(data, metric='Hits', platform='Platform1')
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_batches, stats = import_counter_records(report_type, organization, platform, crs)

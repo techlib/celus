@@ -136,7 +136,7 @@ class TestChartDataAPI:
             ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
             ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
-        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        crs = counter_records(data, metric='Hits', platform='Platform1')
         organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
@@ -196,7 +196,7 @@ class TestChartDataAPI:
             ['Title1', '2018-01-01', '1v1', '2v1', '3v1', 1],
             ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
         ]
-        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        crs = counter_records(data, metric='Hits', platform='Platform1')
         organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
@@ -329,7 +329,7 @@ class TestChartDataAPI:
             [None, '2018-02-01', '1v1', '2v2', '3v2', 16],
             [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
         ]
-        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        crs = counter_records(data, metric='Hits', platform='Platform1')
         organization = organizations["branch"]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs)
@@ -363,7 +363,7 @@ class TestChartDataAPI:
             ['Title2', '2018-03-01', '1v2', 4],
             ['Title1', '2019-01-01', '1v1', 8],
         ]
-        crs = list(counter_records(data, metric='Hits', platform='Platform1'))
+        crs = counter_records(data, metric='Hits', platform='Platform1')
         organization = organizations["branch"]
         report_type = report_type_nd(1)
         import_counter_records(report_type, organization, platform, crs)
