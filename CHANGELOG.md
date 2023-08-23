@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0]  - 2023-08-28
+
+### Added
+
+#### Frontend
+
+- in tag management, it is now possible to hide some tag classes from being listed together with
+  the tagged items (e.g. in reporting output, "All titles", etc.)
+- in reporting, it is now possible to expand the resulting table to whole screen for easier
+  reading
+- the coverage widget in reporting newly contains a tooltip and links to the coverage overview
+  page
+- consortium admins now can see debug links to the configured SUSHI server in SUSHI credentials
+  dialog
+
+#### Backend
+
+- user django admin now contains number of associated organizations and limits data sources in
+  filter to the used ones
+- cli script for computing statistics about saved reports was added
+
+
+### Changes
+
+#### Frontend
+
+- title lists without any matched titles are now displayed differently to make them more obvious
+- when an open-ended time range is selected, default date range for reporting will end at the last
+  "covered" month (the one before the last finished month)
+- colors of some of the buttons and other elements was reviewed after the recent UI changes
+
+#### Backend
+
+- the nibbler library was updated to version 9.0.1 fixing some bugs and adding support for
+  multi-organization TR reports and per-organization stats in preflight
+- export of reports with titles in rows was optimized to use much less memory and be much faster
+  for smaller reports
+- a database constraint permitting only one import batch for one organization-platform-report-month
+  combination was added
+- per api-key throttling was added to the external API to prevent spikes in usage
+- title list parsing was significantly sped up by adding a database index (about 40x speedup for
+  large databases and title lists)
+- interest and materialized reports are calculated during the data import step to prevent
+  temporary inconsistencies in the user interface
+
+### Fixed
+
+#### Frontend
+
+- tags which are not "assignable" by the user are no longer offered when title list is being
+  processed
+- locales were fixed in several places
+
+#### Backend
+
+- CSV files with BOM are now properly parsed when uploading title lists
+- fix reporting coverage error when date range has open end and no data are available
+
+
+
 ## [5.6.0]  - 2023-08-03
 
 ### Added
