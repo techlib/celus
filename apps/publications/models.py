@@ -165,9 +165,9 @@ class Title(models.Model):
         verbose_name='Publication type',
     )
     isbn = models.CharField(max_length=20, blank=True, default='')
-    issn = models.CharField(max_length=9, blank=True, default='')
+    issn = models.CharField(max_length=9, blank=True, default='', db_index=True)
     eissn = models.CharField(
-        max_length=9, blank=True, default='', help_text="ISSN of electronic version"
+        max_length=9, blank=True, default='', db_index=True, help_text="ISSN of electronic version"
     )
     doi = models.CharField(max_length=250, blank=True, default='')
     proprietary_ids = models.JSONField(default=list)
