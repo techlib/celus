@@ -1,7 +1,8 @@
 from .base import *  # noqa F403
 from .base import REST_FRAMEWORK
+from decouple import Csv, config
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default='*')
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

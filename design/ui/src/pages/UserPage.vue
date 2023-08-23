@@ -105,6 +105,9 @@ cs:
         </h3>
         <h4 v-if="user.email" class="font-weight-light mb-1">
           {{ user.email }}
+          <v-icon @click="showUserEditDialog = true" x-small class="mb-1 ml-1"
+            >fas fa-edit</v-icon
+          >
         </h4>
         <div class="font-weight-black">
           <span v-if="user.is_superuser" v-text="$t('is_superuser')"></span>
@@ -119,6 +122,20 @@ cs:
         </div>
       </v-col>
     </v-row>
+
+    <v-dialog
+      v-model="showUserEditDialog"
+      v-if="showUserEditDialog"
+      max-width="1000px"
+    >
+      <AccountCreateModifyWidget
+        :account="user"
+        :editMode="true"
+        @cancel="cancelUserEditDialog"
+        @success="successUserEdit"
+      >
+      </AccountCreateModifyWidget>
+    </v-dialog>
 
     <v-row class="mb-8" justify="center">
       <v-card elevation="0">
@@ -283,10 +300,16 @@ import VGravatar from "vue-gravatar";
 import CheckMark from "@/components/util/CheckMark";
 import axios from "axios";
 import PasswordChangeDialog from "@/components/account/PasswordChangeDialog";
+import AccountCreateModifyWidget from "@/components/account/AccountCreateModifyWidget.vue";
 
 export default {
   name: "UserPage",
-  components: { PasswordChangeDialog, VGravatar, CheckMark },
+  components: {
+    PasswordChangeDialog,
+    VGravatar,
+    CheckMark,
+    AccountCreateModifyWidget,
+  },
   data() {
     return {
       showPasswordChangeDialog: false,
@@ -294,6 +317,7 @@ export default {
       impersonateLoaded: false,
       impersonateRequested: false,
       impersonateSearch: "",
+      showUserEditDialog: false,
     };
   },
   computed: {
@@ -404,6 +428,16 @@ export default {
         await this.impersonateUser(this.impersonator);
       }
     },
+
+    cancelUserEditDialog() {
+      this.showUserEditDialog = false;
+    },
+
+    successUserEdit() {
+      this.cancelUserEditDialog();
+      this.loadUserData();
+    },
+
     async impersonateUser(pk) {
       try {
         this.impersonateRequested = true;

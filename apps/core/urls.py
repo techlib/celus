@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
@@ -5,9 +6,15 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'task-status', views.CeleryTaskStatusViewSet, basename='task-status')
+
+
 router.register(
     r'management/command', views.ManagementCommandViewSet, basename='management-command'
 )
+
+if settings.ALLOW_USER_MANAGEMENT:
+    router.register(r'user-management', views.AccessibleUsersViewSet, basename='user-management')
+
 
 urlpatterns = [
     path('user/', views.UserView.as_view(), name='user_api_view'),
@@ -25,4 +32,14 @@ urlpatterns = [
     ),
     path('test-email/', views.TestEmailView.as_view(), name='test_email_api_view'),
     path('test-error/', views.TestErrorView.as_view(), name='test_error_api_view'),
+    path(
+        'send-verification-email/',
+        views.DifferentUserVerifyEmailView.as_view(),
+        name='send_verification_email',
+    ),
+    path(
+        'send-invitation-email/',
+        views.DifferentUserInviteView.as_view(),
+        name='send_invitation_email',
+    ),
 ] + router.urls

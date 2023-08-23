@@ -708,6 +708,9 @@ ALLOW_USER_REGISTRATION = config('ALLOW_USER_REGISTRATION', cast=bool, default=F
 # Allow user to create platforms
 ALLOW_USER_CREATED_PLATFORMS = config('ALLOW_USER_CREATED_PLATFORMS', cast=bool, default=False)
 
+# Allow to manage organization users
+ALLOW_USER_MANAGEMENT = config('ALLOW_USER_MANAGEMENT', cast=bool, default=False)
+
 # Allows to create new metrics during data import
 # When False, user has to create metrics via admin,
 # which will cause that import fails
@@ -875,6 +878,7 @@ EXPORTED_SETTINGS = [
     'ALLOW_EMAIL_LOGIN',
     'ALLOW_MANUAL_UPLOAD',
     'ALLOW_USER_CREATED_PLATFORMS',
+    'ALLOW_USER_MANAGEMENT',
     'ALLOW_USER_REGISTRATION',
     'AUTOMATICALLY_CREATE_METRICS',
     'CELUS_ADMIN_SITE_PATH',

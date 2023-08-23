@@ -187,6 +187,11 @@ export default new Router({
       },
     },
     {
+      path: "/org-management/",
+      name: "org-management",
+      component: () => import("../pages/AccountManagementPage.vue"),
+    },
+    {
       path: "/analytics/overlap",
       name: "overlap-analysis",
       component: () => import("../pages/OverlapAnalysisPage.vue"),

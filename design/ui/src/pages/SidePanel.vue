@@ -91,6 +91,7 @@ export default {
       celusVersion: "celusVersion",
       enableTags: "enableTags",
       isRawImportEnabled: "isRawImportEnabled",
+      allowUserManagement: "allowUserManagement",
     }),
     tourToShow() {
       return this.tourByName(this.tourName);
@@ -310,6 +311,19 @@ export default {
                   show: this.isSuperuser,
                 },
               ],
+            },
+          ],
+        },
+        {
+          title: "Organization administration",
+          icon: "fa fa-tools",
+          show: this.allowUserManagement,
+          items: [
+            {
+              title: this.$i18n.t("pages.user_management"),
+              icon: "fa fa-user",
+              linkTo: "org-management",
+              show: this.allowUserManagement,
             },
           ],
         },

@@ -3,25 +3,29 @@ import logging
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
+from allauth.account.adapter import get_adapter
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.core.management import call_command
+from django.db.models import Prefetch
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import translation
+from organizations.models import UserOrganization
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
 from core.models import TaskProgress, User
 from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import (
+    AccessibleUsersSerializer,
     EmailVerificationSerializer,
     TaskProgressSerializer,
     UserExtraDataSerializer,
@@ -286,3 +290,88 @@ class ManagementCommandViewSet(ViewSet):
                 'log': log.getvalue(),
             },
         )
+
+
+class AccessibleUsersViewSet(ModelViewSet):
+    serializer_class = AccessibleUsersSerializer
+
+    def get_queryset(self):
+        current_user = self.request.user
+        queryset = current_user.accessible_users().prefetch_related(
+            'userorganization_set__organization',
+            Prefetch(
+                'userorganization_set',
+                queryset=UserOrganization.objects.select_related('organization'),
+                to_attr='userorganization_set_prefetched',
+            ),
+        )
+        return queryset
+
+    @action(detail=True, methods=['post'], url_path='delete-org-relation')
+    def delete_relation(self, request, pk):
+        org_pk = request.data.get('organization')
+
+        if request.user.organization_relationship(org_id=request.data.get('organization')) < 300:
+            return Response(
+                {'detail': 'You are not admin of this organization.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        elif int(pk) == int(request.user.pk):  # pk is the same as request user pk
+            return Response(
+                {'detail': 'You cannot delete your own account.'}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        else:
+            user_org_instance = UserOrganization.objects.get(user=pk, organization=org_pk)
+            user_org_instance.delete()
+            return Response(
+                {'detail': 'User has been removed from the organization.'},
+                status=status.HTTP_200_OK,
+            )
+
+    def create(self, request):
+        # check whether the request.user is allowed to add to this org
+        if request.user.organization_relationship(org_id=request.data.get('organization')) < 300:
+            return Response(
+                {'detail': 'You are not admin of this organization.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return super().create(request)
+
+
+class DifferentUserInviteView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = EmailVerificationSerializer
+
+    def post(self, request):
+        user = User.objects.get(pk=request.data.get('pk'))
+        adapter = get_adapter()
+        adapter.send_invitation_email(request, user)
+        return Response(self.serializer_class(user.email_verification).data)
+
+
+class DifferentUserVerifyEmailView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = EmailVerificationSerializer
+
+    def post(self, request):
+        user = User.objects.get(pk=request.data.get('pk'))
+        sync_user_email_addresses(user)
+
+        # Don't send email if already verified
+        if not user.email_verified:
+            send_email_confirmation(request, user, signup=False)
+            verification_status = 'verification email sent'
+        else:
+            verification_status = 'already verified'
+
+        del user.email_verification  # reload cached property
+
+        response_data = {
+            'verification_status': verification_status,
+            'email_verification_data': self.serializer_class(user.email_verification).data,
+        }
+
+        return Response(response_data)

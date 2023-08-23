@@ -43,6 +43,7 @@ en:
     title_list_overlap: Title list overlap
     title_lists: Title lists
     user_page: User page
+    user_management: User management
   menu: Menu
   organization: Organization
   platform: Platform
@@ -131,6 +132,7 @@ en:
     delete_all_platform_data: Delete all platform data
     delete_data: Delete data
     description: Description
+    email: Email
     empty_value: "- empty -"
     error: Error
     export: Export
@@ -143,10 +145,12 @@ en:
     filter_settings: Filter settings
     filters: Filters
     finished: Finished
+    first_name: First name
     group_by_class: Group by class
     http_authentication: HTTP authentication
     http_password: Password
     http_username: Username
+    last_name: Last name
     last_updated_by: Last updated by
     loading: Loading
     metadata: Metadata
@@ -372,6 +376,7 @@ cs:
     title_list_overlap: Překryv titulového seznamu
     title_lists: Titulové seznamy
     user_page: Uživatelská stránka
+    user_management: Správa uživatelů
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -460,6 +465,7 @@ cs:
     delete_all_platform_data: Smazat všechna data pro platformu
     delete_data: Mazání dat
     description: Popis
+    email: Email
     empty_value: "- prázdné -"
     error: Chyba
     export: Exportovat
@@ -472,10 +478,12 @@ cs:
     filter_settings: Nastavení filtrů
     filters: Filtry
     finished: Dokončeno
+    first_name: Jméno
     group_by_class: Seskupit podle typu
     http_authentication: HTTP autentizace
     http_password: Heslo
     http_username: Uživatelské jméno
+    last_name: Příjmení
     last_updated_by: Naposledy upravil
     loading: Načítání
     metadata: Metadata

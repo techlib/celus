@@ -1,6 +1,8 @@
 import typing
 from datetime import datetime
 
+from organizations.models import Organization, UserOrganization
+from organizations.serializers import OrganizationShortSerializer
 from rest_framework.serializers import (
     BooleanField,
     CharField,
@@ -84,3 +86,61 @@ class TaskProgressSerializer(ModelSerializer):
             'progress_total',
             'progress_current',
         )
+
+
+class UserOrganizationSerializer(ModelSerializer):
+    organization = OrganizationShortSerializer(read_only=True)
+
+    class Meta:
+        model = UserOrganization
+        fields = ('organization', 'is_admin')
+
+
+class AccessibleUsersSerializer(ModelSerializer):
+    organizations = UserOrganizationSerializer(
+        source='userorganization_set', many=True, read_only=True
+    )
+
+    is_admin = BooleanField(write_only=True, required=False)  # neccessary for post
+    organization = PrimaryKeyRelatedField(
+        write_only=True, queryset=Organization.objects.all(), required=False
+    )  # neccessary for post
+
+    class Meta:
+        model = User
+        fields = (
+            'pk',
+            'first_name',
+            'last_name',
+            'username',
+            'email',
+            'is_superuser',
+            'organizations',
+            'is_admin',
+            'organization',
+            'is_admin_of_master_organization',
+        )
+
+    def create(self, validated_data):
+        admin_rights = validated_data.pop('is_admin')
+        organization = validated_data.pop('organization')
+
+        user = User.objects.create(**validated_data)
+        UserOrganization.objects.create(user=user, organization=organization, is_admin=admin_rights)
+        return user
+
+    def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.username = validated_data.get('username', instance.username)
+        instance.save()
+
+        if 'organization' in validated_data:
+            admin_rights = validated_data.pop('is_admin')
+            organization = validated_data.pop('organization')
+            UserOrganization.objects.update_or_create(
+                user=instance, organization=organization, defaults={'is_admin': admin_rights}
+            )
+
+        return instance

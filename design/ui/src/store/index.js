@@ -229,6 +229,12 @@ export default new Vuex.Store({
         return state.basicInfo["ALLOW_USER_CREATED_PLATFORMS"];
       }
     },
+    allowUserManagement(state, getters) {
+      return (
+        getters.showAdminStuff &&
+        (state.basicInfo?.ALLOW_USER_MANAGEMENT ?? false)
+      );
+    },
     consortialInstall(state) {
       if ("CONSORTIAL_INSTALLATION" in state.basicInfo) {
         return state.basicInfo["CONSORTIAL_INSTALLATION"];

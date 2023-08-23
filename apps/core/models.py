@@ -291,6 +291,24 @@ class User(AbstractUser):
     def has_organization_admin_permission(self, org_id: int):
         return self.organization_relationship(org_id) >= REL_ORG_ADMIN
 
+    def accessible_users(self):
+        # superuser can see all users
+        if self.is_superuser:
+            return User.objects.all()
+        # admin of master org can see all users except superusers
+        elif self.is_admin_of_master_organization:
+            return User.objects.filter(is_superuser=False)
+        # read-only users can only see themselves
+        elif not self.admin_organizations().exists():
+            return User.objects.filter(id=self.id)
+        # org admin can see users in the given orgs, except for superusers and master org admins
+        else:
+            qs = User.objects.filter(
+                organizations__in=self.accessible_organizations(), is_superuser=False
+            ).distinct()
+            users = [user.pk for user in qs if user.is_admin_of_master_organization is False]
+            return User.objects.filter(pk__in=users)
+
     @cached_property
     def email_verification(self) -> dict:
         res = {"status": self.EMAIL_VERIFICATION_STATUS_UNKNOWN, "email_sent": None}
