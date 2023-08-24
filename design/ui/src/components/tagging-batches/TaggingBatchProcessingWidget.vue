@@ -91,7 +91,12 @@ cs:
             </v-row>
             <v-row class="mt-0 mx-1">
               <v-col class="pt-0">
-                <TagSelector v-model="tag" scope="title" single-tag />
+                <TagSelector
+                  v-model="tag"
+                  scope="title"
+                  single-tag
+                  assignable-only
+                />
               </v-col>
               <v-col cols="auto" class="align-self-center">
                 <v-btn @click="assignTag()" color="primary" :disabled="!tag"

@@ -13,6 +13,7 @@
     clear-icon="fa-times"
     item-disabled="disabled"
     :disabled="disabled"
+    :filter="filter"
   >
     <template #item="{ item }">
       <v-list-item-content>
@@ -140,6 +141,16 @@ export default {
     },
     unselect(itemId) {
       this.selectedTags = this.selectedTags.filter((item) => item !== itemId);
+    },
+    filter(item, queryText) {
+      const name = item.name.toLowerCase();
+      const className = item.tag_class.name.toLowerCase();
+
+      const words = queryText.toLowerCase().split(/ /);
+      for (let word of words) {
+        if (name.indexOf(word) < 0 && className.indexOf(word) < 0) return false;
+      }
+      return true;
     },
   },
 
