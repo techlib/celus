@@ -24,7 +24,7 @@ en:
   thats_all: That is all. The data were imported.
   return_to_platform: Go to platform page
   upload_more_files: Upload more files
-  preflight_error_found: Error occured during data check
+  preflight_error_found: Error occurred during data check
   import_error_found: The following error was found when data were imported
   back_to_start: Back to data upload
   organization_from_data: No organization is selected. Organization will be derived from data.
@@ -40,6 +40,9 @@ en:
     no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please let us know at ask@celus.net to fix the problem.
     no_organization_selected: No organization found in data. You need to select organization manually.
+    counter_header_not_found: Counter header was not found in data.
+    unrecognized_report_name: Unrecognized counter report name found in data '{crn}'.
+    unrecognized_report_id: Unrecognized counter report ID found in data '{crid}'.
     unknown_counter_error: Something went wrong and Celus was not able to process the data. Celus is pretty good at processing COUNTER reports, but some publishers extend them in a way that Celus does not understand. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_raw_error: Something went wrong and Celus was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
@@ -55,8 +58,14 @@ en:
   method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
   method_raw_disabled_tt: There are no raw reports supported for this platform.
   method_changed_to_counter: The processing method was updated, because the provided file is in standard COUNTER format.
-  notes_url_description: Check our {link} for more information about the input file format.
+  notes_url_description: Check our {link} for more information about the expected report file format for this platform.
   notes_url_href: support web
+  extra_info: Extra information
+  sheet: Sheet
+  before_preflight_text: The following information was extracted from the uploaded file. Please check that it looks correct before continuing.
+  metadata_info: The following metadata were extracted from the header of the uploaded report.
+  report_type_info: Report structure
+  report_type_info_desc: The following report structure is expected for the uploaded file.
 
 cs:
   description: |
@@ -96,6 +105,9 @@ cs:
     no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask@celus.net a my problém vyřešíme.
     no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
+    counter_header_not_found: Nebyla nalezena hlavička counter dat.
+    unrecognized_report_name: V datech se nachází neznámé jméno typu reportu '{crn}'.
+    unrecognized_report_id: V datech se nachází neznámé ID typu reportu '{crid}'.
     unknown_counter_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Celus je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému Celus nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_raw_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
@@ -113,6 +125,12 @@ cs:
   method_changed_to_counter: Metoda nahrávání byla pozměněna, protože nahraný soubor je ve standardním COUNTER formátu.
   notes_url_description: Pokud se chcete dozvědět více o formátu nahrávaného souboru, navštivte naše {link}.
   notes_url_href: stránky podpory
+  extra_info: Extra informace
+  sheet: List
+  before_preflight_text: Následující informace byly extrahovány z nahraného souboru. Prosím zkontrolujte, že jsou data správná, než budete pokračovat.
+  metadata_info: Následující metadata byla extrahována z hlavičky nahraného reportu.
+  report_type_info: Struktura reportu
+  report_type_info_desc: Následující struktura reportu je očekávána pro nahraný soubor.
 </i18n>
 
 <template>
@@ -318,6 +336,7 @@ cs:
                     canSelectReportType
                   "
                   :report-type="selectedReportType"
+                  outlined
                 />
               </v-col>
             </v-row>
@@ -330,6 +349,7 @@ cs:
                   @click="postData"
                   :disabled="!canUpload"
                   :loading="uploading"
+                  color="primary"
                   >{{ $t("upload") }}</v-btn
                 >
                 <v-progress-linear
@@ -351,30 +371,107 @@ cs:
             </v-row>
           </v-container>
         </v-form>
-        <v-form v-else>
-          <v-row no-gutters class="pt-2">
-            <h2>{{ $t("report_type") }}</h2>
-            <v-col cols="12">
-              <ReportTypeInfoWidget :report-type="uploadObject.report_type" />
+        <v-form v-else-if="uploadObject" class="pb-2">
+          <v-row>
+            <v-col class="font-weight-light">{{
+              $t("before_preflight_text")
+            }}</v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <table class="overview">
+                <tr>
+                  <th class="pb-6">{{ $t("labels.report_type") }}</th>
+                  <td class="pb-6">{{ uploadObject.report_type.name }}</td>
+                </tr>
+                <tr v-if="method === 'raw'">
+                  <th class="align-top">
+                    {{ $t("report_type_info") }}
+                    <div class="caption pt-3" style="max-width: 10rem">
+                      {{ $t("report_type_info_desc") }}
+                    </div>
+                  </th>
+                  <td>
+                    <ReportTypeInfoWidget
+                      :report-type="uploadObject.report_type"
+                      hide-implicit-dimensions
+                      hide-title
+                      is-raw
+                    />
+                  </td>
+                </tr>
+                <tr v-if="perSheetExtras && perSheetExtras.length > 0">
+                  <th class="align-top">
+                    {{ $t("labels.metadata") }}
+                    <div class="caption pt-3" style="max-width: 10rem">
+                      {{ $t("metadata_info") }}
+                    </div>
+                  </th>
+                  <td>
+                    <v-card class="pa-2">
+                      <v-tabs
+                        v-model="extraTab"
+                        v-show="perSheetExtras.length > 1"
+                      >
+                        <v-tab
+                          v-for="(data, sheet_idx) in perSheetExtras"
+                          :value="sheet_idx"
+                          :key="`extra-${sheet_idx}`"
+                          >{{ `${$t("sheet")} ${sheet_idx + 1}` }}
+                        </v-tab>
+                      </v-tabs>
+                      <v-card-text class="pa-0">
+                        <v-window v-model="extraTab">
+                          <v-window-item
+                            v-for="[sheet_idx, data] in perSheetExtras"
+                            :key="`extra-${sheet_idx}`"
+                          >
+                            <v-simple-table dense>
+                              <template v-slot:default>
+                                <tbody>
+                                  <tr
+                                    v-for="(value, key) in data"
+                                    :key="`extra-${sheet_idx}-${key}`"
+                                  >
+                                    <th>{{ key }}</th>
+                                    <v-list v-if="Array.isArray(value)">
+                                      <v-list-item
+                                        v-for="(line, idx) in value"
+                                        :key="`extra-${sheet_idx}-${key}-${idx}`"
+                                      >
+                                        {{ line }}
+                                      </v-list-item>
+                                    </v-list>
+                                    <td v-else>{{ value }}</td>
+                                  </tr>
+                                </tbody>
+                              </template>
+                            </v-simple-table>
+                          </v-window-item>
+                        </v-window>
+                      </v-card-text>
+                    </v-card>
+                  </td>
+                </tr>
+              </table>
             </v-col>
           </v-row>
           <v-row>
             <v-col>
               <v-btn
                 class="mr-2"
-                v-if="canConfirm"
-                @click="confirmReportType()"
-                color="info"
-                :loading="confirming"
-              >
-                <v-icon small class="pr-2">fa-solid fa-check</v-icon>
-                {{ $t("confirm") }}
-              </v-btn>
-              <v-btn
                 @click="backToStart()"
                 v-text="$t('back_to_start')"
-                color="secondary"
               ></v-btn>
+              <v-btn
+                v-if="canConfirm"
+                @click="confirmReportType()"
+                color="primary"
+                :loading="confirming"
+              >
+                <v-icon small class="pr-2">fa-caret-right</v-icon>
+                {{ $t("continue") }}
+              </v-btn>
             </v-col>
           </v-row>
         </v-form>
@@ -417,7 +514,7 @@ cs:
                       {{ $t("errors.requires_utf8") }}
                     </strong>
                     <strong v-else-if="error === 'nibbler'">
-                      {{ $t(nibblerReason(errorDetails.nibbler)) }}
+                      {{ nibblerReason(errorDetails.nibbler) }}
                     </strong>
                     <strong
                       v-else-if="
@@ -489,7 +586,7 @@ cs:
             <v-btn
               v-if="canImport"
               @click="triggerImportData()"
-              color="success"
+              color="primary"
               :loading="state === 'importing' || importing"
               :disabled="
                 (preflightData && !!preflightData.clashing_months.length) ||
@@ -508,11 +605,7 @@ cs:
               <v-icon small class="pr-2">fas fa-redo</v-icon>
               {{ $t("regenerate_preflight") }}
             </v-btn>
-            <v-btn
-              @click="backToStart()"
-              v-text="$t('back_to_start')"
-              color="secondary"
-            ></v-btn>
+            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
           </v-card-actions>
           <v-card-actions v-else-if="state === 'prefailed'">
             <v-btn
@@ -523,11 +616,7 @@ cs:
               <v-icon small class="pr-2">fas fa-redo</v-icon>
               {{ $t("regenerate_preflight") }}
             </v-btn>
-            <v-btn
-              @click="backToStart()"
-              v-text="$t('back_to_start')"
-              color="secondary"
-            ></v-btn>
+            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -640,8 +729,10 @@ import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm";
 import ImportPreflightDataWidget from "@/components/ImportPreflightDataWidget";
 import { badge } from "@/libs/sources.js";
+import { counterHeaderRepr } from "@/libs/counter_header.js";
 import MDUChart from "@/components/MDUChart";
 import ErrorDialog from "@/components/util/ErrorDialog";
+import isEmpty from "lodash/isEmpty";
 
 export default {
   name: "CustomDataUploadPage",
@@ -693,6 +784,7 @@ export default {
       },
       method: "counter",
       methodChanged: false,
+      extraTab: null,
     };
   },
   computed: {
@@ -705,6 +797,18 @@ export default {
       enableRawDataImport: "enableRawDataImport",
       isRawImportEnabled: "isRawImportEnabled",
     }),
+    perSheetExtras() {
+      if (!this.uploadObject?.extra) {
+        return null;
+      }
+      return Object.entries(this.uploadObject.extra)
+        .filter((tuple) => !isEmpty(tuple[1]))
+        .map(([idx, extras]) =>
+          this.method === "counter"
+            ? [idx, counterHeaderRepr(extras)]
+            : [idx, extras]
+        );
+    },
     breadcrumbs() {
       return [
         {
@@ -1026,7 +1130,7 @@ export default {
           if ("nibbler_errors" in info) {
             this.showErrorDialog = true;
             this.errors = info.nibbler_errors.map((e) =>
-              this.$t(this.nibblerErrorText(e.sheet_idx, e.name))
+              this.nibblerErrorText(e.sheet_idx, e.name, e.parsers_info)
             );
           }
           this.showSnackbar({ content: "Error sending data: " + error });
@@ -1247,14 +1351,61 @@ export default {
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
       this.globalSpinnerOn = false;
     },
-    nibblerErrorText(sheet_idx, name, extra) {
-      // TODO extract more info about failed parsing
-      // e.g. cells which are not correct
-      return "errors.no_parser_found";
+    nibblerErrorText(sheet_idx, name, parsers_info) {
+      let readable_sheet_idx = parseInt(sheet_idx) + 1;
+      const prefix = `${this.$t("sheet")} ${readable_sheet_idx}: `;
+      if (this.method == "counter") {
+        // Missing counter header
+        if (
+          Object.values(parsers_info).every((e) =>
+            e.some((ee) =>
+              [
+                "no-header-data-extracted",
+                "report-name-not-in-header",
+              ].includes(ee.code)
+            )
+          )
+        ) {
+          return prefix + this.$t("errors.counter_header_not_found");
+        }
+
+        // Check For Wrong Report_ID of C5 reports
+        for (const [parser_name, data] of Object.entries(parsers_info)) {
+          if (parser_name.startsWith("static.counter5")) {
+            for (const record of data) {
+              if (record.code == "wrong-report-type") {
+                return (
+                  prefix +
+                  this.$t("errors.unrecognized_report_id", {
+                    crid: record.found,
+                  })
+                );
+              }
+            }
+          }
+        }
+
+        // Check For Wrong Report name of C4 reports
+        for (const [parser_name, data] of Object.entries(parsers_info)) {
+          if (parser_name.startsWith("static.counter4")) {
+            for (const record of data) {
+              if (record.code == "wrong-report-type") {
+                return (
+                  prefix +
+                  this.$t("errors.unrecognized_report_name", {
+                    crn: record.found,
+                  })
+                );
+              }
+            }
+          }
+        }
+      }
+      return prefix + this.$t("errors.no_parser_found");
     },
     nibblerReason(errors, preflight) {
       if (errors.every((e) => e.name.startsWith("NoParser"))) {
-        return "errors.no_parser_found";
+        return this.$t("errors.no_parser_found");
       }
       return this.unknownErrorMessage;
     },

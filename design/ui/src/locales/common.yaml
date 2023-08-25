@@ -85,6 +85,8 @@ en:
     non_counter: Non-COUNTER
     select_platform: Select platform
     data_coverage: Data coverage
+    info: Info
+    knowledgebase: Knowledgebase
   titles: Titles
   overview: Overview
   chart:
@@ -198,6 +200,7 @@ en:
     total_coverage: Total coverage
     loading: Loading
     months: Months
+    metadata: Metadata
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -384,6 +387,8 @@ cs:
     non_counter: Non-COUNTER
     select_platform: Vyberte platformu
     data_coverage: Pokrytí daty
+    info: Informace
+    knowledgebase: Znalostní báze
   titles: Tituly
   overview: Přehled
   chart:
@@ -497,6 +502,7 @@ cs:
     total_coverage: Celkové pokrytí
     loading: Načítání
     months: Měsíce
+    metadata: Metadata
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

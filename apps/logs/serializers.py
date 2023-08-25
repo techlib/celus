@@ -367,6 +367,7 @@ class ManualDataUploadSerializer(ModelSerializer):
             'state',
             'clashing_months',
             'method',
+            'extra',
         )
 
     def validate(self, attrs):
@@ -441,6 +442,7 @@ class ManualDataUploadSerializer(ModelSerializer):
                             raise MultipleReportType(
                                 f"Multiple ReportTypes found in the data: {rt_names}"
                             )
+                        result.extra = {p.sheet_idx: p.extras for p in poops}
                         result.report_type = report_types[0]
                         result.save()
             except Exception:

@@ -602,10 +602,13 @@ class ParserDefinitionImportAttempt(ImportAttempt):
             highest_nibbler_version = definition.pop('highest_nibbler_version')
 
             # Check version
-            if not (
-                Version(lowest_nibbler_version)
-                <= Version(nibbler_version)
-                <= Version(highest_nibbler_version)
+            if (
+                not (
+                    Version(lowest_nibbler_version)
+                    <= Version(nibbler_version)
+                    <= Version(highest_nibbler_version)
+                )
+                and settings.ENABLE_NIBBLER_PARSER_VERSION_CHECK
             ):
                 logger.warning(
                     "Parser definition %s is incompatible current nibbler version %s",

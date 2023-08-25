@@ -832,6 +832,9 @@ EXPOSED_MANAGEMENT_COMMANDS = config(
     cast=Csv(cast=Csv(post_process=tuple), delimiter=';'),
     default='organizations,load_sushi_credentials_from_xlsx',
 )
+ENABLE_NIBBLER_PARSER_VERSION_CHECK = config(
+    'ENABLE_NIBBLER_PARSER_VERSION_CHECK', cast=bool, default=True
+)
 
 # the following settings will be made available to the frontend via the API
 EXPORTED_SETTINGS = [

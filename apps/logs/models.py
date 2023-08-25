@@ -686,6 +686,9 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     preflight = models.JSONField(
         default=dict, blank=True, help_text='Data derived during pre-flight check'
     )
+    extra = models.JSONField(
+        default=dict, blank=True, help_text='Extra info obtained from parser (e.g. counter headers)'
+    )
     state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
     method = models.CharField(max_length=20, choices=MduMethod.choices, default=MduMethod.COUNTER)
 
