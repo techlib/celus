@@ -13,7 +13,7 @@ from django.utils.translation import activate
 from logs.cubes import ch_backend
 from rest_framework import status
 
-from apps.core.auth import EDUIdAuthenticationBackend
+from core.auth import EDUIdAuthenticationBackend
 
 logger = logging.getLogger(__name__)
 
