@@ -198,12 +198,12 @@ class CsvBackend(AnalyticalExportBackend):
     NAME = 'csv'
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.path = kwargs['path']
         if self.path is None:
             self.path = os.path.abspath(self.rt.short_name + '.csv.zst')
         self._writer = None
         self._header_done = False
-        super().__init__(**kwargs)
 
     def _pre_export(self):
         self._writer.writerow(self.cols.values())
