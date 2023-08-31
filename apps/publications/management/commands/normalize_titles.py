@@ -21,8 +21,8 @@ class Command(BaseCommand):
 
         for title in Title.objects.all().iterator():
             stats['total'] += 1
-            new_issn = title.issn and normalize_issn(title.issn, raise_error=False)
-            new_eissn = title.eissn and normalize_issn(title.eissn, raise_error=False)
+            new_issn = title.issn and normalize_issn(title.issn)
+            new_eissn = title.eissn and normalize_issn(title.eissn)
             new_isbn = title.isbn and normalize_isbn(title.isbn)
             new_name = normalize_title(title.name)
             if (

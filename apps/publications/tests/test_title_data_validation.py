@@ -1,6 +1,6 @@
 import pytest
 
-from logs.logic.validation import normalize_isbn, normalize_issn
+from publications.logic.validation import normalize_isbn, normalize_issn
 
 
 class TestNormalizeISBN:
@@ -37,4 +37,4 @@ class TestNormalizeISSN:
         ],
     )
     def test_normalize_issn(self, inp, expected):
-        assert normalize_issn(inp, raise_error=False) == expected
+        assert normalize_issn(inp) == expected

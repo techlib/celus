@@ -8,11 +8,7 @@ issn_matcher = re.compile(r'(\d{4})-?(\d{3}[\dXx])')
 issn_number_matcher = re.compile(r'^\d{0,7}[\dXx]$')
 
 
-class ValidationError(Exception):
-    pass
-
-
-def normalize_issn(text: str, raise_error=True) -> str:
+def normalize_issn(text: str) -> str:
     """
     Removes all whitespace and checks if ISSN looks like ISSN. But even if not, it still
     returns the original value, so that we can save at least that.
@@ -25,8 +21,6 @@ def normalize_issn(text: str, raise_error=True) -> str:
     if issn_number_matcher.match(clean):
         clean = (8 - len(clean)) * '0' + clean
         return clean[:4] + '-' + clean[4:].upper()
-    if raise_error:
-        raise ValidationError(f'Invalid ISSN: "{text}"')
     if clean:
         logger.warning('Invalid ISSN: "%s"', text)
     # only 9 characters - we do not support more

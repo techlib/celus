@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Callable, Iterable, Optional, Union
 
 from django.db.models import Q
-from logs.logic.validation import normalize_issn
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
+from publications.logic.validation import normalize_issn
 from publications.models import Title
 
 from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TagScope, TitleTag
@@ -40,8 +40,8 @@ class ScopusTitleListTagger:
         with open(fname) as f:
             reader = get_dict_reader_from_csv(f)
             for row in reader:
-                issn = normalize_issn(row['ISSN'].strip(), raise_error=False)
-                eissn = normalize_issn(row['eISSN'].strip(), raise_error=False)
+                issn = normalize_issn(row['ISSN'].strip())
+                eissn = normalize_issn(row['eISSN'].strip())
                 if codes := [code.strip() for code in row['Codes'].split(';') if code.strip()]:
                     if issn:
                         issn_to_code_map[issn] = codes

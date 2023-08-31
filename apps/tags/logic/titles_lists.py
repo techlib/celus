@@ -10,9 +10,9 @@ from gettext import ngettext
 from typing import Any, BinaryIO, Callable, Dict, Generator, Iterable, Optional, Set
 
 from django.db.models import Q
-from logs.logic.data_import import TitleRec
-from logs.logic.validation import normalize_isbn, normalize_issn
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
+from publications.logic.title_management import TitleRec
+from publications.logic.validation import normalize_isbn, normalize_issn
 from publications.models import Title
 
 
@@ -143,8 +143,8 @@ class TitleListReader(abc.ABC):
 class CsvReaderMixin:
     attrs = {
         'isbn': {'normalize': normalize_isbn},
-        'issn': {'normalize': lambda x: normalize_issn(x, raise_error=False)},
-        'eissn': {'normalize': lambda x: normalize_issn(x, raise_error=False)},
+        'issn': {'normalize': lambda x: normalize_issn(x)},
+        'eissn': {'normalize': lambda x: normalize_issn(x)},
         'doi': {'normalize': None},
     }
 

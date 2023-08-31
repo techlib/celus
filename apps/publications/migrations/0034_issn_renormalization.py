@@ -2,7 +2,8 @@
 
 from django.db import migrations
 from django.db.models import Q
-from logs.logic.validation import normalize_issn
+
+from publications.logic.validation import normalize_issn
 
 
 def renormalize_issns(apps, schema_editor):
@@ -10,8 +11,8 @@ def renormalize_issns(apps, schema_editor):
     for title in Title.objects.filter(
         Q(issn__regex=r'^\d+[xX]?$') | Q(eissn__regex=r'^\d+[xX]?$')
     ).iterator():
-        title.issn = normalize_issn(title.issn, raise_error=False)
-        title.eissn = normalize_issn(title.eissn, raise_error=False)
+        title.issn = normalize_issn(title.issn)
+        title.eissn = normalize_issn(title.eissn)
         title.save()
 
 
