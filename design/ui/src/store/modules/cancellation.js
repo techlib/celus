@@ -33,6 +33,7 @@ export default {
       state.controllers[component] = {};
     },
     setController(state, { component, group }) {
+      state.controllers[component] = state.controllers[component] || {};
       state.controllers[component][group] = new AbortController();
     },
     setOngoing(state, { value, component }) {

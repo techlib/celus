@@ -80,7 +80,7 @@ cs:
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
 import AddPlatformButton from "@/components/AddPlatformButton";
@@ -144,6 +144,9 @@ export default {
   },
 
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+    }),
     async loadStoredReports() {
       this.loading = true;
       let { response, error } = await this.http({
