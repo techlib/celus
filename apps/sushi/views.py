@@ -4,6 +4,7 @@ from core.logic.dates import month_end, month_start
 from core.models import UL_CONS_STAFF
 from core.permissions import SuperuserOrAdminPermission
 from dateutil.relativedelta import relativedelta
+from django.db import transaction
 from django.db.models import BooleanField, F, Min
 from django.db.models.functions import Cast
 from django.http import HttpResponse
@@ -118,9 +119,17 @@ class SushiCredentialsViewSet(ModelViewSet):
                         'pk', flat=True
                     )
                 )
-                delete_fetchattempts_and_related_importbatches_task.delay(fetch_attempts_pks)
+
                 reversion.set_comment(
                     'Deleted through API with all related FetchAttempts and ImportBatches.'
+                )
+
+                # we need to trigger deletion after credentials are deleted
+                # otherwise a deadlock may appear between uwsgi and celery job
+                transaction.on_commit(
+                    lambda: delete_fetchattempts_and_related_importbatches_task.delay(
+                        fetch_attempts_pks
+                    )
                 )
             return super().destroy(request, *args, **kwargs)
         else:

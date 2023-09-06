@@ -15,6 +15,7 @@ from test_scenarios.basic import *  # noqa
 
 @pytest.mark.django_db
 class TestSushiCredentialsAPI:
+    @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize(
         [
             'user',
