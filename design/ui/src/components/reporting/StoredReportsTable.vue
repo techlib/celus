@@ -199,7 +199,7 @@
 
           <template #expanded-item="{ item, headers }">
             <th></th>
-            <td :colspan="headers.length - 2" class="py-3">
+            <td :colspan="headers.length - 1" class="py-3">
               <table class="overview text--secondary">
                 <tr>
                   <th>{{ $t("labels.report_type") }}:</th>
