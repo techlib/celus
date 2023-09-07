@@ -71,6 +71,9 @@ class OrganizationPlatform(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ('organization', 'platform')
+
     def __str__(self):
         return f'{self.organization} | {self.platform}'
 

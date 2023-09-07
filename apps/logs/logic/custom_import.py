@@ -11,7 +11,7 @@ from organizations.models import Organization
 from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
 from logs.logic.data_import import import_counter_records, import_empty_batches
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
-from logs.models import ManualDataUpload, OrganizationPlatform
+from logs.models import ManualDataUpload
 
 logger = logging.getLogger(__name__)
 
@@ -142,9 +142,6 @@ def import_custom_data(
                 months=months,
                 import_batch_kwargs={"user": user, "owner_level": mdu.owner_level},
             )
-
-        # explicitly connect the organization and the platform
-        OrganizationPlatform.objects.get_or_create(platform=mdu.platform, organization=organization)
 
         import_batches.extend(new_ibs)
         stats.update(new_stats)

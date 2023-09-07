@@ -1,11 +1,22 @@
 import pytest
 from core.models import User
 from django.db import DatabaseError
+from organizations.fake_data import OrganizationFactory
 from organizations.tests.conftest import organizations  # noqa
+from publications.fake_data import PlatformFactory
 
+from logs.fake_data import ReportTypeFactory
 from logs.logic.reporting.filters import ExplicitDimensionFilter, ForeignKeyDimensionFilter
 from logs.logic.reporting.slicer import FlexibleDataSlicer
-from logs.models import Dimension, DimensionText, FlexibleReport, ReportType, ReportTypeToDimension
+from logs.models import (
+    Dimension,
+    DimensionText,
+    FlexibleReport,
+    ImportBatch,
+    OrganizationPlatform,
+    ReportType,
+    ReportTypeToDimension,
+)
 from test_scenarios.basic import data_sources, report_types  # noqa - fixtures
 
 
@@ -180,3 +191,16 @@ class TestFlexibleReport:
         assert fr.report_config['filters'][0]['dimension'] == 'dim1'
         assert fr.report_config['filters'][0]['values'] == [dt1.text]
         assert fr.report_config['order_by'] == ['platform']
+
+
+@pytest.mark.django_db
+class TestImportBatch:
+    def test_organization_platform_rec_is_created_with_import_batch(self):
+        org = OrganizationFactory.create()
+        platform = PlatformFactory.create()
+        rt = ReportTypeFactory.create()
+        assert not OrganizationPlatform.objects.filter(organization=org, platform=platform).exists()
+        ImportBatch.objects.create(
+            organization=org, platform=platform, report_type=rt, date='2020-01-01'
+        )
+        assert OrganizationPlatform.objects.filter(organization=org, platform=platform).exists()

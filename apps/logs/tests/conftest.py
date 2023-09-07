@@ -222,7 +222,6 @@ def flexible_slicer_test_data(report_type_nd):
                 )
 
     AccessLog.objects.bulk_create(accesslogs)
-    OrganizationPlatform.objects.bulk_create(ops.values())
     # uncomment the following to get the test data in a CSV file
     # it is useful when you want to use pivot table in a spreadsheet to check the calculations
     # it will produce a table with names/human friendly values for all dimensions

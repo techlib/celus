@@ -16,7 +16,6 @@ from logs.models import (
     ImportBatch,
     MduState,
     Metric,
-    OrganizationPlatform,
     ReportMaterializationSpec,
     ReportType,
 )
@@ -180,7 +179,6 @@ class TestReportViewAPI:
         mat_spec = ReportMaterializationSpec.objects.create(base_report_type=rt)
         ReportType.objects.create(materialization_spec=mat_spec, name='mat_rt', short_name='mat_rt')
         organization = organizations[0]
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(
             report_type=rt, organization=organization, platform=platform
@@ -228,7 +226,6 @@ class TestReportViewAPI:
         ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
         ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
         organization = organizations[0]
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(
             report_type=rt, organization=organization, platform=platform
@@ -270,7 +267,6 @@ class TestReportViewAPI:
         ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
         ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
         organization = organizations[0]
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         title = Title.objects.create(name='Journal of Foo Bar')
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(

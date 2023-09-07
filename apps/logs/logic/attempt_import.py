@@ -18,7 +18,6 @@ from logs.logic.data_import import (
     import_counter_records,
     wipe_empty_or_partial_import_batches,
 )
-from logs.models import OrganizationPlatform
 
 logger = logging.getLogger(__name__)
 
@@ -79,16 +78,6 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.extract_header_data(reader.header)
         attempt.save()
         return
-    # we need to create explicit connection between organization and platform
-    op, created = OrganizationPlatform.objects.get_or_create(
-        platform=attempt.credentials.platform, organization=attempt.credentials.organization
-    )
-    if created:
-        logger.debug(
-            'Created Organization-Platform connection between %s and %s',
-            op.organization,
-            op.platform,
-        )
 
     # check errors first - there are cases when partial data is returned together with
     # a SUSHI exception. We do not want to ingest such data

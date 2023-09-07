@@ -11,6 +11,7 @@ from logs.models import (
     ImportBatchSyncLog,
     LastAction,
     ManualDataUpload,
+    OrganizationPlatform,
     ReportInterestMetric,
 )
 
@@ -33,6 +34,14 @@ def import_batch_create_sync_log(sender, instance: ImportBatch, using, **kwargs)
     ImportBatchSyncLog.objects.get_or_create(
         import_batch_id=instance.pk, defaults={'state': ImportBatchSyncLog.STATE_NO_CHANGE}
     )
+
+
+@receiver(post_save, sender=ImportBatch)
+def import_batch_create_organization_platform_link(sender, instance: ImportBatch, using, **kwargs):
+    if instance.organization_id and instance.platform_id:
+        OrganizationPlatform.objects.get_or_create(
+            organization_id=instance.organization_id, platform_id=instance.platform_id
+        )
 
 
 @receiver(post_save, sender=ManualDataUpload)

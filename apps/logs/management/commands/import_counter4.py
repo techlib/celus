@@ -8,7 +8,7 @@ from publications.models import Platform
 from pycounter import report
 
 from ...logic.data_import import import_counter_records
-from ...models import OrganizationPlatform, ReportType
+from ...models import ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +31,6 @@ class Command(BaseCommand):
         data = report.parse(options['file'])
         organization = Organization.objects.get(internal_id=options['organization'])
         platform = Platform.objects.get(short_name=options['platform'])
-        op, created = OrganizationPlatform.objects.get_or_create(
-            platform=platform, organization=organization
-        )
-        if created:
-            self.stderr.write(
-                self.style.SUCCESS(
-                    f'Created Organization-Platform connection between {organization} and {platform}'
-                )
-            )
         report_type = ReportType.objects.get(short_name=options['report_type'])
         reader = Counter4JR1Report()
         records = reader.read_report(data)

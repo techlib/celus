@@ -20,7 +20,6 @@ from logs.models import (
     ManualDataUpload,
     MduState,
     Metric,
-    OrganizationPlatform,
     ReportType,
     ReportTypeToDimension,
 )
@@ -125,13 +124,6 @@ class ImportBatchFullFactory(ImportBatchFactory):
             ]
         AccessLog.objects.bulk_create(als)
 
-        # compute interest
-
-        # create OrganizationPlatform link which would be expected if the data were loaded
-        # from a file
-        OrganizationPlatform.objects.get_or_create(
-            platform_id=obj.platform_id, organization_id=obj.organization_id
-        )
         PlatformTitle.objects.bulk_create(
             [
                 PlatformTitle(

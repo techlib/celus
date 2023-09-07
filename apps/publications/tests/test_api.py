@@ -585,7 +585,6 @@ class TestPlatformTitleAPI:
         organization = organizations["root"]
         platform = platforms["root"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to connect some titles with the platform which is done indirectly through
         # AccessLog instances
         # we create 2 access logs but both for the same title so that we can check that
@@ -639,7 +638,6 @@ class TestPlatformTitleAPI:
         organization = organizations["root"]
         platform = platforms["root"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to connect some titles with the platform which is done indirectly through
         # AccessLog instances
         # we create 2 access logs but both for the same title so that we can check that
@@ -705,7 +703,6 @@ class TestPlatformTitleAPI:
         platform = platforms["root"]
         other_organization = organizations["standalone"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
-        OrganizationPlatform.objects.create(organization=organization, platform=platform)
         # we need to connect some titles with the platform which is done indirectly through
         # AccessLog instances
         # we create 2 access logs but both for the same title so that we can check that
@@ -1528,7 +1525,6 @@ class TestGlobalPlatformsAPI:
 def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, interest_rt):
     organization = organizations["root"]
     platform = platforms["root"]
-    OrganizationPlatform.objects.create(organization=organization, platform=platform)
     rt = report_type_nd(0)
     ig = InterestGroup.objects.create(short_name='interest1', position=1)
     metric = Metric.objects.create(short_name='m1', name='Metric1')

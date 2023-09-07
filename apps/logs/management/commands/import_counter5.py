@@ -9,7 +9,7 @@ from organizations.models import Organization
 from publications.models import Platform
 
 from ...logic.data_import import import_counter_records
-from ...models import OrganizationPlatform, ReportType
+from ...models import ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -33,15 +33,7 @@ class Command(BaseCommand):
         reader = Counter5TRReport()
         organization = Organization.objects.get(internal_id=options['organization'])
         platform = Platform.objects.get(short_name=options['platform'])
-        op, created = OrganizationPlatform.objects.get_or_create(
-            platform=platform, organization=organization
-        )
-        if created:
-            self.stderr.write(
-                self.style.SUCCESS(
-                    f'Created Organization-Platform connection between {organization} and {platform}'
-                )
-            )
+
         report_type = ReportType.objects.get(short_name=options['report_type'])
         self.stderr.write(f'Time #1: {time()-t1}\n')
         t2 = time()

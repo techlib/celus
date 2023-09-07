@@ -10,7 +10,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory
 from logs.logic.attempt_import import import_one_sushi_attempt
-from logs.models import ImportBatch
+from logs.models import ImportBatch, OrganizationPlatform
 from logs.tasks import import_one_sushi_attempt_task
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
@@ -601,6 +601,10 @@ class TestFetchIntention:
                         assert (
                             fi.attempt.import_batch.accesslog_set.count() == 0
                         ), "import batch should be empty if partial_data is not returned"
+                        assert OrganizationPlatform.objects.filter(
+                            organization=fi.credentials.organization,
+                            platform=fi.credentials.platform,
+                        ).exists(), "OrganizationPlatform should have been created"
 
                     else:
                         assert (
