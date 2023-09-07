@@ -1,3 +1,15 @@
+- version: 5.7.1
+  title:
+    en: Bugfix release 5.7.1
+    cs: Opravná verze 5.7.1
+  text:
+    en: This release fixes several smaller bugs.
+    cs: Tato verze opravuje několik menších chyb.
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 5.7.0
   title:
     en: Adjusting tag visibility, full screen reporting output, faster title tagging and more in Celus 5.7.0

@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [5.7.1]  - 2023-09-07
+
+### Fixed
+
+#### Frontend
+
+- expanding a row in the list of stored reports no longer messes up the formatting of the table
+- displaying of errors on the platform list page was fixed
+
+#### Backend
+
+- an occasional database deadlock when deleting SUSHI credentials together with all the data was
+  fixed
+- the command line script `export_analytical` no longer crashes when output file is not explicitly
+  specified
+
+
+
 ## [5.7.0]  - 2023-08-28
 
 ### Added
