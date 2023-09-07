@@ -28,7 +28,7 @@ class Releases(ViewSet):
     def latest(self, request):
         parsed = get_releases_entries()
         if parsed:
-            latest_release = parsed[0]
+            latest_release = next(rel for rel in parsed if rel.get('notify_users', True))
             add_dates_to_releases_from_changelog([latest_release], get_changelog_entries())
             serializer = ReleaseSerializer(data=latest_release, required=False)
             serializer.is_valid(raise_exception=True)

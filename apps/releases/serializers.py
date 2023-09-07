@@ -20,3 +20,6 @@ class ReleaseSerializer(serializers.Serializer):
     is_update = serializers.BooleanField(default=False)
     is_bug_fix = serializers.BooleanField(default=False)
     links = LinkSerializer(required=False, many=True, allow_null=True)
+    notify_users = serializers.BooleanField(
+        default=True, help_text="Should this release create an alert in the UI?"
+    )

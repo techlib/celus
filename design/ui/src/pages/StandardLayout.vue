@@ -295,7 +295,7 @@ export default {
     displayNewReleaseBadge() {
       if (this.latestPublishedRelease?.version) {
         return (
-          this.latestPublishedRelease.version !=
+          this.latestPublishedRelease.version !==
           this.user.extra_data.last_seen_release
         );
       } else {
@@ -305,7 +305,7 @@ export default {
     displayNewReleaseAlert() {
       if (this.latestPublishedRelease?.version) {
         return (
-          this.latestPublishedRelease.version !=
+          this.latestPublishedRelease.version !==
           this.user.extra_data.last_dismissed_release
         );
       } else {

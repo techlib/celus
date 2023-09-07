@@ -19,11 +19,13 @@
   is_new_feature: FALSE
   is_update: FALSE
   is_bug_fix: TRUE
+  notify_users: FALSE
   links:
     - title:
          en: blogpost
          cs: náš blog
       link: https://example.com/
+
 - version: 4.4.0
   title:
     en: even better features
@@ -32,6 +34,7 @@
   is_new_feature: TRUE
   is_update: TRUE
   is_bug_fix: FALSE
+
 - version: 4.3.3
   title:
     en: new feature is here!

@@ -1,4 +1,3 @@
-import json
 import re
 
 import pytest
@@ -39,27 +38,35 @@ class TestReleasesAPI:
             else:
                 assert len(response.data) == 0
 
-    def test_releases_list_creation(self, clients, settings, releases_source):
+    def test_releases_list(self, clients, settings, releases_source):
         settings.RELEASES_SOURCEFILE = 'test-data/releases/test_filled_releases.yaml'
         url = reverse('releases-list')
         response = clients["user1"].get(url)
         assert response.status_code == 200
-        # response.data automagically deserializes date ISO strings to datetime objects
-        # which we don't want, so we need to deserialize the response content manually
-        response_data = json.loads(response.content.decode(response.charset))
-        assert [list(e.items()) for e in response_data] == [
-            list(e.items()) for e in releases_source
-        ]
+        all_data = response.json()
+        assert [rec['version'] for rec in all_data] == ['4.4.1', '4.4.0', '4.3.3']
+        assert [rec['notify_users'] for rec in all_data] == [False, True, True]
+        data = all_data[0]
+        assert data['version'] == '4.4.1'
+        assert data['title']['en'] == 'new release'
+        assert data['text']['en'].startswith("Itaque voluptas")
+        assert data['text']['en'].endswith(" ut.")
+        assert data['text']['cs'] == 'toto je nějaký text'
+        assert data['is_new_feature'] is False
+        assert data['is_update'] is False
+        assert data['is_bug_fix'] is True
+        assert data['notify_users'] is False
+        assert data['links'][0]['title']['en'] == 'blogpost'
+        assert data['links'][0]['title']['cs'] == 'náš blog'
+        assert data['links'][0]['link'] == 'https://example.com/'
 
     def test_latest_release(self, clients, settings, releases_source):
         url = reverse('releases-latest')
         settings.RELEASES_SOURCEFILE = 'test-data/releases/test_filled_releases.yaml'
         response = clients["user1"].get(url)
         assert response.status_code == 200
-        # response.data automagically deserializes date ISO strings to datetime objects
-        # which we don't want, so we need to deserialize the response content manually
-        response_data = json.loads(response.content.decode(response.charset))
-        assert list(response_data.items()) == list(releases_source[0].items())
+        data = response.json()
+        assert data['version'] == '4.4.0', 'last marked with notify_users=True'
 
 
 @pytest.mark.django_db
