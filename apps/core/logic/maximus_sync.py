@@ -2,7 +2,7 @@ import logging
 
 import requests
 from django.conf import settings
-from logs.models import OrganizationPlatform
+from logs.models import FlexibleReport, OrganizationPlatform
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform
 from rest_framework import serializers
@@ -123,6 +123,22 @@ class SushiCredentialsSerializer(serializers.ModelSerializer):
         )
 
 
+class FlexibleReportSerializer(serializers.ModelSerializer):
+    ext_id = serializers.IntegerField(source='id')
+
+    class Meta:
+        model = FlexibleReport
+        fields = (
+            'ext_id',
+            'name',
+            'created',
+            'last_updated',
+            'owner',
+            'owner_organization',
+            'report_config',
+        )
+
+
 def get_organizations():
     return CelusOrganizationSerializer(Organization.objects.all(), many=True).data
 
@@ -152,6 +168,10 @@ def get_sushi_credentials():
     ).data
 
 
+def get_flexible_reports():
+    return FlexibleReportSerializer(FlexibleReport.objects.all(), many=True).data
+
+
 def sync():
     if not settings.MAXIMUS_URL or not settings.MAXIMUS_TOKEN:
         logger.warning("MAXIMUS_URL/MAXIMUS_TOKEN not set - not syncing")
@@ -160,12 +180,13 @@ def sync():
     c = requests.session()
     c.headers['Authorization'] = 'Api-Key ' + settings.MAXIMUS_TOKEN
     d = {
-        '/organizations/': get_organizations(),
-        '/users/': get_users(),
-        '/users-organizations/': get_users_organizations(),
-        '/platforms/': get_platforms(),
-        '/organizations-platforms/': get_organizations_platforms(),
-        '/sushi-credentials/': get_sushi_credentials(),
+        '/organizations/': get_organizations,
+        '/users/': get_users,
+        '/users-organizations/': get_users_organizations,
+        '/platforms/': get_platforms,
+        '/organizations-platforms/': get_organizations_platforms,
+        '/sushi-credentials/': get_sushi_credentials,
+        '/flexible-reports/': get_flexible_reports,
     }
     for k, v in d.items():
-        c.post(settings.MAXIMUS_URL + k, json=v).raise_for_status()
+        c.post(settings.MAXIMUS_URL + k, json=v()).raise_for_status()

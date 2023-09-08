@@ -3,6 +3,7 @@ from datetime import date
 
 import pytest
 from django.utils import timezone
+from logs.models import FlexibleReport
 from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
 from publications.fake_data import PlatformFactory
@@ -12,6 +13,7 @@ from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
 from core.fake_data import DataSourceFactory, UserFactory
 from core.logic.maximus_sync import (
+    get_flexible_reports,
     get_organizations,
     get_organizations_platforms,
     get_platforms,
@@ -246,4 +248,53 @@ class TestMaximusSync:
             for i in range(2)
         ]
         for d in json.loads(json.dumps(get_sushi_credentials())):
+            assert d in check
+
+    def test_get_flexible_reports(self):
+        assert get_flexible_reports() == []
+
+        now = DateTimeField().to_representation(timezone.now())
+        user = UserFactory.create()
+
+        report = {"filters": []}
+
+        obj = FlexibleReport.objects.create(
+            name="Report1", created=now, owner=user, report_config=report
+        )
+        check = (
+            {
+                "ext_id": obj.id,
+                "name": "Report1",
+                "created": now,
+                "last_updated": DateTimeField().to_representation(obj.last_updated),
+                "owner": user.id,
+                "owner_organization": None,
+                "report_config": report,
+            },
+        )
+        out = json.loads(json.dumps(get_flexible_reports()))
+        assert len(out) == len(check)
+        for d in out:
+            assert d in check
+
+        org = OrganizationFactory.create()
+
+        obj = FlexibleReport.objects.create(
+            name="Report2", created=now, owner_organization=org, report_config=report
+        )
+        check = (
+            check[0],
+            {
+                "ext_id": obj.id,
+                "name": "Report2",
+                "created": now,
+                "last_updated": DateTimeField().to_representation(obj.last_updated),
+                "owner": None,
+                "owner_organization": org.id,
+                "report_config": report,
+            },
+        )
+        out = json.loads(json.dumps(get_flexible_reports()))
+        assert len(out) == len(check)
+        for d in out:
             assert d in check
