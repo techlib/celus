@@ -20,8 +20,8 @@ BUSY_TIMEOUT = 5.0  # in seconds
 @email_if_fails
 def plan_schedulers_triggering():
     """This job should be run in cron mode with high frequency."""
-    logger.info("Trying to unlock schedulers which are stucked.")
-    Scheduler.unlock_stucked_schedulers()
+    logger.info("Trying to unlock schedulers which are stuck.")
+    Scheduler.unlock_stuck_schedulers()
     logger.info("Planning schedulers triggering")
     for scheduler in FetchIntention.objects.schedulers_to_trigger():
         trigger_scheduler.delay(scheduler.url, False)
@@ -40,22 +40,21 @@ def trigger_scheduler(self, url: str, finish: bool = False):
         logger.info("Creating scheduler with url %s", url)
 
     res = scheduler.run_next(self.request.id)
-    logger.debug("Sheduler returned %s", res)
+    logger.debug("Scheduler returned %s", res)
     if res == RunResponse.COOLDOWN or (finish and res != RunResponse.IDLE):
-        # replan if in cooldown
+        # re-plan if in cooldown
         # or when finish is set and there are still tasks to perform
-        logger.info("Scheduler with url %s replaned for later.", url)
+        logger.info("Scheduler with url %s re-planned for later.", url)
         eta: datetime
         if res == RunResponse.BUSY:
-            # Add extra timeout when scheduler is BUSY
-            # so it don't gets retriggered to often
+            # Add extra timeout when scheduler is BUSY, so it doesn't get re-triggered too often
             eta = timezone.now() + timedelta(seconds=BUSY_TIMEOUT)
         else:
             eta = scheduler.when_ready
 
         trigger_scheduler.apply_async((url, finish), eta=eta)
     else:
-        # if scheduler is busy or idle or we don't need to finish the scheduler
+        # if scheduler is busy or idle, or we don't need to finish the scheduler
         # we don't need to plan new task
         logger.info("Triggering scheduler with url %s terminated.", url)
 

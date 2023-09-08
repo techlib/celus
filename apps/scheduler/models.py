@@ -195,7 +195,7 @@ class Scheduler(models.Model):
             # was unlocked using cron job at this point
             self.refresh_from_db()
             if str(self.current_celery_task_id) != str(celery_task_id):
-                # Discard results of this this run,
+                # Discard results of this run,
                 # another celery task might be already running to process the intention
                 logger.warning(
                     "Unlocked Scheduler's FetchIntention was finished; Performing rollback"
@@ -224,7 +224,7 @@ class Scheduler(models.Model):
         self.save()
 
     @classmethod
-    def unlock_stucked_schedulers(cls):
+    def unlock_stuck_schedulers(cls):
         with transaction.atomic():
 
             def update_intention(scheduler: 'Scheduler'):

@@ -1073,7 +1073,7 @@ class TestScheduler:
             )
             assert scheduler.run_next() == RunResponse.PROCESSED
 
-    def test_unlock_stucked_schedulers(self, credentials, counter_report_types):
+    def test_unlock_stuck_schedulers(self, credentials, counter_report_types):
 
         scheduler1 = SchedulerFactory(
             url="https://scheduler1.example.com",
@@ -1135,7 +1135,7 @@ class TestScheduler:
         assert intention3.current_scheduler == scheduler3
         assert intention3.scheduler == scheduler3
 
-        Scheduler.unlock_stucked_schedulers()
+        Scheduler.unlock_stuck_schedulers()
 
         # First is unlocked
         scheduler1.refresh_from_db()
