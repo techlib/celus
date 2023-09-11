@@ -1562,6 +1562,12 @@ export default {
         this.showZeroRows = false;
       }
     },
+    tagRollUp() {
+      // if we turn off tag roll up, we need to turn off the remainder
+      if (!this.tagRollUp) {
+        this.showRemainder = false;
+      }
+    },
   },
 };
 </script>
