@@ -1167,7 +1167,6 @@ export default {
     },
     async runExport(format) {
       if (!this.formValid) {
-        console.debug("form is not valid");
         return;
       }
       if (this.canGetData) {
@@ -1205,7 +1204,6 @@ export default {
     },
     async saveReport() {
       if (!this.formValid) {
-        console.debug("form is not valid");
         return;
       }
       if (this.canGetData) {

@@ -178,7 +178,6 @@ export default {
   },
 
   beforeDestroy() {
-    console.log("destroying");
     this.doPoll = false;
   },
 };

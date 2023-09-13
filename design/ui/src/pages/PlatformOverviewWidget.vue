@@ -231,7 +231,7 @@ export default {
           }
         }
       } else {
-        this.showSnackbar({
+        await this.showSnackbar({
           content: "Error loading annotations: " + error,
           color: "error",
         });

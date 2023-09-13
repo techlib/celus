@@ -59,7 +59,6 @@ export default {
       this.showDialog = false;
     },
     platformSaved(platform) {
-      console.log(platform);
       this.showDialog = false;
       this.$emit("update-platforms", platform);
     },

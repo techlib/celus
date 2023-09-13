@@ -14,12 +14,13 @@
     item-disabled="disabled"
     :disabled="disabled"
     :filter="filter"
+    :no-data-text="$t('labels.no_tags_available')"
   >
     <template #item="{ item }">
       <v-list-item-content>
         <v-list-item-title class="d-flex align-center justify-space-between">
-          <TagChip :tag="item" v-if="item.disabled" hide-icon disabled />
-          <TagChip :tag="item" v-else />
+          <TagChip v-if="item.disabled" :tag="item" hide-icon disabled />
+          <TagChip v-else :tag="item" />
           <span class="text-caption">{{ item.tag_class.name }}</span>
         </v-list-item-title>
         <v-list-item-subtitle v-if="item.disabled" class="text-caption">
@@ -34,9 +35,10 @@
       <TagChip
         :tag="item"
         small
-        hide-icon
+        :hide-icon="!singleTag"
         hide-tooltip
-        removable
+        :removable="!singleTag"
+        :show-class="singleTag"
         @remove="unselect(item.pk)"
       />
     </template>
@@ -49,15 +51,31 @@
         {{ tooltip }}
       </v-tooltip>
     </template>
+
+    <template #append-item v-if="allowCreate">
+      <v-list-item-content>
+        <v-list-item-title>
+          <AddTagButton
+            small
+            class="ml-4 mb-1"
+            @saved="addNewTag"
+            :scope="scope"
+            text
+            outlined
+          />
+        </v-list-item-title>
+      </v-list-item-content>
+    </template>
   </v-autocomplete>
 </template>
 <script>
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
+import AddTagButton from "@/components/tags/AddTagButton.vue";
 
 export default {
   name: "TagSelector",
-  components: { TagChip },
+  components: { AddTagButton, TagChip },
   mixins: [cancellation],
 
   props: {
@@ -79,6 +97,7 @@ export default {
       required: true,
     },
     singleTag: { type: Boolean, default: false },
+    allowCreate: { type: Boolean, default: false },
   },
 
   data() {
@@ -151,6 +170,12 @@ export default {
         if (name.indexOf(word) < 0 && className.indexOf(word) < 0) return false;
       }
       return true;
+    },
+    addNewTag(newTag) {
+      // add new tag to the end of the list of tags
+      // we want to add it to the end so that it is visible right up from
+      // the button for adding new tags
+      this.tags.push(newTag);
     },
   },
 

@@ -182,7 +182,6 @@ export default {
   watch: {
     async viewId() {
       if (this.viewId > 0 && this.selectedReport) {
-        console.log("Loading report", this.selectedReport);
         let report = await FlexiReport.fromAPIObject(
           this.selectedReport,
           this.reportTypeMap

@@ -39,7 +39,6 @@ from tags.models import (
 from tags.permissions import TagClassPermissions, TagPermissions
 from tags.serializers import (
     TagClassSerializer,
-    TagCreateSerializer,
     TaggingBatchCreateSerializer,
     TaggingBatchSerializer,
     TagSerializer,
@@ -99,11 +98,7 @@ class TagViewSet(ModelViewSet):
     queryset = Tag.objects.none()
     permission_classes = [IsAuthenticated, TagPermissions]
     filter_backends = [PkMultiValueFilterBackend]
-
-    def get_serializer_class(self):
-        if self.action in ("create", "update", "partial_update"):
-            return TagCreateSerializer
-        return TagSerializer
+    serializer_class = TagSerializer
 
     class ParamSerializer(Serializer):
         item_type = ChoiceField(choices=['title', 'organization', 'platform'], required=False)

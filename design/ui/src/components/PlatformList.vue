@@ -14,7 +14,7 @@ en:
   no_sushi: SUSHI is not activated for this platform and selected organization
   sushi_for_version: "SUSHI for COUNTER version {version} is available"
   sushi_for_version_outside: "SUSHI not managed by consortium for COUNTER version {version} is available"
-  annotations_available:
+  annotations_available: |
     There are annotations for this platform and the current date range. Go to the
     platform page for details.
 
@@ -31,7 +31,7 @@ cs:
   no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
   sushi_for_version: "SUSHI pro verzi {version} COUNTERu je k dispozici"
   sushi_for_version_outside: "SUSHI nespravované konsorciem pro verzi {version} COUNTERu je k dispozici"
-  annotations_available:
+  annotations_available: |
     Pro tuto platformu a vybrané časové období byly uloženy poznámky.
     Na stránce platformy zjistíte detaily.
 </i18n>
@@ -329,7 +329,6 @@ export default {
 
   methods: {
     editDialogSaved(platform) {
-      console.log(platform);
       this.showEditDialog = false;
       this.$emit("update-platforms", platform);
     },
@@ -340,6 +339,35 @@ export default {
     slotName(ig) {
       return "item.interests." + ig.short_name;
     },
+    async syncTags() {
+      let toTag = this.platforms
+        .map((pl) => pl.pk)
+        .filter((pk) => !this.objIdToTags.has(pk));
+      if (this.resolvingTagsForIds.size) {
+        // we only want to resolve those that are not already being resolved
+        toTag = toTag.filter((pk) => !this.resolvingTagsForIds.has(pk));
+      }
+      // we extend the set of what is being resolved
+      toTag.forEach((pk) => this.resolvingTagsForIds.add(pk));
+
+      if (toTag.length) {
+        try {
+          await this.getTagsForObjectsById("platform", toTag);
+        } finally {
+          // clean up the set of what was resolved
+          toTag.forEach((pk) => this.resolvingTagsForIds.delete(pk));
+        }
+      }
+    },
+  },
+
+  created() {
+    // when switching between different "tabs" on the platforms page
+    // this widget may get created without the platforms being loaded
+    // because they are present from the previous load
+    // in that case the watcher for platforms will not be triggered
+    // and we need to make sure tags are loaded
+    this.syncTags();
   },
 
   watch: {
@@ -350,24 +378,7 @@ export default {
     },
     async platforms() {
       if (this.platforms.length) {
-        let toTag = this.platforms
-          .map((pl) => pl.pk)
-          .filter((pk) => !this.objIdToTags.has(pk));
-        if (this.resolvingTagsForIds.size) {
-          // we only want to resolve those that are not already being resolved
-          toTag = toTag.filter((pk) => !this.resolvingTagsForIds.has(pk));
-        }
-        // we extend the set of what is being resolved
-        toTag.forEach((pk) => this.resolvingTagsForIds.add(pk));
-
-        if (toTag.length) {
-          try {
-            await this.getTagsForObjectsById("platform", toTag);
-          } finally {
-            // clean up the set of what was resolved
-            toTag.forEach((pk) => this.resolvingTagsForIds.delete(pk));
-          }
-        }
+        await this.syncTags();
       }
     },
   },

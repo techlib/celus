@@ -109,7 +109,6 @@ export default {
             this.reportViews = [];
             this.selectedReportView = null;
           } else {
-            console.log("ERROR: ", error);
             this.showSnackbar({ content: "Error loading title: " + error });
           }
         } finally {

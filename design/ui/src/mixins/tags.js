@@ -46,13 +46,22 @@ export default {
         linksPromise,
         tagsPromise,
       ]);
-      if (!linksResult.error && !tagsResult.error) {
+      if (
+        linksResult &&
+        tagsResult &&
+        !linksResult.error &&
+        !tagsResult.error
+      ) {
         let tagIdToObj = new Map();
+        let newObjIdToTags = new Map(this.objIdToTags);
+
         tagsResult.response.data.forEach((tag) => tagIdToObj.set(tag.pk, tag));
-        cleanObjectIds.forEach((id) => this.objIdToTags.set(id, []));
+        cleanObjectIds.forEach((id) => newObjIdToTags.set(id, []));
         linksResult.response.data.forEach((link) =>
-          this.objIdToTags.get(link.target_id).push(tagIdToObj.get(link.tag_id))
+          newObjIdToTags.get(link.target_id).push(tagIdToObj.get(link.tag_id))
         );
+        // we exchange the whole map to trigger a re-render
+        this.objIdToTags = newObjIdToTags;
       }
     },
   },

@@ -163,7 +163,6 @@ export default {
           );
           let extraValues = this.value.filter((item) => !possiblePks.has(item));
           if (extraValues.length) {
-            console.debug("fetching extra", extraValues);
             let pks = extraValues.join(",");
             result = await axios.get(url + `&pks=${pks}`);
             result.data.values.forEach((item) => possibleValues.push(item));

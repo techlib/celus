@@ -114,6 +114,71 @@ class TestTagClassVisibility:
                 ), f'{user_key} should not see {key}'
 
     @pytest.mark.parametrize(
+        [
+            'user_key',
+            'can_see_u1',
+            'can_see_u2',
+            'can_see_org2',
+            'can_see_org2_admin',
+            'can_see_cons',
+            'can_see_evbd',
+            'can_see_system',
+        ],
+        [
+            ('user1', True, False, False, False, False, True, False),
+            ('user2', False, True, True, False, False, True, False),
+            ('admin1', False, False, False, False, False, True, False),
+            ('admin2', False, False, True, True, False, True, False),
+            ('master_admin', False, False, True, True, True, True, False),
+            ('master_user', False, False, True, False, False, True, False),
+            ('su', False, False, True, True, True, True, False),
+        ],
+    )
+    def test_user_score_annotation(
+        self,
+        basic1,
+        users,
+        organizations,
+        user_key,
+        can_see_u1,
+        can_see_u2,
+        can_see_evbd,
+        can_see_cons,
+        can_see_system,
+        can_see_org2,
+        can_see_org2_admin,
+    ):
+        """
+        Tests that `annotate_user_score` works as expected - uses the same tests as above
+        tags
+        """
+        TagClassFactory.create(name='u1', owner=users['user1'], can_create_tags=AccessibleBy.OWNER)
+        TagClassFactory.create(name='u2', owner=users['user2'], can_create_tags=AccessibleBy.OWNER)
+        TagClassFactory.create(name='evbd', can_create_tags=AccessibleBy.EVERYBODY)
+        TagClassFactory.create(
+            name='org2',
+            owner_org=organizations['standalone'],
+            can_create_tags=AccessibleBy.ORG_USERS,
+        )
+        TagClassFactory.create(
+            name='org2_admin',
+            owner_org=organizations['standalone'],
+            can_create_tags=AccessibleBy.ORG_ADMINS,
+        )
+        TagClassFactory.create(name='cons', can_create_tags=AccessibleBy.CONS_ADMINS)
+        TagClassFactory.create(name='system', can_create_tags=AccessibleBy.SYSTEM)
+
+        user = users[user_key]
+        for tag_cls in TagClass.objects.all().annotate_user_score(user):
+            key = tag_cls.name
+            if locals()[f'can_see_{key}']:
+                assert tag_cls.user_score >= tag_cls.can_create_tags, f'{user_key} should see {key}'
+            else:
+                assert (
+                    tag_cls.user_score < tag_cls.can_create_tags
+                ), f'{user_key} should not see {key}'
+
+    @pytest.mark.parametrize(
         ['user_key', 'access_permission', 'can_create'],
         [
             ('user1', AccessibleBy.EVERYBODY, 0),

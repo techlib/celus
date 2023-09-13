@@ -17,6 +17,7 @@ from tags.models import Tag, TagClass, TaggingBatch
 class TagClassSerializer(ModelSerializer):
 
     user_can_modify = SerializerMethodField()
+    user_score = SerializerMethodField()
     hidden = BooleanField(default=False, read_only=True)
 
     class Meta:
@@ -36,6 +37,7 @@ class TagClassSerializer(ModelSerializer):
             'default_tag_can_see',
             'default_tag_can_assign',
             'user_can_modify',
+            'user_score',
             'hidden',
         )
 
@@ -103,12 +105,23 @@ class TagClassSerializer(ModelSerializer):
         tag = super().update(instance, validated_data)
         return tag
 
+    def get_user_score(self, tc: TagClass):
+        return self._tag_class_user_scores.get(tc.pk, 0)
+
+    @cached_property
+    def _tag_class_user_scores(self) -> dict:
+        return {
+            tc.pk: tc.user_score
+            for tc in TagClass.objects.annotate_user_score(self.context['request'].user).only('pk')
+        }
+
 
 class TagSerializer(ModelSerializer):
 
-    tag_class = TagClassSerializer()
     user_can_assign = SerializerMethodField()
     user_can_modify = SerializerMethodField()
+    last_updated_by = HiddenField(default=CurrentUserDefault())
+    owner = HiddenField(default=CurrentUserDefault())
 
     class Meta:
         model = Tag
@@ -123,9 +136,14 @@ class TagSerializer(ModelSerializer):
             'can_assign',
             'owner',
             'owner_org',
+            'last_updated_by',
             'user_can_assign',
             'user_can_modify',
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tc_serializer = None
 
     def get_user_can_assign(self, tag: Tag):
         return tag.pk in self._user_assignable_tag_ids
@@ -152,28 +170,6 @@ class TagSerializer(ModelSerializer):
             )
         )
 
-
-class TagCreateSerializer(ModelSerializer):
-
-    last_updated_by = HiddenField(default=CurrentUserDefault())
-    owner = HiddenField(default=CurrentUserDefault())
-
-    class Meta:
-        model = Tag
-        fields = (
-            'pk',
-            'tag_class',
-            'name',
-            'text_color',
-            'bg_color',
-            'desc',
-            'can_see',
-            'can_assign',
-            'owner',
-            'owner_org',
-            'last_updated_by',
-        )
-
     def update(self, instance: Tag, validated_data):
         # generic modify permissions are handled on the viewset level by `permission_classes`
         # here we handle only the specific cases
@@ -193,6 +189,20 @@ class TagCreateSerializer(ModelSerializer):
             raise PermissionDenied(f'User cannot add tags to class "{tc}"')
         tag = super().create(validated_data)
         return tag
+
+    def to_representation(self, instance):
+        # this is a trick how to ensure that the serializer will support primary keys
+        # for tag_class on input, but will always return full objects on output
+        # we also make sure to create the serializer only once, so that
+        # it can use per-serializer caching used to reduce the number of db queries
+        data = super().to_representation(instance)
+        if instance.tag_class:
+            if not self.tc_serializer:
+                self.tc_serializer = TagClassSerializer(context=self.context)
+            data['tag_class'] = self.tc_serializer.to_representation(instance.tag_class)
+        if instance.owner_id:
+            data['owner'] = instance.owner_id
+        return data
 
 
 class _TaggingBatchBaseSerializer(ModelSerializer):

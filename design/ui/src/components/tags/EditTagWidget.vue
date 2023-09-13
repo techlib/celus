@@ -20,9 +20,10 @@ cs:
             <v-col>
               <TagClassSelector
                 v-model="tagClass"
-                :disabled="tag !== null"
+                :disabled="tag !== null || fixedTagClass !== null"
                 allow-create
                 ref="classSelector"
+                :scope="scope"
               />
             </v-col>
             <v-col>
@@ -88,6 +89,14 @@ export default {
 
   props: {
     tag: { type: Object, required: false, default: null },
+    fixedTagClass: { type: Object, required: false, default: null },
+    scope: {
+      type: String,
+      validator(value) {
+        return ["title", "platform", "organization"].includes(value);
+      },
+      required: false,
+    },
   },
 
   data() {
@@ -95,7 +104,7 @@ export default {
       name: "",
       canSee: accessLevels.OWNER,
       canAssign: accessLevels.OWNER,
-      tagClass: null,
+      tagClass: this.fixedTagClass,
       valid: false,
       justCreating: false,
       desc: "",
@@ -198,15 +207,16 @@ export default {
     tag() {
       this.changeTag();
     },
-    tagClass() {
-      if (!this.tag) {
-        // update some stuff to the defaults of the tag class
-        if (this.tagClass) {
+    tagClass: {
+      immediate: true,
+      handler() {
+        if (!this.tag && this.tagClass) {
+          // update some stuff to the defaults of the tag class
           this.bgColor = this.tagClass.bg_color;
           this.canSee = this.tagClass.default_tag_can_see;
           this.canAssign = this.tagClass.default_tag_can_assign;
         }
-      }
+      },
     },
   },
 };

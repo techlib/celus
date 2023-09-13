@@ -27,7 +27,7 @@ cs:
                 :label="$t('labels.tag_scope')"
                 :hint="$t('labels.tag_scope_hint')"
                 persistent-hint
-                :disabled="!!tagClass"
+                :disabled="!!tagClass || !!fixedScope"
               />
             </v-col>
             <v-col>
@@ -128,6 +128,13 @@ export default {
 
   props: {
     tagClass: { type: Object, required: false, default: null },
+    fixedScope: {
+      type: String,
+      validator(value) {
+        return ["title", "platform", "organization"].includes(value);
+      },
+      required: false,
+    },
   },
 
   data() {
@@ -140,7 +147,7 @@ export default {
       valid: false,
       justCreating: false,
       desc: "",
-      scope: "title",
+      scope: this.fixedScope || "title",
       exclusive: true,
     };
   },

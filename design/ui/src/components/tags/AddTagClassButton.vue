@@ -1,7 +1,12 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-btn :color="color" :small="small" @click="showDialog = true">
+  <v-btn
+    :color="color"
+    :small="small"
+    @click="showDialog = true"
+    v-bind="$attrs"
+  >
     <v-icon small class="pr-2">fa fa-plus</v-icon>
     {{ $t("labels.new_tag_class") }}
     <v-dialog v-model="showDialog" max-width="720px">
@@ -9,6 +14,7 @@
         @saved="created"
         @close="showDialog = false"
         ref="widget"
+        :fixed-scope="scope"
       />
     </v-dialog>
   </v-btn>
@@ -25,6 +31,12 @@ export default {
   props: {
     small: { type: Boolean, default: false },
     color: { type: String, default: "" },
+    scope: {
+      type: String,
+      required: false,
+      validator: (value) =>
+        ["title", "platform", "organization"].includes(value),
+    },
   },
 
   data() {

@@ -76,7 +76,6 @@ export default {
     },
     error() {
       if (this.changeError && !this.passwordEdited) {
-        console.log(this.changeError.response);
         if (
           this.changeError.response.data &&
           this.changeError.response.data.new_password2

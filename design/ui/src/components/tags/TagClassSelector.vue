@@ -28,7 +28,14 @@
     <template #append-item v-if="allowCreate">
       <v-list-item-content>
         <v-list-item-title>
-          <AddTagClassButton small class="ml-4" @saved="assignNewClass" />
+          <AddTagClassButton
+            small
+            class="ml-4"
+            @saved="assignNewClass"
+            :scope="scope"
+            text
+            outlined
+          />
         </v-list-item-title>
       </v-list-item-content>
     </template>
@@ -49,7 +56,12 @@ export default {
   props: {
     value: { type: [Object, Number], required: false },
     disabled: { type: Boolean, default: false },
-    scope: { type: String, required: false },
+    scope: {
+      type: String,
+      required: false,
+      validator: (value) =>
+        ["title", "platform", "organization"].includes(value),
+    },
     clearable: { type: Boolean, default: false },
     label: { type: String, default: "" },
     placeholder: { type: String, default: "" },

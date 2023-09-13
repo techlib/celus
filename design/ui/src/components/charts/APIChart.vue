@@ -864,7 +864,6 @@ export default {
         let now = new Date();
         let out = this.pivot();
         this.out = out;
-        console.log("pivot ended", new Date() - now);
         if (this.orderBy) {
           // NOTE: order by sum of values - it does not matter how is the orderBy called
           function sumNonPrimary(rec) {

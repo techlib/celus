@@ -189,7 +189,7 @@ cs:
         </table>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="auto" v-if="enableTags">
+      <v-col cols="12" sm="6" md="4" lg="3" v-if="enableTags">
         <TagCard v-if="titleId" scope="title" :item-id="titleId" show-class />
       </v-col>
     </v-row>

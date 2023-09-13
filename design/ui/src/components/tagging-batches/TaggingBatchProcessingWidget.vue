@@ -96,6 +96,7 @@ cs:
                   scope="title"
                   single-tag
                   assignable-only
+                  dont-check-exclusive
                 />
               </v-col>
               <v-col cols="auto" class="align-self-center">

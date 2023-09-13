@@ -1,14 +1,23 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-btn :color="color" :small="small" @click="showDialog = true">
-    <v-icon small class="pr-2">fa fa-plus</v-icon>
-    {{ $t("labels.new_tag") }}
+  <v-btn
+    :color="color"
+    :small="small"
+    @click="showDialog = true"
+    :icon="icon"
+    v-on="$listeners"
+    v-bind="$attrs"
+  >
+    <v-icon small>fa fa-plus</v-icon>
+    <span v-if="!icon" class="pl-2">{{ $t("labels.new_tag") }}</span>
     <v-dialog v-model="showDialog" max-width="720px">
       <EditTagWidget
         @saved="created"
         @close="showDialog = false"
         ref="widget"
+        :fixed-tag-class="tagClass"
+        :scope="scope"
       />
     </v-dialog>
   </v-btn>
@@ -25,6 +34,15 @@ export default {
   props: {
     small: { type: Boolean, default: false },
     color: { type: String, default: "" },
+    tagClass: { type: Object, default: null },
+    icon: { type: Boolean, default: false },
+    scope: {
+      type: String,
+      validator(value) {
+        return ["title", "platform", "organization"].includes(value);
+      },
+      required: false,
+    },
   },
 
   data() {

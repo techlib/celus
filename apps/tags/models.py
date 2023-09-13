@@ -88,6 +88,30 @@ class TagClassQuerySet(models.QuerySet):
             )
         )
 
+    def annotate_user_score(self, user: User) -> QuerySet['TagClass']:
+        """
+        Adds a numeric score from the `AccessibleBy` scale to each tag class. The score is
+        based on the relationship the user has to the tag class.
+        """
+        return self.annotate(
+            user_score=models.Case(
+                models.When(owner=user, then=models.Value(AccessibleBy.OWNER)),
+                models.When(
+                    models.Value(user.is_superuser or user.is_admin_of_master_organization),
+                    then=models.Value(AccessibleBy.CONS_ADMINS),
+                ),
+                models.When(
+                    owner_org__in=user.admin_organizations(),
+                    then=models.Value(AccessibleBy.ORG_ADMINS),
+                ),
+                models.When(
+                    owner_org__in=user.accessible_organizations(),
+                    then=models.Value(AccessibleBy.ORG_USERS),
+                ),
+                default=models.Value(AccessibleBy.EVERYBODY),
+            )
+        )
+
 
 class TagClass(CreatedUpdatedMixin, models.Model):
 

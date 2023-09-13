@@ -180,6 +180,7 @@ cs:
           >
             <v-icon small>fa-trash</v-icon>
           </v-btn>
+
           <v-tooltip bottom max-width="600px">
             <template #activator="{ on }">
               <v-btn small icon @click="hideClass(group)" v-on="on">
@@ -197,6 +198,23 @@ cs:
                 ? $t("tag_class_hidden")
                 : $t("tag_class_visible")
             }}</span>
+          </v-tooltip>
+
+          <v-tooltip
+            bottom
+            max-width="600px"
+            v-if="canCreateTagsInClass(group)"
+          >
+            <template #activator="{ on }">
+              <AddTagButton
+                v-on="on"
+                :tag-class="classIdToObj.get(group)"
+                icon
+                small
+                @saved="fetchTags()"
+              />
+            </template>
+            {{ $t("labels.new_tag") }}
           </v-tooltip>
         </td>
       </template>
@@ -544,6 +562,13 @@ export default {
           }
         }
       }
+    },
+    canCreateTagsInClass(group) {
+      return (
+        this.classIdToObj.has(group) &&
+        this.classIdToObj.get(group).user_score >=
+          this.classIdToObj.get(group).can_create_tags
+      );
     },
   },
 

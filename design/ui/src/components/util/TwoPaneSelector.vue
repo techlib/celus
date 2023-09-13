@@ -78,7 +78,6 @@ export default {
     this.items
       .filter((item) => selected.has(item[this.itemValue]))
       .forEach((item) => extra.set(item[this.itemValue], item));
-    console.debug("init", selected, extra, this.items);
 
     return {
       selected: selected,
@@ -132,7 +131,6 @@ export default {
           toValidate.push(key);
         }
       });
-      console.debug("revalidating", toValidate);
       let validated = await validator(toValidate);
       let newSelected = new Set();
       let allowed = new Set(validated);
@@ -142,7 +140,6 @@ export default {
         }
       });
       this.selected = newSelected;
-      console.debug("revalidated", newSelected);
     },
   },
 

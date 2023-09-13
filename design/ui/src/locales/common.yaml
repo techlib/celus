@@ -179,6 +179,7 @@ en:
     tag_exclusive_already_present: Target already has a tag from the same exclusive class
     tag_class_can_modify: Who can modify this tag class
     tag_class_can_create_tags: Who can add new tags of this class
+    no_tags_available: No tags available
     custom: Custom
     created: Created
     state: State
@@ -245,7 +246,7 @@ en:
     org_users: Organization users
     org_admins: Organizations admins
     cons_admins: Consortium admins
-    owner: Owner
+    owner: Only you
     system: System
   tagging:
     data_rows: Data rows
@@ -477,6 +478,7 @@ cs:
     tag_exclusive_already_present: Štítek stejného exklusivního typu je již přítomen
     tag_class_can_modify: Kdo může upravovat typ štítku
     tag_class_can_create_tags: Kdo může vytvářet štítky v této skupině
+    no_tags_available: Nejsou dostupné žádné štítky
     custom: Vlastní
     created: Datum vytvoření
     state: Stav
@@ -543,7 +545,7 @@ cs:
     org_users: Členové organizace
     org_admins: Administrátoři organizace
     cons_admins: Administrátoři konzorcia
-    owner: Vlastník
+    owner: Pouze vy
     system: Systém
   tagging:
     data_rows: Datové řádky

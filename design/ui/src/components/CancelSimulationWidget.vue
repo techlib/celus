@@ -496,7 +496,6 @@ export default {
     async prepareData() {
       if (!this.loading) {
         // we only do the computation if we have all the necessary data
-        console.log("start", new Date());
         this.preparingData = true;
         /*
             We only store the non-unique titles for each platform and for the unique ones we just store the
@@ -519,7 +518,6 @@ export default {
           }
         }
         this.preparingData = false;
-        console.log("end", new Date());
       }
     },
     platformTitleCount(platform) {

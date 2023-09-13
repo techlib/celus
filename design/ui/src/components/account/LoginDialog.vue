@@ -458,7 +458,6 @@ export default {
         await this.resetPassword({ email: this.email });
         this.resetSuccess = true;
       } catch (error) {
-        console.log(error);
         this.resetError = error;
       } finally {
         this.requestInProgress = false;

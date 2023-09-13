@@ -16,15 +16,15 @@
     </v-card-title>
     <v-card-text>
       <v-skeleton-loader v-if="loading" type="paragraph" />
-      <div v-else-if="tags.length">
-        <div v-for="tag in tags" :key="tag.pk" class="pb-1">
+      <div v-else-if="tags.length" class="d-flex flex-wrap">
+        <span v-for="tag in tags" :key="tag.pk" class="pr-1 pb-1">
           <TagChip
             :tag="tag"
             :show-class="showClass"
             :removable="editing && tag.user_can_assign"
             @remove="removeTag"
           />
-        </div>
+        </span>
       </div>
       <div v-else-if="!editing">
         {{ $t("labels.no_tags") }}
@@ -32,11 +32,13 @@
 
       <div v-if="editing">
         <TagSelector
-          v-model="tagsToAdd"
+          v-model="tagToAdd"
           :hidden-tags="usedTagIds"
           :used-exclusive-classes="usedExclusiveClasses"
           assignable-only
           :scope="scope"
+          single-tag
+          allow-create
         />
       </div>
     </v-card-text>
@@ -46,6 +48,7 @@
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
 import TagSelector from "@/components/tags/TagSelector";
+import { mapActions } from "vuex";
 
 export default {
   name: "TagCard",
@@ -79,7 +82,7 @@ export default {
       loading: false,
       tags: [],
       editing: false,
-      tagsToAdd: [],
+      tagToAdd: null,
     };
   },
 
@@ -100,13 +103,17 @@ export default {
   },
 
   methods: {
-    async loadTags() {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+    }),
+    async loadTags(triggerLoading = true) {
       if (this.tagsUrl) {
-        this.tags = [];
-        this.loading = true;
+        if (triggerLoading) this.loading = true;
         let result = await this.http({ url: this.tagsUrl });
         if (!result.error) {
           this.tags = result.response.data;
+        } else {
+          this.tags = [];
         }
         this.loading = false;
       }
@@ -119,32 +126,32 @@ export default {
       });
       this.tags = this.tags.filter((item) => item.pk !== tagId);
     },
+    async addTag({ tagId }) {
+      await this.http({
+        url: `/api/tags/tag/${tagId}/${this.scope}/add/`,
+        method: "post",
+        data: { item_id: this.itemId, scope: this.scope },
+      });
+    },
   },
 
   watch: {
     tagsUrl() {
       this.loadTags();
     },
-    async editing() {
-      if (!this.editing) {
-        // we just turned off editing, so we must save the selected tags
-        if (this.tagsToAdd.length) {
-          let promises = [];
-          for (const tag of this.tagsToAdd) {
-            promises.push(
-              this.http({
-                url: `/api/tags/tag/${tag}/${this.scope}/add/`,
-                method: "post",
-                data: { item_id: this.itemId, scope: this.scope },
-              })
-            );
-          }
-          await Promise.all(promises);
-          this.$emit("update");
-          this.tagsToAdd = [];
-          await this.loadTags();
+    async tagToAdd() {
+      if (this.tagToAdd) {
+        const reply = await this.addTag({ tagId: this.tagToAdd });
+        if (reply?.error) {
+          await this.showSnackbar({
+            content: "Error assigning tag.",
+            color: "error",
+          });
         }
       }
+      this.tagToAdd = null;
+      // we do not want the loading animation as it makes the UI jump
+      await this.loadTags(false);
     },
   },
 

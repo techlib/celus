@@ -50,7 +50,6 @@ export default {
         let response = await axios.post("/api/user/extra-data", data);
         commit("storeUserExtraData", { extraData: response.data });
       } catch (error) {
-        console.warn("Could not save tour status");
         throw error;
       }
     },
