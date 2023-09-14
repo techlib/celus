@@ -6,13 +6,6 @@ import typing
 from pathlib import Path
 
 from celus_nibbler import Poop, eat
-from celus_nibbler.definitions.celus_format import (
-    CelusFormatAreaDefinition,
-    CelusFormatParserDefinition,
-    DataFormatDefinition,
-)
-from celus_nibbler.parsers.base import IDS
-from celus_nibbler.sources import ExtractParams
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
 from celus_nigiri.csv_detect import detect_file_encoding
@@ -104,6 +97,15 @@ class Command(BaseCommand):
                 return None
 
     def parse_nibbler(self, path, report_type: ReportType) -> typing.Optional[typing.List[tuple]]:
+        # Delay nibbler imports to speed up startup
+        from celus_nibbler.definitions.celus_format import (
+            CelusFormatAreaDefinition,
+            CelusFormatParserDefinition,
+            DataFormatDefinition,
+        )
+        from celus_nibbler.parsers.base import IDS
+        from celus_nibbler.sources import ExtractParams
+
         try:
             parser_area = CelusFormatAreaDefinition(
                 title_column_names=['title', 'Title', 'source', 'Source'],

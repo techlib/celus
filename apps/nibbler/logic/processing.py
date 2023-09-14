@@ -5,13 +5,6 @@ from pathlib import Path
 
 import logs
 from celus_nibbler import NibblerError, Poop, eat
-from celus_nibbler.definitions.celus_format import (
-    CelusFormatAreaDefinition,
-    CelusFormatParserDefinition,
-    DataFormatDefinition,
-)
-from celus_nibbler.parsers.base import IDS
-from celus_nibbler.sources import ExtractParams
 from celus_nigiri import CounterRecord
 from logs.exceptions import NibblerErrors
 from publications.models import Platform
@@ -42,6 +35,15 @@ def celus_format_poops(
     report_type: 'logs.models.ReportType',
     platform: Platform,
 ) -> typing.List[Poop]:
+    # Delay nibbler imports to speed up startup
+    from celus_nibbler.definitions.celus_format import (
+        CelusFormatAreaDefinition,
+        CelusFormatParserDefinition,
+        DataFormatDefinition,
+    )
+    from celus_nibbler.parsers.base import IDS
+    from celus_nibbler.sources import ExtractParams
+
     parser_area = CelusFormatAreaDefinition(
         title_column_names=['title', 'Title', 'source', 'Source'],
         organization_column_names=['Organization', 'organization', 'org', 'Org'],

@@ -3,8 +3,6 @@ import pathlib
 import typing
 
 from celus_nibbler import NibblerError, Poop, eat
-from celus_nibbler.definitions import Definition
-from celus_nibbler.parsers.dynamic import gen_parser
 from core.models import DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -20,6 +18,10 @@ NibblerOutput = typing.List[typing.Union[Poop, NibblerError]]
 
 class ParserDefinitionQuerySet(models.QuerySet):
     def parse_file(self, path: pathlib.Path, platform: str) -> NibblerOutput:
+        # Delay nibbler imports to speed up startup
+        from celus_nibbler.definitions import Definition
+        from celus_nibbler.parsers.dynamic import gen_parser
+
         definitions = []
         for pd in self:
             try:
@@ -59,6 +61,9 @@ class ParserDefinition(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        # Delay nibbler imports to speed up startup
+        from celus_nibbler.definitions import Definition
+
         # try to parse
         try:
             nibbler_definition = Definition.parse(self.definition)
@@ -79,7 +84,10 @@ class ParserDefinition(models.Model):
 
         return super().save(*args, **kwargs)
 
-    def to_nibbler_definition(self) -> Definition:
+    def to_nibbler_definition(self):
+        # Delay nibbler imports to speed up startup
+        from celus_nibbler.definitions import Definition
+
         return Definition.parse(self.definition)
 
 

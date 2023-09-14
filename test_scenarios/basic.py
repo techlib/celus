@@ -2,11 +2,6 @@ import json
 from datetime import timedelta
 
 import pytest
-from celus_nibbler import conditions as nibbler_conditions
-from celus_nibbler import coordinates as nibbler_coordinates
-from celus_nibbler import data_headers as nibbler_data_headers
-from celus_nibbler import definitions as nibbler_definitions
-from celus_nibbler import sources as nibbler_sources
 from core.fake_data import DataSourceFactory, IdentityFactory, UserFactory
 from core.models import DataSource, Identity
 from django.conf import settings
@@ -548,6 +543,13 @@ def client_by_user_type(clients, organizations, basic1):
 
 @pytest.fixture
 def parser_definitions(data_sources, platforms, metrics, report_types):
+    # Delay nibbler imports to speed up startup
+    from celus_nibbler import conditions as nibbler_conditions
+    from celus_nibbler import coordinates as nibbler_coordinates
+    from celus_nibbler import data_headers as nibbler_data_headers
+    from celus_nibbler import definitions as nibbler_definitions
+    from celus_nibbler import sources as nibbler_sources
+
     parser1 = ParserDefinitionFactory(
         id=1,
         source=data_sources["brain"],
