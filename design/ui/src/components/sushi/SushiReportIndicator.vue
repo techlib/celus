@@ -4,7 +4,7 @@
   <v-tooltip bottom max-width="400">
     <template v-slot:activator="{ on }">
       <span v-on="on">
-        <span>{{ report.code }}</span>
+        <span :class="anyIcon ? 'pr-1' : ''">{{ report.code }}</span>
         <span v-if="showName && report.name" class="font-weight-light me-2"
           >: {{ report.name }}</span
         >
@@ -16,6 +16,13 @@
         >
         <v-icon v-if="inRegistry" small color="counterRegistry" class="pl-1"
           >fa-registered</v-icon
+        >
+        <v-icon
+          v-if="lastHarvestableMonth && showLastHarvestableMonth"
+          small
+          color="warning"
+          class="pl-1"
+          >far fa-calendar-alt</v-icon
         >
       </span>
     </template>
@@ -35,6 +42,18 @@
           >fa-registered</v-icon
         >
         {{ $t("sushi.registry_report_type_desc") }}
+      </div>
+      <div v-if="lastHarvestableMonth && showLastHarvestableMonth">
+        <v-icon small color="warning">far fa-calendar-alt</v-icon>
+        {{ $t("sushi.state_desc.last_harvestable_month") }}:
+        <strong>{{ lastHarvestableMonth.slice(0, 7) }}</strong>
+        <br />
+        <span v-if="lastHarvestableMonthSetByUser">
+          {{ $t("sushi.state_desc.last_harvestable_month_set_by_user") }}
+        </span>
+        <span v-else>
+          {{ $t("sushi.state_desc.last_harvestable_month_set_by_harvest") }}
+        </span>
       </div>
     </span>
   </v-tooltip>
@@ -70,6 +89,10 @@ export default {
       default: false,
       type: Boolean,
     },
+    showLastHarvestableMonth: {
+      default: false,
+      type: Boolean,
+    },
   },
 
   computed: {
@@ -95,6 +118,20 @@ export default {
       } else {
         return this.registryFn(this.report);
       }
+    },
+    lastHarvestableMonth() {
+      return this.report.last_harvestable_month;
+    },
+    lastHarvestableMonthSetByUser() {
+      return this.report.last_harvestable_month_user_id != null;
+    },
+    anyIcon() {
+      return (
+        this.isBroken ||
+        this.inKnowledgebase ||
+        this.inRegistry ||
+        (this.lastHarvestableMonth && this.showLastHarvestableMonth)
+      );
     },
   },
 };

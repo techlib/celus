@@ -94,6 +94,7 @@ en:
     data_coverage: Data coverage
     info: Info
     knowledgebase: Knowledgebase
+    last_harvestable_month: Last harvestable month
   titles: Titles
   overview: Overview
   chart:
@@ -421,6 +422,7 @@ cs:
     data_coverage: Pokrytí daty
     info: Informace
     knowledgebase: Znalostní báze
+    last_harvestable_month: Poslední stáhnutelný měsíc
   titles: Tituly
   overview: Přehled
   chart:

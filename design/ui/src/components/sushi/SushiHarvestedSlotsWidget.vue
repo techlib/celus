@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 <i18n lang="yaml">
 en:
   loading_harvest_slots: Checking existing data
@@ -6,6 +7,7 @@ en:
   slot_tooltip_sushi: Data was already harvested via SUSHI. Will not harvest.
   slot_tooltip_manual: Data already exists from manual upload. Will not harvest.
   slot_tooltip_broken: The credentials or the report type were marked as broken. Will not harvest.
+  slot_tooltip_expired: Data are no longer harvestable.
   slot_tooltip_unknown: Data already exists in the database, probably from a deleted source. Will not harvest.
 
 cs:
@@ -14,6 +16,7 @@ cs:
   slot_tooltip_sushi: Data již byla stažena pomocí SUSHI. Stahování nebude provedeno.
   slot_tooltip_manual: Data již existují z manuálního importu. Stahování nebude provedeno.
   slot_tooltip_broken: Přihlašovací údaje nebo report byly označeny jako nefunkční. Stahování nebude provedeno.
+  slot_tooltip_expired: Data již nejdou stáhnout.
   slot_tooltip_unknown: Data již existují v databázi, pravděpodobně z odstraněného zdroje. Stahování nebude provedeno.
 </i18n>
 
@@ -37,6 +40,9 @@ cs:
           </v-icon>
           <v-icon v-else-if="type === 'broken'" color="#ffaaaa" small
             >far fa-fw fa-times-circle
+          </v-icon>
+          <v-icon v-else-if="type === 'expired'" color="warning lighten-2" small
+            >far fa-fw fa-calendar-alt
           </v-icon>
           <v-icon v-else color="#00ff00" small>fa fa-fw fa-database</v-icon>
         </td>
@@ -68,7 +74,19 @@ cs:
             </div>
             {{ row.cred.organization.name }} / {{ row.cred.platform.name }}
           </td>
-          <td class="caption">{{ row.rt.code }}</td>
+          <td class="caption">
+            <v-chip
+              class="mr-1 px-2"
+              :color="row.rt.broken ? '#888888' : 'teal'"
+              outlined
+              label
+            >
+              <SushiReportIndicator
+                :report="row.rt"
+                show-last-harvestable-month
+              />
+            </v-chip>
+          </td>
           <td v-for="(month, index2) in months" :key="`${index}-${index2}`">
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -97,12 +115,37 @@ cs:
                     small
                     >fa fa-database
                   </v-icon>
+                  <v-icon
+                    v-else-if="row.months[month] === 'expired'"
+                    color="warning lighten-2"
+                    small
+                    >far fa-calendar-alt
+                  </v-icon>
                   <v-icon v-else color="success" small
                     >fa fa-cloud-download-alt</v-icon
                   >
                 </span>
               </template>
               {{ $t(`slot_tooltip_${row.months[month]}`) }}
+              <br />
+              <span
+                v-if="
+                  row.months[month] === 'expired' &&
+                  !!row.rt.last_harvestable_month_user_id
+                "
+              >
+                {{ $t("sushi.state_desc.last_harvestable_month_set_by_user") }}
+              </span>
+              <span
+                v-else-if="
+                  row.months[month] === 'expired' &&
+                  row.rt.last_harvestable_month_user_id
+                "
+              >
+                {{
+                  $t("sushi.state_desc.last_harvestable_month_set_by_harvest")
+                }}
+              </span>
             </v-tooltip>
           </td>
         </tr>
@@ -115,9 +158,14 @@ cs:
 import cancellation from "@/mixins/cancellation";
 import { mapActions } from "vuex";
 import { monthsBetween, parseDateTime, ymDateFormat } from "@/libs/dates";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 
 export default {
   name: "SushiHarvestedSlotsWidget",
+
+  components: {
+    SushiReportIndicator,
+  },
   mixins: [cancellation],
 
   props: {
@@ -153,12 +201,22 @@ export default {
         for (let cred of this.credentials) {
           for (let rt of cred.counter_reports_long) {
             let monthData = {};
+            const last_harvestable_month = rt.last_harvestable_month
+              ? rt.last_harvestable_month.slice(0, 7)
+              : null;
             for (let month of this.months) {
               if (rt.broken || cred.broken) {
                 monthData[month] = "broken";
               } else {
                 let key = `${rt.report_type}#${cred.platform.pk}#${cred.organization.pk}#${month}`;
                 monthData[month] = this.presenceMap.get(key) ?? "";
+              }
+              if (
+                monthData[month] === "" &&
+                last_harvestable_month &&
+                last_harvestable_month > month
+              ) {
+                monthData[month] = "expired";
               }
             }
             rows.push({ cred: cred, rt: rt, months: monthData });

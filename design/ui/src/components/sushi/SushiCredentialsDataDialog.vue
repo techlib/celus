@@ -377,10 +377,13 @@ export default {
           for (const month of this.months) {
             for (const row of year_data[month]) {
               if (row.counter_report.code === counterReport.code) {
+                const ym = `${year_data.year}-${month}`;
                 record[month] = {
                   status: row.status,
                   planned: row.planned,
-                  can_harvest: row.can_harvest,
+                  can_harvest:
+                    row.can_harvest &&
+                    ym >= (this.lastHarvestableMonthMap[counterReport.code] || ""),
                   broken:
                     row.broken ||
                     !!(this.credentials && this.credentials.broken),
@@ -476,6 +479,13 @@ export default {
     },
     totalCount() {
       return this.processedData.length;
+    },
+    lastHarvestableMonthMap() {
+      return Object.fromEntries(
+        this.credentials.counter_reports_long
+          .filter((e) => !!e.last_harvestable_month)
+          .map((e) => [e.code, e.last_harvestable_month])
+      );
     },
   },
 

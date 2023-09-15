@@ -31,6 +31,9 @@ en:
       running: This harvest is currently running.
       deleted: Data was downloaded but deleted from the database afterwards.
       broken_sushi: The SUSHI credentials were marked as broken. Download is postponed until the credentials are fixed.
+      last_harvestable_month: Last harvestable month
+      last_harvestable_month_set_by_user: Last harvestable month was se by user.
+      last_harvestable_month_set_by_harvest: Last harvestable month was supplied by publisher in a SUSHI response.
       waiting: Waiting for download - either planned for future or waiting for a free download slot.
       awaiting_import: Data was downloaded and is currently being imported into the database.
       import_failed: Data was downloaded but importing it into database failed.
@@ -38,12 +41,11 @@ en:
       canceled: Download was canceled.
 
     broken: Broken
-    broken_report_type_desc:
+    broken_report_type_desc: |
       This report was marked as broken for these credentials. This is usually result of errors
       during harvesting of data which indicate credentials are correct, but report is not supported.
       Automatic harvesting is disabled for such reports.
-    knowledgebase_report_type_desc:
-      This report was successfully harvested by other users for this platform.
+    knowledgebase_report_type_desc: This report was successfully harvested by other users for this platform.
     registry_report_type_desc: According to the COUNTER registry, this report is supported by the selected platform.
 
 cs:
@@ -79,6 +81,9 @@ cs:
       running: Toto stahování právě probíhá.
       deleted: Data byla stažena, ale později byla smazána z databáze.
       broken_sushi: Přihlašovací údaje pro SUSHI byly označeny jako nefunkční. Stahování bylo pozastaveno dokud nebudou přihlašovací údaje opraveny.
+      last_harvestable_month: Poslední stáhnutelný měsíc
+      last_harvestable_month_set_by_user: Nejstarší měsíc, který lze stáhnout, byl nastaven uživatelem.
+      last_harvestable_month_set_by_harvest: Nejstarší měsíc, který lze stáhnout, byl získán od vydavatele v SUSHI datech.
       waiting: Čeká na stahování - buď bylo naplánováno na později nebo čeká ve frontě.
       awaiting_import: Data byla stažena a nyní jsou importována do databáze.
       import_failed: Data byla stažena, ale import dat do databáze selhal.
@@ -86,10 +91,9 @@ cs:
       canceled: Stahování bylo zrušeno.
 
     broken: Nefunkční
-    broken_report_type_desc:
+    broken_report_type_desc: |
       Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že
       přihlašovací údaje jsou funkční, ale report není podporovaný.
       Automatické stahování je pro tyto reporty vypnuté.
-    knowledgebase_report_type_desc:
-      Je ověřeno, že tento report je podporován na této platformě.
+    knowledgebase_report_type_desc: Tento report byl na této platformě úspěšně stažený jiným uživatelem.
     registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.

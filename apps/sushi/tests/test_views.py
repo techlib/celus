@@ -519,6 +519,10 @@ class TestSushiCredentialsViewSet:
         assert resp.status_code == 404
 
     def test_credential_details(self, basic1, credentials, clients, counter_report_types):
+        # setup
+        credentials["standalone_br1_jr1"].counterreportstocredentials_set.filter(
+            counter_report=counter_report_types["jr1"]
+        ).update(last_harvestable_month=date(2019, 1, 1))
         attempt_br1 = FetchAttemptFactory(
             credentials=credentials["standalone_br1_jr1"],
             counter_report=counter_report_types["br1"],
@@ -539,8 +543,10 @@ class TestSushiCredentialsViewSet:
         for rec in data['counter_reports_long']:
             if rec['code'] != 'BR1':
                 assert rec['broken'] is None
+                assert rec['last_harvestable_month'] == '2019-01-01'
             else:
                 assert rec['broken'] == BS.BROKEN_SUSHI
+                assert rec['last_harvestable_month'] is None
 
     def test_count_api(self, basic1, credentials, clients, counter_report_types):
         """
@@ -723,3 +729,121 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["status"] == "untried"
                 assert data[1][month][0]["planned"] is False
                 assert data[1][month][0]["can_harvest"] is True
+
+    def test_update_assigned_counter_reports(
+        self,
+        basic1,
+        credentials,
+        users,
+        clients,
+        counter_report_types,
+    ):
+        # Empty
+        resp = clients["admin2"].post(
+            reverse('sushi-credentials-update-assigned-counter-reports'), [], format="json"
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 0, 'unmatched': 0, 'matched': 0}
+        cr2c_tr = CounterReportsToCredentials.objects.get(
+            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
+        )
+
+        cr2c_pr = CounterReportsToCredentials.objects.get(
+            credentials=credentials["branch_pr"], counter_report=counter_report_types["pr"]
+        )
+
+        # Permission denied for single record
+        resp = clients["admin2"].post(
+            reverse('sushi-credentials-update-assigned-counter-reports'),
+            [
+                {
+                    "counter_report_id": counter_report_types["tr"].pk,
+                    "credentials_id": credentials["standalone_tr"].pk,
+                    "last_harvestable_month": "2021-01-01",
+                },
+                {
+                    "counter_report_id": counter_report_types["pr"].pk,
+                    "credentials_id": credentials["branch_pr"].pk,
+                    "last_harvestable_month": None,
+                },
+                {
+                    "counter_report_id": counter_report_types["pr"].pk,
+                    "credentials_id": credentials["standalone_tr"].pk,
+                    "last_harvestable_month": "2020-01-01",
+                },
+            ],
+            format="json",
+        )
+        assert resp.status_code == 403
+        cr2c_tr.refresh_from_db()
+        assert cr2c_tr.last_harvestable_month is None
+        assert cr2c_tr.last_harvestable_month_user is None
+        cr2c_pr.refresh_from_db()
+        assert cr2c_pr.last_harvestable_month is None
+        assert cr2c_pr.last_harvestable_month_user is None
+
+        resp = clients["admin2"].post(
+            reverse('sushi-credentials-update-assigned-counter-reports'),
+            [
+                {
+                    "counter_report_id": counter_report_types["tr"].pk,
+                    "credentials_id": credentials["standalone_tr"].pk,
+                    "last_harvestable_month": "2021-01-01",
+                },
+                {
+                    # this combination of credentials and counter report does not exist
+                    "counter_report_id": counter_report_types["pr"].pk,
+                    "credentials_id": credentials["standalone_tr"].pk,
+                    "last_harvestable_month": "2020-01-01",
+                },
+            ],
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 1, "unmatched": 1, "matched": 1}
+        cr2c_tr.refresh_from_db()
+        assert cr2c_tr.last_harvestable_month == date(2021, 1, 1)
+        assert cr2c_tr.last_harvestable_month_user == users["admin2"]
+
+        test_data = [
+            {
+                # removes a previously assigned value
+                "counter_report_id": counter_report_types["tr"].pk,
+                "credentials_id": credentials["standalone_tr"].pk,
+                "last_harvestable_month": None,
+            },
+            {
+                # updates a previously assigned value
+                "counter_report_id": counter_report_types["pr"].pk,
+                "credentials_id": credentials["branch_pr"].pk,
+                "last_harvestable_month": "2022-01-01",
+            },
+            {
+                # this combination of credentials and counter report does not exist
+                "counter_report_id": counter_report_types["pr"].pk,
+                "credentials_id": credentials["standalone_tr"].pk,
+                "last_harvestable_month": "2020-01-01",
+            },
+        ]
+        resp = clients["master_admin"].post(
+            reverse('sushi-credentials-update-assigned-counter-reports'),
+            test_data,
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 2, "unmatched": 1, "matched": 2}
+        cr2c_tr.refresh_from_db()
+        assert cr2c_tr.last_harvestable_month is None
+        assert cr2c_tr.last_harvestable_month_user == users["master_admin"]
+        cr2c_pr.refresh_from_db()
+        assert cr2c_pr.last_harvestable_month == date(2022, 1, 1)
+        assert cr2c_pr.last_harvestable_month_user == users["master_admin"]
+
+        # retry with the same data - no record should be updated
+        resp = clients["master_admin"].post(
+            reverse('sushi-credentials-update-assigned-counter-reports'),
+            test_data,
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 0, "unmatched": 1, "matched": 2}

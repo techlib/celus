@@ -49,7 +49,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
-from sushi.models import SushiCredentials, SushiFetchAttempt
+from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
 from tags.models import Tag
 
 from logs.logic.export import CSVExport
@@ -756,6 +756,15 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                 )
                 .order_by('organization_id', 'platform_id', '-enabled')
                 .select_related('organization', 'platform')
+                .prefetch_related(
+                    Prefetch(
+                        'counterreportstocredentials_set',
+                        queryset=CounterReportsToCredentials.objects.filter(
+                            counter_report__report_type=rt
+                        ),
+                        to_attr='filtered_cr2c',
+                    )
+                )
                 .distinct('organization_id', 'platform_id')
             ):
                 # the combination of .order_by() and .distinct() above makes sure that
@@ -763,6 +772,11 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                 # (we only want to use one set of credentials per org/platform otherwise the counts
                 #  would be off)
                 months = org_platform_to_month.get((cr.organization_id, cr.platform_id), [])
+
+                # Try to limit months by last_harvestable_month
+                if last_harvestable_month := cr.filtered_cr2c[0].last_harvestable_month:
+                    months = [m for m in months if m >= last_harvestable_month]
+
                 out.append(
                     {
                         'credentials_id': cr.pk,

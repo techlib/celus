@@ -161,7 +161,7 @@ class Scheduler(models.Model):
                             )
                         )
                     )
-                    .order_by('-priority', 'not_before')
+                    .order_by('-priority', '-start_date', 'not_before')
                     .first()
                 )
 
@@ -492,6 +492,8 @@ class FetchIntention(models.Model):
             return self.handle_too_many_requests
         elif error_code == ErrorCode.PARTIAL_DATA_RETURNED:
             return self.handle_partial_data
+        elif error_code == ErrorCode.NO_LONGER_AVAILABLE:
+            return self.handle_no_longer_available
 
         if attempt.status == AttemptStatus.DOWNLOAD_FAILED:
             return self.handle_retry_failed
@@ -790,6 +792,28 @@ class FetchIntention(models.Model):
             MAX_RETRY_GAP.total_seconds(),
         )
         self._create_retry(next_time, inc_data_not_ready_retry=True)
+
+    def handle_no_longer_available(self):
+        """
+        Handle status which indicates that data are no longer avialable
+        """
+
+        # Update last_harvestable_month of CounterReportsToCredentials model
+        if cr2c := CounterReportsToCredentials.objects.filter(
+            counter_report=self.counter_report,
+            credentials=self.credentials,
+        ).first():
+            cr2c.update_last_harvestable_month_by_attempt(self.attempt)
+
+        # Cancel all same intentions with lower start_dates within the same harvest
+        for e in self.harvest.intentions.filter(
+            start_date__lt=self.start_date,
+            counter_report=self.counter_report,
+            credentials=self.credentials,
+            when_processed__isnull=True,
+            duplicate_of__isnull=True,
+        ).select_for_update(skip_locked=True):
+            e.cancel()
 
     @property
     def platform_name(self):

@@ -34,6 +34,7 @@ from .serializers import (
     SushiCredentialsDataSerializer,
     SushiCredentialsSerializer,
     UnsetBrokenSerializer,
+    UpdateAssignedCounterReportsSerializer,
 )
 
 
@@ -213,6 +214,46 @@ class SushiCredentialsViewSet(ModelViewSet):
             'Content-Disposition'
         ] = f'attachment; filename="SushiCredentials-{today}_{org_suffix}.xlsx"'
         return response
+
+    @action(
+        detail=False,
+        methods=['post'],
+        url_path="update-assigned-counter-reports",
+        serializer_class=UpdateAssignedCounterReportsSerializer,
+    )
+    def update_assigned_counter_reports(self, request):
+        serializer = UpdateAssignedCounterReportsSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        cr2c_map = {
+            (e.credentials_id, e.counter_report_id): e
+            for e in CounterReportsToCredentials.objects.select_related(
+                'credentials', 'counter_report'
+            )
+        }
+
+        with transaction.atomic():
+            updated_count = 0
+            unmatched_count = 0
+            matched_count = 0
+            for record in serializer.validated_data:
+                if cr2c := cr2c_map.get((record["credentials_id"], record["counter_report_id"])):
+                    if not cr2c.credentials.can_edit(request.user):
+                        raise PermissionDenied(
+                            f"User #{request.user.pk} can't edit credentials "
+                            f"#{record['credentials_id']}"
+                        )
+                    matched_count += 1
+                    if cr2c.update_last_harvestable_month_by_user(
+                        request.user, record['last_harvestable_month']
+                    ):
+                        updated_count += 1
+                else:
+                    unmatched_count += 1
+
+        return Response(
+            {'matched': matched_count, 'updated': updated_count, 'unmatched': unmatched_count}
+        )
 
     @action(detail=False, methods=['get'], url_name='import-template', url_path="import-template")
     def get_template_for_import(self, request):

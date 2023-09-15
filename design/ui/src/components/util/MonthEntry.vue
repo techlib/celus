@@ -56,6 +56,9 @@ export default {
     month() {
       this.$emit("input", this.month);
     },
+    value() {
+      this.month = this.value;
+    },
   },
 };
 </script>

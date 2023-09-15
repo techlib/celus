@@ -1170,6 +1170,144 @@ class TestScheduler:
         assert intention3.scheduler == scheduler3
         assert intention3.current_scheduler == scheduler3
 
+    def test_last_harvestable_month(self, monkeypatch, credentials, counter_report_types):
+        """Test workflow when 3032 error occurs"""
+        scheduler = SchedulerFactory()
+
+        def mocked_fetch_report(
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
+        ):
+            return FetchAttemptFactory(
+                start_date=date(2020, 2, 1),
+                error_code="3032",
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                status=AttemptStatus.DOWNLOAD_FAILED,
+            )
+
+        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+
+        common_fi_attrs = {
+            "not_before": timezone.now() - timedelta(minutes=1),
+            "scheduler": scheduler,
+            "credentials": credentials["standalone_tr"],
+            "counter_report": counter_report_types["tr"],
+            "harvest": AutomaticFactory().harvest,
+            "attempt": None,
+        }
+
+        fi1 = FetchIntentionFactory(
+            start_date=date(2020, 1, 1),
+            **common_fi_attrs,
+        )
+
+        fi2 = FetchIntentionFactory(
+            start_date=date(2020, 2, 1),
+            **common_fi_attrs,
+        )
+
+        fi3 = FetchIntentionFactory(
+            start_date=date(2020, 3, 1),
+            **common_fi_attrs,
+        )
+
+        assert fi2.process() == ProcessResponse.SUCCESS
+        fi2.refresh_from_db()
+        assert fi2.when_processed is not None, "Second intention was processed"
+        assert fi2.canceled is False
+        assert fi2.attempt is not None
+
+        fi1.refresh_from_db()
+        assert fi1.canceled is True, "First intention was canceled"
+        assert fi1.when_processed is not None, "First intentions is marked as processed"
+        assert fi1.attempt is None
+
+        fi3.refresh_from_db()
+        assert fi3.canceled is False, "Third intention is not canceled"
+        assert fi3.when_processed is None, "Third intention is not processed"
+        assert fi3.attempt is None
+
+        cr2c = CounterReportsToCredentials.objects.get(
+            counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
+        )
+        assert cr2c.last_harvestable_month == date(2020, 3, 1)
+        assert cr2c.last_harvestable_month_attempt == fi2.attempt
+        assert cr2c.last_harvestable_month_user is None
+
+    def test_run_next_ordering(self, monkeypatch, credentials, counter_report_types):
+        def mocked_fetch_report(
+            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
+        ):
+            return FetchAttemptFactory(
+                error_code="",
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+            )
+
+        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+
+        scheduler = SchedulerFactory(
+            url=credentials["standalone_tr"].url,
+            cooldown=10,
+            when_ready=datetime(2020, 1, 1, 0, 0, 0, tzinfo=current_tz),
+        )
+        with freeze_time(datetime(2022, 1, 1, 0, 0, 0, 0, tzinfo=current_tz)):
+            intentions = [
+                FetchIntention(
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                    start_date=date(2020, 1, 1),
+                    end_date=date(2020, 1, 31),
+                ),
+                FetchIntention(
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                    start_date=date(2020, 3, 1),
+                    end_date=date(2020, 3, 31),
+                ),
+                FetchIntention(
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                    start_date=date(2020, 2, 1),
+                    end_date=date(2020, 2, 28),
+                ),
+            ]
+            Harvest.plan_harvesting(intentions)
+
+        # intentsions should be planned in intentions[1], intentions[2], intentions[0]
+        # order
+
+        assert intentions[0].when_processed is None
+        assert intentions[1].when_processed is None
+        assert intentions[2].when_processed is None
+
+        with freeze_time(datetime(2022, 1, 1, 0, 5, 0, 0, tzinfo=current_tz)):
+            assert scheduler.run_next() == RunResponse.PROCESSED
+
+        for i in intentions:
+            i.refresh_from_db()
+        assert intentions[0].when_processed is None
+        assert intentions[1].when_processed is not None
+        assert intentions[2].when_processed is None
+
+        with freeze_time(datetime(2022, 1, 1, 0, 10, 0, 0, tzinfo=current_tz)):
+            assert scheduler.run_next() == RunResponse.PROCESSED
+
+        for i in intentions:
+            i.refresh_from_db()
+        assert intentions[0].when_processed is None
+        assert intentions[1].when_processed is not None
+        assert intentions[2].when_processed is not None
+
+        with freeze_time(datetime(2022, 1, 1, 0, 15, 0, 0, tzinfo=current_tz)):
+            assert scheduler.run_next() == RunResponse.PROCESSED
+
+        for i in intentions:
+            i.refresh_from_db()
+        assert intentions[0].when_processed is not None
+        assert intentions[1].when_processed is not None
+        assert intentions[2].when_processed is not None
+
 
 @pytest.mark.django_db
 class TestHarvest:

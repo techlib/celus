@@ -1,3 +1,5 @@
+from functools import reduce
+
 import pytest
 from charts.models import ReportDataView
 from django.urls import reverse
@@ -663,16 +665,30 @@ class TestImportBatchesAPI:
         assert [rec['ib_count'] for rec in resp.json()] == ib_counts
 
     @pytest.mark.parametrize(
-        ['rt', 'credentials_count', 'months'],
+        ['rt', 'credentials_count', 'months', 'last_harvestable_month'],
         [
-            ('TR', 0, []),  # no data missing
-            ('BR1', 1, ['2020-01', '2020-02']),  # one set of credentials missing data for 2 months
-            ('PR', 0, []),  # no data missing
-            ('DR', 0, []),  # no credentials present - cannot harvest
+            ('TR', 0, [], None),  # no data missing
+            (
+                'BR1',
+                1,
+                ['2020-03-01'],
+                '2020-02-01',
+            ),  # one set of credentials missing data for 2 months
+            ('PR', 0, [], None),  # no data missing
+            ('DR', 0, [], None),  # no credentials present - cannot harvest
         ],
     )
     def test_data_coverage_harvestable(
-        self, data, clients, organizations, platforms, report_types, rt, credentials_count, months
+        self,
+        data,
+        clients,
+        organizations,
+        platforms,
+        report_types,
+        rt,
+        credentials_count,
+        months,
+        last_harvestable_month,
     ):
         """
         Test that the `data-coverage-harvestable` endpoint returns the correct data.
@@ -720,6 +736,11 @@ class TestImportBatchesAPI:
         broken_cr.save()
         assert broken_cr.broken == 'sushi'
 
+        # update last_harvestable_month
+        CounterReportType.objects.get(code=rt).counterreportstocredentials_set.update(
+            last_harvestable_month=last_harvestable_month
+        )
+
         # the test itself
         resp = clients['su'].get(
             reverse('import-batch-list') + "data-coverage-harvestable/",
@@ -732,6 +753,7 @@ class TestImportBatchesAPI:
         assert resp.status_code == 200
         assert type(resp.json()) is list  # noqa E721 - make sure it is a list, not subtype
         assert len(resp.json()) == credentials_count
+        assert set(months) == reduce(lambda acc, e: acc | set(e['months']), resp.json(), set())
 
     @pytest.mark.parametrize('broken', [True, False])
     def test_data_coverage_harvestable_with_broken_report(

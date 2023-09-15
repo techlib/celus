@@ -214,6 +214,18 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
 @admin.register(models.CounterReportsToCredentials)
 class CounterReportsToCredentialsAdmin(admin.ModelAdmin):
 
-    list_display = ['credentials', 'counter_report', 'broken']
+    list_display = [
+        'credentials',
+        'counter_report',
+        'broken',
+        'last_harvestable_month',
+        'last_harvestable_month_user',
+    ]
     list_filter = ['broken', 'counter_report', 'credentials__platform', 'credentials__organization']
-    readonly_fields = ['first_broken_attempt', 'credentials', 'counter_report']
+    readonly_fields = [
+        'first_broken_attempt',
+        'last_harvestable_month_user',
+        'last_harvestable_month_attempt',
+        'credentials',
+        'counter_report',
+    ]

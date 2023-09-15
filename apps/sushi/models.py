@@ -35,7 +35,7 @@ from celus_nigiri.counter5 import (
     TransportError,
 )
 from celus_nigiri.error_codes import ErrorCode
-from core.logic.dates import parse_date
+from core.logic.dates import month_start, parse_date
 from core.models import (
     UL_CONS_ADMIN,
     UL_CONS_STAFF,
@@ -45,10 +45,12 @@ from core.models import (
     User,
 )
 from core.task_support import cache_based_lock
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.files.base import ContentFile, File
 from django.db import models
 from django.db.models import Exists, F, OuterRef
+from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -137,7 +139,7 @@ class BrokenCredentialsMixin(models.Model):
         self.save()
 
     def is_broken(self):
-        return True if self.broken is not None else False
+        return self.broken is not None
 
 
 class CounterReportType(models.Model):
@@ -295,12 +297,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         Set the lock_level on this object
         """
         owner_level = user.organization_relationship(self.organization_id)
-        if self.lock_level > self.UNLOCKED:
-            # we want to relock with different privileges
-            if owner_level < self.lock_level:
-                raise PermissionDenied(
-                    f'User {user} does not have high enough privileges ' f'to lock {self}'
-                )
+        if self.lock_level > self.UNLOCKED and owner_level < self.lock_level:
+            raise PermissionDenied(
+                f'User {user} does not have high enough privileges ' f'to lock {self}'
+            )
         if owner_level < level:
             raise PermissionDenied(
                 f'User {user} does not have high enough privileges '
@@ -313,9 +313,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     def can_edit(self, user: User):
         owner_level = user.organization_relationship(self.organization_id)
-        if owner_level >= self.lock_level:
-            return True
-        return False
+        return owner_level >= self.lock_level
 
     @cached_property
     def is_verified(self):
@@ -1080,7 +1078,53 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 class CounterReportsToCredentials(BrokenCredentialsMixin):
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
+    last_harvestable_month = models.DateField(
+        help_text="When we know that data before this date are not available", null=True
+    )
+    last_harvestable_month_attempt = models.ForeignKey(
+        SushiFetchAttempt,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="cr2c_last_harvestable_month",
+        blank=True,
+    )
+    last_harvestable_month_user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    def update_last_harvestable_month_by_attempt(self, attempt: SushiFetchAttempt) -> bool:
+        """Update last_harvestable_month by attempt which reports that it no longer contains data
+        (3032)"""
+        if not self.last_harvestable_month or self.last_harvestable_month <= attempt.start_date:
+            self.last_harvestable_month_user = None
+            self.last_harvestable_month_attempt = attempt
+            self.last_harvestable_month = month_start(attempt.start_date) + relativedelta(months=1)
+            self.save()
+            return True
+        return False
+
+    def update_last_harvestable_month_by_user(self, user: User, date: Optional[date]) -> bool:
+        """Update last_harvestable_month by user"""
+        if self.last_harvestable_month != date or self.last_harvestable_month_user != user:
+            self.last_harvestable_month_attempt = None
+            self.last_harvestable_month_user = user
+            self.last_harvestable_month = date
+            self.save()
+            return True
+        return False
 
     class Meta:
-        unique_together = (('credentials', 'counter_report'),)
+        constraints = (
+            CheckConstraint(
+                check=~(
+                    models.Q(last_harvestable_month_attempt__isnull=False)
+                    & models.Q(last_harvestable_month_user__isnull=False)
+                ),
+                name='last_harvestable_month_by_attempt_vs_user',
+            ),
+            UniqueConstraint(
+                fields=['credentials', 'counter_report'],
+                name='unique_creds_to_cr',
+            ),
+        )
         verbose_name_plural = 'Counter reports to credentials'

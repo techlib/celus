@@ -53,6 +53,12 @@ en:
   show_debug: Show debugging information
   sushi_debug_links: SUSHI debugging links
   no_report_selected: No report selected
+  last_harvestable_month: Last harvestable month
+  last_harvestable_month_tt: |
+    If you know that data is not available before a certain date, you can set this date here. Celus will use this information
+    and not try to harvest data before this date.
+  last_harvestable_month_updated: Information about last harvestable month was successfully updated
+  last_harvestable_month_error: It was not possible to update information about last harvestable month
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -106,6 +112,12 @@ cs:
   show_debug: Zobrazit debug informace
   sushi_debug_links: Sushi debug odkazy
   no_report_selected: Nebyl vybrán žádný report
+  last_harvestable_month: Poslední stáhnutelný měsíc
+  last_harvestable_month_tt: |
+    Pokud víte, že data nejsou dostupná před určitým datem, můžete toto datum nastavit zde. Celus bude tuto informaci používat a
+    nebude se snažit data stáhnout před tímto datem.
+  last_harvestable_month_updated: Informace o posledním stáhnutelném měsíci byla úspěšně aktualizována
+  last_harvestable_month_error: Informace o posledním stáhnutelném měsíci nebylo možné aktualizovat
 </i18n>
 
 <template>
@@ -415,6 +427,7 @@ cs:
                       :knowledgebase-fn="inKnowledgebase"
                       :registry-fn="inRegistry"
                       show-name
+                      show-last-harvestable-month
                     />
                   </v-list-item-content>
                 </template>
@@ -431,15 +444,32 @@ cs:
                       :broken-fn="isBroken"
                       :knowledgebase-fn="inKnowledgebase"
                       :registry-fn="inRegistry"
+                      show-last-harvestable-month
                     />
                   </v-chip>
+                </template>
+                <template v-slot:append-outer>
+                  <v-tooltip bottom max-width="600px">
+                    <template #activator="{ on }">
+                      <v-btn
+                        v-on="on"
+                        color="primary"
+                        @click="showLastHarvestableMonthDialog = true"
+                        icon
+                        x-small
+                        class="mb-1"
+                      >
+                        <v-icon>far fa-calendar-alt</v-icon>
+                      </v-btn>
+                    </template>
+                    {{ $t("last_harvestable_month_tt") }}
+                  </v-tooltip>
                 </template>
               </v-autocomplete>
             </v-col>
           </v-row>
-
           <v-row class="pb-3 mx-0 pt-2">
-            <v-col class="pb-4 subdued-section" cols="12">
+            <v-col class="pb-4 subdued-section">
               <v-tooltip bottom max-width="600px">
                 <template #activator="{ on }">
                   <h4
@@ -699,6 +729,15 @@ cs:
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <v-dialog v-model="showLastHarvestableMonthDialog" max-width="500px">
+        <LastHarvestableMonthEntryWidget
+          v-model="reportToLastHarvestableMonth"
+          :counter-reports-ordered="selectedReportTypeObjs"
+          @close="closeLastHarvestableMonthDialog"
+          @apply="updateLastHarvestableMonth"
+        />
+      </v-dialog>
     </v-card>
   </v-form>
 </template>
@@ -714,13 +753,13 @@ import { testSushiUrlReport } from "@/libs/sushi-validation";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
-import InterestGroupSelector from "@/components/selectors/InterestGroupSelector.vue";
 import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
+import LastHarvestableMonthEntryWidget from "@/components/sushi/LastHarvestableMonthEntryWidget.vue";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
-    InterestGroupSelector,
+    LastHarvestableMonthEntryWidget,
     HarvesterIPAddressList,
     RegistryIcon,
     HarvestSelectedWidget,
@@ -766,6 +805,8 @@ export default {
         ? [...credentials.counter_reports_long.map((item) => item.id)]
         : [],
       showTestDialog: false,
+      showLastHarvestableMonthDialog: false,
+      reportToLastHarvestableMonth: null,
       organizations: [],
       platforms: [],
       errors: {},
@@ -1046,17 +1087,34 @@ export default {
       try {
         let result = await axios.get("/api/counter-report-type/");
         this.allReportTypes = result.data;
-        this.allReportTypes.forEach(
-          (item) =>
-            (item.long_name = item.name
-              ? `${item.code}: ${item.name}`
-              : item.code)
-        );
+        this.updateReportTypeObjects();
       } catch (error) {
         this.showSnackbar({ content: "Error loading report types: " + error });
       } finally {
         this.loadingReportTypes = false;
       }
+    },
+    updateReportTypeObjects() {
+      this.allReportTypes.forEach((item) => {
+        item.long_name = item.name ? `${item.code}: ${item.name}` : item.code;
+        if (this.credentials) {
+          const reportRec = this.credentials.counter_reports_long.find(
+            (e) => e.id === item.id
+          );
+          this.$set(
+            item,
+            "last_harvestable_month",
+            reportRec?.last_harvestable_month
+              ? reportRec.last_harvestable_month.slice(0, 7)
+              : null
+          );
+          this.$set(
+            item,
+            "last_harvestable_month_user_id",
+            reportRec?.last_harvestable_month_user_id || null
+          );
+        }
+      });
     },
     async loadOrganizations() {
       if (this.organizationSelected) {
@@ -1154,11 +1212,12 @@ export default {
           response = await axios.post(`/api/sushi-credentials/`, this.apiData);
         }
         this.savedCredentials = response.data;
-        this.showSnackbar({
+        await this.showSnackbar({
           content: "Successfully saved SUSHI credentials",
           color: "success",
         });
         this.$emit("update-credentials", response.data);
+        await this.saveLastHarvestableMonths();
         return response.data;
       } catch (error) {
         this.showSnackbar({
@@ -1172,6 +1231,27 @@ export default {
       } finally {
         this.saving = false;
       }
+    },
+    async saveLastHarvestableMonths() {
+      const data = this.selectedReportTypeObjs.map((e) => ({
+        credentials_id: this.credentials.pk,
+        counter_report_id: e.id,
+        last_harvestable_month: e.last_harvestable_month
+          ? `${e.last_harvestable_month}-01`
+          : null,
+      }));
+      try {
+        await axios.post(
+          "/api/sushi-credentials/update-assigned-counter-reports/",
+          data
+        );
+      } catch (error) {
+        await this.showSnackbar({
+          content: this.$t("last_harvestable_month_error"),
+          color: "error",
+        });
+      }
+      await this.reloadCredentials();
     },
     async deleteObject() {
       if (this.credentials) {
@@ -1466,7 +1546,21 @@ export default {
       }
       return `${base}reports/${rt.code}/?${searchParams.toString()}`;
     },
+    async closeLastHarvestableMonthDialog() {
+      this.showLastHarvestableMonthDialog = false;
+    },
+    updateLastHarvestableMonth(data) {
+      Object.entries(data).forEach(([key, value]) => {
+        // we want == here because key may be a string and id is an int
+        const report = this.allReportTypes.find((e) => e.id == key);
+        if (report) {
+          this.$set(report, "last_harvestable_month", value);
+        }
+      });
+      this.showLastHarvestableMonthDialog = false;
+    },
   },
+
   async mounted() {
     try {
       let promises = [this.loadReportTypes()];

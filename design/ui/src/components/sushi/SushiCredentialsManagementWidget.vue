@@ -40,6 +40,14 @@ en:
   import_credentials_confirm_text_3: with the subject line
   import_credentials_confirm_text_4: You can contact us at the same e-mail if you have any questions or issues with the template.
   download_file: Download template file
+  set_last_harvestable_month: Set last harvestable month
+  set_last_harvestable_month_tooltip: When you know that data for certain platforms is not available before a specific date, you can set this date here.
+  last_harvestable_month_filter:
+    all: All
+    set: Set
+    not_set: Not set
+  more_actions: More actions
+
 cs:
   add_new: Přidat nové SUSHI
   export: Exportuj
@@ -78,6 +86,13 @@ cs:
   import_credentials_confirm_text_3: s předmětem
   import_credentials_confirm_text_4: Můžete nás kontaktovat na této e-mail adrese i pokud budete mít jakékoliv dotazy nebo problémy s tabulkou.
   download_file: stáhnout soubor
+  set_last_harvestable_month: Nastavit poslední stáhnutelný měsíc
+  set_last_harvestable_month_tooltip: Pokud víte, že data pro určité platformy nejsou dostupná před určitým datem, můžete toto datum nastavit zde.
+  last_harvestable_month_filter:
+    all: Vše
+    set: Nastaven
+    not_set: Nenastaven
+  more_actions: Další akce
 </i18n>
 
 <template>
@@ -95,7 +110,11 @@ cs:
             <v-col cols="auto" align-self="center">
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn @click="testChecked()" color="secondary" v-on="on">
+                  <v-btn
+                    @click="testChecked('showTestDialog')"
+                    color="secondary"
+                    v-on="on"
+                  >
                     <v-icon small class="mr-2">fa fa-download</v-icon>
                     {{ $t("test_checked") }}
                     <v-badge color="white" inline>
@@ -111,6 +130,7 @@ cs:
               </v-tooltip>
             </v-col>
             <v-spacer></v-spacer>
+            <v-col cols="auto" align-self="center"> </v-col>
             <v-col cols="auto" align-self="center">
               <v-tooltip top>
                 <template #activator="tooltip">
@@ -296,6 +316,47 @@ cs:
                 {{ $t("import_tooltip") }}
               </v-tooltip>
             </v-col>
+            <v-col cols="auto" align-self="center">
+              <v-tooltip top>
+                <template #activator="tooltip">
+                  <v-menu offset-y>
+                    <template #activator="menu">
+                      <v-btn v-on="{ ...menu.on, ...tooltip.on }" color=""
+                        >&hellip;</v-btn
+                      >
+                    </template>
+                    <v-list>
+                      <v-tooltip bottom max-width="600px">
+                        <template #activator="{ on }">
+                          <v-list-item
+                            @click="
+                              testChecked('showLastHarvestableMonthDialog')
+                            "
+                            v-on="on"
+                          >
+                            <v-list-item-icon class="mr-2">
+                              <v-icon small>far fa-calendar-alt</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-content>
+                              <v-list-item-title>
+                                {{ $t("set_last_harvestable_month") }}
+                                <v-badge color="secondary" inline class="mt-1">
+                                  <template #badge>
+                                    {{ checkedCredentials.length }}
+                                  </template>
+                                </v-badge>
+                              </v-list-item-title>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </template>
+                        {{ $t("set_last_harvestable_month_tooltip") }}
+                      </v-tooltip>
+                    </v-list>
+                  </v-menu>
+                </template>
+                {{ $t("more_actions") }}
+              </v-tooltip>
+            </v-col>
           </v-row>
           <v-row>
             <v-spacer></v-spacer>
@@ -305,6 +366,26 @@ cs:
                 v-model="problematicOnly"
                 :label="$t('labels.problematic_only')"
               ></v-switch>
+            </v-col>
+            <v-col cols="3" :md="2" :xl="1">
+              <v-select
+                :items="[
+                  {
+                    text: $t('last_harvestable_month_filter.all'),
+                    value: null,
+                  },
+                  {
+                    text: $t('last_harvestable_month_filter.set'),
+                    value: true,
+                  },
+                  {
+                    text: $t('last_harvestable_month_filter.not_set'),
+                    value: false,
+                  },
+                ]"
+                v-model="withLastHarvestableMonthSet"
+                :label="$t('title_fields.last_harvestable_month')"
+              ></v-select>
             </v-col>
             <v-col cols="3" :md="2" :xl="1">
               <v-select
@@ -366,6 +447,17 @@ cs:
           >
             <SushiReportIndicator :report="report" />
           </v-chip>
+        </template>
+        <template v-slot:item.last_harvestable_month="{ item }">
+          <div
+            v-for="rec in extractLastHarvestableMonth(
+              item.counter_reports_long
+            )"
+            :key="rec.fake_id"
+          >
+            <span v-if="rec.month">{{ rec.month }}</span>
+            <v-badge v-if="rec.count > 0" :content="rec.count" inline />
+          </div>
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn
@@ -548,12 +640,27 @@ cs:
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="showDataDialog" :max-width="dialogMaxWidth">
+    <v-dialog
+      v-model="showDataDialog"
+      v-if="showDataDialog"
+      :max-width="dialogMaxWidth"
+    >
       <SushiCredentialsDataDialog
-        v-if="showDataDialog"
         :credentials="selectedCredentials"
         @close="closeDataDialog"
       ></SushiCredentialsDataDialog>
+    </v-dialog>
+
+    <v-dialog
+      v-model="showLastHarvestableMonthDialog"
+      v-if="showLastHarvestableMonthDialog"
+      max-width="600px"
+    >
+      <CounterReportLastHarvestableMonthWidget
+        :credentials="checkedCredentials"
+        @close="closeLastHarvestableMonthDialog"
+        update-backend
+      ></CounterReportLastHarvestableMonthWidget>
     </v-dialog>
   </v-container>
 </template>
@@ -563,11 +670,12 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
-import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
-import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import CheckMark from "@/components/util/CheckMark";
-import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import CounterReportLastHarvestableMonthWidget from "@/components/sushi/CounterReportLastHarvestableMonthWidget";
+import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
+import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import stateTracking from "@/mixins/stateTracking";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
@@ -576,13 +684,14 @@ export default {
   name: "SushiCredentialsManagementWidget",
 
   components: {
-    PlatformSelector,
-    HarvestSelectedWidget,
-    SushiReportIndicator,
-    SushiCredentialsEditDialog,
-    SushiAttemptListWidget,
-    SushiCredentialsDataDialog,
     CheckMark,
+    HarvestSelectedWidget,
+    PlatformSelector,
+    CounterReportLastHarvestableMonthWidget,
+    SushiAttemptListWidget,
+    SushiCredentialsEditDialog,
+    SushiCredentialsDataDialog,
+    SushiReportIndicator,
   },
   mixins: [stateTracking],
 
@@ -620,8 +729,10 @@ export default {
       showDetailsDialog: false,
       showCreateDialog: false,
       showDataDialog: false,
+      showLastHarvestableMonthDialog: false,
       loading: false,
       counterVersion: null,
+      withLastHarvestableMonthSet: null,
       checkedRows: [],
       showTestDialog: false,
       problematicOnly: this.showProblematicOnly,
@@ -646,6 +757,10 @@ export default {
         {
           name: "counterVersion",
           type: Number,
+        },
+        {
+          name: "withLastHarvestableMonthSet",
+          type: Boolean,
         },
         {
           name: "page",
@@ -711,6 +826,11 @@ export default {
           sortable: false,
         },
         {
+          text: this.$i18n.t("title_fields.last_harvestable_month"),
+          value: "last_harvestable_month",
+          sortable: false,
+        },
+        {
           text: this.$i18n.t("title_fields.outside_consortium"),
           value: "outside_consortium",
           show: this.consortialInstall && large,
@@ -760,6 +880,14 @@ export default {
           (item) =>
             this.counterVersion === null ||
             this.counterVersion === item.counter_version
+        )
+        .filter(
+          (item) =>
+            this.withLastHarvestableMonthSet === null ||
+            this.withLastHarvestableMonthSet ===
+              item.counter_reports_long.some(
+                (e) => e.last_harvestable_month != null
+              )
         )
         .filter(this.createSearchFilter())
         .filter((item) =>
@@ -966,12 +1094,19 @@ export default {
       this.selectedCredentials = null;
       this.showDataDialog = false;
     },
+    closeLastHarvestableMonthDialog(refresh) {
+      if (refresh) {
+        this.loadSushiCredentialsList();
+        this.checkedRows = [];
+      }
+      this.showLastHarvestableMonthDialog = false;
+    },
     activateCreateDialog() {
       this.showCreateDialog = true;
     },
-    testChecked() {
+    testChecked(dialogFlag) {
       if (this.checkedCredentials.length > 0) {
-        this.showTestDialog = true;
+        this[dialogFlag] = true;
       } else {
         this.$confirm(this.$t("select_at_least_one_credentials"), {
           title: this.$t("no_credentials_selected"),
@@ -1012,6 +1147,26 @@ export default {
         return true;
       }
       return filter;
+    },
+    extractLastHarvestableMonth(counter_reports) {
+      let count = 0;
+      let month = null;
+      for (const crt of counter_reports) {
+        if (crt.last_harvestable_month) {
+          month =
+            month !== null && month < crt.last_harvestable_month
+              ? month
+              : crt.last_harvestable_month;
+          count += 1;
+        }
+      }
+      return [
+        {
+          fake_id: "fake_id",
+          month: month ? month.slice(0, 7) : null,
+          count: count > 1 ? `+${count - 1}` : null,
+        },
+      ];
     },
   },
 
