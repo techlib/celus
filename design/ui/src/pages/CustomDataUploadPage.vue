@@ -36,11 +36,12 @@ en:
   preflight_data_outdated: Preflight data are outdated, please regenerate preflight.
   errors:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
-    unknown_preflight_error: An unknown error has occured during data check.
-    unknown_import_error: An unknown error has occured during data import.
-    no_parser_found: Sorry, but we cannot detect the format of the uploaded file.
-    unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please contact the administrator to fix the problem.
+    no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please let us know at ask@celus.net to fix the problem.
     no_organization_selected: No organization found in data. You need to select organization manually.
+    unknown_counter_error: Something went wrong and Celus was not able to process the data. Celus is pretty good at processing COUNTER reports, but some publishers extend them in a way that Celus does not understand. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    unknown_raw_error: Something went wrong and Celus was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
@@ -90,11 +91,12 @@ cs:
   preflight_data_outdated: Data přehledu již nejsou platná. Prosím přegenerujte přehled.
   errors:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
-    unknown_preflight_error: Během kontroly dat se vyskytla neznámá chyba.
-    unknown_import_error: Během importu dat se vyskytla neznámá chyba.
-    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru.
-    unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Kontaktujte prosím administrátora, aby nesrovnalosti vyřešil.
+    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask@celus.net a my problém vyřešíme.
     no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
+    unknown_counter_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Celus je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému Celus nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    unknown_raw_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
@@ -403,7 +405,7 @@ cs:
                       {{ $t("errors.no_organization_selected") }}
                     </strong>
                     <strong v-else>
-                      {{ $t("errors.unknown_preflight_error") }}
+                      {{ unknownErrorMessage }}
                     </strong>
                   </v-expansion-panel-header>
                   <v-expansion-panel-content color="error">
@@ -559,7 +561,7 @@ cs:
                 <v-col cols="auto">
                   <v-alert type="error">
                     <h3 v-text="$t('import_error_found')" class="pb-2"></h3>
-                    <strong>{{ $t("unknown_import_error") }}</strong>
+                    <strong>{{ unknownErrorMessage }}</strong>
                     <pre
                       v-text="errorDetails.exception"
                       v-if="errorDetails && errorDetails.exception"
@@ -909,6 +911,16 @@ export default {
         return null;
       }
     },
+    unknownErrorMessage() {
+      switch (this.method) {
+        case "raw":
+          return this.$t("errors.unknown_raw_error");
+        case "counter":
+          return this.$t("errors.unknown_counter_error");
+        default:
+          return this.$t("errors.unknown_error");
+      }
+    },
   },
   methods: {
     ...mapActions({
@@ -1181,9 +1193,7 @@ export default {
       if (errors.every((e) => e.name.startsWith("NoParser"))) {
         return "errors.no_parser_found";
       }
-      return preflight
-        ? "errors.unknown_preflight_error"
-        : "errors.unknown_import_error";
+      return this.unknownErrorMessage;
     },
   },
   async mounted() {
@@ -1239,3 +1249,10 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+strong {
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+</style>
