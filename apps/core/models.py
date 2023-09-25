@@ -324,13 +324,6 @@ class User(AbstractUser):
         else:
             return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification['status']
 
-    def mailchimp_user_reason(self):
-        return (
-            settings.MAILCHIMP_REASON_CONSORTIAL_MANAGER
-            if self.is_admin_of_master_organization
-            else settings.MAILCHIMP_REASON_NORMAL_USER
-        )
-
 
 class Identity(models.Model):
 

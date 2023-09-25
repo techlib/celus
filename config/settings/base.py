@@ -314,34 +314,6 @@ print(
     file=sys.stderr,
 )
 
-
-# MailChimp
-SYNC_USERS_TO_MAILCHIMP = config('SYNC_USERS_TO_MAILCHIMP', cast=bool, default=False)
-MAILCHIMP_ADMINS = config('MAILCHIMP_ADMINS', cast=Csv(), default='')
-MAILCHIMP_API_KEY = config('MAILCHIMP_API_KEY', default='')
-MAILCHIMP_SERVER_PREFIX = config('MAILCHIMP_SERVER_PREFIX', default='')
-MAILCHIMP_AUDIENCE_ID = config('MAILCHIMP_AUDIENCE_ID', default='')
-MAILCHIMP_STAFF_TAG = config('MAILCHIMP_STAFF_TAG', default=-1, cast=int)
-MAILCHIMP_DO_NOT_DELETE_TAG = config('MAILCHIMP_DO_NOT_DELETE_TAG', default=-1, cast=int)
-# the puropse of CELUS_CUSTOM_NAME_PAIRS is to be able to create a custom names for celuses.
-# If not specified in this variable in format: '{"custom_celus_name": "celus_domain"}'
-# then the celus name will be created automatically as
-# anything what precedes ".celus.net" in the domain of celus
-# (e.g. for "example.celus.net" the celus name would be "example")
-CELUS_CUSTOM_NAME_PAIRS = dict(
-    config(
-        'CELUS_CUSTOM_NAME_PAIRS',
-        cast=Csv(cast=lambda s: s.split(':'), delimiter=','),
-        default='',
-    )
-)
-# purpose of MAILCHIMP_PREFERRED_CELUS_NAME is
-# to choose which celus should be sorted as a first celus in
-# "celus installations" and "celus address" columns in Mailchimp audience table.
-MAILCHIMP_PREFERRED_CELUS_NAME = config('MAILCHIMP_PREFERRED_CELUS_NAME', default='')
-MAILCHIMP_REASON_CONSORTIAL_MANAGER = "consortial manager"
-MAILCHIMP_REASON_NORMAL_USER = "normal user"
-
 # Celus-Maximus integration
 MAXIMUS_URL = config('MAXIMUS_URL', default='')
 MAXIMUS_TOKEN = config('MAXIMUS_TOKEN', default='')
@@ -368,8 +340,6 @@ CELERY_TASK_ROUTES = {
     'core.tasks.empty_task_export': {'queue': 'export'},
     'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
     'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
-    'core.tasks.sync_mailchimp_contacts_with_celus_delayed_task': {'queue': 'celery'},
-    'core.tasks.sync_mailchimp_contacts_with_celus_task': {'queue': 'celery'},
     'core.tasks.sync_with_maximus_task': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
     'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
@@ -549,17 +519,6 @@ CLICKHOUSE_CELERY_SCHEDULE = {
 }
 if CLICKHOUSE_SYNC_ACTIVE:
     CELERY_BEAT_SCHEDULE.update(CLICKHOUSE_CELERY_SCHEDULE)
-
-
-MAILCHIMP_CELERY_SCHEDULE = {
-    'sync_mailchimp_contacts_with_celus_delayed_task': {
-        'task': 'core.tasks.sync_mailchimp_contacts_with_celus_delayed_task',
-        'schedule': crontab(hour=3, minute=30),  # every day between 3:30 and 4:30
-        'options': {'expires': 24 * 60 * 60},
-    }
-}
-if SYNC_USERS_TO_MAILCHIMP:
-    CELERY_BEAT_SCHEDULE.update(MAILCHIMP_CELERY_SCHEDULE)
 
 MAXIMUS_CELERY_SCHEDULE = {
     'sync_with_maximus_task': {

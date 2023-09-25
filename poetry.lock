@@ -1868,24 +1868,6 @@ flake8 = ["flake8"]
 tests = ["psutil", "pytest (!=3.3.0)", "pytest-cov"]
 
 [[package]]
-name = "mailchimp-marketing"
-version = "3.0.80"
-description = "Mailchimp Marketing API"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "mailchimp_marketing-3.0.80-py3-none-any.whl", hash = "sha256:a5bcb3ebd3be60908c65af765f8195724e6fd2d61ecf6da667a794c5bc7b84d3"},
-]
-
-[package.dependencies]
-certifi = ">=2017.4.17"
-python-dateutil = ">=2.1"
-requests = ">=2.23"
-six = ">=1.10"
-urllib3 = ">=1.23"
-
-[[package]]
 name = "markuppy"
 version = "1.14"
 description = "An HTML/XML generator"
@@ -3866,4 +3848,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.8"
-content-hash = "a254c40271844fadfee2a85ec216234e199e00b58374a2c4f02c4b0ae3f5af33"
+content-hash = "c76c118193a823ad81339565f47260ca563090d2e265dd2fe2a62aee1c8a7a32"
