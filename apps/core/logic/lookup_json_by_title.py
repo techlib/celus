@@ -5,7 +5,7 @@ from publications.models import Title
 from sushi.models import SushiFetchAttempt
 
 
-def lookup_json_by_title(title_id):
+def lookup_json_by_title(title_id) -> (dict, list):
     title = ' '.join(Title.objects.values_list("name", flat=True).get(id=title_id).lower().split())
     batches = (
         AccessLog.objects.filter(target_id=title_id)

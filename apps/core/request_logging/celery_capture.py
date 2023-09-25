@@ -1,6 +1,7 @@
 import logging
 import pickle
 import time
+from datetime import timedelta
 
 import redis
 from django.conf import settings
@@ -24,7 +25,11 @@ def create_celery_task_log_dict(
     except TaskResult.DoesNotExist:
         task_obj = None
 
-    duration = (task_obj.date_done - task_obj.date_created) if task_obj.date_done else 0
+    duration = (
+        (task_obj.date_done - task_obj.date_created)
+        if task_obj and task_obj.date_done
+        else timedelta(seconds=0)
+    )
 
     # get the django query count from the cache
     # it was saved by the `logged_task` decorator if used
@@ -47,8 +52,8 @@ def create_celery_task_log_dict(
         'query_count_clickhouse': clickhouse_query_count,
         'execution_time': duration.total_seconds() * 1000,
         'task_name': task.__name__,
-        'task_args': [str(arg) for arg in args],
-        'task_kwargs': {k: str(v) for k, v in kwargs.items()},
+        'task_args': [str(arg) for arg in args] if args else [],
+        'task_kwargs': {k: str(v) for k, v in kwargs.items()} if kwargs else {},
         'status': state,
     }
 
