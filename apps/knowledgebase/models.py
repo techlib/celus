@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 import requests
 from core.models import DataSource
 from core.tasks import async_mail_admins
+from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.transaction import on_commit
@@ -606,12 +607,13 @@ class ParserDefinitionImportAttempt(ImportAttempt):
                 <= Version(nibbler_version)
                 <= Version(highest_nibbler_version)
             ):
-                logger.warn(
+                logger.warning(
                     "Parser definition %s is incompatible current nibbler version %s",
                     pk,
                     nibbler_version,
                 )
-                continue
+                if not settings.DISABLE_NIBBLER_PARSER_VERSION_CHECK:
+                    continue
 
             seen_ids.add(pk)
 

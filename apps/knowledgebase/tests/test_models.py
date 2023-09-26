@@ -587,8 +587,17 @@ class TestReportTypeImportAttempt:
 @pytest.mark.django_db
 class TestParserDefinitionImportAttempt:
     def test_process(
-        self, data_sources, parser_definitions, report_types, platforms, metrics, interests
+        self,
+        data_sources,
+        parser_definitions,
+        report_types,
+        platforms,
+        metrics,
+        interests,
+        settings,
     ):
+        settings.DISABLE_NIBBLER_PARSER_VERSION_CHECK = False
+
         def fill_in_nibbler_versions(
             data: dict, lowest: typing.Optional[str] = None, highest: typing.Optional[str] = None
         ):
@@ -640,3 +649,9 @@ class TestParserDefinitionImportAttempt:
         attempt.save()
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
         assert attempt.stats == {"total": 1, "wiped": 1}, "nibbler version out of range"
+
+        settings.DISABLE_NIBBLER_PARSER_VERSION_CHECK = True
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
+        assert attempt.stats == {"total": 1, "created": 1}, "version checks were disabled"
