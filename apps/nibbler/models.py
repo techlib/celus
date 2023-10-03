@@ -8,7 +8,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from pydantic import ValidationError as PydantidValidationError
+from pydantic import ValidationError as PydanticValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class ParserDefinitionQuerySet(models.QuerySet):
         for pd in self:
             try:
                 definitions.append(Definition.parse(pd.definition))
-            except PydantidValidationError as e:
+            except PydanticValidationError as e:
                 logger.warn("Wrong definition (pk=%s): %s", pd.pk, str(e))
 
         parsers = [gen_parser(e) for e in definitions]
@@ -67,7 +67,7 @@ class ParserDefinition(models.Model):
         # try to parse
         try:
             nibbler_definition = Definition.parse(self.definition)
-        except PydantidValidationError as e:
+        except PydanticValidationError as e:
             raise ValidationError({"definition": str(e)}) from None
 
         # Extract some fields from JSON

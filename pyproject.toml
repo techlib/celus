@@ -42,7 +42,7 @@ license = "MIT"
 python = "^3.8.8"
 
 celery = "~5.3.1"
-celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v9.1.0" }
+celus-nibbler = { git = "https://github.com/Big-Dig-Data/celus-nibbler.git", tag="v10.0.0" }
 celus-nigiri = { git = "https://github.com/Big-Dig-Data/celus-nigiri.git", tag="v1.3.1" }
 colorlog = "^6.7.0"
 dateparser = "^1.1.8"
@@ -78,7 +78,7 @@ prometheus-client = "^0.17.1"
 psutil = "~5.9.4"
 psycopg2-binary = "~2.9.1"
 pycounter = {git = "https://github.com/beda42/pycounter.git", rev = "11ff555d814065f51fb780fa6bf6386446c7f1de"}
-pydantic = "2.1.1"
+pydantic = "^2"
 pyparsing = "^3.0.9"
 python-dateutil = "^2.8.2"
 python-decouple = "^3.3"
