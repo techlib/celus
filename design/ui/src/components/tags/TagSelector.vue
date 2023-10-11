@@ -37,14 +37,14 @@
         small
         :hide-icon="!singleTag"
         hide-tooltip
-        :removable="!singleTag"
+        :removable="!singleTag && !disabled"
         :show-class="singleTag"
         @remove="unselect(item.pk)"
       />
     </template>
 
     <template #prepend v-if="tooltip">
-      <v-tooltip bottom>
+      <v-tooltip bottom max-width="480px">
         <template #activator="{ on }">
           <v-icon v-on="on">fa fa-info-circle</v-icon>
         </template>

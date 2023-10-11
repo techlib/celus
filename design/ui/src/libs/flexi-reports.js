@@ -183,6 +183,7 @@ class FlexiReport {
         if (item.start) res["start"] = item.start;
         if (item.end) res["end"] = item.end;
         if (item.tag_ids) res["tag_ids"] = item.tag_ids;
+        if (item.tag_class_ids) res["tag_class_ids"] = item.tag_class_ids;
         return res;
       });
     // group by
@@ -244,6 +245,8 @@ class FlexiReport {
         filters[item.dimension.ref] = { start: item.start, end: item.end };
       } else if (item.tag_ids) {
         filters["tag__" + item.dimension.ref] = item.tag_ids;
+      } else if (item.tag_class_ids) {
+        filters["tag_class__" + item.dimension.ref] = item.tag_class_ids;
       } else {
         filters[item.dimension.ref] = item.values;
       }

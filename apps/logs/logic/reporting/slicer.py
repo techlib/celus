@@ -23,6 +23,8 @@ from django.db.models import (
     Sum,
 )
 from django.db.models.functions import Coalesce, Concat, NullIf
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from hcube.api.models.aggregation import Sum as HSum
 from organizations.logic.queries import extend_query_filter
 from organizations.models import Organization
@@ -38,6 +40,7 @@ from logs.logic.reporting.filters import (
     DimensionFilter,
     ExplicitDimensionFilter,
     ForeignKeyDimensionFilter,
+    TagClassDimensionFilter,
     TagDimensionFilter,
 )
 from logs.models import AccessLog, DimensionText, ReportType
@@ -580,7 +583,6 @@ class FlexibleDataSlicer:
                 .aggregate(score=HSum('value'))
                 .order_by('-score')
             )
-            return query
         else:
             # check if we could use a materialized rt
             if len(rt_fltr := query_params.get('report_type_id__in', [])) == 1:
@@ -593,11 +595,11 @@ class FlexibleDataSlicer:
                 used_dimensions = [
                     dim[:-3] if dim.endswith('_id') else dim for dim in used_dimensions
                 ]
-                new_rt = find_best_materialized_view(rt, used_dimensions)
-                if new_rt:
+                if new_rt := find_best_materialized_view(rt, used_dimensions):
                     query_params['report_type_id__in'] = [new_rt.pk]
             query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
-            return query
+
+        return query
 
     def get_possible_groups_queryset(self):
         if self.group_by:
@@ -817,6 +819,8 @@ class FlexibleDataSlicer:
         """
         if dimension.startswith('tag__'):
             return TagDimensionFilter
+        if dimension.startswith('tag_class__'):
+            return TagClassDimensionFilter
         field, _modifier = AccessLog.get_dimension_field(dimension)
         if isinstance(field, ForeignKey):
             return ForeignKeyDimensionFilter
@@ -849,6 +853,9 @@ class FlexibleDataSlicer:
             return filter_class(field.name, *date_range_from_params(value))
         elif filter_class is TagDimensionFilter:
             dimension = dimension[len('tag__') :]  # noqa E203
+            return filter_class(dimension, value)
+        elif filter_class is TagClassDimensionFilter:
+            dimension = dimension[len('tag_class__') :]  # noqa E203
             return filter_class(dimension, value)
         else:
             return filter_class(dimension, value)
@@ -952,21 +959,29 @@ class FlexibleDataSlicer:
     def _config_dict_to_filter(cls, fltr: dict) -> DimensionFilter:
         dim = fltr['dimension']
         if 'tag_ids' in fltr:
-            dim_filter = TagDimensionFilter(dim, fltr['tag_ids'])
+            return TagDimensionFilter(dim, fltr['tag_ids'])
+        elif 'tag_class_ids' in fltr:
+            return TagClassDimensionFilter(dim, fltr['tag_class_ids'])
         else:
             filter_class = cls.filter_class(dim)
-            if filter_class is DateDimensionFilter:
-                dim_filter = filter_class(dim, fltr['start'], fltr['end'])
-            else:
-                dim_filter = filter_class(dim, fltr['values'])
-        return dim_filter
+            return (
+                filter_class(dim, fltr['start'], fltr['end'])
+                if filter_class is DateDimensionFilter
+                else filter_class(dim, fltr['values'])
+            )
 
     def filter_to_str(self, fltr):
         """
-        For some filters, we need context of the slicer to be able to serialize it
+        Human-readable representation of the filter to be included in exports, etc.
+        For some filters, we need context of the slicer to be able to serialize it, so it is here
         :param fltr:
         :return:
         """
+        dim_to_str = {
+            'target': _('Title'),
+            'organization': _('Organization'),
+            'platform': _('Platform'),
+        }
         if isinstance(fltr, ExplicitDimensionFilter):
             dim = self.resolve_explicit_dimension(fltr.dimension)
             return f'{dim.short_name}: {fltr.value_str}'
@@ -976,8 +991,13 @@ class FlexibleDataSlicer:
         elif isinstance(fltr, DateDimensionFilter):
             field, _modifier = AccessLog.get_dimension_field(fltr.dimension)
             return f'{field.verbose_name}: {fltr.value_str}'
-        elif isinstance(fltr, TagDimensionFilter):
-            return f'{fltr.dimension}: {fltr.value_str}'
+        elif isinstance(fltr, (TagDimensionFilter, TagClassDimensionFilter)):
+            word = (
+                ngettext('tag', 'tags', len(fltr.tag_ids))
+                if isinstance(fltr, TagDimensionFilter)
+                else ngettext('tag class', 'tag classes', len(fltr.tc_ids))
+            )
+            return f'{dim_to_str.get(fltr.dimension, fltr.dimension)} - {word}: {fltr.value_str}'
         raise NotImplementedError(f'Unsupported filter class: {fltr.__class__.__name__}')
 
     def _get_coverage_for_filters(self, **fltrs):

@@ -167,7 +167,7 @@ class TestFlexibleDataExport:
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
-        tag_value = tag1.full_name if not hide_tag_class else ''
+        tag_value = '' if hide_tag_class else tag1.full_name
         assert data.splitlines() == [
             'Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3',
             f'Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag_value},51246,52218,53190',

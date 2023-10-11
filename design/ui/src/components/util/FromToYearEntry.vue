@@ -8,7 +8,7 @@ cs:
 </i18n>
 
 <template>
-  <div class="d-flex flex-wrap">
+  <div class="d-flex">
     <YearEntry
       class="pr-4"
       v-model="startYear"

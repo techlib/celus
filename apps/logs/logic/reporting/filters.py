@@ -11,7 +11,7 @@ from django.db.models import QuerySet
 from django.utils.dateparse import parse_date
 from organizations.models import Organization
 from publications.models import Platform, Title
-from tags.models import Tag
+from tags.models import Tag, TagClass
 
 from logs.models import AccessLog, DimensionText
 
@@ -227,3 +227,52 @@ class TagDimensionFilter(DimensionFilter):
 
     def config(self):
         return {'dimension': self.dimension, 'tag_ids': self.tag_ids}
+
+
+class TagClassDimensionFilter(DimensionFilter):
+    def __init__(self, dimension, tag_class_ids):
+        if dimension not in ['target', 'platform', 'organization']:
+            raise ValueError(f'Unsupported dimension for tagging: {dimension}')
+        super().__init__(dimension)
+        self.tc_ids = [tc.pk if isinstance(tc, TagClass) else tc for tc in to_list(tag_class_ids)]
+
+    @property
+    def value_str(self):
+        return '; '.join(val.name for val in TagClass.objects.filter(pk__in=self.tc_ids))
+
+    @property
+    def related_model(self) -> Union[Type[Title], Type[Platform], Type[Organization]]:
+        field, _modifier = AccessLog.get_dimension_field(self.dimension)
+        return field.remote_field.model
+
+    def get_tagged_obj_pks_qs(self) -> QuerySet:
+        """
+        Returns a queryset for getting all the tagged objects' PKs.
+        """
+        return (
+            self.related_model.objects.filter(tags__tag_class__in=self.tc_ids)
+            .values_list('pk', flat=True)
+            .distinct()
+        )
+
+    def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
+        if primary_filter:
+            return {'tags__tag_class__in': self.tc_ids}
+        # here we translate the tag class ids to related object ids and use it for query,
+        # querying tags directly in the query (like `platform__tags__tag_class__in`) hits a
+        # nesting limit inside Django
+        obj_ids_qs = self.get_tagged_obj_pks_qs()
+        # see the discussion in TagDimensionFilter.query_params for more details
+        size_limit = CLICKHOUSE_ID_COUNT_LIMIT if clickhouse_compatible else 20_000
+        if obj_ids_qs.count() > size_limit:
+            if clickhouse_compatible:
+                # when clickhouse compatibility is requested, we have to raise an error
+                raise ClickhouseIncompatibleFilter('Too many ids to use in query')
+            # otherwise we just use the queryset
+            obj_ids = obj_ids_qs
+        else:
+            obj_ids = list(obj_ids_qs)
+        return {f'{self.dimension}_id__in': obj_ids}
+
+    def config(self):
+        return {'dimension': self.dimension, 'tag_class_ids': self.tc_ids}

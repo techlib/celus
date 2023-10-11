@@ -23,6 +23,7 @@ from logs.logic.reporting.filters import (
     DateDimensionFilter,
     ExplicitDimensionFilter,
     ForeignKeyDimensionFilter,
+    TagClassDimensionFilter,
     TagDimensionFilter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
@@ -469,6 +470,33 @@ class TestFlexibleDataSlicerComputations:
         for platform in platforms:
             tag.tag(platform, admin_user)
         slicer.add_filter(TagDimensionFilter('platform', tag), add_group=True)
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == Organization.objects.count()
+        data = [remap_row_keys_to_short_names(row, Organization, [Platform]) for row in data]
+        data.sort(key=lambda rec: rec['pk'])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert data == [
+            {'pk': 'org1', 'pl2': 717606, 'pl3': 915894},
+            {'pk': 'org2', 'pl2': 1312470, 'pl3': 1510758},
+            {'pk': 'org3', 'pl2': 1907334, 'pl3': 2105622},
+        ]
+
+    def test_org_sum_by_platform_filter_platform_by_tag_class(
+        self, flexible_slicer_test_data, show_zero, admin_user
+    ):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter: tag on platform
+        """
+        slicer = FlexibleDataSlicer(primary_dimension='organization')
+        platforms = flexible_slicer_test_data['platforms'][1:]
+        tc = TagClassFactory(scope=TagScope.PLATFORM)
+        tags = TagFactory.create_batch(3, name='my_platforms', tag_class=tc)
+        for tag, platform in zip(tags, platforms):
+            tag.tag(platform, admin_user)
+        slicer.add_filter(TagClassDimensionFilter('platform', tc), add_group=True)
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
         assert len(data) == Organization.objects.count()

@@ -110,104 +110,106 @@ en:
     current_plus_2y_back: Matches the COUNTER data retention period
     custom: Manually select the data range
   labels:
-    select_command: Select command
-    date_range: Date range
-    search: Search
-    requestor_id: Requestor ID
-    customer_id: Customer ID
-    counter_version: COUNTER version
-    url: URL
-    http_authentication: HTTP authentication
-    http_username: Username
-    http_password: Password
-    extra_params: Extra parameters
-    api_key: API key
-    variable: Parameter name
-    variable_value: Parameter value
-    value: Value
-    provider: Provider
-    title_count: Title count
-    title_count_short: Title count
-    date: Date
-    user: User
-    report_type: Report type
-    title: Title / database
-    metric: Metric
     accesslog_count: Log count
+    all_tags: All
+    annotated_file: Annotated file
     annotations: Annotations
+    api_key: API key
+    bg_color: Background color
     chart: Chart
-    report_view: Report
-    position: Position
-    problematic_only: Problematic only
+    columns: Columns
+    counter_version: COUNTER version
+    coverage: Coverage
+    created: Created
+    credentials: Credentials
+    custom: Custom
+    customer_id: Customer ID
+    data_export: Data export
+    date: Date
+    date_range: Date range
+    delete_all_platform_data: Delete all platform data
+    delete_data: Delete data
+    description: Description
+    empty_value: "- empty -"
+    error: Error
+    export: Export
+    exported_data: Exported data
+    extra_params: Extra parameters
+    file_format: File format
+    file_size: File size
+    filter_by_tag: Filter by tag
+    filter_by_tag_class: Filter by tag class
+    filter_settings: Filter settings
+    filters: Filters
+    finished: Finished
+    group_by_class: Group by class
+    http_authentication: HTTP authentication
+    http_password: Password
+    http_username: Username
+    loading: Loading
+    metadata: Metadata
+    metric: Metric
+    months: Months
+    new_menu_item: new
+    new_tag: New tag
+    new_tag_class: New tag class
+    no_tags: Click edit to add a tag.
+    no_tags_available: No tags available
+    organization: Organization
     overlap: Overlap
-    relative: Relative
-    total: Total
     platform: Platform
     platform_filter: Platform filter
-    finished: Finished
-    year: Year
-    year_and_month: Year and month
-    organization: Organization
-    filters: Filters
-    filter_settings: Filter settings
-    rows: Rows
-    columns: Columns
-    file_size: File size
-    file_format: File format
-    exported_data: Exported data
-    report_output: Report output
-    status: Status
-    credentials: Credentials
-    settings: Settings
-    report_name: Report name
-    data_export: Data export
-    delete_data: Delete data
-    delete_all_platform_data: Delete all platform data
-    today: today
-    group_by_class: Group by class
-    tag_name: Tag name
-    tag_class: Tag class
-    new_tag: New tag
-    tags: Tags
-    tag: Tag
-    text_color: Text color
-    bg_color: Background color
-    tag_color: Tag color
+    position: Position
     preview: Preview
-    no_tags: Click edit to add a tag.
-    description: Description
-    tag_scope: Tag scope
-    tag_scope_hint: What type of object can this tag be assigned to
-    all_tags: All
-    new_tag_class: New tag class
-    tag_class_name: Tag class name
-    tag_can_see: Who can see tag
+    problematic_only: Problematic only
+    provider: Provider
+    relative: Relative
+    report_name: Report name
+    report_output: Report output
+    report_type: Report type
+    report_view: Report
+    requestor_id: Requestor ID
+    rows: Rows
+    run_report: Run report
+    search: Search
+    select_command: Select command
+    select_report: Select report
+    settings: Settings
+    show_class: Show class
+    source: Source
+    source_file: Source file
+    state: State
+    status: Status
+    tag: Tag
     tag_can_assign: Who can assign tag
+    tag_can_see: Who can see tag
+    tag_class: Tag class
+    tag_class_can_create_tags: Who can add new tags of this class
+    tag_class_can_modify: Who can modify this tag class
+    tag_class_name: Tag class name
+    tag_color: Tag color
+    tag_exclusive_already_present: Target already has a tag from the same exclusive class
     tag_is_exclusive: Exclusive
     tag_is_exclusive_tt: Only one tag from an exclusive tag class may be assigned to an object
-    tag_exclusive_already_present: Target already has a tag from the same exclusive class
-    tag_class_can_modify: Who can modify this tag class
-    tag_class_can_create_tags: Who can add new tags of this class
-    no_tags_available: No tags available
-    custom: Custom
-    created: Created
-    state: State
-    source_file: Source file
-    error: Error
+    tag_name: Tag name
     tag_roll_up: Merge rows by tag
-    show_class: Show class
-    empty_value: "- empty -"
-    new_menu_item: new
-    annotated_file: Annotated file
-    select_report: Select report
-    run_report: Run report
-    export: Export
-    source: Source
-    coverage: Coverage
+    tag_scope: Tag scope
+    tag_scope_hint: What type of object can this tag be assigned to
+    tags: Tags
+    text_color: Text color
+    title: Title / database
+    title_count: Title count
+    title_count_short: Title count
+    today: today
+    total: Total
     total_coverage: Total coverage
-    loading: Loading
-    months: Months
-    metadata: Metadata
+    url: URL
+    user: User
+    value: Value
+    variable: Parameter name
+    variable_value: Parameter value
+    year: Year
+    year_and_month: Year and month
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -419,104 +421,106 @@ cs:
     current_plus_2y_back: Odpovídá retenční periodě pro COUNTER data
     custom: Manuální volba zobrazeného období
   labels:
-    select_command: Vyberte příkaz
-    date_range: Rozmezí dat
-    search: Vyhledávání
-    requestor_id: Requestor ID
-    customer_id: Customer ID
-    counter_version: Verze COUNTER
-    url: URL
-    http_authentication: HTTP autentizace
-    http_username: Uživatelské jméno
-    http_password: Heslo
-    extra_params: Další parametry
-    api_key: API key
-    variable: Název parametru
-    variable_value: Hodnota parametru
-    value: Hodnota
-    provider: Poskytovatel
-    title_count: Počet titulů a databází
-    title_count_short: Počet titulů
-    date: Datum
-    user: Uživatel
-    report_type: Typ reportu
-    title: Titul / databáze
-    metric: Metrika
     accesslog_count: Počet záznamů
+    all_tags: Všechny
+    annotated_file: Anotovaný soubor
     annotations: Poznámky
+    api_key: API key
+    bg_color: Barva pozadí
     chart: Graf
-    report_view: Report
-    position: Pozice
-    problematic_only: Jen problematické
+    columns: Sloupce
+    counter_version: Verze COUNTER
+    coverage: Pokrytí
+    created: Datum vytvoření
+    credentials: Přihlašovací údaje
+    custom: Vlastní
+    customer_id: Customer ID
+    data_export: Export dat
+    date: Datum
+    date_range: Rozmezí dat
+    delete_all_platform_data: Smazat všechna data pro platformu
+    delete_data: Mazání dat
+    description: Popis
+    empty_value: "- prázdné -"
+    error: Chyba
+    export: Exportovat
+    exported_data: Exportovaná data
+    extra_params: Další parametry
+    file_format: Formát souboru
+    file_size: Velikost souboru
+    filter_by_tag: Filtrovat podle štítku
+    filter_by_tag_class: Filtrovat podle typu štítku
+    filter_settings: Nastavení filtrů
+    filters: Filtry
+    finished: Dokončeno
+    group_by_class: Seskupit podle typu
+    http_authentication: HTTP autentizace
+    http_password: Heslo
+    http_username: Uživatelské jméno
+    loading: Načítání
+    metadata: Metadata
+    metric: Metrika
+    months: Měsíce
+    new_menu_item: novinka
+    new_tag: Nový štítek
+    new_tag_class: Nový typ štítku
+    no_tags: Klikněte na editaci k přidání štítku.
+    no_tags_available: Nejsou dostupné žádné štítky
+    organization: Organizace
     overlap: Překryv
-    relative: Relativně
-    total: Celkem
     platform: Platforma
     platform_filter: Filtr platformy
-    finished: Dokončeno
-    year: Rok
-    year_and_month: Rok a měsíc
-    organization: Organizace
-    filters: Filtry
-    filter_settings: Nastavení filtrů
-    rows: Řádky
-    columns: Sloupce
-    file_size: Velikost souboru
-    file_format: Formát souboru
-    exported_data: Exportovaná data
-    report_output: Výstup reportu
-    status: Stav
-    credentials: Přihlašovací údaje
-    settings: Nastavení
-    report_name: Jméno reportu
-    data_export: Export dat
-    delete_data: Mazání dat
-    delete_all_platform_data: Smazat všechna data pro platformu
-    today: dnes
-    group_by_class: Seskupit podle typu
-    tag_name: Název štítku
-    tag_class: Typ štítku
-    new_tag: Nový štítek
-    tags: Štítky
-    tag: Štítek
-    text_color: Barva textu
-    bg_color: Barva pozadí
-    tag_color: Barva štítku
+    position: Pozice
     preview: Náhled
-    no_tags: Klikněte na editaci k přidání štítku.
-    description: Popis
-    tag_scope: Cíl štítku
-    tag_scope_hint: K jakému typu objektu může být štítek připojen
-    all_tags: Všechny
-    new_tag_class: Nový typ štítku
-    tag_class_name: Název typu štítku
-    tag_can_see: Kdo štítek uvidí
+    problematic_only: Jen problematické
+    provider: Poskytovatel
+    relative: Relativně
+    report_name: Jméno reportu
+    report_output: Výstup reportu
+    report_type: Typ reportu
+    report_view: Report
+    requestor_id: Requestor ID
+    rows: Řádky
+    run_report: Spustit report
+    search: Vyhledávání
+    select_command: Vyberte příkaz
+    select_report: Vyberte report
+    settings: Nastavení
+    show_class: Zobrazit typ
+    source: Zdroj
+    source_file: Zdrojový soubor
+    state: Stav
+    status: Stav
+    tag: Štítek
     tag_can_assign: Kdo může štítek přiřazovat
+    tag_can_see: Kdo štítek uvidí
+    tag_class: Typ štítku
+    tag_class_can_create_tags: Kdo může vytvářet štítky v této skupině
+    tag_class_can_modify: Kdo může upravovat typ štítku
+    tag_class_name: Název typu štítku
+    tag_color: Barva štítku
+    tag_exclusive_already_present: Štítek stejného exklusivního typu je již přítomen
     tag_is_exclusive: Exklusivní
     tag_is_exclusive_tt: Objektu může být přiřazený jenom jeden štítek ze skupiny, pokud je typ označný jako exklusivní
-    tag_exclusive_already_present: Štítek stejného exklusivního typu je již přítomen
-    tag_class_can_modify: Kdo může upravovat typ štítku
-    tag_class_can_create_tags: Kdo může vytvářet štítky v této skupině
-    no_tags_available: Nejsou dostupné žádné štítky
-    custom: Vlastní
-    created: Datum vytvoření
-    state: Stav
-    source_file: Zdrojový soubor
-    error: Chyba
+    tag_name: Název štítku
     tag_roll_up: Sloučit řádky podle štítků
-    show_class: Zobrazit typ
-    empty_value: "- prázdné -"
-    new_menu_item: novinka
-    annotated_file: Anotovaný soubor
-    select_report: Vyberte report
-    run_report: Spustit report
-    export: Exportovat
-    source: Zdroj
-    coverage: Pokrytí
+    tag_scope: Cíl štítku
+    tag_scope_hint: K jakému typu objektu může být štítek připojen
+    tags: Štítky
+    text_color: Barva textu
+    title: Titul / databáze
+    title_count: Počet titulů a databází
+    title_count_short: Počet titulů
+    today: dnes
+    total: Celkem
     total_coverage: Celkové pokrytí
-    loading: Načítání
-    months: Měsíce
-    metadata: Metadata
+    url: URL
+    user: Uživatel
+    value: Hodnota
+    variable: Název parametru
+    variable_value: Hodnota parametru
+    year: Rok
+    year_and_month: Rok a měsíc
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

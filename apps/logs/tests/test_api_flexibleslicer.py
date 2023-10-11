@@ -5,7 +5,7 @@ from organizations.models import UserOrganization
 from publications.fake_data import PlatformFactory
 from sushi.fake_data import CredentialsFactory
 from tags.fake_data import TagFactory
-from tags.models import TagScope
+from tags.models import TagScope, TitleTag
 
 from logs.models import ImportBatch, OrganizationPlatform
 from test_scenarios.basic import (  # noqa
@@ -197,9 +197,7 @@ class TestSlicerAPI:
         assert len(data['values']) == 2
 
     @pytest.mark.parametrize('show_zero', [True, False])
-    def test_parts_api_with_tag_roll_up(
-        self, flexible_slicer_test_data_with_tags, clients, show_zero
-    ):
+    def test_tag_roll_up(self, flexible_slicer_test_data_with_tags, clients, show_zero):
         """
         Test that tag_roll_up is properly applied to the data. Also checks that only visible
         tags are returned.
@@ -222,8 +220,33 @@ class TestSlicerAPI:
             [tags[0].pk, tags[2].pk] if show_zero else [tags[0].pk]
         )
 
+    def test_filter_by_tag_class(self, flexible_slicer_test_data_with_tags, clients):
+        """
+        Test that tag_class filter works in the api.
+        """
+        tc = flexible_slicer_test_data_with_tags['tag_classes'][0]
+        t1, t2, t3 = flexible_slicer_test_data_with_tags['targets']
+        tag1, tag2, tag3 = flexible_slicer_test_data_with_tags['tags']
+        TitleTag.objects.filter(tag=tag1, target=t2).delete()  # untag t2 from tag1
+
+        resp = clients['su'].get(
+            reverse('flexible-slicer'),
+            {
+                'primary_dimension': 'target',
+                'groups': b64json(['metric']),
+                'filters': b64json({'tag_class__target': [tc.pk]}),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['count'] == 2
+        assert {row['pk'] for row in data['results']} == {
+            t1.pk,
+            t3.pk,
+        }, 'only titles with first tag class should be returned'
+
     @pytest.mark.parametrize(['sort_desc'], [(True,), (False,)])
-    def test_parts_api_with_tag_roll_up_order_by_tag(
+    def test_tag_roll_up_order_by_tag(
         self, flexible_slicer_test_data_with_tags, clients, sort_desc
     ):
         """

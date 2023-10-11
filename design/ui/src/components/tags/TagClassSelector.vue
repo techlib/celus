@@ -25,6 +25,15 @@
       </v-list-item-content>
     </template>
 
+    <template #prepend v-if="tooltip">
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-icon v-on="on">fa fa-info-circle</v-icon>
+        </template>
+        {{ tooltip }}
+      </v-tooltip>
+    </template>
+
     <template #append-item v-if="allowCreate">
       <v-list-item-content>
         <v-list-item-title>
@@ -67,6 +76,7 @@ export default {
     placeholder: { type: String, default: "" },
     allowCreate: { type: Boolean, default: false },
     withVisibleTags: { type: Boolean, default: false },
+    tooltip: { type: String, default: "" },
   },
 
   data() {

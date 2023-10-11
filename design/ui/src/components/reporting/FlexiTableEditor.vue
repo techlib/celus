@@ -21,6 +21,9 @@ en:
   title_tags_tt: |
     Tags are used to simplify filtering of titles. You can add tags to individual titles on their corresponding pages
     or in one batch by uploading a title list.
+  title_tag_class: Tag class for title filtering
+  title_tag_class_tt: |
+    If you want to select all tags with a specific tag class, you can do so here instead of selecting the tags one by one.
   organization_tags: Tags for organization filtering
   platform_tags: Tags for platform filtering
   tag_class_filter: Limit returned tags by tag class
@@ -60,6 +63,9 @@ cs:
   title_tags_tt: |
     Pro zjednodušení filtrování titulů jsou použity štítky. Můžete je k titulům přidávat na stránce daného titulu nebo
     nahrát celý titulový seznam ze souboru.
+  title_tag_class: Typ štítku pro filtrování titulů
+  title_tag_class_tt: |
+    Pokud chcete vybrat všechny štítky daného typu, můžete tak učinit zde místo toho, abyste vybírali jednotlivé štítky.
   platform_tags: Štítky pro filtrování platforem
   organization_tags: Štítky pro filtrování organizací
   tag_class_filter: Omezit štítky na vybraný typ
@@ -378,71 +384,77 @@ cs:
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
               <v-card-text>
                 <v-container fluid>
-                  <v-row align="start">
-                    <!-- organization -->
+                  <v-row align="stretch">
                     <v-col
                       cols="12"
                       md="6"
-                      xl="3"
+                      xl="4"
                       v-if="filters.includes('organization')"
                     >
-                      <DimensionKeySelector
-                        :query-url="selectorBaseUrl"
-                        v-model="selectedOrganizations"
-                        dimension="organization"
-                        :translator="translators.organization"
-                        :name="$t('labels.organization')"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
-                      />
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                      xl="3"
-                      v-if="filters.includes('organization')"
-                    >
-                      <TagSelector
-                        scope="organization"
-                        v-model="selectedOrganizationTags"
+                      <FilterCard
+                        :title="$t('labels.organization')"
+                        :switch-label="$t('labels.filter_by_tag')"
+                        v-model="filterOrgsByTag"
                         :disabled="disableDimValuesSelectors || readOnly"
-                        :label="$t('organization_tags')"
-                        dont-check-exclusive
-                      />
+                      >
+                        <DimensionKeySelector
+                          :query-url="selectorBaseUrl"
+                          v-model="selectedOrganizations"
+                          dimension="organization"
+                          :translator="translators.organization"
+                          name=""
+                          :disabled="disableDimValuesSelectors"
+                          :read-only="readOnly"
+                        />
+
+                        <template #alt_content>
+                          <TagSelector
+                            scope="organization"
+                            v-model="selectedOrganizationTags"
+                            :disabled="disableDimValuesSelectors || readOnly"
+                            :label="$t('organization_tags')"
+                            dont-check-exclusive
+                          />
+                        </template>
+                      </FilterCard>
                     </v-col>
 
                     <!-- platform -->
                     <v-col
                       cols="12"
                       md="6"
-                      xl="3"
+                      xl="4"
                       v-if="filters.includes('platform')"
                     >
-                      <DimensionKeySelector
-                        :query-url="selectorBaseUrl"
-                        v-model="selectedPlatforms"
-                        dimension="platform"
-                        :translator="translators.platform"
-                        :name="$t('labels.platform')"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
-                      />
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      md="6"
-                      xl="3"
-                      v-if="filters.includes('platform')"
-                    >
-                      <TagSelector
-                        scope="platform"
-                        v-model="selectedPlatformTags"
+                      <FilterCard
+                        :title="$t('labels.platform')"
+                        :switch-label="$t('labels.filter_by_tag')"
+                        v-model="filterPlatformsByTag"
                         :disabled="disableDimValuesSelectors || readOnly"
-                        :label="$t('platform_tags')"
-                        dont-check-exclusive
-                      />
+                      >
+                        <DimensionKeySelector
+                          :query-url="selectorBaseUrl"
+                          v-model="selectedPlatforms"
+                          dimension="platform"
+                          :translator="translators.platform"
+                          name=""
+                          :disabled="disableDimValuesSelectors"
+                          :read-only="readOnly"
+                        />
+
+                        <template #alt_content>
+                          <TagSelector
+                            scope="platform"
+                            v-model="selectedPlatformTags"
+                            :disabled="disableDimValuesSelectors || readOnly"
+                            :label="$t('platform_tags')"
+                            dont-check-exclusive
+                          />
+                        </template>
+                      </FilterCard>
                     </v-col>
 
+                    <!-- title -->
                     <v-col
                       cols="12"
                       md="6"
@@ -450,16 +462,34 @@ cs:
                       class="d-flex"
                       v-if="filters.includes('target') && enableTags"
                     >
-                      <TagSelector
-                        scope="title"
-                        v-model="selectedTitleTags"
+                      <FilterCard
+                        :title="$t('labels.title')"
+                        :switch-label="$t('labels.filter_by_tag_class')"
+                        v-model="filterTitlesByClass"
                         :disabled="disableDimValuesSelectors || readOnly"
-                        :label="$t('title_tags')"
-                        :tooltip="$t('title_tags_tt')"
-                        dont-check-exclusive
-                      />
+                      >
+                        <TagSelector
+                          scope="title"
+                          v-model="selectedTitleTags"
+                          :disabled="disableDimValuesSelectors || readOnly"
+                          :label="$t('title_tags')"
+                          :tooltip="$t('title_tags_tt')"
+                          dont-check-exclusive />
+
+                        <template #alt_content>
+                          <TagClassSelector
+                            scope="title"
+                            v-model="selectedTitleTagClass"
+                            :disabled="disableDimValuesSelectors || readOnly"
+                            :label="$t('title_tag_class')"
+                            :tooltip="$t('title_tag_class_tt')"
+                            with-visible-tags
+                            clearable
+                          /> </template
+                      ></FilterCard>
                     </v-col>
 
+                    <!-- metric -->
                     <v-col
                       cols="12"
                       md="6"
@@ -467,17 +497,20 @@ cs:
                       class="d-flex"
                       v-if="filters.includes('metric')"
                     >
-                      <DimensionKeySelector
-                        :query-url="selectorBaseUrl"
-                        v-model="selectedMetrics"
-                        dimension="metric"
-                        :translator="translators.metric"
-                        :name="$t('labels.metric')"
-                        :disabled="disableDimValuesSelectors"
-                        :read-only="readOnly"
-                      />
+                      <FilterCard :title="$t('labels.metric')">
+                        <DimensionKeySelector
+                          :query-url="selectorBaseUrl"
+                          v-model="selectedMetrics"
+                          dimension="metric"
+                          :translator="translators.metric"
+                          name=""
+                          :disabled="disableDimValuesSelectors"
+                          :read-only="readOnly"
+                        />
+                      </FilterCard>
                     </v-col>
 
+                    <!-- explicit dimension -->
                     <template v-for="(ed, index) in explicitDims">
                       <v-col
                         :key="index"
@@ -487,32 +520,45 @@ cs:
                         xl="4"
                         v-if="filters.includes(`dim${index + 1}`)"
                       >
-                        <DimensionKeySelector
-                          :query-url="selectorBaseUrl"
-                          v-model="selectedDimValues[index]"
-                          :dimension="`dim${index + 1}`"
-                          :name="ed.name"
-                          :translator="translators.explicitDimension"
-                          :disabled="disableDimValuesSelectors"
-                          :read-only="readOnly"
-                        />
+                        <FilterCard :title="ed.name">
+                          <DimensionKeySelector
+                            :query-url="selectorBaseUrl"
+                            v-model="selectedDimValues[index]"
+                            :dimension="`dim${index + 1}`"
+                            name=""
+                            :translator="translators.explicitDimension"
+                            :disabled="disableDimValuesSelectors"
+                            :read-only="readOnly"
+                          />
+                        </FilterCard>
                       </v-col>
                     </template>
 
-                    <v-col v-if="filters.includes('date')" cols="auto">
-                      <FromToMonthEntry
-                        v-model="selectedDateRange"
-                        :disabled="readOnly"
-                      />
+                    <v-col
+                      v-if="filters.includes('date')"
+                      cols="12"
+                      md="6"
+                      xl="4"
+                    >
+                      <FilterCard :title="$t('labels.date')">
+                        <FromToMonthEntry
+                          v-model="selectedDateRange"
+                          :disabled="readOnly"
+                        />
+                      </FilterCard>
                     </v-col>
                     <v-col
                       v-else-if="filters.includes('date__year')"
-                      cols="auto"
+                      cols="12"
+                      md="6"
+                      xl="4"
                     >
-                      <FromToYearEntry
-                        v-model="selectedDateRange"
-                        :disabled="readOnly"
-                      />
+                      <FilterCard :title="$t('labels.year')">
+                        <FromToYearEntry
+                          v-model="selectedDateRange"
+                          :disabled="readOnly"
+                        />
+                      </FilterCard>
                     </v-col>
                   </v-row>
                 </v-container>
@@ -776,6 +822,7 @@ import lastDayOfYear from "date-fns/lastDayOfYear";
 import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
 import goTo from "vuetify/lib/services/goto";
+import FilterCard from "@/components/reporting/FilterCard.vue";
 
 export default {
   name: "FlexiTableEditor",
@@ -789,6 +836,7 @@ export default {
   ],
 
   components: {
+    FilterCard,
     ReportNamingWidget,
     CoverageCard,
     TagClassSelector,
@@ -826,9 +874,13 @@ export default {
       selectedDateRange: { start: null, end: null },
       selectedDimValues: [],
       selectedTitleTags: [],
+      selectedTitleTagClass: null,
       selectedPlatformTags: [],
       selectedOrganizationTags: [],
-      selectedTagClass: null,
+      selectedTagClass: null, // this one is for the tag roll-up, not the title tag class
+      filterOrgsByTag: false,
+      filterPlatformsByTag: false,
+      filterTitlesByClass: false,
       trendMode: false,
       tmBaseDateRange: {
         start: ymDateFormat(baseStart),
@@ -924,12 +976,14 @@ export default {
       }
       if (
         this.filters.includes("platform") &&
+        !this.filterPlatformsByTag &&
         this.selectedPlatforms.length > 0
       ) {
         ret["platform"] = this.selectedPlatforms;
       }
       if (
         this.filters.includes("organization") &&
+        !this.filterOrgsByTag &&
         this.selectedOrganizations.length > 0
       ) {
         ret["organization"] = this.selectedOrganizations;
@@ -937,13 +991,25 @@ export default {
       // title tags
       if (
         this.filters.includes("target") &&
+        !this.filterTitlesByClass &&
         this.selectedTitleTags.length > 0
       ) {
         ret["tag__target"] = this.selectedTitleTags;
       }
+      // title tag class
+      // we only allow single selection, but it behaves like a list
+      // in the API
+      if (
+        this.filters.includes("target") &&
+        this.filterTitlesByClass &&
+        this.selectedTitleTagClass
+      ) {
+        ret["tag_class__target"] = [this.selectedTitleTagClass.pk];
+      }
       // platform tags
       if (
         this.filters.includes("platform") &&
+        this.filterPlatformsByTag &&
         this.selectedPlatformTags.length > 0
       ) {
         ret["tag__platform"] = this.selectedPlatformTags;
@@ -951,6 +1017,7 @@ export default {
       // organization tags
       if (
         this.filters.includes("organization") &&
+        this.filterOrgsByTag &&
         this.selectedOrganizationTags.length > 0
       ) {
         ret["tag__organization"] = this.selectedOrganizationTags;
@@ -1295,10 +1362,22 @@ export default {
               this.selectedTitleTags = filter.tag_ids;
             } else if (filter.dimension === "platform") {
               this.selectedPlatformTags = filter.tag_ids;
+              this.filterPlatformsByTag = true;
             } else if (filter.dimension === "organization") {
               this.selectedOrganizationTags = filter.tag_ids;
+              this.filterOrgsByTag = true;
             }
             this.filters.push(filter.dimension);
+          } else if (filter.tag_class_ids) {
+            if (filter.dimension === "target") {
+              if (filter.tag_class_ids.length > 0) {
+                this.selectedTitleTagClass = filter.tag_class_ids[0];
+                this.filterTitlesByClass = true;
+                this.filters.push(filter.dimension);
+              }
+            } else {
+              console.warn("unsupported tag class filter: ", filter);
+            }
           } else if (configToAttr.has(filter.dimension)) {
             this.$set(this, configToAttr.get(filter.dimension), filter.values);
             this.filters.push(filter.dimension);
@@ -1492,16 +1571,6 @@ export default {
         }
       }
       this.fetchCoverageData();
-    },
-    dataUrlFilteringParams: {
-      deep: true,
-      handler(newVal, oldVal) {
-        // we need to compare the values of newVal and oldVal as the references
-        // might change without the actual value changing
-        if (!isEqual(newVal, oldVal) && !this.ignoreUrlFilteringParams) {
-          this.$refs.outputTable.updateOutput(this.reportObject, false);
-        }
-      },
     },
     filters: {
       deep: true,
