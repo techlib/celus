@@ -6,15 +6,13 @@ en:
   releases: Celus releases
   email_not_verified: Your email is not verified
   impersonated: You are currently impersonating another user.
-  no_help: No help available for this page
-  help_panel_tt: Context specific help
+  context_help_tt: Click for a link to the Celus knowledge base for this page
   click_for_more_info: Click for more information about the release
 
 cs:
   releases: Vydání Celusu
   email_not_verified: Vaše emailová adresa není ověřená
-  no_help: Pro tuto stránku není dostupná žádná nápověda
-  help_panel_tt: Nápověda pro aktuální stránku
+  context_help_tt: Kliknutím přejdete na stránku s nápovědou k této stránce
   impersonated: Právě zosobňujete jiného uživatele.
   click_for_more_info: Klikněte pro více informací o vydání
 </i18n>
@@ -26,18 +24,6 @@ cs:
       data-tour="side-panel"
       :tour-name="offeredTour"
     />
-
-    <v-navigation-drawer
-      right
-      app
-      v-model="showHelpPanel"
-      clipped
-      disable-resize-watcher
-    >
-      <div class="pa-3">
-        <router-view name="helpPanel" />
-      </div>
-    </v-navigation-drawer>
 
     <v-app-bar app clipped-left clipped-right data-tour="app-bar">
       <v-toolbar-title class="flex-sm-shrink-0">
@@ -196,14 +182,13 @@ cs:
               bottom
               right
               v-on="on"
-              @click="helpPanelOpen = !helpPanelOpen"
+              target="_blank"
+              :href="helpLink"
             >
-              <v-icon
-                >{{ helpPanelOpen ? "fa-angle-right" : "fa-question" }}
-              </v-icon>
+              <v-icon>fa-question</v-icon>
             </v-btn>
           </template>
-          {{ $t("help_panel_tt") }}
+          {{ helpText || $t("context_help_tt") }}
         </v-tooltip>
 
         <router-view :key="$route.fullPath" v-if="loggedIn" />
@@ -249,6 +234,7 @@ import LoginDialog from "@/components/account/LoginDialog";
 import VGravatar from "vue-gravatar";
 import CreateOrganizationDialog from "@/components/account/CreateOrganizationDialog";
 import UITour from "@/components/help/UITour";
+import axios from "axios";
 
 export default {
   name: "Dashboard",
@@ -266,7 +252,8 @@ export default {
       navbarExpanded: false,
       showSidePanel: true,
       basicsTourName: "basic",
-      helpPanelOpen: false,
+      helpLink: false,
+      helpText: "",
     };
   },
   computed: {
@@ -361,15 +348,7 @@ export default {
       return null;
     },
     showHelpButton() {
-      return !!this.$route.matched[0].components.helpPanel;
-    },
-    showHelpPanel: {
-      get() {
-        return this.showHelpButton && this.helpPanelOpen;
-      },
-      set(value) {
-        this.helpPanelOpen = value;
-      },
+      return !!this.helpLink;
     },
   },
 
@@ -382,6 +361,19 @@ export default {
     }),
     toggleNavbar() {
       this.navbarExpanded = !this.navbarExpanded;
+    },
+    async fetchHelpLink() {
+      try {
+        const result = await axios.get(
+          `https://spaces.celus.net/help/${this.$route.name}.json`
+        );
+        this.helpLink = result.data.url;
+        this.helpText = result.data.help_text;
+      } catch (error) {
+        if (error.response.status !== 404) {
+          console.log(error);
+        }
+      }
     },
   },
 
@@ -423,6 +415,8 @@ export default {
         document.title = to.meta?.title
           ? this.$t(to.meta.title) + " – Celus"
           : "Celus";
+        this.helpLink = null;
+        this.fetchHelpLink();
       },
     },
   },

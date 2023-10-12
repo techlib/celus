@@ -44,11 +44,7 @@ export default new Router({
     {
       path: "/dashboard/",
       name: "dashboard",
-      components: {
-        default: () => import("../pages/DashboardPage.vue"),
-        helpPanel: () =>
-          import("../components/help-panels/DashboardHelpPanel.vue"),
-      },
+      component: () => import("../pages/DashboardPage.vue"),
       meta: {
         title: "pages.dashboard",
       },
@@ -137,10 +133,7 @@ export default new Router({
     {
       path: "/tags",
       name: "tags",
-      components: {
-        default: () => import("../pages/TagListPage.vue"),
-        helpPanel: () => import("../components/help-panels/TagsHelpPanel.vue"),
-      },
+      component: () => import("../pages/TagListPage.vue"),
       meta: {
         hideDateRangeSelector: true,
         title: "pages.tag_management",
