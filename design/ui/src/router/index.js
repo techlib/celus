@@ -49,6 +49,9 @@ export default new Router({
         helpPanel: () =>
           import("../components/help-panels/DashboardHelpPanel.vue"),
       },
+      meta: {
+        title: "pages.dashboard",
+      },
     },
     {
       path: "/user/",
@@ -57,12 +60,16 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.user_page",
       },
     },
     {
       path: "/platforms/",
       name: "platform-list",
       component: () => import("../pages/PlatformListPage.vue"),
+      meta: {
+        title: "pages.platforms",
+      },
     },
     {
       path: "/organizations/",
@@ -71,12 +78,16 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.organizations",
       },
     },
     {
       path: "/titles/",
       name: "title-list",
       component: () => import("../pages/AllTitlesListPage.vue"),
+      meta: {
+        title: "pages.all_titles",
+      },
     },
     {
       path: "/platforms/:platformId",
@@ -85,6 +96,9 @@ export default new Router({
       props: (route) => ({
         platformId: Number.parseInt(route.params.platformId, 10),
       }),
+      meta: {
+        title: "pages.platform_detail",
+      },
     },
     {
       path: "/platforms/:platformId/title/:titleId",
@@ -94,6 +108,9 @@ export default new Router({
         platformId: Number.parseInt(route.params.platformId, 10),
         titleId: Number.parseInt(route.params.titleId, 10),
       }),
+      meta: {
+        title: "pages.title_detail",
+      },
     },
     {
       path: "/titles/:titleId",
@@ -103,6 +120,9 @@ export default new Router({
         platformId: null,
         titleId: Number.parseInt(route.params.titleId, 10),
       }),
+      meta: {
+        title: "pages.title_detail",
+      },
     },
     {
       path: "/interests",
@@ -111,6 +131,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.interest_overview",
       },
     },
     {
@@ -122,6 +143,7 @@ export default new Router({
       },
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.tag_management",
       },
     },
     {
@@ -130,6 +152,7 @@ export default new Router({
       component: () => import("../pages/TaggingBatchesPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.title_lists",
       },
     },
 
@@ -140,6 +163,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.releases",
       },
     },
     {
@@ -149,6 +173,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.changelog",
       },
     },
     {
@@ -156,21 +181,33 @@ export default new Router({
       name: "heatmap",
       component: () =>
         import("../pages/OrganizationPlatformInterestOverviewPage.vue"),
+      meta: {
+        title: "pages.heatmap",
+      },
     },
     {
       path: "/annotations/",
       name: "annotations",
       component: () => import("../pages/AnnotationListPage.vue"),
+      meta: {
+        title: "labels.annotations",
+      },
     },
     {
       path: "/analytics/overlap",
       name: "overlap-analysis",
       component: () => import("../pages/OverlapAnalysisPage.vue"),
+      meta: {
+        title: "pages.overlap_analysis_titles",
+      },
     },
     {
       path: "/analytics/platform-overlap",
       name: "platform-overlap-analysis",
       component: () => import("../pages/PlatformOverlapAnalysisPage"),
+      meta: {
+        title: "pages.overlap_analysis_platforms",
+      },
     },
     {
       path: "/analytics/title-list-overlap",
@@ -178,6 +215,7 @@ export default new Router({
       component: () => import("../pages/TitleListOverlapPage"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.title_list_overlap",
       },
     },
     {
@@ -187,6 +225,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.create_report",
       },
     },
     {
@@ -199,6 +238,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.flexi_report",
       },
     },
     {
@@ -208,6 +248,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.flexi_reports",
       },
     },
     {
@@ -217,6 +258,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.exports",
       },
     },
     {
@@ -226,6 +268,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.management",
       },
     },
     {
@@ -234,6 +277,7 @@ export default new Router({
       component: () => import("../pages/SushiCredentialsManagementPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.sushi_management",
       },
     },
     {
@@ -242,6 +286,7 @@ export default new Router({
       component: () => import("../pages/SushiCredentialsMonthOverviewPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.sushi_monthly_overview",
       },
     },
     {
@@ -251,6 +296,7 @@ export default new Router({
       meta: {
         hideDateRangeSelector: true,
         hideOrganizationSelector: true,
+        title: "pages.sushi_troubleshooting",
       },
     },
     {
@@ -259,6 +305,7 @@ export default new Router({
       component: () => import("../pages/ManualUploadListPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.manual_data_uploads",
       },
     },
     {
@@ -267,6 +314,7 @@ export default new Router({
       component: () => import("../pages/SupportedNonCounterPlatformsPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.supported_non_counter_platforms",
       },
     },
     {
@@ -275,6 +323,7 @@ export default new Router({
       component: () => import("../pages/HarvestsPage.vue"),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.sushi_fetch_attempts",
       },
     },
     {
@@ -284,6 +333,7 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.maintenance",
       },
     },
     {
@@ -293,12 +343,16 @@ export default new Router({
       meta: {
         hideOrganizationSelector: true,
         hideDateRangeSelector: true,
+        title: "pages.management_commands",
       },
     },
     {
       path: "/admin/data-coverage/",
       name: "data-coverage-overview",
       component: () => import("../pages/DataCoverageOverviewPage.vue"),
+      meta: {
+        title: "pages.data_coverage_overview",
+      },
     },
     {
       path: "/platforms/:platformId/upload-data/",
@@ -309,6 +363,7 @@ export default new Router({
       }),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.mdu_detail",
       },
     },
     {
@@ -321,12 +376,16 @@ export default new Router({
       }),
       meta: {
         hideDateRangeSelector: true,
+        title: "pages.mdu_detail",
       },
     },
     {
       path: "/specialized-reports",
       name: "specialized-reports",
       component: () => import("../pages/SpecializedReportsPage.vue"),
+      meta: {
+        title: "pages.specialized_reports",
+      },
     },
     {
       path: "/secure",

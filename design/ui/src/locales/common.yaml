@@ -1,41 +1,48 @@
 en:
   pages:
-    settings: Settings
-    content: Content
-    platforms: Platforms
-    all_titles: All titles
-    sushi_management: SUSHI management
     admin: Administration
-    sushi_fetch_attempts: SUSHI harvests
-    import_batches: Import batches
-    management: Management
-    maintenance: Maintenance
-    interest_overview: Interests
-    heatmap: Interest heatmap
-    manual_data_uploads: Manual data uploads
-    dashboard: Dashboard
-    sushi_monthly_overview: SUSHI status
+    all_titles: All titles
     analytics: Analytics
-    overlap_analysis_titles: Titles on multiple platforms
-    overlap_analysis_platforms: Platform overlap
-    flexitable: Reporting and exports
-    sushi: SUSHI
+    changelog: Changelog
     configuration: Configuration
-    data_management: Data management
-    subscriptions: Overlap analysis
-    exports: Exports
+    content: Content
     create_report: Create report
-    flexi_reports: Reports
-    tags: Tags
-    tag_management: Tag management
-    title_lists: Title lists
-    organizations: Organizations
-    sushi_troubleshooting: Troubleshooting
-    supported_non_counter_platforms: non-COUNTER platforms
-    title_list_overlap: Title list overlap
-    specialized_reports: Specialized reports
+    dashboard: Dashboard
     data_coverage_overview: Data coverage overview
+    data_management: Data management
+    exports: Exports
+    flexi_report: Report detail
+    flexi_reports: Reports
+    flexitable: Reporting and exports
+    heatmap: Interest heatmap
+    import_batches: Import batches
+    interest_overview: Interests
+    maintenance: Maintenance
+    management: Management
     management_commands: Management commands
+    manual_data_uploads: Manual data uploads
+    mdu_detail: Manual data upload detail
+    organizations: Organizations
+    overlap_analysis_platforms: Platform overlap
+    overlap_analysis_titles: Titles on multiple platforms
+    platform_detail: Platform detail
+    platforms: Platforms
+    releases: Releases
+    settings: Settings
+    specialized_reports: Specialized reports
+    subscriptions: Overlap analysis
+    supported_non_counter_platforms: non-COUNTER platforms
+    sushi: SUSHI
+    sushi_fetch_attempts: SUSHI harvests
+    sushi_management: SUSHI management
+    sushi_monthly_overview: SUSHI status
+    sushi_troubleshooting: Troubleshooting
+    tag_management: Tag management
+    tags: Tags
+    title_detail: Title detail
+    title_list_overlap: Title list overlap
+    title_lists: Title lists
+    user_page: User page
   menu: Menu
   organization: Organization
   platform: Platform
@@ -302,42 +309,49 @@ en:
 
 cs:
   pages:
-    settings: Nastavení
-    content: Obsah
-    platforms: Platformy
-    all_titles: Všechny tituly
-    sushi_management: Správa SUSHI
     admin: Administrace
-    sushi_fetch_attempts: Stahování SUSHI
-    import_batches: Importované dávky
-    management: Management
-    maintenance: Údržba
-    interest_overview: Zájmy
-    heatmap: Heatmapa zájmu
-    manual_data_uploads: Ručně nahraná data
-    dashboard: Přehled
-    sushi_monthly_overview: Stav SUSHI
+    all_titles: Všechny tituly
     analytics: Analytické nástroje
-    overlap_analysis_titles: Tituly na více platformách
-    overlap_analysis_platforms: Překryv platforem
-    flexitable: Reporting a exporty
-    sushi: SUSHI
+    changelog: Seznam změn
     configuration: Konfigurace
-    data_management: Správa dat
-    subscriptions: Analýza překryvů
-    exports: Exporty
+    content: Obsah
     create_report: Vytvořit report
-    flexi_reports: Reporty
-    tags: Štítky
-    tag_management: Správa štítků
-    title_lists: Titulové seznamy
-    organizations: Organizace
-    sushi_troubleshooting: Řešení problémů
-    supported_non_counter_platforms: non-COUNTER platformy
-    title_list_overlap: Překryv titulového seznamu
-    specialized_reports: Speciální reporty
+    dashboard: Přehled
     data_coverage_overview: Přehled pokrytí daty
+    data_management: Správa dat
+    exports: Exporty
+    flexi_report: Detail report
+    flexi_reports: Reporty
+    flexitable: Reporting a exporty
+    heatmap: Heatmapa zájmu
+    import_batches: Importované dávky
+    interest_overview: Zájmy
+    maintenance: Údržba
+    management: Management
     management_commands: Management příkazy
+    manual_data_uploads: Ručně nahraná data
+    mdu_detail: Detail ručně nahraných dat
+    organizations: Organizace
+    overlap_analysis_platforms: Překryv platforem
+    overlap_analysis_titles: Tituly na více platformách
+    platform_detail: Detail platformy
+    platforms: Platformy
+    releases: Verze
+    settings: Nastavení
+    specialized_reports: Speciální reporty
+    subscriptions: Analýza překryvů
+    supported_non_counter_platforms: non-COUNTER platformy
+    sushi: SUSHI
+    sushi_fetch_attempts: Stahování SUSHI
+    sushi_management: Správa SUSHI
+    sushi_monthly_overview: Stav SUSHI
+    sushi_troubleshooting: Řešení problémů
+    tag_management: Správa štítků
+    tags: Štítky
+    title_detail: Detail titulu
+    title_list_overlap: Překryv titulového seznamu
+    title_lists: Titulové seznamy
+    user_page: Uživatelská stránka
   menu: Menu
   organization: Organizace
   platform: Platforma

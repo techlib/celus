@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml" />
 
 <i18n lang="yaml">
 en:
@@ -414,6 +415,15 @@ export default {
       if (!this.showCreateOrganizationDialog && !this.userBasicTourFinished) {
         this.$tours[this.basicsTourName].start();
       }
+    },
+
+    $route: {
+      immediate: true,
+      handler(to, from) {
+        document.title = to.meta?.title
+          ? this.$t(to.meta.title) + " – Celus"
+          : "Celus";
+      },
     },
   },
 };
