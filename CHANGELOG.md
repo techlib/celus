@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [5.8.0]  - 2023-10-19
+
+### Added
+
+#### Frontend
+
+- filtering by tag class (not only by individual tags) was added to reporting
+- "last harvestable month" was introduced for SUSHI credentials - Celus will not try to harvest
+  data for months after this date. It is automatically extracted from failed reports and may be
+  set/overridden by the user.
+- tagging titles from a title list newly supports getting tag names from the uploaded file, rather
+  than being selected manually
+- tagging titles from a title list newly supports automatic periodic re-tagging of new titles
+- report type selection is no longer necessary when uploading COUNTER data - Celus will detect it
+  automatically
+- confirmation step was added to the manual data upload process to let user know what report type
+  was detected
+- page title was added to all pages - makes history, bookmarks and browser tabs more useful
+- link to knowledgebase articles was added to several pages
+- file size information was added to the list of harvest attempts
+
+#### Backend
+
+- support for importing data from XLS (older Excel format) files was added
+
+
+### Changes
+
+#### Frontend
+
+- tag management was improved to allow for easier creation of new tags
+- users newly see not only the title lists they uploaded, but also those related to tags and
+  tag classes they can assign
+- tags are newly applied to titles immediately after they are selected - no confirmation is needed
+- the templates for SUSHI credentials batch upload were polished for more consistent formatting
+- more user-friendly error messages were added to the manual data upload process
+
+#### Backend
+
+- code cleanup + typo fixing was performed in the backend code
+- lazy imports were added to the nibbler library to speed up startup of Celus
+- API key based authentication was sped up by using a newer version of the corresponding library
+- CSV processing throughout Celus was unified to use the same library
+
+
+### Fixed
+
+#### Frontend
+
+- tags for platforms occasionally not loading was fixed
+- when tag roll up is switched off, computation of remainder is automatically switched off as well
+
+#### Backend
+
+- creation of organization-platform link records was fixed to work more reliably
+- processing of title lists containing the BOM character was fixed
+
+
 ## [5.7.1]  - 2023-09-07
 
 ### Fixed

@@ -1,3 +1,32 @@
+- version: 5.8.0
+  title:
+    en: Tagging improvements, smarter SUSHI harvesting, support for Kanopy non-COUNTER report, and much more in Celus 5.8.0
+    cs: Vylepšení štítkování, chytřejší SUSHI harvesting, podpora non-COUNTER reportů Kanopy a mnoho dalšího v Celusu 5.8.0
+  text:
+    en: |
+      - support for Kanopy non-COUNTER report was added
+      - when tagging title from a file, it is now possible to apply many tags at once by explicitly listing them in the file
+      - title lists newly support periodic re-tagging of new titles
+      - in reporting it is now possible to filter by tag class - not only by individual tags
+      - "last harvestable month" was introduced for SUSHI credentials - Celus will not try to harvest data for months after this date. It is automatically extracted from failed reports and may be set/overridden by the user.
+      - links to knowledgebase articles were added to many Celus pages - look for the blue questionmark in the lower right corner
+      - users can newly see title lists created by other users which are related to tags and tag classes they can assign
+      - several other small improvements and fixes were introduced
+    cs: |
+      - byla přidána podpora pro non-COUNTER report Kanopy
+      - při štítkování titulů ze souboru je nyní možné aplikovat více štítků najednou uvedením jednotlivých štítků přímo v souboru
+      - titulové seznamy nově podporují pravidelné znovu-zpracování pro označení nových titulů
+      - v reportingu je nyní možné filtrovat podle typu štítků - nejen podle jednotlivých štítků
+      - byl přidán parametr "poslední stáhnutelný měsíc" pro SUSHI přihlašovací údaje - Celus se nebude pro pozdější měsíce pokoušet sklízet data. Tento parametr je automaticky extrahován z neúspěšných sklízení a může být nastaven/přepsán uživatelem.
+      - na mnoha stránkách Celusu byly přidány odkazy na články v naší znalostní bázi - hledejte modrý otazník v pravém dolním rohu
+      - uživatelé nyní vidí titulové seznamy vytvořené jinými uživateli, které jsou spojeny se štítky a typy štítků, které mohou přiřazovat
+      - bylo provedeno několik dalších menších vylepšení a oprav
+
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
+
 - version: 5.7.1
   title:
     en: Bugfix release 5.7.1
