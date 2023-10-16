@@ -21,7 +21,7 @@ en:
   actions_cancel_title: Cancel
   actions_force_run_title: Run
   previous_attempt: Previous attempt
-  not_before_tooltip: Data might not be avialable or some ratelimit was reached.
+  not_before_tooltip: Data might not be available or a ratelimit was reached.
   runnable:
     all: All
     filter: Ready to run
