@@ -104,8 +104,10 @@ cs:
                         :href="item.attempt.data_file"
                         target="_blank"
                       >
-                        {{ $t("data_file") }}
-                      </a>
+                        {{ $t("data_file") }}</a
+                      ><span class="caption">
+                        ({{ filesize(item.attempt.file_size) }})</span
+                      >
                     </div>
                   </div>
                 </td>
@@ -204,6 +206,7 @@ import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntention
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
+import filesize from "filesize";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -349,6 +352,7 @@ export default {
     },
   },
   methods: {
+    filesize,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

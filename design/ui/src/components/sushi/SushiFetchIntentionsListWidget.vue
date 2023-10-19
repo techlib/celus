@@ -197,6 +197,9 @@ cs:
                   <a :href="item.attempt.data_file" target="_blank">{{
                     item.attempt.data_file
                   }}</a>
+                  <span class="caption">
+                    ({{ filesize(item.attempt.file_size) }})</span
+                  >
                 </div>
                 <div v-if="item.attempt && item.attempt.error_code">
                   <strong>{{ $t("title_fields.error_code") }}</strong
@@ -312,6 +315,7 @@ import {
 import CheckMark from "@/components/util/CheckMark";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
+import filesize from "filesize";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
@@ -504,6 +508,7 @@ export default {
   },
 
   methods: {
+    filesize,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

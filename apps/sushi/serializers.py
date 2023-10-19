@@ -182,29 +182,6 @@ class SushiCredentialsDataSerializer(Serializer):
         locals()[f"{month:02d}"] = SushiCredentialsDataReportSerializer(many=True)
 
 
-class SushiFetchAttemptSerializer(ModelSerializer):
-    class Meta:
-        model = SushiFetchAttempt
-        fields = (
-            'counter_report',
-            'credentials',
-            'data_file',
-            'end_date',
-            'error_code',
-            'import_batch',
-            'log',
-            'organization',
-            'pk',
-            'platform',
-            'start_date',
-            'timestamp',
-            'when_processed',
-            'partial_data',
-            'status',
-            'last_updated',
-        )
-
-
 class SushiFetchAttemptSimpleSerializer(ModelSerializer):
 
     counter_version = IntegerField(read_only=True, source='counter_report.counter_version')
@@ -216,6 +193,7 @@ class SushiFetchAttemptSimpleSerializer(ModelSerializer):
             'counter_version',
             'credentials_id',
             'data_file',
+            'file_size',
             'end_date',
             'error_code',
             'import_batch',
@@ -235,6 +213,7 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
             'counter_report',
             'credentials',
             'data_file',
+            'file_size',
             'end_date',
             'error_code',
             'import_batch',
