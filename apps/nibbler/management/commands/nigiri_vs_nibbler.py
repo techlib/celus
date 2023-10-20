@@ -1,5 +1,3 @@
-import codecs
-import csv
 import logging
 import re
 import typing
@@ -8,10 +6,11 @@ from pathlib import Path
 from celus_nibbler import Poop, eat
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
-from celus_nigiri.csv_detect import detect_file_encoding
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from logs.models import ReportType
+
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +85,7 @@ class Command(BaseCommand):
 
     def parse_nigiri(self, path, report_type: ReportType) -> typing.Optional[typing.List[tuple]]:
         with path.open("rb") as f:
-            reader = csv.DictReader(codecs.iterdecode(f, detect_file_encoding(f)))
+            reader = get_dict_reader_from_csv(f)
             try:
                 records = custom_data_to_records(
                     reader, extra_dims=report_type.dimension_short_names

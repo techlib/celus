@@ -1,10 +1,9 @@
-import csv
-
 import reversion
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from logs.models import ReportType
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.models import Platform
 
 from sushi.models import CounterReportType
@@ -84,7 +83,7 @@ class Command(BaseCommand):
         platform_short_name_to_obj = {pl.short_name: pl for pl in Platform.objects.all()}
         platform_to_interest = {}
         with open(options['file'], 'r') as infile:
-            reader = csv.DictReader(infile)
+            reader = get_dict_reader_from_csv(infile)
             if platform_col not in reader.fieldnames:
                 raise CommandError(
                     f'File does not contain the "{platform_col}" column for '

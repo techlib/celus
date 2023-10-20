@@ -1,5 +1,3 @@
-import codecs
-import csv
 import logging
 import os
 import re
@@ -14,7 +12,6 @@ import magic
 from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
 from celus_nigiri.celus import custom_data_to_records
-from celus_nigiri.csv_detect import detect_file_encoding
 from core.exceptions import ModelUsageError
 from core.models import (
     UL_ROBOT,
@@ -48,6 +45,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.aggregation import Sum as HSum
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from nibbler.logic.processing import (
     celus_format_poops,
     counter_format_poops,
@@ -741,16 +739,13 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     def is_processed(self):
         return self.state == MduState.IMPORTED
 
-    def detect_file_encoding(self) -> str:
-        """
-        returns encoding of the file uploaded
-        """
-        with open(self.data_file.path, "rb") as file:
-            return detect_file_encoding(file)
-
     def to_record_dicts(self) -> [dict]:
-        reader = csv.DictReader(codecs.iterdecode(self.data_file.file, self.detect_file_encoding()))
-        data = list(reader)
+
+        # Unwrap django file abstraction
+        file = getattr(self.data_file, 'file', self.data_file)
+        file = getattr(file, 'file', file)
+
+        data = list(get_dict_reader_from_csv(file))
         return data
 
     def prepare_default_metric(self) -> Metric:

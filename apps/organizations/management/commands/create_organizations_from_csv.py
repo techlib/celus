@@ -1,9 +1,9 @@
-import csv
 import logging
 from collections import Counter
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 
 from organizations.models import Organization
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         with open(options['csv_file'], 'r') as infile:
-            reader = csv.DictReader(infile)
+            reader = get_dict_reader_from_csv(infile)
             for row in reader:
                 name = row.get('name')
                 if not name:

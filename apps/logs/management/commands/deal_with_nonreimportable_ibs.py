@@ -1,4 +1,3 @@
-import csv
 import logging
 from collections import Counter
 
@@ -6,6 +5,7 @@ from core.logic.dates import month_end, parse_date
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.transaction import atomic, on_commit
+from nibbler.logic import get_dict_reader_from_csv
 from scheduler.models import FetchIntention, Harvest
 from sushi.models import CounterReportType, SushiCredentials
 
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         harvest_groups = {}
         ibs_to_delete = []
         with open(options['input_file'], 'r') as infile:
-            reader = csv.DictReader(infile)
+            reader = get_dict_reader_from_csv(infile)
             for rec in reader:
                 logger.debug('rec: %s', rec)
                 try:

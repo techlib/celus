@@ -1,10 +1,10 @@
-import csv
 import logging
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Union
 
 from django.db.models import Q
 from logs.logic.validation import normalize_issn
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.models import Title
 
 from tags.models import AccessibleBy, Tag, TagClass, TaggingBatch, TagScope, TitleTag
@@ -29,7 +29,7 @@ class ScopusTitleListTagger:
     def _load_class_code_map(cls, fname: str) -> dict:
         class_code_map = {}
         with open(fname) as f:
-            reader = csv.DictReader(f)
+            reader = get_dict_reader_from_csv(f)
             for row in reader:
                 code = row.pop('Code')
                 class_code_map[code] = {k.strip(): v.strip() for k, v in row.items()}
@@ -39,7 +39,7 @@ class ScopusTitleListTagger:
     def _load_issn_to_code_map(cls, fname: str) -> dict:
         issn_to_code_map = {}
         with open(fname) as f:
-            reader = csv.DictReader(f)
+            reader = get_dict_reader_from_csv(f)
             for row in reader:
                 issn = normalize_issn(row['ISSN'].strip(), raise_error=False)
                 eissn = normalize_issn(row['eISSN'].strip(), raise_error=False)

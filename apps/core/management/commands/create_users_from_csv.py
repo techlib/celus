@@ -1,4 +1,3 @@
-import csv
 import logging
 from collections import Counter
 from distutils.util import strtobool
@@ -6,6 +5,7 @@ from distutils.util import strtobool
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.db.transaction import atomic
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from organizations.models import Organization, UserOrganization
 
 from core.models import User
@@ -28,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         with open(options['csv_file'], 'r') as infile:
-            reader = csv.DictReader(infile)
+            reader = get_dict_reader_from_csv(infile)
             for row in reader:
                 email = row.get('email')
                 if not email:

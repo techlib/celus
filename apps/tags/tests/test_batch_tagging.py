@@ -1,5 +1,3 @@
-import codecs
-import csv
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -7,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from django.core.files.base import ContentFile
 from freezegun import freeze_time
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.fake_data import TitleFactory
 from publications.tests.test_api import MockTask
 from rest_framework.reverse import reverse
@@ -107,6 +106,11 @@ class TestBatchTagging:
         assert tb.state == TaggingBatchState.PREFLIGHT
         assert tb.last_preflight is not None
         assert tb.last_preflight.recognized_columns == ['ISSN']
+        # now try to import
+        tb.state = TaggingBatchState.IMPORTING
+        tb.assign_tag()
+        assert tb.state == TaggingBatchState.IMPORTED
+        assert tb.last_import.recognized_columns == ['ISSN']
 
     def test_tagging_batch_tagging(self, inmemory_media, users):
         TitleFactory.create(isbn='9780787960186')
@@ -219,8 +223,7 @@ class TestBatchTagging:
         )
         tb.do_preflight()
         assert tb.state == TaggingBatchState.PREFLIGHT
-        stream = codecs.getreader('utf-8')(tb.annotated_file)
-        reader = csv.DictReader(stream)
+        reader = get_dict_reader_from_csv(tb.annotated_file.file.file)
         assert '_Celus info_' in reader.fieldnames
         row1 = next(reader)
         assert row1['ISBN'] == '9780787960186'
@@ -234,8 +237,7 @@ class TestBatchTagging:
         tb.assign_tag()
         assert tb.state == TaggingBatchState.IMPORTED
         # recheck
-        stream = codecs.getreader('utf-8')(tb.annotated_file)
-        reader = csv.DictReader(stream)
+        reader = get_dict_reader_from_csv(tb.annotated_file.file.file)
         assert '_Celus info_' in reader.fieldnames
         row1 = next(reader)
         assert row1['ISBN'] == '9780787960186'

@@ -1,4 +1,3 @@
-import csv
 import logging
 import re
 from collections import Counter
@@ -6,6 +5,7 @@ from collections import Counter
 from core.models import DataSource
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 
 from publications.models import Platform
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
         ext_id_to_platform = {p.ext_id: p for p in Platform.objects.all()}
         seen_registry_ids = {str(p.counter_registry_id) for p in ext_id_to_platform.values()}
         with open(options['csv_file'], 'r') as infile:
-            reader = csv.DictReader(infile)
+            reader = get_dict_reader_from_csv(infile)
             for row in reader:
                 ext_id = int(row.get('ext_id').strip())
                 platform = ext_id_to_platform.get(ext_id)

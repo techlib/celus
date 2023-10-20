@@ -1,5 +1,3 @@
-import codecs
-import csv
 import logging
 import operator
 import os
@@ -9,7 +7,6 @@ from functools import reduce
 from typing import BinaryIO, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import magic
-from celus_nigiri.csv_detect import detect_file_encoding
 from colorfield.fields import ColorField
 from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
 from django.conf import settings
@@ -746,8 +743,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         """
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)
-        reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
-        columns = next(reader)
+        columns = CsvTitleListReader().fieldnames(self.source_file)
         self.source_file.seek(orig_pos)
         return columns
 
@@ -795,8 +791,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
     def file_row_count(self):
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)
-        check_reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
-        total = sum(1 for _ in check_reader) - 1  # -1 because of header
+        total = CsvTitleListReader().record_count(self.source_file)
         self.source_file.seek(orig_pos)
         return total
 
@@ -835,12 +830,9 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
-        encoding = detect_file_encoding(self.source_file)
         tag_to_matched_lines = Counter()
         tag_to_unique_title_ids = defaultdict(set)
-        for rec in reader.process_source(
-            codecs.getreader(encoding)(self.source_file), dump_file=dump_file
-        ):
+        for rec in reader.process_source(self.source_file, dump_file=dump_file):
             stats['row_count'] += 1
             unique_title_ids |= rec.title_ids
             if not rec.title_ids:
@@ -1068,9 +1060,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         tag_to_unique_title_ids = defaultdict(set)
         tag_to_matched_lines = Counter()
         with tempfile.NamedTemporaryFile('wb') as dump_file:
-            for rec in reader.process_source(
-                codecs.iterdecode(self.source_file, 'utf-8'), dump_file=dump_file
-            ):
+            for rec in reader.process_source(self.source_file, dump_file=dump_file):
                 stats['row_count'] += 1
                 tag_names = [None] if self.tag else rec.tag_names
                 if not rec.title_ids:

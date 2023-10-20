@@ -1,11 +1,10 @@
-import codecs
-from csv import DictReader
 from io import BytesIO, StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from organizations.fake_data import OrganizationFactory
 
 from publications.fake_data import (
@@ -64,7 +63,7 @@ class TestTitleListOverlap:
         assert [len(rec.title_ids) for rec in data] == expected_counts
         # check the dump file
         dump.seek(0)
-        dump_reader = DictReader(codecs.getreader('utf-8')(dump))
+        dump_reader = get_dict_reader_from_csv(dump)
         reader_recs = list(dump_reader)
         assert dump_reader.fieldnames == [
             'Name',
@@ -139,7 +138,7 @@ class TestTitleListOverlap:
         assert len(data) == 2
         # check the dump file
         dump.seek(0)
-        dump_reader = DictReader(codecs.getreader('utf-8')(dump))
+        dump_reader = get_dict_reader_from_csv(dump)
         t1_rec, t2_rec = list(dump_reader)
         if t1_pfoo_match:
             assert 'Foo' in t1_rec['_Found on platforms_']
@@ -171,7 +170,7 @@ class TestTitleOverlapBatchModel:
         assert batch.processing_info['stats']['unique_matched_titles'] == 0
         assert batch.processing_info['recognized_columns'] == ['eISSN', 'ISBN', 'issn']
         assert batch.annotated_file.name.endswith('-annotated.csv')
-        reader = DictReader(codecs.getreader('utf-8')(batch.annotated_file))
+        reader = get_dict_reader_from_csv(batch.annotated_file.file.file)
         assert '_Matched titles_' in reader.fieldnames
         assert '_Found on platforms_' in reader.fieldnames
 

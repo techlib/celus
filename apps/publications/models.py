@@ -1,12 +1,9 @@
-import codecs
-import csv
 import os
 import tempfile
 from collections import Counter
 from typing import BinaryIO, Callable, Optional
 
 import magic
-from celus_nigiri.csv_detect import detect_file_encoding
 from core.models import CreatedUpdatedMixin, DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -290,10 +287,11 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
         verbose_name_plural = 'Title overlap batches'
 
     def file_row_count(self):
+        from publications.logic.title_list_overlap import CsvTitleListOverlapReader
+
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)
-        check_reader = csv.reader(codecs.getreader('utf-8')(self.source_file))
-        total = sum(1 for _ in check_reader) - 1  # -1 because of header
+        total = CsvTitleListOverlapReader().record_count(self.source_file)
         self.source_file.seek(orig_pos)
         return total
 
@@ -318,10 +316,7 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
         stats = Counter()
         unique_title_ids = set()
         total = self.file_row_count()
-        encoding = detect_file_encoding(self.source_file)
-        for rec in reader.process_source(
-            codecs.getreader(encoding)(self.source_file), dump_file=dump_file
-        ):
+        for rec in reader.process_source(self.source_file, dump_file=dump_file):
             stats['row_count'] += 1
             unique_title_ids |= rec.title_ids
             if not rec.title_ids:

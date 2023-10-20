@@ -12,6 +12,7 @@ from typing import Any, BinaryIO, Callable, Dict, Generator, Iterable, Optional,
 from django.db.models import Q
 from logs.logic.data_import import TitleRec
 from logs.logic.validation import normalize_isbn, normalize_issn
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.models import Title
 
 
@@ -33,6 +34,7 @@ class TitleListReader(abc.ABC):
         dump_file: Optional[BinaryIO] = None,
     ) -> Generator[TitleTaggingRecord, None, None]:
         dump_writer = None
+
         for rec in self.add_title_ids_to_records(
             self.parse_data(source), merge_issns=merge_issns, batch_size=batch_size
         ):
@@ -147,6 +149,11 @@ class CsvReaderMixin:
         'doi': {'normalize': None},
     }
 
+    def _remove_django_file_wrappers(self, source):
+        file = getattr(source, 'file', source)
+        file = getattr(file, 'file', file)
+        return file
+
     def __init__(self, tag_name_column: Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
         self.tag_name_column = tag_name_column
@@ -156,8 +163,20 @@ class CsvReaderMixin:
         # `self.attrs`, the value is the actual column name
         self.column_names = {}
 
-    def parse_data(self, source: Iterable[str]) -> Generator[TitleTaggingRecord, None, None]:
-        reader = csv.DictReader(source)
+    def fieldnames(self, source) -> Iterable[str]:
+        file = self._remove_django_file_wrappers(source)
+        reader = get_dict_reader_from_csv(file)
+        return reader.fieldnames
+
+    def record_count(self, source) -> int:
+        file = self._remove_django_file_wrappers(source)
+        reader = get_dict_reader_from_csv(file)
+        return sum(1 for _ in reader)
+
+    def parse_data(self, source: Any) -> Generator[TitleTaggingRecord, None, None]:
+
+        file = self._remove_django_file_wrappers(source)
+        reader = get_dict_reader_from_csv(file)
         # find which columns are present and find the actual form of the name (case and whitespace)
         for column_name in reader.fieldnames:
             if (column_name_clean := column_name.strip().lower()) in self.attrs:

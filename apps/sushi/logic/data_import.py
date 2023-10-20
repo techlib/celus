@@ -1,4 +1,3 @@
-import csv
 import json
 import logging
 from collections import Counter
@@ -7,6 +6,7 @@ from typing import Optional
 
 import reversion
 from django.db.models import Count, Q
+from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from openpyxl import load_workbook
 from organizations.models import Organization
 from publications.models import Platform
@@ -349,13 +349,8 @@ def import_sushi_credentials_from_csv(
     reversion_comment: Optional[str] = None,
     override_organization: Optional[Organization] = None,
 ) -> dict:
-    if hasattr(filename, 'read'):
-        reader = csv.DictReader(filename)
-        records = list(reader)  # read all records from the reader
-    else:
-        with open(filename, 'r') as infile:
-            reader = csv.DictReader(infile)
-            records = list(reader)  # read all records from the reader
+    reader = get_dict_reader_from_csv(filename)
+    records = list(reader)  # read all records from the reader
     return import_sushi_credentials_old(
         records,
         prefer_knowledgebase_urls=prefer_knowledgebase_urls,
