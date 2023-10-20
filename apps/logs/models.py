@@ -623,6 +623,7 @@ def validate_mime_type(fileobj):
         'text/x-Algol68',
         'application/json',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',  # xls
     ]
 
     if fileobj.name and fileobj.name.endswith(".xlsx"):

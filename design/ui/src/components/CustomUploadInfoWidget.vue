@@ -47,7 +47,7 @@ en:
       dimensions <i>Publisher</i> and <i>Success</i>.
 
   raw:
-    text1: Please upload a <strong>CSV</strong>, <strong>TSV</strong> or <strong>XLSX</strong> file with non-COUNTER data for this platform.
+    text1: Please upload a <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> or <strong>XLSX</strong> file with non-COUNTER data for this platform.
     note: Please note that this function is experimental and not all formats are supported.
 
   counter:
@@ -101,7 +101,7 @@ cs:
       rozměry <i>Publisher</i> a <i>Success</i>.
 
   raw:
-    text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
+    text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
     note: Upozorňujeme, že tato funkce je experimentální a nejsou podporovány všechny možné formáty.
 
   counter:
