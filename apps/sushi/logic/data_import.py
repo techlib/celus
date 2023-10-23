@@ -12,7 +12,7 @@ from publications.models import Platform
 
 from sushi.logic.export import Col
 
-from ..models import SushiCredentials
+from ..models import CounterReportsToCredentials, CounterReportType, SushiCredentials
 
 logger = logging.getLogger(__name__)
 
@@ -142,20 +142,22 @@ def import_sushi_credentials_new(
 
     def log(message: str, *args, stat_name='error', trivial=False, level=logging.ERROR):
         if log_trivial or not trivial:
-            logger.log(level, "row #%03d: " + message, i + 2, *args)
+            logger.log(level, f"row #%03d: {message}", i + 2, *args)
         stats[stat_name] += 1
 
     for i, record in enumerate(records):  # noqa: B007 - i is used in `log` function
         customer_id = to_clean_str(record.get(Col.CUSTOMER_ID.value))
         if not customer_id:
             log(
-                'Customer ID empty - interpretting as empty row',
+                'Customer ID empty - interpreting as empty row',
                 stat_name='empty_customer_id',
                 trivial=True,
                 level=logging.INFO,
             )
             # skip empty lines
             continue
+
+        # organization name
         organization_name = (
             single_org.name_en if single_org else to_clean_str(record.get(Col.ORGANIZATION.value))
         )
@@ -166,6 +168,8 @@ def import_sushi_credentials_new(
         if not organization:
             log('Unknown organization: "%s"', organization_name)
             continue
+
+        # platform
         platform_name = to_clean_str(record.get(Col.PUBLISHER_VENDOR_PLATFORM.value))
         plat_source_org = db_platforms.get(
             (platform_name.lower(), organization.id)
@@ -179,7 +183,6 @@ def import_sushi_credentials_new(
                 organization.name_en,
             )
             continue
-
         if not plat_source_other and not plat_source_org:
             log(
                 'Unknown platform "%s" for organization "%s"',
@@ -188,7 +191,9 @@ def import_sushi_credentials_new(
             )
             continue
         platform = plat_source_other or plat_source_org
-        optional = dict()
+
+        # optional fields
+        optional = {}
         if title := to_clean_str(record.get(Col.TITLE.value)):
             optional['title'] = title
 
@@ -215,6 +220,8 @@ def import_sushi_credentials_new(
                 platform.name_en,
             )
             continue
+
+        # sync credentials
         key = (organization.pk, platform.pk, 5)
         if key in db_credentials:
             if key in db_identical_credentials:
@@ -284,6 +291,44 @@ def import_sushi_credentials_new(
                 )
                 db_credentials[key] = cr
             log("Credentials created", stat_name='added', level=logging.WARNING)
+
+        # report type assignment
+        linked_rts = {rt.code for rt in cr.counter_reports.all()}
+        if platform.knowledgebase:
+            if provider := next(
+                (
+                    p
+                    for p in platform.knowledgebase.get('providers', [])
+                    if p['counter_version'] == 5 and p.get('assigned_report_types')
+                ),
+                None,
+            ):
+                for report_type in provider['assigned_report_types']:
+                    if rt := CounterReportType.objects.filter(
+                        code=report_type['report_type']
+                    ).first():
+                        if report_type['report_type'] not in linked_rts:
+                            CounterReportsToCredentials.objects.create(
+                                credentials=cr, counter_report=rt
+                            )
+                            log(
+                                f"Report type {report_type['report_type']} assigned",
+                                stat_name='report_type_assigned',
+                                level=logging.INFO,
+                            )
+                    else:
+                        log(
+                            f"Report type {report_type['report_type']} not found",
+                            stat_name='report_type_not_found',
+                            level=logging.WARNING,
+                        )
+            else:
+                log(
+                    "No report types assigned to the platform '%s' - no knowledgebase provider",
+                    platform.name_en,
+                    stat_name='report_type_not_assigned',
+                    level=logging.WARNING,
+                )
     return stats
 
 

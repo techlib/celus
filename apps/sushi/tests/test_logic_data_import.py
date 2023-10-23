@@ -7,7 +7,6 @@ from core.models import DataSource
 from faker import Faker
 from openpyxl import Workbook
 from organizations.fake_data import OrganizationFactory
-from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.fake_data import PlatformFactory
 from publications.models import Platform
 
@@ -18,6 +17,12 @@ from sushi.logic.data_import import (
     import_sushi_credentials_old,
 )
 from sushi.models import AttemptStatus
+from test_scenarios.basic import (  # noqa - fixtures
+    counter_report_types,
+    data_sources,
+    organizations,
+    report_types,
+)
 
 from ..fake_data import FetchAttemptFactory
 from ..models import SushiCredentials
@@ -44,8 +49,37 @@ class TestLogicDataImportXLSX:
     @pytest.fixture
     def knowledgebases(self):
         return [
-            {'providers': [{'counter_version': 5, 'provider': {'url': fake.url()}}]},
-            {'providers': [{'counter_version': 5, 'provider': {'url': fake.url()}}]},
+            {
+                'providers': [
+                    {
+                        'counter_version': 5,
+                        'provider': {'url': fake.url()},
+                        'assigned_report_types': [
+                            {'not_valid_after': None, 'not_valid_before': None, 'report_type': 'TR'}
+                        ],
+                    }
+                ]
+            },
+            {
+                'providers': [
+                    {
+                        'counter_version': 5,
+                        'provider': {'url': fake.url()},
+                        'assigned_report_types': [
+                            {
+                                'not_valid_after': None,
+                                'not_valid_before': None,
+                                'report_type': 'TR',
+                            },
+                            {
+                                'not_valid_after': None,
+                                'not_valid_before': None,
+                                'report_type': 'DR',
+                            },
+                        ],
+                    }
+                ]
+            },
         ]
 
     @pytest.fixture
@@ -55,7 +89,7 @@ class TestLogicDataImportXLSX:
         return [p1, p2]
 
     @pytest.fixture
-    def organizations(self):
+    def local_organizations(self):
         return OrganizationFactory.create_batch(3)
 
     @pytest.fixture
@@ -89,11 +123,11 @@ class TestLogicDataImportXLSX:
         ]
 
     @pytest.fixture
-    def records(self, records_wo_org, organizations):
+    def records(self, records_wo_org, local_organizations):
         rec = deepcopy(records_wo_org)
-        rec[0]['organization'] = organizations[0].name_en
-        rec[1]['organization'] = organizations[1].name_en
-        rec[2]['organization'] = organizations[2].name_en
+        rec[0]['organization'] = local_organizations[0].name_en
+        rec[1]['organization'] = local_organizations[1].name_en
+        rec[2]['organization'] = local_organizations[2].name_en
         return rec
 
     @pytest.fixture
@@ -141,7 +175,7 @@ class TestLogicDataImportXLSX:
         ],
     )
     def test_single_org_arg_and_organization_column(
-        self, single_org_arg, org_colum, value_error, records, records_wo_org, organizations
+        self, single_org_arg, org_colum, value_error, records, records_wo_org, local_organizations
     ):
         org = OrganizationFactory()
         single_org = org.name_en if single_org_arg else None
@@ -160,9 +194,9 @@ class TestLogicDataImportXLSX:
                     if single_org_arg:
                         assert cr.organization == org
                     else:
-                        assert cr.organization in organizations
+                        assert cr.organization in local_organizations
 
-    def test_sushi_import(self, knowledgebases, records):
+    def test_sushi_import(self, knowledgebases, records, counter_report_types):
         assert SushiCredentials.objects.count() == 0
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
@@ -183,6 +217,10 @@ class TestLogicDataImportXLSX:
                 )
                 assert cr.counter_version == 5
                 assert cr.url == kb['providers'][0]['provider']['url']
+                expected_reports = {
+                    rec['report_type'] for rec in kb['providers'][0]['assigned_report_types']
+                }
+                assert expected_reports == {rt.code for rt in cr.counter_reports.all()}
 
             # retry
             stats = import_sushi_credentials_new(records)
@@ -245,16 +283,16 @@ class TestLogicDataImportXLSX:
                 )
                 assert cr.api_key == (updated_rec['api key'] if updated else rec['api key'])
 
-    def test_existing_sushi_reimport(self, records, platforms, organizations):
+    def test_existing_sushi_reimport(self, records, platforms, local_organizations):
         SushiCredentials.objects.create(
             title=fake.company(),
-            organization=organizations[0],
+            organization=local_organizations[0],
             platform=platforms[0],
             counter_version=5,
         )
         SushiCredentials.objects.create(
             title=fake.company(),
-            organization=organizations[0],
+            organization=local_organizations[0],
             platform=platforms[0],
             counter_version=5,
         )
@@ -269,10 +307,10 @@ class TestLogicDataImportXLSX:
 
     @pytest.mark.parametrize(['name_is_identical', 'error', 'added'], [[False, 0, 1], [True, 1, 0]])
     def test_conflicting_platform_names(
-        self, organizations, knowledgebases, name_is_identical, error, added
+        self, local_organizations, knowledgebases, name_is_identical, error, added
     ):
         ds_type_org = DataSourceFactory.create(
-            type=DataSource.TYPE_ORGANIZATION, organization=organizations[0]
+            type=DataSource.TYPE_ORGANIZATION, organization=local_organizations[0]
         )
         ds_type_kb = DataSourceFactory.create(
             type=DataSource.TYPE_KNOWLEDGEBASE,
@@ -286,7 +324,7 @@ class TestLogicDataImportXLSX:
         records = [
             {
                 'title': fake.company(),
-                'organization': organizations[0].name_en,
+                'organization': local_organizations[0].name_en,
                 'publisher/vendor/platform': name,
                 'customer id': fake.isbn10(),
             }
@@ -298,7 +336,8 @@ class TestLogicDataImportXLSX:
 
 @pytest.mark.django_db
 class TestLogicDataImportCSV:
-    def test_sushi_import(self, organizations):
+    def test_sushi_import(self):
+        organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
         data = [
             {
@@ -342,7 +381,8 @@ class TestLogicDataImportCSV:
         assert stats['skipped'] == 2
         assert SushiCredentials.objects.count() == 2
 
-    def test_sushi_reimport(self, organizations):
+    def test_sushi_reimport(self):
+        organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
         data = [
             {
@@ -379,7 +419,8 @@ class TestLogicDataImportCSV:
         assert credentials.http_username == ''
 
     @pytest.mark.parametrize('organization_idx', [0, 1])
-    def test_sushi_import_with_custom_platforms(self, organizations, organization_idx):
+    def test_sushi_import_with_custom_platforms(self, organization_idx):
+        organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
         pl_global = PlatformFactory.create(short_name='pl-global', ext_id=10)
         s1, _ = DataSource.objects.get_or_create(

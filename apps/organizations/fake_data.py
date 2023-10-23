@@ -14,7 +14,7 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
     ext_id = factory.Sequence(lambda n: n)
     ico = factory.Sequence(lambda n: n)
     name = factory.Faker('company')
-    internal_id = factory.LazyAttribute(lambda x: x.name.upper().replace(' ', '_'))
+    internal_id = factory.LazyAttribute(lambda x: x.name.lower().replace(' ', '_'))
     short_name = factory.LazyAttribute(lambda x: x.name[:10])
     url = factory.Faker('url')
     fte = factory.Faker('pyint')
