@@ -22,7 +22,7 @@ def organization_filter_from_org_id(
         else:
             raise Http404()
     else:
-        if type(org_id) is str and not org_id.isdigit():
+        if isinstance(org_id, str) and not org_id.isdigit():
             raise Http404()
         org_qs = user.admin_organizations() if admin_required else user.accessible_organizations()
         if (

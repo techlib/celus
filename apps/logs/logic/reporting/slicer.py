@@ -843,10 +843,10 @@ class FlexibleDataSlicer:
             if isinstance(value, datetime.date):
                 # specific date means we should only allow the one month
                 return filter_class(field.name, start=value, end=value)
-            if type(value) is int:
+            if isinstance(value, int):
                 # we treat int in a special way as the whole year with that number
                 value = {'start': f'{value}-01-01', 'end': f'{value}-12-31'}
-            elif type(value) is str:
+            elif isinstance(value, str):
                 start = parse_month(value)
                 end = month_end(start)
                 value = {'start': start, 'end': end}

@@ -4,7 +4,7 @@ from rest_framework.relations import MANY_RELATION_KWARGS
 
 class CommaSeparatedPrimaryKeyListField(serializers.ManyRelatedField):
     def to_internal_value(self, data):
-        if type(data) is list and len(data) == 1 and isinstance(data[0], str):
+        if isinstance(data, list) and len(data) == 1 and isinstance(data[0], str):
             data = data[0].split(',')
         return super().to_internal_value(data)
 

@@ -1683,7 +1683,7 @@ class TestTitleInterestBrief:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert type(data) is dict
+        assert type(data) is dict  # noqa E721 - make sure it is a list, not subtype
         assert len(data) == 1, 'just "interest" key'
         assert data['interest'] == 3  # 1 + 2
 

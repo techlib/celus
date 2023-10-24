@@ -730,7 +730,7 @@ class TestImportBatchesAPI:
             },
         )
         assert resp.status_code == 200
-        assert type(resp.json()) is list
+        assert type(resp.json()) is list  # noqa E721 - make sure it is a list, not subtype
         assert len(resp.json()) == credentials_count
 
     @pytest.mark.parametrize('broken', [True, False])
@@ -776,7 +776,7 @@ class TestImportBatchesAPI:
             },
         )
         assert resp.status_code == 200
-        assert type(resp.json()) is list
+        assert type(resp.json()) is list  # noqa E721 - make sure it is a list, not subtype
         assert len(resp.json()) == 0 if broken else 1
 
     @pytest.mark.parametrize(
@@ -810,6 +810,6 @@ class TestImportBatchesAPI:
             },
         )
         assert resp.status_code == 200
-        assert type(resp.json()) is dict
+        assert type(resp.json()) is dict  # noqa E721 - make sure it is a dict, not subtype
         assert resp.json()['ib_count'] == ib_count
         assert resp.json()['ib_max'] == ib_max

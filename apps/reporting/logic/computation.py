@@ -78,7 +78,7 @@ class ReportingContext:
         """
         if len(parsed_formula) == 1:
             variable = parsed_formula[0]
-            if type(variable) is list:
+            if isinstance(variable, list):
                 return self.perform_computation(variable, source_name=source_name)
             if stage := self.get_stage_for_current_part(variable):
                 out = stage.report_data_.copy()
@@ -217,7 +217,7 @@ class Report:
         """
         if len(parsed_formula) == 1:
             variable = parsed_formula[0]
-            if type(variable) is list:
+            if isinstance(variable, list):
                 return self.get_used_data_sources(part_id, variable)
             if stage := self.stages_by_part_and_id[part_id].get(variable):
                 return self.get_used_data_sources(part_id, stage.parsed_formula)

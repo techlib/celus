@@ -70,7 +70,7 @@ class Syncer:
             self._seen_pks.add(obj.pk)
             save = False
             for key, value in record.items():
-                if type(value) is not dict and not isinstance(value, models.Model):
+                if not isinstance(value, (dict, models.Model)):
                     # we do not translate value for dicts as it messes the JSON field somehow
                     value = self.object_class._meta._forward_fields_map[key].get_prep_value(value)
                 if getattr(obj, key) != value:
@@ -101,9 +101,7 @@ class ERMSSyncer(Syncer):
     primary_id = 'ext_id'
 
     def translate_value(self, key, value):
-        if type(value) is list:
-            return value[0]
-        return value
+        return value[0] if isinstance(value, list) else value
 
     def translate_key(self, key):
         if '@' in key:

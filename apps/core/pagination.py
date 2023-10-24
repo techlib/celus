@@ -25,7 +25,7 @@ class SmartPageNumberPagination(PageNumberPagination):
         result = queryset[(page_number - 1) * page_size : page_number * page_size]  # noqa E203
         if result:
             first = result[0]
-            if type(first) is dict:
+            if isinstance(first, dict):
                 self.count_ = first.get(self.COUNT_ATTR, 0)
             else:
                 self.count_ = getattr(first, self.COUNT_ATTR, 0)

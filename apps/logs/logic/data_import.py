@@ -38,16 +38,15 @@ COUNTER_RECORD_BUFFER_SIZE = settings.COUNTER_RECORD_BUFFER_SIZE
 
 
 def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None) -> int:
-    if attr_value not in mapping:
-        data = {attr_name: attr_value}
-        if other_attrs:
-            data.update(other_attrs)
-        obj, created = model.objects.get_or_create(**data)
-        data["pk"] = obj.pk
-        mapping[attr_value] = data
-        return obj.pk
-    else:
+    if attr_value in mapping:
         return mapping[attr_value]["pk"]
+    data = {attr_name: attr_value}
+    if other_attrs:
+        data |= other_attrs
+    obj, created = model.objects.get_or_create(**data)
+    data["pk"] = obj.pk
+    mapping[attr_value] = data
+    return obj.pk
 
 
 @dataclass
@@ -724,12 +723,12 @@ def _preprocess_counter_records(
         if title_id is None:
             # the title could not be found or created (probably missing required field like title)
             stats['warn missing title'] += 1
-        if type(record.metric) is int:
+        if isinstance(record.metric, int):
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
         else:
             metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
-        start = record.start if not isinstance(record.start, date) else record.start.isoformat()
+        start = record.start.isoformat() if isinstance(record.start, date) else record.start
         import_batch = month_to_import_batch[start]
         id_attrs = {'metric_id': metric_id, 'target_id': title_id}
         for i, dim in enumerate(dimensions):

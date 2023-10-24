@@ -299,7 +299,7 @@ class TestTitleManager:
         assert Title.objects.count() == 1
         # now process the in_title
         title_rec = TitleRec(**in_title)
-        assert type(title_rec.proprietary_ids) is set
+        assert isinstance(title_rec.proprietary_ids, set)
         tm = TitleManager()
         # the following is necessary because normalization would normally be carried out
         # in `counter_record_to_title_rec` which we do not use here

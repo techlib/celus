@@ -74,7 +74,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             attempt.log = str(e)
         # fill in extracted_data
-        if hasattr(reader, 'header') and type(reader.header) is dict:
+        if hasattr(reader, 'header') and isinstance(reader.header, dict):
             attempt.extract_header_data(reader.header)
         attempt.save()
         return
@@ -85,13 +85,10 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         error = reader.errors[0]
         attempt.log = '; '.join(str(e) for e in reader.errors)
         logger.warning('Found errors: %s', attempt.log)
-        if isinstance(error, TransportError):
-            attempt.status = AttemptStatus.DOWNLOAD_FAILED
-        else:
+        if not isinstance(error, TransportError):
             attempt.error_code = error.code
-            attempt.status = AttemptStatus.DOWNLOAD_FAILED
+        attempt.status = AttemptStatus.DOWNLOAD_FAILED
         attempt.save()
-    # now read the data and import it
     elif reader.record_found:
 
         month = (
@@ -129,14 +126,14 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             # it may be overwritten bellow with sushi warnings, but that's not a problem
             attempt.log = 'No data found during import'
         if counter_version == 5 and (reader.errors or reader.warnings):
-            attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
+            attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
             attempt.error_code = reader.warnings[0].code
         attempt.save()
         logger.info('Import stats: %s', stats)
     else:
         # Process errors for counter5
         if counter_version == 5 and reader.warnings:
-            attempt.log = 'Warnings: {}'.format('; '.join(str(w) for w in reader.warnings))
+            attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
         else:
             attempt.log = 'No data found during import'
         attempt.status = AttemptStatus.NO_DATA
@@ -150,9 +147,12 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.save()
         logger.warning('No records found!')
     # fill in extracted_data
-    if hasattr(reader, 'header') and type(reader.header) is dict:
-        if attempt.extract_header_data(reader.header):
-            attempt.save()
+    if (
+        hasattr(reader, 'header')
+        and isinstance(reader.header, dict)
+        and attempt.extract_header_data(reader.header)
+    ):
+        attempt.save()
     attempt.mark_processed()
 
 

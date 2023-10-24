@@ -278,13 +278,15 @@ class TestTitleOverlapBatchAPI:
         batch = TitleOverlapBatch.objects.get(pk=response.data['pk'])
         assert batch.state == TitleOverlapBatchState.INITIAL
         # check the serialized data
-        assert type(response.data['pk']) is int
-        assert type(response.data['state']) is str
-        assert type(response.data['organization']) is int or response.data['organization'] is None
-        assert type(response.data['source_file']) is str
+        assert isinstance(response.data['pk'], int)
+        assert isinstance(response.data['state'], str)
+        assert (
+            isinstance(response.data['organization'], int) or response.data['organization'] is None
+        )
+        assert isinstance(response.data['source_file'], str)
         assert response.data['source_file'].endswith('.csv')
         assert response.data['annotated_file'] is None
-        assert type(response.data['processing_info']) is dict
+        assert isinstance(response.data['processing_info'], dict)
         # perform the processing task synchronously
         batch.state = TitleOverlapBatchState.PROCESSING
         batch.save()

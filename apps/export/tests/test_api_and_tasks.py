@@ -92,8 +92,8 @@ class TestFlexibleExportApi:
         assert resp.status_code == 201
         export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
         assert export.export_params['trend_mode'] is True
-        assert type(export.export_params['base_subset_filters']) is list
-        assert type(export.export_params['compared_subset_filters']) is list
+        assert isinstance(export.export_params['base_subset_filters'], list)
+        assert isinstance(export.export_params['compared_subset_filters'], list)
         assert len(export.export_params['base_subset_filters']) == 1
         assert len(export.export_params['compared_subset_filters']) == 1
         # test the structure of the content of the export

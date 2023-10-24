@@ -881,11 +881,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         while char and char.isspace():
             char = data_file.read(1)
         data_file.seek(0)
-        if char and type(char) is not bytes:
+        if char and not isinstance(char, bytes):
             char = char.encode('utf-8', errors='ignore')
-        if char in b'[{':
-            return True
-        return False
+        return char in b'[{'
 
     def file_is_json(self) -> Optional[bool]:
         """

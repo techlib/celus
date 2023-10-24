@@ -19,7 +19,7 @@ class TestReportsAPI:
         for key in ['name', 'description', 'dataSources', 'parts', 'infoUrl']:
             assert key in r1
         sources = r1['dataSources']
-        assert type(sources) is list
+        assert isinstance(sources, list)
         # check source
         s1 = sources[0]
         for key in ['id', 'name', 'reportType', 'metric', 'filters', 'fallbackFor']:

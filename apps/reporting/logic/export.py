@@ -255,7 +255,7 @@ class XlsxExporter:
         context_args = (col, row, current_row, part)
         if len(parsed_formula) == 1:
             variable = parsed_formula[0]
-            if type(variable) is list:
+            if isinstance(variable, list):
                 return self.construct_formula(variable, *context_args)
             if stage_ref := self.report.context.get_stage_for_current_part(variable):
                 stage_sheet = self.sheet_names[(part.name, stage_ref.name)]

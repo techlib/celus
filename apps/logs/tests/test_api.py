@@ -142,7 +142,7 @@ class TestChartDataAPI:
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
-        if type(primary_dim) is int:
+        if isinstance(primary_dim, int):
             primary_dim = report_type.dimensions_sorted[primary_dim - 1].short_name
         params = {
             'organization': organization.pk,
@@ -209,7 +209,7 @@ class TestChartDataAPI:
             'prim_dim': primary_dim,
         }
         if secondary_dim:
-            if type(secondary_dim) is int:
+            if isinstance(secondary_dim, int):
                 params['sec_dim'] = report_type.dimensions_sorted[secondary_dim - 1].short_name
             else:
                 params['sec_dim'] = secondary_dim
@@ -335,7 +335,7 @@ class TestChartDataAPI:
         import_counter_records(report_type, organization, platform, crs)
         assert AccessLog.objects.count() == 6
         metric = Metric.objects.get(short_name='Hits')
-        if type(primary_dim) is int:
+        if isinstance(primary_dim, int):
             primary_dim = report_type.dimensions_sorted[primary_dim - 1].short_name
         params = {
             'organization': organization.pk,
@@ -858,7 +858,7 @@ class TestAccessLogListView:
         locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
         for rec in data['results']:
             value = rec[order_by]
-            if type(value) is str:
+            if isinstance(value, str):
                 # database uses unicode collation, which sorts differently than python
                 # in presence of spaces. So we need to use unicode sort order as well
                 value = locale.strxfrm(value)
@@ -975,7 +975,7 @@ class TestAccessLogListView:
             last_value = None
             for rec in data['results']:
                 value = rec[order_by]
-                if type(value) is str:
+                if isinstance(value, str):
                     # database uses unicode collation, which sorts differently than python
                     # in presence of spaces. So we need to use unicode sort order as well
                     value = locale.strxfrm(value)
