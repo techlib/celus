@@ -336,7 +336,7 @@ class TestLogicDataImportXLSX:
 
 @pytest.mark.django_db
 class TestLogicDataImportCSV:
-    def test_sushi_import(self):
+    def test_sushi_import(self, counter_report_types):
         organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
         data = [
@@ -346,7 +346,7 @@ class TestLogicDataImportCSV:
                 'customer_id': 'AAA',
                 'requestor_id': 'RRR',
                 'URL': 'http://this.is/test/',
-                'version': 4,
+                'version': "4",
             },
             {
                 'platform': 'XXX',
@@ -356,26 +356,37 @@ class TestLogicDataImportCSV:
                 'URL': 'http://this.is/test/2',
                 'version': 5,
                 'extra_attrs': f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                'counter_reports': 'TR, DR',
+            },
+            {
+                # missing organization and counter version
+                'platform': 'XXX',
+                'customer_id': 'AAA',
+                'requestor_id': 'RRR',
+                'URL': 'http://this.is/test/',
             },
         ]
         Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
         stats = import_sushi_credentials_old(data)
         assert stats['added'] == 2
+        assert stats['error'] == 1, 'the last record is missing organization'
         assert SushiCredentials.objects.count() == 2
         credentials = SushiCredentials.objects.all().order_by('pk')
         # check individual objects
         cr1 = credentials[0]
-        assert cr1.counter_version == data[0]['version']
+        assert cr1.counter_version == 4
         assert cr1.url == data[0]['URL']
         assert cr1.organization == organizations[0]
         cr2 = credentials[1]
-        assert cr2.counter_version == data[1]['version']
+        assert cr2.counter_version == 5
         assert cr2.url == data[1]['URL']
         assert cr2.organization == organizations[1]
         assert cr2.http_username == 'un'
         assert cr2.http_password == 'pass'
         assert cr2.api_key == 'key' * 100
         assert cr2.extra_params == {'foo': 'bar'}
+        assert cr2.counter_reports.count() == 2
+        assert {crt.code for crt in cr2.counter_reports.all()} == {'TR', 'DR'}
         # retry
         stats = import_sushi_credentials_old(data)
         assert stats['skipped'] == 2
@@ -467,3 +478,54 @@ class TestLogicDataImportCSV:
             assert used_pl_names == ['pl-global', 'pl-org1']
         else:
             assert used_pl_names == ['pl-global', 'pl-org2']
+
+    def test_sushi_import_override_organization(self, counter_report_types):
+        org1, org2, org3 = OrganizationFactory.create_batch(3)
+        assert SushiCredentials.objects.count() == 0
+        data = [
+            {
+                'platform': 'XXX',
+                'organization': org1.internal_id,
+                'customer_id': 'AAA',
+                'requestor_id': 'RRR',
+                'URL': 'http://this.is/test/',
+                'version': 4,
+            },
+            {
+                'platform': 'XXX',
+                'organization': org2.internal_id,
+                'customer_id': 'BBB',
+                'requestor_id': 'RRRX',
+                'URL': 'http://this.is/test/2',
+                'version': 5,
+                'extra_attrs': f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                'counter_reports': 'TR, DR',
+            },
+        ]
+        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        stats = import_sushi_credentials_old(data, override_organization=org3)
+        assert stats['added'] == 2
+        assert SushiCredentials.objects.count() == 2
+        assert SushiCredentials.objects.filter(organization=org3).count() == 2
+        assert SushiCredentials.objects.filter(organization=org1).count() == 0
+        assert SushiCredentials.objects.filter(organization=org2).count() == 0
+
+    @pytest.mark.parametrize('default_version', [4, 5, None])
+    def test_sushi_import_default_version(self, counter_report_types, default_version):
+        organization = OrganizationFactory.create()
+        assert SushiCredentials.objects.count() == 0
+        data = [
+            {
+                'platform': 'XXX',
+                'organization': organization.name,
+                'customer_id': 'AAA',
+                'requestor_id': 'RRR',
+                'URL': 'http://this.is/test/',
+            },
+        ]
+        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        extra = {'default_version': default_version} if default_version is not None else {}
+        stats = import_sushi_credentials_old(data, **extra)
+        assert stats['added'] == 1
+        cr1 = SushiCredentials.objects.first()
+        assert cr1.counter_version == (5 if default_version is None else default_version)

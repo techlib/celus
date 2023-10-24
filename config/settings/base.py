@@ -839,7 +839,7 @@ OCTOPUS_HMAC_ALGO = config('OCTOPUS_HMAC_ALGO', default='sha256')
 EXPOSED_MANAGEMENT_COMMANDS = config(
     'EXPOSED_MANAGEMENT_COMMANDS',
     cast=Csv(cast=Csv(post_process=tuple), delimiter=';'),
-    default='organizations,load_sushi_credentials_from_xlsx',
+    default='organizations,load_sushi_credentials_from_xlsx;organizations,load_sushi_credentials',
 )
 ENABLE_NIBBLER_PARSER_VERSION_CHECK = config(
     'ENABLE_NIBBLER_PARSER_VERSION_CHECK', cast=bool, default=True

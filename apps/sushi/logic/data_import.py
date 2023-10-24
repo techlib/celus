@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 from collections import Counter
 from enum import Enum, auto
@@ -343,7 +344,10 @@ def _create_diff_info(status, cr, organization, platform, diff):
 
 
 def import_sushi_credentials_from_csv(
-    filename, prefer_knowledgebase_urls: bool = False, reversion_comment: Optional[str] = None
+    filename,
+    prefer_knowledgebase_urls: bool = False,
+    reversion_comment: Optional[str] = None,
+    override_organization: Optional[Organization] = None,
 ) -> dict:
     if hasattr(filename, 'read'):
         reader = csv.DictReader(filename)
@@ -356,6 +360,7 @@ def import_sushi_credentials_from_csv(
         records,
         prefer_knowledgebase_urls=prefer_knowledgebase_urls,
         reversion_comment=reversion_comment,
+        override_organization=override_organization,
     )
 
 
@@ -364,6 +369,7 @@ def import_sushi_credentials_old(
     prefer_knowledgebase_urls: bool = False,
     reversion_comment: Optional[str] = None,
     default_version=5,
+    override_organization: Optional[Organization] = None,
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data
@@ -372,6 +378,9 @@ def import_sushi_credentials_old(
     :param prefer_knowledgebase_urls: if True, the urls from the knowledgebase will be used instead
             of the ones from the file
     :param records:
+    :param default_version:
+    :param override_organization: if provided, this organization will be used for all imported
+               credentials otherwise, organization will be taken from the data
     :return:
     """
     stats = Counter()
@@ -381,45 +390,80 @@ def import_sushi_credentials_old(
     }
     platform_objects = Platform.objects.all()
     source_id = lambda pl: pl.source.organization_id if pl.source else None  # noqa: E731
-    platforms = {(pl.short_name.lower(), source_id(pl)): pl for pl in platform_objects}
-    platforms.update({(pl.name.lower(), source_id(pl)): pl for pl in platform_objects})
-    organization_objects = Organization.objects.all()
-    organizations = {org.internal_id: org for org in organization_objects}
-    organizations.update({org.short_name.lower(): org for org in organization_objects})
-    organizations.update({org.name.lower(): org for org in organization_objects})
-    for record in records:
-        organization_name = record.get('organization')
-        if not organization_name:
-            logger.error('Organization name is missing')
-            stats['error'] += 1
-            continue
-        organization = organizations.get(organization_name.strip().lower())
-        if not organization:
-            logger.error(
-                'Unknown organization: "%s" in "%s"',
-                record.get('organization'),
-                record.get('organization_name'),
-            )
-            stats['error'] += 1
-            continue
-        # at first try global platforms
-        platform = platforms.get((record.get('platform').strip().lower(), None))  # type: Platform
-        if not platform:
-            # then platforms specific for the organization
-            platform = platforms.get((record.get('platform').strip().lower(), organization.id))
-            if not platform:
+    platforms = {(pl.short_name.lower(), source_id(pl)): pl for pl in platform_objects} | {
+        (pl.name.lower(), source_id(pl)): pl for pl in platform_objects
+    }
+    # get organization
+    organizations = {}
+    if not override_organization:
+        organization_objects = Organization.objects.all()
+        organizations = (
+            {org.internal_id: org for org in organization_objects}
+            | {org.short_name.lower(): org for org in organization_objects}
+            | {org.name.lower(): org for org in organization_objects}
+        )
+
+    seen_keys = set()
+    for i, record in enumerate(records):
+        if override_organization:
+            organization = override_organization
+        else:
+            organization_name = record.get('organization')
+            if not organization_name:
+                logger.error('#%03d: Organization name is missing', i + 2)
+                stats['error'] += 1
+                continue
+            organization = organizations.get(organization_name.strip().lower())
+            if not organization:
                 logger.error(
-                    'Unknown platform: "%s" for organization "%s"',
-                    record.get('platform', '').strip(),
-                    organization.short_name,
+                    '#%03d: Unknown organization: "%s"',
+                    i + 2,
+                    record.get('organization'),
                 )
                 stats['error'] += 1
                 continue
-        version = int(record.get('version')) if 'version' in record else default_version
+        # at first try global platforms
+        platform = platforms.get((record.get('platform').strip().lower(), None)) or platforms.get(
+            (record.get('platform').strip().lower(), organization.id)
+        )
+        if not platform:
+            logger.error(
+                '#%03d: Unknown platform: "%s" for organization "%s"',
+                i + 2,
+                record.get('platform', '').strip(),
+                organization.short_name,
+            )
+            stats['error'] += 1
+            continue
+        # counter version
+        if not (version := get_int_value(record, 'version')):
+            version = get_int_value(record, 'counter_version')
+        if not version:
+            version = default_version
+            logger.warning('#%03d: Version not specified, assuming %d', i + 2, version)
+        # other stuff
         key = (organization.pk, platform.pk, version)
+        if key in seen_keys:
+            logger.error(
+                '#%03d: Credentials for organization "%s", platform "%s", counter %d: '
+                'have more than one corresponding instance in the file. Skipping.',
+                i + 2,
+                organization.name_en,
+                platform.name_en,
+                version,
+            )
+            stats['error'] += 1
+            continue
+        seen_keys.add(key)
+        # extra attrs are in the format: name=value;name=value;...
         extra_attrs = record.get('extra_attrs', {})
         if extra_attrs:
             extra_attrs = parse_params(extra_attrs, version=version)
+        # extra params are in json format
+        extra_params = record.get('extra_params', {})
+        if extra_params:
+            extra_attrs |= json.loads(extra_params)
+
         optional = {}
         if 'auth' in extra_attrs:
             optional['http_username'], optional['http_password'] = extra_attrs['auth']
@@ -467,8 +511,12 @@ def import_sushi_credentials_old(
             save = False
             for key, value in to_sync.items():
                 if value != getattr(cr, key):
+                    logger.info(
+                        "#%03d: %s changed from '%s' to '%s'", i + 2, key, getattr(cr, key), value
+                    )
                     setattr(cr, key, value)
                     save = True
+
             if save:
                 with reversion.create_revision():
                     cr.save()
@@ -495,7 +543,20 @@ def import_sushi_credentials_old(
                     reversion_comment or 'Created by logic.data_import.import_sushi_credentials'
                 )
                 db_credentials[key] = cr
+                logger.info('#%03d: Credentials created for platform "%s"', i + 2, platform.name_en)
             stats['added'] += 1
+        # link report types
+        linked_rts = {rt.code for rt in cr.counter_reports.all()}
+        report_types = record.get('counter_reports', '').split(',')
+        for report_type in report_types:
+            report_type = report_type.strip()
+            if report_type and report_type not in linked_rts:
+                if rt := CounterReportType.objects.filter(code=report_type).first():
+                    CounterReportsToCredentials.objects.create(credentials=cr, counter_report=rt)
+                    stats['report_type_assigned'] += 1
+                else:
+                    logger.error('#%03d: Report type "%s" not found', i + 2, report_type)
+                    stats['report_type_not_found'] += 1
     return stats
 
 
@@ -515,3 +576,12 @@ def parse_params(text, version: Optional[int] = None) -> dict:
         # if this is C5, we assume the value is the API key
         out['api_key'] = text
     return out
+
+
+def get_int_value(mapping, key):
+    value = mapping.get(key)
+    if isinstance(value, int):
+        return value
+    if value is not None:
+        return int(value.strip())
+    return None

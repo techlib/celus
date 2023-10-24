@@ -511,6 +511,15 @@ class TestManagementCommandAPI:
                         'help': 'If available, use knowledgebase urls instead of the ones stored '
                         'in the file',
                     },
+                    {
+                        'name': 'override_org',
+                        'default': None,
+                        'required': False,
+                        'metavar': '_ORG_ID_',
+                        'type': 'str',
+                        'help': 'pk, name_en or short_name_en of the organization for '
+                        'which you intend to import credentials',
+                    },
                 ],
                 'uses_doit': True,
             }
