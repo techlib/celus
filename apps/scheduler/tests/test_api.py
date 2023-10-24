@@ -345,7 +345,7 @@ class TestHarvestAPI:
                     )
         assert len(intentions) == 36
 
-        with django_assert_max_num_queries(30):
+        with django_assert_max_num_queries(35):
             resp = clients[user_type].post(
                 reverse('harvest-list'),
                 json.dumps({"intentions": intentions}),

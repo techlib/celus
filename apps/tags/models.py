@@ -636,6 +636,7 @@ class TaggingBatchQuerySet(models.QuerySet):
                     batch=OuterRef('id'),
                     operation=TaggingAttemptOperation.IMPORT,
                 )
+                .order_by()
                 .annotate(x=Value(7))  # to ensure all sub-rows have the same value
                 .values('x')
                 .annotate(c=Count('id'))  # aggregating all sub-rows into one value

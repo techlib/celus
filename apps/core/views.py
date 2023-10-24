@@ -43,9 +43,7 @@ class UserView(GenericAPIView):
         """
         Obtains info about currently logged user
         """
-
         if request.user:
-            request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
             return Response(UserSerializer(request.user, context={"request": request}).data)
         return HttpResponseForbidden('user is not logged in')
 
@@ -55,8 +53,7 @@ class UserExistsView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        check = request.GET.get('hmac')
-        if check:
+        if check := request.GET.get('hmac'):
             if User.objects.raw(
                 "SELECT * FROM core_user WHERE encode(hmac(email, %s, %s), 'hex') = %s LIMIT 1",
                 [settings.OCTOPUS_HMAC_KEY, settings.OCTOPUS_HMAC_ALGO, check],

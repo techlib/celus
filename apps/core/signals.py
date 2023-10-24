@@ -4,7 +4,7 @@ from django.dispatch import Signal, receiver
 
 from .tasks import async_mail_admins
 
-password_reset_signal = Signal(providing_args=['request', 'user'])
+password_reset_signal = Signal()
 
 
 @receiver(user_signed_up)
