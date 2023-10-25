@@ -71,6 +71,33 @@ cs:
       <v-toolbar-items class="align-baseline">
         <v-divider class="mx-3" inset vertical></v-divider>
 
+        <v-badge
+          color="error"
+          overlap
+          :value="unreadEventCount"
+          :content="unreadEventCount"
+          class="align-self-center mr-2"
+        >
+          <v-tooltip bottom max-width="600px">
+            <template #activator="{ on }">
+              <v-btn
+                v-on="on"
+                icon
+                small
+                text
+                plain
+                :to="{
+                  name: 'events',
+                  query: { sortBy: 'created', sortDesc: true },
+                }"
+              >
+                <v-icon>fa-envelope</v-icon>
+              </v-btn>
+            </template>
+            {{ $t("labels.unread_messages") }}
+          </v-tooltip>
+        </v-badge>
+
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <span v-on="on" class="align-self-center">
@@ -269,9 +296,11 @@ export default {
       selectedOrganizationId: "selectedOrganizationId",
       user: "user",
       latestPublishedRelease: "latestPublishedRelease",
+      eventWorker: "eventWorker",
       siteLogo: (state) => state.siteConfig.siteLogo,
       siteName: (state) => state.siteConfig.siteName,
       footerImages: (state) => state.siteConfig.footerImages,
+      unreadEventCount: (state) => state.events.unreadCount,
       forceDisableOrganizationSelector: "forceDisableOrganizationSelector",
     }),
     ...mapGetters({

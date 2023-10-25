@@ -58,7 +58,11 @@ export default {
                 this[attr.name] = parseInt(value);
                 break;
               case Boolean:
-                this[attr.name] = value === "true";
+                if (typeof value === "boolean") {
+                  this[attr.name] = value;
+                } else {
+                  this[attr.name] = value === "true";
+                }
                 break;
               default:
                 this[attr.name] = value;

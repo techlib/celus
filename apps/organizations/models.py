@@ -1,8 +1,8 @@
-from core.models import DataSource
+from core.models import DataSource, User
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, UniqueConstraint
+from django.db.models import Q, QuerySet, UniqueConstraint
 from django.utils.translation import gettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
@@ -108,6 +108,23 @@ class Organization(MPTTModel):
                 _("An alias for organization {org} clashes with one of organization names.")
                 % {"org": altname.organization}
             )
+
+    def admins(self, include_superusers=False) -> QuerySet[User]:
+        """
+        Returns queryset of users that are admins of this organization. If include_superusers is
+        True, it also includes superusers and master admins.
+        :param include_superusers:
+        :return:
+        """
+        q_direct_admins = Q(userorganization__organization=self, userorganization__is_admin=True)
+        if include_superusers:
+            q_superusers = Q(is_superuser=True)
+            q_master_admin = Q(
+                userorganization__organization__internal_id__in=settings.MASTER_ORGANIZATIONS,
+                userorganization__is_admin=True,
+            )
+            return User.objects.filter(q_direct_admins | q_superusers | q_master_admin)
+        return User.objects.filter(q_direct_admins)
 
 
 class OrganizationAltName(models.Model):

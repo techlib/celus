@@ -11,12 +11,13 @@ from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import DatabaseError, models, transaction
-from django.db.models import Exists, F, Max, OuterRef, Q
+from django.db.models import Exists, F, Max, Min, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
+from events.models import Event, EventCategory, EventImportance
 from logs.exceptions import DataStructureError
 from logs.logic.data_import import create_import_batch_or_crash
 from logs.models import AccessLog, ImportBatch
@@ -906,9 +907,9 @@ class Harvest(CreatedUpdatedMixin):
 
                 setattr(self, name, value)
 
-    def stats(self) -> typing.Tuple[dict, int]:
+    def stats(self) -> dict:
         """Returns how many intentions are finished.
-        Note that it considers replaned intentions as one
+        Note that it considers re-planned intentions as one
 
         :returns: stats dict
         """
@@ -1016,6 +1017,39 @@ class Harvest(CreatedUpdatedMixin):
     @property
     def is_automatic(self):
         return Automatic.objects.filter(harvest=self).exists()
+
+    def create_event_if_finished(self):
+        """
+        Creates an event if the harvest is finished and it was a manual harvest.
+        """
+        if self.last_updated_by and self.stats().get("planned") == 0:
+            # this is a manual harvest, let the user know that it has finished
+            orgs = list(self.organizations())
+            platforms = list(self.platforms())
+            org_text = (
+                f'organization "{orgs[0].name}"' if len(orgs) == 1 else f"{len(orgs)} organizations"
+            )
+            plat_text = (
+                f'platform "{platforms[0].name}"'
+                if len(platforms) == 1
+                else f"{len(platforms)} platforms"
+            )
+            min_max_dates = self.intentions.aggregate(
+                min_date=Min("start_date"), max_date=Max("end_date")
+            )
+
+            desc = (
+                f"Manually created SUSHI harvest for {org_text} and {plat_text} "
+                f"between {min_max_dates['min_date']} and {min_max_dates['max_date']} has finished"
+            )
+
+            Event.create_for_users(
+                [self.last_updated_by],
+                title="Manual harvest finished",
+                description=desc,
+                category=EventCategory.SUSHI,
+                importance=EventImportance.NORMAL,
+            )
 
 
 class Automatic(models.Model):

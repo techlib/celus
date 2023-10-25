@@ -11,6 +11,8 @@ en:
     dashboard: Dashboard
     data_coverage_overview: Data coverage overview
     data_management: Data management
+    event_preferences: Event preferences
+    events: Events
     exports: Exports
     flexi_report: Report detail
     flexi_reports: Reports
@@ -45,6 +47,8 @@ en:
     title_list_overlap: Title list overlap
     title_lists: Title lists
     user_page: User page
+    whats_new: What's new
+    user_management: User management
   menu: Menu
   organization: Organization
   platform: Platform
@@ -219,6 +223,7 @@ en:
     today: today
     total: Total
     total_coverage: Total coverage
+    unread_messages: Unread messages
     url: URL
     user: User
     value: Value
@@ -340,8 +345,53 @@ en:
     new_feature_tt: This release contains new features
     update_tt: This release contains updates of existing features
   registry_info: COUNTER registry info
+  events:
+    date: Date
+    importance: Importance
+    title: Title
+    category: Category
+    read: Read
+    expires: Expires
+    expires_tt: The event will be automatically removed after this date
+    mark_as_read: Mark as read
+  event_importance:
+    10: Normal
+    20: High
+  event_category:
+    general: General announcements
+    overlap: Overlap
+    platform: Platform info
+    sushi: SUSHI
+    tags: Tags
+  event_category_desc:
+    general: General announcements about Celus - new releases, planned maintenance, etc.
+    overlap: Messages related to overlap analysis
+    platform: Alerts about platforms - issues with SUSHI harvesting, data consistency, etc.
+    sushi: Messages related to individual SUSHI harvests, such as errors, warnings, etc.
+    tags: Messages related to tags - title list imports, tag assignments, etc.
+  event_read:
+    read: Read
+    unread: Unread
+    all: All
+  event_handling:
+    ignore: Ignore
+    notify: Notify in app
+    email: Send email
+  event_handling_desc:
+    ignore: Such events will be completely ignored
+    notify: A message will be displayed in the app
+    email: An email will be sent to you and the event will be displayed in the app
+  notifications:
+    notifications_enabled: Notifications enabled
+    notifications_enabled_tt: System notifications are enabled. To disable them, you need to disable them in your browser settings.
+    notifications_disabled: Notifications disabled
+    notifications_disabled_tt: System notifications are disabled. To enable them, you need to unblock them in your browser settings first.
+    enable_notifications: Enable notifications
+    enable_notifications_tt: Enable system notifications. You will be notified about new events even if you are not currently using Celus.
   errors:
     file_too_large: The uploaded file is too large
+  options:
+    all: All
 
 cs:
   pages:
@@ -356,6 +406,8 @@ cs:
     dashboard: Přehled
     data_coverage_overview: Přehled pokrytí daty
     data_management: Správa dat
+    event_preferences: Nastavení událostí
+    events: Události
     exports: Exporty
     flexi_report: Detail report
     flexi_reports: Reporty
@@ -390,6 +442,8 @@ cs:
     title_list_overlap: Překryv titulového seznamu
     title_lists: Titulové seznamy
     user_page: Uživatelská stránka
+    whats_new: Co je nového
+    user_management: Správa uživatelů
   menu: Menu
   organization: Organizace
   platform: Platforma
@@ -564,6 +618,7 @@ cs:
     today: dnes
     total: Celkem
     total_coverage: Celkové pokrytí
+    unread_messages: Nepřečtené zprávy
     url: URL
     user: Uživatel
     value: Hodnota
@@ -685,5 +740,50 @@ cs:
     new_feature_tt: Toto vydaní obsahuje nové funkce
     update_tt: Toto vydaní obsahuje aktualizace existujících funkcí
   registry_info: Informace z COUNTER registru
+  events:
+    date: Datum
+    importance: Důležitost
+    title: Titul
+    category: Kategorie
+    read: Přečteno
+    expires: Expiruje
+    expires_tt: Po uplynití tohoto data bude událost automaticky odstraněna
+    mark_as_read: Označit jako přečtené
+  event_importance:
+    10: Normální
+    20: Vysoká
+  event_category:
+    general: Obecné oznámení
+    overlap: Překryv
+    platform: Informace o platformě
+    sushi: SUSHI
+    tags: Štítky
+  event_category_desc:
+    general: Obecné oznámení o Celusu - nové verze, plánovaná údržba, atd.
+    overlap: Zprávy související s analýzou překryvů
+    platform: Upozornění o platformách - problémy se stahováním SUSHI, konzistencí dat, atd.
+    sushi: Zprávy související s jednotlivými stahováními SUSHI, jako jsou chyby, varování, atd.
+    tags: Zprávy související se štítky - importy seznamů titulů, přiřazení štítků, atd.
+  event_read:
+    read: Přečteno
+    unread: Nepřečteno
+    all: Všechny
+  event_handling:
+    ignore: Ignorovat
+    notify: Zpráva v aplikaci
+    email: Poslat e-mail
+  event_handling_desc:
+    ignore: Takové události budou zcela ignorovány
+    notify: V aplikaci bude zobrazena zpráva
+    email: E-mail bude odeslán vám a událost bude zobrazena v aplikaci
+  notifications:
+    notifications_enabled: Notifikace zapnuty
+    notifications_enabled_tt: Systémové notifikace jsou zapnuty. Pro jejich vypnutí je potřeba je vypnout v nastavení prohlížeče.
+    notifications_disabled: Notifikace vypnuty
+    notifications_disabled_tt: Systémové notifikace jsou vypnuty. Pro jejich zapnutí je potřeba odstranit jejich blokaci v nastavení prohlížeče.
+    enable_notifications: Zapnout notifikace
+    enable_notifications_tt: Zapnout systémové notifikace. Budete upozorněni na nové události i když právě nepoužíváte Celus.
   errors:
     file_too_large: The uploaded file is too large
+  options:
+    all: Všechny

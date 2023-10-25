@@ -41,6 +41,7 @@ cs:
               <v-col class="overflow-auto">
                 <HarvestsTable
                   :show-organization="showManagementStuff"
+                  :open-harvest-id="openHarvestId"
                   show-platform
                 />
               </v-col>
@@ -62,7 +63,13 @@ export default {
     HarvestsTable,
   },
   data() {
-    return {};
+    let harvestId = this.$route.query.harvestId || null;
+    if (harvestId) {
+      harvestId = parseInt(harvestId);
+    }
+    return {
+      openHarvestId: harvestId,
+    };
   },
   computed: {
     ...mapState({

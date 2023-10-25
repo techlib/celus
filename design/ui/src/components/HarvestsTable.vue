@@ -206,7 +206,7 @@ cs:
 
         <v-dialog
           v-model="showHarvestDialog"
-          v-if="currentHarvest"
+          v-if="currentHarvestId"
           content-class="top-dialog"
           max-width="1320px"
         >
@@ -219,7 +219,7 @@ cs:
               </v-row>
               <div>
                 <SushiFetchIntentionsListWidget
-                  :harvest-id="currentHarvest.pk"
+                  :harvest-id="currentHarvestId"
                   ref="intentionsList"
                 />
               </div>
@@ -229,7 +229,7 @@ cs:
               <v-btn
                 @click="
                   showHarvestDialog = false;
-                  currentHarvest = null;
+                  currentHarvestId = null;
                 "
                 class="mb-3 mr-4"
                 >{{ $t("actions.close") }}</v-btn
@@ -266,6 +266,7 @@ export default {
 
   props: {
     showOrganization: { default: false, type: Boolean },
+    openHarvestId: { default: null, type: Number },
   },
 
   data() {
@@ -273,8 +274,8 @@ export default {
       harvestsData: [], // raw request data
       tableData: [], // processed data
       platformList: [],
-      showHarvestDialog: false,
-      currentHarvest: null,
+      showHarvestDialog: !!this.openHarvestId,
+      currentHarvestId: this.openHarvestId || null,
       loading: false,
       loadingPlatforms: false,
       filterFinished: "",
@@ -498,14 +499,14 @@ export default {
       }
       if (result.error !== "canceled") {
         // if the request was cancelled, it means another request was made
-        // so we do not want to swich loading off
+        // so we do not want to switch loading off
         this.loading = false;
       }
     },
     async selectHarvest(id) {
       const candidates = this.harvestsData.filter((item) => item.pk === id);
       if (candidates.length > 0) {
-        this.currentHarvest = candidates[0];
+        this.currentHarvestId = candidates[0].pk;
       }
     },
     dataToTable(harvests) {

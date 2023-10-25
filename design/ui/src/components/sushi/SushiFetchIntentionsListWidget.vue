@@ -28,6 +28,7 @@ en:
     now: Immediately
     future: In the future
     never: Can't be run
+  harvest_not_found: The requested harvest was not found
 
 cs:
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
@@ -57,12 +58,17 @@ cs:
     now: Hned
     future: V budoucnu
     never: Nelze pustit
+  harvest_not_found: Požadované stahování nebylo nalezeno
 </i18n>
 <template>
   <v-container fluid class="pt-0 pb-0">
     <v-row>
       <v-col>
+        <v-alert v-if="harvestNotFound" type="error" outlined class="my-6">
+          {{ $t("harvest_not_found") }}
+        </v-alert>
         <v-data-table
+          v-else
           :items="filteredItems"
           :headers="headers"
           :expanded.sync="expanded"
@@ -360,6 +366,7 @@ export default {
       runnableFilter: "all",
       stateFilter: null,
       numberOfRetries: 0,
+      harvestNotFound: false,
     };
   },
 
@@ -580,9 +587,10 @@ export default {
         let response = await axios.get(this.intentionsUrl, {
           params: params,
         });
+        this.harvestNotFound = false;
         let newData = response.data;
         newData.forEach(annotateIntention);
-        if (newData.length == 0) {
+        if (newData.length === 0) {
           // do nothing when there are no new data
         } else if (this.intentionData.length > 0) {
           // we already have intentions, we just want to update the changed ones
@@ -599,10 +607,14 @@ export default {
           this.intentionData = newData;
         }
       } catch (error) {
-        this.showSnackbar({
-          content: "Error fetching harvest data: " + error,
-          color: "error",
-        });
+        if (error.response && error.response.status === 404) {
+          this.harvestNotFound = true;
+        } else {
+          this.showSnackbar({
+            content: "Error fetching harvest data: " + error,
+            color: "error",
+          });
+        }
       } finally {
         this.loading = false;
       }

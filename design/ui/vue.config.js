@@ -28,6 +28,11 @@ module.exports = {
         changeOrigin: true,
         ws: true,
       },
+      "/ws/": {
+        target: "http://localhost:8077/",
+        changeOrigin: true,
+        ws: true,
+      },
     },
     client: {
       overlay: process.env.BUILD == "yes" ? false : { errors: false },
@@ -62,6 +67,14 @@ module.exports = {
         ),
       }),
     ],
+    // module: {
+    //   rules: [
+    //     {
+    //       test: /.*-worker\.js$/,
+    //       use: { loader: "worker-loader" },
+    //     },
+    //   ],
+    // },
   },
 
   chainWebpack: (config) => {
@@ -75,6 +88,15 @@ module.exports = {
       .use("yaml")
       .loader("yaml-loader")
       .end();
+    config.module.rule("js").exclude.add(/.*-worker\.js$/);
+    config.module
+      .rule("worker-loader")
+      .test(/.*-worker\.js$/)
+      .use("worker-loader")
+      .options({
+        worker: "SharedWorker",
+      })
+      .loader("worker-loader");
   },
 
   transpileDependencies: ["vuex-persist", "vuetify"], //'lodash', 'lodash.*'],

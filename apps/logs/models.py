@@ -1341,7 +1341,7 @@ class LastAction(CreatedUpdatedMixin, models.Model):
         if 'update_interest' is older than 'interest_definition_has_changed', it should run
         if it is newer, it should not run
         if 'interest_definition_has_changed' does not exist, then 'update_interest' is always newer
-          and should run, but only if it does exist at all - if 'update_interest' does not exist,
+          and shouldn't run, but only if it does exist at all - if 'update_interest' does not exist,
           then it should run.
         """
         try:

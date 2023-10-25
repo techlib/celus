@@ -789,6 +789,10 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             return self._last_imports[0] if self._last_imports else None
         return self.imports.last()
 
+    @property
+    def context_desc(self) -> str:
+        return f"tag {self.tag}" if self.tag else f"tag class {self.tag_class}"
+
     def file_row_count(self):
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)

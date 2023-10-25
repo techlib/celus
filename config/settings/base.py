@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "tags.apps.TagsConfig",
     "releases.apps.ReleasesConfig",
     "necronomicon.apps.NecronomiconConfig",
+    "events.apps.EventsConfig",
     "rest_pandas",
     "django_prometheus",
     "import_export",
@@ -127,7 +128,10 @@ MIDDLEWARE = [
     "core.prometheus.CelusPrometheusAfterMiddleware",
 ]
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "sesame.backends.ModelBackend",
+]
 
 ALLOW_EMAIL_LOGIN = config("ALLOW_EMAIL_LOGIN", cast=bool, default=True)
 if ALLOW_EMAIL_LOGIN:
@@ -359,6 +363,7 @@ CELERY_TASK_ROUTES = {
     "core.tasks.flush_request_logs_to_clickhouse": {"queue": "celery"},
     "core.tasks.sync_with_maximus_task": {"queue": "celery"},
     "core.tasks.update_prometheus_db_stats": {"queue": "celery"},
+    "events.tasks.send_unsent_event_emails_task": {"queue": "celery"},
     "export.tasks.delete_expired_flexible_data_exports_task": {"queue": "celery"},
     "export.tasks.process_flexible_export_task": {"queue": "export"},
     "knowledgebase.tasks.sync_all_with_knowledgebase_task": {"queue": "celery"},
@@ -471,6 +476,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "core.tasks.update_prometheus_db_stats",
         "schedule": schedule(run_every=timedelta(minutes=5)),
         "options": {"expires": 5 * 60},
+    },
+    "send_unsent_event_emails_task": {
+        "task": "events.tasks.send_unsent_event_emails_task",
+        "schedule": schedule(run_every=timedelta(minutes=15)),
+        "options": {"expires": 15 * 60},
     },
     # crontab schedules - daily stuff
     "sync_organizationplatform_records_task": {
@@ -804,6 +814,9 @@ CUSTOMER_CARE_ADMINS = (
 # https://docs.djangoproject.com/en/3.2/ref/settings/#password-reset-timeout
 #
 PASSWORD_RESET_TIMEOUT = config("PASSWORD_RESET_TIMEOUT", cast=int, default=864000)  # 10 days
+
+# django-sesame config - this is used for the "magic link" login used by websockets
+SESAME_MAX_AGE = 30  # 30 seconds
 
 CELUS_ADMIN_SITE_PATH = config("CELUS_ADMIN_SITE_PATH", default="wsEc67YNV2sq/")
 

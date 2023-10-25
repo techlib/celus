@@ -321,6 +321,28 @@ export default {
             },
           ],
         },
+        {
+          title: this.$i18n.t("pages.whats_new"),
+          icon: "fa fa-info-circle",
+          show: true,
+          items: [
+            {
+              title: this.$i18n.t("pages.events"),
+              icon: "fa fa-envelope",
+              linkTo: "events",
+            },
+            {
+              title: this.$i18n.t("pages.releases"),
+              icon: "fa fa-broadcast-tower",
+              linkTo: "releases",
+            },
+            {
+              title: this.$i18n.t("pages.changelog"),
+              icon: "fa fa-list",
+              linkTo: "changelog",
+            },
+          ],
+        },
       ];
     },
     activeGroups() {

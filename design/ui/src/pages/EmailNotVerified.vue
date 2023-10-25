@@ -139,7 +139,7 @@ export default {
           content: this.$t("checked"),
           color: "warning",
         });
-      } catch {
+      } catch (error) {
         this.handleError(error, "Error checking email verification");
       } finally {
         this.checking = false;
@@ -150,7 +150,7 @@ export default {
     this.sendVerificationEmail(true);
     this.loadUserDataInterval = setInterval(() => {
       if (this.emailVerified) {
-        clearInterval(loadUserDataInterval);
+        clearInterval(this.loadUserDataInterval);
       } else {
         this.loadUserData();
       }

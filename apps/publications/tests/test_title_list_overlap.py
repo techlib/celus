@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
+from events.models import EventImportance
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from organizations.fake_data import OrganizationFactory
 
@@ -159,8 +160,11 @@ plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plai
 
 @pytest.mark.django_db
 class TestTitleOverlapBatchModel:
-    def test_title_overlap_batch_no_titles(self, inmemory_media):
-        batch = TitleOverlapBatchFactory.create(source_file=plain_test_file)
+    def test_title_overlap_batch_no_titles(self, inmemory_media, admin_user):
+        batch = TitleOverlapBatchFactory.create(
+            source_file=plain_test_file, last_updated_by=admin_user
+        )
+        assert admin_user.assigned_events.count() == 0
         assert batch.state == TitleOverlapBatchState.INITIAL
         batch.process()
         assert batch.state == TitleOverlapBatchState.DONE
@@ -173,6 +177,13 @@ class TestTitleOverlapBatchModel:
         reader = get_dict_reader_from_csv(batch.annotated_file.file.file)
         assert "_Matched titles_" in reader.fieldnames
         assert "_Found on platforms_" in reader.fieldnames
+        # check that an event informing about the processing was created
+        assert admin_user.assigned_events.count() == 1
+        event = admin_user.assigned_events.first()
+        assert (
+            event.description == "Number of rows processed: 6\nNumber of unique titles matched: 0"
+        )
+        assert event.importance == EventImportance.NORMAL
 
     @pytest.mark.parametrize(
         ["used_org", "matched_rows", "matched_titles"], [(0, 3, 2), (1, 0, 0), (-1, 3, 2)]
@@ -196,6 +207,23 @@ class TestTitleOverlapBatchModel:
         assert batch.processing_info["stats"]["row_count"] == 6
         assert batch.processing_info["stats"]["no_match"] == 6 - matched_rows
         assert batch.processing_info["stats"]["unique_matched_titles"] == matched_titles
+
+    def test_title_overlap_batch_with_error(self, inmemory_media, admin_user):
+        batch = TitleOverlapBatchFactory.create(
+            source_file=plain_test_file, last_updated_by=admin_user
+        )
+        assert admin_user.assigned_events.count() == 0
+        with patch("publications.models.TitleOverlapBatch.process_source_file") as mock:
+            mock.side_effect = Exception("Some error")
+            batch.process()
+            assert batch.state == TitleOverlapBatchState.FAILED
+            # check that an event informing about the processing was created
+            assert admin_user.assigned_events.count() == 1
+            event = admin_user.assigned_events.first()
+            assert event.importance == EventImportance.HIGH
+            assert (
+                event.description == "An error occurred while processing the title list: Some error"
+            )
 
 
 @pytest.mark.django_db

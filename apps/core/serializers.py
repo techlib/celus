@@ -18,6 +18,7 @@ from rest_framework.serializers import (
     Serializer,
     SerializerMethodField,
 )
+from sesame.utils import get_token
 
 from core.models import TaskProgress, User
 
@@ -58,6 +59,7 @@ class UserSerializer(ModelSerializer):
     otp_required = SerializerMethodField()
     email_verification_status = SerializerMethodField()
     email_verification_sent = SerializerMethodField(required=False)
+    sesame_token = SerializerMethodField()
     impersonator = PrimaryKeyRelatedField(read_only=True, required=False)
 
     class Meta:
@@ -79,12 +81,13 @@ class UserSerializer(ModelSerializer):
             "email_verification_sent",
             "extra_data",
             "impersonator",
+            "sesame_token",
         )
 
-    def get_email_verification_status(self, obj) -> str:
+    def get_email_verification_status(self, obj: User) -> str:
         return obj.email_verification["status"]
 
-    def get_email_verification_sent(self, obj) -> typing.Optional[datetime]:
+    def get_email_verification_sent(self, obj: User) -> typing.Optional[datetime]:
         return obj.email_verification["email_sent"]
 
     def get_otp_required(self, obj) -> typing.Optional[typing.List[dict]]:
@@ -117,12 +120,19 @@ class UserSerializer(ModelSerializer):
         # No need for 2FA
         return None
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User):
         if impersonator_user := self.context["request"].impersonator:
             instance.impersonator = impersonator_user.pk
         else:
             instance.impersonator = None
         return super().to_representation(instance)
+
+    def get_sesame_token(self, instance: User) -> str:
+        if self.get_otp_required(instance):
+            # 2FA is required, so we don't want to return the token
+            # otherwise it would create a side channel for bypassing 2FA
+            return ""
+        return get_token(instance)
 
 
 class UserSimpleSerializer(ModelSerializer):
@@ -212,7 +222,9 @@ class AccessibleUsersSerializer(ModelSerializer):
             admin_rights = validated_data.pop("is_admin")
             organization = validated_data.pop("organization")
             UserOrganization.objects.update_or_create(
-                user=instance, organization=organization, defaults={"is_admin": admin_rights}
+                user=instance,
+                organization=organization,
+                defaults={"is_admin": admin_rights},
             )
 
         return instance

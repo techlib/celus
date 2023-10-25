@@ -20,12 +20,13 @@ import interest from "./modules/interest";
 import maintenance from "./modules/maintenance";
 import tour from "./modules/tour";
 import login from "./modules/login";
+import events from "./modules/events";
 import pageSettings from "./modules/page-settings";
 import siteConfig from "./modules/site-config";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
-import startOfMonth from "date-fns/startOfMonth";
+import Worker from "@/workers/event-worker";
 import endOfMonth from "date-fns/endOfMonth";
 
 Vue.use(Vuex);
@@ -77,6 +78,7 @@ export default new Vuex.Store({
     siteConfig,
     tour,
     pageSettings,
+    events,
   },
   state: {
     latestPublishedRelease: null,
@@ -104,6 +106,8 @@ export default new Vuex.Store({
     bootUpMessage: "loading_basic_data",
     et: false,
     highlightDateRangeSelector: false,
+    eventWorker: null,
+    ws: null, // web socket for notifications
     forceDisableOrganizationSelector: {},
     otpRequired: false,
   },
@@ -409,7 +413,7 @@ export default new Vuex.Store({
   },
 
   actions: {
-    async start({ dispatch, state }) {
+    async start({ dispatch }) {
       await dispatch("loadBasicInfo"); // load basic info - this can be done without logging in
       await dispatch("loadSiteConfig"); // site config - name, images, etc.
       await dispatch("loadUserData"); // we need user data first
@@ -435,6 +439,8 @@ export default new Vuex.Store({
         if (getters.showManagementStuff) {
           dispatch("fetchNoInterestPlatforms");
         }
+        dispatch("loadEvents");
+        dispatch("startEventWorker");
       }
     },
     showSnackbar(context, { content, color }) {
@@ -466,7 +472,7 @@ export default new Vuex.Store({
         console.warn("Could not fetch or set the latest published release");
       }
     },
-    async loadUserData({ commit, dispatch }) {
+    async loadUserData({ dispatch, commit }) {
       try {
         let response = await axios.get("/api/user/", { privileged: true });
         commit("setUserData", response.data);
@@ -493,11 +499,12 @@ export default new Vuex.Store({
         }
       }
     },
-    cleanUserData({ commit }) {
+    cleanUserData({ commit, dispatch }) {
       commit("setUserData", null);
       commit("setAuthenticated", false);
       //commit('setSelectedOrganizationId', null)
       commit("setOrganizations", null);
+      dispatch("stopEventWorker");
     },
     async dismissLastRelease({ state, commit }, markSeen) {
       if (state.latestPublishedRelease?.version) {
@@ -662,6 +669,69 @@ export default new Vuex.Store({
     async changeDateSelectorHighlight(context, { highlight }) {
       context.commit("setDateSelectorHighlight", { highlight });
     },
+    startEventWorker({ commit, state, dispatch }) {
+      if (state.eventWorker) {
+        console.log("Worker is already running");
+        return;
+      }
+      if (typeof Worker !== "undefined") {
+        // Create a new
+        const worker = new Worker();
+
+        worker.port.onmessage = async function (e) {
+          console.log("Worker: Message received", e.data);
+          if (e.data.type === "event") {
+            const data = e.data.data;
+            console.log("Worker: New event", data.event);
+            dispatch("updateStats", {
+              unread: data.unread_count,
+              newest_pk: data.event.pk,
+              newest_event: data.event,
+            });
+          } else if (e.data.type === "stats") {
+            const data = e.data.stats;
+            console.log("Worker: Stats update", data);
+            dispatch("updateStats", {
+              unread: data.unread,
+              total: data.total,
+              newest_pk: data.newest_pk,
+            });
+          } else if (e.data.type === "wsAuthError") {
+            if (state.user?.sesame_token) {
+              console.log("Worker: Auth error, trying to reauthenticate");
+              await dispatch("loadUserData");
+              worker.port.postMessage({
+                command: "startWs",
+                token: state.user.sesame_token,
+              });
+            } else {
+              console.error(
+                "Worker: no auth token available - cannot reauthenticate"
+              );
+            }
+          }
+        };
+        worker.port.onerror = function (e) {
+          console.error("Worker: Error", e);
+        };
+        console.log("Worker: Created worker", worker);
+
+        commit("setEventWorker", worker);
+        worker.port.postMessage({
+          command: "startWs",
+          token: state.user.sesame_token,
+        });
+        console.debug("Sent start to worker");
+      } else {
+        console.error("Worker: Web worker is not supported.");
+      }
+    },
+    async stopEventWorker({ commit, state }) {
+      if (state.eventWorker) {
+        state.eventWorker.port.postMessage({ command: "stopWs" });
+        commit("setEventWorker", null);
+      }
+    },
     async changeForceDisableOrganizationSelector(context, { hide, route }) {
       context.commit("setForceDisableOrganizationSelector", { hide, route });
     },
@@ -743,6 +813,12 @@ export default new Vuex.Store({
     },
     setDateSelectorHighlight(state, { highlight }) {
       state.highlightDateRangeSelector = highlight;
+    },
+    setEventWorker(state, worker) {
+      state.eventWorker = worker;
+    },
+    setWs(state, ws) {
+      state.ws = ws;
     },
     setForceDisableOrganizationSelector(state, { hide, route }) {
       Vue.set(state.forceDisableOrganizationSelector, route, hide);

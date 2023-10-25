@@ -146,6 +146,9 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
     finally:
         if attempt.data_file:
             attempt.data_file.close()
+    # check the harvest status and create an Event when harvest is finished
+    if attempt.status == AttemptStatus.SUCCESS:
+        attempt.fetchintention.harvest.create_event_if_finished()
 
 
 @celery.shared_task

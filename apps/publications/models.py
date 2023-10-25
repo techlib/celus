@@ -350,6 +350,30 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
             self.processing_info["error"] = str(e)
             self.state = TitleOverlapBatchState.FAILED
             self.save()
+            from events.models import Event, EventCategory, EventImportance
+
+            Event.create_for_users(
+                [self.last_updated_by],
+                title="Title list overlap analysis failed",
+                description="An error occurred while processing the title list: {error}".format(
+                    **self.processing_info
+                ),
+                importance=EventImportance.HIGH,
+                category=EventCategory.OVERLAP,
+            )
+        else:
+            from events.models import Event, EventCategory, EventImportance
+
+            Event.create_for_users(
+                [self.last_updated_by],
+                title="Title list overlap analysis finished successfully",
+                description=(
+                    "Number of rows processed: {row_count}\n"
+                    "Number of unique titles matched: {unique_matched_titles}"
+                ).format(**self.processing_info["stats"]),
+                importance=EventImportance.NORMAL,
+                category=EventCategory.OVERLAP,
+            )
 
     def create_annotated_file_name(self) -> str:
         if not self.source_file:

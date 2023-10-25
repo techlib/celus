@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import requests_mock
@@ -172,18 +173,24 @@ class TestSushiFetching:
         checksum,
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         assert credentials.is_broken() is False
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
-        with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
+        with freeze_time("2019-05-10"), requests_mock.Mocker() as m, patch(
+            "sushi.models.Event"
+        ) as mock_event:
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
                 content = datafile.read()
                 m.get(re.compile(f"^{credentials.url}.*"), text=content)
                 file_size = len(content)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
+                counter_report_types[counter_report],
+                start_date="2019-04-01",
+                end_date="2019-04-30",
             )
             assert m.called
             assert attempt.status == status1
@@ -201,19 +208,26 @@ class TestSushiFetching:
             assert attempt.checksum == checksum
             assert attempt.file_size == file_size
 
+            # test that an Event is created when the attempt breaks credentials
+            assert mock_event.create_for_users.call_count == (1 if breaks else 0)
+
         assert credentials.is_broken() == breaks
 
     @pytest.mark.parametrize("time", ("2020-08-01", "2020-06-15"))
     def test_c4_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=4,
         )
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time(time):
             with open(Path(__file__).parent / "data/counter4/sushi_3030.xml") as datafile:
                 m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date="2020-05-01", end_date="2020-05-31"
+                counter_report_types["db1"],
+                start_date="2020-05-01",
+                end_date="2020-05-31",
             )
             assert m.called
             assert attempt.status == AttemptStatus.NO_DATA
@@ -224,7 +238,9 @@ class TestSushiFetching:
 
     def test_c4_wrong_namespaces(self, counter_report_types, organizations, platforms):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=4,
         )
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
@@ -233,7 +249,9 @@ class TestSushiFetching:
             ) as datafile:
                 m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date="2020-01-01", end_date="2020-01-31"
+                counter_report_types["db1"],
+                start_date="2020-01-01",
+                end_date="2020-01-31",
             )
             assert m.called
             assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
@@ -244,7 +262,9 @@ class TestSushiFetching:
 
     def test_c4_non_sushi_exception(self, counter_report_types, organizations, platforms):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=4,
         )
         credentials.counter_reports.add(counter_report_types["jr1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
@@ -253,7 +273,9 @@ class TestSushiFetching:
             ) as datafile:
                 m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["jr1"], start_date="2021-10-01", end_date="2021-10-31"
+                counter_report_types["jr1"],
+                start_date="2021-10-01",
+                end_date="2021-10-31",
             )
             assert m.called
             assert attempt.status == AttemptStatus.PARSING_FAILED
@@ -265,13 +287,21 @@ class TestSushiFetching:
         self, path, error_code, partial, counter_report_types, organizations, platforms
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=4
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=4,
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / "data/counter4" / path) as datafile:
-                m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
+                m.post(
+                    re.compile(f"^{credentials.url}.*"),
+                    text=datafile.read(),
+                    status_code=200,
+                )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date="2020-05-01", end_date="2020-05-31"
+                counter_report_types["db1"],
+                start_date="2020-05-01",
+                end_date="2020-05-31",
             )
             assert m.called
             assert str(attempt.error_code) == error_code
@@ -281,7 +311,9 @@ class TestSushiFetching:
     @pytest.mark.parametrize("time", ("2017-04-01", "2017-02-15"))
     def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         credentials.counter_reports.add(counter_report_types["tr"])
         with requests_mock.Mocker() as m, freeze_time(time):
@@ -290,7 +322,9 @@ class TestSushiFetching:
             ) as datafile:
                 m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date="2017-01-01", end_date="2017-01-31"
+                counter_report_types["pr"],
+                start_date="2017-01-01",
+                end_date="2017-01-31",
             )
             assert m.called
             assert attempt.status == AttemptStatus.NO_DATA
@@ -305,10 +339,19 @@ class TestSushiFetching:
         ),
     )
     def test_c5_with_http_error_codes(
-        self, path, http_status, error_code, status, counter_report_types, organizations, platforms
+        self,
+        path,
+        http_status,
+        error_code,
+        status,
+        counter_report_types,
+        organizations,
+        platforms,
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         with requests_mock.Mocker() as m:
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
@@ -318,7 +361,9 @@ class TestSushiFetching:
                     status_code=http_status,
                 )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
+                counter_report_types["pr"],
+                start_date="2019-04-01",
+                end_date="2019-04-30",
             )
             assert m.called
             assert attempt.status == status
@@ -340,15 +385,23 @@ class TestSushiFetching:
         self, path, error_code, partial, counter_report_types, organizations, platforms
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
         with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
-                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
+                m.get(
+                    re.compile(f"^{credentials.url}.*"),
+                    text=datafile.read(),
+                    status_code=200,
+                )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
+                counter_report_types["pr"],
+                start_date="2019-04-01",
+                end_date="2019-04-30",
             )
             assert m.called
             assert attempt.error_code == error_code
@@ -365,16 +418,24 @@ class TestSushiFetching:
         delay_days,
     ):
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         path = "C5_PR_with_3040.json"
         with freeze_time(
             datetime(2019, 5, 1) + timedelta(days=delay_days)
         ), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
-                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
+                m.get(
+                    re.compile(f"^{credentials.url}.*"),
+                    text=datafile.read(),
+                    status_code=200,
+                )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
+                counter_report_types["pr"],
+                start_date="2019-04-01",
+                end_date="2019-04-30",
             )
             assert m.called
             assert attempt.error_code == "3040"
@@ -409,19 +470,33 @@ class TestSushiFetching:
         ),
     )
     def test_c5_all_cases(
-        self, path, counter_report, import_passes, counter_report_types, organizations, platforms
+        self,
+        path,
+        counter_report,
+        import_passes,
+        counter_report_types,
+        organizations,
+        platforms,
     ):
         """Just test that processing of test data works as excpected"""
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
         )
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
         with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
-                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
+                m.get(
+                    re.compile(f"^{credentials.url}.*"),
+                    text=datafile.read(),
+                    status_code=200,
+                )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
+                counter_report_types[counter_report],
+                start_date="2019-04-01",
+                end_date="2019-04-30",
             )
             if import_passes:
                 import_one_sushi_attempt(attempt)

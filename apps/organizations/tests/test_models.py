@@ -1,10 +1,11 @@
 import pytest
+from core.fake_data import UserFactory
 from core.models import DataSource
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from organizations.fake_data import OrganizationAltNameFactory, OrganizationFactory
-from organizations.models import Organization, OrganizationAltName
+from organizations.models import Organization, OrganizationAltName, UserOrganization
 
 
 @pytest.mark.django_db
@@ -157,3 +158,45 @@ class TestOrganization:
                 source=None,
             )
             org.full_clean()
+
+    def test_admins(self):
+        # create 3 users and 3 organizations
+        # so that:
+        #    | u1 | u2 | u3 |
+        # o1 |  A |  U |    |
+        # o2 |  A |    |    |
+        # o3 |  A |  U |  A |
+        u1, u2, u3 = UserFactory.create_batch(3)
+        o1, o2, o3 = OrganizationFactory.create_batch(3)
+        UserOrganization.objects.create(user=u1, organization=o1, is_admin=True)
+        UserOrganization.objects.create(user=u1, organization=o2, is_admin=True)
+        UserOrganization.objects.create(user=u1, organization=o3, is_admin=True)
+        UserOrganization.objects.create(user=u2, organization=o1, is_admin=False)
+        UserOrganization.objects.create(user=u2, organization=o3, is_admin=False)
+        UserOrganization.objects.create(user=u3, organization=o3, is_admin=True)
+        # check that admins() returns correct admins
+        assert set(o1.admins()) == {u1}
+        assert set(o2.admins()) == {u1}
+        assert set(o3.admins()) == {u1, u3}
+
+    def test_admins_with_superusers(self, settings):
+        # create 3 users and 3 organizations
+        # so that:
+        #    | u1 | u2 | u3 |
+        # o1 |  A |    |    |
+        # o2 |    |  U |    |
+        # o3 |    |    |  A |
+        u1, u2, u3 = UserFactory.create_batch(3)
+        o1, o2, o3 = OrganizationFactory.create_batch(3)
+        UserOrganization.objects.create(user=u1, organization=o1, is_admin=True)
+        UserOrganization.objects.create(user=u2, organization=o2, is_admin=False)
+        UserOrganization.objects.create(user=u3, organization=o3, is_admin=True)
+        # create superuser and master admin
+        su = UserFactory(is_superuser=True)
+        sa = UserFactory()
+        admin_org = OrganizationFactory(internal_id=settings.MASTER_ORGANIZATIONS[0])
+        UserOrganization.objects.create(user=sa, organization=admin_org, is_admin=True)
+        # check that admins() returns correct admins
+        assert set(o1.admins(include_superusers=True)) == {u1, su, sa}
+        assert set(o2.admins(include_superusers=True)) == {su, sa}
+        assert set(o3.admins(include_superusers=True)) == {u3, su, sa}

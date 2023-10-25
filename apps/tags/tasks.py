@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import celery
 from core.context_managers import logged_task
@@ -8,10 +9,23 @@ from core.models import TaskProgress
 from core.tasks import async_mail_admins
 from django.db import DatabaseError
 from django.db.transaction import atomic
+from events.models import Event, EventCategory, EventImportance
 
 from tags.models import TaggingBatch, TaggingBatchState
 
 logger = logging.getLogger(__name__)
+
+
+def grab_tagging_batch(batch_id) -> Optional[TaggingBatch]:
+    try:
+        tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
+    except TaggingBatch.DoesNotExist:
+        logger.warning("batch #%d was not found", batch_id)
+        return
+    except DatabaseError as e:
+        logger.warning("batch #%d is already being processed. (%s)", batch_id, e)
+        return
+    return tb
 
 
 @celery.shared_task
@@ -19,20 +33,41 @@ logger = logging.getLogger(__name__)
 @email_if_fails
 @atomic
 def tagging_batch_preflight_task(batch_id: int, domain_name: str = "/"):
-    try:
-        tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
-        if tb.state == TaggingBatchState.PREPROCESSING:
-            tp = TaskProgress(task_id=celery.current_task.request.id)
-            tb.do_preflight(
-                title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
-                progress_monitor=tp.store_progress,
-            )
-        else:
-            logger.error("Can't generate preflight for batch #%d (state=%s)", tb.pk, tb.state)
-    except TaggingBatch.DoesNotExist:
-        logger.warning("batch #%d was not found", batch_id)
-    except DatabaseError as e:
-        logger.warning("batch #%d is already being processed. (%s)", batch_id, e)
+    if not (tb := grab_tagging_batch(batch_id)):
+        return
+
+    if tb.state != TaggingBatchState.PREPROCESSING:
+        logger.error("Can't generate preflight for batch #%d (state=%s)", tb.pk, tb.state)
+        return
+
+    tp = TaskProgress(task_id=celery.current_task.request.id)
+    preflight = tb.do_preflight(
+        title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
+        progress_monitor=tp.store_progress,
+    )
+    # create corresponding event
+    if preflight.success:
+        title = "Pre-processing of title list has finished"
+        importance = EventImportance.NORMAL
+        description = (
+            f"Title list #{tb.pk} {tb.context_desc} was pre-processed, "
+            f"{preflight.unique_matched_titles} titles were matched.",
+        )
+    else:
+        title = "Pre-processing of title list failed"
+        importance = EventImportance.HIGH
+        description = (
+            f"An error occurred while pre-processing title list #{tb.pk} {tb.context_desc}:"
+            f"\n\n{preflight.error}"
+        )
+
+    Event.create_for_users(
+        [tb.last_updated_by],
+        title=title,
+        description=description,
+        importance=importance,
+        category=EventCategory.TAGS,
+    )
 
 
 @celery.shared_task
@@ -40,20 +75,41 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = "/"):
 @email_if_fails
 @atomic
 def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = "/"):
-    try:
-        tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
-        if tb.state == TaggingBatchState.IMPORTING:
-            tp = TaskProgress(task_id=celery.current_task.request.id)
-            tb.assign_tag(
-                title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
-                progress_monitor=tp.store_progress,
-            )
-        else:
-            logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
-    except TaggingBatch.DoesNotExist:
-        logger.warning("batch #%d was not found", batch_id)
-    except DatabaseError as e:
-        logger.warning("batch #%d is already being processed. (%s)", batch_id, e)
+    if not (tb := grab_tagging_batch(batch_id)):
+        return
+
+    if tb.state != TaggingBatchState.IMPORTING:
+        logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
+        return
+
+    tp = TaskProgress(task_id=celery.current_task.request.id)
+    postflight = tb.assign_tag(
+        title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
+        progress_monitor=tp.store_progress,
+    )
+
+    if postflight.success:
+        title = "Processing of title list has finished"
+        importance = EventImportance.NORMAL
+        description = (
+            f"Title list #{tb.pk} {tb.context_desc} has been processed, {postflight.tagged_titles} "
+            f"titles were tagged.",
+        )
+    else:
+        title = "Processing of title list failed"
+        importance = EventImportance.HIGH
+        description = (
+            f"An error occurred while processing title list #{tb.pk} {tb.context_desc}:"
+            f"\n\n{postflight.error}"
+        )
+
+    Event.create_for_users(
+        [tb.last_updated_by],
+        title=title,
+        description=description,
+        importance=importance,
+        category=EventCategory.TAGS,
+    )
 
 
 @celery.shared_task
@@ -61,21 +117,19 @@ def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = "/"):
 @email_if_fails
 @atomic
 def tagging_batch_unassign_task(batch_id: int):
-    try:
-        tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
-        if tb.state == TaggingBatchState.UNDOING:
-            tp = TaskProgress(task_id=celery.current_task.request.id)
-            tb.unassign_tag(progress_monitor=tp.store_progress)
-            # set it to initial state to allow preflight to be generated again
-            tb.state = TaggingBatchState.PREPROCESSING
-            tb.save()
-            tagging_batch_preflight_task.apply_async(args=[batch_id], countdown=2)
-        else:
-            logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
-    except TaggingBatch.DoesNotExist:
-        logger.warning("batch #%d was not found", batch_id)
-    except DatabaseError as e:
-        logger.warning("batch #%d is already being processed. (%s)", batch_id, e)
+    if not (tb := grab_tagging_batch(batch_id)):
+        return
+
+    if tb.state != TaggingBatchState.UNDOING:
+        logger.error("Can't process batch #%d (state=%s)", tb.pk, tb.state)
+        return
+
+    tp = TaskProgress(task_id=celery.current_task.request.id)
+    tb.unassign_tag(progress_monitor=tp.store_progress)
+    # set it to initial state to allow preflight to be generated again
+    tb.state = TaggingBatchState.PREPROCESSING
+    tb.save()
+    tagging_batch_preflight_task.apply_async(args=[batch_id], countdown=2)
 
 
 @celery.shared_task
@@ -96,9 +150,35 @@ def reprocess_due_tagging_batches_task():
         domain_name = this_celus_domain()
         tb.state = TaggingBatchState.IMPORTING
         tb.save()
-        tb.assign_tag(
+
+        postflight = tb.assign_tag(
             title_id_formatter=lambda title_id: f"https://{domain_name}/titles/{title_id}",
         )
+
+        # create corresponding event
+        if postflight.success:
+            title = "Periodic re-processing of title list was performed"
+            importance = EventImportance.NORMAL
+            description = (
+                f"Title list #{tb.pk} {tb.context_desc} was re-processed, "
+                f"{postflight.tagged_titles} titles were tagged.",
+            )
+        else:
+            title = "Periodic re-processing of title list failed"
+            importance = EventImportance.HIGH
+            description = (
+                f"An error occurred while processing title list #{tb.pk} {tb.context_desc}:"
+                f"\n\n{postflight.error}"
+            )
+
+        Event.create_for_users(
+            [tb.last_updated_by],
+            title=title,
+            description=description,
+            importance=importance,
+            category=EventCategory.TAGS,
+        )
+
+        # reschedule the task to run again to process the next batch
         if TaggingBatch.objects.to_reprocess().exists():
-            # reschedule the task to run again to process the next batch
             reprocess_due_tagging_batches_task.delay()

@@ -391,6 +391,14 @@ export default new Router({
       },
     },
     {
+      path: "/events",
+      name: "events",
+      component: () => import("../pages/EventsPage.vue"),
+      meta: {
+        title: "pages.events",
+      },
+    },
+    {
       path: "/goto/:name",
       redirect: (to) => {
         return {

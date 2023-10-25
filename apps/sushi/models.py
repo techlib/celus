@@ -57,6 +57,7 @@ from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from events.models import Event, EventCategory, EventImportance
 from logs.models import AccessLog, ImportBatch
 from organizations.models import Organization
 from publications.models import Platform
@@ -959,7 +960,27 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             if not self.update_broken_credentials():
                 # entire sushi credentials were not marked as broken
                 # lets check whether is can't be marked as broken per report type
-                self.update_broken_report_type()
+                if self.update_broken_report_type():
+                    Event.create_for_users(
+                        self.credentials.organization.admins(include_superusers=True),
+                        title=f"The {self.counter_report.code} report was marked as broken",
+                        description=f"The COUNTER {self.credentials.counter_version} report "
+                        f"{self.counter_report.code} for credentials for "
+                        f"{self.credentials.organization} / {self.credentials.platform} was marked "
+                        f"as broken as a result of a harvesting error.",
+                        importance=EventImportance.HIGH,
+                        category=EventCategory.SUSHI,
+                    )
+            else:
+                Event.create_for_users(
+                    self.credentials.organization.admins(include_superusers=True),
+                    title="SUSHI credentials were marked as broken",
+                    description=f"COUNTER {self.credentials.counter_version} credentials for "
+                    f"{self.credentials.organization} / {self.credentials.platform} were marked "
+                    f"as broken as a result of a harvesting error.",
+                    importance=EventImportance.HIGH,
+                    category=EventCategory.SUSHI,
+                )
 
     def any_success_lately(self, days: int = 15) -> bool:
         return self.credentials.current_successful_attempts.filter(
@@ -971,7 +992,6 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
         return True if the credetials become broken, False otherwise
         """
-
         # Check http status code
         if self.http_status_code in (401, 403):
             self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
@@ -998,29 +1018,29 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
         return False
 
-    def update_broken_report_type(self):
-        def mark_broken(broken_type: str):
+    def update_broken_report_type(self) -> bool:
+        def mark_broken(broken_type: str) -> bool:
             # try to get the report
             try:
                 cr2c = CounterReportsToCredentials.objects.get(
                     credentials=self.credentials, counter_report=self.counter_report
                 )
                 cr2c.set_broken(self, broken_type)
+                return True
             except CounterReportsToCredentials.DoesNotExist:
                 # Counter report was removed from credentials
-                return
+                return False
 
         if self.http_status_code in (404,):
-            mark_broken(SushiCredentials.BROKEN_HTTP)
-            return
+            return mark_broken(SushiCredentials.BROKEN_HTTP)
 
         if str(self.error_code) in (
             str(ErrorCode.REPORT_NOT_SUPPORTED.value),
             str(ErrorCode.REPORT_VERSION_NOT_SUPPORTED.value),
             str(ErrorCode.INVALID_REPORT_FILTER.value),
         ):
-            mark_broken(SushiCredentials.BROKEN_SUSHI)
-            return
+            return mark_broken(SushiCredentials.BROKEN_SUSHI)
+        return False
 
     def extract_header_data(self, header: dict) -> bool:
         """
