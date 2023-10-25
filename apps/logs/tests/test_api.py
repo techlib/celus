@@ -608,8 +608,8 @@ class TestDimensionTextAPI:
         url = reverse('dimension-text-list')
         resp = admin_client.get(url)
         assert resp.status_code == 200
-        assert resp.json()['count'] == len(dimension_texts)
-        assert len(resp.json()['results']) == len(dimension_texts)
+        assert resp.json()['count'] == DimensionText.objects.count()
+        assert len(resp.json()['results']) == DimensionText.objects.count()
 
     def test_list_with_selected_pks(self, admin_client, dimension_texts):
         url = reverse('dimension-text-list')
