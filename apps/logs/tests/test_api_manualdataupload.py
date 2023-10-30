@@ -85,7 +85,9 @@ class TestManualUploadForCounterData:
             mdu.save()
 
         # calculate preflight in celery
-        with patch('core.models.SourceFileMixin._send_error_mail') as mail_mock:
+        with patch('core.models.SourceFileMixin._send_error_mail') as mail_mock, patch(
+            'logs.tasks.async_mail_admins'
+        ) as mail_admins_mock:
             prepare_preflight(mdu.pk)
 
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
@@ -105,7 +107,8 @@ class TestManualUploadForCounterData:
             assert not mail_mock.called, 'email to admin was not sent'
         else:
             assert data['error'] == 'general'
-            assert mail_mock.called, 'email to admin was sent'
+            assert mail_mock.called, 'email to admin was sent from checksum mismatch'
+            assert mail_admins_mock.delay.called, 'email to admins was sent from MDU preflight fail'
 
     @pytest.mark.parametrize(['hash_matches'], [(True,), (False,)])
     @pytest.mark.parametrize(
