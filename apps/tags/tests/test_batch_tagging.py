@@ -122,6 +122,24 @@ class TestBatchTagging:
         assert tb.last_import.tagged_titles == 2, "2 are matched by 3 lines"
         assert tag.titles.count() == 2, "2 are matched by 3 lines"
 
+    def test_tagging_batch_assign_fail(self, inmemory_media, users):
+        TitleFactory.create(isbn='9780787960186')
+        TitleFactory.create(issn='1234-5678')
+        tag = TagForTitleFactory.create()
+        tb = TaggingBatchFactory.create(
+            tag=tag, source_file=plain_test_file, last_updated_by=users['admin1']
+        )
+        tb.do_preflight()
+        tb.state = TaggingBatchState.IMPORTING
+        # the progress monitor does not match the signature and will fail
+        tb.assign_tag(progress_monitor=lambda: None)
+        assert tb.state == TaggingBatchState.FAILED
+        assert tb.last_import.tagged_titles == 0
+        assert tag.titles.count() == 0
+        attempt = tb.taggingattempts.last()
+        assert attempt.operation == TaggingAttemptOperation.IMPORT
+        assert attempt.success is False
+
     def test_tagging_with_exclusive_tags(self, inmemory_media, users):
         t1 = TitleFactory.create(isbn='9780787960186')
         t2 = TitleFactory.create(issn='1234-5678')

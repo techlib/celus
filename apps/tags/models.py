@@ -23,7 +23,7 @@ from organizations.models import Organization
 from publications.models import Platform, Title
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from tags.logic.titles_lists import CsvTitleListReader
+from tags.logic.titles_lists import CsvTitleListReader, TitleListReader
 
 logger = logging.getLogger(__name__)
 
@@ -933,41 +933,36 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             self.last_updated_by
         ):
             raise PermissionDenied(f'User cannot add tags to class #{self.tag_class}')
+        try:
+            postflight = self._do_assign_tag(title_id_formatter, progress_monitor)
+        except Exception as e:
+            postflight = TaggingAttempt.objects.create(
+                batch=self, operation=TaggingAttemptOperation.IMPORT, success=False, error=str(e)
+            )
+            self.state = TaggingBatchState.FAILED
+        else:
+            # update batch
+            self.state = TaggingBatchState.IMPORTED
+        self.save()
+        if hasattr(self, '_last_imports'):
+            # we have the imports already prefetched and need to update them
+            self._last_imports.insert(0, postflight)
+
+    def _do_assign_tag(
+        self,
+        title_id_formatter: Callable[[int], str] = str,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+    ):
+        rows_total = self.file_row_count()
         reader = CsvTitleListReader(
             dump_id_formatter=title_id_formatter,
             tag_name_column=self.TAG_COLUMN_NAME if self.needs_tag_column else None,
         )
         stats = Counter()
-        rows_total = self.file_row_count()
-        tag_to_unique_title_ids = defaultdict(set)
-        tag_to_matched_lines = Counter()
-        with tempfile.NamedTemporaryFile('wb') as dump_file:
-            for rec in reader.process_source(
-                codecs.iterdecode(self.source_file, 'utf-8'), dump_file=dump_file
-            ):
-                stats['row_count'] += 1
-                tag_names = [None] if self.tag else rec.tag_names
-                if not rec.title_ids:
-                    stats['no_match'] += 1
-                else:
-                    for tag_name in tag_names:
-                        tag_to_unique_title_ids[tag_name] |= rec.title_ids
-                if self.needs_tag_column:
-                    for tag_name in rec.tag_names:
-                        tag_to_matched_lines[tag_name] += 1
-                if progress_monitor:
-                    # report only half of the progress, because we are doing the insertion into
-                    # the database later
-                    progress_monitor(stats['row_count'] // 2, rows_total)
-            dump_file.seek(0)
-            with open(dump_file.name, 'rb') as infile:
-                if self.annotated_file:
-                    # we delete the original annotated_file in order to preserve the original name
-                    # and not allow Django to replace it with one with extra junk in the filename
-                    self.annotated_file.delete(save=False)
-                self.annotated_file = File(infile, name=self.create_annotated_file_name())
-                self.save()
 
+        tag_to_matched_lines, tag_to_unique_title_ids = self._process_file_for_assignment(
+            reader, rows_total, stats, progress_monitor
+        )
         # do the actual tagging
         # postflight (import) is referenced in TitleTag, so we need to create it first
         postflight = TaggingAttempt.objects.create(
@@ -1058,12 +1053,47 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             }
         postflight.tag_stats = tag_stats
         postflight.save()
-        # update batch
-        self.state = TaggingBatchState.IMPORTED
-        self.save()
-        if hasattr(self, '_last_imports'):
-            # we have the imports already prefetched and need to update them
-            self._last_imports.insert(0, postflight)
+        return postflight
+
+    def _process_file_for_assignment(
+        self,
+        reader: TitleListReader,
+        rows_total: int,
+        stats: Counter,
+        progress_monitor: Optional[Callable[[int, int], None]] = None,
+    ):
+        """
+        Internal function to process the file and return the stats and the mapping of tag names
+        """
+        tag_to_unique_title_ids = defaultdict(set)
+        tag_to_matched_lines = Counter()
+        with tempfile.NamedTemporaryFile('wb') as dump_file:
+            for rec in reader.process_source(
+                codecs.iterdecode(self.source_file, 'utf-8'), dump_file=dump_file
+            ):
+                stats['row_count'] += 1
+                tag_names = [None] if self.tag else rec.tag_names
+                if not rec.title_ids:
+                    stats['no_match'] += 1
+                else:
+                    for tag_name in tag_names:
+                        tag_to_unique_title_ids[tag_name] |= rec.title_ids
+                if self.needs_tag_column:
+                    for tag_name in rec.tag_names:
+                        tag_to_matched_lines[tag_name] += 1
+                if progress_monitor:
+                    # report only half of the progress, because we are doing the insertion into
+                    # the database later
+                    progress_monitor(stats['row_count'] // 2, rows_total)
+            dump_file.seek(0)
+            with open(dump_file.name, 'rb') as infile:
+                if self.annotated_file:
+                    # we delete the original annotated_file in order to preserve the original name
+                    # and not allow Django to replace it with one with extra junk in the filename
+                    self.annotated_file.delete(save=False)
+                self.annotated_file = File(infile, name=self.create_annotated_file_name())
+                self.save()
+        return tag_to_matched_lines, tag_to_unique_title_ids
 
     def unassign_tag(self, progress_monitor: Optional[Callable[[int, int], None]] = None) -> None:
         """
