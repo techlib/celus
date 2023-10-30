@@ -2,7 +2,6 @@ from rest_framework import serializers as s
 
 
 class ReportDataSourceSerializer(s.Serializer):
-
     id = s.CharField()
     name = s.CharField()
     reportType = s.CharField(source='report_type')
@@ -12,7 +11,6 @@ class ReportDataSourceSerializer(s.Serializer):
 
 
 class ReportPartStageSerializer(s.Serializer):
-
     id = s.CharField()
     name = s.CharField()
     description = s.CharField()
@@ -21,7 +19,6 @@ class ReportPartStageSerializer(s.Serializer):
 
 
 class ReportPartSerializer(s.Serializer):
-
     name = s.CharField()
     description = s.CharField()
     explanation = s.CharField()
@@ -30,7 +27,6 @@ class ReportPartSerializer(s.Serializer):
 
 
 class ReportSerializer(s.Serializer):
-
     name = s.CharField()
     description = s.CharField()
     parts = ReportPartSerializer(many=True)

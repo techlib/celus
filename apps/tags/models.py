@@ -125,7 +125,6 @@ class TagClassQuerySet(models.QuerySet):
 
 
 class TagClass(CreatedUpdatedMixin, models.Model):
-
     internal = models.BooleanField(default=False)
     scope = models.CharField(max_length=16, choices=TagScope.choices)
     name = models.CharField(max_length=200)
@@ -343,7 +342,6 @@ class TagQuerySet(models.QuerySet):
 
 
 class Tag(CreatedUpdatedMixin, models.Model):
-
     tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     text_color = ColorField(default='#303030')
@@ -493,7 +491,6 @@ class Tag(CreatedUpdatedMixin, models.Model):
 
 
 class ItemTag(CreatedUpdatedMixin, models.Model):
-
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     target = models.ForeignKey(Title, on_delete=models.CASCADE)  # just to have something here
     tagging_batch = models.ForeignKey(
@@ -543,17 +540,14 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
 
 
 class TitleTag(ItemTag):
-
     target = models.ForeignKey(Title, on_delete=models.CASCADE)
 
 
 class PlatformTag(ItemTag):
-
     target = models.ForeignKey(Platform, on_delete=models.CASCADE)
 
 
 class OrganizationTag(ItemTag):
-
     target = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
 
@@ -663,7 +657,6 @@ class TaggingBatchQuerySet(models.QuerySet):
 
 
 class TaggingBatch(CreatedUpdatedMixin, models.Model):
-
     TAG_COLUMN_NAME = 'tag'
 
     source_file = models.FileField(

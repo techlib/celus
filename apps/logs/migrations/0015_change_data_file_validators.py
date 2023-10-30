@@ -6,7 +6,6 @@ import logs.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0014_default_dimension_type')]
 
     operations = [

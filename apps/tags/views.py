@@ -53,7 +53,6 @@ from tags.tasks import (
 
 
 class TagClassViewSet(ModelViewSet):
-
     queryset = TagClass.objects.none()
     serializer_class = TagClassSerializer
     permission_classes = [IsAuthenticated, TagClassPermissions]
@@ -96,7 +95,6 @@ class TagClassViewSet(ModelViewSet):
 
 
 class TagViewSet(ModelViewSet):
-
     queryset = Tag.objects.none()
     permission_classes = [IsAuthenticated, TagPermissions]
     filter_backends = [PkMultiValueFilterBackend]
@@ -133,7 +131,6 @@ class TagViewSet(ModelViewSet):
 
 
 class TaggedItemViewSet(ReadOnlyModelViewSet):
-
     pagination_class = StandardResultsSetPagination
     item_list_attr = None
 
@@ -193,13 +190,11 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
 
 
 class TaggedTitleViewSet(TaggedItemViewSet):
-
     serializer_class = TitleSerializer
     item_list_attr = 'titles'
 
 
 class TaggedPlatformsViewSet(TaggedItemViewSet):
-
     serializer_class = PlatformSerializer
     item_list_attr = 'platforms'
 
@@ -208,7 +203,6 @@ class TaggedPlatformsViewSet(TaggedItemViewSet):
 
 
 class TaggedOrganizationsViewSet(TaggedItemViewSet):
-
     serializer_class = OrganizationSerializer
     item_list_attr = 'organizations'
 
@@ -247,7 +241,6 @@ class TagItemLinksView(APIView):
 
 
 class TaggingBatchViewSet(ModelViewSet):
-
     queryset = TaggingBatch.objects.none()
 
     def get_serializer_class(self):

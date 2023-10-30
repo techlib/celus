@@ -13,7 +13,6 @@ def update_tr_j1_view(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('charts', '0011_remove_reportdataview_primary_dimension'),
     ]

@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class EDUIdHeaderMiddleware(RemoteUserMiddleware):
-
     header = settings.EDUID_IDENTITY_HEADER
 
     def process_request(self, request):

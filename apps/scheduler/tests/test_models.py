@@ -1078,7 +1078,6 @@ class TestScheduler:
             assert scheduler.run_next() == RunResponse.PROCESSED
 
     def test_unlock_stuck_schedulers(self, credentials, counter_report_types):
-
         scheduler1 = SchedulerFactory(
             url="https://scheduler1.example.com",
             cooldown=10,
@@ -1817,7 +1816,6 @@ class TestAutomatic:
     def test_credentials_signals_with_retry_chains(
         self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials
     ):
-
         # Clear all harvests
         Harvest.objects.all().delete()
 

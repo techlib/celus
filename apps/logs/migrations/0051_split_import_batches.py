@@ -82,7 +82,6 @@ def check_long_import_batches_with_fa(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0050_import_batch_date_remove_import_batch_from_mdu')]
 
     operations = [

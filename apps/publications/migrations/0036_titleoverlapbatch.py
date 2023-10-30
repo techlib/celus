@@ -9,7 +9,6 @@ import publications.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('organizations', '0022_organization_raw_enabled'),

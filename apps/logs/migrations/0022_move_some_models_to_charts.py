@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0021_virtual_report_type_to_report_data_view')]
 
     operations = [

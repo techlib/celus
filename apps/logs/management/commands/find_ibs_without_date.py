@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Finds all import batches which do not have date - the are remnants of old data'
 
     def add_arguments(self, parser):

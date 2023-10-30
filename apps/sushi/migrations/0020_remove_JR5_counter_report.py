@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0019_add_defaults_to_sushifetchattempt_booleans')]
 
     operations = [

@@ -89,7 +89,6 @@ class TestCeleryTasks:
             assert dimension_count + 2 == Dimension.objects.count(), "two dimensions were created"
 
     def test_sync_knowledgebase_fail_task(self, data_sources):
-
         with requests_mock.Mocker() as m:
             m.get(
                 re.compile(f'^{data_sources["brain"].url}/knowledgebase/platforms/'),

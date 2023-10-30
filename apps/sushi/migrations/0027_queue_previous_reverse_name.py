@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0026_customer_id_requestor_id_blank_fix')]
 
     operations = [

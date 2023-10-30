@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Looks at all the cached queries and plans their update to current Django. Is meant '
         'to be run during updates'

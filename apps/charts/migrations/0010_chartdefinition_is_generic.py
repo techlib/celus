@@ -15,7 +15,6 @@ def set_some_charts_as_generic(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('charts', '0009_jsonfield')]
 
     operations = [

@@ -39,7 +39,6 @@ from .serializers import (
 
 
 class SushiCredentialsViewSet(ModelViewSet):
-
     serializer_class = SushiCredentialsSerializer
     queryset = SushiCredentials.objects.none()
 
@@ -331,7 +330,7 @@ class SushiCredentialsViewSet(ModelViewSet):
             year_result = {"year": year}
             for i in range(1, 13):
                 year_result[f"{i:02d}"] = {}
-                for (crt, broken) in report_types_and_broken:
+                for crt, broken in report_types_and_broken:
                     if entry := data_matrix_map.get((crt.report_type.pk, year, i)):
                         status = "success" if entry.has_logs else "no_data"
                         can_harvest = False
@@ -469,6 +468,5 @@ class SushiCredentialsViewSet(ModelViewSet):
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):
-
     serializer_class = CounterReportTypeSerializer
     queryset = CounterReportType.objects.all()

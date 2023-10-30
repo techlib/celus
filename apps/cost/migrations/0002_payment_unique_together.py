@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('organizations', '0013_auto_20191113_0939'),
         ('publications', '0014_remove_old_interest_reports_attr'),

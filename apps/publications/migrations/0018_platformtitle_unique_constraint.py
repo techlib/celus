@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('organizations', '0014_nullable_ico'),
         ('publications', '0017_platformtitle_unique_data'),

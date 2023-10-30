@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('sushi', '0056_alter_sushifetchattempt_credentials'),
     ]

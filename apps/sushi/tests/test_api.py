@@ -45,7 +45,6 @@ class TestSushiCredentialsAPI:
         delete_data,
         status_code,
     ):
-
         cr = credentials['standalone_tr']
         fetch_attempts = FetchAttemptFactory.create_batch(2, credentials=cr)
         fi = FetchIntentionFactory(credentials=cr, attempt=fetch_attempts[0])
@@ -129,7 +128,6 @@ def get_empty_credentials_c5():
 
 @pytest.fixture
 def credentials_dict(credentials):
-
     standalone_br1_jr1 = get_empty_credentials_c4()
     cr = credentials['standalone_br1_jr1']
     standalone_br1_jr1.update(

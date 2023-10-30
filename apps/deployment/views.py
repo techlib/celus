@@ -10,25 +10,21 @@ from deployment.serializers import FooterImageSerializer, SiteLogoSerializer, Si
 
 
 class FooterImageViewSet(ReadOnlyModelViewSet):
-
     serializer_class = FooterImageSerializer
     queryset = FooterImage.objects.filter(site_id=settings.SITE_ID)
 
 
 class SiteLogoViewSet(ReadOnlyModelViewSet):
-
     serializer_class = SiteLogoSerializer
     queryset = SiteLogo.objects.filter(site_id=settings.SITE_ID)
 
 
 class SiteViewSet(ReadOnlyModelViewSet):
-
     serializer_class = SiteSerializer
     queryset = Site.objects.filter(pk=settings.SITE_ID)
 
 
 class SiteOverview(APIView):
-
     permission_classes = [AllowAny]
 
     def get(self, request):

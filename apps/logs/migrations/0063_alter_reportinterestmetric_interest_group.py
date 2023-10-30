@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0062_merge_20220325_1628')]
 
     operations = [

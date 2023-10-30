@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('publications', '0005_auto_20190801_1615'),
         ('organizations', '0008_sushicredentials_enabled'),

@@ -41,7 +41,6 @@ from .tasks import trigger_scheduler
 class HarvestViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericViewSet
 ):
-
     pagination_class = StandardResultsSetPagination
 
     filter_backends = [
@@ -236,7 +235,6 @@ class LastUpdatedIntentionFilterBackend(filters.BaseFilterBackend):
 
 
 class HarvestIntentionViewSet(ReadOnlyModelViewSet):
-
     serializer_class = FetchIntentionShortSerializer
     filter_backends = [LastUpdatedIntentionFilterBackend]
 
@@ -302,7 +300,6 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
 
 class IntentionViewSet(ModelViewSet):
-
     serializer_class = FetchIntentionSerializer
     http_method_names = ['get', 'options', 'head', 'post']
     filter_backends = [

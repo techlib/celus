@@ -183,7 +183,6 @@ class Scheduler(models.Model):
 
         # processing fetch intention
         with transaction.atomic(savepoint=True):
-
             # It may take so time to process the intention
             # (download the data)
             process_response = intention.process()
@@ -362,7 +361,6 @@ class FetchIntentionQuerySet(models.QuerySet):
 
 
 class FetchIntention(models.Model):
-
     PRIORITY_NOW = 100
     PRIORITY_NORMAL = 50
 
@@ -590,7 +588,6 @@ class FetchIntention(models.Model):
         inc_service_not_available_retry: bool = False,
         inc_service_busy_retry: bool = False,
     ) -> typing.Optional['FetchIntention']:
-
         if self.broken_credentials:
             logger.warning(
                 "Credentials are broken. Can't create retry for FetchIntention %s", self.pk
@@ -666,7 +663,6 @@ class FetchIntention(models.Model):
                 return
 
     def handle_data_not_ready(self, final_import_batch=False):
-
         if not self.credentials.is_verified:
             # credentials not verified -> terminate
             return
@@ -889,7 +885,6 @@ class FetchIntentionQueue(models.Model):
 
 
 class Harvest(CreatedUpdatedMixin):
-
     objects = HarvestQuerySet.as_manager()
     stats_attrs = ("planned", "total", "attempt_count", "finished", "working")
 

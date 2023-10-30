@@ -55,7 +55,6 @@ class ReportDataSourceSerializer(s.Serializer):
 
 
 class ReportPartStageSerializer(s.Serializer):
-
     id = s.CharField(required=False)
     name = s.CharField()
     description = s.CharField(required=False)
@@ -69,7 +68,6 @@ class ReportPartStageSerializer(s.Serializer):
 
 
 class ReportPartSerializer(s.Serializer):
-
     name = s.CharField()
     description = s.CharField()
     explanation = s.CharField(required=False)
@@ -78,7 +76,6 @@ class ReportPartSerializer(s.Serializer):
 
 
 class ReportSerializer(s.Serializer):
-
     name = s.CharField()
     description = s.CharField()
     parts = ReportPartSerializer(many=True)

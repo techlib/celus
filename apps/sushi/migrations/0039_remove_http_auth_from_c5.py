@@ -11,7 +11,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0038_jsonfield')]
 
     operations = [migrations.RunPython(remove_http_auth_from_c5, noop)]

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('charts', '0010_chartdefinition_is_generic')]
 
     operations = [migrations.RemoveField(model_name='reportdataview', name='primary_dimension')]

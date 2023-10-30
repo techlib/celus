@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('recache', '0005_remove_cachedquery_query_pickle')]
 
     operations = [

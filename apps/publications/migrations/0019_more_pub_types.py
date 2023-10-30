@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0018_platformtitle_unique_constraint')]
 
     operations = [

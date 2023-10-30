@@ -13,7 +13,6 @@ def split_access_log_source(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('publications', '0004_pub_type_verbose_name'),
         ('organizations', '0003_non_unique_ico'),

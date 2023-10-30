@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class ScopusTitleListTagger:
-
     LEVEL_TO_COLOR = {'Level 1': '#ef90a3', 'Level 2': '#f1b1be', 'Level 3': '#f5cdd5'}
     DEFAULT_COLOR = '#ed6d86'
 

@@ -69,7 +69,6 @@ logger = logging.getLogger(__name__)
 
 
 class OrganizationPlatform(models.Model):
-
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
 
@@ -511,7 +510,6 @@ class AccessLogQuerySet(QuerySet):
 
 
 class AccessLog(models.Model):
-
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, db_index=False)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -740,7 +738,6 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         return self.state == MduState.IMPORTED
 
     def to_record_dicts(self) -> [dict]:
-
         # Unwrap django file abstraction
         file = getattr(self.data_file, 'file', self.data_file)
         file = getattr(file, 'file', file)
@@ -1136,7 +1133,6 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
 
 class ManualDataUploadImportBatch(models.Model):
-
     import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, related_name='mdu_link')
     mdu = models.ForeignKey(
         ManualDataUpload, on_delete=models.CASCADE, related_name='import_batch_link'

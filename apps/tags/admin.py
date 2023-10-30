@@ -18,7 +18,6 @@ class TagPreviewMixin:
 
 @admin.register(models.Tag)
 class TagAdmin(TagPreviewMixin, admin.ModelAdmin):
-
     list_display = [
         'pk',
         'name',
@@ -35,7 +34,6 @@ class TagAdmin(TagPreviewMixin, admin.ModelAdmin):
 
 @admin.register(models.TagClass)
 class TagClassAdmin(TagPreviewMixin, admin.ModelAdmin):
-
     list_display = ['pk', 'name', 'text_color', 'bg_color', 'can_create_tags', 'rendered']
     readonly_fields = ['last_updated_by']
     search_fields = ['name', 'text_color', 'bg_color']
@@ -43,14 +41,12 @@ class TagClassAdmin(TagPreviewMixin, admin.ModelAdmin):
 
 @admin.register(models.TaggingBatch)
 class TaggingBatchAdmin(admin.ModelAdmin):
-
     list_display = ['pk', 'state', 'created', 'last_updated_by', 'tag', 'tag_class']
     list_filter = ['state', 'last_updated_by', 'tag', 'tag_class']
 
 
 @admin.register(models.TaggingAttempt)
 class TaggingAttemptAdmin(admin.ModelAdmin):
-
     list_display = [
         'batch_id',
         'operation',

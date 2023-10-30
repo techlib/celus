@@ -8,7 +8,6 @@ from logs.models import ReportType
 
 
 class Command(BaseCommand):
-
     help = 'Exports analytical data with a chosen backend'
 
     def add_arguments(self, parser):

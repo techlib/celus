@@ -6,7 +6,6 @@ import sushi.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0033_sushifetchattempt_queue_id')]
 
     operations = [

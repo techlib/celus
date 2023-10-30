@@ -56,7 +56,6 @@ class SushiCredentialsResource(ModelResource):
 
 @admin.register(models.SushiCredentials)
 class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
-
     list_display = [
         'organization',
         'organization_internal_id',
@@ -79,7 +78,6 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
 
 @admin.register(models.CounterReportType)
 class CounterReportTypeAdmin(admin.ModelAdmin):
-
     list_display = ['code', 'name', 'counter_version', 'report_type', 'active']
     list_filter = ['counter_version']
     ordering = ['code']
@@ -144,7 +142,6 @@ class HasImportBatch(admin.SimpleListFilter):
 
 @admin.register(models.SushiFetchAttempt)
 class SushiFetchAttemptAdmin(admin.ModelAdmin):
-
     list_display = [
         'organization',
         'platform',
@@ -213,7 +210,6 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
 @admin.register(models.CounterReportsToCredentials)
 class CounterReportsToCredentialsAdmin(admin.ModelAdmin):
-
     list_display = [
         'credentials',
         'counter_report',

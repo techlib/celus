@@ -3,7 +3,6 @@ from django.db import models
 
 
 class SiteImage(models.Model):
-
     site = models.ForeignKey(Site, on_delete=models.CASCADE)
     img = models.FileField(upload_to='deployment')
     alt_text = models.TextField(blank=True)
@@ -18,7 +17,6 @@ class SiteImage(models.Model):
 
 
 class FooterImage(SiteImage):
-
     position = models.PositiveSmallIntegerField(help_text='influences sorting of images on page')
 
     class Meta:

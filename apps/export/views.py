@@ -9,7 +9,6 @@ from .tasks import process_flexible_export_task
 
 
 class FlexibleDataExportViewSet(ModelViewSet):
-
     queryset = FlexibleDataExport.objects.none()
     serializer_class = FlexibleDataExportSerializer
 

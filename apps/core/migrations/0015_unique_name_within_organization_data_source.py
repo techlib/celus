@@ -16,7 +16,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('core', '0014_auto_20210329_1002')]
 
     operations = [

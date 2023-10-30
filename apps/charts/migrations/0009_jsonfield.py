@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('charts', '0008_datasource_set_null')]
 
     operations = [

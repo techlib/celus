@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0060_controlled_metrics')]
 
     operations = [migrations.RemoveField(model_name='manualdataupload', name='is_processed')]

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     # dependency on 0028_reporttype_superseeded_by was added ex-post when I found out that
     # in some cases the migration order was incorrect and this change occurred before
     # 0028_reporttype_superseeded_by which is incorrect

@@ -8,7 +8,6 @@ def fn_name(fullpath):
 
 
 class Command(BaseCommand):
-
     help = 'Start the specified celery task'
 
     tasks = {fn_name(task_name): task_name for task_name in settings.CELERY_TASK_ROUTES.keys()}

@@ -46,7 +46,6 @@ class TestAttemptImport:
         )
         correct_checkum = 'c6135b6b06065a572e18c3cf8a8b4ab643d906385c8cc10fcdd120a4e798d4d8'
         with (Path(__file__).parent / "data/counter4/counter4_br2_one_month.tsv").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "something.tsv"
 
@@ -86,7 +85,6 @@ class TestAttemptImport:
         )
 
         with (Path(__file__).parent / "data/counter4/4_JR2_denials.tsv").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "something.tsv"
 
@@ -117,7 +115,6 @@ class TestAttemptImport:
         )
 
         with (Path(__file__).parent / "data/counter4/counter4_jr1_empty.tsv").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "something.tsv"
 
@@ -151,7 +148,6 @@ class TestAttemptImport:
     def test_import_precondition_error(
         self, status, passed, counter_report_type, organizations, platforms
     ):
-
         creds = SushiCredentials.objects.create(
             organization=organizations["empty"],
             platform=platforms["empty"],
@@ -190,7 +186,6 @@ class TestAttemptImport:
         )
 
         with (Path(__file__).parent / "data/counter5/5_TR_with_warning.json").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "something.json"
 
@@ -268,7 +263,6 @@ class TestAttemptImport:
         )
 
         with (Path(__file__).parent / f"data/counter5/{filename}").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "something.json"
 
@@ -301,7 +295,6 @@ class TestAttemptImport:
         )
 
         with (Path(__file__).parent / "data/counter5/C5_PR_test.json").open() as f:
-
             data_file = ContentFile(f.read())
             data_file.name = "C5_PR_test.json"
 
@@ -327,7 +320,6 @@ class TestAttemptImport:
     def test_wiping_empty_ibs(
         self, organizations, counter_report_types, platforms, credentials, report_types
     ):
-
         # existing empty ib
         ib = ImportBatchFactory(
             date="2019-02-01",

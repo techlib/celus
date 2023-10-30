@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Go over all titles and merge those which represent the same title'
 
     def add_arguments(self, parser):

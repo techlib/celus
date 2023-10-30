@@ -15,7 +15,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0042_flexiblereport_last_updated_by')]
 
     operations = [

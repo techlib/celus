@@ -98,7 +98,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class Counter5DataView(APIView):
-
     # permission_classes = [IsAuthenticated &
     #                       (SuperuserOrAdminPermission | CanAccessOrganizationFromGETAttrs)
     #                      ]
@@ -142,7 +141,6 @@ class Counter5DataView(APIView):
 
 
 class ReportTypeViewSet(ReadOnlyModelViewSet):
-
     serializer_class = ReportTypeSerializer
     queryset = ReportType.objects.exclude_materialized().select_related(
         'source', 'counterreporttype'
@@ -164,7 +162,6 @@ class ReportTypeViewSet(ReadOnlyModelViewSet):
 
 
 class MetricViewSet(ReadOnlyModelViewSet):
-
     serializer_class = MetricSerializer
     queryset = Metric.objects.all()
     filter_backends = [PkMultiValueFilterBackend]
@@ -190,7 +187,6 @@ class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
 
 
 class DimensionTextViewSet(ReadOnlyModelViewSet):
-
     serializer_class = DimensionTextSerializer
     queryset = DimensionText.objects.all()
     pagination_class = StandardResultsSetPagination
@@ -216,7 +212,6 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
 
 
 class AccessLogListViewBase(ListAPIView):
-
     serializer_class = AccessLogSerializer
     implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
     pagination_class = StandardResultsSetPagination
@@ -375,7 +370,6 @@ class RawDataExportView(PandasViewBase, AccessLogListViewBase):
 
 
 class RawDataDelayedExportView(APIView):
-
     permission_classes = [
         IsAuthenticated
         & (
@@ -425,7 +419,6 @@ class RawDataDelayedExportProgressView(View):
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):
-
     serializer_class = ImportBatchSerializer
     queryset = ImportBatch.objects.all()
     # pagination_class = StandardResultsSetPagination
@@ -543,7 +536,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         return Response(counter)
 
     class DataPresenceParamSerializer(Serializer):
-
         start_date = CharField(validators=[month_validator], required=True)
         end_date = CharField(validators=[month_validator], required=True)
         credentials = CharField(validators=[pk_list_validator], required=True)
@@ -616,7 +608,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         )
 
     class DataCoverageCoreParamSerializer(Serializer):
-
         start_date = CharField(validators=[month_validator], required=False)
         end_date = CharField(validators=[month_validator], required=False)
         organization = CommaSeparatedPrimaryKeyRelatedField(
@@ -624,7 +615,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         )
 
     class DataCoverageBasicParamSerializer(DataCoverageCoreParamSerializer):
-
         report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False)
         report_view = PrimaryKeyRelatedField(queryset=ReportDataView.objects.all(), required=False)
         platform = CommaSeparatedPrimaryKeyRelatedField(
@@ -640,7 +630,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             return data
 
     class DataCoverageFullParamSerializer(DataCoverageBasicParamSerializer):
-
         title = PrimaryKeyRelatedField(queryset=Title.objects.all(), required=False)
         split_by_org = BooleanField(default=False)
         split_by_platform = BooleanField(default=False)
@@ -840,7 +829,6 @@ class ManualDataUploadViewSet(
     mixins.RetrieveModelMixin,
     GenericViewSet,
 ):
-
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
@@ -979,7 +967,6 @@ class ManualDataUploadViewSet(
         elif mdu.state == MduState.IMPORTING:
             return Response({"msg": "already importing"})
         elif mdu.can_import(request.user):
-
             # Set organization to None if organization is read from data
             if mdu.multiple_organizations:
                 mdu.organization = None
@@ -1045,7 +1032,6 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
 
 
 class OrganizationReportTypesViewSet(ModelViewSet):
-
     queryset = ReportType.objects.all()
     serializer_class = ReportTypeSerializer
 
@@ -1078,7 +1064,6 @@ class OrganizationReportTypesViewSet(ModelViewSet):
 
 
 class InterestGroupViewSet(ReadOnlyModelViewSet):
-
     queryset = InterestGroup.objects.all()
     serializer_class = InterestGroupSerializer
 
@@ -1165,7 +1150,6 @@ class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):
 
 
 class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
-
     MAX_COUNT = 1000
 
     def get(self, request):
@@ -1188,7 +1172,6 @@ class FlexibleSlicerCoverageView(FlexibleSlicerBaseView):
 
 
 class FlexibleReportViewSet(ModelViewSet):
-
     queryset = FlexibleReport.objects.none()
     serializer_class = FlexibleReportSerializer
     filter_backends = [PrimaryDimensionFlexiReportFilter]

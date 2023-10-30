@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Fetches platforms from given knowledgebase data source'
 
     def add_arguments(self, parser):

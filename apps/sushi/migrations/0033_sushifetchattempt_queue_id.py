@@ -32,7 +32,6 @@ def fill_missing_start_queue(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0032_unschedule_3030')]
 
     operations = [

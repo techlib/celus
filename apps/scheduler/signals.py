@@ -38,7 +38,6 @@ def update_intentions_from_cred_post_save(
 def update_intentions_from_cr2c_post_save(
     sender, instance, created, raw, using, update_fields, **kwargs
 ):
-
     # skip when automatic scheduling disabled
     if not settings.AUTOMATIC_HARVESTING_ENABLED:
         return
@@ -52,7 +51,6 @@ def update_intentions_from_cr2c_post_save(
 
 @receiver(post_delete, sender=CounterReportsToCredentials)
 def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
-
     # skip when automatic scheduling disabled
     if not settings.AUTOMATIC_HARVESTING_ENABLED:
         return

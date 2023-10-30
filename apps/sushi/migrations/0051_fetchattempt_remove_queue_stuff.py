@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0050_alter_sushicredentials_api_key')]
 
     operations = [

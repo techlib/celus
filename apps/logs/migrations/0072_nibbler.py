@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0071_mdu_import_batch_ordering')]
 
     operations = [

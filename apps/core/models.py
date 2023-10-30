@@ -138,7 +138,6 @@ class CelusUserManager(UserManager):
 
 
 class User(AbstractUser):
-
     EMAIL_VERIFICATION_STATUS_UNKNOWN = "unknown"
     EMAIL_VERIFICATION_STATUS_VERIFIED = "verified"
     EMAIL_VERIFICATION_STATUS_PENDING = "pending"
@@ -192,7 +191,6 @@ class User(AbstractUser):
     def accessible_platforms(
         self, organization: typing.Optional["apps.publications.models.Organization"] = None
     ) -> models.QuerySet:
-
         """
         Display accessible platform for the user
 
@@ -326,7 +324,6 @@ class User(AbstractUser):
 
 
 class Identity(models.Model):
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     identity = models.CharField(
         max_length=100,
@@ -387,7 +384,6 @@ def where_to_store(instance: models.Model, filename):
 
 
 class SourceFileMixin(models.Model):
-
     DIGEST_SIZE = 32  # byte length of the checksum
 
     data_file = models.FileField(upload_to=where_to_store, blank=True, null=True, max_length=256)

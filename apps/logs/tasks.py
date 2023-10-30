@@ -287,7 +287,6 @@ def prepare_preflight(mdu_id: int):
             return
 
         elif mdu.state == MduState.CONFIRMED:
-
             if mdu.method == MduMethod.RAW:
                 # update method if it was updated
                 nibbler_output, mdu.method = mdu.get_nibbler_output()

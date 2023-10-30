@@ -16,7 +16,6 @@ def data_source():
 
 @pytest.mark.django_db
 class TestUserSync:
-
     user_data = [
         {'id': 1, 'vals': {'name@cs': ['Pepa Vonasek']}, 'refs': {'administrator of': [5]}},
         {'id': 22, 'vals': {'name@cs': ['Lojza Huml']}, 'refs': {'administrator of': []}},
@@ -120,7 +119,6 @@ class TestUserSync:
 
 @pytest.mark.django_db
 class TestIdentitySync:
-
     identity_data = [
         {'person': 1, 'identity': 'foo@bar.baz'},
         {'person': 1, 'identity': 'foo@baz.bar'},

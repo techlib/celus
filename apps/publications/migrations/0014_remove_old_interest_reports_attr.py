@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0013_platforminterestreport_m2m')]
 
     operations = [

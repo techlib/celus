@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Delete organization given by its PK, name or short_name'
 
     def add_arguments(self, parser):

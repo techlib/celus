@@ -51,7 +51,6 @@ class TestManualUploadForCounterData:
         report_code,
         hash_matches,
     ):
-
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -134,7 +133,6 @@ class TestManualUploadForCounterData:
         report_code,
         hash_matches,
     ):
-
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -227,7 +225,6 @@ class TestManualUploadForCounterData:
         create_fails,
         preflight_fails,
     ):
-
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -336,7 +333,6 @@ class TestManualUploadForCounterData:
         report_code,
         months,
     ):
-
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
             data_file.name = f"something.{filename.split('.')[-1]}"
@@ -601,7 +597,6 @@ class TestManualUploadForRaw:
     def test_multiple_organizations_unauthorized(
         self, platforms, organizations, settings, tmp_path, clients, report_types, basic1
     ):
-
         with (
             Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate.csv"
         ).open() as f:
@@ -663,7 +658,6 @@ class TestManualUploadForRaw:
         basic1,
         organization_set,
     ):
-
         with (
             Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate.csv"
         ).open() as f:
@@ -802,7 +796,6 @@ class TestManualUploadForRaw:
         basic1,
         organization_set,
     ):
-
         with (
             Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate-single.csv"
         ).open() as f:
@@ -960,7 +953,6 @@ class TestManualUploadForRaw:
         import_user,
         status,
     ):
-
         with (Path(__file__).parent / "data/counter5/counter5_table_dr.csv").open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "counter.csv"

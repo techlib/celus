@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('organizations', '0015_nullable_ext_id')]
 
     operations = [

@@ -17,7 +17,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0028_reporttype_superseeded_by')]
 
     operations = [

@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Helper script for reimport which fixes titles erroneously mixed together. It contains '
         'code for two stages of the process - preparation and cleanup.'

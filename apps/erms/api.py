@@ -7,7 +7,6 @@ logger = logging.getLogger(__file__)
 
 
 class ERMSError(Exception):
-
     pass
 
 

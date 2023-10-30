@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('recache', '0006_query_hash_unique_with_django_version')]
 
     operations = [

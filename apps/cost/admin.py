@@ -5,7 +5,6 @@ from . import models
 
 @admin.register(models.Payment)
 class PaymentAdmin(admin.ModelAdmin):
-
     list_display = ['organization', 'platform', 'year', 'price']
     search_fields = ['organization__name', 'platform__name', 'platform__short_name']
     list_filter = [

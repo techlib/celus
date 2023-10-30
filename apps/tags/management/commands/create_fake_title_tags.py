@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Creates tags with a different number of tagged titles'
 
     BATCH_SIZES = [10, 100, 1000, 10_000, 100_000]

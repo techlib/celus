@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0004_pub_type_verbose_name')]
 
     operations = [

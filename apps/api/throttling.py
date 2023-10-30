@@ -3,7 +3,6 @@ from rest_framework.throttling import SimpleRateThrottle
 
 
 class APIKeyBasedThrottle(SimpleRateThrottle):
-
     scope = 'remote_api'
 
     def get_cache_key(self, request, view):

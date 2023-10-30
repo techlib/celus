@@ -6,7 +6,6 @@ import tags.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('tags', '0007_tagging_batch_internal_name')]
 
     operations = [

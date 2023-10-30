@@ -280,7 +280,6 @@ class PlatformImportAttempt(ImportAttempt):
         updated_platforms_ids = []
 
         for record in data:
-
             # make sure that counter_registry_id is
             # not used for other platform
             if record["counter_registry_id"]:
@@ -586,7 +585,6 @@ class ParserDefinitionImportAttempt(ImportAttempt):
 
     @transaction.atomic
     def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
-
         # Check whether the data are valid
         ParserDefinitionSerializer(data=data, many=True).is_valid(raise_exception=True)
 

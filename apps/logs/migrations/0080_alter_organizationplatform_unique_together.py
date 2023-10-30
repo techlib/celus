@@ -13,7 +13,6 @@ def ensure_unique_organizationplatform(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('organizations', '0024_alter_userorganization_unique_together'),
         ('publications', '0038_issn_eissn_index'),

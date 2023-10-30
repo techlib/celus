@@ -9,7 +9,6 @@ issn_number_matcher = re.compile(r'^\d{0,7}[\dXx]$')
 
 
 class ValidationError(Exception):
-
     pass
 
 

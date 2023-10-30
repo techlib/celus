@@ -6,7 +6,6 @@ from rest_framework.response import Response
 
 
 class SmartPageNumberPagination(PageNumberPagination):
-
     COUNT_ATTR = '_count'
 
     def __init__(self) -> None:

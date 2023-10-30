@@ -11,7 +11,6 @@ def import_batch_to_import_batches(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0048_importbatchsynclog')]
 
     operations = [

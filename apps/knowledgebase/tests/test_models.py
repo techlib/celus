@@ -149,7 +149,6 @@ class TestPlatformImportAttempt:
         assert attempt.success == success
 
     def test_process(self, data_sources, report_types):
-
         attempt = PlatformImportAttempt(source=data_sources["brain"])
         attempt.save()
 
@@ -300,7 +299,6 @@ class TestPlatformImportAttempt:
         assert platform_no_wiped.knowledgebase == {"some": "data2"}, "KB from other source remain"
 
     def test_process_merge_strategies_more_that_one_record(self, data_sources, report_types):
-
         # Create multiple for ALL strategy
         platform_no_source1 = PlatformFactory(source=None, short_name="AAP")
         no_source1_values = Platform.objects.values().get(pk=platform_no_source1.pk)
@@ -459,7 +457,6 @@ class TestRouterSyncAttempt:
 @pytest.mark.django_db
 class TestReportTypeImportAttempt:
     def test_process(self, data_sources, report_types, interests):
-
         # Create
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0004_source_field'),
         ('publications', '0004_pub_type_verbose_name'),

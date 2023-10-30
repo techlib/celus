@@ -9,7 +9,6 @@ from logs.models import (
 
 
 class Command(BaseCommand):
-
     help = 'Go over all stored reports in reporting and print some stats'
 
     def add_arguments(self, parser):

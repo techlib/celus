@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Import data from a COUNTER 5 JSON file into the database'
 
     def add_arguments(self, parser):

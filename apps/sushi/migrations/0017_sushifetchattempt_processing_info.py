@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0016_counterreporttype_superseeded_by')]
 
     operations = [

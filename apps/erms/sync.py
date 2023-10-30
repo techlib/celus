@@ -11,12 +11,10 @@ from django.db import models
 
 
 class SyncerError(Exception):
-
     pass
 
 
 class Syncer:
-
     attr_map = {}
     primary_id = 'id'  # used to find if a value is in the database or not
     object_class = None
@@ -97,7 +95,6 @@ class Syncer:
 
 
 class ERMSSyncer(Syncer):
-
     primary_id = 'ext_id'
 
     def translate_value(self, key, value):

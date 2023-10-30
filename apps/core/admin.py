@@ -99,7 +99,6 @@ class IsAdminOfMasterOrganization(admin.SimpleListFilter):
 
 @admin.register(User)
 class MyUserAdmin(ExportActionMixin, UserAdmin):
-
     list_display = (
         'username',
         'email',
@@ -173,7 +172,6 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
 
 @admin.register(Identity)
 class IdentityAdmin(admin.ModelAdmin):
-
     list_display = ['identity', 'user', 'source']
     list_filter = ['source']
     list_select_related = ['user', 'source']
@@ -182,5 +180,4 @@ class IdentityAdmin(admin.ModelAdmin):
 
 @admin.register(DataSource)
 class DataSourceAdmin(admin.ModelAdmin):
-
     list_display = ['short_name', 'type', 'url', 'organization']

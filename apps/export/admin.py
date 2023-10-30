@@ -5,7 +5,6 @@ from .models import FlexibleDataExport
 
 @admin.register(FlexibleDataExport)
 class FlexibleDataExportAdmin(admin.ModelAdmin):
-
     list_display = ['pk', 'owner', 'status', 'created', 'output_file']
 
     actions = ['create_output_file']

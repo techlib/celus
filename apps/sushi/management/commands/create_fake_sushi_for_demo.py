@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Goes over all platforms and if there is no C5 SUSHI registered for it, create one'
         'with fake sashimi server.'

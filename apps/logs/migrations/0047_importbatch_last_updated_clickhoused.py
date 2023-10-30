@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0046_one_import_batch_per_month')]
 
     operations = [

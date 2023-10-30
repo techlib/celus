@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('core', '0007_timestamps'), ('logs', '0016_report_interest_metrics')]
 
     operations = [

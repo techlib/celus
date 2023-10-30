@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0034_longer_data_file_field')]
 
     operations = [

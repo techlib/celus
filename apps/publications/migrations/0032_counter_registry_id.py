@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0031_alter_title_unique_together')]
 
     operations = [

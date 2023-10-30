@@ -193,7 +193,6 @@ class FetchIntentionAdmin(admin.ModelAdmin):
     when_processed_repr.short_description = "When Processed"
 
     def harvest_link(self, obj: models.FetchIntention):
-
         return format_html(
             f'<a href="{ reverse("admin:scheduler_harvest_change", args=(obj.harvest.id,)) }">'
             f'{ obj.harvest.id }</a>'

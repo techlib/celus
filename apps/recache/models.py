@@ -99,7 +99,6 @@ class CachedQueryQuerySet(models.QuerySet):
 
 
 class CachedQuery(models.Model):
-
     origin = models.CharField(
         max_length=32,
         blank=True,

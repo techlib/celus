@@ -7,7 +7,6 @@ from sushi.logic import cleanup
 
 
 class Command(BaseCommand):
-
     help = 'Cleanup old fetch attempts'
 
     def add_arguments(self, parser):

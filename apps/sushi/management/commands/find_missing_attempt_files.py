@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Goes over the queued sushi attempts which should have an associated file and '
         'checks that the file exists. If not, it can remove the attempts'

@@ -141,7 +141,6 @@ class TitleListReader(abc.ABC):
 
 
 class CsvReaderMixin:
-
     attrs = {
         'isbn': {'normalize': normalize_isbn},
         'issn': {'normalize': lambda x: normalize_issn(x, raise_error=False)},
@@ -174,7 +173,6 @@ class CsvReaderMixin:
         return sum(1 for _ in reader)
 
     def parse_data(self, source: Any) -> Generator[TitleTaggingRecord, None, None]:
-
         file = self._remove_django_file_wrappers(source)
         reader = get_dict_reader_from_csv(file)
         # find which columns are present and find the actual form of the name (case and whitespace)
@@ -205,7 +203,6 @@ class CsvReaderMixin:
 
 
 class CsvTitleListReader(CsvReaderMixin, TitleListReader):
-
     annotation_column = '_Celus info_'
 
     def __init__(

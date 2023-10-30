@@ -17,7 +17,6 @@ from organizations.models import Organization
 
 
 class PlatformInterestReport(models.Model):
-
     report_type = models.ForeignKey('logs.ReportType', on_delete=models.CASCADE)
     platform = models.ForeignKey('Platform', on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
@@ -25,7 +24,6 @@ class PlatformInterestReport(models.Model):
 
 
 class Platform(models.Model):
-
     ext_id = models.PositiveIntegerField(blank=True, null=True)
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
@@ -104,7 +102,6 @@ class Platform(models.Model):
 
 
 class Title(models.Model):
-
     PUB_TYPE_BOOK = 'B'
     PUB_TYPE_JOURNAL = 'J'
     PUB_TYPE_UNKNOWN = 'U'
@@ -201,7 +198,6 @@ class Title(models.Model):
 
 
 class PlatformTitle(models.Model):
-
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE)
@@ -221,7 +217,6 @@ def where_to_store(instance: 'TitleOverlapBatch', filename):
 
 
 class TitleOverlapBatchState(models.TextChoices):
-
     INITIAL = 'initial', _("Initial")
     PROCESSING = 'processing', _("Processing")
     FAILED = 'failed', _("Import failed")
@@ -250,7 +245,6 @@ def validate_mime_type(fileobj):
 
 
 class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
-
     source_file = models.FileField(
         upload_to=where_to_store,
         blank=True,

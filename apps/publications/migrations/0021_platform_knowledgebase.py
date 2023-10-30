@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0011_datasource_knowledgebase'),
         ('publications', '0020_platform_nullable_ext_id'),

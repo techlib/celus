@@ -7,7 +7,6 @@ import logs.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0066_lastaction')]
 
     operations = [

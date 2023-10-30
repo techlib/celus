@@ -23,7 +23,6 @@ def remove_obsolete_caches(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('recache', '0007_alter_cachedquery_lifetime')]
 
     operations = [migrations.RunPython(remove_obsolete_caches, migrations.RunPython.noop)]

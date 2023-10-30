@@ -90,7 +90,6 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.status = AttemptStatus.DOWNLOAD_FAILED
         attempt.save()
     elif reader.record_found:
-
         month = (
             attempt.start_date.isoformat()
             if isinstance(attempt.start_date, date)

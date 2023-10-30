@@ -6,7 +6,6 @@ from . import models
 
 @admin.register(models.ReportDataView)
 class ReportDataViewAdmin(TranslationAdmin):
-
     list_display = [
         'short_name',
         'name',
@@ -28,14 +27,12 @@ class ReportDataViewAdmin(TranslationAdmin):
 
 @admin.register(models.DimensionFilter)
 class DimensionFilterAdmin(admin.ModelAdmin):
-
     list_display = ['report_data_view', 'dimension', 'allowed_values']
     list_filter = ['report_data_view', 'dimension']
 
 
 @admin.register(models.ChartDefinition)
 class ChartDefinitionAdmin(TranslationAdmin):
-
     list_display = [
         'name',
         'desc',
@@ -50,7 +47,6 @@ class ChartDefinitionAdmin(TranslationAdmin):
 
 @admin.register(models.ReportViewToChartType)
 class ReportViewToChartTypeAdmin(admin.ModelAdmin):
-
     list_display = ['report_data_view', 'chart_definition', 'position']
     list_editable = ['position']
     list_filter = ['report_data_view', 'chart_definition']

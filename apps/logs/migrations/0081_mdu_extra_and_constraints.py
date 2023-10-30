@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0080_alter_organizationplatform_unique_together'),
     ]

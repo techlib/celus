@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Import data from a COUNTER 4 TSV file into the database'
 
     def add_arguments(self, parser):

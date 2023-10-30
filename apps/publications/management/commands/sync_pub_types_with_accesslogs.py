@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Go over all titles and set their publication_type from Data_Type in corresponding '
         'AccessLogs'

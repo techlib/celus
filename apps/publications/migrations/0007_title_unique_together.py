@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0006_no_null_title_text_attrs')]
 
     operations = [

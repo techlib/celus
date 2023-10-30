@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('charts', '0004_is_standard_view_and_position')]
 
     operations = [

@@ -21,7 +21,6 @@ from annotations.serializers import AnnotationSerializer
 
 
 class AnnotationsViewSet(ModelViewSet):
-
     queryset = Annotation.objects.all()
     serializer_class = AnnotationSerializer
     pagination_class = StandardResultsSetPagination

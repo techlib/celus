@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('core', '0003_datasource'), ('logs', '0003_split_accesslog_source')]
 
     operations = [

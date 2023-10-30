@@ -37,7 +37,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0028_sushifetchattempt_credentials_version_hash')]
 
     operations = [

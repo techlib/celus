@@ -10,7 +10,6 @@ from sushi.models import CounterReportType
 
 
 class Command(BaseCommand):
-
     help = 'Loads the combinations of platform and report types from a CSV table'
 
     def add_arguments(self, parser):

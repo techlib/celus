@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0048_discard_credentials_broken_state')]
 
     operations = [

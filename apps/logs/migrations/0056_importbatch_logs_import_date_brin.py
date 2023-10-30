@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0055_accesslog_logs_access_platfor_cdb3c4_idx')]
 
     operations = [

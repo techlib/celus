@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Go over all platforms and assign "standard" set of interest report to all'
 
     def add_arguments(self, parser):

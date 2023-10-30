@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0032_counter_registry_id')]
 
     operations = [

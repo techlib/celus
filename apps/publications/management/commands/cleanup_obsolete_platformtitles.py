@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Removes platform-title links that are no longer valid because logs were removed'
 
     def add_arguments(self, parser):

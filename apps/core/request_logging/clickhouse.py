@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class RequestLogCube(Cube):
-
     # we need some way how to globally store the backend instance, but we don't want to
     # create it on module import, because it would require django settings to be already
     # loaded
@@ -106,7 +105,6 @@ RequestLogRecord = RequestLogCube.record_type()
 
 
 class CeleryTaskLogCube(Cube):
-
     # model attributes
     hostname = StringDimension(clickhouse={'low_cardinality': True})
     db_server = StringDimension(clickhouse={'low_cardinality': True})

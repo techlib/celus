@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('scheduler', '0007_fetchintention_one_to_one_attempt')]
 
     operations = [

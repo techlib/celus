@@ -20,7 +20,6 @@ def couter_reports_to_active_counter_reports(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0035_sushifetchattempt_http_status_code')]
 
     operations = [

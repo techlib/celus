@@ -230,7 +230,6 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
 
 
 class StatsComputer:
-
     implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
     input_dim_to_query_dim = {'interest': 'metric'}
     extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}

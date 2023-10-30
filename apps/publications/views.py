@@ -158,7 +158,6 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
 
 class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
-
     serializer_class = PlatformSerializer
 
     def get_permissions(self):
@@ -443,7 +442,6 @@ class PlatformInterestReportViewSet(ReadOnlyModelViewSet):
 
 
 class GlobalPlatformsViewSet(ReadOnlyModelViewSet):
-
     permission_classes = [ViewPlatformPermission | HasOrganizationAPIKey]
     serializer_class = SimplePlatformSerializer
     queryset = Platform.objects.all()
@@ -470,7 +468,6 @@ class GlobalPlatformsViewSet(ReadOnlyModelViewSet):
 
 
 class GlobalTitleViewSet(ReadOnlyModelViewSet):
-
     serializer_class = TitleSerializer
     queryset = Title.objects.all()
     pagination_class = StandardResultsSetPagination
@@ -482,7 +479,6 @@ class GlobalTitleViewSet(ReadOnlyModelViewSet):
 
 
 class BaseTitleViewSet(ReadOnlyModelViewSet):
-
     serializer_class = TitleSerializer
     # pagination_class = StandardResultsSetPagination
 
@@ -753,7 +749,6 @@ class TitleInterestMixin:
 
 
 class PlatformTitleInterestViewSet(TitleInterestMixin, PlatformTitleViewSet):
-
     serializer_class = TitleCountSerializer
     pagination_class = SmartResultsSetPagination
 
@@ -847,7 +842,6 @@ class PlatformTitleReportDataViewViewSet(BaseReportDataViewViewSet):
 
 
 class TitleViewSet(BaseTitleViewSet):
-
     serializer_class = TitleSerializer
 
     @action(detail=True, url_path='platforms')
@@ -1100,7 +1094,6 @@ class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
 
 
 class StartERMSSyncPlatformsTask(APIView):
-
     permission_classes = [SuperuserOrAdminPermission]
 
     def post(self, request):
@@ -1109,7 +1102,6 @@ class StartERMSSyncPlatformsTask(APIView):
 
 
 class TitleOverlapBatchViewSet(ModelViewSet):
-
     serializer_class = TitleOverlapBatchSerializer
     # do not allow put or patch
     http_method_names = ['get', 'post', 'delete']

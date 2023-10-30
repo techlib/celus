@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class OrganizationSyncer(ERMSObjectSyncer):
-
     attr_map = {
         'czechelib id': 'internal_id',
         'short name': 'short_name',

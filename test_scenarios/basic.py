@@ -303,7 +303,6 @@ def import_batches(report_types):
 
 @pytest.fixture
 def credentials(counter_report_types, organizations, platforms):
-
     standalone_br1_jr1 = CredentialsFactory(
         organization=organizations["standalone"],
         platform=platforms["standalone"],

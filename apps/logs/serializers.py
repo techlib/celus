@@ -99,7 +99,6 @@ class ReportTypeSimpleSerializer(ModelSerializer):
 
 
 class ReportTypeSerializer(ModelSerializer):
-
     controlled_metrics = PrimaryKeyRelatedField(many=True, read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     public = BooleanField(default=False)
@@ -191,7 +190,6 @@ class ReportTypeSerializer(ModelSerializer):
 
 
 class ReportInterestMetricSerializer(ModelSerializer):
-
     interest_group = InterestGroupSerializer(read_only=True)
     metric = MetricSerializer(read_only=True)
     target_metric = MetricSerializer(read_only=True)
@@ -202,7 +200,6 @@ class ReportInterestMetricSerializer(ModelSerializer):
 
 
 class ReportTypeExtendedSerializer(ModelSerializer):
-
     controlled_metrics = PrimaryKeyRelatedField(many=True, read_only=True)
     dimensions_sorted = DimensionSerializer(many=True, read_only=True)
     interest_metric_set = ReportInterestMetricSerializer(
@@ -229,7 +226,6 @@ class ReportTypeExtendedSerializer(ModelSerializer):
 
 
 class ReportTypeInterestSerializer(ModelSerializer):
-
     interest_metric_set = ReportInterestMetricSerializer(
         many=True, read_only=True, source='reportinterestmetric_set'
     )
@@ -253,7 +249,6 @@ class ReportTypeInterestSerializer(ModelSerializer):
 
 
 class AccessLogSerializer(BaseSerializer):
-
     report_type = StringRelatedField()
     organization = StringRelatedField()
     platform = StringRelatedField()
@@ -282,7 +277,6 @@ class AccessLogSerializer(BaseSerializer):
 
 
 class ImportBatchSerializer(ModelSerializer):
-
     user = UserSimpleSerializer(read_only=True)
     report_type = StringRelatedField()
     organization = StringRelatedField()
@@ -309,7 +303,6 @@ class ManualDataUploadSimpleSerializer(ModelSerializer):
 
 
 class ImportBatchVerboseSerializer(ModelSerializer):
-
     user = UserSimpleSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
@@ -335,7 +328,6 @@ class ImportBatchVerboseSerializer(ModelSerializer):
 
 
 class ManualDataUploadSerializer(ModelSerializer):
-
     user = HiddenField(default=CurrentUserDefault())
     import_batches = ImportBatchSerializer(read_only=True, many=True)
     report_type = ReportTypeExtendedSerializer(read_only=True)
@@ -417,7 +409,6 @@ class ManualDataUploadSerializer(ModelSerializer):
 
                     # update report type in it wasn't set before
                     if not result.report_type:
-
                         # update method for raw => counter transition
                         result.method = method
 
@@ -469,7 +460,6 @@ class ManualDataUploadSerializer(ModelSerializer):
 
 
 class ManualDataUploadVerboseSerializer(ModelSerializer):
-
     user = UserSimpleSerializer(read_only=True)
     platform = SimplePlatformSerializer(read_only=True)
     organization = OrganizationSerializer(read_only=True)
@@ -504,7 +494,6 @@ class DimensionTextSerializer(ModelSerializer):
 
 
 class FlexibleReportSerializer(ModelSerializer):
-
     last_updated_by = HiddenField(default=CurrentUserDefault())
 
     class Meta:

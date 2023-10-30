@@ -438,7 +438,6 @@ class TestSushiCredentialsViewSet:
         assert len(resp.json()) == 0, 'there should be no record for this period'
 
     def test_unset_broken(self, credentials, clients, counter_report_types):
-
         attempt_tr = FetchAttemptFactory(
             credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
         )
@@ -571,7 +570,6 @@ class TestSushiCredentialsViewSet:
 
     @freeze_time("2020-06-01")
     def test_data(self, basic1, credentials, clients, harvests, counter_report_types):
-
         # mark credentials
         attempt_tr = FetchAttemptFactory(
             credentials=credentials["standalone_tr"],

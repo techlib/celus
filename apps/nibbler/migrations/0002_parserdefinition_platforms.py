@@ -13,7 +13,6 @@ def fill_platforms(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('nibbler', '0001_initial')]
 
     operations = [

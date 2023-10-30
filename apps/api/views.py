@@ -27,7 +27,6 @@ class RedocView(TemplateView):
 
 class PlatformReportView(APIView):
     class ParamSerializer(Serializer):
-
         month = CharField(validators=[month_validator], required=True)
         dims = CharField(required=True, allow_blank=True)
 

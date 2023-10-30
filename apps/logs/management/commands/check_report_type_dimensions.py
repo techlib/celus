@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Checks that dimensions assigned to report types match what the readers have defined'
 
     dim_name_remap = {

@@ -106,7 +106,6 @@ def import_custom_data(
     organizations = mdu.preflight.get("organizations", {"": {}}) or {"": {}}
     import_batches = []
     for org_name, org_data in organizations.items():
-
         records = mdu.data_to_records()
         if org_name:
             # Try to get organization

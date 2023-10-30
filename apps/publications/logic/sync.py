@@ -13,7 +13,6 @@ from ..models import Platform
 
 
 class PlatformSyncer(ERMSObjectSyncer):
-
     attr_map = {
         'id': 'ext_id',
         'short name': 'short_name',

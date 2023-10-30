@@ -27,7 +27,6 @@ class StatsSerializer(serializers.Serializer):
 
 
 class CreateFetchIntentionSerializer(serializers.Serializer):
-
     not_before = DateTimeField(required=False)
     credentials = serializers.IntegerField()
     counter_report = serializers.IntegerField()

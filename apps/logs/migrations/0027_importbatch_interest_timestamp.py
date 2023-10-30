@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0026_interest_group_ordering')]
 
     operations = [

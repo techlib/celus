@@ -18,7 +18,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0025_modification_dates'), ('publications', '0012_platform_source')]
 
     operations = [

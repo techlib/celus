@@ -42,7 +42,6 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestHarvestAPI:
     def test_list(self, basic1, clients, harvests):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -94,7 +93,6 @@ class TestHarvestAPI:
     @pytest.mark.parametrize('column', ['pk', 'created', 'start_date', 'attempt_count'])
     @pytest.mark.parametrize('desc', ['true', 'false', 'undefined'])
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -114,7 +112,6 @@ class TestHarvestAPI:
         assert values == resorted
 
     def test_list_filter_finished(self, basic1, clients, harvests):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -142,7 +139,6 @@ class TestHarvestAPI:
         assert data1[0]["pk"] != data2[1]["pk"]
 
     def test_list_filter_automatic(self, basic1, clients, harvests):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -162,7 +158,6 @@ class TestHarvestAPI:
         assert data1[0]["pk"] != data2[1]["pk"]
 
     def test_list_filter_broken(self, basic1, clients, harvests, credentials, counter_report_types):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -190,7 +185,6 @@ class TestHarvestAPI:
         assert len(data2) == 3
 
     def test_list_filter_month(self, basic1, clients, harvests):
-
         url = reverse('harvest-list')
         # test finished filter
         resp = clients["master_admin"].get(url + "?month=2020-01", {})
@@ -204,7 +198,6 @@ class TestHarvestAPI:
         assert len(data2) == 1
 
     def test_list_filter_platforms(self, basic1, clients, harvests, platforms):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -365,7 +358,6 @@ class TestHarvestAPI:
         ),
     )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
-
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
@@ -624,7 +616,6 @@ class TestHarvestAPI:
 @pytest.mark.django_db()
 class TestHarvestFetchIntentionAPI:
     def test_list(self, basic1, clients, harvests):
-
         url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200

@@ -8,7 +8,6 @@ from publications.models import Title
 
 
 class Command(BaseCommand):
-
     help = (
         'Go over all titles and remove those for which there are no access logs. Useful when '
         'using an older database template for a new installation.'

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0009_conterreporttype_oneonone_report_type')]
 
     operations = [

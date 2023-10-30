@@ -31,7 +31,6 @@ def bools_to_state(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0044_fix_data_already_imported')]
 
     operations = [

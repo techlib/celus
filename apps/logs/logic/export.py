@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class CSVExport:
-
     implicit_dims = {
         'platform': 'name',
         'metric': 'short_name',

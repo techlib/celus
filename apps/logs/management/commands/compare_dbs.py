@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Compares the `default` database to the `old` one from the settings and creates a report'
     annot_keys = ['sum', 'ib_count_active', 'ib_count_complete', 'ib_ids_active', 'title_count']
 

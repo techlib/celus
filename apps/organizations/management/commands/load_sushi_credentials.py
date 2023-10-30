@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Load SUSHI credentials from a CSV file'
 
     def add_arguments(self, parser):

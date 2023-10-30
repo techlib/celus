@@ -9,7 +9,6 @@ def fill_in_empty_queue_id(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('scheduler', '0008_current_task')]
 
     operations = [

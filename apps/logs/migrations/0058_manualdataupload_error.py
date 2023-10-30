@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0057_rename_extra_manualdataupload_preflight')]
 
     operations = [

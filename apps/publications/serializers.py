@@ -72,7 +72,6 @@ class AllPlatformSerializer(ModelSerializer):
 
 
 class DetailedPlatformSerializer(ModelSerializer):
-
     title_count = IntegerField(read_only=True)
     interests = JSONField(read_only=True)
     has_data = BooleanField(read_only=True)
@@ -94,7 +93,6 @@ class DetailedPlatformSerializer(ModelSerializer):
 
 
 class PlatformSushiCredentialsSerializer(ModelSerializer):
-
     count = IntegerField(read_only=True, source='sushi_credentials_count')
 
     class Meta:
@@ -103,7 +101,6 @@ class PlatformSushiCredentialsSerializer(ModelSerializer):
 
 
 class TitleSerializer(ModelSerializer):
-
     pub_type_name = SerializerMethodField()
 
     class Meta:
@@ -115,7 +112,6 @@ class TitleSerializer(ModelSerializer):
 
 
 class TitleCountSerializer(ModelSerializer):
-
     interests = JSONField(read_only=True)
     platform_count = IntegerField(read_only=True)
     nonzero_platform_count = IntegerField(read_only=True)
@@ -148,7 +144,6 @@ class TitleCountSerializer(ModelSerializer):
 
 
 class UseCaseSerializer(Serializer):
-
     url = URLField(required=True)
     organization = IntegerField(required=True)
     platform = IntegerField(required=True)
@@ -159,7 +154,6 @@ class UseCaseSerializer(Serializer):
 
 
 class TitleOverlapBatchSerializer(ModelSerializer):
-
     organization = OrganizationSerializer(read_only=True, required=False)
 
     class Meta:
@@ -177,7 +171,6 @@ class TitleOverlapBatchSerializer(ModelSerializer):
 
 
 class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
-
     last_updated_by = HiddenField(default=CurrentUserDefault())
     organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
 

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0051_split_import_batches')]
 
     operations = [migrations.RemoveField(model_name='importbatch', name='system_created')]

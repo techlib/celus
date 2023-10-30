@@ -380,7 +380,6 @@ class TestCounter5Import:
                     assert title.uris == exp_uris
                     break
             else:
-
                 assert False, 'expected title was not found'
 
     @pytest.mark.parametrize(

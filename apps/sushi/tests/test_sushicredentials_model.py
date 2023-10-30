@@ -45,7 +45,6 @@ class TestLocking:
         can_lock_org_admin,
         can_lock_staff,
     ):
-
         org = organizations["branch"]
         credentials = SushiCredentials.objects.create(
             organization=org, platform=platforms[0], counter_version=5
@@ -300,7 +299,6 @@ class TestCredentialsQuerySet:
         assert SushiCredentials.objects.all().working().count() == 1
 
     def test_verified(self, report_types, counter_report_types):
-
         # empty
         cr1 = CredentialsFactory()
         assert cr1.is_verified is False

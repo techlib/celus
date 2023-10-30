@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('charts', '0002_chartdefinition_reportviewtocharttype')]
 
     operations = [

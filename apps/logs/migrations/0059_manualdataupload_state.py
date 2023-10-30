@@ -14,7 +14,6 @@ def derive_state(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0058_manualdataupload_error')]
 
     operations = [

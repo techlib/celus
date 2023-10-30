@@ -12,7 +12,6 @@ def split_import_batches(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0045_dimension_int_to_str'),
         ('scheduler', '0012_fill_queue_id'),

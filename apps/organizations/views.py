@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 
 
 class OrganizationViewSet(ReadOnlyModelViewSet):
-
     serializer_class = OrganizationListSerializer
     histogram_bins = [
         (0, 0),
@@ -391,7 +390,6 @@ For more info see Django admin: {request.build_absolute_uri(
 
 
 class StartERMSSyncOrganizationsTask(APIView):
-
     permission_classes = [SuperuserOrAdminPermission]
 
     def post(self, request):

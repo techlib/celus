@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0056_importbatch_logs_import_date_brin')]
 
     operations = [

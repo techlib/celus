@@ -17,7 +17,6 @@ def add_ir_m1_as_interest_to_all_platforms(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0036_titleoverlapbatch')]
 
     operations = [

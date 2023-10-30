@@ -8,7 +8,6 @@ import knowledgebase.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0015_unique_name_within_organization_data_source'),
         ('knowledgebase', '0002_jsonfield'),

@@ -21,7 +21,6 @@ from charts.serializers import (
 
 
 class ChartDefinitionViewSet(ReadOnlyModelViewSet):
-
     queryset = ChartDefinition.objects.all()
     serializer_class = ChartDefinitionSerializer
 

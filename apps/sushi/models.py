@@ -143,7 +143,6 @@ class BrokenCredentialsMixin(models.Model):
 
 
 class CounterReportType(models.Model):
-
     CODE_CHOICES = [(cr.code, cr.code) for cr in COUNTER_REPORTS if cr.sushi_compatible]
 
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
@@ -220,7 +219,6 @@ class SushiCredentialsQuerySet(models.QuerySet):
 
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
-
     objects = SushiCredentialsQuerySet.as_manager()
 
     UNLOCKED = 0
@@ -452,7 +450,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     def _fetch_report_v4(
         self, client: Sushi4Client, counter_report, start_date, end_date, file_data: IO[bytes]
     ) -> dict:
-
         status = AttemptStatus.INITIAL
         partial_data = False
         when_processed = None
@@ -764,7 +761,6 @@ class AttemptStatus(models.TextChoices):
 
 
 class SushiFetchAttempt(SourceFileMixin, models.Model):
-
     status = models.CharField(
         max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
     )
@@ -974,7 +970,6 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
                 # the entire credentials and are handled when update_broken_report_type
                 # is triggered
                 if str(self.error_code) not in (str(ErrorCode.INVALID_REPORT_FILTER.value),):
-
                     self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
                     return True
 

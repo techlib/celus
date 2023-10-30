@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('core', '0007_timestamps'), ('publications', '0011_unlocalize_short_name')]
 
     operations = [

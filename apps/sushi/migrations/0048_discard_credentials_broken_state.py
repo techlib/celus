@@ -9,7 +9,6 @@ def convert_broken_credentials_state(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0047_no_data_for_3031_and_3030')]
 
     operations = [

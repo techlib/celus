@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Goes through the SUSHI data and checks that they are OK'
 
     def add_arguments(self, parser):

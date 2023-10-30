@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0012_datasource_set_null'),
         ('logs', '0035_reporttype_default_platform_interest'),

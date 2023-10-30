@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Add registry ID to platforms from a CSV file'
 
     def add_arguments(self, parser):

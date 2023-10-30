@@ -18,7 +18,6 @@ def mark_older_3030_as_unqueued(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0031_sushifetchattempt_last_updated')]
 
     operations = [migrations.RunPython(mark_older_3030_as_unqueued)]

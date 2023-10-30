@@ -1240,7 +1240,6 @@ class TestAllPlatformsAPI:
         organizations,
         parser_definitions,
     ):
-
         resp = clients[client].get(
             reverse("all-platforms-list", args=[organizations[organization].pk])
         )
@@ -1385,7 +1384,6 @@ class TestAllPlatformsAPI:
         organization,
         record_count,
     ):
-
         # Some success comes from harvests fixture (pr)
         # and the second is created here (br1)
         FetchAttemptFactory(
@@ -1447,7 +1445,6 @@ class TestGlobalPlatformsAPI:
         ],
     )
     def test_all_platform_list(self, client, status, available, clients, platforms, organizations):
-
         resp = clients[client].get(reverse("global-platforms-list"))
         assert resp.status_code in status
         if available is not None:

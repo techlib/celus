@@ -25,7 +25,6 @@ django_db = settings.DATABASES['default']
 
 
 class AccessLogCube(Cube):
-
     # dimensions
     id = IntDimension(signed=False, bits=64)
     report_type_id = IntDimension(signed=False, bits=32)
@@ -185,7 +184,6 @@ AccessLogCubeRecord = AccessLogCube.record_type()
 
 
 class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
-
     cube = AccessLogCube
     preserved_dimensions = ['target_id', 'platform_id', 'organization_id', 'date']
     aggregated_metrics = ['value']

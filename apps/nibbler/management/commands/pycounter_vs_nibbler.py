@@ -72,7 +72,6 @@ class Command(BaseCommand):
     def process_path(
         self, path: Path, counter_report_types: typing.Dict[str, CounterReportType], regex: str
     ):
-
         if crt := re.match(regex, path.name):
             crt = crt.group(1)
             if crt := counter_report_types.get(crt):
@@ -154,7 +153,6 @@ class Command(BaseCommand):
     def parse_nibbler(
         self, path, counter_report_type: CounterReportType, is_json: bool
     ) -> (typing.Optional[typing.List[tuple]], float):
-
         try:
             poops = eat(
                 path,

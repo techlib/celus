@@ -59,7 +59,6 @@ class Batch(models.Model):
         return [e.info for e in self.candidates.all()]
 
     def plan_delete_batch_targets(self) -> bool:
-
         with transaction.atomic():
             # lock
             try:
@@ -132,7 +131,6 @@ class Batch(models.Model):
             return count
 
     def plan_prepare_batch(self) -> bool:
-
         with transaction.atomic():
             # lock
             try:

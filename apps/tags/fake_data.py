@@ -56,7 +56,6 @@ class TagFactory(factory.django.DjangoModelFactory):
 
 
 class TagForTitleFactory(TagFactory):
-
     tag_class = factory.SubFactory(TagClassFactory, scope=TagScope.TITLE)
 
 
@@ -127,7 +126,6 @@ class TaggingAttemptFactory(factory.django.DjangoModelFactory):
 
 
 class TaggingAttemptFuzzyFactory(TaggingAttemptFactory):
-
     recognized_columns = factory.fuzzy.FuzzyChoice(['issn', 'eissn', 'isbn'])
     tag_stats = factory.lazy_attribute(
         lambda obj: {

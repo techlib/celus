@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0067_alter_importbatchsynclog_state'),
         ('logs', '0068_file_checksums'),

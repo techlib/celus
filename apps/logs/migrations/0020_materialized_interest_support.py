@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0019_virtualreporttype_primary_dimension')]
 
     operations = [

@@ -103,7 +103,6 @@ class TestImpersonateAPI:
             assert clients[from_client].get(reverse("user_api_view")).data["impersonator"] is None
 
         else:
-
             assert response.status_code in [404, 403]
             # try to list to see whether something has changed
             response = clients[from_client].get(reverse("impersonate-list"))

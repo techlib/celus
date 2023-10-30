@@ -179,7 +179,6 @@ def remove_orphan_import_batches_without_date(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('logs', '0053_clickhouse_add_import_batch_idx'),
         ('sushi', '0048_discard_credentials_broken_state'),

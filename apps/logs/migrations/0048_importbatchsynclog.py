@@ -18,7 +18,6 @@ def create_import_batch_sync_logs(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('logs', '0047_importbatch_last_updated_clickhoused'),

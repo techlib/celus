@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Cleanup all the organizations and their data from the database. Used when you copy an '
         'existing db into a new install and want to clean it up.'

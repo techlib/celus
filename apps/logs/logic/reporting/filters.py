@@ -56,7 +56,6 @@ class DimensionFilter(ABC):
 
 
 class DateDimensionFilter(DimensionFilter):
-
     month_format_matcher = re.compile(r'^\d{4}-\d{2}$')
 
     def __init__(self, dimension: str, start, end):

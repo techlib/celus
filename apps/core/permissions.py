@@ -119,7 +119,6 @@ class AdminAccessForOrganization(BasePermission):
 
 
 class OrganizationRequiredInDataForNonSuperusers(BasePermission):
-
     FULL_DATA_METHODS = ('POST', 'PUT')
 
     def has_permission(self, request, view):

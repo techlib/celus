@@ -16,7 +16,6 @@ from tags.models import Tag, TagClass, TaggingAttempt, TaggingBatch, TagScope
 
 
 class TagClassSerializer(ModelSerializer):
-
     user_can_modify = SerializerMethodField()
     user_score = SerializerMethodField()
     hidden = BooleanField(default=False, read_only=True)
@@ -116,7 +115,6 @@ class TagClassSerializer(ModelSerializer):
 
 
 class TagSerializer(ModelSerializer):
-
     user_can_assign = SerializerMethodField()
     user_can_modify = SerializerMethodField()
     last_updated_by = HiddenField(default=CurrentUserDefault())
@@ -224,7 +222,6 @@ class TaggingAttemptSerializer(ModelSerializer):
 
 
 class TaggingBatchSerializer(ModelSerializer):
-
     preflight = TaggingAttemptSerializer(source='last_preflight', read_only=True)
     postflight = TaggingAttemptSerializer(source='last_import', read_only=True)
     last_updated_by = UserSimpleSerializer(read_only=True)
@@ -295,5 +292,4 @@ class TaggingBatchSerializer(ModelSerializer):
 
 
 class TaggingBatchCreateSerializer(TaggingBatchSerializer):
-
     last_updated_by = HiddenField(default=CurrentUserDefault())

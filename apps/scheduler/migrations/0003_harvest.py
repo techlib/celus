@@ -12,7 +12,6 @@ def delete_existing_fetch_intentions(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('scheduler', '0002_fetchintention_duplicit_of'),

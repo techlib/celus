@@ -5,7 +5,6 @@ from django.utils.timezone import now
 
 
 class Payment(models.Model):
-
     organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE)
     platform = models.ForeignKey('publications.Platform', on_delete=models.CASCADE)
     year = models.PositiveSmallIntegerField(validators=[validate_year])

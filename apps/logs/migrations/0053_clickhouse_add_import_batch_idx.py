@@ -26,7 +26,6 @@ def clickhouse_add_import_batch_id_idx(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0052_remove_importbatch_system_created')]
 
     operations = [

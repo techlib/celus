@@ -10,7 +10,6 @@ from reporting.logic.computation import Report, ReportPart, ReportPartStage, Res
 
 
 class XlsxExporter:
-
     tab_palette = [
         "#4CAF50",
         "#3F51B5",

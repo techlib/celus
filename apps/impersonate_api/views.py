@@ -30,7 +30,6 @@ class ImpersonateViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, Generic
         )
 
     def perform_update(self, serializer):
-
         user = self.get_object()
         if self.request.user.pk != user.pk:
             # Deactivate impersonation if active

@@ -30,7 +30,6 @@ def derive_use_nibbler(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0073_alter_reportinterestmetric_unique_together')]
 
     operations = [

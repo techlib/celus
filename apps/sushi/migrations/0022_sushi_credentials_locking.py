@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('sushi', '0021_sushifetchattempt_import_crashed')]
 
     operations = [

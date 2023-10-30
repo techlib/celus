@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('knowledgebase', '0003_routersyncattempt')]
 
     operations = [

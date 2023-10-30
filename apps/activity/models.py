@@ -4,7 +4,6 @@ from django.utils.timezone import now
 
 
 class UserActivity(models.Model):
-
     ACTION_TYPE_LOGIN = 'LGN'
 
     ACTION_TYPE_CHOICES = ((ACTION_TYPE_LOGIN, 'Login'),)

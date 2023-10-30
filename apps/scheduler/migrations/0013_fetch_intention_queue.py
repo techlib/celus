@@ -25,7 +25,6 @@ def create_queues(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('scheduler', '0012_fill_queue_id')]
 
     operations = [

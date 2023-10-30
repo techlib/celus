@@ -8,7 +8,6 @@ from . import models
 
 @admin.register(models.Organization)
 class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
-
     list_display = ['short_name', 'internal_id', 'name', 'ico', 'source'] + (
         ['raw_data_import_enabled'] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
@@ -22,7 +21,6 @@ class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
 
 @admin.register(models.UserOrganization)
 class UserOrganizationAdmin(admin.ModelAdmin):
-
     list_display = ['user', 'organization', 'is_admin', 'source']
     autocomplete_fields = ['user', 'organization']
     list_filter = ['source']
@@ -37,7 +35,6 @@ class UserOrganizationAdmin(admin.ModelAdmin):
 
 @admin.register(models.OrganizationAltName)
 class OrganizationAltNameAdmin(admin.ModelAdmin):
-
     list_display = ['organization', 'name']
     list_filter = ['organization']
     list_select_related = ['organization']

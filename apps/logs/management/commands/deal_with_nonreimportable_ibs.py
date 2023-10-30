@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Helper script for reimport which takes a CSV of non-reimportable IBs produced by '
         '`reimport_data` and deals with the IBs. If it finds credentials for them, it will '

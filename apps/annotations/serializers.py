@@ -12,7 +12,6 @@ from .models import Annotation
 
 
 class AnnotationSerializer(ModelSerializer):
-
     organization = OrganizationSerializer(read_only=True)
     platform = SimplePlatformSerializer(read_only=True)
     subject = ReadOnlyField()

@@ -6,7 +6,6 @@ from .models import Annotation
 
 @admin.register(Annotation)
 class AnnotationAdmin(TranslationAdmin):
-
     list_display = [
         'subject',
         'level',

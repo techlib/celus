@@ -100,6 +100,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
     'core.middleware.EDUIdHeaderMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',  # should be place after auth middlewares
     'core.middleware.CelusVersionHeaderMiddleware',
@@ -761,7 +762,6 @@ SENTRY_ENVIRONMENT = config('SENTRY_ENVIRONMENT', default='unknown')
 SENTRY_RELEASE = config('SENTRY_RELEASE', default='')
 SENTRY_URL = config('SENTRY_URL', default='')
 if SENTRY_URL:
-
     # by default, we take the most frequent transactions and sample them at 1% because they are
     # also one of the most boring ones
     SENTRY_TRANSACTION_SAMPLE_RATES = config(

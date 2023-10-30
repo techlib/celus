@@ -37,7 +37,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('logs', '0044_better_source_related_constraints')]
 
     operations = [migrations.RunPython(convert_dim_int_to_str, noop)]

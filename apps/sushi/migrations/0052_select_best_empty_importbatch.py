@@ -94,7 +94,6 @@ def fix_3030_fas_with_ib_and_empty_data_file(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('sushi', '0051_fetchattempt_remove_queue_stuff'),
         ('logs', '0065_remove_dimension_type'),

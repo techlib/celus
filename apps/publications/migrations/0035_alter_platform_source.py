@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0017_user_extra_data_dismissed_and_seen_last_release'),
         ('publications', '0034_issn_renormalization'),

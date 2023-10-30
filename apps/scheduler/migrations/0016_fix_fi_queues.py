@@ -17,7 +17,6 @@ def fix_queues(apps, schema_editor):
     # one iteration should be enough here, we are fixing
     # the queue from the start and fi are sorted by pk
     for fi in FetchIntention.objects.filter(query).order_by('pk'):
-
         queue = fi.previous_intention.queue
         if not queue:
             # queue is missing for the previous intention
@@ -41,7 +40,6 @@ def fix_queues(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('scheduler', '0015_fetchintention_timestamp')]
 
     operations = [RunPython(fix_queues, RunPython.noop)]

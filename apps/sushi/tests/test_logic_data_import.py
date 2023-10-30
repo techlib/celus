@@ -245,7 +245,6 @@ class TestLogicDataImportXLSX:
         records,
         updated_records,
     ):
-
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
             assert SushiCredentials.objects.count() == 0

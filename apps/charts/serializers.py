@@ -6,7 +6,6 @@ from .models import ChartDefinition, ReportDataView, ReportViewToChartType
 
 
 class ReportDataViewSerializer(ModelSerializer):
-
     public = BooleanField(default=False)
     is_proxy = BooleanField(read_only=True, default=False)
 
@@ -27,7 +26,6 @@ class ReportDataViewSerializer(ModelSerializer):
 
 
 class ChartDefinitionSerializer(ModelSerializer):
-
     primary_dimension = DimensionSerializer(read_only=True)
     secondary_dimension = DimensionSerializer(read_only=True)
 

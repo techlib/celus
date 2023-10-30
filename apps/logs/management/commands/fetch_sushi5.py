@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Pulls data from a Sushi server and displays some simple stats'
 
     def add_arguments(self, parser):

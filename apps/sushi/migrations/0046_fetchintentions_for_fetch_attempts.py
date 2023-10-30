@@ -21,7 +21,6 @@ def add_fetch_intention(apps, schema_editor):
         .select_related('credentials')
         .iterator()
     ):
-
         # group intentions per organization per day
         this_date = attempt.timestamp.date()
         if organization_id != attempt.credentials.organization_id or datestamp != this_date:
@@ -49,7 +48,6 @@ def add_fetch_intention(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('sushi', '0045_fetchattempt_statemachine'),
         ('scheduler', '0011_fetchintention_previous'),

@@ -9,7 +9,6 @@ import logs.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('publications', '0009_even_more_pub_types'),
         ('organizations', '0012_timestamps'),

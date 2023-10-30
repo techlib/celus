@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('organizations', '0018_datasource_set_null')]
 
     operations = [

@@ -6,7 +6,6 @@ from .models import CachedQuery
 
 @admin.register(CachedQuery)
 class CachedQueryAdmin(admin.ModelAdmin):
-
     list_display = [
         'pk',
         'origin',

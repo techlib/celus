@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('publications', '0024_better_source_related_constraints')]
 
     operations = [

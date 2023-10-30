@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Assigns a standard set of reports to credentials. If knowledgebase is available, it '
         'uses report from there, otherwise uses a standard set. ONLY WORKS FOR C5 FOR NOW!'

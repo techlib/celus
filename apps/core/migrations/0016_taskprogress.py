@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('django_celery_results', '0010_remove_duplicate_indices'),
         ('core', '0015_unique_name_within_organization_data_source'),

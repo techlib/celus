@@ -6,7 +6,6 @@ from .models import Organization, OrganizationAltName
 
 
 class OrganizationSerializer(ModelSerializer):
-
     is_admin = BooleanField(read_only=True)
     is_member = BooleanField(read_only=True)
 
@@ -47,7 +46,6 @@ class OrganizationAltNameSerializer(ModelSerializer):
 
 
 class OrganizationListSerializer(ModelSerializer):
-
     is_admin = BooleanField(read_only=True)
     is_member = BooleanField(read_only=True)
     alt_names = OrganizationAltNameSerializer(

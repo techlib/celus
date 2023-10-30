@@ -73,7 +73,7 @@ def clean_obsolete_platform_title_links(pretend=False, batch_size=500_000):
                 .iterator()
             )
 
-        for (rec_platform_id, rec_target_id, rec_date) in rec_gen:
+        for rec_platform_id, rec_target_id, rec_date in rec_gen:
             if last_month != rec_date:
                 if len(pts_in_logs) > batch_size:
                     sync_batch(pts_in_logs, first_month, rec_date)

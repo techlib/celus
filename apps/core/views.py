@@ -35,7 +35,6 @@ from .tasks import erms_sync_users_and_identities_task
 
 
 class UserView(GenericAPIView):
-
     serializer_class = UserSerializer
     action = 'current'
 
@@ -49,7 +48,6 @@ class UserView(GenericAPIView):
 
 
 class UserExistsView(GenericAPIView):
-
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -63,7 +61,6 @@ class UserExistsView(GenericAPIView):
 
 
 class SystemInfoView(GenericAPIView):
-
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -113,7 +110,6 @@ class UserVerifyEmailView(APIView):
 
 
 class StartERMSSyncUsersAndIdentitiesTask(APIView):
-
     permission_classes = [SuperuserOrAdminPermission]
 
     def post(self, request):
@@ -122,7 +118,6 @@ class StartERMSSyncUsersAndIdentitiesTask(APIView):
 
 
 class TestEmailView(APIView):
-
     permission_classes = [SuperuserPermission]
 
     def post(self, request):
@@ -131,7 +126,6 @@ class TestEmailView(APIView):
 
 
 class TestErrorView(APIView):
-
     permission_classes = [SuperuserPermission]
 
     def get(self, request):

@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Checks directory were dowloaded files from sushi are downloaded '
         'and removes files which are not associated with any attempt.'
@@ -31,7 +30,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-
         if options["older_than"] < 1:
             raise CommandError("Deleted files should be at least one day old", returncode=1)
         time_limit = time.time() - options["older_than"] * 24 * 60 * 60
@@ -60,7 +58,7 @@ class Command(BaseCommand):
 
             dirs_len = len(dirs)
             print()
-            for (idx, dir_path) in enumerate(dirs):
+            for idx, dir_path in enumerate(dirs):
                 sys.stdout.write(f"\rCleaning dirs {idx + 1}/{dirs_len}")
 
                 for entry in dir_path.iterdir():

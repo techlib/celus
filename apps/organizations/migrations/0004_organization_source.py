@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('core', '0003_datasource'), ('organizations', '0003_non_unique_ico')]
 
     operations = [

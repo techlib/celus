@@ -87,7 +87,6 @@ class PlatformImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
         return super().get_queryset(request).filter(kind=ImportAttempt.KIND_PLATFORM)
 
     def run_sync(self, request):
-
         source = DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE).get(
             pk=request.POST["source"]
         )
@@ -106,7 +105,6 @@ class ParserDefinitionImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdm
         return super().get_queryset(request).filter(kind=ImportAttempt.KIND_PARSER_DEFINITION)
 
     def run_sync(self, request):
-
         source = DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE).get(
             pk=request.POST["source"]
         )
@@ -125,7 +123,6 @@ class ReportTypeImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
         return super().get_queryset(request).filter(kind=ImportAttempt.KIND_REPORT_TYPE)
 
     def run_sync(self, request):
-
         source = DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE).get(
             pk=request.POST["source"]
         )

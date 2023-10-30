@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Create/sync users with a CSV table. Columns can be: '
         '"name","email","superuser","staff","organization","org_admin"'

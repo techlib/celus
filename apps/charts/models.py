@@ -76,7 +76,6 @@ class DimensionFilter(models.Model):
 
 
 class ChartDefinition(models.Model):
-
     IMPLICIT_DIMENSION_CHOICES = (
         ('date', _('date')),
         ('platform', _('platform')),
@@ -161,7 +160,6 @@ class ChartDefinition(models.Model):
 
 
 class ReportViewToChartType(models.Model):
-
     report_data_view = models.ForeignKey(ReportDataView, on_delete=models.CASCADE)
     chart_definition = models.ForeignKey(ChartDefinition, on_delete=models.CASCADE)
     position = models.PositiveIntegerField(

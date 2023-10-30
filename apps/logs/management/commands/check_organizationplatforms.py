@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Checks that OrganizationPlatform records match what it should be according to the '
         'import batches'

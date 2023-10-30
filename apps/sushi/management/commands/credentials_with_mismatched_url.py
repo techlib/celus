@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = (
         'Finds all SUSHI credentials where the platform has URL from brain and the credentials '
         'use some other URL.'

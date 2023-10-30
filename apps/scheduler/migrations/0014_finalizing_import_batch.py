@@ -65,7 +65,6 @@ def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('scheduler', '0013_fetch_intention_queue'),
         ('logs', '0052_remove_importbatch_system_created'),

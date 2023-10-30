@@ -23,7 +23,6 @@ def print_time_stats(times, title=''):
 
 
 class Command(BaseCommand):
-
     help = 'Runs some queries using tags and prints out statistics.'
 
     def add_arguments(self, parser):

@@ -30,7 +30,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-
         # try to get site domain
         domain_name = Site.objects.get(pk=settings.SITE_ID).domain
 

@@ -8,7 +8,6 @@ import tags.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('tags', '0002_tagclass_defaults_for_tag'),

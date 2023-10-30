@@ -5,7 +5,6 @@ from sushi.logic.cleanup import fetch_attempt_fill_in_missing_header_data
 
 
 class Command(BaseCommand):
-
     help = 'Fill in missing header data in FetchAttempts'
 
     def add_arguments(self, parser):

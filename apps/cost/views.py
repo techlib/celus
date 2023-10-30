@@ -15,7 +15,6 @@ from .serializers import PaymentSerializer
 
 
 class OrganizationPaymentViewSet(ModelViewSet):
-
     serializer_class = PaymentSerializer
     queryset = Payment.objects.none()
     permission_classes = [

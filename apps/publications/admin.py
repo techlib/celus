@@ -23,7 +23,6 @@ create_default_interests.short_description = "Create default interest for select
 
 @admin.register(models.Platform)
 class PlatformAdmin(NecronomiconAdminMixin, TranslationAdmin):
-
     list_display = [
         'short_name',
         'name',
@@ -62,7 +61,6 @@ class PlatformAdmin(NecronomiconAdminMixin, TranslationAdmin):
 
 @admin.register(models.PlatformInterestReport)
 class PlatformInterestReportAdmin(admin.ModelAdmin):
-
     list_display = ['platform', 'report_type', 'last_modified']
     list_filter = ['report_type', 'platform']
     search_fields = ['platform__short_name', 'platform__name', 'platform__provider']
@@ -70,14 +68,12 @@ class PlatformInterestReportAdmin(admin.ModelAdmin):
 
 @admin.register(models.Title)
 class TitleAdmin(admin.ModelAdmin):
-
     list_display = ['name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi']
     search_fields = ['name', 'isbn', 'issn', 'eissn', 'doi']
 
 
 @admin.register(models.PlatformTitle)
 class PlatformTitleAdmin(admin.ModelAdmin):
-
     list_display = ['platform', 'organization', 'title', 'date']
     list_filter = ['platform', 'organization']
     readonly_fields = ['platform', 'organization', 'title', 'date']
@@ -86,5 +82,4 @@ class PlatformTitleAdmin(admin.ModelAdmin):
 
 @admin.register(models.TitleOverlapBatch)
 class TitleOverlapBatchAdmin(admin.ModelAdmin):
-
     list_display = ['last_updated', 'last_updated_by', 'state', 'organization']

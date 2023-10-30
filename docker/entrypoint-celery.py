@@ -54,7 +54,6 @@ def config_to_program(worker_name, options: dict) -> typing.List[str]:
 
 # Converts celery related env vars into
 for k, v in [(k, v) for k, v in os.environ.items() if k.startswith("CELERY_WORKER_")]:
-
     # extract env variable
     match = re.match(r"^CELERY_WORKER_(.*)_([^_]+)$", k)
     if not match:

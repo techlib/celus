@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0009_user_extra_data_default'),
         ('organizations', '0016_more_blank_fields'),

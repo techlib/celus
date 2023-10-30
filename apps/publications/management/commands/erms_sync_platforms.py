@@ -5,7 +5,6 @@ from publications.logic.sync import erms_sync_platforms
 
 
 class Command(BaseCommand):
-
     help = 'Sync platforms between ERMS and the database'
 
     def add_arguments(self, parser):

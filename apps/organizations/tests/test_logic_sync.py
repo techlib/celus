@@ -9,7 +9,6 @@ from organizations.models import Organization
 
 @pytest.mark.django_db
 class TestLogicSync:
-
     src_data = [
         {
             'class': 'Organization',

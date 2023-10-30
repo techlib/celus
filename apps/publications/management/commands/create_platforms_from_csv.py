@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-
     help = 'Create/sync platforms with CSV file'
 
     def add_arguments(self, parser):

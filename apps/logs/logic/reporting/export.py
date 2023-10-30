@@ -610,7 +610,6 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 sink.write(outfile.read())
 
     def create_writer(self, output, fields: List[Tuple[str, str]]) -> DictWriter:
-
         col_formats = {}
         if self.slicer.trend_mode:
             col_formats[self.slicer.COL_REL_DIFF] = self.workbook.add_format(

@@ -47,7 +47,6 @@ class TestViews:
         ids=["all", "valid", "outdated", "future"],
     )
     def test_annotation_filter_dates(self, params, count, authenticated_client):
-
         GlobalAnnotationFactory(subject='valid1'),
         GlobalAnnotationFactory(subject='valid2', start_date=date(2021, 8, 1)),
         GlobalAnnotationFactory(subject='valid3', end_date=date(2022, 12, 1)),

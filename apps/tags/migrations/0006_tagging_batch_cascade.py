@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('tags', '0005_alter_tag_options')]
 
     operations = [

@@ -9,7 +9,6 @@ from organizations.models import Organization
 
 
 class Command(BaseCommand):
-
     help = "Create an API key for each organization"
 
     def add_arguments(self, parser):
