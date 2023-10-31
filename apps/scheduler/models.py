@@ -68,7 +68,7 @@ class ProcessResponse(Enum):
 class Scheduler(models.Model):
     """Represents attempt scheduling based on remote URL"""
 
-    DEFAULT_COOLDOWN_DELAY = 5  # in seconds
+    DEFAULT_COOLDOWN_DELAY = 0  # in seconds
     DEFAULT_TOO_MANY_REQUESTS_DELAY = 60 * 60  # in seconds
     DEFAULT_SERVICE_NOT_AVAILABLE_DELAY = 60 * 60  # in seconds
     DEFAULT_SERVICE_BUSY_DELAY = 60  # in seconds
