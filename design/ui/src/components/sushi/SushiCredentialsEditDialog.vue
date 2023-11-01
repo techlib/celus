@@ -1113,6 +1113,11 @@ export default {
             "last_harvestable_month_user_id",
             reportRec?.last_harvestable_month_user_id || null
           );
+          this.$set(
+            item,
+            "last_harvestable_month_attempt_id",
+            reportRec?.last_harvestable_month_attempt_id || null
+          );
         }
       });
     },

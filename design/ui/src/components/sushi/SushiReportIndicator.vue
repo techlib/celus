@@ -51,7 +51,7 @@
         <span v-if="lastHarvestableMonthSetByUser">
           {{ $t("sushi.state_desc.last_harvestable_month_set_by_user") }}
         </span>
-        <span v-else>
+        <span v-else-if="lastHarvestableMonthSetByHarvest">
           {{ $t("sushi.state_desc.last_harvestable_month_set_by_harvest") }}
         </span>
       </div>
@@ -124,6 +124,9 @@ export default {
     },
     lastHarvestableMonthSetByUser() {
       return this.report.last_harvestable_month_user_id != null;
+    },
+    lastHarvestableMonthSetByHarvest() {
+      return this.report.last_harvestable_month_attempt_id != null;
     },
     anyIcon() {
       return (

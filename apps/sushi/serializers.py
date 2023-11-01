@@ -73,6 +73,7 @@ class CounterReportsToCredentialsSerializer(ModelSerializer):
             'broken',
             'last_harvestable_month',
             'last_harvestable_month_user_id',
+            'last_harvestable_month_attempt_id',
         )
 
 

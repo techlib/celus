@@ -131,7 +131,7 @@ cs:
               <span
                 v-if="
                   row.months[month] === 'expired' &&
-                  !!row.rt.last_harvestable_month_user_id
+                  row.rt.last_harvestable_month_user_id
                 "
               >
                 {{ $t("sushi.state_desc.last_harvestable_month_set_by_user") }}
@@ -139,7 +139,7 @@ cs:
               <span
                 v-else-if="
                   row.months[month] === 'expired' &&
-                  row.rt.last_harvestable_month_user_id
+                  row.rt.last_harvestable_month_attempt_id
                 "
               >
                 {{
