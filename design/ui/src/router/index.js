@@ -385,6 +385,14 @@ export default new Router({
       name: "after-login-page",
       component: () => import("../pages/AfterLoginPage.vue"),
     },
+    {
+      path: "/goto/:name",
+      redirect: (to) => {
+        return {
+          name: to.params.name,
+        };
+      },
+    },
 
     {
       path: "*",
