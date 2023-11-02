@@ -85,16 +85,18 @@ class TestBatchTagging:
                 assert tb.last_preflight.rows_no_match == 3
                 assert tb.last_preflight.unique_matched_titles == 2
                 assert tb.last_preflight.recognized_columns == ['eISSN', 'ISBN', 'issn']
-        elif has_class:
-            # we could still do preflight, but we would need to find the tag column in the data
-            assert tb.misses_tag_column
-            with pytest.raises(
-                ValueError, match='The source file does not contain the `tag` column'
-            ):
-                tb.do_preflight()
         else:
-            with pytest.raises(ValueError, match='Either tag or tag_class must be set'):
-                tb.do_preflight()
+            if has_class:
+                # we could still do preflight, but we would need to find the tag column in the data
+                # which is not present in the test file
+                expected_error = 'The source file does not contain the `tag` column'
+            else:
+                expected_error = 'Either tag or tag_class must be set'
+
+            preflight = tb.do_preflight()
+            assert tb.state == TaggingBatchState.PREFAILED
+            assert preflight.success is False
+            assert preflight.error == expected_error
 
     def test_tagging_batch_preflight_with_bom(self, inmemory_media):
         tb = TaggingBatchFactory.create(
@@ -143,6 +145,25 @@ class TestBatchTagging:
         attempt = tb.taggingattempts.last()
         assert attempt.operation == TaggingAttemptOperation.IMPORT
         assert attempt.success is False
+
+    def test_tagging_batch_assign_fail_wrong_state(self, inmemory_media, users):
+        """
+        Check that the assign_tag method does not fail if the state is not IMPORTING
+        but creates a failed attempt instead
+        """
+        TitleFactory.create(isbn='9780787960186')
+        TitleFactory.create(issn='1234-5678')
+        tag = TagForTitleFactory.create()
+        tb = TaggingBatchFactory.create(
+            source_file=plain_test_file, last_updated_by=users['admin1']
+        )
+        tb.state = TaggingBatchState.INITIAL
+        postflight = tb.assign_tag()
+        assert tb.state == TaggingBatchState.FAILED
+        assert tb.last_import.tagged_titles == 0
+        assert tag.titles.count() == 0
+        assert postflight.success is False
+        assert postflight.error == 'Cannot assign tag for batch in state "initial"'
 
     def test_tagging_with_exclusive_tags(self, inmemory_media, users):
         t1 = TitleFactory.create(isbn='9780787960186')

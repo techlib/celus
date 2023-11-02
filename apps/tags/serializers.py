@@ -219,6 +219,7 @@ class TaggingAttemptSerializer(ModelSerializer):
             'exclusively_tagged_titles',
             'created',
             'last_updated',
+            'error',
         )
 
 

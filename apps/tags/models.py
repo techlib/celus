@@ -823,6 +823,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
+        self._check_prerequisites()
         reader = CsvTitleListReader(
             tag_name_column=self.TAG_COLUMN_NAME if self.needs_tag_column else None,
             dump_id_formatter=title_id_formatter,
@@ -870,20 +871,22 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             tag_stats=tag_stats,
         )
 
+    def _check_prerequisites(self):
+        if not self.tag and not self.tag_class:
+            raise ValueError('Either tag or tag_class must be set')
+        if self.misses_tag_column:
+            raise ValueError('The source file does not contain the `tag` column')
+
     def do_preflight(
         self,
         title_id_formatter: Callable[[int], str] = str,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ):
+    ) -> 'TaggingAttempt':
         """
         :param title_id_formatter: converts title ids to string in the annotated file
         :param progress_monitor: callback to report progress, should send (current, total) ints
         :return:
         """
-        if not self.tag and not self.tag_class:
-            raise ValueError('Either tag or tag_class must be set')
-        if self.misses_tag_column:
-            raise ValueError('The source file does not contain the `tag` column')
         try:
             with tempfile.NamedTemporaryFile('r+b') as dump_file:
                 preflight = self.compute_preflight(
@@ -906,26 +909,21 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         if hasattr(self, '_last_preflights'):
             # we have the preflights already prefetched and need to update them
             self._last_preflights.insert(0, preflight)
+        return preflight
 
     @atomic
     def assign_tag(
         self,
         title_id_formatter: Callable[[int], str] = str,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
-    ) -> None:
+    ) -> 'TaggingAttempt':
         """
         :param title_id_formatter: converts title ids to string in the annotated file
         :param progress_monitor: callback to report progress, should send (current, total) ints
         """
-        if self.state != TaggingBatchState.IMPORTING:
-            raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
-        if self.tag and not self.tag.can_user_assign(self.last_updated_by):
-            raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
-        if self.tag_class and self.tag_class not in TagClass.objects.user_accessible_tag_classes(
-            self.last_updated_by
-        ):
-            raise PermissionDenied(f'User cannot add tags to class #{self.tag_class}')
         try:
+            self._check_prerequisites()
+            self._preassign_checks()
             postflight = self._do_assign_tag(title_id_formatter, progress_monitor)
         except Exception as e:
             postflight = TaggingAttempt.objects.create(
@@ -939,6 +937,20 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         if hasattr(self, '_last_imports'):
             # we have the imports already prefetched and need to update them
             self._last_imports.insert(0, postflight)
+        return postflight
+
+    def _preassign_checks(self):
+        """
+        Checks that the batch is in the correct state and that the user can assign the tag
+        """
+        if self.state != TaggingBatchState.IMPORTING:
+            raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
+        if self.tag and not self.tag.can_user_assign(self.last_updated_by):
+            raise PermissionDenied(f'User cannot assing tag #{self.tag_id}')
+        if self.tag_class and self.tag_class not in TagClass.objects.user_accessible_tag_classes(
+            self.last_updated_by
+        ):
+            raise PermissionDenied(f'User cannot add tags to class #{self.tag_class}')
 
     def _do_assign_tag(
         self,
