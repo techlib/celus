@@ -224,31 +224,32 @@ en:
     denial: Denied interest
   interest_types: Types of interest to show
   actions:
-    edit: Edit
-    close: Close
-    upload_data: Upload data
-    upload_file: Upload file
-    upload_file_for_annotation: Upload file for annotation
+    add_tag: Add tag
+    assign_tag: Assign tag
+    assign_tags: Assign tags
     cancel: Cancel
-    show_attempts: Downloads
-    show_overview: Overview
-    show_overview_details: Yearly overview of downloaded data
-    start_test: Start test
-    start_harvesting: Start harvesting
-    show_raw_data: Show raw data
-    show_chart: Show charts
+    clear_selection: Clear selection
+    close: Close
+    create: Create
     delete: Delete
+    download: Download
+    edit: Edit
+    refresh: Refresh
+    reharvest: Reharvest
     save: Save
     save_changes: Save changes
     save_report: Save report
-    refresh: Refresh
-    download: Download
-    add_tag: Add tag
-    create: Create
-    assign_tag: Assign tag
-    assign_tags: Assign tags
     select_all: Select all
-    clear_selection: Clear selection
+    show_attempts: Downloads
+    show_chart: Show charts
+    show_overview: Overview
+    show_overview_details: Yearly overview of downloaded data
+    show_raw_data: Show raw data
+    start_harvesting: Start harvesting
+    start_test: Start test
+    upload_data: Upload data
+    upload_file: Upload file
+    upload_file_for_annotation: Upload file for annotation
   in_czech: Czech
   in_english: English
   cover_image: Cover image
@@ -552,31 +553,32 @@ cs:
     denial: Odepřený zájem
   interest_types: Zobrazené typy zájmu
   actions:
-    edit: Editovat
-    close: Zavřít
-    upload_data: Nahrát data
-    upload_file: Nahrát soubor
-    upload_file_for_annotation: Nahrát soubor pro anotaci
+    add_tag: Přidat štítek
+    assign_tag: Oštítkovat
+    assign_tags: Oštítkovat
     cancel: Zrušit
-    show_attempts: Stažení
-    show_overview: Přehled
-    show_overview_details: Roční přehled stažených dat
-    start_test: Spustit test
-    start_harvesting: Spustit stahování
-    show_raw_data: Zobrazit data
-    show_chart: Zobrazit grafy
+    clear_selection: Zrušit výběr
+    close: Zavřít
+    create: Vytvořit
     delete: Smazat
+    download: Stáhnout
+    edit: Editovat
+    refresh: Aktualizovat
+    reharvest: Znovu stáhnout
     save: Uložit
     save_changes: Uložit změny
     save_report: Uložit report
-    refresh: Aktualizovat
-    download: Stáhnout
-    add_tag: Přidat štítek
-    create: Vytvořit
-    assign_tag: Oštítkovat
-    assign_tags: Oštítkovat
     select_all: Vybrat vše
-    clear_selection: Zrušit výběr
+    show_attempts: Stažení
+    show_chart: Zobrazit grafy
+    show_overview: Přehled
+    show_overview_details: Roční přehled stažených dat
+    show_raw_data: Zobrazit data
+    start_harvesting: Spustit stahování
+    start_test: Spustit test
+    upload_data: Nahrát data
+    upload_file: Nahrát soubor
+    upload_file_for_annotation: Nahrát soubor pro anotaci
   in_czech: česky
   in_english: anglicky
   cover_image: Obrázek obálky

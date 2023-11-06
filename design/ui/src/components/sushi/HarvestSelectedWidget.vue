@@ -13,11 +13,13 @@ en:
   nothing_to_harvest: Nothing to harvest
   no_problem_closing_dialog: Feel free to close this dialog. The harvesting will continue in the background and you can review the progress on the {harvest_link}
   harvest_page: SUSHI harvests page
+  reharvest_mode: Reharvest mode
+  reharvest_mode_tt: Switch on to delete existing data before harvesting
 
 cs:
   select_dates_text: "Vyberte rozsah měsíců pro stažení:"
   select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů:"
-  select_dates_text_test_note:
+  select_dates_text_test_note: |
     "<strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
     stáhnout data za delší období, použijte tlačítko 'Stáhni' na stránce správy SUSHI."
   there_were_errors: "Nebylo možné zahájit harvesting kvůli následující chybě: | Nebylo možné zahájit harvesting kvůli následujícím chybám: | Nebylo možné zahájit harvesting kvůli následujícím chybám:"
@@ -27,6 +29,8 @@ cs:
   nothing_to_harvest: Není co stahovat
   no_problem_closing_dialog: Tento dialog můžete bezpečně zavřít. Stahování bude pokračovat na pozadí. Vrátit se k němu můžete na {harvest_link}
   harvest_page: stránce Stahování SUSHI
+  reharvest_mode: Reharvestovací mód
+  reharvest_mode_tt: Zapněte pro smazání existujících dat před stahováním
 </i18n>
 
 <template>
@@ -95,7 +99,7 @@ cs:
       </v-col>
       <v-col cols="auto">
         <v-btn
-          @click="createIntentions()"
+          @click="startHarvest()"
           v-text="
             slotsFree === 0
               ? $t('nothing_to_harvest')
@@ -108,6 +112,20 @@ cs:
           width="100%"
           :disabled="!totalReportCount || !slotsReady || slotsFree === 0"
         ></v-btn>
+      </v-col>
+      <v-spacer />
+      <v-col cols="auto">
+        <v-tooltip bottom max-width="600px">
+          <template #activator="{ on }">
+            <span v-on="on">
+              <v-switch
+                v-model="reharvestMode"
+                :label="$t('reharvest_mode')"
+              ></v-switch>
+            </span>
+          </template>
+          <span>{{ $t("reharvest_mode_tt") }}</span>
+        </v-tooltip>
       </v-col>
     </v-row>
     <v-row v-if="test">
@@ -125,6 +143,7 @@ cs:
             :end-date="test ? startDate : endDate"
             ref="slotWidget"
             :ready.sync="slotsReady"
+            :reharvest="reharvestMode"
           />
         </div>
       </v-col>
@@ -171,6 +190,18 @@ cs:
         </v-col>
       </v-row>
     </template>
+    <v-dialog
+      v-if="showDeleteDialog"
+      v-model="showDeleteDialog"
+      max-width="1100px"
+    >
+      <ImportBatchesDeleteConfirm
+        :import-batch-slices="importBatchSlicesToDelete"
+        :intention-slices="intentionSlicesToDelete"
+        @cancel="showDeleteDialog = false"
+        @deleted="dataDeleted"
+      />
+    </v-dialog>
   </v-container>
 </template>
 
@@ -184,14 +215,15 @@ import {
   ymDateFormat,
   ymDateParse,
 } from "@/libs/dates";
-import addMonths from "date-fns/addMonths";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
+import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm.vue";
 
 export default {
   name: "HarvestSelectedWidget",
 
   components: {
+    ImportBatchesDeleteConfirm,
     SushiHarvestedSlotsWidget,
     SushiFetchIntentionsListWidget,
   },
@@ -215,6 +247,8 @@ export default {
       endDateMenu: null,
       error: null,
       slotsReady: false,
+      reharvestMode: false,
+      showDeleteDialog: false,
     };
   },
 
@@ -243,27 +277,52 @@ export default {
       }
       return [];
     },
-    monthsToCover() {
-      let start = ymDateParse(this.startDate);
-      let months = [start];
-      if (this.test) {
-        return months;
-      }
-      const endMonth = ymDateParse(this.endDate);
-      while (start < endMonth) {
-        start = addMonths(start, 1);
-        months.push(start);
-      }
-      return months;
-    },
-    monthsToCoverCount() {
-      return this.monthsToCover.length;
-    },
     slotsFree() {
       if (this.slotsReady && this.$refs.slotWidget) {
         return this.$refs.slotWidget.slotsFree;
       }
       return 0;
+    },
+    importBatchSlicesToDelete() {
+      // list of import batches to delete - used by ImportBatchesDeleteConfirm
+      let out = [];
+      if (this.reharvestMode) {
+        for (let rec of this.$refs.slotWidget.tableData) {
+          let months = Object.entries(rec.months)
+            .filter(([month, source]) => source === "rh-ok")
+            .map(([month, source]) => month + "-01");
+          if (months.length > 0) {
+            out.push({
+              platform: rec.cred.platform.pk,
+              organization: rec.cred.organization.pk,
+              report_type: rec.rt.report_type,
+              months: months,
+            });
+          }
+        }
+      }
+      return out;
+    },
+    intentionSlicesToDelete() {
+      // list of intentions to delete - used by ImportBatchesDeleteConfirm
+      // I am not completely sure why we need this when the intentions
+      // are deleted together with the import batches,
+      // but I copied it from SushiCredentialsDataDialog.vue
+      let out = [];
+      if (this.reharvestMode) {
+        for (let rec of this.$refs.slotWidget.tableData) {
+          for (let [month, source] of Object.entries(rec.months)) {
+            if (source === "rh-ok") {
+              out.push({
+                credentials: rec.cred.pk,
+                counter_report: rec.rt.id,
+                start_date: month + "-01",
+              });
+            }
+          }
+        }
+      }
+      return out;
     },
   },
 
@@ -271,12 +330,28 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    async startHarvest() {
+      // if in reharvest mode, delete existing data first
+      if (
+        this.reharvestMode &&
+        (this.importBatchSlicesToDelete.length ||
+          this.intentionSlicesToDelete.length)
+      ) {
+        // if we are in reharvest mode, we cannot run createIntentions
+        // until all the data is deleted
+        this.showDeleteDialog = true;
+        return;
+      }
+      // now create the intentions
+      await this.createIntentions();
+    },
+
     async createIntentions() {
       let intentions = [];
 
       for (let rec of this.$refs.slotWidget.tableData) {
         for (let [month, source] of Object.entries(rec.months)) {
-          if (source === "") {
+          if (source === "" || source === "rh-ok") {
             let monthDate = ymDateParse(month);
             intentions.push({
               start_date: monthFirstDay(monthDate),
@@ -304,6 +379,12 @@ export default {
           });
         }
       }
+    },
+    async dataDeleted() {
+      this.showDeleteDialog = false;
+      await this.$refs.slotWidget.fetchPresenceData();
+      // we call startHarvest() again to make sure that no data is left
+      await this.startHarvest();
     },
     allowedStartMonths(value) {
       let end = this.endDate;

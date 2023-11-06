@@ -9,6 +9,10 @@ en:
   slot_tooltip_broken: The credentials or the report type were marked as broken. Will not harvest.
   slot_tooltip_expired: Data are no longer harvestable.
   slot_tooltip_unknown: Data already exists in the database, probably from a deleted source. Will not harvest.
+  slot_tooltip_rh-expired: Data are no longer harvestable via SUSHI. Will not attempt to reharvest.
+  slot_tooltip_rh-ok: Data will be reharvested by deleting the existing data and harvesting it again.
+  reharvest_warning: Reharvesting will be performed by at first deleting the existing data and then harvesting it again. <strong>If the data is not available anymore, it will be lost</strong>!
+  reports_to_harvest: Reports to harvest
 
 cs:
   loading_harvest_slots: Kontroluji existující data
@@ -16,8 +20,12 @@ cs:
   slot_tooltip_sushi: Data již byla stažena pomocí SUSHI. Stahování nebude provedeno.
   slot_tooltip_manual: Data již existují z manuálního importu. Stahování nebude provedeno.
   slot_tooltip_broken: Přihlašovací údaje nebo report byly označeny jako nefunkční. Stahování nebude provedeno.
-  slot_tooltip_expired: Data již nejdou stáhnout.
+  slot_tooltip_expired: Data již nejde stáhnout.
   slot_tooltip_unknown: Data již existují v databázi, pravděpodobně z odstraněného zdroje. Stahování nebude provedeno.
+  slot_tooltip_rh-expired: Data již nejde stáhnout pomocí SUSHI. Nebude proveden pokus o znovustažení.
+  slot_tooltip_rh-ok: Data budou znovu stažena smazáním existujících dat a jejich opětovným stažením.
+  reharvest_warning: Znovu stažení bude provedeno smazáním existujících dat a jejich opětovným stažením. <strong>Pokud data již nejsou dostupná, budou ztracena</strong>!
+  reports_to_harvest: Reporty k stažení
 </i18n>
 
 <template>
@@ -26,36 +34,51 @@ cs:
     <v-progress-linear indeterminate color="primary" />
   </div>
   <div v-else>
-    <table class="pb-4">
-      <tr v-for="type in presentSlotTypes" :key="type">
-        <td>
-          <v-icon v-if="type === ''" color="success" small>
-            fa fa-fw fa-cloud-download-alt</v-icon
+    <div class="d-flex">
+      <table class="pb-4">
+        <tr v-for="type in slots" :key="type">
+          <td>
+            <v-icon :color="iconColor(type)" small>
+              fa-fw {{ icon(type) }}
+            </v-icon>
+          </td>
+          <td class="text-right font-weight-bold caption px-2">
+            {{ slotToCount[type] }}
+          </td>
+          <td class="caption">{{ $t("slot_tooltip_" + type) }}</td>
+        </tr>
+      </table>
+      <v-spacer />
+      <div>
+        <div class="caption">{{ $t("reports_to_harvest") }}:</div>
+        <v-btn-toggle
+          v-model="selectedReportTypes"
+          multiple
+          dense
+          class="mb-2"
+          color="secondary"
+        >
+          <v-tooltip
+            v-for="rt in availableReportTypes"
+            bottom
+            max-width="600px"
+            :key="rt.id"
           >
-          <v-icon v-else-if="type === 'sushi'" color="#dddddd" small
-            >fa fa-fw fa-file-download
-          </v-icon>
-          <v-icon v-else-if="type === 'manual'" color="#dddddd" small
-            >fa fa-fw fa-file-import
-          </v-icon>
-          <v-icon v-else-if="type === 'broken'" color="#ffaaaa" small
-            >far fa-fw fa-times-circle
-          </v-icon>
-          <v-icon v-else-if="type === 'expired'" color="warning lighten-2" small
-            >far fa-fw fa-calendar-alt
-          </v-icon>
-          <v-icon v-else color="#00ff00" small>fa fa-fw fa-database</v-icon>
-        </td>
-        <td>
-          <span class="text-right font-weight-bold caption px-2">{{
-            slotCount(type)
-          }}</span>
-        </td>
-        <td>
-          <span class="caption">{{ $t("slot_tooltip_" + type) }}</span>
-        </td>
-      </tr>
-    </table>
+            <template #activator="{ on }">
+              <v-btn v-on="on" :value="rt.id">
+                {{ rt.code }}
+              </v-btn>
+            </template>
+            {{ rt.name }}
+          </v-tooltip>
+        </v-btn-toggle>
+      </div>
+    </div>
+
+    <v-alert v-if="reharvestCount" type="warning" outlined class="mb-4">
+      <span v-html="$t('reharvest_warning')"></span>
+    </v-alert>
+
     <v-simple-table dense>
       <thead>
         <tr>
@@ -87,44 +110,44 @@ cs:
               />
             </v-chip>
           </td>
-          <td v-for="(month, index2) in months" :key="`${index}-${index2}`">
-            <v-tooltip bottom>
+          <td
+            v-for="(month, index2) in months"
+            :key="`${index}-${index2}`"
+            class="text-center"
+          >
+            <!-- reharvest with data present -->
+            <v-tooltip
+              v-if="reharvest && dataPresent(row.months[month])"
+              bottom
+              max-width="600px"
+              :key="`tt-${index}-${index2}`"
+            >
               <template #activator="{ on }">
                 <span v-on="on">
                   <v-icon
-                    v-if="row.months[month] === 'sushi'"
-                    color="#dddddd"
+                    v-if="dataHarvestable(row.cred, row.rt, month)"
+                    color="warning lighten-1"
                     small
-                    >fa fa-file-download
-                  </v-icon>
-                  <v-icon
-                    v-else-if="row.months[month] === 'manual'"
-                    color="#dddddd"
-                    small
-                    >fa fa-file-import
-                  </v-icon>
-                  <v-icon
-                    v-else-if="row.months[month] === 'broken'"
-                    color="#ffaaaa"
-                    small
-                    >far fa-times-circle
-                  </v-icon>
-                  <v-icon
-                    v-else-if="row.months[month] === 'unknown'"
-                    color="#ff0000"
-                    small
-                    >fa fa-database
-                  </v-icon>
-                  <v-icon
-                    v-else-if="row.months[month] === 'expired'"
-                    color="warning lighten-2"
-                    small
-                    >far fa-calendar-alt
-                  </v-icon>
-                  <v-icon v-else color="success" small
-                    >fa fa-cloud-download-alt</v-icon
+                    class="ml-1"
+                    >fa fa-sync-alt</v-icon
+                  >
+                  <v-icon v-else color="error lighten-1" small class="ml-1"
+                    >fa fa-exclamation-triangle</v-icon
                   >
                 </span>
+              </template>
+              {{
+                dataHarvestable(row.cred, row.rt, month)
+                  ? $t("reharvest_will_do_tt")
+                  : $t("reharvest_data_not_available_tt")
+              }}
+            </v-tooltip>
+            <!-- new harvest or no data present -->
+            <v-tooltip bottom v-else>
+              <template #activator="{ on }">
+                <v-icon v-on="on" :color="iconColor(row.months[month])" small
+                  >fa {{ icon(row.months[month]) }}
+                </v-icon>
               </template>
               {{ $t(`slot_tooltip_${row.months[month]}`) }}
               <br />
@@ -173,14 +196,20 @@ export default {
     startDate: { type: String, required: true },
     endDate: { type: String, required: true },
     ready: { type: Boolean },
+    reharvest: { type: Boolean, default: false },
   },
 
   data() {
+    let rts = new Set();
+    this.credentials.forEach((cr) =>
+      cr.counter_reports_long.forEach((rt) => rts.add(rt.id))
+    );
     return {
       presenceData: [],
       presenceMap: new Map(),
       loading: false,
       dataReady: this.ready,
+      selectedReportTypes: Array.from(rts),
     };
   },
 
@@ -200,6 +229,8 @@ export default {
       if (this.startDate && this.endDate && this.credentials.length) {
         for (let cred of this.credentials) {
           for (let rt of cred.counter_reports_long) {
+            // only selected report types
+            if (!this.selectedReportTypes.includes(rt.id)) continue;
             let monthData = {};
             const last_harvestable_month = rt.last_harvestable_month
               ? rt.last_harvestable_month.slice(0, 7)
@@ -207,16 +238,27 @@ export default {
             for (let month of this.months) {
               if (rt.broken || cred.broken) {
                 monthData[month] = "broken";
-              } else {
-                let key = `${rt.report_type}#${cred.platform.pk}#${cred.organization.pk}#${month}`;
-                monthData[month] = this.presenceMap.get(key) ?? "";
+                continue;
               }
-              if (
-                monthData[month] === "" &&
-                last_harvestable_month &&
-                last_harvestable_month > month
-              ) {
-                monthData[month] = "expired";
+              let key = `${rt.report_type}#${cred.platform.pk}#${cred.organization.pk}#${month}`;
+              monthData[month] = this.presenceMap.get(key) ?? "";
+              // if no data is present, we can reharvest or not, but we do
+              // not need to take reharvest into account
+              if (monthData[month] === "") {
+                monthData[month] =
+                  last_harvestable_month && last_harvestable_month > month
+                    ? "expired"
+                    : "";
+                continue;
+              }
+              // sushi not broken and there is some data present
+              // we either leave the data as it is, or in reharvest mode
+              // we want to check the last harvestable month
+              if (this.reharvest) {
+                monthData[month] =
+                  last_harvestable_month && last_harvestable_month > month
+                    ? "rh-expired"
+                    : "rh-ok";
               }
             }
             rows.push({ cred: cred, rt: rt, months: monthData });
@@ -230,34 +272,33 @@ export default {
       );
       return rows;
     },
-    slotsTotal() {
-      let result = 0;
-      this.tableData.forEach(
-        (row) => (result += Object.values(row.months).length)
-      );
-      return result;
-    },
-    slotCount() {
-      return function (type) {
-        let result = 0;
-        this.tableData.forEach(
-          (row) =>
-            (result += Object.values(row.months).filter(
-              (value) => value === type
-            ).length)
-        );
-        return result;
-      };
-    },
     slotsFree() {
-      return this.slotCount("");
+      return (this.slotToCount[""] ?? 0) + (this.slotToCount["rh-ok"] ?? 0);
     },
-    presentSlotTypes() {
-      let types = new Set();
+    slotToCount() {
+      let out = {};
       this.tableData.forEach((row) =>
-        Object.values(row.months).forEach((value) => types.add(value))
+        Object.values(row.months).forEach((value) => {
+          out[value] ??= 0;
+          out[value]++;
+        })
       );
-      return [...types];
+      return out;
+    },
+    slots() {
+      return Object.keys(this.slotToCount).sort();
+    },
+    reharvestCount() {
+      return this.slotToCount["rh-ok"] ?? 0;
+    },
+    availableReportTypes() {
+      let out = new Map();
+      this.credentials.forEach((cr) =>
+        cr.counter_reports_long.forEach((rt) => out.set(rt.id, rt))
+      );
+      let array = Array.from(out.values());
+      array.sort((a, b) => a.code.localeCompare(b.code));
+      return array;
     },
   },
 
@@ -286,6 +327,55 @@ export default {
         this.presenceMap = map;
         this.dataReady = true;
       }
+    },
+    icon(status) {
+      switch (status) {
+        case "sushi":
+          return "fa-file-download";
+        case "manual":
+          return "fa-file-import";
+        case "broken":
+          return "fa-times-circle";
+        case "expired":
+          return "fa-calendar-alt";
+        case "unknown":
+          return "fa-database";
+        case "rh-expired":
+          return "fa-calendar-alt";
+        case "rh-ok":
+          return "fa-sync-alt";
+        default:
+          return "fa-cloud-download-alt";
+      }
+    },
+    iconColor(status) {
+      switch (status) {
+        case "sushi":
+        case "manual":
+          return "#dddddd";
+        case "broken":
+          return "#ffaaaa";
+        case "expired":
+          return "warning lighten-2";
+        case "unknown":
+        case "rh-expired":
+          return "error lighten-1";
+        case "rh-ok":
+          return "warning lighten-1";
+        default:
+          return "success";
+      }
+    },
+    dataPresent(status) {
+      return status === "sushi" || status === "manual" || status === "unknown";
+    },
+    dataHarvestable(credentials, report, month) {
+      return (
+        !report.broken &&
+        !credentials.broken &&
+        (!report.last_harvestable_month ||
+          report.last_harvestable_month <= month)
+      );
     },
   },
 

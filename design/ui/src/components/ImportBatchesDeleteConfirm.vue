@@ -145,7 +145,7 @@ export default {
       }
     },
     async deleteIntentions() {
-      if (this.intentionSlices.length == 0) {
+      if (this.intentionSlices.length === 0) {
         return;
       }
       try {

@@ -57,6 +57,11 @@ cs:
           :false-tooltip="$t('import_batches_list.tooltip.manual')"
         />
       </template>
+      <template #item.accesslog_count="{ item }">
+        <span class="text-right">{{
+          formatInteger(item.accesslog_count)
+        }}</span>
+      </template>
     </v-data-table>
   </v-container>
 </template>
@@ -68,6 +73,7 @@ import {
   parseDateTime,
 } from "../libs/dates";
 import CheckMark from "@/components/util/CheckMark";
+import { formatInteger } from "../libs/numbers";
 
 export default {
   name: "ImportBatchesList",
@@ -121,11 +127,13 @@ export default {
         {
           text: this.$i18n.t("import_batches_list.header.record_count"),
           value: "accesslog_count",
+          align: "right",
         },
       ];
     },
   },
   methods: {
+    formatInteger,
     isoDateTimeFormatSpans: isoDateTimeFormatSpans,
     ymDateFormat: ymDateFormat,
     parseDateTime: parseDateTime,
