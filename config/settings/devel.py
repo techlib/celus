@@ -67,3 +67,5 @@ CELERY_BEAT_SCHEDULE = {
 QUERYCOUNT = {'DISPLAY_DUPLICATES': 5}
 
 REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'].append('rest_framework.renderers.BrowsableAPIRenderer')
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080']
