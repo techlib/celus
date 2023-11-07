@@ -457,7 +457,7 @@ def import_sushi_credentials_old(
         # extra params are in json format
         extra_params = record.get('extra_params', {})
         if extra_params:
-            extra_attrs |= json.loads(extra_params)
+            extra_attrs.update(json.loads(extra_params))
 
         optional = {}
         if 'auth' in extra_attrs:
