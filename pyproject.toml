@@ -33,7 +33,7 @@ fixable = ['I001']  # isort: imports are incorrectly sorted
 
 [tool.poetry]
 name = "celus"
-version = "5.8.0"
+version = "5.8.1"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
 license = "MIT"
