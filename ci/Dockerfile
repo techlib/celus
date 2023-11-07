@@ -1,4 +1,4 @@
-FROM ubuntu:latest as celus-test
+FROM ubuntu:20.04 as celus-test
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -39,6 +39,7 @@ RUN \
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
 RUN \
+	touch /usr/pyvenv.cfg && \
 	poetry config virtualenvs.create false && \
 	poetry config virtualenvs.options.no-setuptools true && \
 	poetry env use system && \
