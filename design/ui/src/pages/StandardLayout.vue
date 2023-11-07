@@ -29,7 +29,9 @@ cs:
       <v-toolbar-title class="flex-sm-shrink-0">
         <img
           :src="
-            siteLogo ? siteLogo.img : require('../assets/celus-plus-dark.svg')
+            siteLogo
+              ? siteLogo.img
+              : require('../assets/celus-horizontal-dark.svg')
           "
           :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
           id="logo-image"
