@@ -11,7 +11,7 @@ lints:pre_commit:
     POSTGRES_PASSWORD: celus
     POSTGRES_HOST: postgres
   before_script:
-    - poetry install
+    - poetry install --no-root
     - cp .env.example .env
   script:
     - poetry run pre-commit run --hook-stage push --all-files

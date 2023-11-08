@@ -10,6 +10,7 @@ RUN \
 		ca-certificates git cmake make pkg-config gcc g++ openssh-client \
 		python3-dev python3-pip python3-venv \
 		python3-wheel curl locales libmagic-dev \
+		python3-virtualenv \
 		&& \
 	rm -rf /var/lib/apt/lists/*
 
@@ -26,22 +27,18 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
 # install poetry
-RUN \
-	curl -sSL https://install.python-poetry.org | python
+RUN curl -sSL https://install.python-poetry.org | python
 ENV PATH="${PATH}:/root/.local/bin"
-ENV PYTHONPATH="/usr/lib/python3.8/site-packages:/usr/lib/python3.8/dist-packages"
+
+# create virtualenv and make sure it is used
+RUN virtualenv env
+ENV VIRTUAL_ENV /env
+ENV PATH "/env/bin:${PATH}"
 
 # install latest pip
-RUN \
-	pip install --upgrade pip
+RUN pip install --upgrade pip
 
 # install dependencies
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
-RUN \
-	touch /usr/pyvenv.cfg && \
-	poetry config virtualenvs.create false && \
-	poetry config virtualenvs.options.no-setuptools true && \
-	poetry env use system && \
-	poetry install && \
-	rm -rf /root/.cache
+RUN poetry install --no-root
