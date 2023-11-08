@@ -372,8 +372,8 @@ export default {
         this.helpLink = result.data.url;
         this.helpText = result.data.help_text;
       } catch (error) {
-        if (error.response.status !== 404) {
-          console.log(error);
+        if (error.response?.status !== 404) {
+          console.error("Unexpected error getting CDN data: ", error);
         }
       }
     },
