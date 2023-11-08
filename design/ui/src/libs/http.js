@@ -31,12 +31,18 @@ axios.interceptors.response.use(
     // Do something with response error
     if (axios.isCancel(error)) {
       // we ignore this
-    } else if (
-      error.response?.status === 401 ||
-      error.response?.status === 403
-    ) {
+    } else if (error.response?.status === 401) {
       // if there is 401 error, try to (re)authenticate
-      store.dispatch("setShowLoginDialog", { show: true });
+      // this can either happen when using shibboleth and the session expires
+      // or when using normal login and the session expires
+      //
+      // in both cases, we only do it if the request was sent to the same origin
+      if (
+        error.response?.request?.responseURL &&
+        error.response?.request?.responseURL.startsWith(window.location.origin)
+      ) {
+        store.dispatch("setShowLoginDialog", { show: true });
+      }
     } else if (
       error.response?.status === 409 &&
       error.response.headers["celus-version"] !== store.getters.celusVersion
