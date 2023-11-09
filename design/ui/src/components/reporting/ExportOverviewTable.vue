@@ -82,62 +82,14 @@
     <template #expanded-item="{ item, headers }">
       <th></th>
       <td :colspan="headers.length - 1" class="py-3">
-        <table class="overview text--secondary">
-          <tr>
-            <th>{{ $t("labels.report_type") }}:</th>
-            <td>
-              {{ item.reportTypes.map((rt) => rt.name).join(", ") }}
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t("labels.columns") }}:</th>
-            <td v-if="item.trendMode">
-              {{ $t("trend_mode.trend_mode") }}:
-              <em>{{ smartMonthRange(item.baseSubsetDateRange) }}</em>
-              vs
-              <em>{{ smartMonthRange(item.comparedSubsetDateRange) }}</em>
-            </td>
-            <td v-else>
-              {{ item.groupBy.map((fltr) => fltr.getName($i18n)).join(", ") }}
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t("labels.filters") }}:</th>
-            <td>
-              {{
-                item.filters
-                  .map((fltr) => fltr.dimension.getName($i18n))
-                  .join(", ")
-              }}
-            </td>
-          </tr>
-          <tr>
-            <th class="align-top">{{ $t("labels.settings") }}:</th>
-            <td>
-              <ul class="unobtrusive-bullets">
-                <li>
-                  {{
-                    item.includeZeroRows
-                      ? $t("show_zero_rows_yes")
-                      : $t("show_zero_rows_no")
-                  }}
-                </li>
-                <li>
-                  {{
-                    item.includeTotals
-                      ? $t("show_totals_yes")
-                      : $t("show_totals_no")
-                  }}
-                </li>
-                <li v-if="item.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
-              </ul>
-            </td>
-          </tr>
-          <tr v-if="item.status === EXPORT_ERROR">
-            <th>{{ $t("error_details") }}:</th>
-            <td>{{ item.errorInfo.detail }}</td>
-          </tr>
-        </table>
+        <ReportSpecOverview :report="item">
+          <template #append>
+            <tr v-if="item.status === EXPORT_ERROR">
+              <th>{{ $t("error_details") }}:</th>
+              <td>{{ item.errorInfo.detail }}</td>
+            </tr>
+          </template>
+        </ReportSpecOverview>
       </td>
     </template>
 
@@ -165,10 +117,11 @@ import { FlexiExport } from "@/libs/flexi-reports";
 import reportTypes from "@/mixins/reportTypes";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import { EXPORT_ERROR, EXPORT_FINISHED } from "@/libs/flexi-reports";
+import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
 
 export default {
   name: "ExportOverviewTable",
-  components: { ExportMonitorWidget },
+  components: { ReportSpecOverview, ExportMonitorWidget },
   mixins: [reportTypes],
 
   data() {

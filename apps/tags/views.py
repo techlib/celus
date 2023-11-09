@@ -56,7 +56,7 @@ class TagClassViewSet(ModelViewSet):
     queryset = TagClass.objects.none()
     serializer_class = TagClassSerializer
     permission_classes = [IsAuthenticated, TagClassPermissions]
-    filter_backends = [TagClassScopeFilter]
+    filter_backends = [TagClassScopeFilter, PkMultiValueFilterBackend]
 
     def get_queryset(self):
         return TagClass.objects.user_accessible_tag_classes(self.request.user).annotate_hidden(

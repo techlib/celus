@@ -237,82 +237,7 @@
           <template #expanded-item="{ item, headers }">
             <th></th>
             <td :colspan="headers.length - 1" class="py-3">
-              <table class="overview text--secondary">
-                <tr>
-                  <th>{{ $t("labels.report_type") }}:</th>
-                  <td>
-                    {{ item.reportTypes.map((rt) => rt.name).join(", ") }}
-                  </td>
-                </tr>
-                <tr>
-                  <th>{{ $t("title_fields.split_by") }}:</th>
-                  <td>
-                    {{ item.splitBy?.getName($i18n) }}
-                  </td>
-                </tr>
-                <tr>
-                  <th>{{ $t("labels.rows") }}:</th>
-                  <td>
-                    {{ item.primaryDimension.getName($i18n) }}
-                  </td>
-                </tr>
-                <tr>
-                  <th>{{ $t("labels.columns") }}:</th>
-                  <td v-if="item.trendMode">
-                    {{ $t("trend_mode.trend_mode") }}:
-                    <em>{{ smartMonthRange(item.baseSubsetDateRange) }}</em>
-                    vs
-                    <em>{{ smartMonthRange(item.comparedSubsetDateRange) }}</em>
-                  </td>
-                  <td v-else>
-                    {{
-                      item.groupBy.map((fltr) => fltr.getName($i18n)).join(", ")
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <th>{{ $t("labels.filters") }}:</th>
-                  <td>
-                    {{
-                      item.filters
-                        .map((fltr) => fltr.dimension.getName($i18n))
-                        .join(", ")
-                    }}
-                  </td>
-                </tr>
-                <tr>
-                  <th class="align-top">{{ $t("labels.settings") }}:</th>
-                  <td>
-                    <ul class="unobtrusive-bullets">
-                      <li>
-                        {{
-                          item.includeZeroRows
-                            ? $t("show_zero_rows_yes")
-                            : $t("show_zero_rows_no")
-                        }}
-                      </li>
-                      <li>
-                        {{
-                          item.includeTotals
-                            ? $t("show_totals_yes")
-                            : $t("show_totals_no")
-                        }}
-                      </li>
-                      <li v-if="item.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
-                      <li v-if="item.showUntaggedRemainder">
-                        <v-tooltip bottom>
-                          <template #activator="{ on }">
-                            <span v-on="on">{{
-                              $t("tags_show_remainder")
-                            }}</span>
-                          </template>
-                          {{ $t("tags_show_remainder_tt") }}
-                        </v-tooltip>
-                      </li>
-                    </ul>
-                  </td>
-                </tr>
-              </table>
+              <ReportSpecOverview :report="item" :two-panes="twoPanes" />
             </td>
           </template>
 
@@ -367,13 +292,19 @@ import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import { FlexiReport } from "@/libs/flexi-reports";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
 import CopyReportDialog from "@/components/reporting/CopyReportDialog";
+import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
 
 export default {
   name: "StoredReportsTable",
 
   mixins: [dimensionMixin, reportTypes],
 
-  components: { CopyReportDialog, FlexiTableOutput, ExportMonitorWidget },
+  components: {
+    ReportSpecOverview,
+    CopyReportDialog,
+    FlexiTableOutput,
+    ExportMonitorWidget,
+  },
 
   data() {
     return {
@@ -423,10 +354,10 @@ export default {
     rowDims() {
       let out = new Map();
       this.reports.forEach((r) =>
-        out.set(r.primaryDimension.ref, r.primaryDimension.name)
+        out.set(r.primaryDimension.ref, r.primaryDimension)
       );
-      return Array.from(out).map(([ref, title]) => ({
-        text: this.$t(title),
+      return Array.from(out).map(([ref, dim]) => ({
+        text: dim.getName(this.$i18n),
         value: ref,
       }));
     },
@@ -439,6 +370,9 @@ export default {
         out = out.filter((r) => r.primaryDimension.ref === this.selectedRowDim);
       }
       return out;
+    },
+    twoPanes() {
+      return this.$vuetify.breakpoint.lgAndUp;
     },
   },
 

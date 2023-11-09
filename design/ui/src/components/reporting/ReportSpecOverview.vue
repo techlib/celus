@@ -1,0 +1,107 @@
+<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml" />
+
+<template>
+  <div class="d-flex align-start">
+    <table class="overview text--secondary">
+      <tr>
+        <th>{{ $t("labels.report_type") }}:</th>
+        <td>
+          {{ report.reportTypes.map((rt) => rt.name).join(", ") }}
+        </td>
+      </tr>
+      <tr>
+        <th>{{ $t("title_fields.split_by") }}:</th>
+        <td>
+          {{ report.splitBy?.getName($i18n) }}
+        </td>
+      </tr>
+      <tr>
+        <th>{{ $t("labels.rows") }}:</th>
+        <td>
+          {{ report.primaryDimension.getName($i18n) }}
+        </td>
+      </tr>
+      <tr>
+        <th>{{ $t("labels.columns") }}:</th>
+        <td v-if="report.trendMode">
+          {{ $t("trend_mode.trend_mode") }}:
+          <em>{{ smartMonthRange(report.baseSubsetDateRange) }}</em>
+          vs
+          <em>{{ smartMonthRange(report.comparedSubsetDateRange) }}</em>
+        </td>
+        <td v-else>
+          {{ report.groupBy.map((fltr) => fltr.getName($i18n)).join(", ") }}
+        </td>
+      </tr>
+      <tr v-if="!twoPanes">
+        <th class="align-top">{{ $t("labels.filters") }}:</th>
+        <td>
+          <ul class="unobtrusive-bullets">
+            <li v-for="fltr in report.filters" :key="fltr.dimension.ref">
+              <FilterSpec :fltr="fltr" />
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <th class="align-top">{{ $t("labels.settings") }}:</th>
+        <td>
+          <ul class="unobtrusive-bullets">
+            <li>
+              {{
+                report.includeZeroRows
+                  ? $t("show_zero_rows_yes")
+                  : $t("show_zero_rows_no")
+              }}
+            </li>
+            <li>
+              {{
+                report.includeTotals
+                  ? $t("show_totals_yes")
+                  : $t("show_totals_no")
+              }}
+            </li>
+            <li v-if="report.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
+            <li v-if="report.showUntaggedRemainder">
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <span v-on="on">{{ $t("tags_show_remainder") }}</span>
+                </template>
+                {{ $t("tags_show_remainder_tt") }}
+              </v-tooltip>
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <slot name="append"></slot>
+    </table>
+    <!-- second pane with filters -->
+    <div v-if="twoPanes" class="overview text--secondary ml-12">
+      <div class="font-weight-bold">{{ $t("labels.filters") }}:</div>
+      <ul class="unobtrusive-bullets">
+        <li v-for="fltr in report.filters" :key="fltr.dimension.ref">
+          <FilterSpec :fltr="fltr" />
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+<script>
+import { smartMonthRange } from "@/libs/dates";
+import FilterSpec from "@/components/reporting/FilterSpec.vue";
+
+export default {
+  name: "ReportSpecOverview",
+  components: { FilterSpec },
+
+  props: {
+    report: { type: Object },
+    twoPanes: { type: Boolean, default: false },
+  },
+
+  methods: {
+    smartMonthRange,
+  },
+};
+</script>

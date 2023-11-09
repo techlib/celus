@@ -455,6 +455,9 @@ export default {
     itemsPerPageOptions() {
       return this.contextOverride ? [20, 50, 100, -1] : [20, 50, 100];
     },
+    noPartAvailable() {
+      return this.report.splitBy && !this.currentPart && !this.loadingParts;
+    },
   },
 
   methods: {
@@ -472,20 +475,19 @@ export default {
         this.currentPart = null;
       }
 
+      if (this.noPartAvailable) {
+        // we cannot show the report without a part, so we just return
+        return;
+      }
+
       // update translators
       this.report.groupBy
         .filter((item) => item.isExplicit)
         .forEach((item) => {
-          if (item.isMapped) {
-            this.translators[item.ref] = this.translators.explicitDimension;
-          } else {
-            this.translators[item.ref] = null;
-          }
+          this.translators[item.ref] = this.getTranslator(item);
         });
       let primDim = this.report.primaryDimension;
-      if (primDim.isExplicit && primDim.isMapped) {
-        this.translators[primDim.ref] = this.translators.explicitDimension;
-      }
+      this.translators[primDim.ref] = this.getTranslator(primDim);
       this.errorCode = null;
       this.errorDetails = null;
       if (clean) {
@@ -506,13 +508,7 @@ export default {
         let splitParts = resp.response.data.values.map(
           (item) => item[this.report.splitBy.ref]
         );
-        // explicit dimensions do not have a translator defined by default,
-        // so we need to define it if we are splitting by explicit mapped dimension
-        if (this.report.splitBy.isExplicit && this.report.splitBy.isMapped) {
-          this.translators[this.report.splitBy.ref] =
-            this.translators.explicitDimension;
-        }
-        let translator = this.translators[this.report.splitBy.ref];
+        const translator = this.getTranslator(this.report.splitBy);
         if (translator) {
           await translator.prepareTranslation(splitParts);
           this.splitParts = splitParts

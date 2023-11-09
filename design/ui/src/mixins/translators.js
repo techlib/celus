@@ -12,6 +12,7 @@ export default {
         report_type: new IdTranslation("/api/report-type/"),
         explicitDimension: explicitDimensionTranslator,
         tag: new IdTranslation("/api/tags/tag/"),
+        tagClass: new IdTranslation("/api/tags/tag-class/visible-tags/"),
         dim1: null,
         dim2: null,
         dim3: null,
@@ -21,5 +22,16 @@ export default {
         dim7: null,
       },
     };
+  },
+
+  methods: {
+    getTranslator(dim) {
+      if (dim.isMapped) {
+        return dim.isExplicit
+          ? this.translators.explicitDimension
+          : this.translators[dim.ref];
+      }
+      return null;
+    },
   },
 };
