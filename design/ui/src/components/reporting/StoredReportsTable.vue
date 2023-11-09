@@ -8,7 +8,7 @@
       <v-col>
         <v-data-table
           v-model="selectedRows"
-          :items="reports"
+          :items="shownReports"
           item-key="pk"
           :headers="headers"
           show-expand
@@ -31,7 +31,41 @@
                 </v-btn>
               </v-col>
               <v-spacer></v-spacer>
-              <v-col cols="auto">
+              <!-- visibility filter -->
+              <v-col cols="6" md="3" lg="3" xl="2">
+                <v-select
+                  v-model="selectedVisibility"
+                  :items="visibilities"
+                  clearable
+                  clear-icon="fa-times"
+                  :label="$t('title_fields.access_level')"
+                >
+                  <template #item="{ item }">
+                    <v-icon small class="mr-2"
+                      >fa-fw {{ accessLevelIcon(item) }}</v-icon
+                    >
+                    {{ $t(`access_level.${item}`) }}
+                  </template>
+                  <template #selection="{ item }">
+                    <v-icon small class="mr-2"
+                      >fa-fw {{ accessLevelIcon(item) }}</v-icon
+                    >
+                    {{ $t(`access_level.${item}`) }}
+                  </template>
+                </v-select>
+              </v-col>
+              <!-- primary dim filter -->
+              <v-col cols="6" md="3" lg="3" xl="2">
+                <v-select
+                  v-model="selectedRowDim"
+                  :items="rowDims"
+                  clearable
+                  clear-icon="fa-times"
+                  :label="$t('title_fields.primary_dimension')"
+                />
+              </v-col>
+              <!-- search -->
+              <v-col cols="6" md="3" lg="3" xl="2">
                 <v-text-field
                   v-model="search"
                   clearable
@@ -42,6 +76,7 @@
               </v-col>
             </v-row>
           </template>
+
           <template #item.actions="{ item }">
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -354,6 +389,8 @@ export default {
       loading: false,
       search: "",
       selectedRows: [],
+      selectedVisibility: null,
+      selectedRowDim: null,
     };
   },
 
@@ -377,6 +414,31 @@ export default {
           sortable: false,
         },
       ];
+    },
+    visibilities() {
+      let out = new Set();
+      this.reports.forEach((r) => out.add(r.accessLevel));
+      return Array.from(out);
+    },
+    rowDims() {
+      let out = new Map();
+      this.reports.forEach((r) =>
+        out.set(r.primaryDimension.ref, r.primaryDimension.name)
+      );
+      return Array.from(out).map(([ref, title]) => ({
+        text: this.$t(title),
+        value: ref,
+      }));
+    },
+    shownReports() {
+      let out = this.reports;
+      if (this.selectedVisibility) {
+        out = out.filter((r) => r.accessLevel === this.selectedVisibility);
+      }
+      if (this.selectedRowDim) {
+        out = out.filter((r) => r.primaryDimension.ref === this.selectedRowDim);
+      }
+      return out;
     },
   },
 
