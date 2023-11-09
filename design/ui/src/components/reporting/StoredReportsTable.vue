@@ -7,6 +7,7 @@
     <v-row>
       <v-col>
         <v-data-table
+          v-model="selectedRows"
           :items="reports"
           item-key="pk"
           :headers="headers"
@@ -16,6 +17,7 @@
           :loading="loading"
           :search="search"
           class="auto-table"
+          single-select
         >
           <template #top>
             <v-row class="align-baseline">
@@ -279,11 +281,13 @@
             </td>
           </template>
 
-          <template #item.data-table-expand="{ isExpanded, expand }">
+          <template
+            #item.data-table-expand="{ isExpanded, expand, isSelected }"
+          >
             <v-btn @click="expand(!isExpanded)" icon small>
-              <v-icon small>{{
-                isExpanded ? "fa-angle-down" : "fa-angle-right"
-              }}</v-icon>
+              <v-icon small>
+                {{ arrowIcon(isSelected) }}-{{ isExpanded ? "down" : "right" }}
+              </v-icon>
             </v-btn>
           </template>
         </v-data-table>
@@ -349,6 +353,7 @@ export default {
       copiedReport: null,
       loading: false,
       search: "",
+      selectedRows: [],
     };
   },
 
@@ -416,6 +421,7 @@ export default {
       }
     },
     async runReport(report) {
+      this.selectedRows = [report];
       this.activeReport = report;
       await this.$refs.outputTable.updateOutput(report);
     },
@@ -484,6 +490,12 @@ export default {
         content: `${this.$t("copy_error")}: ${error}`,
         color: "error",
       });
+    },
+    accessLevelIcon(level) {
+      return FlexiReport.accessLeveLToIcon[level];
+    },
+    arrowIcon(isSelected) {
+      return isSelected ? "fa-angle-double" : "fa-angle";
     },
   },
 
