@@ -6,25 +6,39 @@ en:
     records: Do you really want to delete following records?
     no_data: No data to delete.
     delete_ok: Selected data were deleted.
+    title_reharvest: Delete before reharvest
+    records_reharvest: Do you really want to continue reharvesting by deleting following records?
+    delete_btn_reharvest: Delete & reharvest
 cs:
   confirm_delete:
     title: Potvrzení smazání
     records: Opravdu si přejete smazat následující záznamy?
     no_data: Žádná data ke mazání.
     delete_ok: Vybraná data byla smazána.
+    title_reharvest: Smazat před reharvestem
+    records_reharvest: Opravdu si přejete pokračovat v reharvestu smazáním následujících záznamů?
+    delete_btn_reharvest: Smazat a reharvestovat
 </i18n>
 
 <template>
   <v-card>
     <v-card-title class="headline">
-      {{ $t("confirm_delete.title") }}
+      {{
+        reharvest
+          ? $t("confirm_delete.title_reharvest")
+          : $t("confirm_delete.title")
+      }}
     </v-card-title>
     <v-card-text>
       <ImportBatchesList
         v-model="importBatches"
         v-if="importBatches && (loading || canDelete)"
         :import-batches="importBatches"
-        :title-text="$t('confirm_delete.records')"
+        :title-text="
+          reharvest
+            ? $t('confirm_delete.records_reharvest')
+            : $t('confirm_delete.records')
+        "
         :loading="loading"
       />
       <p v-else>{{ $t("confirm_delete.no_data") }}</p>
@@ -45,7 +59,12 @@ cs:
           class="mr-2"
         />
         <v-icon v-else small class="pr-2">fas fa-trash</v-icon>
-        {{ $t("actions.delete") }}
+
+        {{
+          reharvest
+            ? $t("confirm_delete.delete_btn_reharvest")
+            : $t("actions.delete")
+        }}
       </v-btn>
       <v-spacer />
       <v-btn @click="cancelDialog()" class="mr-2">
@@ -78,6 +97,8 @@ export default {
     // Note that these records are deleted based on time / organization / platform
     // and not based on existing data and no confirmation is displayed here.
     intentionSlices: { required: false, type: Array, default: () => [] },
+    // when used for deleting data during reharvest, we use different texts
+    reharvest: { type: Boolean, default: false },
   },
   data() {
     return {

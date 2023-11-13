@@ -200,6 +200,7 @@ cs:
         :intention-slices="intentionSlicesToDelete"
         @cancel="showDeleteDialog = false"
         @deleted="dataDeleted"
+        reharvest
       />
     </v-dialog>
   </v-container>
