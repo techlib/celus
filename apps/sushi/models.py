@@ -35,6 +35,7 @@ from celus_nigiri.counter5 import (
     TransportError,
 )
 from celus_nigiri.error_codes import ErrorCode
+from celus_pycounter.exceptions import SushiException
 from core.logic.dates import month_start, parse_date
 from core.models import (
     UL_CONS_ADMIN,
@@ -58,7 +59,6 @@ from django.utils.translation import gettext_lazy as _
 from logs.models import AccessLog, ImportBatch
 from organizations.models import Organization
 from publications.models import Platform
-from pycounter.exceptions import SushiException
 from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)

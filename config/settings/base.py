@@ -569,8 +569,8 @@ LOGGING = {
         'mail_admins': {'level': 'ERROR', 'class': 'django.utils.log.AdminEmailHandler'},
     },
     'loggers': {
+        'celus_pycounter': {'level': 'INFO'},
         'django.db': {'level': 'INFO'},
-        'pycounter': {'level': 'INFO'},
         'requests': {'level': 'INFO'},
         'django': {'level': 'ERROR', 'handlers': ['errorlog', 'mail_admins'], 'propagate': True},
         'logs.logic.materialized_interest': {'level': 'INFO'},
@@ -804,7 +804,7 @@ if SENTRY_URL:
         before_send_transaction=filter_events,
     )
     # ignore pycounter errors
-    ignore_logger("pycounter.sushi")
+    ignore_logger("celus_pycounter.sushi")
 
 # Releases and Changelog
 RELEASES_SOURCEFILE = config('RELEASES_SOURCEFILE', default='RELEASES.yaml')

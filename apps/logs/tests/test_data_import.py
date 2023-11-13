@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
+from celus_pycounter import report
 from django.db.models import Count, Sum
 from django.urls import reverse
 from hcube.api.models.aggregation import Sum as HSum
@@ -275,7 +276,6 @@ class TestDataImport:
 class TestCounter4Import:
     def test_import_br2_tsv(self, organizations, report_type_nd, platform):
         rt = report_type_nd(1, dimension_names=['Publisher'])
-        from pycounter import report
 
         data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
         reader = Counter4BR2Report()
@@ -313,8 +313,6 @@ class TestCounter4Import:
 
         reader = Counter4BR2Report()
         rt = report_type_nd(len(reader.dimensions), dimension_names=reader.dimensions)
-
-        from pycounter import report
 
         data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
 
