@@ -23,3 +23,7 @@ CLICKHOUSE_SYNC_ACTIVE = config('CLICKHOUSE_SYNC_ACTIVE', cast=bool, default=Tru
 CLICKHOUSE_QUERY_ACTIVE = config(  # noqa F405
     'CLICKHOUSE_QUERY_ACTIVE', cast=bool, default=CLICKHOUSE_SYNC_ACTIVE
 )
+
+LOGGING["handlers"]["mail_admins"][  # noqa F405
+    "email_backend"
+] = 'django.core.mail.backends.console.EmailBackend'

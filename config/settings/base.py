@@ -566,7 +566,11 @@ LOGGING = {
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': BASE_DIR / 'error.log',
         },
-        'mail_admins': {'level': 'ERROR', 'class': 'django.utils.log.AdminEmailHandler'},
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            "email_backend": 'django_ntfy.ExponentialRateLimitBackends',
+        },
     },
     'loggers': {
         'celus_pycounter': {'level': 'INFO'},
@@ -639,6 +643,22 @@ SILENCED_SYSTEM_CHECKS = []
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
+
+# NTFY stuff configuration
+NTFY_BASE_URL = config("NTFY_BASE_URL", default="https://ntfy.sh/")
+NTFY_DEFAULT_TOPIC = config("NTFY_DEFAULT_TOPIC", default="celus-test")
+# TODO official persistent icon for celus
+NTFY_DEFAULT_ICON_URL = config("NTFY_DEFAULT_ICON_URL", "https://idemo.celus.net/favicon.ico")
+NTFY_DEFAULT_TAGS = config("NTFY_DEFAULT_TAGS", default="rotating_light", cast=Csv())
+NTFY_DEFAULT_PRIORITY = config("NTFY_DEFAULT_PRIORITY", default=4, cast=int)
+EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS = config(
+    "EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS",
+    default="django_ntfy.NtfyBackend,anymail.backends.mailgun.EmailBackend",
+    cast=Csv(),
+)
+EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT = config(
+    "EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT", default=60 * 60 * 12, cast=int
+)
 
 # other django stuff
 MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='')

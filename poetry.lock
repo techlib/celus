@@ -921,12 +921,12 @@ six = ">=1.10"
 
 [[package]]
 name = "dj-rest-auth"
-version = "5.0.1"
+version = "5.0.2"
 description = "Authentication and Registration in Django Rest Framework"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "dj-rest-auth-5.0.1.tar.gz", hash = "sha256:2f574edd7bcc9a421e6e1d9d47f7b1eb56b71eb797927be135c995ea546dd9b5"},
+    {file = "dj-rest-auth-5.0.2.tar.gz", hash = "sha256:aad7d912476169e9991547bf98645344d3939be2d7052098048d819524c115d9"},
 ]
 
 [package.dependencies]
@@ -934,7 +934,7 @@ Django = ">=3.2"
 djangorestframework = ">=3.13.0"
 
 [package.extras]
-with-social = ["django-allauth (>=0.55.0,<0.56.0)"]
+with-social = ["django-allauth (>=0.56.0,<0.58.0)"]
 
 [[package]]
 name = "django"
@@ -1156,6 +1156,21 @@ django-js-asset = "*"
 
 [package.extras]
 tests = ["coverage", "mock-django"]
+
+[[package]]
+name = "django-ntfy"
+version = "0.1.1"
+description = "Django's email backend which is used to send messages to ntfy.sh"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "django_ntfy-0.1.1-py3-none-any.whl", hash = "sha256:375ef4cd887c3c0709c3dc57c5cfccc86f78286b13a0e2943c5deaf83b94be77"},
+    {file = "django_ntfy-0.1.1.tar.gz", hash = "sha256:9831ed02ab9f52a82a4aed16cebfd2a15cc53fe9acd0320420bc1d19efa47fd1"},
+]
+
+[package.dependencies]
+Django = ">=4.2.0"
+requests = ">=2.31,<3.0"
 
 [[package]]
 name = "django-postgres-copy"
@@ -2130,8 +2145,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.20.3", markers = "python_version < \"3.10\""},
-    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
+    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -2328,13 +2343,13 @@ twisted = ["twisted"]
 
 [[package]]
 name = "prompt-toolkit"
-version = "3.0.40"
+version = "3.0.41"
 description = "Library for building powerful interactive command lines in Python"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "prompt_toolkit-3.0.40-py3-none-any.whl", hash = "sha256:99ba3dfb23d5b5af89712f89e60a5f3d9b8b67a9482ca377c5771d0e9047a34b"},
-    {file = "prompt_toolkit-3.0.40.tar.gz", hash = "sha256:a371c06bb1d66cd499fecd708e50c0b6ae00acba9822ba33c586e2f16d1b739e"},
+    {file = "prompt_toolkit-3.0.41-py3-none-any.whl", hash = "sha256:f36fe301fafb7470e86aaf90f036eef600a3210be4decf461a5b1ca8403d3cb2"},
+    {file = "prompt_toolkit-3.0.41.tar.gz", hash = "sha256:941367d97fc815548822aa26c2a269fdc4eb21e9ec05fc5d447cf09bad5d75f0"},
 ]
 
 [package.dependencies]
@@ -2610,13 +2625,13 @@ pyparsing = ">=2.1.4"
 
 [[package]]
 name = "pyfakefs"
-version = "5.3.0"
+version = "5.3.1"
 description = "pyfakefs implements a fake file system that mocks the Python file system modules."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyfakefs-5.3.0-py3-none-any.whl", hash = "sha256:33c1f891078c727beec465e75cb314120635e2298456493cc2cc0539e2130cbb"},
-    {file = "pyfakefs-5.3.0.tar.gz", hash = "sha256:e3e35f65ce55ee8ecc5e243d55cfdbb5d0aa24938f6e04e19f0fab062f255020"},
+    {file = "pyfakefs-5.3.1-py3-none-any.whl", hash = "sha256:dbe268b70da64f1506baf7d7a2a2248b96b56d28d61a68859272b5fdc321c39e"},
+    {file = "pyfakefs-5.3.1.tar.gz", hash = "sha256:dd1fb374039fadccf35d3f3df7aa5d239482e0650dcd240e053d3b9e78740918"},
 ]
 
 [[package]]
@@ -3488,18 +3503,17 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.0.7"
+version = "2.1.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.0.7-py3-none-any.whl", hash = "sha256:fdb6d215c776278489906c2f8916e6e7d4f5a9b602ccbcfdf7f016fc8da0596e"},
-    {file = "urllib3-2.0.7.tar.gz", hash = "sha256:c97dfde1f7bd43a71c8d2a58e369e9b2bf692d1334ea9f9cae55add7d0dd0f84"},
+    {file = "urllib3-2.1.0-py3-none-any.whl", hash = "sha256:55901e917a5896a349ff771be919f8bd99aff50b79fe58fec595eb37bbc56bb3"},
+    {file = "urllib3-2.1.0.tar.gz", hash = "sha256:df7aa8afb0148fa78488e7899b2c59b5f4ffcfa82e6c54ccb9dd37c1d7b52d54"},
 ]
 
 [package.extras]
 brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
-secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.1.0)", "urllib3-secure-extra"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
@@ -3593,13 +3607,13 @@ watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
 name = "wcwidth"
-version = "0.2.9"
+version = "0.2.10"
 description = "Measures the displayed width of unicode strings in a terminal"
 optional = false
 python-versions = "*"
 files = [
-    {file = "wcwidth-0.2.9-py2.py3-none-any.whl", hash = "sha256:9a929bd8380f6cd9571a968a9c8f4353ca58d7cd812a4822bba831f8d685b223"},
-    {file = "wcwidth-0.2.9.tar.gz", hash = "sha256:a675d1a4a2d24ef67096a04b85b02deeecd8e226f57b5e3a72dbb9ed99d27da8"},
+    {file = "wcwidth-0.2.10-py2.py3-none-any.whl", hash = "sha256:aec5179002dd0f0d40c456026e74a729661c9d468e1ed64405e3a6c2176ca36f"},
+    {file = "wcwidth-0.2.10.tar.gz", hash = "sha256:390c7454101092a6a5e43baad8f83de615463af459201709556b6e4b1c861f97"},
 ]
 
 [[package]]
@@ -3762,4 +3776,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.9"
-content-hash = "b6f438124a274133b11f823a570f6c3ff08764463380d6d482bce67efb9a8f31"
+content-hash = "f76cbe254636c990422e62100da738aa37eb5d5f4ca5c6746a4c26037a144f63"
