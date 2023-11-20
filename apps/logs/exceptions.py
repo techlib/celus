@@ -101,10 +101,14 @@ class UnknownReportTypeInPreflight(PreflightFailed):
     """
 
 
-class MultipleReportType(PreflightFailed):
+class MultipleReportTypes(PreflightFailed):
     """
     ReportType from nibbler matches multiple reportype in this Celus
     """
+
+    def __init__(self, report_types):
+        super().__init__("Multiple ReportTypes found in the data")
+        self.report_types = report_types
 
 
 class NibblerErrors(Exception):

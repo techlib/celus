@@ -25,6 +25,7 @@ en:
   return_to_platform: Go to platform page
   upload_more_files: Upload more files
   preflight_error_found: Error occurred during data check
+  multiple_report_types_found: Multiple report types were found in provided file. It is possible to upload only one report type at a time. Please modify the input data so that only one report type is present (e.g. by uploading only a single sheet in xlsx).
   import_error_found: The following error was found when data were imported
   back_to_start: Back to data upload
   organization_from_data: No organization is selected. Organization will be derived from data.
@@ -90,6 +91,7 @@ cs:
   return_to_platform: Přejít na stránku platformy
   upload_more_files: Nahrát další data
   preflight_error_found: Chyba při kontrole dat
+  multiple_report_types_found: V souboru bylo nalezeno víc typů reportů. Je možné nahrát pouze jeden typ reportu z jednoho souboru. Prosím změnte soubor tak, aby v něm byl pouze jeden typ reportu (např. tak, že budete nahrávat xlsx soubor s jedním listem).
   import_error_found: Při nahrávání dat byla nalezena následující chyba
   back_to_start: Zpět na nahrání dat
   organization_from_data: Organizace nebyla vybrána a bude odvozena ze vstupních dat.
@@ -1133,6 +1135,9 @@ export default {
               this.nibblerErrorText(e.sheet_idx, e.name, e.parsers_info)
             );
           }
+          if ("multiple_report_types" in info) {
+            this.handleMultipleReportTypeError();
+          }
           this.showSnackbar({ content: "Error sending data: " + error });
         } else {
           this.showSnackbar({ content: "Error sending data: " + error });
@@ -1408,6 +1413,10 @@ export default {
         return this.$t("errors.no_parser_found");
       }
       return this.unknownErrorMessage;
+    },
+    handleMultipleReportTypeError() {
+      this.showErrorDialog = true;
+      this.errors = [this.$t("multiple_report_types_found")];
     },
   },
   async mounted() {

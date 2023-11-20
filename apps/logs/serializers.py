@@ -28,7 +28,7 @@ from rest_framework.serializers import (
 )
 from sushi.serializers import SushiFetchAttemptFlatSerializer
 
-from .exceptions import MultipleReportType, NibblerErrors
+from .exceptions import MultipleReportTypes, NibblerErrors
 from .models import (
     AccessLog,
     Dimension,
@@ -430,9 +430,7 @@ class ManualDataUploadSerializer(ModelSerializer):
                             # that would indicate that the user uploaded e.g. xlsx file
                             # with different report type on each sheet
                             # => raise original exception
-                            raise MultipleReportType(
-                                f"Multiple ReportTypes found in the data: {rt_names}"
-                            )
+                            raise MultipleReportTypes(report_types)
                         result.extra = {p.sheet_idx: p.extras for p in poops}
                         result.report_type = report_types[0]
                         result.save()

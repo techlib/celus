@@ -26,7 +26,7 @@ from sushi.models import AttemptStatus, SushiFetchAttempt
 from logs.exceptions import (
     DataStructureError,
     ImportNotPossible,
-    MultipleReportType,
+    MultipleReportTypes,
     NibblerErrors,
     OrganizationHasToBeSelected,
     UnknownReportTypeInPreflight,
@@ -308,7 +308,7 @@ def prepare_preflight(mdu_id: int):
                     # Altough nibbler allows you to have different report_types on
                     # different sheets, in celus you may have only the same report type
                     # on all sheets
-                    raise MultipleReportType(f"Multiple ReportTypes found in the data: {rt_names}")
+                    raise MultipleReportTypes(report_types)
 
                 mdu.report_type = report_types[0]
 
@@ -370,7 +370,7 @@ Traceback: {traceback.format_exc()}
         error = "general"
         if isinstance(e, UnknownReportTypeInPreflight):
             error = "unknown-report-type"
-        elif isinstance(e, MultipleReportType):
+        elif isinstance(e, MultipleReportTypes):
             error = "multiple-report-type"
         mdu.log = body
         mdu.error = error

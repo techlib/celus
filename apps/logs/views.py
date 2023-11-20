@@ -83,7 +83,7 @@ from logs.serializers import (
 )
 
 from . import filters
-from .exceptions import NibblerErrors
+from .exceptions import MultipleReportTypes, NibblerErrors
 from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
@@ -989,6 +989,10 @@ class ManualDataUploadViewSet(
         except NibblerErrors as e:
             raise BadRequestException(
                 {"nibbler_errors": [err.dict() for err in e.errors]},
+            ) from e
+        except MultipleReportTypes as e:
+            raise BadRequestException(
+                {"multiple_report_types": [e.id for e in e.report_types]}
             ) from e
 
 
