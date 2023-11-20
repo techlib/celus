@@ -734,6 +734,13 @@ EMAIL_SUBJECT_PREFIX = config('EMAIL_SUBJECT_PREFIX', default='[Stats] ')
 SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='root@localhost')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+# customer care admins - they receive emails about new users, organizations, etc.
+CUSTOMER_CARE_ADMINS = (
+    config(
+        'CUSTOMER_CARE_ADMINS', cast=Csv(cast=Csv(post_process=tuple), delimiter=';'), default=''
+    )
+    or ADMINS
+)
 
 # password reset and invitation token timeout (in seconds)
 # the purpose of the timeout is to guard against someone getting access to an old email account

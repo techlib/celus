@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from django.core.checks import Warning, register
+from django.core.checks import Error, Warning, register
 
 
 def version_to_int(version: str):
@@ -70,6 +70,19 @@ class CoreConfig(AppConfig):
                         'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is '
                         'likely an error as the data will not be up to date in queries.',
                         id='core.W002',
+                    )
+                ]
+            return []
+
+        @register()
+        def check_customer_care_admins(app_configs, **kwargs):
+            if not all(
+                isinstance(a, (list, tuple)) and len(a) == 2 for a in settings.CUSTOMER_CARE_ADMINS
+            ):
+                return [
+                    Error(
+                        "The CUSTOMER_CARE_ADMINS setting must be a list of 2-tuples.",
+                        id="core.E001",
                     )
                 ]
             return []

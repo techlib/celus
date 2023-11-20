@@ -105,13 +105,13 @@ class TestOrganizationAPI:
         settings.ALLOW_USER_REGISTRATION = True
         url = reverse('organization-create-user-default')
         assert Organization.objects.count() == 0
-        with patch('organizations.views.async_mail_admins') as email_task:  # fake celery task
+        with patch('organizations.views.async_mail_customer_care_admins') as email_task:
             resp = authenticated_client.post(
                 url, {'name': 'test organization'}, content_type='application/json'
             )
             assert (
                 email_task.delay.called
-            ), 'email informing about a default organization created by user should be sent to admin'
+            ), 'email about a default organization created by user was sent to admin'
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         org = Organization.objects.get()

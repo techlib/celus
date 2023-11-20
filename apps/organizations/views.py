@@ -9,7 +9,7 @@ from core.logic.dates import date_filter_from_params, month_end
 from core.logic.util import text_hash
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
-from core.tasks import async_mail_admins
+from core.tasks import async_mail_customer_care_admins
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, transaction
@@ -238,7 +238,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         UserOrganization.objects.create(
             user=request.user, organization=org, is_admin=True, source=data_source
         )
-        async_mail_admins.delay(
+        async_mail_customer_care_admins.delay(
             "New organization created",
             f"""\
 A new organization was created by the user.

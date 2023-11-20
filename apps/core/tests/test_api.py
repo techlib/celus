@@ -194,7 +194,7 @@ class TestAccountCreationAPI:
         settings.ALLOW_EDUID_LOGIN = False
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
-        with patch('core.signals.async_mail_admins'):  # fake celery task
+        with patch('core.signals.async_mail_customer_care_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
         assert resp.status_code == 204
         assert User.objects.count() == 1
@@ -211,13 +211,13 @@ class TestAccountCreationAPI:
         Tests that is it possible to create two accounts with the same part before @ in email
         """
         assert User.objects.count() == 0
-        with patch('core.signals.async_mail_admins'):  # fake celery task
+        with patch('core.signals.async_mail_customer_care_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
         assert resp.status_code == 204
         assert User.objects.count() == 1
         second_user_data = dict(self.test_user_data)
         second_user_data['email'] = 'foo@baz.bar'
-        with patch('core.signals.async_mail_admins'):  # fake celery task
+        with patch('core.signals.async_mail_customer_care_admins'):  # fake celery task
             resp = client.post('/api/rest-auth/registration/', second_user_data)
         assert resp.status_code == 204
         assert User.objects.count() == 2
@@ -229,7 +229,7 @@ class TestAccountCreationAPI:
         """
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
-        with patch('core.signals.async_mail_admins'):  # fake celery task
+        with patch('core.signals.async_mail_customer_care_admins'):  # fake celery task
             resp = client.post(
                 '/api/rest-auth/registration/',
                 {
@@ -249,7 +249,7 @@ class TestAccountCreationAPI:
         Tests that the email verification email sent when creating an account uses our own
         text and not the one provided with allauth.
         """
-        with patch('core.signals.async_mail_admins'):  # fake celery task
+        with patch('core.signals.async_mail_customer_care_admins'):  # fake celery task
             resp = client.post(
                 '/api/rest-auth/registration/',
                 {
@@ -286,13 +286,12 @@ class TestAccountCreationAPI:
         assert 'Celus' in mail.body, "Celus must be mentioned in the email body"
         assert '/verify-email/?key=' in mail.body, "We use custom url endpoint, it should be there"
 
-    def test_email_admins_about_create_account(self, mailoutbox, client, site):
+    def test_email_admins_about_create_account(self, client, site):
         """
-        Tests that admins are sent a email when user creates an account
+        Tests that admins are sent an email when user creates an account
         """
         assert User.objects.count() == 0
-        assert len(mailoutbox) == 0
-        with patch('core.signals.async_mail_admins') as email_task:
+        with patch('core.signals.async_mail_customer_care_admins') as email_task:
             resp = client.post('/api/rest-auth/registration/', self.test_user_data)
             assert resp.status_code == 204
             assert User.objects.count() == 1

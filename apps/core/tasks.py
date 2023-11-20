@@ -12,6 +12,7 @@ from django.utils.timezone import now
 from core.logic.error_reporting import email_if_fails
 
 from .context_managers import logged_task
+from .logic.email import mail_customer_care_admins
 from .logic.maximus_sync import sync as maximus_sync
 from .logic.sync import sync_identities_with_erms, sync_users_with_erms
 from .models import DataSource
@@ -39,6 +40,11 @@ def erms_sync_users_and_identities_task():
 @celery.shared_task
 def async_mail_admins(subject, body):
     mail_admins(subject, body)
+
+
+@celery.shared_task
+def async_mail_customer_care_admins(subject, body):
+    mail_customer_care_admins(subject, body)
 
 
 @celery.shared_task
