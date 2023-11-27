@@ -7,6 +7,8 @@ const ATTEMPT_PARTIAL_DATA = "partial_data";
 const ATTEMPT_IMPORT_FAILED = "import_failed";
 const ATTEMPT_AWAITING_IMPORT = "awaiting_import";
 const ATTEMPT_NOT_USED = "not_used";
+const ATTEMPT_BUG = "bug";
+const ATTEMPT_NOT_HARVESTABLE = "not_harvestable";
 const BROKEN_CREDENTIALS = "broken";
 const BROKEN_REPORT = "broken_report";
 
@@ -61,6 +63,10 @@ function attemptStateToIcon(state) {
       return { color: "warning", icon: "fas fa-exclamation-triangle" };
     case ATTEMPT_NOT_USED:
       return { color: "grey", icon: "far fa-times-circle" };
+    case ATTEMPT_BUG:
+      return { color: "red", icon: "fa fa-bug" };
+    case ATTEMPT_NOT_HARVESTABLE:
+      return { color: "warning", icon: "far fa-calendar-alt" };
     default:
       return { color: "warning", icon: "far fa-question-circle" };
   }
@@ -69,6 +75,7 @@ function attemptStateToIcon(state) {
 export {
   attemptState,
   attemptStateToIcon,
+  ATTEMPT_BUG,
   ATTEMPT_UNKNOWN,
   ATTEMPT_ERROR,
   ATTEMPT_IMPORT_FAILED,
@@ -77,6 +84,7 @@ export {
   ATTEMPT_NOT_MADE,
   ATTEMPT_EMPTY_DATA,
   ATTEMPT_PARTIAL_DATA,
+  ATTEMPT_NOT_HARVESTABLE,
   ATTEMPT_NOT_USED,
   BROKEN_CREDENTIALS,
   BROKEN_REPORT,

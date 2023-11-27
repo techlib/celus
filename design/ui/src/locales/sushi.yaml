@@ -39,6 +39,8 @@ en:
       import_failed: Data was downloaded but importing it into database failed.
       partial_data: Data was downloaded and imported, but it might not be complete.
       canceled: Download was canceled.
+      bug: Date are missing and can't be downloaded because credentials are broken.
+      not_harvestable: Data for this date are no longer available from SUSHI server.
 
     broken: Broken
     broken_report_type_desc: |
@@ -89,6 +91,8 @@ cs:
       import_failed: Data byla stažena, ale import dat do databáze selhal.
       partial_data: Data byla stažena a naimportována, ale nemusí být kompletní.
       canceled: Stahování bylo zrušeno.
+      bug: Chybí data a nemůžou být stažena, protože přihlašovací údaje byly označeny jako nefunkční.
+      not_harvestable: Data za toto období již nejsou ze SUSHI serveru k dispozici.
 
     broken: Nefunkční
     broken_report_type_desc: |

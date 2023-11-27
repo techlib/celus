@@ -230,7 +230,13 @@ import addMonths from "date-fns/addMonths";
 import { parseDateTime, ymDateFormat } from "@/libs/dates";
 import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntentionStateIcon";
 import { intentionState } from "@/libs/intention-state";
-import { ATTEMPT_SUCCESS, ATTEMPT_NOT_MADE } from "@/libs/attempt-state";
+import {
+  ATTEMPT_SUCCESS,
+  ATTEMPT_NOT_MADE,
+  ATTEMPT_EMPTY_DATA,
+  ATTEMPT_NOT_HARVESTABLE,
+  ATTEMPT_BUG,
+} from "@/libs/attempt-state";
 import cancellation from "@/mixins/cancellation";
 import IconButton from "@/components/sushi/IconButton";
 
@@ -383,6 +389,20 @@ export default {
             item[reportType.code] = this.intentionsMap.get(key);
           } else {
             item[reportType.code] = { untried: true, state: ATTEMPT_NOT_MADE };
+          }
+          if (
+            ![ATTEMPT_SUCCESS, ATTEMPT_EMPTY_DATA].includes(
+              item[reportType.code].status
+            )
+          ) {
+            // Update status
+            if (reportType.broken !== null || item.broken !== null) {
+              item[reportType.code].state = ATTEMPT_BUG;
+            } else if (
+              this.selectedMonth < (reportType.last_harvestable_month || "")
+            ) {
+              item[reportType.code].state = ATTEMPT_NOT_HARVESTABLE;
+            }
           }
         }
         return item;
