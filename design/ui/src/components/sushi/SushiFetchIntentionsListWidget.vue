@@ -326,7 +326,7 @@ export default {
       type: Number,
       default: null,
     },
-    retryInterval: { default: 3000, type: Number },
+    initialRetryInterval: { default: 3000, type: Number },
     showOrganization: { default: false, type: Boolean },
     showPlatform: { default: false, type: Boolean },
   },
@@ -359,6 +359,7 @@ export default {
       ],
       runnableFilter: "all",
       stateFilter: null,
+      numberOfRetries: 0,
     };
   },
 
@@ -425,6 +426,11 @@ export default {
           sortable: false,
         },
       ];
+    },
+    retryInterval() {
+      // in millis
+      // add 0.1s for every performed retry
+      return this.initialRetryInterval + this.numberOfRetries * 100;
     },
     retryTimeout() {
       let timeouts = [];
@@ -627,6 +633,7 @@ export default {
           () => this.scheduleRecheck(false),
           Math.min(1000 * 60 * 60, this.retryTimeout)
         );
+        this.numberOfRetries += 1;
       }
     },
     switchStateFilter(state) {
