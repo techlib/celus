@@ -29,7 +29,7 @@ cs:
         <v-row>
           <v-spacer></v-spacer>
           <v-col md="4" cols="12">
-            <v-select
+            <v-autocomplete
               v-model="filterPlatforms"
               :label="$t('title_fields.platforms')"
               :items="platforms"
@@ -38,7 +38,7 @@ cs:
               multiple
               clearable
               clear-icon="fas fa-times"
-            ></v-select>
+            ></v-autocomplete>
           </v-col>
           <v-col md="4" cols="12">
             <v-select
