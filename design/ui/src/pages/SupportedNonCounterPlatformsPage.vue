@@ -1,32 +1,36 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
 <i18n lang="yaml">
 en:
-  header: Supported non-COUNTER platforms
+  header: Supported non-SUSHI platforms
   desc0: |
-    There are still many platforms which do not support COUNTER statistics. They usually provide
-    their statistics in a custom format specific to the platform.
+    There are many non-COUNTER-compliant platforms. They usually provide their statistics in
+    a custom format specific to the platform or COUNTER format not harvestable via SUSHI.
   desc1: |
-    For the following platforms, Celus supports the <strong>import of raw non-COUNTER data</strong>
-    files. This means that you can upload the raw data files from your
-    platform and Celus will automatically parse the data and import it.
+    For the following platforms, CELUS supports the <strong>import of raw data files</strong>.
+    This means you can upload the raw data files from your platform, and CELUS will
+    automatically parse and import the data.
   desc2: |
-    We are constantly working on adding more platforms to this list. If you have
-    a platform that is <strong>not listed here</strong> and which does not support COUNTER, please <strong>let us know</strong> at
-    <a href="mailto:ask@celus.net">ask@celus.net</a>.
+    We are constantly working on adding more platforms to this list.
+    If you need CELUS to process a report not listed
+    <a href="https://docs.google.com/spreadsheets/d/1Hf89L01aHUqQTsiGawKSJvfKwOrta-14qoAxEWM1Sgg">here</a>
+    and which does not support COUNTER, please <strong>let us know</strong>
+    at <a href="mailto:ask@celus.net">ask@celus.net</a>.
 
 cs:
-  header: Podporované non-COUNTER platformy
+  header: Podporované non-SUSHI platformy
   desc0: |
-    Stále existuje mnoho platform, které nepodporují COUNTER statistiky. Obvykle poskytují své statistiky
-    ve vlastním formátu specifickém pro danou platformu.
+    Existuje mnoho platform, které ne zcela vyhovují COUNTER standardům.
+    Obvykle poskytují své statistiky ve vlastním formátu specifickém pro danou platformu
+    nebo v COUNTER formátu, který se ovšem nedá stáhnout přes SUSHI.
   desc1: |
-    Pro následující platformy podporuje Celus import non-COUNTER dat z neupravených datových souborů.
+    Pro následující platformy podporuje CELUS <strong>import dat z neupravených datových souborů</strong>.
     To znamená, že můžete nahrát datové soubory z vaší
-    platformy, tak jak jste je obdrželi, a Celus je automaticky zpracuje a importuje.
+    platformy, tak jak jste je obdrželi, a CELUS je automaticky zpracuje a naimportuje.
   desc2: |
-    Stále připravujeme podporu pro nové platformy a níže zobrazený seznam rozšiřujeme. Pokud máte
-    platformu, která <strong>není v seznamu</strong> a která nepodporuje COUNTER, <strong>dejte nám vědět</strong> na
-    <a href="mailto:ask@celus.net">ask@celus.net</a>.
+    Stále připravujeme podporu pro nové platformy a níže zobrazený seznam rozšiřujeme.
+    Pokud potřebujete, aby CELUS zpracoval report, který není na
+    <a href="https://docs.google.com/spreadsheets/d/1Hf89L01aHUqQTsiGawKSJvfKwOrta-14qoAxEWM1Sgg">seznamu</a>,
+    <strong>dejte nám vědět</strong> na <a href="mailto:ask@celus.net">ask@celus.net</a>.
 </i18n>
 
 <template>

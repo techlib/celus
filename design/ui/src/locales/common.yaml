@@ -31,7 +31,7 @@ en:
     settings: Settings
     specialized_reports: Specialized reports
     subscriptions: Overlap analysis
-    supported_non_counter_platforms: non-COUNTER platforms
+    supported_non_counter_platforms: non-SUSHI platforms
     sushi: SUSHI
     sushi_fetch_attempts: SUSHI harvests
     sushi_management: SUSHI management
@@ -364,7 +364,7 @@ cs:
     settings: Nastavení
     specialized_reports: Speciální reporty
     subscriptions: Analýza překryvů
-    supported_non_counter_platforms: non-COUNTER platformy
+    supported_non_counter_platforms: non-SUSHI platformy
     sushi: SUSHI
     sushi_fetch_attempts: Stahování SUSHI
     sushi_management: Správa SUSHI

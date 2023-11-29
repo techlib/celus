@@ -17,6 +17,7 @@ cs:
     :search="search"
     :loading="loading"
     class="auto-table"
+    dense
   >
     <template #item.actions="{ item }">
       <v-tooltip bottom>
@@ -120,7 +121,9 @@ export default {
         url: `/api/organization/${this.selectedOrganizationId}/all-platform/`,
       });
       if (!resp.error) {
-        this.platforms = resp.response.data.filter((p) => p.has_raw_parser);
+        this.platforms = resp.response.data.filter(
+          (p) => !!p.knowledgebase?.notes_url
+        );
       }
       this.loading = false;
     },
