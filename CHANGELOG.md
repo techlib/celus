@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0]  - 2023-12-05
+
+### Added
+
+#### Frontend
+
+* interface for managing organization users was added to organization admins
+* reharvesting of data is now possible directly from the harvest dialog
+* report selection was added to the harvest dialog to allow for limiting the harvest to a subset
+  of reports
+* values of filters are now shown on the report and export list pages - no need to open the report detail
+* filtering of reports by row dimension and visibility was added to the report list page
+* when running a report directly from the report list, the current report is newly highlighted
+* two new states were added to the montly SUSHI status overview to indicate broken and past last
+  harvestable month credentials
+
+#### Backend
+
+* NTFY integration was added for admin notifications
+
+
+### Changes
+
+#### Frontend
+
+* menu entry `non-COUNTER platforms` was renamed to `non-SUSHI platforms` to better reflect the
+  nature of the platforms listed there
+* autocomplete is now used for selecting platforms when uploading data manually
+* during an ongoing harvest, progress checks with the backend are done progressively less often
+  to reduce the load on the server
+* default logo was changed from "Celus Plus" to "Celus"
+* logic for displaying platforms in the list of non-COUNTER platforms was changed to use info about
+  presence of support web article
+* Excel files incorrectly detected as 'application/CDFV2' are now accepted as XLSX files
+
+
+#### Backend
+
+* the `pycounter` library was replaced by our internal fork (`celus-pycounter`)
+* all internal git based dependencies were replaced by pip based dependencies
+* ratelimitting was added to admin emails
+* a separate list of customer care admins was added for specific notifications (e.g. user registration)
+
+
+### Fixed
+
+#### Frontend
+
+* handling of errors connecting to the CDN in presence of security proxies was fixed
+* more graceful handling of situations where uploaded file contains more than one report was added
+
+
+
 ## [5.8.1]  - 2023-11-07
 
 ### Fixed
