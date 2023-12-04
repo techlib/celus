@@ -476,16 +476,27 @@ class TestReportTypeImportAttempt:
         report_type2 = ReportType.objects.get(short_name="two")
         assert report_type2.name == "second"
         assert report_type2.ext_id == 222
-        assert report_type2.controlled_metrics.count() == 1
-        assert list(report_type2.controlled_metrics.values_list('short_name', flat=True)) == [
-            'metric1'
-        ]
+        assert report_type2.controlled_metrics.count() == 3
+        assert set(report_type2.controlled_metrics.values_list('short_name', flat=True)) == {
+            'metric1',
+            'metric2',
+            'metric3',
+        }
         assert report_type2.dimensions.count() == 2
         assert list(
             report_type2.reporttypetodimension_set.order_by('position').values_list(
                 'position', 'dimension__short_name'
             )
         ) == [(0, 'dim1'), (1, 'dim2')]
+        assert list(
+            report_type2.reportinterestmetric_set.order_by('id').values_list(
+                'metric__short_name', 'interest_group__short_name'
+            )
+        ) == [
+            ("metric1", "multimedia"),
+            ("metric2", "search"),
+            ("metric3", "other"),
+        ]
 
         # Create import batch for on of the report types
         ImportBatchFactory(report_type=report_type2)
@@ -499,8 +510,8 @@ class TestReportTypeImportAttempt:
         assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
         assert (
-            ReportInterestMetric.objects.count() == rim_count + 2
-        ), 'report type metric were created'
+            ReportInterestMetric.objects.count() == rim_count
+        ), 'two report type metric were created and two were delete'
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"
@@ -516,9 +527,14 @@ class TestReportTypeImportAttempt:
         report_type2 = ReportType.objects.get(short_name="Two")
         assert report_type2.name == "SECOND"
         assert report_type2.ext_id == 222
-        assert report_type2.controlled_metrics.count() == 1
-        assert list(report_type2.controlled_metrics.values_list('short_name', flat=True)) == [
-            'metric2'
+        assert report_type2.controlled_metrics.count() == 2
+        assert list(
+            report_type2.controlled_metrics.order_by('short_name').values_list(
+                'short_name', flat=True
+            )
+        ) == [
+            'metric2',
+            'metric3',
         ]
         assert report_type2.dimensions.count() == 2
         assert list(
@@ -526,6 +542,13 @@ class TestReportTypeImportAttempt:
                 'position', 'dimension__short_name'
             )
         ) == [(0, 'dim1'), (1, 'dim2')]
+        assert list(
+            report_type2.reportinterestmetric_set.order_by('id').values_list(
+                'metric__short_name', 'interest_group__short_name'
+            )
+        ) == [
+            ("metric3", "search"),
+        ]
 
         report_type3 = ReportType.objects.get(short_name="three")
         assert report_type3.name == "third"
@@ -558,11 +581,13 @@ class TestReportTypeImportAttempt:
 
     def test_metrics_are_not_duplicated(self, data_sources):
         MetricFactory(short_name="metric1", source=None)
-        assert Metric.objects.count() == 1
+        MetricFactory(short_name="metric2", source=None)
+        MetricFactory(short_name="metric3", source=None)
+        assert Metric.objects.count() == 3
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
-        assert Metric.objects.count() == 1, 'metric was not duplicated'
+        assert Metric.objects.count() == 3, 'metric were not duplicated'
         assert Metric.objects.filter(short_name="metric1").first().source is None
 
     def test_metrics_do_not_use_brain_source(self, data_sources):
@@ -570,7 +595,7 @@ class TestReportTypeImportAttempt:
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
-        assert Metric.objects.count() == 1, 'metric was created'
+        assert Metric.objects.count() == 3, 'metrics were created'
         assert Metric.objects.filter(short_name="metric1").first().source is None
 
     def test_dimensions_do_not_use_brain_source(self, data_sources):

@@ -122,7 +122,26 @@ REPORT_TYPE_INPUT_DATA = [
             {"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1"]},
             {"pk": 2, "short_name": "dim2", "aliases": ["dimension2", "d2"]},
         ],
-        "metrics": [{"pk": 1, "short_name": "metric1", "aliases": ["m1", "met1"]}],
+        "metrics": [
+            {
+                "pk": 1,
+                "short_name": "metric1",
+                "aliases": ["m1", "met1"],
+                "interest_group": "multimedia",
+            },
+            {
+                "pk": 2,
+                "short_name": "metric2",
+                "aliases": ["m2", "met2"],
+                "interest_group": "search",
+            },
+            {
+                "pk": 3,
+                "short_name": "metric3",
+                "aliases": ["m3", "met3"],
+                "interest_group": "other",
+            },
+        ],
     },
 ]
 
@@ -144,7 +163,18 @@ REPORT_TYPE_INPUT_DATA2 = [
             {"pk": 3, "short_name": "dim3", "aliases": ["dimension3"]},
         ],
         "metrics": [
-            {"pk": 2, "short_name": "metric2", "aliases": ["m2", "met2"], "interest_group": None}
+            {
+                "pk": 2,
+                "short_name": "metric2",
+                "aliases": ["m2", "met2"],
+                "interest_group": None,
+            },
+            {
+                "pk": 3,
+                "short_name": "metric3",
+                "aliases": ["m3", "met3"],
+                "interest_group": "search",
+            },
         ],
     },
     {

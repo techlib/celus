@@ -458,8 +458,9 @@ class ReportTypeImportAttempt(ImportAttempt):
             else:
                 dimensions = []
 
-            # Create metrics (if needed)
-            metrics = []
+            # Prepare metrics
+            ig_updated = False
+            metrics_and_igs = []
             for metric_data in report_type_data["metrics"]:
                 metric, metric_created = Metric.objects.get_or_create(
                     short_name=metric_data['short_name']
@@ -471,16 +472,22 @@ class ReportTypeImportAttempt(ImportAttempt):
                         report_type_data['short_name'],
                     )
 
-                metrics.append(metric)
                 if ig := InterestGroup.objects.filter(
                     short_name=metric_data.get("interest_group")
                 ).first():
-                    ReportInterestMetric.objects.get_or_create(
+                    rim = ReportInterestMetric(
                         report_type=report_type, metric=metric, interest_group=ig
                     )
+                else:
+                    rim = None
+
+                metrics_and_igs.append((metric, rim))
 
             if created:
-                report_type.controlled_metrics.set(metrics)
+                report_type.controlled_metrics.set(e[0] for e in metrics_and_igs)
+                for rim in [e[1] for e in metrics_and_igs if e[1]]:
+                    rim.save()
+
                 # create dimensions
                 for position, dimension in enumerate(dimensions):
                     ReportTypeToDimension.objects.create(
@@ -492,11 +499,37 @@ class ReportTypeImportAttempt(ImportAttempt):
 
                 # Compare metrics
                 metrics_differ = {e.pk for e in report_type.controlled_metrics.all()} != {
-                    e.pk for e in metrics
+                    e[0].pk for e in metrics_and_igs
                 }
                 if metrics_differ:
-                    report_type.controlled_metrics.set(metrics)
+                    report_type.controlled_metrics.set([e[0] for e in metrics_and_igs])
                 updated = updated or metrics_differ
+
+                # Compare metric interest groups
+                old_rims = report_type.reportinterestmetric_set.filter(
+                    interest_group__isnull=False
+                ).values_list('metric__pk', 'interest_group__pk', 'pk')
+                old_rims = {m: (ig, rim) for m, ig, rim in old_rims}
+                for rim in [e[1] for e in metrics_and_igs if e[1]]:
+                    # Update existing rim if necessary
+                    if existing := old_rims.get(rim.metric.pk):
+                        ig, rim_pk = existing
+                        if ig != rim.interest_group.pk:
+                            ig_updated = True
+                            ReportInterestMetric.objects.filter(pk=rim_pk).update(
+                                interest_group_id=rim.interest_group.pk
+                            )
+                    else:
+                        # Store new rim
+                        ig_updated = True
+                        rim.save()
+
+                # Remove other rims
+                metrics_with_ig_ids = {e[0].pk for e in metrics_and_igs if e[1]}
+                to_delete = [v[1] for k, v in old_rims.items() if k not in metrics_with_ig_ids]
+                if to_delete:
+                    ig_updated = True
+                    ReportInterestMetric.objects.filter(pk__in=to_delete).delete()
 
                 # Compare dimensions and send an email to admins when it differs
                 new_dimensions = list(
@@ -538,7 +571,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                     updated = updated or (getattr(report_type, field) != report_type_data[field])
                     setattr(report_type, field, report_type_data[field])
 
-                if updated:
+                if updated or ig_updated:
                     counter['updated'] += 1
                     report_type.save()
                 else:
