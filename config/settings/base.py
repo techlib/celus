@@ -569,7 +569,7 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-            "email_backend": 'django_ntfy.ExponentialRateLimitBackends',
+            'email_backend': 'django_ntfy.ExponentialRateLimitBackends',
         },
     },
     'loggers': {
@@ -644,22 +644,6 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default=[])
 
-# NTFY stuff configuration
-NTFY_BASE_URL = config("NTFY_BASE_URL", default="https://ntfy.sh/")
-NTFY_DEFAULT_TOPIC = config("NTFY_DEFAULT_TOPIC", default="celus-test")
-# TODO official persistent icon for celus
-NTFY_DEFAULT_ICON_URL = config("NTFY_DEFAULT_ICON_URL", "https://idemo.celus.net/favicon.ico")
-NTFY_DEFAULT_TAGS = config("NTFY_DEFAULT_TAGS", default="rotating_light", cast=Csv())
-NTFY_DEFAULT_PRIORITY = config("NTFY_DEFAULT_PRIORITY", default=4, cast=int)
-EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS = config(
-    "EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS",
-    default="django_ntfy.NtfyBackend,anymail.backends.mailgun.EmailBackend",
-    cast=Csv(),
-)
-EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT = config(
-    "EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT", default=60 * 60 * 12, cast=int
-)
-
 # other django stuff
 MAILGUN_API_KEY = config('MAILGUN_API_KEY', default='')
 if MAILGUN_API_KEY:
@@ -671,6 +655,27 @@ if MAILGUN_API_KEY:
         'MAILGUN_SENDER_DOMAIN': config('MAILGUN_SENDER_DOMAIN', default='mg.celus.net'),
         'MAILGUN_API_URL': config('MAILGUN_API_URL', default='https://api.eu.mailgun.net/v3'),
     }
+
+# NTFY stuff configuration
+NTFY_BASE_URL = config("NTFY_BASE_URL", default="https://ntfy.sh/")
+NTFY_DEFAULT_TOPIC = config("NTFY_DEFAULT_TOPIC", default="")
+# TODO official persistent icon for celus
+NTFY_DEFAULT_ICON_URL = config("NTFY_DEFAULT_ICON_URL", "https://idemo.celus.net/favicon.ico")
+NTFY_DEFAULT_TAGS = config("NTFY_DEFAULT_TAGS", default="rotating_light", cast=Csv())
+NTFY_DEFAULT_PRIORITY = config("NTFY_DEFAULT_PRIORITY", default=4, cast=int)
+# decide which mail backends to activate by default
+default_ntfy_backends = []
+if MAILGUN_API_KEY:
+    default_ntfy_backends.append("anymail.backends.mailgun.EmailBackend")
+if NTFY_DEFAULT_TOPIC:
+    default_ntfy_backends.append("django_ntfy.NtfyBackend")
+EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS = config(
+    "EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS", default=",".join(default_ntfy_backends), cast=Csv()
+)
+EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT = config(
+    "EMAIL_EXPONENTIAL_RATE_LIMIT_TIMEOUT", default=60 * 60 * 12, cast=int
+)
+
 
 # ERMS related stuff
 ERMS_API_URL = config('ERMS_API_URL', default='https://erms.czechelib.cz/api/')
