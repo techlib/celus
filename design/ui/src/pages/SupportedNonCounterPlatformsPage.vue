@@ -12,7 +12,7 @@ en:
   desc2: |
     We are constantly working on adding more platforms to this list.
     If you need CELUS to process a report not listed
-    <a href="https://docs.google.com/spreadsheets/d/1Hf89L01aHUqQTsiGawKSJvfKwOrta-14qoAxEWM1Sgg">here</a>
+    <a href="https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus">here</a>
     and which does not support COUNTER, please <strong>let us know</strong>
     at <a href="mailto:ask@celus.net">ask@celus.net</a>.
 
@@ -29,7 +29,7 @@ cs:
   desc2: |
     Stále připravujeme podporu pro nové platformy a níže zobrazený seznam rozšiřujeme.
     Pokud potřebujete, aby CELUS zpracoval report, který není na
-    <a href="https://docs.google.com/spreadsheets/d/1Hf89L01aHUqQTsiGawKSJvfKwOrta-14qoAxEWM1Sgg">seznamu</a>,
+    <a href="https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus">seznamu</a>,
     <strong>dejte nám vědět</strong> na <a href="mailto:ask@celus.net">ask@celus.net</a>.
 </i18n>
 
