@@ -12,7 +12,7 @@ import {
   lastFinishedMonth,
   lastCoveredMonth,
 } from "@/libs/dates";
-import { format as formatNumber } from "mathjs/lib/function/string/format";
+import { format as formatNumber } from "mathjs/number";
 import VuexPersistence from "vuex-persist";
 import { sortOrganizations } from "@/libs/organizations";
 import cancellation from "./modules/cancellation";

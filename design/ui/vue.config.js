@@ -1,4 +1,4 @@
-let devURLBase = "http://localhost:8015/";
+let devURLBase = "http://127.0.0.1:8015/";
 
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
@@ -13,23 +13,25 @@ module.exports = {
 
   devServer: {
     proxy: {
-      "/api/": {
+      "^/api/": {
         target: devURLBase,
         changeOrigin: true,
         ws: true
       },
-      "/static/": {
+      "^/static/": {
         target: devURLBase,
         changeOrigin: true,
         ws: true
       },
-      "/media/": {
+      "^/media/": {
         target: devURLBase,
         changeOrigin: true,
         ws: true
       }
     },
-    overlay: process.env.BUILD == "yes" ? false : { errors: false },
+    client: {
+      overlay: process.env.BUILD == "yes" ? false : { errors: false },
+    },
     port: process.env.DEV_SERVER_PORT
   },
 

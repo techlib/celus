@@ -7,7 +7,7 @@ module.exports = {
   },
   transform: {
     "^.+\\.js$": "babel-jest",
-    "^.+\\.vue$": "vue-jest",
+    "^.+\\.vue$": "@vue/vue2-jest",
   },
   snapshotSerializers: ["<rootDir>/node_modules/jest-serializer-vue"],
   collectCoverageFrom: ["src/**/*.{js,vue}", "!**/node_modules/**"],
@@ -19,4 +19,5 @@ module.exports = {
       },
     },
   },
+  testEnvironment: "jsdom",
 };
