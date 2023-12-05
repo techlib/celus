@@ -5,6 +5,8 @@ en:
   cannot_delete: You cannot remove the user that is currently logged in.
   create_new_user: Create a new user
   delete_prompt: Are you sure you want to remove user {first_name} {last_name} ({username}) from this organization?
+  delete_user: Delete user
+  edit_user: Modify user
   error_delete: Error while removing user
   error_send_invitation: Error sending invitation email
   error_send_verification: Error sending verification email
@@ -24,6 +26,8 @@ cs:
   cannot_delete: Nemůžete smazat aktuálně přihlášeného uživatele.
   create_new_user: Vytvořit nového uživatele
   delete_prompt: Opravdu chcete smazat uživatele {first_name} {last_name} ({username}) z této organizace?
+  delete_user: Smazat uživatele
+  edit_user: Upravit uživatele
   error_delete: Při mazání uživatele došlo k chybě
   error_send_invitation: Při odesílání pozvánky došlo k chybě
   error_send_verification: Při odesílání ověřovacího emailu došlo k chybě
@@ -176,13 +180,23 @@ cs:
             </template>
 
             <template #item.actions="{ item }">
-              <v-icon small @click="deleteItem(item)" class="mr-2"
-                >fas fa-trash
-              </v-icon>
-              <v-icon small @click="editItem(item)" class="mr-2"
-                >fas fa-edit
-              </v-icon>
-              <v-tooltip top>
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
+                  <v-icon v-on="on" small @click="deleteItem(item)" class="mr-2"
+                    >fas fa-trash
+                  </v-icon>
+                </template>
+                <span>{{ $t("delete_user") }}</span>
+              </v-tooltip>
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
+                  <v-icon v-on="on" small @click="editItem(item)" class="mr-2"
+                    >fas fa-edit
+                  </v-icon>
+                </template>
+                <span>{{ $t("edit_user") }}</span>
+              </v-tooltip>
+              <v-tooltip bottom max-width="600px">
                 <template v-slot:activator="{ on }">
                   <v-icon small v-on="on" @click="sendEmail(item, 'invitation')"
                     >fas fa-envelope</v-icon
@@ -193,7 +207,7 @@ cs:
             </template>
 
             <template v-if="user.is_superuser" #item.superactions="{ item }">
-              <v-tooltip top>
+              <v-tooltip bottom max-width="600px">
                 <template v-slot:activator="{ on }">
                   <v-icon
                     small
