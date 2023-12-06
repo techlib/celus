@@ -4,18 +4,18 @@
     cs: Snazší reharvesting, vylepšení reportingu a mnoho dalších non-COUNTER reportů přichází s Celusem 5.9.0
   text:
     en: |
-      - organization admins in single-library installations now have the ability to manage their users
-      - reharvesting of data is newly possible directly from the harvest dialog
+      - organization admins in single-library installations now have the ability to **[manage their users](https://support.celus.net/en/support/solutions/articles/103000260180)**
+      - **[reharvesting of data](https://support.celus.net/support/solutions/articles/103000054365)** is newly possible **directly from the harvest dialog**
       - several improvements were introduced in reporting - filter values are shown directly in the report list, filters for easier report selection were added, and more
-      - the list of non-COUNTER platforms was renamed to non-SUSHI platforms and now includes 85 platforms
-      - Come have a chat with us at the ER&L conference 2024 at booth \#306!
+      - the list of non-COUNTER platforms was renamed to **non-SUSHI platforms** and now **[includes 85 platforms](https://support.celus.net/support/solutions/articles/103000096445)**
+      - Come have a chat with us at the **ER&L conference 2024** at booth \#306!
       - several other smaller improvements and fixes were introduced
     cs: |
-      - správci organizací v instalacích pro individuální knihovny nyní mají možnost spravovat své uživatele
-      - reharvesting dat je nyní možný přímo z dialogu pro stahování dat
+      - správci organizací v instalacích pro individuální knihovny nyní mají možnost **[spravovat své uživatele](https://support.celus.net/en/support/solutions/articles/103000260180)**
+      - **[reharvesting dat](https://support.celus.net/support/solutions/articles/103000054365)** je nyní možný **přímo z dialogu pro stahování dat**
       - v reportingu bylo provedeno několik vylepšení - hodnoty filtrů jsou nyní zobrazeny přímo v seznamu reportů, byly přidány filtry pro snazší výběr reportů a další
-      - seznam non-COUNTER platforem byl přejmenován na non-SUSHI platformy a nyní obsahuje 85 platforem
-      - Přijďte si s námi popovídat na ER&L conference 2024 na stánek \#306!
+      - seznam non-COUNTER platforem byl přejmenován na **non-SUSHI platformy** a nyní **[obsahuje 85 platforem](https://support.celus.net/support/solutions/articles/103000096445)**
+      - Přijďte si s námi popovídat na **ER&L conference 2024** na stánek \#306!
       - bylo provedeno několik dalších menších vylepšení a oprav
   is_new_feature: TRUE
   is_update: TRUE
