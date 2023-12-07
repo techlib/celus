@@ -3,7 +3,6 @@ import axios from "axios";
 import { ConcurrencyManager } from "axios-concurrency";
 
 const MAX_CONCURRENT_REQUESTS_DEFAULT = 2;
-let concurrencyManager = null;
 
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
@@ -69,7 +68,7 @@ if (!max_concurrent_requests) {
   max_concurrent_requests = MAX_CONCURRENT_REQUESTS_DEFAULT;
 }
 console.debug("max_concurrent_requests", max_concurrent_requests);
-concurrencyManager = ConcurrencyManager(axios, max_concurrent_requests);
+ConcurrencyManager(axios, max_concurrent_requests);
 
 axios.interceptors.request.use(async (config) => {
   // only let requests marked as privileged unless state.letAxiosThrough is true
@@ -107,7 +106,15 @@ axios.interceptors.request.use(async (config) => {
  * @returns {Object} - { response, error }
  */
 const http = async (args) => {
-  const { label, raise, component, group, dontShowError, ...config } = args;
+  const {
+    label,
+    raise,
+    component,
+    group,
+    dontShowError,
+    errorTexts,
+    ...config
+  } = args;
 
   if (!config["signal"] && component) {
     let grp = group || "";
@@ -146,7 +153,14 @@ const http = async (args) => {
       }
     }
     if (!dontShowError) {
-      store.dispatch("showError", { label, error: error || e });
+      if (e?.response?.status && errorTexts?.[e.response.status]) {
+        store.dispatch("showError", { message: errorTexts[e.response.status] });
+      } else {
+        store.dispatch("showError", {
+          label,
+          error: error || e,
+        });
+      }
     }
 
     return { response: null, error: error || e };

@@ -326,13 +326,14 @@ export default {
         method: "POST",
         data: formData,
         headers: { "Content-Type": "multipart/form-data" },
+        errorTexts: { 413: this.$t("errors.file_too_large") },
       });
       if (!result.error) {
         this.taggingBatch = result.response.data;
         await this.startPreflight();
       } else {
         let info = result.error?.response?.data;
-        if (info && "source_file" in info) {
+        if (info && typeof info === "object" && "source_file" in info) {
           this.showErrorDialog = true;
           this.errors = info.source_file;
         }

@@ -385,9 +385,12 @@ export default new Vuex.Store({
     hideSnackbar(context) {
       context.commit("setSnackbarShow", { show: false });
     },
-    showError({ dispatch }, { label, error }) {
+    showError({ dispatch }, { label, error, message }) {
+      const content = message
+        ? message
+        : `Error loading ${label ? label : "data"}: ${error}`;
       dispatch("showSnackbar", {
-        content: `Error loading ${label ? label : "data"}: ${error}`,
+        content,
         color: "error",
       });
     },
