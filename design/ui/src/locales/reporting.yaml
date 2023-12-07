@@ -2,7 +2,7 @@ en:
   access_level_tt:
     user: Personal report - visible only to you
     org: Organization level report - visible to members of one organization
-    sys: Consortium level report - visible to everone
+    sys: Consortium level report - visible to everyone
   access_level:
     user: Personal
     org: Organization
