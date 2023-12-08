@@ -32,6 +32,16 @@ class TestUserAPI:
         assert resp_data['username'] == identity.user.username
         assert 'extra_data' in resp_data
 
+    def test_user_language(self, authenticated_client):
+        authenticated_client.user.language = 'cs'
+        authenticated_client.user.save()
+        resp = authenticated_client.put(
+            reverse('user_lang_api_view'), {'language': 'en'}, content_type='application/json'
+        )
+        assert resp.status_code == 200
+        authenticated_client.user.refresh_from_db()
+        assert authenticated_client.user.language == 'en'
+
     def test_verified_email(self, authenticated_client, valid_identity, settings):
         """
         Test which checks email validity status

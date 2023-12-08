@@ -12,7 +12,6 @@ from django.core.mail import mail_admins
 from django.core.management import call_command
 from django.db.models import Prefetch
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from django.utils import translation
 from organizations.models import UserOrganization
 from rest_framework import mixins, status
 from rest_framework.decorators import action
@@ -92,7 +91,6 @@ class UserLanguageView(APIView):
             except ValidationError as e:
                 return HttpResponseBadRequest(str(e))
             else:
-                request.session[translation.LANGUAGE_SESSION_KEY] = request.user.language
                 return Response({'ok': True})
         return HttpResponseForbidden('user is not logged in')
 
