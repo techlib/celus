@@ -1135,6 +1135,10 @@ export default {
               this.nibblerErrorText(e.sheet_idx, e.name, e.parsers_info)
             );
           }
+          if ("encoding_error" in info) {
+            this.showErrorDialog = true;
+            this.errors = [this.$t("errors.requires_utf8")];
+          }
           if ("multiple_report_types" in info) {
             this.handleMultipleReportTypeError();
           }

@@ -277,11 +277,10 @@ class TestManualUploadForCounterData:
             assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        ['filename', 'report_code', 'months'],
+        ['filename', 'months'],
         (
             pytest.param(
                 'counter5/counter5_table_tr_empty.csv',
-                'tr',
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -294,7 +293,6 @@ class TestManualUploadForCounterData:
             ),
             pytest.param(
                 'counter5/counter5_table_dr_empty.csv',
-                'dr',
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -307,7 +305,6 @@ class TestManualUploadForCounterData:
             ),
             pytest.param(
                 'counter5/counter5_table_pr_empty.csv',
-                'pr',
                 {
                     "2017-01-01",
                     "2017-02-01",
@@ -330,7 +327,6 @@ class TestManualUploadForCounterData:
         tmp_path,
         settings,
         filename,
-        report_code,
         months,
     ):
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -388,6 +384,37 @@ class TestManualUploadForCounterData:
         response = clients["master_admin"].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
         assert response.status_code == 200
         assert months == {e['date'] for e in response.data["import_batches"]}
+
+    def test_wrong_encoding(
+        self,
+        basic1,
+        organizations,
+        counter_report_types,
+        platforms,
+        clients,
+        tmp_path,
+        settings,
+    ):
+        with (Path(__file__).parent / "data/counter5/TR-wrong-encoding.csv").open('rb') as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "TR-wrong-encoding.csv"
+
+        organization = organizations['master']
+        platform = platforms['master']
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platform.id,
+                'organization': organization.pk,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 400
+        assert "encoding_error" in response.data
 
 
 @pytest.mark.django_db

@@ -994,6 +994,8 @@ class ManualDataUploadViewSet(
             raise BadRequestException(
                 {"multiple_report_types": [e.id for e in e.report_types]}
             ) from e
+        except UnicodeDecodeError as e:
+            raise BadRequestException({"encoding_error": str(e)}) from e
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
