@@ -496,21 +496,37 @@ class TestTagClassViews:
         assert 'hidden' in resp.json()[0], 'hidden field is present'
 
     @pytest.mark.parametrize(
-        ['scope', 'count'],
-        [(TagScope.ORGANIZATION, 2), (TagScope.PLATFORM, 4), (TagScope.TITLE, 8)],
+        ['scope', 'include_managed', 'count'],
+        [
+            (TagScope.ORGANIZATION, False, 2),
+            (TagScope.PLATFORM, False, 4),
+            (TagScope.TITLE, False, 8),
+            (TagScope.ORGANIZATION, True, 2 + 1),
+            (TagScope.PLATFORM, True, 4 + 3),
+            (TagScope.TITLE, True, 8 + 7),
+        ],
     )
-    def test_tag_class_list_visible_tags_with_scope_filter(self, clients, users, scope, count):
+    def test_tag_class_list_visible_tags_with_scope_filter(
+        self, clients, users, scope, include_managed, count
+    ):
         """
         Test that the `visible-tags` custom action takes the `scope` filter into account.
         """
+        TagClassFactory.create_batch(1, scope=TagScope.ORGANIZATION, owner=users['user1'])
         tc_org = TagClassFactory.create_batch(2, scope=TagScope.ORGANIZATION)
         [TagFactory.create(tag_class=tc) for tc in tc_org]
+        TagClassFactory.create_batch(3, scope=TagScope.PLATFORM, owner=users['user1'])
         tc_pla = TagClassFactory.create_batch(4, scope=TagScope.PLATFORM)
         [TagFactory.create(tag_class=tc) for tc in tc_pla]
+        TagClassFactory.create_batch(7, scope=TagScope.TITLE, owner=users['user1'])
         tc_tt = TagClassFactory.create_batch(8, scope=TagScope.TITLE)
         [TagFactory.create(tag_class=tc) for tc in tc_tt]
 
-        resp = clients['user1'].get(reverse('tag-class-visible-tags'), {'scope': scope})
+        query = {'scope': scope}
+        if include_managed:
+            query['include_managed'] = 'true'
+
+        resp = clients['user1'].get(reverse('tag-class-visible-tags'), query)
         assert resp.status_code == 200
         assert len(resp.json()) == count
 

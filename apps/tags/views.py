@@ -68,9 +68,15 @@ class TagClassViewSet(ModelViewSet):
         """
         Return a list of tag classes with visible tags for the current user.
         """
-        qs = self.filter_queryset(
-            TagClass.objects.with_user_visible_tags(request.user).annotate_hidden(request.user)
-        )
+        include_managed = to_bool(request.query_params.get('include_managed', 'false'))
+
+        fltr = TagClass.objects.with_user_visible_tags(request.user).annotate_hidden(request.user)
+        if include_managed:
+            fltr |= TagClass.objects.user_accessible_tag_classes(request.user)
+
+        fltr = fltr.distinct()
+
+        qs = self.filter_queryset(fltr.annotate_hidden(request.user))
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 

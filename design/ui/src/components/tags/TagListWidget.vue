@@ -422,24 +422,15 @@ export default {
     },
     async fetchTagClasses() {
       this.tagClassesLoading = true;
-      // load tag classes which the user can edit or create tags
-      const reply = await this.http({ url: "/api/tags/tag-class/" });
-      // load tag classes from which the user can see tags
-      // e.g. system tags will be here but not in the first reply
-      const reply2 = await this.http({
-        url: "/api/tags/tag-class/visible-tags/",
+      // load tag classes for which user can create tags
+      // and tag classes that have at least one tag which is visible
+      // for the user (e.g. system tags)
+      const reply = await this.http({
+        url: "/api/tags/tag-class/visible-tags/?include_managed=true",
       });
       this.tagClassesLoading = false;
-      let inReply = new Set();
       if (!reply.error) {
-        // merge the two replies
         this.tagClasses = reply.response.data;
-        this.tagClasses.forEach((item) => inReply.add(item.pk));
-        for (let rec2 of reply2.response.data) {
-          if (!inReply.has(rec2.pk)) {
-            this.tagClasses.push(rec2);
-          }
-        }
       }
     },
     editTag(tag) {
