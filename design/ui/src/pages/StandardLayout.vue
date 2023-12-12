@@ -72,7 +72,7 @@ cs:
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <span v-on="on">
+            <span v-on="on" class="align-self-center">
               <router-link :to="{ name: 'releases' }">
                 <v-badge
                   :value="displayNewReleaseBadge"
@@ -94,15 +94,18 @@ cs:
 
         <v-tooltip bottom v-if="impersonator">
           <template v-slot:activator="{ on }">
-            <v-icon v-on="on" class="mr-2" color="purple">fa-mask</v-icon>
+            <v-icon v-on="on" class="mx-1 align-self-center" color="purple"
+              >fa-mask</v-icon
+            >
           </template>
           {{ $t("impersonated") }}
         </v-tooltip>
+
         <v-tooltip bottom v-if="!emailVerified">
           <template v-slot:activator="{ on }">
-            <span v-on="on">
+            <span v-on="on" class="align-self-center">
               <router-link :to="{ name: 'user-page' }">
-                <v-icon class="mx-2 mt-5" color="warning"
+                <v-icon class="mx-1" color="warning"
                   >fa fa-exclamation-triangle</v-icon
                 >
               </router-link>
