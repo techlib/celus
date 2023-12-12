@@ -277,10 +277,10 @@ export default {
                 text: this.$t("labels.new_menu_item"),
                 color: "error",
               },
-              show: this.showAdminStuff,
+              show: true,
             },
           ],
-          show: this.showAdminStuff,
+          show: true,
         },
         {
           title: this.$i18n.t("pages.admin"),

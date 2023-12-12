@@ -182,7 +182,13 @@ cs:
       </v-col>
     </v-row>
     <v-row v-if="selectedReportType" v-intersect="onDetailIntersect">
-      <v-col align-self="center" cols="12" md="6" lg="8" xl="9">
+      <v-col
+        align-self="center"
+        cols="12"
+        :md="userCanHarvest ? 6 : 12"
+        :lg="userCanHarvest ? 8 : 12"
+        :xl="userCanHarvest ? 9 : 12"
+      >
         <CompositionBar
           :data="compositionBarData"
           height="36"
@@ -190,7 +196,7 @@ cs:
           ref="compositionBar"
         />
       </v-col>
-      <v-col cols="12" md="6" lg="4" xl="3">
+      <v-col v-if="userCanHarvest" cols="12" md="6" lg="4" xl="3">
         <v-btn
           v-if="harvestInfo && selectedWillingToHarvestCount"
           color="primary"
@@ -392,7 +398,6 @@ import {
 } from "@/libs/dates";
 import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
-import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
 import CoverageCard from "@/components/coverage/CoverageCard.vue";
 import stateTracking from "@/mixins/stateTracking";
 
@@ -403,7 +408,6 @@ export default {
 
   components: {
     CoverageCard,
-    CoverageScoreGauge,
     SushiFetchIntentionsListWidget,
     CompositionBar,
     CoverageMap,
@@ -447,6 +451,7 @@ export default {
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
       dateRangeCoverageEndText: "dateRangeCoverageEndText",
+      showAdminStuff: "showAdminStuff",
     }),
     showingAllOrganizations() {
       return this.organizationId <= 0;
@@ -606,6 +611,9 @@ export default {
     },
     oldestHarvestedMonth() {
       return ymDateFormat(counterGuaranteedPeriodStartDate());
+    },
+    userCanHarvest() {
+      return this.showAdminStuff;
     },
   },
 
