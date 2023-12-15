@@ -80,15 +80,19 @@ class TestAPI:
         )
         assert resp.status_code == 400
 
-    def test_platform_report_view_response(self, client, flexible_slicer_test_data):
+    @pytest.mark.parametrize('use_registry_id', [True, False])
+    def test_platform_report_view_response(
+        self, client, flexible_slicer_test_data, use_registry_id
+    ):
         org = flexible_slicer_test_data['organizations'][0]
         platform = flexible_slicer_test_data['platforms'][0]
         report = flexible_slicer_test_data['report_types'][0]
         api_key, key_val = OrganizationAPIKey.objects.create_key(organization=org, name='test')
+        platform_id = str(platform.counter_registry_id) if use_registry_id else platform.pk
         resp = client.get(
             reverse(
                 'api_platform_report_data',
-                kwargs={'platform_id': platform.pk, 'report_type': report.short_name},
+                kwargs={'platform_id': platform_id, 'report_type': report.short_name},
             ),
             {'month': '2020-01', 'dims': 'dim1name'},
             HTTP_AUTHORIZATION=f'Api-Key {key_val}',

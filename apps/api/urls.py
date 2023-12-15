@@ -11,11 +11,13 @@ from . import views
 logger = logging.getLogger(__name__)
 
 local_urls = [
+    # add platform report data views for two different platform_id types - uuid and int
     path(
-        'platform/<int:platform_id>/report/<str:report_type>',
+        f'platform/<{id_type}:platform_id>/report/<str:report_type>',
         views.PlatformReportView.as_view(),
         name='api_platform_report_data',
     )
+    for id_type in ['uuid', 'int']
 ]
 
 urlpatterns = [

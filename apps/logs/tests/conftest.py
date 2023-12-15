@@ -155,7 +155,11 @@ def flexible_slicer_test_data(report_type_nd):
         Organization.objects.create(short_name='org3', name='Organization 3'),
     ]
     platforms = [
-        Platform.objects.create(short_name='pl1', name='Platform 1'),
+        Platform.objects.create(
+            short_name='pl1',
+            name='Platform 1',
+            counter_registry_id='11111111-1111-1111-1111-111111111111',
+        ),
         Platform.objects.create(short_name='pl2', name='Platform 2'),
         Platform.objects.create(short_name='pl3', name='Platform 3'),
     ]

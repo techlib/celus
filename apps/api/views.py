@@ -1,3 +1,5 @@
+import uuid
+
 from core.logic.dates import parse_month
 from core.validators import month_validator
 from django.db.models import Sum
@@ -8,7 +10,7 @@ from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import find_best_materialized_view
 from logs.models import AccessLog, DimensionText, Metric, ReportType
-from publications.models import Title
+from publications.models import Platform, Title
 from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
@@ -38,7 +40,7 @@ class PlatformReportView(APIView):
     permission_classes = [HasOrganizationAPIKey]
     throttle_classes = [APIKeyBasedThrottle]
 
-    def get(self, request, platform_id, report_type):
+    def get(self, request, report_type, platform_id):
         organization = extract_org_from_request_api_key(self.request)
         if not organization:
             # we should not get here as the permission_classes should take care of it
@@ -66,6 +68,11 @@ class PlatformReportView(APIView):
         reported_dims = [
             f'dim{i+1}' for i, dim in enumerate(rt.dimensions_sorted) if dim.short_name in req_dims
         ]
+        # deal with possible uuid being used as platform_id
+        if isinstance(platform_id, uuid.UUID):
+            platform_id = get_object_or_404(
+                Platform.objects.all(), counter_registry_id=platform_id
+            ).pk
 
         if request.USE_CLICKHOUSE:
             # clickhouse does not contain metric names, so we must remap them later on
