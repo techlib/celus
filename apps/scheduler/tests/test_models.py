@@ -217,7 +217,7 @@ class TestFetchIntention:
         monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
 
         fi = FetchIntentionFactory(
-            harvest=AutomaticFactory(harvest__last_updated_by=users["user1"]).harvest,
+            harvest=AutomaticFactory(harvest__last_updated_by=users["admin1"]).harvest,
             not_before=timezone.now(),
             scheduler=sch,
             credentials=credentials["standalone_tr"],
@@ -225,10 +225,10 @@ class TestFetchIntention:
             data_not_ready_retry=2,
             service_not_available_retry=3,
             service_busy_retry=4,
-            harvest__last_updated_by=users["user1"],
+            harvest__last_updated_by=users["admin1"],
         )
         assert fi.process() == ProcessResponse.SUCCESS
-        assert fi.attempt.triggered_by == users["user1"]
+        assert fi.attempt.triggered_by == users["admin1"]
         assert fi.when_processed == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz)
 
         # test not_before for newly created FetchIntentions
@@ -1367,11 +1367,11 @@ class TestHarvest:
                 intentions,
                 harvest=harvest,
                 priority=FetchIntention.PRIORITY_NOW,
-                user=users["user1"],
+                user=users["admin1"],
             )
             == harvest
         )
-        assert harvest.last_updated_by == users["user1"]
+        assert harvest.last_updated_by == users["admin1"]
         assert FetchIntention.objects.filter(harvest=harvest).count() == 6
 
         assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
@@ -1531,11 +1531,11 @@ class TestHarvest:
     def test_latest_intentions(self, harvests):
         assert harvests["anonymous"].intentions.count() == 4
         assert harvests["anonymous"].latest_intentions.count() == 3
-        assert harvests["user1"].intentions.count() == 2
-        assert harvests["user1"].latest_intentions.count() == 2
+        assert harvests["admin1"].intentions.count() == 2
+        assert harvests["admin1"].latest_intentions.count() == 2
 
     def test_wipe(self, harvests):
-        assert Harvest.objects.filter(pk=harvests["user1"].pk).wipe() == {
+        assert Harvest.objects.filter(pk=harvests["admin1"].pk).wipe() == {
             "fetch_attemtps_deleted": (1, {"sushi.SushiFetchAttempt": 1}),
             "harvests_deleted": (3, {"scheduler.FetchIntention": 2, "scheduler.Harvest": 1}),
             "import_batches_deleted": (1, {'logs.ImportBatch': 1}),

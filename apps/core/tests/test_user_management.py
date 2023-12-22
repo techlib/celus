@@ -21,31 +21,51 @@ from test_scenarios.basic import (  # noqa - fixtures
 
 @pytest.mark.django_db
 class TestAccessibleOrganizations:
-    def test(self, basic1, organizations, platforms, clients, users):
-        assert User.objects.count() == 8  # we should have 8 test users and 5 orgs
-        assert users['user1'].organizations.count() == 1  # belongs to branch org
+    def test_counts(self, basic1, organizations, platforms, clients, users):
+        assert User.objects.count() == 8, "we should have 8 test users and 5 orgs"
+        assert users['user1'].organizations.count() == 1, "user 1 belongs to branch org"
         assert (
             users['user1'].accessible_organizations().count() == 1
-        )  # is user-> only branch org accessible
-        assert users['admin1'].organizations.count() == 1  # belongs to root org
+        ), "only branch org accessible for user1"
+
+        assert users['admin1'].organizations.count() == 2, "admin1 belongs to root and branch org"
         assert (
             users['admin1'].accessible_organizations().count() == 2
-        )  # root is parent of branch-> both accessible
+        ), "both root and branch org are accessible for admin1"
 
-        assert users['user2'].organizations.count() == 1  # belongs to standalone org
-        assert users['user2'].accessible_organizations().count() == 1
-        assert users['admin2'].organizations.count() == 1
+        assert users['user2'].organizations.count() == 1, "user2 belongs to standalone org"
+        assert (
+            users['user2'].accessible_organizations().count() == 1
+        ), "standalone is accessible for user2"
+        assert users['admin2'].organizations.count() == 1, "admin2 belongs to standalone org"
         assert (
             users['admin2'].accessible_organizations().count() == 1
-        )  # standalone org is standalone
+        ), "standalone is accessible for user2"
 
-        assert users['master_user'].organizations.count() == 1  # belongs to master org
-        assert users['master_user'].accessible_organizations().count() == 5
-        assert users['master_admin'].organizations.count() == 1  # belongs to master org
-        assert users['master_admin'].accessible_organizations().count() == 5
+        assert users['master_user'].organizations.count() == 1, "master_user belongs to master org"
+        assert (
+            users['master_user'].accessible_organizations().count() == 5
+        ), "all organizations are accessible for master_user"
+        assert (
+            users['master_admin'].organizations.count() == 1
+        ), "master_admin belongs to master org"
+        assert (
+            users['master_admin'].accessible_organizations().count() == 5
+        ), "all organizations are accessible for master_admin"
 
-        assert users['su'].organizations.count() == 0  # superuser doesnt explicitly belong to org
-        assert users['su'].accessible_organizations().count() == 5  # but he has access to all orgs
+        assert users['su'].organizations.count() == 0, "superuser doesn't explicitly belong to org"
+        assert (
+            users['su'].accessible_organizations().count() == 5
+        ), "all organizations are accessible for superuser"
+
+        assert (
+            users['admin1'].userorganization_set.filter(organization__name="branch").delete()[0]
+            == 1
+        ), "remove admin1 from branch organization"
+        assert users['admin1'].accessible_organizations().count() == 2, (
+            "branch is a subbranch of root and are both org are accessible for admin1 "
+            "even when admin1 is only direct member of root org"
+        )
 
 
 @pytest.mark.django_db

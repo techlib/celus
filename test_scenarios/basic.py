@@ -178,6 +178,7 @@ def basic1(users, organizations, platforms, data_sources, identities, clients): 
         organizations["master"], through_defaults={"is_admin": False}
     )
     users["admin1"].organizations.add(organizations["root"], through_defaults={"is_admin": True})
+    users["admin1"].organizations.add(organizations["branch"], through_defaults={"is_admin": True})
     users["admin2"].organizations.add(
         organizations["standalone"], through_defaults={"is_admin": True}
     )
@@ -404,8 +405,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
         bulk=False,
     )
 
-    user2 = HarvestFactory(
-        last_updated_by=users["user2"],
+    admin2 = HarvestFactory(
+        last_updated_by=users["admin2"],
         intentions=(
             FetchIntentionFactory.build(
                 credentials=credentials["standalone_br1_jr1"],
@@ -424,8 +425,8 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
         ),
     )
 
-    user1 = HarvestFactory(
-        last_updated_by=users["user1"],
+    admin1 = HarvestFactory(
+        last_updated_by=users["admin1"],
         intentions=(
             FetchIntentionFactory.build(
                 credentials=credentials["branch_pr"],
@@ -464,7 +465,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
                 start_date="2020-01-01",
                 end_date="2020-01-31",
                 when_processed=None,
-                duplicate_of=user1.intentions.get(
+                duplicate_of=admin1.intentions.get(
                     credentials=credentials["branch_pr"],
                     counter_report=counter_report_types["pr"],
                     attempt__isnull=False,

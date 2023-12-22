@@ -221,7 +221,7 @@ class TestHarvestAPI:
         assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert len(data["intentions"]) == 3
 
-        url = reverse('harvest-detail', args=(harvests["user1"].pk,))
+        url = reverse('harvest-detail', args=(harvests["admin1"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -235,7 +235,7 @@ class TestHarvestAPI:
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
 
-        url = reverse('harvest-detail', args=(harvests["user2"].pk,))
+        url = reverse('harvest-detail', args=(harvests["admin2"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -351,10 +351,10 @@ class TestHarvestAPI:
         (
             ("master_admin", 6),
             ("master_user", 0),
-            ("admin1", 0),
-            ("admin2", 2),
-            ("user1", 1),
-            ("user2", 1),
+            ("admin1", 2),
+            ("admin2", 3),
+            ("user1", 0),
+            ("user2", 0),
         ),
     )
     def test_list_filtering(self, basic1, harvests, clients, user, length):
@@ -368,18 +368,18 @@ class TestHarvestAPI:
         assert len(data) == length
 
     @pytest.mark.parametrize(
-        "user,anonymous_status,automatic_status,user1_status",
+        "user,anonymous_status,automatic_status,admin1_status",
         (
             ("master_admin", 200, 200, 200),
             ("master_user", 404, 404, 404),
-            ("admin1", 404, 404, 404),
+            ("admin1", 404, 404, 200),
             ("admin2", 404, 200, 404),
-            ("user1", 404, 404, 200),
+            ("user1", 404, 404, 404),
             ("user2", 404, 404, 404),
         ),
     )
     def test_get_permissions(
-        self, basic1, harvests, clients, user, anonymous_status, automatic_status, user1_status
+        self, basic1, harvests, clients, user, anonymous_status, automatic_status, admin1_status
     ):
         url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
         resp = clients[user].get(url, {})
@@ -389,12 +389,36 @@ class TestHarvestAPI:
         resp = clients[user].get(url, {})
         assert resp.status_code == automatic_status
 
-        url = reverse('harvest-detail', args=(harvests["user1"].pk,))
+        url = reverse('harvest-detail', args=(harvests["admin1"].pk,))
         resp = clients[user].get(url, {})
-        assert resp.status_code == user1_status
+        assert resp.status_code == admin1_status
 
+    @pytest.mark.parametrize(
+        "user,crt1,crt2,org1,org2,status",
+        (
+            ("master_admin", "pr", "tr", "branch_pr", "standalone_tr", 201),
+            ("master_user", "pr", "pr", "branch_pr", "branch_pr", 403),
+            ("user1", "pr", "pr", "branch_pr", "branch_pr", 403),
+            ("user2", "tr", "tr", "standalone_tr", "standalone_tr", 403),
+            ("admin1", "pr", "pr", "branch_pr", "branch_pr", 201),
+            ("admin1", "tr", "pr", "branch_pr", "branch_pr", 400),
+            ("admin1", "pr", "tr", "branch_pr", "standalone_tr", 403),
+        ),
+    )
     def test_create_permission(
-        self, basic1, harvests, clients, credentials, counter_report_types, monkeypatch
+        self,
+        basic1,
+        harvests,
+        clients,
+        credentials,
+        counter_report_types,
+        monkeypatch,
+        user,
+        crt1,
+        crt2,
+        org1,
+        org2,
+        status,
     ):
         url = reverse('harvest-list')
 
@@ -404,20 +428,20 @@ class TestHarvestAPI:
         monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
 
         # can create harvests if user is an organization member
-        resp = clients["user2"].post(
+        resp = clients[user].post(
             url,
             json.dumps(
                 {
                     "intentions": [
                         {
-                            "credentials": credentials["standalone_tr"].pk,
-                            "counter_report": counter_report_types["tr"].pk,
+                            "credentials": credentials[org1].pk,
+                            "counter_report": counter_report_types[crt1].pk,
                             "start_date": "2020-03-01",
                             "end_date": "2020-03-31",
                         },
                         {
-                            "credentials": credentials["standalone_br1_jr1"].pk,
-                            "counter_report": counter_report_types["br1"].pk,
+                            "credentials": credentials[org2].pk,
+                            "counter_report": counter_report_types[crt2].pk,
                             "start_date": "2020-03-01",
                             "end_date": "2020-03-31",
                         },
@@ -426,32 +450,7 @@ class TestHarvestAPI:
             ),
             content_type='application/json',
         )
-        assert resp.status_code == 201
-
-        # missing permissions for a single credentials
-        resp = clients["user2"].post(
-            url,
-            json.dumps(
-                {
-                    "intentions": [
-                        {
-                            "credentials": credentials["branch_pr"].pk,
-                            "counter_report": counter_report_types["pr"].pk,
-                            "start_date": "2020-03-01",
-                            "end_date": "2020-03-31",
-                        },
-                        {
-                            "credentials": credentials["standalone_br1_jr1"].pk,
-                            "counter_report": counter_report_types["br1"].pk,
-                            "start_date": "2020-03-01",
-                            "end_date": "2020-03-31",
-                        },
-                    ]
-                }
-            ),
-            content_type='application/json',
-        )
-        assert resp.status_code == 403
+        assert resp.status_code == status
 
     def test_create_empty(self, clients):
         url = reverse('harvest-list')
@@ -625,7 +624,7 @@ class TestHarvestFetchIntentionAPI:
         assert data[2]["previous_intention"] is not None
         assert all("canceled" in record for record in data)
 
-        url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
+        url = reverse('harvest-intention-list', args=(harvests["admin1"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -691,24 +690,26 @@ class TestHarvestFetchIntentionAPI:
         assert len(get_data(just_now)) == 1
 
     @pytest.mark.parametrize(
-        "user,anonymous_status,user1_status",
+        "user,anonymous_status,admin1_status",
         (
             ("master_admin", 200, 200),
             ("master_user", 404, 404),
-            ("user1", 404, 200),
+            ("user1", 404, 404),
             ("user2", 404, 404),
+            ("admin1", 404, 200),
+            ("admin2", 404, 404),
         ),
     )
     def test_list_permissions(
-        self, basic1, harvests, clients, user, anonymous_status, user1_status
+        self, basic1, harvests, clients, user, anonymous_status, admin1_status
     ):
         url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == anonymous_status
 
-        url = reverse('harvest-intention-list', args=(harvests["user1"].pk,))
+        url = reverse('harvest-intention-list', args=(harvests["admin1"].pk,))
         resp = clients[user].get(url, {})
-        assert resp.status_code == user1_status
+        assert resp.status_code == admin1_status
 
     @pytest.mark.parametrize(
         ["user", "status_code"],
@@ -742,7 +743,10 @@ class TestHarvestFetchIntentionAPI:
 
         url = reverse(
             'harvest-intention-detail',
-            args=(harvests["user1"].pk, harvests["anonymous"].latest_intentions.first().pk),
+            args=(
+                harvests["admin1"].pk,
+                harvests["anonymous"].latest_intentions.first().pk,
+            ),
         )
 
         resp = clients["master_admin"].get(url, {})
@@ -793,15 +797,19 @@ class TestHarvestFetchIntentionAPI:
         assert old_pk in [e["pk"] for e in resp.json()], '"list_all" param will show all'
 
     @pytest.mark.parametrize(
-        "user,anonymous_status,user1_status",
+        "user,anonymous_status,admin1_status",
         (
             ("master_admin", 200, 200),
             ("master_user", 404, 404),
-            ("user1", 404, 200),
+            ("user1", 404, 404),
             ("user2", 404, 404),
+            ("admin1", 404, 200),
+            ("admin2", 404, 404),
         ),
     )
-    def test_get_permissions(self, basic1, harvests, clients, user, anonymous_status, user1_status):
+    def test_get_permissions(
+        self, basic1, harvests, clients, user, anonymous_status, admin1_status
+    ):
         url = reverse(
             'harvest-intention-detail',
             args=(harvests["anonymous"].pk, harvests["anonymous"].latest_intentions.first().pk),
@@ -811,10 +819,10 @@ class TestHarvestFetchIntentionAPI:
 
         url = reverse(
             'harvest-intention-detail',
-            args=(harvests["user1"].pk, harvests["user1"].latest_intentions.first().pk),
+            args=(harvests["admin1"].pk, harvests["admin1"].latest_intentions.first().pk),
         )
         resp = clients[user].get(url, {})
-        assert resp.status_code == user1_status
+        assert resp.status_code == admin1_status
 
     @pytest.mark.parametrize(
         "user,processed,status,planned",
@@ -823,19 +831,23 @@ class TestHarvestFetchIntentionAPI:
             ("master_admin", True, 400, False),
             ("master_user", False, 404, False),
             ("master_user", False, 404, False),
-            ("user1", False, 200, True),
-            ("user1", True, 400, False),
+            ("user1", False, 404, False),
+            ("user1", True, 404, False),
             ("user2", True, 404, False),
             ("user2", False, 404, False),
+            ("admin1", False, 200, True),
+            ("admin1", True, 400, False),
+            ("admin2", True, 404, False),
+            ("admin2", False, 404, False),
         ),
     )
     def test_trigger(
         self, basic1, harvests, clients, monkeypatch, user, processed, status, planned
     ):
         if processed:
-            intention = harvests["user1"].latest_intentions.first()
+            intention = harvests["admin1"].latest_intentions.first()
         else:
-            intention = harvests["user1"].latest_intentions.last()
+            intention = harvests["admin1"].latest_intentions.last()
 
         url = reverse('harvest-intention-trigger', args=(intention.harvest.pk, intention.pk))
 
@@ -857,17 +869,21 @@ class TestHarvestFetchIntentionAPI:
             ("master_admin", False, 400),
             ("master_user", True, 404),
             ("master_user", False, 404),
-            ("user1", True, 200),
-            ("user1", False, 400),
+            ("user1", True, 404),
+            ("user1", False, 404),
             ("user2", False, 404),
             ("user2", True, 404),
+            ("admin1", True, 200),
+            ("admin1", False, 400),
+            ("admin2", False, 404),
+            ("admin2", True, 404),
         ),
     )
     def test_cancel(self, basic1, harvests, clients, user, cancelable, status):
         if cancelable:
-            intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[1]
+            intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[1]
         else:
-            intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[0]
+            intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[0]
 
         url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk))
 
@@ -888,12 +904,12 @@ class TestFetchIntentionAPI:
         [
             ['unauthenticated', 401],
             ['invalid', 401],
-            ['user1', 200],
+            ['user1', 404],
             ['user2', 404],
             ['admin1', 200],
             ['admin2', 404],
             ['master_admin', 200],
-            ['master_user', 200],
+            ['master_user', 404],
             ['su', 200],
         ],
     )
@@ -912,7 +928,7 @@ class TestFetchIntentionAPI:
         """
         Check whether displaying detail about fetch attempts works properly
         """
-        intention = harvests["user1"].intentions.latest_intentions().order_by('pk')[0]
+        intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[0]
         url = reverse('intention-detail', args=(intention.pk,))
         resp = clients[user].get(url)
         assert resp.status_code == status_code

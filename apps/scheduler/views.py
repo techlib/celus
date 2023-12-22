@@ -1,7 +1,7 @@
 from collections import Counter
 
 from core.logic.dates import month_end
-from core.models import REL_ORG_USER
+from core.models import REL_ORG_ADMIN
 from core.permissions import SuperuserOrAdminPermission
 from django.db.models import Count, F, Max, Min, Prefetch, Q
 from django.db.models.functions import Coalesce
@@ -162,7 +162,7 @@ class HarvestViewSet(
                 # Check whether user is within organization - it is an ID now
                 if (
                     org_id not in seen_orgs
-                    and self.request.user.organization_relationship(org_id) < REL_ORG_USER
+                    and self.request.user.organization_relationship(org_id) < REL_ORG_ADMIN
                 ):
                     raise PermissionDenied(
                         f"No permission to use credentails (pk={intention['credentials'].pk})"
@@ -317,17 +317,19 @@ class IntentionViewSet(ModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return (
-            FetchIntention.objects.all()
-            .select_related(
-                'attempt',
-                'counter_report',
-                'credentials__organization',
-                'credentials__platform',
-                'current_scheduler',
+        if SuperuserOrAdminPermission().has_permission(self.request, self):
+            qs = FetchIntention.objects.all()
+        else:
+            qs = FetchIntention.objects.filter(
+                credentials__organization__in=self.request.user.admin_organizations()
             )
-            .annotate_credentials_state()
-        )
+        return qs.select_related(
+            'attempt',
+            'counter_report',
+            'credentials__organization',
+            'credentials__platform',
+            'current_scheduler',
+        ).annotate_credentials_state()
 
     class PurgeSerializer(Serializer):
         credentials = PrimaryKeyRelatedField(many=False, queryset=SushiCredentials.objects.all())
