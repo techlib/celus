@@ -13,32 +13,19 @@
     clearable
   >
     <template v-slot:item="{ item }">
-      <v-tooltip bottom max-width="600px" v-if="badge(item)">
-        <template #activator="{ on }">
-          <span>{{ item.name }}</span>
-          <v-badge
-            inline
-            :content="$t(badge(item).content)"
-            :color="badge(item).color"
-          >
-            <template v-slot:badge>
-              <span v-on="on">{{ $t(badge(item).content) }}</span>
-            </template>
-          </v-badge>
-        </template>
-        <span>{{ $t(badge(item).tooltip) }}</span>
-      </v-tooltip>
-      <span v-else>
-        {{ item.name }}
-      </span>
+      <ItemBadge :item="item" tag="span" />
     </template>
   </v-autocomplete>
 </template>
 <script>
-import { badge } from "@/libs/sources.js";
+import ItemBadge from "@/components/util/ItemBadge";
 
 export default {
   name: "PlatformSelector",
+
+  components: {
+    ItemBadge,
+  },
 
   props: {
     platforms: { type: Array, required: true },
@@ -59,9 +46,6 @@ export default {
     },
   },
 
-  methods: {
-    badge,
-  },
 
   watch: {
     selectedPlatform() {

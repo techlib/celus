@@ -4,7 +4,7 @@ en:
       organization: CUSTOM
       registry: Registry
     tooltip:
-      organization: Manually added for this organization only
+      organization: Platform was manually added for this organization only
       registry: Platform synchronized with the COUNTER registry
 
 
@@ -14,5 +14,5 @@ cs:
       organization: VLASTNÍ
       registry: Registry
     tooltip:
-      organization: Ručně přidáno pouze pro tuto organizaci
+      organization: Platform byla ručně přidána pouze pro tuto organizaci
       registry: Platforma synchronizovaná s COUNTER registry

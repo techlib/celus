@@ -88,6 +88,7 @@ from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
+from .permissions import AccessiblePlatformFromOrganization
 from .tasks import export_raw_data_task, sync_organizationplatform_records_task
 
 
@@ -855,6 +856,7 @@ class ManualDataUploadViewSet(
                 & CanAccessOrganizationRelatedObjectPermission
             )
         )
+        & AccessiblePlatformFromOrganization
     ]
 
     serializer_class = ManualDataUploadSerializer

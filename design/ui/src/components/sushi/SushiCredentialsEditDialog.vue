@@ -288,24 +288,11 @@ cs:
                     />
                   </template>
                   <template v-slot:item="{ item }">
-                    <v-tooltip bottom max-width="600px" v-if="badge(item)">
-                      <template #activator="{ on }">
-                        <span class="v-list-item__title">{{ item.name }}</span>
-                        <v-badge
-                          inline
-                          :content="$t(badge(item).content)"
-                          :color="badge(item).color"
-                        >
-                          <template v-slot:badge>
-                            <span v-on="on">{{ $t(badge(item).content) }}</span>
-                          </template>
-                        </v-badge>
-                      </template>
-                      <span>{{ $t(badge(item).tooltip) }}</span>
-                    </v-tooltip>
-                    <span v-else class="v-list-item__title">
-                      {{ item.name }}
-                    </span>
+                    <ItemBadge
+                      inner-class="v-list-item__title"
+                      tag="span"
+                      :item="item"
+                    />
                   </template>
                 </v-autocomplete>
                 <v-tooltip bottom v-if="platformRegistryLink">
@@ -745,7 +732,6 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
-import { badge } from "@/libs/sources.js";
 import AddPlatformButton from "@/components/AddPlatformButton";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import validate from "validate.js";
@@ -755,6 +741,7 @@ import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
 import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
 import LastHarvestableMonthEntryWidget from "@/components/sushi/LastHarvestableMonthEntryWidget.vue";
+import ItemBadge from "@/components/util/ItemBadge";
 
 export default {
   name: "SushiCredentialsEditDialog",
@@ -766,6 +753,7 @@ export default {
     SushiReportIndicator,
     AddPlatformButton,
     DeleteSushiCredentialsDataWidget,
+    ItemBadge,
   },
   props: {
     credentialsObject: {},
@@ -1496,9 +1484,6 @@ export default {
         return this.$t("invalid_url");
       }
       return true;
-    },
-    badge(item) {
-      return badge(item);
     },
     async reloadCredentials() {
       try {

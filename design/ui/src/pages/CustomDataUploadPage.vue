@@ -154,8 +154,13 @@ cs:
         </v-breadcrumbs>
       </v-row>
       <v-row>
-        <v-col>
-          <h2 v-if="platform">{{ platform.name }}</h2>
+        <v-col v-if="platform">
+          <ItemBadge
+            :item="platform"
+            tag="h2"
+            badge-class="ml-2"
+            :badge-inline="false"
+          />
         </v-col>
       </v-row>
       <v-row>
@@ -294,24 +299,7 @@ cs:
                   :loading="!reportTypesFetched"
                 >
                   <template v-slot:item="{ item }">
-                    <v-tooltip bottom max-width="600px" v-if="badge(item)">
-                      <template #activator="{ on }">
-                        <span>{{ item.name }}</span>
-                        <v-badge
-                          inline
-                          :content="$t(badge(item).content)"
-                          :color="badge(item).color"
-                        >
-                          <template v-slot:badge>
-                            <span v-on="on">{{ $t(badge(item).content) }}</span>
-                          </template>
-                        </v-badge>
-                      </template>
-                      <span>{{ $t(badge(item).tooltip) }}</span>
-                    </v-tooltip>
-                    <span v-else>
-                      {{ item.name }}
-                    </span>
+                    <ItemBadge tag="span" :item="item" />
                   </template>
                 </v-select>
               </v-col>
@@ -730,11 +718,11 @@ import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
 import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm";
 import ImportPreflightDataWidget from "@/components/ImportPreflightDataWidget";
-import { badge } from "@/libs/sources.js";
 import { counterHeaderRepr } from "@/libs/counter_header.js";
 import MDUChart from "@/components/MDUChart";
 import ErrorDialog from "@/components/util/ErrorDialog";
 import isEmpty from "lodash/isEmpty";
+import ItemBadge from "@/components/util/ItemBadge";
 
 export default {
   name: "CustomDataUploadPage",
@@ -747,6 +735,7 @@ export default {
     AccessLogList,
     CustomUploadInfoWidget,
     ReportTypeInfoWidget,
+    ItemBadge,
   },
   props: {
     platformId: { required: true },
@@ -1060,18 +1049,20 @@ export default {
           return this.$t("errors.unknown_error");
       }
     },
+    privatePlaformForOrganizationPk() {
+      return this.platform?.source?.organization?.pk;
+    },
   },
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      changeForceDisableOrganizationSelector: "changeForceDisableOrganizationSelector",
+      selectOrganization: "selectOrganization",
     }),
     highlightStyle(highlighted) {
       return highlighted
         ? { "background-color": "rgba(255, 255, 0, .15)" }
         : {};
-    },
-    badge(item) {
-      return badge(item);
     },
     setProgress(total, current) {
       if (total) {
@@ -1453,6 +1444,14 @@ export default {
     this.cancelRefreshTimeout();
   },
   watch: {
+    platform() {
+      let hide = !!this.privatePlaformForOrganizationPk;
+      this.changeForceDisableOrganizationSelector({ hide: hide, route: this.$router.currentRoute.name });
+      // set organization when no organization is selected for private platform
+      if (!this.currentOrganization && hide) {
+        this.selectOrganization({ id: this.privatePlaformForOrganizationPk });
+      }
+    },
     organizationId() {
       this.regeneratePreflight();
       // Choose method again if selected organization can't import raw data

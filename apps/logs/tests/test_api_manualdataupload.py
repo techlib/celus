@@ -416,6 +416,78 @@ class TestManualUploadForCounterData:
         assert response.status_code == 400
         assert "encoding_error" in response.data
 
+    def test_upload_of_private_platform_from_non_owner_organization(
+        self,
+        basic1,
+        organizations,
+        counter_report_types,
+        platforms,
+        clients,
+        tmp_path,
+        settings,
+    ):
+        with (Path(__file__).parent / "data/counter5/counter5_table_dr.tsv").open('rb') as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "dr.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        # note that standalone and branch platforms are private
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platforms['standalone'].pk,
+                'organization': organizations['branch'].pk,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 400
+
+    def test_change_of_organization_to_unrelated_private_platform_in_preflight(
+        self,
+        basic1,
+        organizations,
+        counter_report_types,
+        platforms,
+        clients,
+        tmp_path,
+        settings,
+    ):
+        with (Path(__file__).parent / "data/counter5/counter5_table_dr.tsv").open('rb') as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "dr.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        # upload the data
+        # note that standalone and branch platforms are private
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-list'),
+            data={
+                'platform': platforms['standalone'].pk,
+                'organization': organizations['standalone'].pk,
+                'data_file': data_file,
+                'method': MduMethod.COUNTER,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+
+        # confirm report type
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+        )
+        assert response.status_code == 200
+
+        response = clients["master_admin"].post(
+            reverse('manual-data-upload-preflight', args=(mdu.pk,)),
+            {"organization_id": organizations["branch"].pk},
+        )
+
+        assert response.status_code == 403
+
 
 @pytest.mark.django_db
 class TestManualUploadControlledMetrics:
@@ -692,7 +764,7 @@ class TestManualUploadForRaw:
             data_file.name = "something.csv"
 
         organization = organizations['standalone'] if organization_set else None
-        platform = platforms['standalone']
+        platform = platforms['shared']
         settings.MEDIA_ROOT = tmp_path
 
         post_data = {
@@ -917,7 +989,7 @@ class TestManualUploadForRaw:
             data_file = ContentFile(f.read())
             data_file.name = "nibbler.csv"
 
-        platform = platforms['standalone']  # doesn't matter which platform is used
+        platform = platforms['shared']
         settings.MEDIA_ROOT = tmp_path
 
         response = clients[owner].post(
@@ -985,7 +1057,7 @@ class TestManualUploadForRaw:
             data_file.name = "counter.csv"
 
         organization = organizations[organization]
-        platform = platforms['standalone']  # doesn't matter which platform is used
+        platform = platforms['shared']
         settings.MEDIA_ROOT = tmp_path
 
         response = clients[owner].post(

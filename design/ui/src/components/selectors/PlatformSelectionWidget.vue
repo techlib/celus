@@ -35,7 +35,6 @@
 <script>
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
-import { badge } from "@/libs/sources.js";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 
 export default {
@@ -80,9 +79,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    badge(item) {
-      return badge(item);
     },
   },
   mounted() {

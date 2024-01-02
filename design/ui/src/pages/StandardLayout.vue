@@ -45,6 +45,7 @@ cs:
         :lang="appLanguage"
         v-if="showOrganizationSelector"
         class="d-flex"
+        :disabled="disableOrganizationSelector"
       />
       <SelectedDateRangeWidget
         input-like-label
@@ -271,6 +272,7 @@ export default {
       siteLogo: (state) => state.siteConfig.siteLogo,
       siteName: (state) => state.siteConfig.siteName,
       footerImages: (state) => state.siteConfig.footerImages,
+      forceDisableOrganizationSelector: "forceDisableOrganizationSelector",
     }),
     ...mapGetters({
       loggedIn: "loggedIn",
@@ -327,6 +329,9 @@ export default {
     },
     showLanguageSelector() {
       return this.activeLanguageCodes.length > 1;
+    },
+    disableOrganizationSelector() {
+      return !!this.forceDisableOrganizationSelector[this.$route.name];
     },
     showOrganizationSelector() {
       return (

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from core.models import UL_CONS_STAFF, DataSource, SourceFileMixin
+from core.models import DATA_SOURCE_TYPE_ORGANIZATION, UL_CONS_STAFF, DataSource, SourceFileMixin
 from core.serializers import UserSimpleSerializer
 from django.conf import settings
 from django.db import transaction
@@ -376,6 +376,17 @@ class ManualDataUploadSerializer(ModelSerializer):
             else:
                 if "report_type_id" not in attrs:
                     raise ValidationError({"report_type_id": "is missing"})
+
+            platform = attrs["platform"]
+            if organization := attrs.get("organization"):
+                if (
+                    platform.source
+                    and platform.source.type == DATA_SOURCE_TYPE_ORGANIZATION
+                    and platform.source.organization != organization
+                ):
+                    raise ValidationError(
+                        {"organization": "platform is private and belongs to another organization"},
+                    )
         else:
             if "report_type_id" in attrs:
                 raise ValidationError(

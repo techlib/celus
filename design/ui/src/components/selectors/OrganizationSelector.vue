@@ -24,6 +24,7 @@
           :label="label"
           data-tour="organization-select"
           :rules="[required]"
+          :disabled="disabled"
         >
           <template v-slot:item="{ item }">
             <span
@@ -44,6 +45,7 @@ export default {
   props: {
     lang: { required: false, default: null },
     internalLabel: { default: false, type: Boolean },
+    disabled: { default: false, type: Boolean },
   },
   computed: {
     ...mapState({

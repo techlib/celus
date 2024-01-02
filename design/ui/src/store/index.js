@@ -123,6 +123,7 @@ export default new Vuex.Store({
     bootUpMessage: "loading_basic_data",
     et: false,
     highlightDateRangeSelector: false,
+    forceDisableOrganizationSelector: {},
   },
 
   getters: {
@@ -595,6 +596,9 @@ export default new Vuex.Store({
     async changeDateSelectorHighlight(context, { highlight }) {
       context.commit("setDateSelectorHighlight", { highlight });
     },
+    async changeForceDisableOrganizationSelector(context, { hide, route }) {
+      context.commit("setForceDisableOrganizationSelector", { hide, route });
+    },
   },
 
   mutations: {
@@ -669,6 +673,9 @@ export default new Vuex.Store({
     },
     setDateSelectorHighlight(state, { highlight }) {
       state.highlightDateRangeSelector = highlight;
+    },
+    setForceDisableOrganizationSelector(state, { hide, route }) {
+      Vue.set(state.forceDisableOrganizationSelector, route, hide);
     },
   },
 });
