@@ -7,7 +7,10 @@ from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
-from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
+from core.permissions import (
+    SuperuserOrAdminPermission,
+    ViewPlatformPermission,
+)
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -38,13 +41,13 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from tags.models import Tag
 
+from config.permissions import IsAuthenticatedWithOptional2FA
 from publications.models import (
     Platform,
     PlatformTitle,
@@ -167,7 +170,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             action = self.action
 
             # Create admin permission for given organization
-            class Permission(IsAuthenticated):
+            class Permission(IsAuthenticatedWithOptional2FA):
                 def has_permission(self, request, *args, **kwargs):
                     # Deleting all data should be enabled regardless
                     # of ALLOW_USER_CREATED_PLATFORMS flag

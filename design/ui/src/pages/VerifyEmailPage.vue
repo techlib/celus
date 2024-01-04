@@ -73,7 +73,7 @@ export default {
     async verifyEmail() {
       try {
         await axios.post(
-          `/api/rest-auth/registration/verify-email/`,
+          "/api/user/verify-email-code",
           { key: this.key },
           { privileged: true }
         );

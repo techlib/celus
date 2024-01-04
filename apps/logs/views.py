@@ -42,7 +42,6 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
@@ -59,6 +58,7 @@ from sushi.models import (
 from sushi.serializers import CounterReportTypeSerializer
 from tags.models import Tag
 
+from config.permissions import IsAuthenticatedWithOptional2FA
 from logs.logic.export import CSVExport
 from logs.logic.queries import StatsComputer, extract_accesslog_attr_query_params
 from logs.models import (
@@ -106,7 +106,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class Counter5DataView(APIView):
-    # permission_classes = [IsAuthenticated &
+    # permission_classes = [IsAuthenticatedWithOptional2FA &
     #                       (SuperuserOrAdminPermission | CanAccessOrganizationFromGETAttrs)
     #                      ]
 
@@ -379,7 +379,7 @@ class RawDataExportView(PandasViewBase, AccessLogListViewBase):
 
 class RawDataDelayedExportView(APIView):
     permission_classes = [
-        IsAuthenticated
+        IsAuthenticatedWithOptional2FA
         & (
             SuperuserOrAdminPermission
             | SuperuserOrMasterUserPermission
@@ -931,7 +931,7 @@ class ManualDataUploadViewSet(
 ):
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
-        IsAuthenticated
+        IsAuthenticatedWithOptional2FA
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (
@@ -944,7 +944,7 @@ class ManualDataUploadViewSet(
     ]
 
     extra_actions_permission_classes = [
-        IsAuthenticated
+        IsAuthenticatedWithOptional2FA
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (
@@ -1109,7 +1109,7 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
     serializer_class = ManualDataUploadVerboseSerializer
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
-        IsAuthenticated
+        IsAuthenticatedWithOptional2FA
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (OwnerLevelBasedPermissions & CanAccessOrganizationRelatedObjectPermission)

@@ -36,6 +36,11 @@ USES_ERMS = config("USES_ERMS", cast=bool, default=False)
 
 CELUS_VERSION = get_version(BASE_DIR)
 DEBUG = config("DEBUG", cast=bool, default=False)
+OTP_ENABLED = config("OTP_ENABLED", cast=bool, default=False)
+# time to verify token (in seconds)
+OTP_EMAIL_TOKEN_VALIDITY = config("OTP_EMAIL_TOKEN_VALIDITY", cast=int, default=60 * 30)
+# how long should be verification valid (in days)
+OTP_VERIFICATION_VALIDITY = config("OTP_VERIFICATION_VALIDITY", cast=int, default=90)
 
 # Application definition
 
@@ -48,7 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "modeltranslation",  # must be before admin
-    "django.contrib.admin",
+    "core.apps.CelusAdminConfig",  # replaces Django's admin
     "rest_framework",
     "rest_framework.authtoken",
     "django_celery_results",
@@ -82,6 +87,13 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "impersonate",
     "colorfield",
+    "django_otp",
+    # Unfortunatelly otp_static and otp_totp
+    # has to be enabled as well, otherwise
+    # device_classes() function of django-otp crashes
+    "django_otp.plugins.otp_static",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_email",
     # allauth is at the end so that we can easily override its templates
     "allauth",
     "allauth.socialaccount",
@@ -102,6 +114,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "core.middleware.CookieOTPMiddleware",
     "core.middleware.EDUIdHeaderMiddleware",
     "impersonate.middleware.ImpersonateMiddleware",  # should be place after auth middlewares
     "core.middleware.CelusVersionHeaderMiddleware",
@@ -226,7 +239,7 @@ STATIC_ROOT = config("STATIC_ROOT", default=BASE_DIR / "static_compiled")
 
 REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": False,
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_PERMISSION_CLASSES": ("config.permissions.IsAuthenticatedWithOptional2FA",),
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_pandas.renderers.PandasCSVRenderer",
@@ -905,4 +918,5 @@ EXPORTED_SETTINGS = [
     "SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL",
     "REPORT_TYPES_WITHOUT_COVERAGE",
     "CLICKHOUSE_QUERY_ACTIVE",
+    "OTP_ENABLED",
 ]

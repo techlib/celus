@@ -17,7 +17,8 @@
   <div v-else>
     <v-app>
       <BootUpWidget />
-      <LoginDialog if="showLoginDialog" />
+      <LoginDialog v-if="showLoginDialog" />
+      <OtpDialog v-else-if="otpRequired" />
     </v-app>
   </div>
 </template>
@@ -29,12 +30,14 @@ import EmailNotVerified from "./EmailNotVerified";
 import StandardLayout from "./StandardLayout";
 import BootUpWidget from "@/components/BootUpWidget";
 import LoginDialog from "@/components/account/LoginDialog";
+import OtpDialog from "@/components/account/OtpDialog";
 import NewCelusVersionDialog from "@/components/NewCelusVersionDialog";
 
 export default {
   name: "Dashboard",
   components: {
     LoginDialog,
+    OtpDialog,
     BootUpWidget,
     InvalidUserPage,
     NewCelusVersionDialog,
@@ -49,6 +52,7 @@ export default {
       invalidUser: "invalidUser",
       user: "user",
       showLoginDialog: "showLoginDialog",
+      otpRequired: "otpRequired",
       newCelusVersion: "newCelusVersion",
     }),
     ...mapGetters({

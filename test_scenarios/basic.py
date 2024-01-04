@@ -2,7 +2,13 @@ import json
 from datetime import timedelta
 
 import pytest
-from core.fake_data import DataSourceFactory, IdentityFactory, UserFactory
+from core.fake_data import (
+    DataSourceFactory,
+    EmailAddressFactory,
+    EmailDeviceFactory,
+    IdentityFactory,
+    UserFactory,
+)
 from core.models import DataSource, Identity
 from django.conf import settings
 from django.utils import timezone
@@ -39,6 +45,13 @@ def users():
     admin2 = UserFactory(username="admin2")
     su = UserFactory(username="su", is_superuser=True)
     return locals()
+
+
+@pytest.fixture
+def otp_devices(users):
+    for user in users.values():
+        EmailAddressFactory(user=user, verified=True)
+    return {k: EmailDeviceFactory(user=v) for k, v in users.items()}
 
 
 @pytest.fixture

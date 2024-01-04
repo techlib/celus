@@ -124,6 +124,7 @@ export default new Vuex.Store({
     et: false,
     highlightDateRangeSelector: false,
     forceDisableOrganizationSelector: {},
+    otpRequired: false,
   },
 
   getters: {
@@ -347,6 +348,12 @@ export default new Vuex.Store({
         return !!getters.selectedOrganization?.is_raw_data_import_enabled;
       }
     },
+    otpRequired(state) {
+      return state.otpRequired;
+    },
+    otpEnabled(state) {
+      return state.basicInfo.OTP_ENABLED;
+    },
   },
 
   actions: {
@@ -407,7 +414,10 @@ export default new Vuex.Store({
         let response = await axios.get("/api/user/", { privileged: true });
         commit("setUserData", response.data);
         commit("setAppLanguage", { lang: response.data.language });
-        dispatch("afterAuthentication");
+        commit("setOtpRequired", { required: response.data.otp_required });
+        if (!response.data.otp_required) {
+          dispatch("afterAuthentication");
+        }
       } catch (error) {
         if (error.response?.status === 403) {
           // we could not get user data because of 403 Forbidden error
@@ -670,6 +680,9 @@ export default new Vuex.Store({
     },
     setForceDisableOrganizationSelector(state, { hide, route }) {
       Vue.set(state.forceDisableOrganizationSelector, route, hide);
+    },
+    setOtpRequired(state, { required }) {
+      state.otpRequired = required;
     },
   },
 });

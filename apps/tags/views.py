@@ -15,7 +15,6 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import BooleanField, ChoiceField, IntegerField
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.status import (
@@ -27,6 +26,7 @@ from rest_framework.status import (
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from config.permissions import IsAuthenticatedWithOptional2FA
 from tags.filters import TagClassScopeFilter
 from tags.models import (
     ItemTag,
@@ -56,7 +56,7 @@ from tags.tasks import (
 class TagClassViewSet(ModelViewSet):
     queryset = TagClass.objects.none()
     serializer_class = TagClassSerializer
-    permission_classes = [IsAuthenticated, TagClassPermissions]
+    permission_classes = [IsAuthenticatedWithOptional2FA, TagClassPermissions]
     filter_backends = [TagClassScopeFilter, PkMultiValueFilterBackend]
 
     def get_queryset(self):
@@ -103,7 +103,7 @@ class TagClassViewSet(ModelViewSet):
 
 class TagViewSet(ModelViewSet):
     queryset = Tag.objects.none()
-    permission_classes = [IsAuthenticated, TagPermissions]
+    permission_classes = [IsAuthenticatedWithOptional2FA, TagPermissions]
     filter_backends = [PkMultiValueFilterBackend]
     serializer_class = TagSerializer
 

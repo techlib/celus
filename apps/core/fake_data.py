@@ -1,4 +1,6 @@
 import factory
+from allauth.account.models import EmailAddress
+from django_otp.plugins.otp_email.models import EmailDevice
 from faker import Faker
 
 from core.models import DataSource, Identity, User
@@ -30,3 +32,20 @@ class IdentityFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     identity = factory.LazyAttribute(lambda x: x.user.email)
+
+
+class EmailAddressFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailAddress
+
+    user = factory.SubFactory(UserFactory)
+    email = factory.LazyAttribute(lambda x: x.user.email)
+
+
+class EmailDeviceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailDevice
+
+    name = "default"
+    user = factory.SubFactory(UserFactory)
+    email = factory.LazyAttribute(lambda x: x.user.email)

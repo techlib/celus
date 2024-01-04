@@ -28,3 +28,6 @@ CLICKHOUSE_QUERY_ACTIVE = config(  # noqa F405
 LOGGING["handlers"]["mail_admins"][  # noqa F405
     "email_backend"
 ] = "django.core.mail.backends.console.EmailBackend"
+
+# Make enable OTP otherwise otp endpoints are missing in the tests
+OTP_ENABLED = True

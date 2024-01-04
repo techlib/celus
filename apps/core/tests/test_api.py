@@ -9,49 +9,117 @@ from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.core.files.base import ContentFile
 from django.urls import reverse
 from django.utils import timezone
+from freezegun import freeze_time
 
 from core.fake_data import UserFactory
-from core.models import Identity, User
+from core.models import User
+from test_scenarios.basic import (
+    basic1,  # noqa
+    clients,  # noqa
+    data_sources,  # noqa
+    identities,  # noqa
+    organizations,  # noqa
+    otp_devices,  # noqa
+    platforms,  # noqa
+    users,  # noqa
+)
+
+
+@pytest.fixture
+def disallow_eduid_login(settings):
+    settings.ALLOW_EDUID_LOGIN = False
+    settings.AUTHENTICATION_BACKENDS = [
+        e
+        for e in settings.AUTHENTICATION_BACKENDS
+        if e != "apps.core.auth.EDUIdAuthenticationBackend"
+    ]
 
 
 @pytest.mark.django_db
 class TestUserAPI:
-    def test_authenticated(self, authenticated_client):
-        resp = authenticated_client.get(reverse("user_api_view"))
+    def test_authenticated(self, clients):
+        resp = clients["user1"].get(reverse("user_api_view"))
         assert resp.status_code == 200
 
-    def test_unauthenticated(self, unauthenticated_client):
-        resp = unauthenticated_client.get(reverse("user_api_view"))
+    def test_unauthenticated(self, clients):
+        resp = clients["unauthenticated"].get(reverse("user_api_view"))
         assert resp.status_code in (403, 401)  # depends on auth backend
 
-    def test_authenticated_details(self, authenticated_client, valid_identity):
-        identity = Identity.objects.select_related("user").get(identity=valid_identity)
-        resp = authenticated_client.get(reverse("user_api_view"))
+    def test_authenticated_details(self, clients, users):
+        resp = clients["user1"].get(reverse("user_api_view"))
         assert resp.status_code == 200
         resp_data = resp.json()
-        assert resp_data["username"] == identity.user.username
+        assert resp_data["username"] == users["user1"].username
         assert "extra_data" in resp_data
 
-    def test_user_language(self, authenticated_client):
-        authenticated_client.user.language = "cs"
-        authenticated_client.user.save()
-        resp = authenticated_client.put(
-            reverse("user_lang_api_view"), {"language": "en"}, content_type="application/json"
-        )
+    def test_user_language(self, clients, users):
+        users["user1"].language = "cs"
+        users["user1"].save()
+        resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
         assert resp.status_code == 200
-        authenticated_client.user.refresh_from_db()
-        assert authenticated_client.user.language == "en"
+        users["user1"].refresh_from_db()
+        assert users["user1"].language == "en"
 
-    def test_verified_email(self, authenticated_client, valid_identity, settings):
+    def test_user_language_with_otp_device(
+        self, settings, clients, users, otp_devices, disallow_eduid_login
+    ):
+        settings.OTP_ENABLED = True
+        users["user1"].language = "cs"
+        users["user1"].save()
+        resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+        assert resp.status_code == 403, "Missing device verification"
+
+        # Send verification email
+        resp = clients["user1"].post(reverse("otp-generate", args=(otp_devices["user1"].pk,)))
+        assert resp.status_code == 200
+
+        # Verify code
+        otp_devices["user1"].refresh_from_db()
+        resp = clients["user1"].post(
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
+            {"code": otp_devices["user1"].token},
+        )
+        assert resp.status_code == 200, "code verified and cookie set"
+
+        resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+        assert resp.status_code == 200, "Allow to change language when 2FA is done"
+
+    def test_user_language_with_unlinked_otp_device_notification_mail(
+        self,
+        settings,
+        clients,
+        users,
+        disallow_eduid_login,
+        mailoutbox,
+    ):
+        settings.OTP_ENABLED = True
+        with freeze_time("2024-01-01 00:00:00"):
+            with patch("core.tasks.async_mail_admins") as email_task:
+                resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+                assert resp.status_code == 200
+                assert email_task.delay.called, "Notification email sent"
+
+        with freeze_time("2024-01-01 01:00:00"):
+            with patch("core.tasks.async_mail_admins") as email_task:
+                resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+                assert resp.status_code == 200
+                assert not email_task.delay.called, "Notification email not sent - still in timeout"
+
+        with freeze_time("2024-01-05 00:00:00"):
+            with patch("core.tasks.async_mail_admins") as email_task:
+                resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+                assert resp.status_code == 200
+                assert email_task.delay.called, "Notification email sent - timeout expired"
+
+    def test_verified_email(self, settings, users, clients, disallow_eduid_login):
         """
         Test which checks email validity status
         """
-        settings.ALLOW_EDUID_LOGIN = False
-        user = authenticated_client.user
+        user = users["user1"]
         sent_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
 
         def get_response() -> dict:
-            resp = authenticated_client.get(reverse("user_api_view"))
+            resp = clients["user1"].get(reverse("user_api_view"))
             assert resp.status_code == 200
             return resp.json()
 
@@ -93,15 +161,12 @@ class TestUserAPI:
         assert User.objects.get(pk=user.pk).email_verified is True
 
     def test_send_email_verification(
-        self, authenticated_client, valid_identity, mailoutbox, site, settings
+        self, mailoutbox, site, settings, users, clients, disallow_eduid_login
     ):
-        settings.ALLOW_EDUID_LOGIN = False
-        user = authenticated_client.user
-        user.email = valid_identity
-        user.save()
+        user = users["user1"]
 
         # get user info
-        resp = authenticated_client.get(reverse("user_api_view"))
+        resp = clients["user1"].get(reverse("user_api_view"))
         assert resp.status_code == 200
         resp_data = resp.json()
         assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_UNKNOWN
@@ -110,7 +175,7 @@ class TestUserAPI:
         assert len(mailoutbox) == 0
 
         # send verification email
-        resp = authenticated_client.post(reverse("user_api_verify_email_view"))
+        resp = clients["user1"].post(reverse("user_api_verify_email_view"))
         assert resp.status_code == 200
         resp_data = resp.json()
         assert resp_data["status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
@@ -118,75 +183,84 @@ class TestUserAPI:
         assert len(mailoutbox) == 1
 
         # obtain user info again
-        resp = authenticated_client.get(reverse("user_api_view"))
+        resp = clients["user1"].get(reverse("user_api_view"))
         assert resp.status_code == 200
         resp_data = resp.json()
 
         assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
         assert resp_data["email_verification_sent"] is not None
 
-    def test_set_extra_data(self, authenticated_client):
+    def test_set_extra_data(self, clients, users):
         """
         Checks that it is possible to store extra_data in User models
         """
-        resp = authenticated_client.post(
-            reverse("user_extra_data_view"), {"basic_tour_finished": True}
-        )
+        resp = clients["user1"].post(reverse("user_extra_data_view"), {"basic_tour_finished": True})
         assert resp.status_code == 200
-        user = authenticated_client.user
+        user = users["user1"]
         user.refresh_from_db()
         assert "basic_tour_finished" in user.extra_data
         assert user.extra_data["basic_tour_finished"] is True
 
-    def test_set_extra_data_merging(self, authenticated_client):
+    def test_set_extra_data_merging(self, clients, users):
         """
         Checks that when storing extra_data in User model, existing keys are not removed
         """
-        user = authenticated_client.user
+        user = users["user1"]
         user.extra_data["foobar"] = 10
         user.save()
-        resp = authenticated_client.post(
-            reverse("user_extra_data_view"), {"basic_tour_finished": True}
-        )
+        resp = clients["user1"].post(reverse("user_extra_data_view"), {"basic_tour_finished": True})
         assert resp.status_code == 200
         user.refresh_from_db()
         assert "basic_tour_finished" in user.extra_data
         assert user.extra_data["basic_tour_finished"] is True
         assert user.extra_data["foobar"] == 10
 
-    def test_set_extra_data_bad_key(self, authenticated_client):
+    def test_set_extra_data_bad_key(self, clients, users):
         """
         Checks that it is possible to store extra_data in User models, but only allowed ones.
         """
-        resp = authenticated_client.post(reverse("user_extra_data_view"), {"foobarbaz": True})
+        resp = clients["user1"].post(reverse("user_extra_data_view"), {"foobarbaz": True})
         assert resp.status_code == 400
-        user = authenticated_client.user
+        user = users["user1"]
         user.refresh_from_db()
         assert "foobarbaz" not in user.extra_data
 
-    def test_set_extra_data_bad_value(self, authenticated_client):
+    def test_set_extra_data_bad_value(self, clients):
         """
         Checks that value validation work for extra data
         """
-        resp = authenticated_client.post(
+        resp = clients["user1"].post(
             reverse("user_extra_data_view"), {"basic_tour_finished": "foobarbaz"}
         )
         assert resp.status_code == 400
 
-    def test_set_extra_data_no_data(self, authenticated_client):
+    def test_set_extra_data_no_data(self, clients, users):
         """
         Checks that posting empty data raises a BadRequest error
         """
-        user = authenticated_client.user
+        user = users["user1"]
         # add some extra data - we check later that it did not disappear
         user.extra_data["foobar"] = True
         old_extra_data = user.extra_data
         user.save()
-        resp = authenticated_client.post(reverse("user_extra_data_view"), {})
+        resp = clients["user1"].post(reverse("user_extra_data_view"), {})
         assert resp.status_code == 400
         user.refresh_from_db()
         assert "foobar" in user.extra_data
         assert old_extra_data == user.extra_data
+
+    @pytest.mark.parametrize(
+        "otp_enabled",
+        (True, False),
+    )
+    def test_otp_required(self, otp_enabled, settings, clients, otp_devices):
+        settings.OTP_ENABLED = otp_enabled
+        resp = clients["master_user"].get(reverse("user_api_view"))
+        assert resp.status_code == 200
+        if otp_enabled:
+            assert len(resp.data["otp_required"]) == 1
+        else:
+            assert not resp.data["otp_required"]
 
 
 @pytest.mark.django_db
@@ -197,15 +271,17 @@ class TestAccountCreationAPI:
         "password2": "verysecret666",
     }
 
-    def test_create_account(self, mailoutbox, client, site, settings):
+    def test_create_account(self, mailoutbox, clients, site, settings, disallow_eduid_login):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
         """
-        settings.ALLOW_EDUID_LOGIN = False
+        User.objects.all().delete()
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post("/api/rest-auth/registration/", self.test_user_data)
+            resp = clients["unauthenticated"].post(
+                "/api/rest-auth/registration/", self.test_user_data
+            )
         assert resp.status_code == 204
         assert User.objects.count() == 1
         assert len(mailoutbox) == 1
@@ -216,32 +292,35 @@ class TestAccountCreationAPI:
         assert user.emailaddress_set.count() == 1
         assert user.emailaddress_set.first().emailconfirmation_set.count() == 1
 
-    def test_create_account_same_username(self, client, site):
+    def test_create_account_same_username(self, clients, site):
         """
         Tests that is it possible to create two accounts with the same part before @ in email
         """
+        User.objects.all().delete()
         assert User.objects.count() == 0
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post("/api/rest-auth/registration/", self.test_user_data)
+            resp = clients["unauthenticated"].post(
+                "/api/rest-auth/registration/", self.test_user_data
+            )
         assert resp.status_code == 204
         assert User.objects.count() == 1
         second_user_data = dict(self.test_user_data)
         second_user_data["email"] = "foo@baz.bar"
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post("/api/rest-auth/registration/", second_user_data)
+            resp = clients["unauthenticated"].post("/api/rest-auth/registration/", second_user_data)
         assert resp.status_code == 204
         assert User.objects.count() == 2
 
     @pytest.mark.parametrize("first_verified", [True, False])
-    def test_create_account_same_email(self, client, first_verified):
+    def test_create_account_same_email(self, clients, first_verified):
         """
         Tests that it is not possible to create two accounts with the same email, if the email
         is verified. If it is not verified, it is possible to create a new account with the same
         email.
         """
-        assert User.objects.count() == 0
+        assert User.objects.count() == 8
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post(
+            resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/",
                 {
                     "email": "foo@bar.baz",
@@ -250,9 +329,10 @@ class TestAccountCreationAPI:
                 },
             )
             assert resp.status_code == 204
+            assert User.objects.count() == 9
             if first_verified:
                 EmailAddress.objects.filter(email="foo@bar.baz").update(verified=True)
-            resp = client.post(
+            resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/",
                 {
                     "email": "foo@bar.baz",
@@ -261,16 +341,18 @@ class TestAccountCreationAPI:
                 },
             )
             assert resp.status_code == (400 if first_verified else 204)
+            assert User.objects.count() == 9 if first_verified else 10
 
-    def test_create_account_bad_data(self, mailoutbox, client):
+    def test_create_account_bad_data(self, mailoutbox, clients):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
         when there are problems with the data
         """
+        User.objects.all().delete()
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post(
+            resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/",
                 {
                     "email": "thisisnoemail",
@@ -284,13 +366,13 @@ class TestAccountCreationAPI:
         assert User.objects.count() == 0
         assert len(mailoutbox) == 0
 
-    def test_create_account_email_customization(self, mailoutbox, client, site):
+    def test_create_account_email_customization(self, mailoutbox, clients, site):
         """
         Tests that the email verification email sent when creating an account uses our own
         text and not the one provided with allauth.
         """
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = client.post(
+            resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/",
                 {
                     "email": "foo@bar.baz",
@@ -306,19 +388,19 @@ class TestAccountCreationAPI:
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
     def test_create_account_email_customization_resend(
-        self, mailoutbox, authenticated_client, site, settings
+        self, mailoutbox, users, site, settings, clients, otp_devices, disallow_eduid_login
     ):
         """
         Tests that the email verification email sent when re-sending verification email has custom
         text and not the one provided with allauth.
         """
-        settings.ALLOW_EDUID_LOGIN = False
-        user = authenticated_client.user
-        user.email = "foo@bar.baz"
-        user.save()
-        # create email address to get user into the 'unverified' status
-        EmailAddress.objects.create(user=user, email=user.email)
-        resp = authenticated_client.post("/api/user/verify-email")
+
+        # make email address unverified
+        email_address = EmailAddress.objects.get(user=users["user1"])
+        email_address.verified = False
+        email_address.save()
+
+        resp = clients["user1"].post("/api/user/verify-email")
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
@@ -326,13 +408,25 @@ class TestAccountCreationAPI:
         assert "Celus" in mail.body, "Celus must be mentioned in the email body"
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
-    def test_email_admins_about_create_account(self, client, site):
+        resp = clients["user1"].post(
+            reverse("user_verify_email_code"),
+            {"key": email_address.emailconfirmation_set.all().last().key},
+        )
+        assert resp.status_code == 200
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None
+        ), "device cookie is set"
+
+    def test_email_admins_about_create_account(self, clients, site):
         """
         Tests that admins are sent an email when user creates an account
         """
+        User.objects.all().delete()
         assert User.objects.count() == 0
         with patch("core.signals.async_mail_customer_care_admins") as email_task:
-            resp = client.post("/api/rest-auth/registration/", self.test_user_data)
+            resp = clients["unauthenticated"].post(
+                "/api/rest-auth/registration/", self.test_user_data
+            )
             assert resp.status_code == 204
             assert User.objects.count() == 1
             assert email_task.delay.called, "email to admins should be sent"
@@ -340,8 +434,8 @@ class TestAccountCreationAPI:
 
 @pytest.mark.django_db
 class TestBasicInfoAPI:
-    def test_system_info_api_view(self, client, settings):
-        resp = client.get(reverse("system_info_api_view"))
+    def test_system_info_api_view(self, clients, settings):
+        resp = clients["unauthenticated"].get(reverse("system_info_api_view"))
         assert resp.status_code == 200
         data = resp.json()
         # just a few hard-coded text values
@@ -354,27 +448,31 @@ class TestBasicInfoAPI:
 
 @pytest.mark.django_db
 class TestInvitationAndPasswordResetAPI:
-    def test_password_reset_email_is_sent(self, client, mailoutbox):
+    def test_password_reset_email_is_sent(self, clients, users, mailoutbox):
         """
         Test that the API endpoint for sending password reset emails works and really sends out
         an email with the correct link
         """
-        user = User.objects.create(username="foo", email="foo@bar.baz")
         assert len(mailoutbox) == 0
-        resp = client.post("/api/rest-auth/password/reset/", {"email": user.email})
+        resp = clients["unauthenticated"].post(
+            "/api/rest-auth/password/reset/",
+            {"email": users["user1"].email},
+        )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
         assert "/reset-password/?" in mailoutbox[0].body, "reset link should be present in mail"
 
-    def test_password_reset_confirm_endpoint_works(self, client, mailoutbox):
+    def test_password_reset_confirm_endpoint_works(self, clients, users, mailoutbox):
         """
         Test that password can be changed using the link sent when password reset it triggered
         """
         # at first we need to get the appropriate input for the endpoint
         # the code is buried in a django form, so we simply simulate sending the email and
         # get the data from there
-        user = User.objects.create(username="foo", email="foo@bar.baz")
-        resp = client.post("/api/rest-auth/password/reset/", {"email": user.email})
+        resp = clients["unauthenticated"].post(
+            "/api/rest-auth/password/reset/",
+            {"email": users["user1"].email},
+        )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
         # extract uid and token to use for the endpoint
@@ -383,18 +481,18 @@ class TestInvitationAndPasswordResetAPI:
         token = re.search(r"&token=([\w-]+)", mailoutbox[0].body).group(1)
         assert uid and token, "both uid and token must be present in the email body"
         # now try resetting the password
-        old_pwd = user.password
+        old_pwd = users["user1"].password
         new_pwd = "4aKVkhMfVP"
-        resp = client.post(
+        resp = clients["unauthenticated"].post(
             "/api/user/password-reset",
             {"uid": uid, "token": token, "new_password1": new_pwd, "new_password2": new_pwd},
         )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1, "no new email after password reset"
-        user.refresh_from_db()
-        assert user.password != old_pwd
+        users["user1"].refresh_from_db()
+        assert users["user1"].password != old_pwd
         # one more thing - check that the user email is thus verified
-        assert user.email_verified
+        assert users["user1"].email_verified
 
     def test_invitation_workflow_works(self, admin_client, client, mailoutbox, settings, site):
         """
@@ -451,7 +549,10 @@ class TestInvitationAndPasswordResetAPI:
         settings.ALLOWED_HOSTS = ["testserver", *allowed_hosts]
         resp = admin_client.post(
             reverse("admin:core_user_changelist"),
-            {"action": "send_invitation_emails", ACTION_CHECKBOX_NAME: [admin_user.pk]},
+            {
+                "action": "send_invitation_emails",
+                ACTION_CHECKBOX_NAME: [admin_user.pk],
+            },
         )
         assert resp.status_code == 302
         if ok:
@@ -470,11 +571,11 @@ class TestMiddleware:
             (False, 409),  # Client celus version != celus server version
         ),
     )
-    def test_version(self, authenticated_client, same_version, status, settings):
+    def test_version(self, clients, same_version, status, settings):
         if same_version is None:
-            resp = authenticated_client.get(reverse("user_api_view"))
+            resp = clients["user1"].get(reverse("user_api_view"))
         else:
-            resp = authenticated_client.get(
+            resp = clients["user1"].get(
                 reverse("user_api_view"),
                 HTTP_CELUS_VERSION=settings.CELUS_VERSION if same_version else "0.0.0",
             )
@@ -491,7 +592,7 @@ class TestMiddleware:
 @pytest.mark.django_db
 class TestUserExistsView:
     @pytest.mark.parametrize("exists", [True, False])
-    def test_user_exists(self, client, exists, settings):
+    def test_user_exists(self, clients, exists, settings):
         settings.OCTOPUS_HMAC_KEY = "testtesttesttest"
         email = "foo@bar.baz"
         check = hmac.digest(
@@ -501,7 +602,10 @@ class TestUserExistsView:
         ).hex()
         if exists:
             UserFactory.create(email=email)
-        resp = client.get(reverse("user_exists_api_view"), {"hmac": check})
+        resp = clients["unauthenticated"].get(
+            reverse("user_exists_api_view"),
+            {"hmac": check},
+        )
         assert resp.status_code == 200
         assert resp.json() == {"exists": exists}
 
@@ -516,9 +620,12 @@ class TestUserExistsView:
             "3b4bb87b4b06f185bd3fba4203e5e44b52279adab79c3f6dc33f%c44dd11b5a8",
         ],
     )
-    def test_user_exists_fuzzy(self, client, settings, check):
+    def test_user_exists_fuzzy(self, clients, settings, check):
         settings.OCTOPUS_HMAC_KEY = "testtesttesttest"
-        resp = client.get(reverse("user_exists_api_view"), {"hmac": check})
+        resp = clients["unauthenticated"].get(
+            reverse("user_exists_api_view"),
+            {"hmac": check},
+        )
         assert resp.status_code == 200
 
     @pytest.mark.parametrize(
@@ -545,9 +652,9 @@ class TestUserExistsView:
 
 @pytest.mark.django_db
 class TestManagementCommandAPI:
-    def test_list_commands(self, admin_client, settings):
+    def test_list_commands(self, clients, settings):
         settings.EXPOSED_MANAGEMENT_COMMANDS = [("organizations", "load_sushi_credentials")]
-        resp = admin_client.get(reverse("management-command-list"))
+        resp = clients["su"].get(reverse("management-command-list"))
         assert resp.status_code == 200
         assert resp.json() == [
             {
@@ -597,9 +704,7 @@ class TestManagementCommandAPI:
             ["superuser", True],
         ],
     )
-    def test_list_commands_access(
-        self, clients, settings, user_type, has_access, client_by_user_type
-    ):
+    def test_list_commands_access(self, settings, user_type, has_access, client_by_user_type):
         settings.EXPOSED_MANAGEMENT_COMMANDS = [("core", "echo")]
         client, _ = client_by_user_type(user_type)
         resp = client.get(reverse("management-command-list"))
@@ -704,9 +809,7 @@ class TestManagementCommandAPI:
             ["superuser", True],
         ],
     )
-    def test_run_command_access(
-        self, clients, settings, user_type, has_access, client_by_user_type
-    ):
+    def test_run_command_access(self, settings, user_type, has_access, client_by_user_type):
         settings.EXPOSED_MANAGEMENT_COMMANDS = [("core", "echo")]
         client, _ = client_by_user_type(user_type)
         resp = client.post(reverse("management-command-run", args=["echo"]))
@@ -714,3 +817,137 @@ class TestManagementCommandAPI:
             assert resp.status_code == 200
         else:
             assert resp.status_code in (403, 401)
+
+
+@pytest.mark.django_db
+class TestOtpAPI:
+    def test_list(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        resp = clients["master_user"].get(reverse("otp-list"))
+        assert resp.status_code == 200
+        assert len(resp.data) == 1
+
+    def test_create(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        resp = clients["master_user"].post(
+            reverse("otp-list"),
+            {
+                "name": "default",
+            },
+        )
+        assert resp.status_code == 201
+        assert resp.data["name"] == "default"
+        assert resp.data["email"] is None
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['master_user'].pk}") is not None
+        ), "device cookie is set"
+
+    def test_create_email_not_verified(
+        self, settings, clients, users, otp_devices, disallow_eduid_login
+    ):
+        settings.OTP_ENABLED = True
+        EmailAddress.objects.all().delete()
+        resp = clients["master_user"].post(
+            reverse("otp-list"),
+            {
+                "name": "default",
+            },
+        )
+        assert resp.status_code == 400
+        assert "user" in resp.data
+
+    def test_destroy(self, settings, clients, users, otp_devices, basic1):
+        settings.OTP_ENABLED = True
+
+        resp = clients["admin2"].delete(reverse("otp-detail", args=(otp_devices["admin1"].pk,)))
+        assert resp.status_code == 404, "Foreign user can't delete data"
+
+        resp = clients["su"].delete(reverse("otp-detail", args=(otp_devices["admin1"].pk,)))
+        assert resp.status_code == 204, "Super user can delete other user's devices"
+        assert resp.cookies.get(f"otp_device_id_{users['su'].pk}") is not None, "Cookie unset"
+
+        resp = clients["master_admin"].delete(
+            reverse("otp-detail", args=(otp_devices["admin2"].pk,))
+        )
+        assert resp.status_code == 204, "master admin can delete other user's devices"
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['master_admin'].pk}") is not None
+        ), "Cookie unset"
+
+        resp = clients["user1"].delete(reverse("otp-detail", args=(otp_devices["user1"].pk,)))
+        assert resp.status_code == 204, "users can delete own devices devices"
+        assert resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None, "Cookie unset"
+
+    def test_generate(self, settings, clients, users, otp_devices, mailoutbox):
+        settings.OTP_ENABLED = True
+        resp = clients["user1"].post(reverse("otp-generate", args=(otp_devices["user1"].pk,)))
+        assert resp.status_code == 200
+        request_id = resp.data["request_id"]
+        otp_devices["user1"].refresh_from_db()
+        token = otp_devices["user1"].token
+        assert request_id in mailoutbox[0].body, "email contains request id"
+        assert token in mailoutbox[0].body, "email contains token"
+
+        resp = clients["user1"].post(reverse("otp-generate", args=(otp_devices["user1"].pk,)))
+        assert resp.status_code == 200
+        otp_devices["user1"].refresh_from_db()
+        assert token == otp_devices["user1"].token, "token remained the same"
+        assert request_id != resp.data["request_id"], "request id changed on resend"
+        assert resp.data["request_id"] in mailoutbox[1].body, "email contains new request id"
+        assert token in mailoutbox[1].body, "email contains the old token"
+
+    def test_generate_email_not_verified(
+        self, settings, clients, users, otp_devices, mailoutbox, disallow_eduid_login
+    ):
+        settings.OTP_ENABLED = True
+        EmailAddress.objects.all().delete()
+        resp = clients["user1"].post(reverse("otp-generate", args=(otp_devices["user1"].pk,)))
+        assert resp.status_code == 400
+        assert len(mailoutbox) == 0
+
+    def test_verify(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        otp_devices["user1"].generate_token()
+
+        resp = clients["user1"].post(
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
+            {"code": otp_devices["user1"].token},
+        )
+        assert resp.status_code == 200
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None
+        ), "device cookie is set"
+
+    def test_verify_missing_code(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        resp = clients["user1"].post(
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
+            {},
+        )
+        assert resp.status_code == 400
+
+    def test_verify_other_user(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        otp_devices["user1"].generate_token()
+
+        resp = clients["user2"].post(
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
+            {"code": otp_devices["user1"].token},
+        )
+        assert resp.status_code == 404
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None
+        ), "device cookie is not set"
+
+    def test_verify_wrong_code(self, settings, clients, users, otp_devices):
+        settings.OTP_ENABLED = True
+        otp_devices["user1"].generate_token()
+
+        resp = clients["user1"].post(
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
+            {"code": "000000"},
+        )
+        assert resp.status_code == 404
+        assert (
+            resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None
+        ), "device cookie is not set"

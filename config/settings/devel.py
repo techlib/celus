@@ -72,6 +72,8 @@ QUERYCOUNT = {"DISPLAY_DUPLICATES": 5}
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"].append("rest_framework.renderers.BrowsableAPIRenderer")
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
+
+# Use console logger for outgoing emails
 LOGGING["handlers"]["mail_admins"][  # noqa F405
     "email_backend"
 ] = "django.core.mail.backends.console.EmailBackend"

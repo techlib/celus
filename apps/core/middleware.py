@@ -10,6 +10,8 @@ from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.db import connection
 from django.http import JsonResponse
 from django.utils.translation import activate
+from django_otp import DEVICE_ID_SESSION_KEY, devices_for_user
+from django_otp.middleware import OTPMiddleware
 from logs.cubes import ch_backend
 from rest_framework import status
 
@@ -140,3 +142,28 @@ class QueryLoggingMiddleware:
             response = self.get_response(request)
             response["X-Django-Query-Count"] = self.qc.counter[tid] - start
             return response
+
+
+class CookieOTPMiddleware(OTPMiddleware):
+    """
+    Sets OTP device from signed cookie.
+    Note that this middleware needs to be applied before ImpersonateMiddleware
+    """
+
+    def __call__(self, request):
+        if not settings.OTP_ENABLED:
+            return super().__call__(request)
+
+        # Try to refresh otp device in session from a cookie
+        if request.user.is_authenticated:
+            if device_id := request.get_signed_cookie(
+                f"{DEVICE_ID_SESSION_KEY}_{request.user.pk}", None
+            ):
+                # Set device id only for new sessions
+                if DEVICE_ID_SESSION_KEY not in request.session:
+                    user_devices = devices_for_user(request.user)
+                    # Check whether user is still linked with the device
+                    if device_id in [e.persistent_id for e in user_devices]:
+                        request.session[DEVICE_ID_SESSION_KEY] = device_id
+
+        return super().__call__(request)

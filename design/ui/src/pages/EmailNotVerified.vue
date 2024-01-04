@@ -118,7 +118,7 @@ export default {
       try {
         console.log("sending", initial);
         this.sending = true;
-        await axios.post("/api/user/verify-email");
+        await axios.post("/api/user/verify-email", null, { privileged: true });
         if (!initial) {
           this.showSnackbar({
             content: this.$t("resent"),

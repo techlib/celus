@@ -1,8 +1,12 @@
 import typing
 from datetime import datetime
 
+from django.conf import settings
+from django_otp import DEVICE_ID_SESSION_KEY, devices_for_user, user_has_device
+from django_otp.plugins.otp_email.models import EmailDevice
 from organizations.models import Organization, UserOrganization
 from organizations.serializers import OrganizationShortSerializer
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     BooleanField,
     CharField,
@@ -22,7 +26,35 @@ class EmailVerificationSerializer(Serializer):
     email_sent = DateTimeField(read_only=True, default=None)
 
 
+class EmailDeviceSerializer(ModelSerializer):
+    class Meta:
+        fields = (
+            "pk",
+            "email",
+            "name",
+            "confirmed",
+        )
+        model = EmailDevice
+
+    def validate(self, attrs):
+        result = super().validate(attrs)
+        user = self.context["request"].user
+        if not user.email_verified:
+            raise ValidationError({"user": "user's email is not verified"})
+        return result
+
+    def create(self, validated_data):
+        device = EmailDevice.objects.create(
+            user=self.context["request"].user,
+            name=validated_data["name"],
+            confirmed=True,
+            email=None,
+        )
+        return device
+
+
 class UserSerializer(ModelSerializer):
+    otp_required = SerializerMethodField()
     email_verification_status = SerializerMethodField()
     email_verification_sent = SerializerMethodField(required=False)
     impersonator = PrimaryKeyRelatedField(read_only=True, required=False)
@@ -41,6 +73,7 @@ class UserSerializer(ModelSerializer):
             "is_admin_of_master_organization",
             "is_superuser",
             "is_staff",
+            "otp_required",
             "email_verification_status",
             "email_verification_sent",
             "extra_data",
@@ -52,6 +85,36 @@ class UserSerializer(ModelSerializer):
 
     def get_email_verification_sent(self, obj) -> typing.Optional[datetime]:
         return obj.email_verification["email_sent"]
+
+    def get_otp_required(self, obj) -> typing.Optional[typing.List[dict]]:
+        if not settings.OTP_ENABLED:
+            # OTP disabled
+            return None
+
+        if request := self.context.get("request"):
+            # User needs to have device activated
+            if user_has_device(obj):
+                # Test whether device matches
+                device_id = request.session.get(DEVICE_ID_SESSION_KEY)
+                user_devices = devices_for_user(obj)
+                # Only emails are currently supported
+                user_devices = [e for e in user_devices if isinstance(e, EmailDevice)]
+                if device_id in [e.persistent_id for e in user_devices]:
+                    return None  # 2FA is activated
+
+                res = []
+                for device in user_devices:
+                    serializer = EmailDeviceSerializer(device)
+                    data = serializer.data
+                    # EmailDevice allows you to override email
+                    # when override is not used fill in User.email here
+                    data["email"] = data.get("email") or obj.email
+                    res.append(data)
+
+                return res
+
+        # No need for 2FA
+        return None
 
     def to_representation(self, instance):
         if impersonator_user := self.context["request"].impersonator:

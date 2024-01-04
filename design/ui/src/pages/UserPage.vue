@@ -147,7 +147,7 @@ cs:
       </AccountCreateModifyWidget>
     </v-dialog>
 
-    <v-row class="mb-8" justify="center">
+    <v-row class="mb-5" justify="center" no-gutters>
       <v-card elevation="0">
         <v-card-actions>
           <v-btn

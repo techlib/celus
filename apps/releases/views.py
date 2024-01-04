@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class Releases(ViewSet):
+    permission_classes = [IsAuthenticated]
+
     def list(self, request):
         parsed = get_releases_entries()
         if parsed:
@@ -38,5 +41,7 @@ class Releases(ViewSet):
 
 
 class ChangelogAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         return Response(get_changelog_entries())

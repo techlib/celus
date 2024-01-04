@@ -1,10 +1,14 @@
+import base64
 import codecs
 import logging
+import secrets
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import timedelta
 from io import StringIO
 
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
+from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -12,6 +16,8 @@ from django.core.mail import mail_admins
 from django.core.management import call_command
 from django.db.models import Prefetch
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django_otp import DEVICE_ID_SESSION_KEY, match_token
+from django_otp.plugins.otp_email.models import EmailDevice, GenerateNotAllowed
 from organizations.models import UserOrganization
 from rest_framework import mixins, status
 from rest_framework.decorators import action
@@ -21,10 +27,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
+from config.permissions import IsAuthenticatedWithOptional2FA
+from core.logic.email import mail_otp_token
 from core.models import TaskProgress, User
-from core.permissions import SuperuserOrAdminPermission, SuperuserPermission
+from core.permissions import (
+    OwnerPermission,
+    SuperuserOrAdminPermission,
+    SuperuserPermission,
+)
 from core.serializers import (
     AccessibleUsersSerializer,
+    EmailDeviceSerializer,
     EmailVerificationSerializer,
     TaskProgressSerializer,
     UserExtraDataSerializer,
@@ -38,6 +51,7 @@ from .tasks import erms_sync_users_and_identities_task
 
 
 class UserView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
     action = "current"
 
@@ -199,15 +213,33 @@ class UserPasswordResetView(PasswordResetConfirmView):
         return response
 
 
+class VerifyEmailAndOtpView(VerifyEmailView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200 and settings.OTP_ENABLED:
+            device, _created = EmailDevice.objects.get_or_create(
+                user=request.user,
+                name="default",
+                defaults={
+                    "confirmed": True,
+                    "email": None,
+                },
+            )
+            device.confirmed = True
+            device.save()
+            OtpDeviceView._set_cookie(response, request.user, device)
+        return response
+
+
 class CeleryTaskStatusViewSet(mixins.RetrieveModelMixin, GenericViewSet):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedWithOptional2FA,)
     serializer_class = TaskProgressSerializer
     queryset = TaskProgress.objects.all()
     lookup_field = "task_id"
 
 
 class ManagementCommandViewSet(ViewSet):
-    permission_classes = (IsAuthenticated, SuperuserPermission)
+    permission_classes = (IsAuthenticatedWithOptional2FA, SuperuserPermission)
     lookup_field = "name"
 
     def list(self, request):
@@ -341,7 +373,7 @@ class AccessibleUsersViewSet(ModelViewSet):
 
 
 class DifferentUserInviteView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedWithOptional2FA,)
     serializer_class = EmailVerificationSerializer
 
     def post(self, request):
@@ -352,7 +384,7 @@ class DifferentUserInviteView(APIView):
 
 
 class DifferentUserVerifyEmailView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticatedWithOptional2FA,)
     serializer_class = EmailVerificationSerializer
 
     def post(self, request):
@@ -374,3 +406,111 @@ class DifferentUserVerifyEmailView(APIView):
         }
 
         return Response(response_data)
+
+
+class OtpDeviceView(
+    mixins.ListModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin, GenericViewSet
+):
+    permission_classes = [
+        SuperuserOrAdminPermission | OwnerPermission,
+    ]
+    serializer_class = EmailDeviceSerializer
+
+    @staticmethod
+    def _set_cookie(response, user, device):
+        max_age = timedelta(days=settings.OTP_VERIFICATION_VALIDITY)
+
+        response.set_signed_cookie(
+            f"{DEVICE_ID_SESSION_KEY}_{user.pk}",
+            device.persistent_id,
+            max_age=max_age,
+            httponly=True,  # don't let js access this cookie
+        )
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        # set cookie right away so that user is not forced
+        # to login and logout when OTP login is switched on (toggle button is pressed)
+        if response.status_code == status.HTTP_201_CREATED:
+            device = EmailDevice.objects.filter(user=self.request.user).order_by("id").last()
+            OtpDeviceView._set_cookie(response, request.user, device)
+
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        # Unset cookie so it doesn't mess up future 2FA
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            response.delete_cookie(f"{DEVICE_ID_SESSION_KEY}_{request.user.pk}")
+        return response
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.is_admin_of_master_organization:
+            return EmailDevice.objects.all()
+        else:
+            return EmailDevice.objects.filter(user=user)
+
+    def random(self) -> str:
+        return base64.b64encode(secrets.token_bytes(20)).decode()[:10]
+
+    @action(detail=True, methods=["post"])
+    def generate(self, request, pk):
+        device = self.get_object()
+        generate_allowed, data_dict = device.generate_is_allowed()
+
+        if not request.user.email_verified:
+            # can't sent token using unverified email
+            return Response(
+                {"error": "user's email is not verified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if generate_allowed:
+            # generate new token
+            device.cooldown_set(commit=False)
+            device.generate_token(valid_secs=settings.OTP_EMAIL_TOKEN_VALIDITY, commit=True)
+
+        elif not data_dict or data_dict["reason"] != GenerateNotAllowed.COOLDOWN_DURATION_PENDING:
+            # Currently can't generate token
+            return Response(
+                {"error": "can't generate token for this device"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request_id = self.random()
+        mail_otp_token(
+            device.email or self.request.user.email,
+            request_id,
+            device.token,
+            self.request.user.language,
+        )
+        return Response({"request_id": request_id})
+
+    @action(detail=True, methods=["post"])
+    def verify(self, request, pk):
+        # read code / token
+        token = request.data.get("code")
+        if not token:
+            return Response(
+                {"code": "missing field"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if device := match_token(
+            request.user,
+            token,
+        ):
+            # no need to set anything special to request
+            # after setting this cookie otp_required will be set to null
+            response = Response()
+            OtpDeviceView._set_cookie(response, request.user, device)
+
+            return response
+
+        # couldn't find token
+        return Response(
+            {"token": "token not valid"},
+            status=status.HTTP_404_NOT_FOUND,
+        )

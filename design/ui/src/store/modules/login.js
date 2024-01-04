@@ -50,10 +50,13 @@ export default {
     async logout({ dispatch }) {
       let csrftoken = Cookies.get("csrftoken");
       try {
+        // In order to be able to log out user properly
+        // even in situation when 2FA check was not performed
+        // we need to make logout priviliged request
         await axios.post(
           "/api/rest-auth/logout/",
           {},
-          { headers: { "X-CSRFToken": csrftoken } }
+          { headers: { "X-CSRFToken": csrftoken }, privileged: true }
         );
       } catch (error) {
         dispatch("showSnackbar", {
@@ -94,6 +97,10 @@ export default {
         { new_password1: password, new_password2: password },
         { headers: { "X-CSRFToken": csrftoken } }
       );
+    },
+    async finishAuthentication({ commit, dispatch }) {
+      dispatch("loadUserData");
+      dispatch("afterAuthentication");
     },
   },
 

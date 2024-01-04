@@ -1,5 +1,10 @@
 from django.apps import AppConfig
+from django.contrib.admin.apps import AdminConfig
 from django.core.checks import Error, Warning, register
+
+
+class CelusAdminConfig(AdminConfig):
+    default_site = "core.admin_site.CelusAdminSite"
 
 
 def version_to_int(version: str):

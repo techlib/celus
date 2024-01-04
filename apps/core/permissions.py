@@ -1,7 +1,8 @@
 from django.conf import settings
 from organizations.models import UserOrganization
-from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
+from config.permissions import IsAuthenticatedWithOptional2FA
 from core.logic.url import extract_field_from_request, extract_organization_id_from_request_data
 
 
@@ -44,7 +45,7 @@ class OrganizationRelatedPermissionMixin:
         return user.accessible_organizations().filter(pk=org_id).exists()
 
 
-class ViewPlatformPermission(IsAuthenticated):
+class ViewPlatformPermission(IsAuthenticatedWithOptional2FA):
 
     """
     Permission to view platform object
@@ -170,3 +171,16 @@ class EnabledInSettingsPermission(BasePermission):
 
     def has_permission(self, request, view):
         return getattr(settings, self.name_in_settings, self.default)
+
+
+class ManualDataUploadEnabledPermission(EnabledInSettingsPermission):
+    name_in_settings = "ALLOW_MANUAL_UPLOAD"
+
+
+class OwnerPermission(BasePermission):
+    """Permission to access owned objects"""
+
+    user_attr = "user"
+
+    def has_object_permission(self, request, view, obj):
+        return getattr(obj, self.user_attr) == request.user

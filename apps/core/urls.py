@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.urls import path
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from . import views
 
@@ -21,6 +21,11 @@ urlpatterns = [
     path("user/language", views.UserLanguageView.as_view(), name="user_lang_api_view"),
     path(
         "user/verify-email", views.UserVerifyEmailView.as_view(), name="user_api_verify_email_view"
+    ),
+    path(
+        "user/verify-email-code",
+        views.VerifyEmailAndOtpView.as_view(),
+        name="user_verify_email_code",
     ),
     path("user/extra-data", views.UserExtraDataView.as_view(), name="user_extra_data_view"),
     path("user/password-reset", views.UserPasswordResetView.as_view(), name="user_password_reset"),
@@ -43,3 +48,9 @@ urlpatterns = [
         name="send_invitation_email",
     ),
 ] + router.urls
+
+
+if settings.OTP_ENABLED:
+    otp_router = SimpleRouter()
+    otp_router.register("otp", views.OtpDeviceView, basename="otp")
+    urlpatterns += otp_router.urls
