@@ -1,6 +1,5 @@
 import logging
 from collections import Counter
-from datetime import date
 from typing import Callable, Optional
 
 from core.logic.debug import log_memory
@@ -18,50 +17,28 @@ from publications.models import Platform, PlatformTitle
 logger = logging.getLogger(__name__)
 
 
-def clean_obsolete_platform_title_links(pretend=False, batch_size=500_000):
+def sync_platform_title_links(pretend=False):
     """
-    Doing it in one query is possible, but takes a very long time. Therefor
-    we go by organization. We also split the data into batches by month, so
-    that we don't have to keep all the data in memory.
+    Compares the AccessLog records with the PlatformTitle records and synchronizes
+    the PlatformTitle records with the AccessLog records - by adding missing
+    PlatformTitle records and removing extra PlatformTitle records.
 
-    The `batch_size` was experimentally determined to give reasonable speed and still
-    not to consume much memory (in testing it was around 290 MB for the whole process).
-    :return:
+    Doing it in one query is possible, but takes a very long time. Therefor
+    we use batching by organization.
     """
     stats = Counter()
     memories = []
 
-    def sync_batch(pts_from_logs: set, from_month: Optional[date], to_month: Optional[date]):
-        fltrs = {'date__gte': from_month} if from_month else {}
-        fltrs.update({'date__lt': to_month} if to_month else {})
-        extra_pts = {
-            pt_rec[0]
-            for pt_rec in PlatformTitle.objects.filter(organization_id=org.pk, **fltrs)
-            .values_list('pk', 'platform_id', 'title_id', 'date')
-            .iterator()
-            if (pt_rec[1], pt_rec[2], pt_rec[3]) not in pts_from_logs
-        }
-        count = len(extra_pts)
-        stats['removed'] += count
-        if not pretend and count > 0:
-            PlatformTitle.objects.filter(pk__in=extra_pts).delete()
-        logger.info('%s - %s, %d from %d', from_month, to_month, count, len(pts_from_logs))
-        memories.append(log_memory('clean_obsolete_platform_title_links'))
-
     for org in Organization.objects.all():
-        pts_in_logs = set()
-        first_month = None
-        last_month = None
-        rec_date = None
-
+        # prepare a generator based on the AccessLog records
         if settings.CLICKHOUSE_QUERY_ACTIVE:
             rec_gen = (
                 (r.platform_id, r.target_id, r.date)
                 for r in ch_backend.get_records(
                     AccessLogCube.query()
-                    .filter(organization_id=org.pk)
+                    .filter(organization_id=org.pk, target_id__not_in=[0])
                     .group_by('platform_id', 'target_id', 'date')
-                    .order_by('date'),
+                    .order_by('platform_id', 'target_id', 'date'),
                     streaming=True,
                 )
             )
@@ -69,20 +46,65 @@ def clean_obsolete_platform_title_links(pretend=False, batch_size=500_000):
             rec_gen = (
                 AccessLog.objects.filter(organization_id=org.pk)
                 .values_list('platform_id', 'target_id', 'date')
-                .order_by('date')
+                .order_by('platform_id', 'target_id', 'date')
                 .iterator()
             )
+        # prepare a second generator based on the PlatformTitle records
+        pt_gen = (
+            PlatformTitle.objects.filter(organization_id=org.pk)
+            .values_list('platform_id', 'title_id', 'date', 'pk')
+            .order_by('platform_id', 'title_id', 'date')
+            .iterator()
+        )
+        # stats
+        count = 0  # count records in pt_gen
+        missing_pts = []
+        extra_pts = []
+        # iterate over both generators in parallel to find missing and extra records
+        while True:
+            if (pt_rec := next(pt_gen, None)) is None:
+                break
+            count += 1
 
-        for rec_platform_id, rec_target_id, rec_date in rec_gen:
-            if last_month != rec_date:
-                if len(pts_in_logs) > batch_size:
-                    sync_batch(pts_in_logs, first_month, rec_date)
-                    pts_in_logs = set()
-                    first_month = rec_date
+            if (al_rec := next(rec_gen, None)) is None:
+                extra_pts.append(pt_rec[3])
+                break
 
-                last_month = rec_date
-            pts_in_logs.add((rec_platform_id, rec_target_id, rec_date))
-        sync_batch(pts_in_logs, first_month, rec_date)
+            while pt_rec and pt_rec[:3] < al_rec:
+                # everything extra in pt_rec goes to extra_pts
+                extra_pts.append(pt_rec[3])
+                if pt_rec := next(pt_gen, None):
+                    count += 1
+
+            while al_rec and pt_rec[:3] > al_rec:
+                # everything extra in al_rec goes to missing_pts
+                missing_pts.append(al_rec)
+                al_rec = next(rec_gen, None)
+        # gather extra stuff after one of the generators ended
+        while al_extra := next(rec_gen, None):
+            missing_pts.append(al_extra)
+        while pt_extra := next(pt_gen, None):
+            extra_pts.append(pt_extra[3])
+            count += 1
+        logger.info(
+            '%s, total %d, extra %d, missing %d', org, count, len(extra_pts), len(missing_pts)
+        )
+        # missing platform-titles
+        if missing_pts:
+            stats['missing'] += len(missing_pts)
+            if not pretend:
+                PlatformTitle.objects.bulk_create(
+                    PlatformTitle(
+                        organization_id=org.pk, platform_id=key[0], title_id=key[1], date=key[2]
+                    )
+                    for key in missing_pts
+                )
+        # extra platform-titles
+        if extra_pts:
+            stats['removed'] += len(extra_pts)
+            if not pretend:
+                PlatformTitle.objects.filter(pk__in=extra_pts).delete()
+        memories.append(log_memory('sync_platform_title_links'))
 
     if memories:
         logger.info('max memory used: %.2f', max(memories))

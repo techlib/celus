@@ -2,13 +2,14 @@ import logging
 from collections import Counter
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from core.context_managers import needs_clickhouse_sync
 from django.db.models import F, Q, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
+from publications.models import Title
 
 from ..cubes import AccessLogCube, ch_backend
 from ..models import AccessLog, ImportBatch, ImportBatchSyncLog
@@ -257,6 +258,7 @@ class ComparisonResult:
         return not any(key for key in self.stats.keys() if key != 'ok')
 
 
+@needs_clickhouse_sync
 def compare_db_with_clickhouse() -> ComparisonResult:
     result = ComparisonResult()
     in_db = (
@@ -315,6 +317,55 @@ def compare_db_with_clickhouse() -> ComparisonResult:
 
 
 @needs_clickhouse_sync
+def compare_titles_with_clickhouse(import_batch_id: Optional[int] = None) -> ComparisonResult:
+    """
+    It seems that when we merge titles, it sometimes does not make the necessary changes in
+    clickhouse. So here we try to find titles which are mentioned in clickhouse but not in db.
+    We use the fact that titles after merging are removed, so we can just check if the title
+    exists in the titles table - we do not need to involve the access_log table.
+    :param import_batch_id: limit the search to one import batch if its id is specified
+    :return:
+    """
+    result = ComparisonResult()
+    fltr = {"import_batch_id": import_batch_id} if import_batch_id else {}
+    in_ch = {
+        rec.target_id
+        for rec in ch_backend.get_records(
+            AccessLogCube.query()
+            .filter(target_id__not_in=[0], **fltr)
+            .group_by('target_id')
+            .order_by('target_id')
+        )
+    }
+    logger.info('Titles in ch: %d', len(in_ch))
+    i = 0
+    # in order not to create second large set, we simply discard titles from the
+    # set of all titles in the db. This is slightly slower, but saves some memory
+    for title_id in Title.objects.values_list('id', flat=True).iterator():
+        i += 1
+        in_ch.discard(title_id)
+    logger.info('Titles in db: %d', i)
+    if in_ch:
+        logger.warning("Found %d titles in clickhouse but not in db", len(in_ch))
+        logger.warning("First 10 title ids: %s", list(in_ch)[:10])
+        result.log.append(f'Found {len(in_ch)} titles in clickhouse but not in db')
+        result.stats['extra titles'] += len(in_ch)
+        ib_ids = {
+            rec.import_batch_id
+            for rec in ch_backend.get_records(
+                AccessLogCube.query().filter(target_id__in=list(in_ch)).group_by('import_batch_id')
+            )
+        }
+        # recheck the ids against the db
+        result.import_batches_to_resync = set(
+            ImportBatch.objects.filter(pk__in=ib_ids).values_list('pk', flat=True)
+        )
+        # the remaining import batches do not exist anymore, so we can delete them
+        result.import_batches_to_delete = ib_ids - result.import_batches_to_resync
+    return result
+
+
+@needs_clickhouse_sync
 def deal_with_comparison_results(results: ComparisonResult):
     for ib in ImportBatch.objects.filter(pk__in=results.import_batches_to_resync):
         logger.debug('Resyncing #%s', ib.pk)
@@ -322,3 +373,36 @@ def deal_with_comparison_results(results: ComparisonResult):
     for ib_id in results.import_batches_to_delete:
         logger.debug('Deleting #%s', ib_id)
         AccessLogCube.delete_import_batch(ch_backend, ib_id)
+
+
+@needs_clickhouse_sync
+def sync_platformtitle_projection() -> (int, int, bool):
+    """
+    Checks if the data from the raw table and from the projection are the same. If not, rebuilds
+    the projection data
+    :return: (no_projection:int, with_projection:int, was_rebuilt:bool)
+    """
+    query = """
+    SELECT COUNT()
+    FROM (
+         SELECT organization_id, platform_id, target_id
+         FROM AccessLogCube
+         WHERE target_id != 0
+         GROUP BY organization_id, platform_id, target_id
+         ORDER BY organization_id, platform_id, target_id
+    ) AS X
+    SETTINGS optimize_use_projections = {0:d};
+    """
+    with ch_backend.pool.get_client() as client:
+        no_projection = client.execute(query.format(0))[0][0]
+        with_projection = client.execute(query.format(1))[0][0]
+        logger.debug('No projection: %d, with projection: %d', no_projection, with_projection)
+        if rebuild := (no_projection != with_projection):
+            client.execute(
+                "ALTER TABLE AccessLogCube CLEAR PROJECTION PlatformTitleOrganizationProjection;"
+            )
+            client.execute(
+                "ALTER TABLE AccessLogCube "
+                "MATERIALIZE PROJECTION PlatformTitleOrganizationProjection;"
+            )
+        return no_projection, with_projection, rebuild

@@ -7,13 +7,15 @@ from django.db import connection
 from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
-from publications.models import Platform, PlatformInterestReport
+from publications.fake_data import PlatformFactory, TitleFactory
+from publications.models import Platform, PlatformInterestReport, Title
 
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import ImportBatchFullFactory, MetricFactory
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
+    compare_titles_with_clickhouse,
     process_one_import_batch_sync_log,
     resync_import_batch_with_clickhouse,
     sync_accesslogs_with_clickhouse_superfast,
@@ -425,17 +427,69 @@ class TestClickhouseCompare:
         assert len(result.import_batches_to_resync) == len(set(in_db) - set(in_ch))
         assert len(result.import_batches_to_delete) == len(set(in_ch) - set(in_db))
 
+    def test_compare_titles_with_clickhouse(self, counter_records, organizations, report_type_nd):
+        """
+        Here we test the case where some title_ids were changed in postgres, but the change
+        did not make it into clickhouse.
+        """
+        platform = PlatformFactory.create()
+        data = [
+            ['Title1', '2018-01-01', '1v1', '2v1', '3v1', 1],
+            ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
+            ['Title2', '2018-01-01', '1v2', '2v2', '3v1', 4],
+            ['Title1', '2018-02-01', '1v1', '2v1', '3v1', 8],
+            ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
+            ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
+        ]
+        crs = counter_records(data, metric='hits', platform='Platform1')
+        organization = organizations[0]
+        report_type = report_type_nd(3)
+        import_counter_records(report_type, organization, platform, crs, skip_clickhouse_sync=False)
+        old_title = Title.objects.get(name='Title2')
+        new_title = TitleFactory.create()
+        assert Title.objects.count() == 3
+        AccessLog.objects.filter(target_id=old_title.pk).update(target_id=new_title.pk)
+        old_title.delete()
+        # compare_db_with_clickhouse() cannot not find anything - the sums still match
+        result = compare_db_with_clickhouse()
+        assert len(result.import_batches_to_resync) == 0
+        # now use compare_titles_with_clickhouse - it should work correctly
+        result = compare_titles_with_clickhouse()
+        assert len(result.import_batches_to_resync) == 2, 'the last ib does not have Title2'
+
+
+@pytest.mark.django_db
+class TestClickhouseCompareDetection:
     @pytest.mark.parametrize(
         ['stats', 'is_ok'],
         [({}, True), ({'ok': 1}, True), ({'ok': 1, 'x': 2}, False), ({'x': 2}, False)],
     )
-    def test_compare_with_clickhouse_task_problem_detection(self, stats, is_ok):
+    def test_compare_db_with_clickhouse_task_problem_detection(self, stats, is_ok):
+        # we need to mock both functions so that it works without clickhouse and data
         with patch('logs.tasks.compare_db_with_clickhouse') as mock, patch(
-            'logs.tasks.async_mail_admins'
-        ) as mailmock:
+            'logs.tasks.compare_titles_with_clickhouse'
+        ) as mock2, patch('logs.tasks.async_mail_admins') as mailmock:
             mock.return_value = ComparisonResult(stats=stats)
+            mock.__name__ = 'compare_db_with_clickhouse'
             compare_db_with_clickhouse_task()
             mock.assert_called_once()
+            mock2.assert_called_once()
+            assert mailmock.delay.call_count == (1 if not is_ok else 0)
+
+    @pytest.mark.parametrize(
+        ['stats', 'is_ok'],
+        [({}, True), ({'ok': 1}, True), ({'ok': 1, 'x': 2}, False), ({'x': 2}, False)],
+    )
+    def test_compare_titles_with_clickhouse_task_problem_detection(self, stats, is_ok):
+        # we need to mock both functions so that it works without clickhouse and data
+        with patch('logs.tasks.compare_db_with_clickhouse') as mock, patch(
+            'logs.tasks.compare_titles_with_clickhouse'
+        ) as mock2, patch('logs.tasks.async_mail_admins') as mailmock:
+            mock2.return_value = ComparisonResult(stats=stats)
+            mock2.__name__ = 'compare_titles_with_clickhouse'
+            compare_db_with_clickhouse_task()
+            mock.assert_called_once()
+            mock2.assert_called_once()
             assert mailmock.delay.call_count == (1 if not is_ok else 0)
 
 

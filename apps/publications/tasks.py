@@ -10,7 +10,7 @@ from core.models import TaskProgress
 from django.db.transaction import atomic
 from organizations.models import Organization
 
-from publications.logic.cleanup import clean_obsolete_platform_title_links, delete_platform_data
+from publications.logic.cleanup import delete_platform_data, sync_platform_title_links
 from publications.logic.sync import erms_sync_platforms
 from publications.logic.title_management import find_mergeable_titles, merge_titles
 from publications.models import Platform, TitleOverlapBatchState
@@ -28,8 +28,8 @@ def erms_sync_platforms_task():
 @celery.shared_task
 @logged_task
 @email_if_fails
-def clean_obsolete_platform_title_links_task():
-    clean_obsolete_platform_title_links()
+def sync_platform_title_links_task():
+    sync_platform_title_links()
 
 
 @celery.shared_task

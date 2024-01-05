@@ -340,48 +340,54 @@ CELERY_TASK_DEFAULT_QUEUE = 'celery'  # just making the default explicit
 CELERY_TASK_ROUTES = {
     'core.tasks.empty_task_export': {'queue': 'export'},
     'core.tasks.flush_request_logs_to_clickhouse': {'queue': 'celery'},
-    'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
     'core.tasks.sync_with_maximus_task': {'queue': 'celery'},
+    'core.tasks.update_prometheus_db_stats': {'queue': 'celery'},
     'export.tasks.delete_expired_flexible_data_exports_task': {'queue': 'celery'},
     'export.tasks.process_flexible_export_task': {'queue': 'export'},
-    'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
-    'knowledgebase.tasks.sync_route': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_all_with_knowledgebase_task': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task': {'queue': 'celery'},
     'knowledgebase.tasks.sync_platforms_with_knowledgebase_task': {'queue': 'celery'},
     'knowledgebase.tasks.sync_report_types_with_knowledgebase_task': {'queue': 'celery'},
-    'knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task': {'queue': 'celery'},
-    'knowledgebase.tasks.sync_all_with_knowledgebase_task': {'queue': 'celery'},
-    'logs.tasks.sync_interest_task': {'queue': 'interest'},
-    'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
+    'knowledgebase.tasks.sync_route': {'queue': 'celery'},
+    'knowledgebase.tasks.sync_routes': {'queue': 'celery'},
+    'logs.tasks.compare_db_with_clickhouse_delayed_task': {'queue': 'celery'},
+    'logs.tasks.compare_db_with_clickhouse_task': {'queue': 'import'},
+    'logs.tasks.export_raw_data_task': {'queue': 'export'},
+    'logs.tasks.import_manual_upload_data': {'queue': 'import'},
     'logs.tasks.import_new_sushi_attempts_task': {'queue': 'import'},
     'logs.tasks.import_one_sushi_attempt_task': {'queue': 'import'},
-    'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
-    'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
-    'logs.tasks.process_outstanding_import_batch_sync_logs_task': {'queue': 'celery'},
-    'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
-    'logs.tasks.export_raw_data_task': {'queue': 'export'},
     'logs.tasks.prepare_preflight': {'queue': 'preflight'},
-    'logs.tasks.import_manual_upload_data': {'queue': 'import'},
     'logs.tasks.prepare_preflights': {'queue': 'preflight'},
+    'logs.tasks.process_outstanding_import_batch_sync_logs_task': {'queue': 'celery'},
+    'logs.tasks.recompute_interest_by_batch_task': {'queue': 'interest'},
     'logs.tasks.reprocess_mdu_task': {'queue': 'import'},
-    'logs.tasks.compare_db_with_clickhouse_task': {'queue': 'import'},
-    'logs.tasks.compare_db_with_clickhouse_delayed_task': {'queue': 'celery'},
+    'logs.tasks.smart_interest_sync_task': {'queue': 'interest'},
+    'logs.tasks.sync_interest_task': {'queue': 'interest'},
+    'logs.tasks.sync_materialized_reports_task': {'queue': 'interest'},
     'logs.tasks.sync_organizationplatform_records_task': {'queue': 'celery'},
-    'publications.tasks.clean_obsolete_platform_title_links_task': {'queue': 'interest'},
+    'logs.tasks.sync_platformtitle_projection_task': {'queue': 'import'},
+    'logs.tasks.update_report_approx_record_count_task': {'queue': 'interest'},
+    'publications.tasks.sync_platform_title_links_task': {'queue': 'interest'},
     'publications.tasks.delete_platform_data_task': {'queue': 'import'},
     'publications.tasks.merge_titles_task': {'queue': 'interest'},
     'publications.tasks.process_title_overlap_batch_task': {'queue': 'celery'},
     'scheduler.tasks.plan_schedulers_triggering': {'queue': 'sushi'},
-    'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'scheduler.tasks.trigger_scheduler': {'queue': 'sushi'},
+    'scheduler.tasks.update_automatic_harvesting': {'queue': 'sushi'},
     'sushi.tasks.delete_fetchattempts_and_related_importbatches_task': {'queue': 'import'},
     'tags.tasks.reprocess_due_tagging_batches_task': {'queue': 'celery'},
-    'tags.tasks.tagging_batch_preflight_task': {'queue': 'celery'},
     'tags.tasks.tagging_batch_assign_tag_task': {'queue': 'celery'},
+    'tags.tasks.tagging_batch_preflight_task': {'queue': 'celery'},
     'tags.tasks.tagging_batch_unassign_task': {'queue': 'celery'},
 }
 
 # FlexibleDataExport settings
 EXPORT_DELETING_PERIOD = timedelta(days=config('EXPORT_DELETING_DAYS', cast=int, default=7))
+
+
+def randmin(a=0, b=59):
+    return str(randint(a, b))
+
 
 CELERY_BEAT_SCHEDULE = {
     'smart_interest_sync_task': {
@@ -452,47 +458,47 @@ CELERY_BEAT_SCHEDULE = {
     # crontab schedules - daily stuff
     'sync_organizationplatform_records_task': {
         'task': 'logs.tasks.sync_organizationplatform_records_task',
-        'schedule': crontab(hour=23, minute=17),  # every day at 23:17
+        'schedule': crontab(hour='23', minute=randmin(0, 40)),  # every day at 23:00-23:40
         'options': {'expires': 24 * 60 * 60},
     },
     'scheduler_update_automatic_harvesting': {
         'task': 'scheduler.tasks.update_automatic_harvesting',
-        'schedule': crontab(minute=50, hour=23),  # every day at 23:50
+        'schedule': crontab(hour='23', minute='50'),  # every day at 23:50
         'options': {'expires': 24 * 60 * 60},
     },
-    'clean_obsolete_platform_title_links': {
-        'task': 'publications.tasks.clean_obsolete_platform_title_links_task',
-        'schedule': crontab(hour=0, minute=13),  # every day at 0:13
+    'sync_platform_title_links_task': {
+        'task': 'publications.tasks.sync_platform_title_links_task',
+        'schedule': crontab(hour='0', minute=randmin(0, 29)),  # every day at 0:00-0:29
         'options': {'expires': 24 * 60 * 60},
     },
     'merge_titles_task': {
         'task': 'publications.tasks.merge_titles_task',
-        'schedule': crontab(hour=0, minute=37),  # every day at 0:37
+        'schedule': crontab(hour='0', minute=randmin(30, 59)),  # every day at 0:30-0:59
         'options': {'expires': 24 * 60 * 60},
     },
     'update_report_approx_record_count_task': {
         'task': 'logs.tasks.update_report_approx_record_count_task',
-        'schedule': crontab(hour=1, minute=13),  # every day at 1:13
+        'schedule': crontab(hour='1', minute=randmin()),  # every day between 1:00 and 1:59
         'options': {'expires': 24 * 60 * 60},
     },
     'remove_old_cached_queries_task': {
         'task': 'recache.tasks.remove_old_cached_queries_task',
-        'schedule': crontab(minute=17, hour=2),  # every day at 2:17
+        'schedule': crontab(hour='2', minute='17'),  # every day at 2:17
         'options': {'expires': 24 * 60 * 60},
     },
     'sync_all_with_knowledgebase_task': {
         'task': 'knowledgebase.tasks.sync_all_with_knowledgebase_task',
-        'schedule': crontab(minute=randint(0, 59), hour=2),  # every day between 2:00 and 2:59
+        'schedule': crontab(hour='2', minute=randmin()),  # between 2:00 and 2:59
         'options': {'expires': 24 * 60 * 60},
     },
     'delete_expired_flexible_data_exports_task': {
         'task': 'export.tasks.delete_expired_flexible_data_exports_task',
-        'schedule': crontab(hour=3, minute=0),  # every day at 3:00
+        'schedule': crontab(hour='3', minute='0'),  # every day at 3:00
         'options': {'expires': 24 * 60 * 60},
     },
     'reprocess_due_tagging_batches_task': {
         'task': 'tags.tasks.reprocess_due_tagging_batches_task',
-        'schedule': crontab(hour=3, minute=randint(0, 59)),  # every day between 3:00 and 3:59
+        'schedule': crontab(hour='3', minute=randmin()),  # between 3:00 and 3:59
         'options': {'expires': 24 * 60 * 60},
     },
 }
@@ -523,9 +529,14 @@ if USES_ERMS:
 CLICKHOUSE_CELERY_SCHEDULE = {
     'compare_db_with_clickhouse_delayed_task': {
         'task': 'logs.tasks.compare_db_with_clickhouse_delayed_task',
-        'schedule': crontab(minute=0, hour=22),  # every day at 22:00
+        'schedule': crontab(hour='22', minute='0'),  # every day at 22:00
         'options': {'expires': 22 * 60 * 60},  # expires in 22 hours to leave room for random delays
-    }
+    },
+    'sync_platformtitle_projection_task': {
+        'task': 'logs.tasks.sync_platformtitle_projection_task',
+        'schedule': crontab(hour='23', minute=randmin()),  # between 23:00-59
+        'options': {'expires': 24 * 60 * 60},
+    },
 }
 if CLICKHOUSE_SYNC_ACTIVE:
     CELERY_BEAT_SCHEDULE.update(CLICKHOUSE_CELERY_SCHEDULE)
@@ -533,7 +544,7 @@ if CLICKHOUSE_SYNC_ACTIVE:
 MAXIMUS_CELERY_SCHEDULE = {
     'sync_with_maximus_task': {
         'task': 'core.tasks.sync_with_maximus_task',
-        'schedule': crontab(hour=21, minute=30),  # every day at 21:30
+        'schedule': crontab(hour='21', minute='30'),  # every day at 21:30
         'options': {'expires': 24 * 60 * 60},
     }
 }

@@ -36,7 +36,12 @@ from logs.logic.cleanup import (
     find_organizationplatform_differences,
     fix_organizationplatform_differences,
 )
-from logs.logic.clickhouse import compare_db_with_clickhouse, process_one_import_batch_sync_log
+from logs.logic.clickhouse import (
+    compare_db_with_clickhouse,
+    compare_titles_with_clickhouse,
+    process_one_import_batch_sync_log,
+    sync_platformtitle_projection,
+)
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
 from logs.logic.materialized_interest import (
@@ -230,24 +235,26 @@ def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
 @celery.shared_task
 @logged_task
 @email_if_fails
-@needs_clickhouse_sync
 @atomic
 def compare_db_with_clickhouse_task():
     """
     Compares the database with Clickhouse and sends an email with the results
     """
     start = monotonic()
-    result = compare_db_with_clickhouse()
-    if not result.is_ok():
-        # there are some differences - we need to report it to admins
-        # (in the future we might want to fix it automatically, but not now)
-        log = '\n'.join(result.log)
-        body = (
-            f'**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n'
-            f'Duration: {monotonic() - start:.2f} s'
-        )
-        async_mail_admins.delay('Found differences between database and Clickhouse', body)
-        logger.warning('Send email about differences between database and Clickhouse: %s', body)
+    for fn in (compare_db_with_clickhouse, compare_titles_with_clickhouse):
+        result = fn()
+        if not result.is_ok():
+            # there are some differences - we need to report it to admins
+            # (in the future we might want to fix it automatically, but not now)
+            log = '\n'.join(result.log)
+            body = (
+                f'**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n'
+                f'Duration: {monotonic() - start:.2f} s'
+            )
+            async_mail_admins.delay(
+                f'Found differences between database and Clickhouse ({fn.__name__})', body
+            )
+            logger.warning('Send email about differences between database and Clickhouse: %s', body)
 
 
 @celery.shared_task
@@ -516,3 +523,15 @@ def sync_organizationplatform_records_task(reason: Optional[str] = None):
             reason_str
             + f'Missing: {len(missing)}\nExtra: {len(extra)}\n\nProblems have already been fixed.',
         )
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def sync_platformtitle_projection_task():
+    no_projection, with_projection, synced = sync_platformtitle_projection()
+    async_mail_admins.delay(
+        "PlatformTitleOrganizationProjection projection was rebuilt",
+        f"Inconsistency found in projection data ({no_projection} vs "
+        f"{with_projection}) - projection was rebuilt",
+    )

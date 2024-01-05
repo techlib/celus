@@ -13,8 +13,8 @@ from .. import tasks
 class TestCeleryTasks:
     @pytest.mark.clickhouse
     @pytest.mark.django_db(transaction=True)
-    def test_clean_obsolete_platform_title_links_task(self, clickhouse_on_off):
-        tasks.clean_obsolete_platform_title_links_task()
+    def test_sync_platform_title_links_task(self, clickhouse_on_off):
+        tasks.sync_platform_title_links_task()
 
     def test_merge_titles_task(self):
         tasks.merge_titles_task()

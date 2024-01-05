@@ -298,7 +298,6 @@ For more info see Django admin: {request.build_absolute_uri(
             ON (A."title_id" = B."title_id" AND A."organization_id" = B."organization_id")
             {main_where_part}
           GROUP BY A."platform_id", B."platform_id";'''
-
         logger.debug('Overlap raw query: %s', query)
 
         # neither recache not cachalot do support raw queries, so we cache it using django caching

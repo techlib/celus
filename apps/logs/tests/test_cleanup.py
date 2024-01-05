@@ -1,6 +1,6 @@
 import pytest
 from organizations.tests.conftest import organizations  # noqa
-from publications.logic.cleanup import clean_obsolete_platform_title_links
+from publications.logic.cleanup import sync_platform_title_links
 from publications.models import PlatformTitle
 
 from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
@@ -27,7 +27,7 @@ class TestPlatformTitleCleanup:
             ib.delete()
         assert AccessLog.objects.count() == 0
         assert PlatformTitle.objects.count() == 1, 'the platform-title link is still there'
-        clean_obsolete_platform_title_links()
+        sync_platform_title_links()
         assert PlatformTitle.objects.count() == 0, 'the platform-title link was removed'
 
     def test_cleanup(
@@ -56,6 +56,6 @@ class TestPlatformTitleCleanup:
         ib1.delete()  # delete data for 2020-01-01
         assert AccessLog.objects.count() == 1
         assert PlatformTitle.objects.count() == 3, 'the platform-title links are all still there'
-        clean_obsolete_platform_title_links()
+        sync_platform_title_links()
         assert PlatformTitle.objects.count() == 1, 'one platform-title link remains'
         assert PlatformTitle.objects.get().date.isoformat() == '2020-02-01'
