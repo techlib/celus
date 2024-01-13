@@ -28,19 +28,14 @@ export default {
       if (cleanObjectIds.length === 0) {
         return;
       }
+      let objIdStr = cleanObjectIds.join(",");
       let linksPromise = this.http({
         url: "/api/tags/tag-item-links/",
-        params: { item_type: objectType, item_id: cleanObjectIds },
-        paramsSerializer: function (params) {
-          return qs.stringify(params, { arrayFormat: "repeat" });
-        },
+        params: { item_type: objectType, item_id: objIdStr },
       });
       let tagsPromise = this.http({
         url: "/api/tags/tag/",
-        params: { item_type: objectType, item_id: cleanObjectIds },
-        paramsSerializer: function (params) {
-          return qs.stringify(params, { arrayFormat: "repeat" });
-        },
+        params: { item_type: objectType, item_id: objIdStr },
       });
       let [linksResult, tagsResult] = await Promise.all([
         linksPromise,

@@ -165,7 +165,8 @@ class TestTagViews:
             for title in titles[: i + 1]:
                 tag.tag(title, user)
         resp = clients['user1'].get(
-            reverse('tag-list'), {'item_type': 'title', 'item_id': [t.pk for t in titles]}
+            reverse('tag-list'),
+            {'item_type': 'title', 'item_id': ','.join(str(t.pk) for t in titles)},
         )
         assert resp.status_code == 200
         assert len(resp.json()) == 4, 'only the 4 related tags should be there'
@@ -873,7 +874,8 @@ class TestTagItemsLinksView:
             tags[0].tag_class.change_hidden_for_user(user, True)
 
         resp = clients['user1'].get(
-            reverse('tag-item-links'), {'item_type': 'title', 'item_id': [t.pk for t in titles]}
+            reverse('tag-item-links'),
+            {'item_type': 'title', 'item_id': ','.join(str(t.pk) for t in titles)},
         )
         assert resp.status_code == 200
         if hide_first_class:
@@ -896,7 +898,7 @@ class TestTagItemsLinksView:
                 tag.tag(org, user)
         resp = clients[user_key].get(
             reverse('tag-item-links'),
-            {'item_type': 'organization', 'item_id': [org.pk for org in organizations]},
+            {'item_type': 'organization', 'item_id': ','.join(str(o.pk) for o in organizations)},
         )
         assert resp.status_code == 200
         assert len(resp.json()) == org_count * 4, 'there should 4 links per visible organization'
@@ -922,7 +924,7 @@ class TestTagItemsLinksView:
                 tag.tag(platform, users['su'])  # note, the user is irrelevant here
         resp = clients[user_key].get(
             reverse('tag-item-links'),
-            {'item_type': 'platform', 'item_id': [p.pk for p in platforms]},
+            {'item_type': 'platform', 'item_id': ','.join(str(p.pk) for p in platforms)},
         )
         assert resp.status_code == 200
         assert (

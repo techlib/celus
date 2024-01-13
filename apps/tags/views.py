@@ -2,6 +2,7 @@ from typing import Optional
 
 from allauth.utils import build_absolute_uri
 from core.exceptions import BadRequestException
+from core.fields import CompactListField
 from core.filters import PkMultiValueFilterBackend
 from core.logic.type_conversion import to_bool
 from django.db import DatabaseError, IntegrityError
@@ -12,7 +13,7 @@ from organizations.serializers import OrganizationSerializer
 from publications.serializers import PlatformSerializer, TitleSerializer
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.fields import BooleanField, ChoiceField, IntegerField, ListField
+from rest_framework.fields import BooleanField, ChoiceField, IntegerField
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -108,7 +109,7 @@ class TagViewSet(ModelViewSet):
 
     class ParamSerializer(Serializer):
         item_type = ChoiceField(choices=['title', 'organization', 'platform'], required=False)
-        item_id = ListField(child=IntegerField(), required=False)
+        item_id = CompactListField(child=IntegerField(), required=False)
         assignable_only = BooleanField(required=False)
         scope = ChoiceField(choices=TagScope.choices, required=False)
 
@@ -219,7 +220,7 @@ class TaggedOrganizationsViewSet(TaggedItemViewSet):
 class TagItemLinksView(APIView):
     class ParamSerializer(Serializer):
         item_type = ChoiceField(choices=TagScope.choices, required=True)
-        item_id = ListField(child=IntegerField(), allow_empty=False)
+        item_id = CompactListField(child=IntegerField(), allow_empty=False)
 
     def get(self, request):
         param_serializer = self.ParamSerializer(data=self.request.query_params)
