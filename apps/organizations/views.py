@@ -13,13 +13,12 @@ from core.tasks import async_mail_customer_care_admins
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, transaction
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q, Sum, Value
+from django.db.models import Count, Exists, Max, Min, OuterRef, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.urls import reverse
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import AccessLog, ReportType
-from publications.models import PlatformTitle
+from logs.models import AccessLog, OrganizationPlatform, ReportType
 from recache.util import recache_queryset
 from rest_framework import status
 from rest_framework.decorators import action
@@ -300,8 +299,8 @@ For more info see Django admin: {request.build_absolute_uri(
           GROUP BY A."platform_id", B."platform_id";'''
         logger.debug('Overlap raw query: %s', query)
 
-        # neither recache not cachalot do support raw queries, so we cache it using django caching
-        cache_key = text_hash(query % where_params)
+        # neither recache nor cachalot do support raw queries, so we cache it using django caching
+        cache_key = 'platform-overlap-' + text_hash(query % where_params)
         if not (result := cache.get(cache_key, None)):
             with connection.cursor() as cursor:
                 start = monotonic()
@@ -322,49 +321,95 @@ For more info see Django admin: {request.build_absolute_uri(
     @action(detail=True, url_path='all-platforms-overlap')
     def all_platforms_overlap(self, request, pk):
         """
-        API that returns a specific reply for platform overlap with all other platforms
-        """
-        org_filter = organization_filter_from_org_id(pk, request.user)
-        date_filter_params1 = date_filter_from_params(request.GET)
-        is_on_other_platform = PlatformTitle.objects.filter(
-            title_id=OuterRef('title_id'),
-            organization_id=OuterRef('organization_id'),
-            **date_filter_params1,
-        ).exclude(platform_id=OuterRef('platform_id'))
-        query = (
-            PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
-            .annotate(elsewhere=Exists(is_on_other_platform))
-            .values("platform")
-            .annotate(count=Count("title_id", filter=Q(elsewhere=True), distinct=True))
-        )
-        # APO = 'all platform overlap'
-        query = recache_queryset(query, origin='APO-titles')
+        API that returns an overlap of each platform with all the other platforms together.
 
-        # interest for the titles
+        This view uses similar approach to the previous one - most of the calculation is done
+        by a hand crafter raw SQL query.
+
+        Compared to the previous version this one fixes an error where overlap was sometimes
+        reported in interest even thouth the overlapping titles were for different organizations.
+        It is also significantly faster. In my tests on copy of K1 db it took 18 seconds
+        compared to 76 seconds for the previous version.
+        """
+        org_filter = organization_filter_from_org_id(pk, request.user, prefix="")
+        date_filter = date_filter_from_params(request.GET)
         interest_rt = ReportType.objects.get_interest_rt()
-        title_id_filter = {
-            'target_id__in': PlatformTitle.objects.filter(**org_filter, **date_filter_params1)
-            .filter(Exists(is_on_other_platform))
-            .values("title_id")
-            .distinct()
-        }
-        accesslog_filter = {
-            'report_type': interest_rt,
-            **org_filter,
-            **date_filter_params1,
-            **title_id_filter,
-        }
-        replace_report_type_with_materialized(accesslog_filter)
-        overlap_interests = (
-            AccessLog.objects.filter(**accesslog_filter)
-            .values('platform')
-            .annotate(interest=Coalesce(Sum('value'), 0))
-        )
-        overlap_interests = recache_queryset(overlap_interests, origin='APO-interest')
-        pk_to_interest = {rec['platform']: rec['interest'] for rec in overlap_interests}
+        main_where_parts = []
+        sub_where_parts = []
+        join_parts = ["report_type_id = %(rt_id)s"]
+        where_params = {"rt_id": interest_rt.pk}
+        if 'date__gte' in date_filter:
+            sub_where_parts.append('date >= %(date__gte)s')
+            join_parts.append('date >= %(date__gte)s')
+            where_params.update(date_filter)
+        if 'date__lte' in date_filter:
+            sub_where_parts.append('date <= %(date__lte)s')
+            join_parts.append('date <= %(date__lte)s')
+            where_params.update(date_filter)
+        if org_filter:
+            main_where_parts.append(
+                "A.organization_id = %(org_id)s AND B.organization_id = %(org_id)s"
+            )
+            sub_where_parts.append("organization_id = %(org_id)s")
+            join_parts.append("organization_id = %(org_id)s")
+            where_params['org_id'] = org_filter['organization__pk']
+
+        if main_where_part := ' AND '.join(main_where_parts):
+            main_where_part = 'WHERE ' + main_where_part
+
+        if sub_where_part := ' AND '.join(sub_where_parts):
+            sub_where_part = 'WHERE ' + sub_where_part
+
+        if join_part := ' AND '.join(join_parts):
+            join_part = 'AND ' + join_part
+
+        # left outer join below is used to correctly count all the titles, not only
+        # those with interest
+        query = f'''
+        SELECT X.platform_id, COALESCE(SUM(al.value), 0), COUNT(DISTINCT X.title_id)
+            FROM (
+                SELECT A."platform_id", A."title_id"
+                FROM (
+                    SELECT DISTINCT organization_id,
+                           platform_id,
+                           title_id
+                      FROM publications_platformtitle {sub_where_part}
+                    ) AS A
+                    INNER JOIN (
+                        SELECT DISTINCT organization_id,
+                               platform_id,
+                               title_id
+                          FROM publications_platformtitle {sub_where_part}
+                       ) AS B
+                    ON (A."title_id" = B."title_id"
+                        AND A."organization_id" = B."organization_id"
+                        AND A."platform_id" != B."platform_id")
+                    {main_where_part}
+                    GROUP BY A."platform_id", A.title_id
+                ) AS X
+        LEFT OUTER JOIN logs_accesslog al
+            ON al.platform_id = X.platform_id
+            {join_part}
+            AND target_id = X.title_id
+        GROUP BY X.platform_id;
+        '''
+        start = monotonic()
+        # neither recache nor cachalot do support raw queries, so we cache it using django caching
+        cache_key = 'all-platforms-overlap-' + text_hash(query % where_params)
+        if not (pid_to_counts := cache.get(cache_key, {})):
+            with connection.cursor() as cursor:
+                cursor.execute(query, where_params)
+                for p, interest, title_count in cursor.fetchall():
+                    pid_to_counts[p] = (interest, title_count)
+                if monotonic() - start > 2:
+                    # only cache results that take more than 2 seconds to compute
+                    # we also use a short time for caching to avoid stale results
+                    # (the purpose of the cache is just to allow quick return to the corresponding
+                    #  frontend page after the user tried some other overlap related page)
+                    cache.set(cache_key, pid_to_counts, timeout=5 * 60)
 
         # overall interest
-        accesslog_filter = {'report_type': interest_rt, **org_filter, **date_filter_params1}
+        accesslog_filter = {'report_type': interest_rt, **org_filter, **date_filter}
         replace_report_type_with_materialized(accesslog_filter)
         total_overlap_interests = (
             AccessLog.objects.filter(**accesslog_filter)
@@ -376,14 +421,15 @@ For more info see Django admin: {request.build_absolute_uri(
         )
         pk_to_total_interest = {rec['platform']: rec['interest'] for rec in total_overlap_interests}
 
+        org_pl_qs = OrganizationPlatform.objects.filter(**org_filter)
         result = [
             {
-                'platform': rec['platform'],
-                'overlap': rec['count'],
-                'overlap_interest': pk_to_interest.get(rec['platform'], 0),
-                'total_interest': pk_to_total_interest.get(rec['platform'], 0),
+                'platform': pl_id,
+                'overlap': pid_to_counts.get(pl_id, (0, 0))[1],
+                'overlap_interest': pid_to_counts.get(pl_id, (0, 0))[0],
+                'total_interest': pk_to_total_interest.get(pl_id, 0),
             }
-            for rec in query
+            for pl_id in org_pl_qs.values_list('platform_id', flat=True).distinct()
         ]
         return Response(result)
 

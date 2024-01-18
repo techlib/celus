@@ -12,6 +12,7 @@ from core.tests.conftest import (  # noqa - fixtures
     master_user_identity,
     valid_identity,
 )
+from django.db.models import Sum
 from django.urls import reverse
 from logs.fake_data import (
     AccessLogFactory,
@@ -933,6 +934,7 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
+        OrganizationPlatform.objects.create(organization=organization, platform=platform2)
         resp = authenticated_client.get(
             reverse('organization-all-platforms-overlap', args=[organization.pk])
         )
@@ -949,7 +951,12 @@ class TestPlatformTitleAPI:
                 assert rec['total_interest'] == 0, 'no interest on platform 2'
 
     def test_organization_all_platform_overlap_2(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
+        self,
+        authenticated_client,
+        accesslogs_with_interest,
+        valid_identity,
+        platforms,
+        master_user_client,
     ):
         """
         Create two identical sets of access logs but for different platforms and see what the
@@ -961,10 +968,13 @@ class TestPlatformTitleAPI:
         titles = accesslogs_with_interest['titles']
         import_batch = accesslogs_with_interest['import_batch']
         metric = accesslogs_with_interest['metric']
-        import_batch2 = ImportBatch.objects.create(
-            platform=platform, organization=organization, report_type=import_batch.report_type
-        )
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        PlatformInterestReport.objects.create(
+            report_type=import_batch.report_type, platform=platform2
+        )
+        import_batch2 = ImportBatch.objects.create(
+            platform=platform2, organization=organization, report_type=import_batch.report_type
+        )
         # here we create the same accesslogs for a different platform
         accesslog_basics = {
             'report_type': import_batch.report_type,
@@ -1010,6 +1020,78 @@ class TestPlatformTitleAPI:
             assert rec['overlap_interest'] == 7
             assert rec['total_interest'] == 7
 
+    # check that the result is correct regardless of date limits (it the data falls inside it)
+    @pytest.mark.parametrize(
+        ['start_date', 'end_date'],
+        [
+            ('2023-01', '2023-01'),
+            (None, None),
+            ('2020-01', '2024-01'),
+            (None, '2024-01'),
+            ('2020-01', None),
+        ],
+    )
+    def test_organization_all_platform_overlap_3(
+        self, interest_rt, platforms, master_user_client, report_type_nd, start_date, end_date
+    ):
+        """
+        Check the calculation of interest overlap in a situation where
+        - overlap is requested for all organizations
+        - three platforms share the same title
+        - two of them share the same organization
+        - third platform is not linked to the organization
+
+        In this case the overlap of the third platform should be 0 because it is calculated
+        when the same titles are available on different platforms for the same organization.
+
+        This test should guard against a regression where the interest overlap was calculated
+        as usage of titles on multiple platforms regardless of the organization.
+        """
+        org1, org2 = OrganizationFactory.create_batch(2)
+        platform1, platform2, platform3 = PlatformFactory.create_batch(3)
+        title = TitleFactory.create()
+        # create the interest related records
+        rt = report_type_nd(0)
+        ig = InterestGroup.objects.create(short_name='interest1', position=1)
+        metric = Metric.objects.create(short_name='m1', name='Metric1')
+        ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
+        for platform in (platform1, platform2, platform3):
+            PlatformInterestReport.objects.create(report_type=rt, platform=platform)
+        # create some data
+        ib1 = ImportBatchFactory.create(
+            platform=platform1, organization=org1, report_type=rt, date='2023-01-01'
+        )
+        AccessLogFactory.create(import_batch=ib1, value=1, target=title, metric=metric)
+        ib2 = ImportBatchFactory.create(
+            platform=platform2, organization=org1, report_type=rt, date='2023-01-01'
+        )
+        AccessLogFactory.create(import_batch=ib2, value=2, target=title, metric=metric)
+        # this one is on org2, so it should not overlap with the other two
+        ib3 = ImportBatchFactory.create(
+            platform=platform3, organization=org2, report_type=rt, date='2023-01-01'
+        )
+        AccessLogFactory.create(import_batch=ib3, value=5, target=title, metric=metric)
+        create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
+        sync_interest_by_import_batches()
+        assert interest_rt.accesslog_set.aggregate(Sum('value'))['value__sum'] == 8
+        # the problem at hand only occurs when all organizations (id=-1) are requested
+        resp = master_user_client.get(
+            reverse('organization-all-platforms-overlap', args=['-1']),
+            {"start": start_date or "", "end": end_date or ""},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 3, '3 records for 3 platforms'
+        for rec in data:
+            if rec['platform'] == platform3.pk:
+                assert rec['overlap'] == 0, 'platform 3 has no overlap'
+                assert rec['overlap_interest'] == 0, 'platform 3 has no overlap'
+                assert rec['total_interest'] == 5, 'platform 3 has no overlap'
+            else:
+                assert rec['overlap'] == 1, 'both platforms share the same title'
+                assert rec['overlap_interest'] in (1, 2)
+                assert rec['total_interest'] == rec['overlap_interest']
+
     def test_organization_all_platform_overlap_all_orgs(
         self, master_user_client, accesslogs_with_interest, platforms
     ):
@@ -1020,6 +1102,7 @@ class TestPlatformTitleAPI:
         PlatformTitle.objects.create(
             platform=platform2, title=titles[0], organization=organization, date='2020-01-01'
         )
+        OrganizationPlatform.objects.create(organization=organization, platform=platform2)
         resp = master_user_client.get(reverse('organization-all-platforms-overlap', args=['-1']))
         assert resp.status_code == 200
         data = resp.json()
