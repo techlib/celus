@@ -349,8 +349,8 @@ export default {
       currentTab: urlParams.has("register")
         ? "register"
         : urlParams.has("reset-password")
-        ? "reset-password"
-        : "login",
+          ? "reset-password"
+          : "login",
       signupError: null,
       resetError: null,
       showPassword: false,

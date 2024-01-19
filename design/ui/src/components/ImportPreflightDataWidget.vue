@@ -306,8 +306,7 @@ cs:
                     </v-tooltip>
                     <v-tooltip
                       v-else-if="
-                        method == 'raw' &&
-                        rawDisabledPk.includes(rec.value.pk)
+                        method == 'raw' && rawDisabledPk.includes(rec.value.pk)
                       "
                       bottom
                     >

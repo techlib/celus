@@ -9,9 +9,7 @@ cs:
 </i18n>
 
 <template>
-  <v-form ref="form"
-    v-model="valid"
-    @submit.prevent="save">
+  <v-form ref="form" v-model="valid" @submit.prevent="save">
     <v-container fluid>
       <v-row>
         <v-col>

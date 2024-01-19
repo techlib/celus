@@ -1,7 +1,7 @@
 let devURLBase = "http://127.0.0.1:8015/";
 
-const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
-  .BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 const webpack = require("webpack");
 
 // stuff beginning with VUE_APP_ gets automatically exported into the environment
@@ -16,23 +16,23 @@ module.exports = {
       "^/api/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true
+        ws: true,
       },
       "^/static/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true
+        ws: true,
       },
       "^/media/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true
-      }
+        ws: true,
+      },
     },
     client: {
       overlay: process.env.BUILD == "yes" ? false : { errors: false },
     },
-    port: process.env.DEV_SERVER_PORT
+    port: process.env.DEV_SERVER_PORT,
   },
 
   //filenameHashing: false,
@@ -43,8 +43,8 @@ module.exports = {
       locale: "en",
       fallbackLocale: "en",
       localeDir: "locales",
-      enableInSFC: true
-    }
+      enableInSFC: true,
+    },
   },
 
   configureWebpack: {
@@ -59,12 +59,12 @@ module.exports = {
         SENTRY_URL: JSON.stringify(`${process.env.SENTRY_URL_JS || ""}`),
         SENTRY_ENVIRONMENT: JSON.stringify(
           `${process.env.SENTRY_ENVIRONMENT || ""}`
-        )
-      })
-    ]
+        ),
+      }),
+    ],
   },
 
-  chainWebpack: config => {
+  chainWebpack: (config) => {
     config.module
       .rule("i18n")
       .resourceQuery(/blockType=i18n/)
@@ -79,5 +79,5 @@ module.exports = {
 
   transpileDependencies: ["vuex-persist", "vuetify"], //'lodash', 'lodash.*'],
 
-  lintOnSave: false
+  lintOnSave: false,
 };

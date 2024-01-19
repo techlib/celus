@@ -505,7 +505,7 @@ export default new Vuex.Store({
         if (Object.keys(state.organizations).length > 0) {
           commit("setSelectedOrganizationId", {
             id:
-              -1 in state.organizations
+              (-1) in state.organizations
                 ? -1 // preselect organization All for consortial users logging in for the first time
                 : Number.parseInt(Object.keys(state.organizations)[0], 10),
           });

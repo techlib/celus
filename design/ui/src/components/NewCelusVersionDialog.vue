@@ -2,7 +2,7 @@
 en:
   title: New Celus version available
   text: "Celus is being updated ({oldVersion} -> {newCelusVersion})."
-  wait:  Wait a moment, please...
+  wait: Wait a moment, please...
   button: Update now
 cs:
   title: Je dostupná nová verze Celusu
@@ -12,16 +12,21 @@ cs:
 </i18n>
 
 <template>
-  <v-dialog
-    v-model="newCelusVersion"
-    persistent
-    :max-width="350"
-  >
+  <v-dialog v-model="newCelusVersion" persistent :max-width="350">
     <v-card>
-      <v-card-title class="headline">{{ $t("title") }}<v-spacer/></v-card-title>
+      <v-card-title class="headline"
+        >{{ $t("title") }}<v-spacer
+      /></v-card-title>
       <v-card-text>
-        <div>{{ $t("text", {newCelusVersion: newCelusVersion, oldVersion: oldVersion}) }}</div>
-        <br/>
+        <div>
+          {{
+            $t("text", {
+              newCelusVersion: newCelusVersion,
+              oldVersion: oldVersion,
+            })
+          }}
+        </div>
+        <br />
         <div>{{ $t("wait") }} <v-icon color="info">fa-cog fa-spin</v-icon></div>
       </v-card-text>
       <v-card-actions>
@@ -57,7 +62,7 @@ export default {
 
   methods: {
     refreshPage() {
-      window.location.reload()
+      window.location.reload();
     },
   },
 
@@ -65,7 +70,7 @@ export default {
   mounted() {
     // Refresh current page in 10 seconds
     setTimeout(this.refreshPage, 10000);
-  }
+  },
 };
 </script>
 <style lang="scss">

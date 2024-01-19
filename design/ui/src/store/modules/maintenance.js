@@ -6,7 +6,7 @@ export default {
     noInterestPlatformsWithDataCount: 0,
     sushiCredentialsCount: 0,
     sushiCredentialsBrokenCount: 0,
-    sushiCredentialsBrokenReportCount: 0
+    sushiCredentialsBrokenReportCount: 0,
   },
 
   getters: {
@@ -16,12 +16,12 @@ export default {
       if (state.noInterestPlatformsWithDataCount > 0) {
         ret["maintenance"] = {
           tooltip: "no_interest_platforms_with_data_present",
-          level: "warning"
+          level: "warning",
         };
       } else if (state.noInterestPlatformsCount > 0) {
         ret["maintenance"] = {
           tooltip: "no_interest_platforms_present",
-          level: "info"
+          level: "info",
         };
       }
       if (
@@ -30,22 +30,22 @@ export default {
       ) {
         ret["sushi-credentials-list"] = {
           tooltip: "broken_credentials_present",
-          level: "warning"
+          level: "warning",
         };
       }
       return ret;
-    }
+    },
   },
 
   actions: {
     async fetchNoInterestPlatforms({ commit }) {
       const { response } = await http({
-        url: "/api/organization/-1/platform/no-interest-defined/"
+        url: "/api/organization/-1/platform/no-interest-defined/",
       });
       if (!response) return [];
       commit("setNoInterestPlatformsCount", { count: response.data.length });
       commit("setNoInterestPlatformsWithDataCount", {
-        count: response.data.filter((item) => item.has_data).length
+        count: response.data.filter((item) => item.has_data).length,
       });
       return response.data;
     },
@@ -53,11 +53,11 @@ export default {
       const { response } = await http({
         url: "/api/sushi-credentials/count/",
         label: "sushi credentials count",
-        component
+        component,
       });
       if (!response) return;
       commit("setSushiCredentialsCount", response.data);
-    }
+    },
   },
 
   mutations: {
@@ -71,6 +71,6 @@ export default {
       state.sushiCredentialsCount = count;
       state.sushiCredentialsBrokenCount = broken;
       state.sushiCredentialsBrokenReportCount = broken_reports;
-    }
-  }
+    },
+  },
 };

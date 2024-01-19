@@ -40,7 +40,5 @@ export default {
   methods: {
     badge,
   },
-
 };
-
 </script>

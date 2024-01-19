@@ -7,31 +7,31 @@ export default {
     interestGroups: [],
     selectedGroups: [],
     totalInterestData: null,
-    interestReportType: null
+    interestReportType: null,
   },
 
   getters: {
     selectedGroupObjects: (state) =>
       state.interestGroups.filter(
         (item) => state.selectedGroups.indexOf(item.short_name) > -1
-      )
+      ),
   },
 
   actions: {
     async fetchInterestGroups({ commit }, component) {
-      let {response} = await http({
+      let { response } = await http({
         url: "/api/interest-groups/",
         label: "interest groups",
         component,
       });
       if (!response) return;
       commit("setInterestGroups", {
-        interestGroups: response.data
+        interestGroups: response.data,
       });
       commit("setSelectedGroups", {
         groups: response.data
           .filter((item) => item.important)
-          .map((item) => item.short_name)
+          .map((item) => item.short_name),
       });
     },
     changeSelectedGroups({ commit }, groups) {
@@ -58,11 +58,11 @@ export default {
       if (!config) return;
       const { response } = await http({
         label: "total interest data",
-        ...config
+        ...config,
       });
       if (!response) return;
       commit("setTotalInterestData", response.data);
-    }
+    },
   },
 
   mutations: {
@@ -77,6 +77,6 @@ export default {
     },
     setInterestReportType(state, { rt }) {
       state.interestReportType = rt;
-    }
-  }
+    },
+  },
 };

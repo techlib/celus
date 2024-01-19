@@ -200,7 +200,9 @@ ul.no-bullets {
 }
 
 #date-range-selector {
-  transition: background-color 0.2s, border 0.2s;
+  transition:
+    background-color 0.2s,
+    border 0.2s;
   border: solid 4px transparent;
   border-radius: 6px;
 }

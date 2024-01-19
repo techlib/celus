@@ -58,9 +58,7 @@ cs:
     non_counter: Mimo counter
     counter: Counter
     raw: Ze souboru
-
   description: Pro správné nahrání dat je nutné data nahrát ve <strong>správném formátu</strong>.
-
   non_counter:
     part1:
       Pro platformy, které nevyužívají standardní formát COUNTER, je třeba data
@@ -99,11 +97,9 @@ cs:
     example_img_desc:
       Ukázka se standardními rozměry <i>Metric</i> a <i>Title</i> a specifickými
       rozměry <i>Publisher</i> a <i>Success</i>.
-
   raw:
     text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
     note: Upozorňujeme, že tato funkce je experimentální a nejsou podporovány všechny možné formáty.
-
   counter:
     text1: Pro platformy, které jej podporují, můžete data nahrát
       <strong>ve formátu COUNTER</strong> uložená do souboru ve formátu

@@ -1056,7 +1056,8 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
-      changeForceDisableOrganizationSelector: "changeForceDisableOrganizationSelector",
+      changeForceDisableOrganizationSelector:
+        "changeForceDisableOrganizationSelector",
       selectOrganization: "selectOrganization",
     }),
     highlightStyle(highlighted) {
@@ -1446,7 +1447,10 @@ export default {
   watch: {
     platform() {
       let hide = !!this.privatePlaformForOrganizationPk;
-      this.changeForceDisableOrganizationSelector({ hide: hide, route: this.$router.currentRoute.name });
+      this.changeForceDisableOrganizationSelector({
+        hide: hide,
+        route: this.$router.currentRoute.name,
+      });
       // set organization when no organization is selected for private platform
       if (!this.currentOrganization && hide) {
         this.selectOrganization({ id: this.privatePlaformForOrganizationPk });

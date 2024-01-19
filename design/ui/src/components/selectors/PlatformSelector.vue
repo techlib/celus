@@ -46,7 +46,6 @@ export default {
     },
   },
 
-
   watch: {
     selectedPlatform() {
       this.$emit("input", this.selectedPlatform);

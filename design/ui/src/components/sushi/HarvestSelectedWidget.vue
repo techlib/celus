@@ -104,8 +104,8 @@ cs:
             slotsFree === 0
               ? $t('nothing_to_harvest')
               : test
-              ? $t('actions.start_test')
-              : $tc('start_harvesting', slotsFree)
+                ? $t('actions.start_test')
+                : $tc('start_harvesting', slotsFree)
           "
           color="primary"
           class=""

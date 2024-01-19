@@ -383,7 +383,8 @@ export default {
                   planned: row.planned,
                   can_harvest:
                     row.can_harvest &&
-                    ym >= (this.lastHarvestableMonthMap[counterReport.code] || ""),
+                    ym >=
+                      (this.lastHarvestableMonthMap[counterReport.code] || ""),
                   broken:
                     row.broken ||
                     !!(this.credentials && this.credentials.broken),

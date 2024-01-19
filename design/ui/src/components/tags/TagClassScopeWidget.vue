@@ -25,8 +25,8 @@ export default {
       return this.scope === "title"
         ? "fa-copy"
         : this.scope === "platform"
-        ? "fa-list-alt"
-        : "fa-university";
+          ? "fa-list-alt"
+          : "fa-university";
     },
   },
 };
