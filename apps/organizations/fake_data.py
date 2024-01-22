@@ -9,23 +9,23 @@ fake = Faker()
 class OrganizationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Organization
-        django_get_or_create = ('short_name',)
+        django_get_or_create = ("short_name",)
 
     ext_id = factory.Sequence(lambda n: n)
     ico = factory.Sequence(lambda n: n)
-    name = factory.Faker('company')
-    internal_id = factory.LazyAttribute(lambda x: x.name.lower().replace(' ', '_'))
+    name = factory.Faker("company")
+    internal_id = factory.LazyAttribute(lambda x: x.name.lower().replace(" ", "_"))
     short_name = factory.LazyAttribute(lambda x: x.name[:10])
-    url = factory.Faker('url')
-    fte = factory.Faker('pyint')
-    address = factory.LazyAttribute(lambda x: {'street': fake.street_address()})
+    url = factory.Faker("url")
+    fte = factory.Faker("pyint")
+    address = factory.LazyAttribute(lambda x: {"street": fake.street_address()})
     parent = None
 
 
 class OrganizationAltNameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = OrganizationAltName
-        django_get_or_create = ('name',)
+        django_get_or_create = ("name",)
 
-    name = factory.Faker('company')
+    name = factory.Faker("company")
     organization = factory.SubFactory(OrganizationFactory)

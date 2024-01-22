@@ -5,26 +5,26 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('sushi', '0056_alter_sushifetchattempt_credentials'),
+        ("sushi", "0056_alter_sushifetchattempt_credentials"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='status',
+            model_name="sushifetchattempt",
+            name="status",
             field=models.CharField(
                 choices=[
-                    ('initial', 'Initial'),
-                    ('downloading', 'Downloading'),
-                    ('importing', 'Importing'),
-                    ('success', 'Success'),
-                    ('no_data', 'No data'),
-                    ('import_failed', 'Import failed'),
-                    ('parsing_failed', 'Parsing failed'),
-                    ('download_failed', 'Download failed'),
-                    ('not_used', 'Not used'),
+                    ("initial", "Initial"),
+                    ("downloading", "Downloading"),
+                    ("importing", "Importing"),
+                    ("success", "Success"),
+                    ("no_data", "No data"),
+                    ("import_failed", "Import failed"),
+                    ("parsing_failed", "Parsing failed"),
+                    ("download_failed", "Download failed"),
+                    ("not_used", "Not used"),
                 ],
-                default='initial',
+                default="initial",
                 max_length=20,
             ),
         ),

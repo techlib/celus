@@ -12,4 +12,4 @@ def to_list(values: Iterable) -> List:
 
 
 def to_bool(value) -> bool:
-    return value in (True, 'true', 'True', '1', 1)
+    return value in (True, "true", "True", "1", 1)

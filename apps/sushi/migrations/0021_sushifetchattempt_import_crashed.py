@@ -4,16 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0020_remove_JR5_counter_report')]
+    dependencies = [("sushi", "0020_remove_JR5_counter_report")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='import_crashed',
+            model_name="sushifetchattempt",
+            name="import_crashed",
             field=models.BooleanField(
                 default=False,
-                help_text='Set to true if there was an error during data import. Details in log '
-                'and processing_info',
+                help_text="Set to true if there was an error during data import. Details in log "
+                "and processing_info",
             ),
         )
     ]

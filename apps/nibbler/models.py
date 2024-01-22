@@ -52,11 +52,11 @@ class ParserDefinition(models.Model):
     objects = ParserDefinitionQuerySet.as_manager()
 
     class Meta:
-        verbose_name = _('Parser Definition')
-        verbose_name_plural = _('Parser Definitions')
+        verbose_name = _("Parser Definition")
+        verbose_name_plural = _("Parser Definitions")
         constraints = (
             models.UniqueConstraint(
-                fields=['short_name', 'source'], name='parser_def_short_name_source_not_null'
+                fields=["short_name", "source"], name="parser_def_short_name_source_not_null"
             ),
         )
 

@@ -4,26 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0001_initial')]
+    dependencies = [("organizations", "0001_initial")]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='ext_id',
-            field=models.PositiveIntegerField(help_text='object ID taken from EMRS', unique=True),
+            model_name="organization",
+            name="ext_id",
+            field=models.PositiveIntegerField(help_text="object ID taken from EMRS", unique=True),
         ),
         migrations.AlterField(
-            model_name='organization',
-            name='ico',
+            model_name="organization",
+            name="ico",
             field=models.PositiveIntegerField(
-                help_text='Business registration number', unique=True
+                help_text="Business registration number", unique=True
             ),
         ),
         migrations.AlterField(
-            model_name='organization',
-            name='internal_id',
+            model_name="organization",
+            name="internal_id",
             field=models.CharField(
-                help_text='special ID used for internal purposes',
+                help_text="special ID used for internal purposes",
                 max_length=50,
                 null=True,
                 unique=True,

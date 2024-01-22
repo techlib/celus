@@ -5,12 +5,12 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('organizations', '0014_nullable_ico'),
-        ('publications', '0017_platformtitle_unique_data'),
+        ("organizations", "0014_nullable_ico"),
+        ("publications", "0017_platformtitle_unique_data"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='platformtitle', unique_together={('title', 'platform', 'organization', 'date')}
+            name="platformtitle", unique_together={("title", "platform", "organization", "date")}
         )
     ]

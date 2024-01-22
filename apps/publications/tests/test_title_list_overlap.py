@@ -31,28 +31,28 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestTitleListOverlap:
     @pytest.mark.parametrize(
-        ['batch_size', 'num_queries'], [(1, 6), (2, 3), (6, 1), (10, 1), (1000, 1)]
+        ["batch_size", "num_queries"], [(1, 6), (2, 3), (6, 1), (10, 1), (1000, 1)]
     )
     @pytest.mark.parametrize(
-        ['merge_issns', 'expected_counts'],
+        ["merge_issns", "expected_counts"],
         [(False, [1, 1, 0, 0, 0, 0]), (True, [1, 1, 0, 0, 1, 0])],
     )
     def test_title_matching(
         self, merge_issns, expected_counts, batch_size, num_queries, django_assert_max_num_queries
     ):
-        p_foo = PlatformFactory.create(name='Foo')
-        p_bar = PlatformFactory.create(name='Bar')
+        p_foo = PlatformFactory.create(name="Foo")
+        p_bar = PlatformFactory.create(name="Bar")
         # t1 is on platform Foo only
-        t1 = TitleFactory.create(isbn='9780787960186')
-        PlatformTitleFactory.create(title=t1, platform=p_foo, date='2020-01-01')
+        t1 = TitleFactory.create(isbn="9780787960186")
+        PlatformTitleFactory.create(title=t1, platform=p_foo, date="2020-01-01")
         # t2 is on both platforms
-        t2 = TitleFactory.create(issn='1234-5678')
-        PlatformTitleFactory.create(title=t2, platform=p_foo, date='2019-01-01')
-        PlatformTitleFactory.create(title=t2, platform=p_bar, date='2019-03-01')
+        t2 = TitleFactory.create(issn="1234-5678")
+        PlatformTitleFactory.create(title=t2, platform=p_foo, date="2019-01-01")
+        PlatformTitleFactory.create(title=t2, platform=p_bar, date="2019-03-01")
 
         reader = CsvTitleListOverlapReader()
         dump = BytesIO()
-        with open('test-data/tagging_batch/plain-title-list.csv', 'r') as infile:
+        with open("test-data/tagging_batch/plain-title-list.csv", "r") as infile:
             with django_assert_max_num_queries(num_queries * 3):  # 3 queries per batch
                 data = list(
                     reader.process_source(
@@ -66,42 +66,42 @@ class TestTitleListOverlap:
         dump_reader = get_dict_reader_from_csv(dump)
         reader_recs = list(dump_reader)
         assert dump_reader.fieldnames == [
-            'Name',
-            'ISBN',
-            'issn',
-            'eISSN',
-            'note',
-            '_Found on platforms_',
-            '_Matched titles_',
-            '_First usage data_',
-            '_Last usage data_',
+            "Name",
+            "ISBN",
+            "issn",
+            "eISSN",
+            "note",
+            "_Found on platforms_",
+            "_Matched titles_",
+            "_First usage data_",
+            "_Last usage data_",
         ]
         for i, rec in enumerate(reader_recs):
             if expected_counts[i] == 0:
-                assert rec['_Matched titles_'] == ''
-                assert rec['_Found on platforms_'] == ''
-                assert rec['_First usage data_'] == ''
-                assert rec['_Last usage data_'] == ''
+                assert rec["_Matched titles_"] == ""
+                assert rec["_Found on platforms_"] == ""
+                assert rec["_First usage data_"] == ""
+                assert rec["_Last usage data_"] == ""
             else:
-                assert rec['_Matched titles_'] != ''
-                if int(rec['_Matched titles_']) == t1.pk:
-                    assert rec['_Found on platforms_'] == 'Foo'
-                    assert rec['_First usage data_'] == '2020-01-01'
-                    assert rec['_Last usage data_'] == '2020-01-01'
+                assert rec["_Matched titles_"] != ""
+                if int(rec["_Matched titles_"]) == t1.pk:
+                    assert rec["_Found on platforms_"] == "Foo"
+                    assert rec["_First usage data_"] == "2020-01-01"
+                    assert rec["_Last usage data_"] == "2020-01-01"
                 else:
-                    assert rec['_Found on platforms_'] == 'Bar, Foo'
-                    assert rec['_First usage data_'] == '2019-01-01'
-                    assert rec['_Last usage data_'] == '2019-03-01'
+                    assert rec["_Found on platforms_"] == "Bar, Foo"
+                    assert rec["_First usage data_"] == "2019-01-01"
+                    assert rec["_Last usage data_"] == "2019-03-01"
 
     @pytest.mark.parametrize(
         [
-            't1_pfoo_org',
-            't2_pfoo_org',
-            't2_pbar_org',
-            'query_org',
-            't1_pfoo_match',
-            't2_pfoo_match',
-            't2_pbar_match',
+            "t1_pfoo_org",
+            "t2_pfoo_org",
+            "t2_pbar_org",
+            "query_org",
+            "t1_pfoo_match",
+            "t2_pfoo_match",
+            "t2_pbar_match",
         ],
         [
             (0, 0, 0, 0, True, True, True),  # the same org for all title-platforms and the query
@@ -121,13 +121,13 @@ class TestTitleListOverlap:
         t2_pbar_match,
     ):
         orgs = OrganizationFactory.create_batch(2)
-        p_foo = PlatformFactory.create(name='Foo')
-        p_bar = PlatformFactory.create(name='Bar')
+        p_foo = PlatformFactory.create(name="Foo")
+        p_bar = PlatformFactory.create(name="Bar")
         # t1 is on platform Foo only
-        t1 = TitleFactory.create(isbn='9780787960186')
+        t1 = TitleFactory.create(isbn="9780787960186")
         PlatformTitleFactory.create(title=t1, platform=p_foo, organization=orgs[t1_pfoo_org])
         # t2 is on both platforms
-        t2 = TitleFactory.create(issn='1234-5678')
+        t2 = TitleFactory.create(issn="1234-5678")
         PlatformTitleFactory.create(title=t2, platform=p_foo, organization=orgs[t2_pfoo_org])
         PlatformTitleFactory.create(title=t2, platform=p_bar, organization=orgs[t2_pbar_org])
 
@@ -141,20 +141,20 @@ class TestTitleListOverlap:
         dump_reader = get_dict_reader_from_csv(dump)
         t1_rec, t2_rec = list(dump_reader)
         if t1_pfoo_match:
-            assert 'Foo' in t1_rec['_Found on platforms_']
+            assert "Foo" in t1_rec["_Found on platforms_"]
         else:
-            assert 'Foo' not in t1_rec['_Found on platforms_']
+            assert "Foo" not in t1_rec["_Found on platforms_"]
         if t2_pfoo_match:
-            assert 'Foo' in t2_rec['_Found on platforms_']
+            assert "Foo" in t2_rec["_Found on platforms_"]
         else:
-            assert 'Foo' not in t2_rec['_Found on platforms_']
+            assert "Foo" not in t2_rec["_Found on platforms_"]
         if t2_pbar_match:
-            assert 'Bar' in t2_rec['_Found on platforms_']
+            assert "Bar" in t2_rec["_Found on platforms_"]
         else:
-            assert 'Bar' not in t2_rec['_Found on platforms_']
+            assert "Bar" not in t2_rec["_Found on platforms_"]
 
 
-plain_test_file = Path(__file__).parent / '../../../test-data/tagging_batch/plain-title-list.csv'
+plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plain-title-list.csv"
 
 
 @pytest.mark.django_db
@@ -164,18 +164,18 @@ class TestTitleOverlapBatchModel:
         assert batch.state == TitleOverlapBatchState.INITIAL
         batch.process()
         assert batch.state == TitleOverlapBatchState.DONE
-        assert 'stats' in batch.processing_info
-        assert batch.processing_info['stats']['row_count'] == 6
-        assert batch.processing_info['stats']['no_match'] == 6
-        assert batch.processing_info['stats']['unique_matched_titles'] == 0
-        assert batch.processing_info['recognized_columns'] == ['eISSN', 'ISBN', 'issn']
-        assert batch.annotated_file.name.endswith('-annotated.csv')
+        assert "stats" in batch.processing_info
+        assert batch.processing_info["stats"]["row_count"] == 6
+        assert batch.processing_info["stats"]["no_match"] == 6
+        assert batch.processing_info["stats"]["unique_matched_titles"] == 0
+        assert batch.processing_info["recognized_columns"] == ["eISSN", "ISBN", "issn"]
+        assert batch.annotated_file.name.endswith("-annotated.csv")
         reader = get_dict_reader_from_csv(batch.annotated_file.file.file)
-        assert '_Matched titles_' in reader.fieldnames
-        assert '_Found on platforms_' in reader.fieldnames
+        assert "_Matched titles_" in reader.fieldnames
+        assert "_Found on platforms_" in reader.fieldnames
 
     @pytest.mark.parametrize(
-        ['used_org', 'matched_rows', 'matched_titles'], [(0, 3, 2), (1, 0, 0), (-1, 3, 2)]
+        ["used_org", "matched_rows", "matched_titles"], [(0, 3, 2), (1, 0, 0), (-1, 3, 2)]
     )
     def test_title_overlap_batch_with_titles(
         self, inmemory_media, used_org, matched_rows, matched_titles
@@ -183,9 +183,9 @@ class TestTitleOverlapBatchModel:
         # two organizations
         orgs = OrganizationFactory.create_batch(2)
         # two titles - both connected to the first organization
-        t1 = TitleFactory.create(isbn='9780787960186')
+        t1 = TitleFactory.create(isbn="9780787960186")
         PlatformTitleFactory.create(title=t1, organization=orgs[0])
-        t2 = TitleFactory.create(issn='1234-5678')
+        t2 = TitleFactory.create(issn="1234-5678")
         PlatformTitleFactory.create(title=t2, organization=orgs[0])
         # create the batch
         org = orgs[used_org] if used_org >= 0 else None
@@ -193,38 +193,38 @@ class TestTitleOverlapBatchModel:
         assert batch.state == TitleOverlapBatchState.INITIAL
         batch.process()
         assert batch.state == TitleOverlapBatchState.DONE
-        assert batch.processing_info['stats']['row_count'] == 6
-        assert batch.processing_info['stats']['no_match'] == 6 - matched_rows
-        assert batch.processing_info['stats']['unique_matched_titles'] == matched_titles
+        assert batch.processing_info["stats"]["row_count"] == 6
+        assert batch.processing_info["stats"]["no_match"] == 6 - matched_rows
+        assert batch.processing_info["stats"]["unique_matched_titles"] == matched_titles
 
 
 @pytest.mark.django_db
 class TestTitleOverlapBatchAPI:
-    @pytest.mark.parametrize(('user_type', 'expected_count'), [('admin1', 1), ('user1', 0)])
+    @pytest.mark.parametrize(("user_type", "expected_count"), [("admin1", 1), ("user1", 0)])
     def test_title_overlap_batch_list(self, clients, users, user_type, expected_count):
         """
         Check that each user can only see his own batches.
         """
-        TitleOverlapBatchFactory.create(last_updated_by=users['admin1'])
-        response = clients[user_type].get(reverse('title-overlap-batch-list'))
+        TitleOverlapBatchFactory.create(last_updated_by=users["admin1"])
+        response = clients[user_type].get(reverse("title-overlap-batch-list"))
         assert response.status_code == 200
         assert len(response.data) == expected_count
 
     @pytest.mark.parametrize(
-        ('user_type', 'can_create_with_standalone_org', 'can_create_no_org'),
+        ("user_type", "can_create_with_standalone_org", "can_create_no_org"),
         [
-            ('unauthenticated', None, None),
-            ('invalid', None, None),
-            ('user1', False, False),
-            ('user2', True, False),  # belongs to standalone org
-            ('master_admin', True, True),  # is consortium admin
-            ('master_user', True, True),  # is consortium read-only user
-            ('admin1', False, False),
-            ('admin2', True, False),  # is admin of standalone org
-            ('su', True, True),  # is superuser
+            ("unauthenticated", None, None),
+            ("invalid", None, None),
+            ("user1", False, False),
+            ("user2", True, False),  # belongs to standalone org
+            ("master_admin", True, True),  # is consortium admin
+            ("master_user", True, True),  # is consortium read-only user
+            ("admin1", False, False),
+            ("admin2", True, False),  # is admin of standalone org
+            ("su", True, True),  # is superuser
         ],
     )
-    @pytest.mark.parametrize('assign_org', [True, False])
+    @pytest.mark.parametrize("assign_org", [True, False])
     def test_create_batch_permissions(
         self,
         clients,
@@ -240,13 +240,13 @@ class TestTitleOverlapBatchAPI:
         Test that user can only assign organization to which he belongs to the batch.
         """
         # create the batch
-        org = organizations['standalone'] if assign_org else None
-        with open(plain_test_file, 'rb') as f:
+        org = organizations["standalone"] if assign_org else None
+        with open(plain_test_file, "rb") as f:
             # we need to mock the task so that it is not executed in the test environment
             response = clients[user_type].post(
-                reverse('title-overlap-batch-list'),
-                data={'source_file': f, 'organization': org.pk if org else ''},
-                format='multipart',
+                reverse("title-overlap-batch-list"),
+                data={"source_file": f, "organization": org.pk if org else ""},
+                format="multipart",
             )
         success = can_create_with_standalone_org if assign_org else can_create_no_org
         if success is None:
@@ -255,9 +255,9 @@ class TestTitleOverlapBatchAPI:
         elif success:
             assert response.status_code == 201
             if assign_org:
-                assert TitleOverlapBatch.objects.get(pk=response.data['pk']).organization == org
+                assert TitleOverlapBatch.objects.get(pk=response.data["pk"]).organization == org
             else:
-                assert TitleOverlapBatch.objects.get(pk=response.data['pk']).organization is None
+                assert TitleOverlapBatch.objects.get(pk=response.data["pk"]).organization is None
         else:
             assert response.status_code == 403
 
@@ -266,35 +266,35 @@ class TestTitleOverlapBatchAPI:
         Check the workflow of creating a batch and the structure of the serialized data.
         """
         # create the batch
-        with open(plain_test_file, 'rb') as f, patch(
-            'publications.views.process_title_overlap_batch_task'
+        with open(plain_test_file, "rb") as f, patch(
+            "publications.views.process_title_overlap_batch_task"
         ) as mock:
             response = admin_client.post(
-                reverse('title-overlap-batch-list'), data={'source_file': f}, format='multipart'
+                reverse("title-overlap-batch-list"), data={"source_file": f}, format="multipart"
             )
             assert not mock.delay.called
         assert response.status_code == 201
-        batch = TitleOverlapBatch.objects.get(pk=response.data['pk'])
+        batch = TitleOverlapBatch.objects.get(pk=response.data["pk"])
         assert batch.state == TitleOverlapBatchState.INITIAL
         # check the serialized data
-        assert isinstance(response.data['pk'], int)
-        assert isinstance(response.data['state'], str)
+        assert isinstance(response.data["pk"], int)
+        assert isinstance(response.data["state"], str)
         assert (
-            isinstance(response.data['organization'], int) or response.data['organization'] is None
+            isinstance(response.data["organization"], int) or response.data["organization"] is None
         )
-        assert isinstance(response.data['source_file'], str)
-        assert response.data['source_file'].endswith('.csv')
-        assert response.data['annotated_file'] is None
-        assert isinstance(response.data['processing_info'], dict)
+        assert isinstance(response.data["source_file"], str)
+        assert response.data["source_file"].endswith(".csv")
+        assert response.data["annotated_file"] is None
+        assert isinstance(response.data["processing_info"], dict)
         # perform the processing task synchronously
         batch.state = TitleOverlapBatchState.PROCESSING
         batch.save()
         process_title_overlap_batch_task(batch.pk)
         # check the batch data
-        response = admin_client.get(reverse('title-overlap-batch-detail', args=[batch.pk]))
+        response = admin_client.get(reverse("title-overlap-batch-detail", args=[batch.pk]))
         assert response.status_code == 200
-        assert response.data['state'] == TitleOverlapBatchState.DONE
-        assert response.data['annotated_file'].endswith('-annotated.csv')
+        assert response.data["state"] == TitleOverlapBatchState.DONE
+        assert response.data["annotated_file"].endswith("-annotated.csv")
 
     def test_process_batch(self, admin_client, inmemory_media):
         """
@@ -302,36 +302,36 @@ class TestTitleOverlapBatchAPI:
         and then processing it.
         """
         # create the batch
-        with open(plain_test_file, 'rb') as f:
+        with open(plain_test_file, "rb") as f:
             response = admin_client.post(
-                reverse('title-overlap-batch-list'), data={'source_file': f}, format='multipart'
+                reverse("title-overlap-batch-list"), data={"source_file": f}, format="multipart"
             )
         assert response.status_code == 201
-        batch = TitleOverlapBatch.objects.get(pk=response.data['pk'])
+        batch = TitleOverlapBatch.objects.get(pk=response.data["pk"])
         assert batch.state == TitleOverlapBatchState.INITIAL
         # call the process endpoint
-        with patch('publications.views.process_title_overlap_batch_task') as mock:
+        with patch("publications.views.process_title_overlap_batch_task") as mock:
             mock.delay.return_value = MockTask()
-            response = admin_client.post(reverse('title-overlap-batch-process', args=[batch.pk]))
+            response = admin_client.post(reverse("title-overlap-batch-process", args=[batch.pk]))
             assert response.status_code == 202
-            assert response.data['batch']['state'] == TitleOverlapBatchState.PROCESSING
-            assert 'task_id' in response.data
+            assert response.data["batch"]["state"] == TitleOverlapBatchState.PROCESSING
+            assert "task_id" in response.data
             assert mock.delay.called
         # simulate the processing task synchronously
         process_title_overlap_batch_task(batch.pk)
         # check the batch data
-        response = admin_client.get(reverse('title-overlap-batch-detail', args=[batch.pk]))
+        response = admin_client.get(reverse("title-overlap-batch-detail", args=[batch.pk]))
         assert response.status_code == 200
-        assert response.data['state'] == TitleOverlapBatchState.DONE
-        assert response.data['annotated_file'].endswith('-annotated.csv')
+        assert response.data["state"] == TitleOverlapBatchState.DONE
+        assert response.data["annotated_file"].endswith("-annotated.csv")
 
-    @pytest.mark.parametrize(('user_type', 'can_delete'), [('admin1', True), ('user1', False)])
+    @pytest.mark.parametrize(("user_type", "can_delete"), [("admin1", True), ("user1", False)])
     def test_title_overlap_batch_delete(self, clients, users, user_type, can_delete):
         """
         Check that each user can only see his own batches.
         """
-        batch = TitleOverlapBatchFactory.create(last_updated_by=users['admin1'])
-        response = clients[user_type].delete(reverse('title-overlap-batch-detail', args=[batch.pk]))
+        batch = TitleOverlapBatchFactory.create(last_updated_by=users["admin1"])
+        response = clients[user_type].delete(reverse("title-overlap-batch-detail", args=[batch.pk]))
         if can_delete:
             assert response.status_code == 204
         else:

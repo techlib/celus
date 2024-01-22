@@ -5,8 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0028_verbose_names'),
-        ('publications', '0029_title_default_pub_type'),
+        ("publications", "0028_verbose_names"),
+        ("publications", "0029_title_default_pub_type"),
     ]
 
     operations = []

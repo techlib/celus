@@ -161,7 +161,7 @@ def report_data_tr_jr1():
             create_accesslogs__metrics=[metric_tr1],
             create_accesslogs__titles=titles,
             create_accesslogs__value=100,
-            **{f'create_accesslogs__dim{dim_am_idx + 1}': val_regular_text.pk},
+            **{f"create_accesslogs__dim{dim_am_idx + 1}": val_regular_text.pk},
         )
         ImportBatchFullFactory(
             organization=org,

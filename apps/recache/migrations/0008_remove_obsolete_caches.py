@@ -17,12 +17,12 @@ def remove_obsolete_caches(apps, schema_editor):
     # remove caches older than 10 days
     CachedQuery.objects.annotate(
         live_until=ExpressionWrapper(
-            F('last_queried') + timedelta(days=10), output_field=DateTimeField()
+            F("last_queried") + timedelta(days=10), output_field=DateTimeField()
         )
     ).filter(live_until__lt=now()).delete()
 
 
 class Migration(migrations.Migration):
-    dependencies = [('recache', '0007_alter_cachedquery_lifetime')]
+    dependencies = [("recache", "0007_alter_cachedquery_lifetime")]
 
     operations = [migrations.RunPython(remove_obsolete_caches, migrations.RunPython.noop)]

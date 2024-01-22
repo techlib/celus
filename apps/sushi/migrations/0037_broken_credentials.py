@@ -8,56 +8,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sushi', '0036_credentials_intermediate_report_types'),
+        ("sushi", "0036_credentials_intermediate_report_types"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='counterreportstocredentials',
-            name='broken',
+            model_name="counterreportstocredentials",
+            name="broken",
             field=models.CharField(
-                choices=[('http', 'HTTP'), ('sushi', 'SUSHI')],
-                help_text='Indication that credentails are broken',
+                choices=[("http", "HTTP"), ("sushi", "SUSHI")],
+                help_text="Indication that credentails are broken",
                 max_length=20,
                 null=True,
             ),
         ),
         migrations.AddField(
-            model_name='counterreportstocredentials',
-            name='first_broken_attempt',
+            model_name="counterreportstocredentials",
+            name="first_broken_attempt",
             field=models.OneToOneField(
-                help_text='Indicator whether the report type is broken',
+                help_text="Indicator whether the report type is broken",
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='sushi.SushiFetchAttempt',
+                to="sushi.SushiFetchAttempt",
             ),
         ),
         migrations.AddField(
-            model_name='sushicredentials',
-            name='broken',
+            model_name="sushicredentials",
+            name="broken",
             field=models.CharField(
-                choices=[('http', 'HTTP'), ('sushi', 'SUSHI')],
-                help_text='Indication that credentails are broken',
+                choices=[("http", "HTTP"), ("sushi", "SUSHI")],
+                help_text="Indication that credentails are broken",
                 max_length=20,
                 null=True,
             ),
         ),
         migrations.AddField(
-            model_name='sushicredentials',
-            name='first_broken_attempt',
+            model_name="sushicredentials",
+            name="first_broken_attempt",
             field=models.OneToOneField(
-                help_text='Indicator whether the report type is broken',
+                help_text="Indicator whether the report type is broken",
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='sushi.SushiFetchAttempt',
+                to="sushi.SushiFetchAttempt",
             ),
         ),
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='triggered_by',
+            model_name="sushifetchattempt",
+            name="triggered_by",
             field=models.ForeignKey(
-                help_text='User who triggered the attempt or null if attempt was triggered by '
-                'e.g. cron',
+                help_text="User who triggered the attempt or null if attempt was triggered by "
+                "e.g. cron",
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to=settings.AUTH_USER_MODEL,

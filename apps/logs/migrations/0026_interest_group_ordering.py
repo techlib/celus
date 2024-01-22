@@ -4,24 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0025_modification_dates')]
+    dependencies = [("logs", "0025_modification_dates")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='interestgroup', options={'ordering': ('position', 'important')}
+            name="interestgroup", options={"ordering": ("position", "important")}
         ),
         migrations.AddField(
-            model_name='interestgroup',
-            name='important',
+            model_name="interestgroup",
+            name="important",
             field=models.BooleanField(
                 default=False,
-                help_text='Important interest groups should be shown preferentially to users',
+                help_text="Important interest groups should be shown preferentially to users",
             ),
         ),
         migrations.AddField(
-            model_name='interestgroup',
-            name='position',
-            field=models.PositiveSmallIntegerField(default=1, help_text='Used for sorting'),
+            model_name="interestgroup",
+            name="position",
+            field=models.PositiveSmallIntegerField(default=1, help_text="Used for sorting"),
             preserve_default=False,
         ),
     ]

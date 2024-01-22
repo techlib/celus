@@ -7,53 +7,53 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [('sites', '0002_alter_domain_unique')]
+    dependencies = [("sites", "0002_alter_domain_unique")]
 
     operations = [
         migrations.CreateModel(
-            name='SiteLogo',
+            name="SiteLogo",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('img', models.ImageField(upload_to='deployment')),
-                ('alt_text', models.TextField(blank=True)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('last_modified', models.DateTimeField(auto_now=True)),
+                ("img", models.ImageField(upload_to="deployment")),
+                ("alt_text", models.TextField(blank=True)),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("last_modified", models.DateTimeField(auto_now=True)),
                 (
-                    'site',
-                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sites.Site'),
+                    "site",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="sites.Site"),
                 ),
             ],
-            options={'unique_together': {('site',)}},
+            options={"unique_together": {("site",)}},
         ),
         migrations.CreateModel(
-            name='FooterImage',
+            name="FooterImage",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('img', models.ImageField(upload_to='deployment')),
-                ('alt_text', models.TextField(blank=True)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('last_modified', models.DateTimeField(auto_now=True)),
+                ("img", models.ImageField(upload_to="deployment")),
+                ("alt_text", models.TextField(blank=True)),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("last_modified", models.DateTimeField(auto_now=True)),
                 (
-                    'position',
+                    "position",
                     models.PositiveSmallIntegerField(
-                        help_text='influences sorting of images on page'
+                        help_text="influences sorting of images on page"
                     ),
                 ),
                 (
-                    'site',
-                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sites.Site'),
+                    "site",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="sites.Site"),
                 ),
             ],
-            options={'unique_together': {('site', 'position')}},
+            options={"unique_together": {("site", "position")}},
         ),
     ]

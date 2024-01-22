@@ -4,11 +4,11 @@ from django.db import migrations
 
 
 def add_ir_m1_as_interest_to_all_platforms(apps, schema_editor):
-    Platform = apps.get_model('publications', 'Platform')
-    ReportType = apps.get_model('logs', 'ReportType')
-    PlatformInterestReport = apps.get_model('publications', 'PlatformInterestReport')
+    Platform = apps.get_model("publications", "Platform")
+    ReportType = apps.get_model("logs", "ReportType")
+    PlatformInterestReport = apps.get_model("publications", "PlatformInterestReport")
     try:
-        ir_m1 = ReportType.objects.get(short_name='IR_M1')
+        ir_m1 = ReportType.objects.get(short_name="IR_M1")
     except ReportType.DoesNotExist:
         pass
     else:
@@ -17,7 +17,7 @@ def add_ir_m1_as_interest_to_all_platforms(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0036_titleoverlapbatch')]
+    dependencies = [("publications", "0036_titleoverlapbatch")]
 
     operations = [
         migrations.RunPython(

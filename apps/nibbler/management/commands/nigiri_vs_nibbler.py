@@ -16,20 +16,20 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Compares output nigiri and nibbler when parsing non-counter celus format'
+    help = "Compares output nigiri and nibbler when parsing non-counter celus format"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--source',
-            dest='source',
-            help='directory or file where to look',
+            "--source",
+            dest="source",
+            help="directory or file where to look",
             default=None,
             type=Path,
         )
         parser.add_argument(
-            '--regex',
-            dest='regex',
-            help='regular expression to extract counter report type name from a file',
+            "--regex",
+            dest="regex",
+            help="regular expression to extract counter report type name from a file",
             default="^([^-]+)-.*csv$",
         )
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
     def compare(
         self, path: Path, report_type: ReportType
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[int], bool,]:
+    ) -> typing.Tuple[typing.Optional[int], typing.Optional[int], bool]:
         nigiri_output = self.parse_nigiri(path, report_type)
         nigiri_count = len(nigiri_output) if nigiri_output else nigiri_output
         nibbler_output = self.parse_nibbler(path, report_type)
@@ -107,9 +107,9 @@ class Command(BaseCommand):
 
         try:
             parser_area = CelusFormatAreaDefinition(
-                title_column_names=['title', 'Title', 'source', 'Source'],
-                organization_column_names=['Organization', 'organization', 'org', 'Org'],
-                metric_column_names=['metric', 'Metric'],
+                title_column_names=["title", "Title", "source", "Source"],
+                organization_column_names=["Organization", "organization", "org", "Org"],
+                metric_column_names=["metric", "Metric"],
                 title_ids_mapping={e: e for e in IDS},
                 dimension_mapping={e: e for e in report_type.dimension_short_names},
                 value_extract_params=ExtractParams(default=0),

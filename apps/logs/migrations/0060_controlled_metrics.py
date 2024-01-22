@@ -6,46 +6,46 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0059_manualdataupload_state')]
+    dependencies = [("logs", "0059_manualdataupload_state")]
 
     operations = [
         migrations.CreateModel(
-            name='ControlledMetric',
+            name="ControlledMetric",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated", models.DateTimeField(auto_now=True)),
                 (
-                    'metric',
+                    "metric",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.metric'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.metric"
                     ),
                 ),
                 (
-                    'report_type',
+                    "report_type",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.reporttype'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.reporttype"
                     ),
                 ),
             ],
         ),
         migrations.AddField(
-            model_name='reporttype',
-            name='controlled_metrics',
+            model_name="reporttype",
+            name="controlled_metrics",
             field=models.ManyToManyField(
-                related_name='controlled', through='logs.ControlledMetric', to='logs.Metric'
+                related_name="controlled", through="logs.ControlledMetric", to="logs.Metric"
             ),
         ),
         migrations.AddConstraint(
-            model_name='controlledmetric',
+            model_name="controlledmetric",
             constraint=models.UniqueConstraint(
-                fields=('metric_id', 'report_type_id'),
-                name='controlled_report_type_and_metric_unique',
+                fields=("metric_id", "report_type_id"),
+                name="controlled_report_type_and_metric_unique",
             ),
         ),
     ]

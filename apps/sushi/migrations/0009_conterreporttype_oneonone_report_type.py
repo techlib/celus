@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0008_sushiattemp_importbatch_onetoone')]
+    dependencies = [("sushi", "0008_sushiattemp_importbatch_onetoone")]
 
     operations = [
         migrations.AlterField(
-            model_name='counterreporttype',
-            name='report_type',
+            model_name="counterreporttype",
+            name="report_type",
             field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                on_delete=django.db.models.deletion.CASCADE, to="logs.ReportType"
             ),
         )
     ]

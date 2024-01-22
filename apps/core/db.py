@@ -9,7 +9,7 @@ class ILike(Lookup):
     when using a TRGM index
     """
 
-    lookup_name = 'ilike'
+    lookup_name = "ilike"
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = self.process_lhs(compiler, connection)

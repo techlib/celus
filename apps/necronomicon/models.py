@@ -13,11 +13,11 @@ from . import tasks
 
 
 class BatchStatus(models.TextChoices):
-    INITIAL = 'initial', _("Initial")
-    PREPARING = 'preparing', _("Preparing Stats")
-    PREPARED = 'prepared', _("Stats Prepared")
-    DELETE = 'delete', _("Deleting")
-    DELETED = 'deleted', _("Deleted")
+    INITIAL = "initial", _("Initial")
+    PREPARING = "preparing", _("Preparing Stats")
+    PREPARED = "prepared", _("Stats Prepared")
+    DELETE = "delete", _("Deleting")
+    DELETED = "deleted", _("Deleted")
 
 
 class Batch(models.Model):
@@ -150,7 +150,7 @@ class Batch(models.Model):
         return True
 
     @classmethod
-    def create_from_queryset(cls, queryset) -> typing.Optional['Batch']:
+    def create_from_queryset(cls, queryset) -> typing.Optional["Batch"]:
         if queryset.exists():
             batch = Batch.objects.create()
             for obj in queryset:
@@ -164,7 +164,7 @@ class Candidate(models.Model):
     batch = models.ForeignKey(Batch, related_name="candidates", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey(ct_field='content_type', fk_field='object_id')
+    content_object = GenericForeignKey(ct_field="content_type", fk_field="object_id")
 
     info = models.JSONField(default=dict, blank=True, null=True)
 

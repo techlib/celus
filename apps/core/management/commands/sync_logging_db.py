@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Make sure the logging database is up to date'
+    help = "Make sure the logging database is up to date"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--drop-columns',
-            action='store_true',
-            help='When syncing table columns, also drop extra columns',
+            "--drop-columns",
+            action="store_true",
+            help="When syncing table columns, also drop extra columns",
         )
 
     def handle(self, *args, **options):
@@ -29,25 +29,25 @@ class Command(BaseCommand):
         )
 
         for name, cube, condition in (
-            ('Request', RequestLogCube, settings.CLICKHOUSE_REQUEST_LOGGING),
-            ('Celery task', CeleryTaskLogCube, settings.CLICKHOUSE_CELERY_TASK_LOGGING),
+            ("Request", RequestLogCube, settings.CLICKHOUSE_REQUEST_LOGGING),
+            ("Celery task", CeleryTaskLogCube, settings.CLICKHOUSE_CELERY_TASK_LOGGING),
         ):
             if condition:
                 backend = get_logging_backend()
                 backend.initialize_storage(cube)
-                changed, added, to_remove = backend.sync_storage(cube, drop=options['drop_columns'])
-                if to_remove and not options['drop_columns']:
+                changed, added, to_remove = backend.sync_storage(cube, drop=options["drop_columns"])
+                if to_remove and not options["drop_columns"]:
                     logger.warning(
-                        'Some columns are not present in the model anymore: %s. '
-                        'Use --drop-columns to drop them.',
-                        ', '.join(to_remove),
+                        "Some columns are not present in the model anymore: %s. "
+                        "Use --drop-columns to drop them.",
+                        ", ".join(to_remove),
                     )
                 if changed:
-                    dropped = len(to_remove) if options['drop_columns'] else 0
+                    dropped = len(to_remove) if options["drop_columns"] else 0
                     logger.info(
-                        f'{cube} schema was synced: %d columns added, %d dropped',
+                        f"{cube} schema was synced: %d columns added, %d dropped",
                         len(added),
                         dropped,
                     )
             else:
-                logger.warning(f'{name} logging is disabled, skipping logging database creation')
+                logger.warning(f"{name} logging is disabled, skipping logging database creation")

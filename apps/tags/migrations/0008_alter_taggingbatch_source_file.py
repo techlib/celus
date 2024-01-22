@@ -6,12 +6,12 @@ import tags.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('tags', '0007_tagging_batch_internal_name')]
+    dependencies = [("tags", "0007_tagging_batch_internal_name")]
 
     operations = [
         migrations.AlterField(
-            model_name='taggingbatch',
-            name='source_file',
+            model_name="taggingbatch",
+            name="source_file",
             field=models.FileField(
                 blank=True,
                 max_length=256,

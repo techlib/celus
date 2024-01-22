@@ -5,46 +5,46 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0007_fetchintention_one_to_one_attempt')]
+    dependencies = [("scheduler", "0007_fetchintention_one_to_one_attempt")]
 
     operations = [
         migrations.AddField(
-            model_name='scheduler',
-            name='current_celery_task_id',
+            model_name="scheduler",
+            name="current_celery_task_id",
             field=models.UUIDField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='scheduler',
-            name='current_intention',
+            model_name="scheduler",
+            name="current_intention",
             field=models.OneToOneField(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='current_scheduler',
-                to='scheduler.fetchintention',
+                related_name="current_scheduler",
+                to="scheduler.fetchintention",
             ),
         ),
         migrations.AddField(
-            model_name='scheduler',
-            name='current_start',
+            model_name="scheduler",
+            name="current_start",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='fetchintention',
-            name='scheduler',
+            model_name="fetchintention",
+            name="scheduler",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='intentions',
-                to='scheduler.scheduler',
+                related_name="intentions",
+                to="scheduler.scheduler",
             ),
         ),
         migrations.AlterField(
-            model_name='fetchintention',
-            name='when_processed',
+            model_name="fetchintention",
+            name="when_processed",
             field=models.DateTimeField(
-                blank=True, help_text='When fetch intention was processed', null=True
+                blank=True, help_text="When fetch intention was processed", null=True
             ),
         ),
     ]

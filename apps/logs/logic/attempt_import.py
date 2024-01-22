@@ -43,19 +43,19 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     counter_version = attempt.credentials.counter_version
     reader_cls = attempt.counter_report.get_reader_class(json_format=attempt.file_is_json())
     if not reader_cls:
-        logger.warning('Unsupported report type %s', attempt.counter_report.code)
+        logger.warning("Unsupported report type %s", attempt.counter_report.code)
         return
 
     attempt.check_importable()
 
-    logger.debug('Processing file: %s; time: %.3f', attempt.data_file.name, time())
+    logger.debug("Processing file: %s; time: %.3f", attempt.data_file.name, time())
 
     reader = reader_cls()
     try:
         records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
-        logger.debug('Records parsed; time: %.3f', time())
+        logger.debug("Records parsed; time: %.3f", time())
     except FileNotFoundError as e:
-        logger.error('Cannot find the referenced file - probably deleted?: %s', e)
+        logger.error("Cannot find the referenced file - probably deleted?: %s", e)
         attempt.mark_crashed(e)
         return
     try:
@@ -65,8 +65,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             validate_data_v5(reader)
     except SushiException as e:
         # if we find validation error on data revalidation, we switch the report success attr
-        logger.error('Validation error: %s', e)
-        logger.info('Marking the attempt as unsuccessful')
+        logger.error("Validation error: %s", e)
+        logger.info("Marking the attempt as unsuccessful")
         attempt.status = AttemptStatus.IMPORT_FAILED
         if isinstance(e.text, SushiError):
             attempt.log = str(e.text)
@@ -74,7 +74,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             attempt.log = str(e)
         # fill in extracted_data
-        if hasattr(reader, 'header') and isinstance(reader.header, dict):
+        if hasattr(reader, "header") and isinstance(reader.header, dict):
             attempt.extract_header_data(reader.header)
         attempt.save()
         return
@@ -83,8 +83,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     # a SUSHI exception. We do not want to ingest such data
     if counter_version == 5 and reader.errors:
         error = reader.errors[0]
-        attempt.log = '; '.join(str(e) for e in reader.errors)
-        logger.warning('Found errors: %s', attempt.log)
+        attempt.log = "; ".join(str(e) for e in reader.errors)
+        logger.warning("Found errors: %s", attempt.log)
         if not isinstance(error, TransportError):
             attempt.error_code = error.code
         attempt.status = AttemptStatus.DOWNLOAD_FAILED
@@ -103,7 +103,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.credentials.platform,
             month,
         ):
-            logger.info('%d empty conflicting ImportBatch(es) were deleted', count)
+            logger.info("%d empty conflicting ImportBatch(es) were deleted", count)
 
         import_batches, stats = import_counter_records(
             attempt.counter_report.report_type,
@@ -114,7 +114,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         )
 
         if len(import_batches) > 1:
-            raise DataStructureError('Cannot import data for more than one month from SUSHI')
+            raise DataStructureError("Cannot import data for more than one month from SUSHI")
         # it is possible that because of month filter there will be no data imported anyway
         # here we handle such situation
         if import_batches:
@@ -123,18 +123,18 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             attempt.status = AttemptStatus.NO_DATA
             # it may be overwritten bellow with sushi warnings, but that's not a problem
-            attempt.log = 'No data found during import'
+            attempt.log = "No data found during import"
         if counter_version == 5 and (reader.errors or reader.warnings):
             attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
             attempt.error_code = reader.warnings[0].code
         attempt.save()
-        logger.info('Import stats: %s', stats)
+        logger.info("Import stats: %s", stats)
     else:
         # Process errors for counter5
         if counter_version == 5 and reader.warnings:
             attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
         else:
-            attempt.log = 'No data found during import'
+            attempt.log = "No data found during import"
         attempt.status = AttemptStatus.NO_DATA
         # create empty import batch each time empty data are imported
         attempt.import_batch = create_import_batch_or_crash(
@@ -144,10 +144,10 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             month=attempt.start_date,
         )
         attempt.save()
-        logger.warning('No records found!')
+        logger.warning("No records found!")
     # fill in extracted_data
     if (
-        hasattr(reader, 'header')
+        hasattr(reader, "header")
         and isinstance(reader.header, dict)
         and attempt.extract_header_data(reader.header)
     ):
@@ -162,6 +162,6 @@ def reprocess_attempt(attempt: SushiFetchAttempt) -> typing.Optional[SushiFetchA
         import_one_sushi_attempt(attempt)
     except Exception as e:
         # we catch any kind of error to make sure that there is no crash
-        logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+        logger.error("Importing sushi attempt #%d crashed: %s", attempt.pk, e)
         attempt.mark_crashed(e)
     return attempt

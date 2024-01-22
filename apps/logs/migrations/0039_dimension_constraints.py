@@ -4,22 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0038_flexiblereport')]
+    dependencies = [("logs", "0038_flexiblereport")]
 
     operations = [
-        migrations.AlterUniqueTogether(name='dimension', unique_together=set()),
+        migrations.AlterUniqueTogether(name="dimension", unique_together=set()),
         migrations.AddConstraint(
-            model_name='dimension',
+            model_name="dimension",
             constraint=models.UniqueConstraint(
-                fields=('short_name', 'source'), name='short_name_source_not_null'
+                fields=("short_name", "source"), name="short_name_source_not_null"
             ),
         ),
         migrations.AddConstraint(
-            model_name='dimension',
+            model_name="dimension",
             constraint=models.UniqueConstraint(
                 condition=models.Q(source=None),
-                fields=('short_name',),
-                name='short_name_source_null',
+                fields=("short_name",),
+                name="short_name_source_null",
             ),
         ),
     ]

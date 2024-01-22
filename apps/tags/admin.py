@@ -7,7 +7,7 @@ from . import models
 
 
 class TagPreviewMixin:
-    @admin.display(description='Preview')
+    @admin.display(description="Preview")
     def rendered(self, obj: Union[models.Tag, models.TagClass]):
         return format_html(
             f"<span style='padding: 4px 8px; background-color: {obj.bg_color}; "
@@ -19,57 +19,57 @@ class TagPreviewMixin:
 @admin.register(models.Tag)
 class TagAdmin(TagPreviewMixin, admin.ModelAdmin):
     list_display = [
-        'pk',
-        'name',
-        'tag_class',
-        'text_color',
-        'bg_color',
-        'can_see',
-        'can_assign',
-        'rendered',
+        "pk",
+        "name",
+        "tag_class",
+        "text_color",
+        "bg_color",
+        "can_see",
+        "can_assign",
+        "rendered",
     ]
-    readonly_fields = ['last_updated_by']
-    search_fields = ['name', 'tag_class__name', 'text_color', 'bg_color']
+    readonly_fields = ["last_updated_by"]
+    search_fields = ["name", "tag_class__name", "text_color", "bg_color"]
 
 
 @admin.register(models.TagClass)
 class TagClassAdmin(TagPreviewMixin, admin.ModelAdmin):
-    list_display = ['pk', 'name', 'text_color', 'bg_color', 'can_create_tags', 'rendered']
-    readonly_fields = ['last_updated_by']
-    search_fields = ['name', 'text_color', 'bg_color']
+    list_display = ["pk", "name", "text_color", "bg_color", "can_create_tags", "rendered"]
+    readonly_fields = ["last_updated_by"]
+    search_fields = ["name", "text_color", "bg_color"]
 
 
 @admin.register(models.TaggingBatch)
 class TaggingBatchAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'state', 'created', 'last_updated_by', 'tag', 'tag_class']
-    list_filter = ['state', 'last_updated_by', 'tag', 'tag_class']
+    list_display = ["pk", "state", "created", "last_updated_by", "tag", "tag_class"]
+    list_filter = ["state", "last_updated_by", "tag", "tag_class"]
 
 
 @admin.register(models.TaggingAttempt)
 class TaggingAttemptAdmin(admin.ModelAdmin):
     list_display = [
-        'batch_id',
-        'operation',
-        'created',
-        'rows_total',
-        'unique_matched_titles',
-        'tagged_titles',
-        'already_tagged_titles',
+        "batch_id",
+        "operation",
+        "created",
+        "rows_total",
+        "unique_matched_titles",
+        "tagged_titles",
+        "already_tagged_titles",
     ]
-    list_filter = ['operation', 'created']
+    list_filter = ["operation", "created"]
     readonly_fields = [
-        'batch',
-        'operation',
-        'recognized_columns',
-        'rows_total',
-        'rows_no_match',
-        'rows_no_tag',
-        'tag_stats',
-        'unique_matched_titles',
-        'already_tagged_titles',
-        'tagged_titles',
-        'exclusively_tagged_titles',
-        'created',
-        'last_updated',
-        'last_updated_by',
+        "batch",
+        "operation",
+        "recognized_columns",
+        "rows_total",
+        "rows_no_match",
+        "rows_no_tag",
+        "tag_stats",
+        "unique_matched_titles",
+        "already_tagged_titles",
+        "tagged_titles",
+        "exclusively_tagged_titles",
+        "created",
+        "last_updated",
+        "last_updated_by",
     ]

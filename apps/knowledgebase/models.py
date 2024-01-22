@@ -40,7 +40,7 @@ class AuthTokenMixin:
 
     @property
     def request_headers(self) -> dict:
-        res = {'Authorization': f'Token {self.source.token}', 'Content-Type': 'application/json'}
+        res = {"Authorization": f"Token {self.source.token}", "Content-Type": "application/json"}
         res.update(self.request_headers_extra)
         return res
 
@@ -57,7 +57,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     done = models.DateTimeField(null=True, blank=True)
-    last_error = models.TextField(blank=True, default='')
+    last_error = models.TextField(blank=True, default="")
 
     @property
     def url(self):
@@ -76,7 +76,7 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
 
         res = False
         try:
-            self.last_error = ''
+            self.last_error = ""
             if self.target == self.Target.PRESENT:
                 resp = requests.put(self.url, headers=self.request_headers)
                 resp.raise_for_status()
@@ -92,14 +92,14 @@ class RouterSyncAttempt(AuthTokenMixin, models.Model):
             logger.debug(traceback.format_exc())
 
             self.last_error = str(e)
-            self.retries = models.F('retries') + 1
+            self.retries = models.F("retries") + 1
         finally:
             self.save()
 
         return res
 
     @staticmethod
-    def propagate_prefix(prefix: str, target: 'RouterSyncAttempt.Target'):
+    def propagate_prefix(prefix: str, target: "RouterSyncAttempt.Target"):
         with transaction.atomic():
             for source in DataSource.objects.filter(type=DataSource.TYPE_KNOWLEDGEBASE):
                 sync_attempt, _ = RouterSyncAttempt.objects.get_or_create(
@@ -127,20 +127,20 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         EMPTY_SOURCE = auto()  # Merges by short_name only when source is empty
         ALL = auto()  # Merges by short_name regardless of the source
 
-    KIND_PLATFORM = 'platform'
-    KIND_REPORT_TYPE = 'report_type'
-    KIND_PARSER_DEFINITION = 'parser_definition'
+    KIND_PLATFORM = "platform"
+    KIND_REPORT_TYPE = "report_type"
+    KIND_PARSER_DEFINITION = "parser_definition"
 
     KINDS = (
-        (KIND_PLATFORM, 'Platform'),
-        (KIND_REPORT_TYPE, 'Report type'),
-        (KIND_PARSER_DEFINITION, 'Parser definition'),
+        (KIND_PLATFORM, "Platform"),
+        (KIND_REPORT_TYPE, "Report type"),
+        (KIND_PARSER_DEFINITION, "Parser definition"),
     )
 
     URL_MAP = {
-        KIND_PLATFORM: '/knowledgebase/platforms/',
-        KIND_REPORT_TYPE: '/knowledgebase/report_types/',
-        KIND_PARSER_DEFINITION: '/knowledgebase/parsers/',
+        KIND_PLATFORM: "/knowledgebase/platforms/",
+        KIND_REPORT_TYPE: "/knowledgebase/report_types/",
+        KIND_PARSER_DEFINITION: "/knowledgebase/parsers/",
     }
 
     url = models.URLField()
@@ -163,7 +163,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         return super().save(*args, **kwargs)
 
     @property
-    def status(self) -> 'ImportAttempt.State':
+    def status(self) -> "ImportAttempt.State":
         if self.error is not None:
             return ImportAttempt.State.FAILED
 
@@ -214,7 +214,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
                     error__isnull=True,
                 )
                 .exclude(data_hash__exact="")
-                .order_by('-downloaded_timestamp')
+                .order_by("-downloaded_timestamp")
                 .first()
             )
 
@@ -261,13 +261,13 @@ class PlatformImportAttempt(ImportAttempt):
         counter: typing.Counter[str] = Counter()
 
         UPDATABLE_FIELDS = (
-            'short_name',
-            'name',
-            'provider',
-            'url',
-            'knowledgebase',
-            'counter_registry_id',
-            'duplicates',
+            "short_name",
+            "name",
+            "provider",
+            "url",
+            "knowledgebase",
+            "counter_registry_id",
+            "duplicates",
         )
 
         # parse data
@@ -289,18 +289,18 @@ class PlatformImportAttempt(ImportAttempt):
                 ).update(counter_registry_id=None)
 
             updatable = {
-                'short_name': record["short_name"],
-                'name': record["name"],
-                'provider': record["provider"],
-                'url': record["url"],
-                'knowledgebase': {
+                "short_name": record["short_name"],
+                "name": record["name"],
+                "provider": record["provider"],
+                "url": record["url"],
+                "knowledgebase": {
                     "providers": record["providers"],
                     "report_types": record.get("report_types", []),
                     "platform_filter": record.get("platform_filter"),
                     "notes_url": record.get("notes_url"),
                 },
-                'counter_registry_id': record["counter_registry_id"],
-                'duplicates': record.get("duplicates", []),
+                "counter_registry_id": record["counter_registry_id"],
+                "duplicates": record.get("duplicates", []),
             }
 
             if (
@@ -382,9 +382,9 @@ class PlatformImportAttempt(ImportAttempt):
             Platform.objects.filter(
                 models.Q(source=None) | models.Q(source__type=DataSource.TYPE_KNOWLEDGEBASE)
             )
-            .values('short_name')
-            .annotate(count=models.Count('pk'))
-            .values('short_name', 'count')
+            .values("short_name")
+            .annotate(count=models.Count("pk"))
+            .values("short_name", "count")
             .filter(count__gt=1)
         )
         if duplicates:
@@ -446,13 +446,13 @@ class ReportTypeImportAttempt(ImportAttempt):
                 dimensions = []
                 for dimension_data in report_type_data["dimensions"]:
                     dimension, dimension_created = Dimension.objects.get_or_create(
-                        short_name=dimension_data['short_name'],
+                        short_name=dimension_data["short_name"],
                     )
                     if dimension_created:
                         logger.info(
                             "Dimension '%s' was created for report type '%s'",
                             dimension.short_name,
-                            report_type_data['short_name'],
+                            report_type_data["short_name"],
                         )
                     dimensions.append(dimension)
             else:
@@ -463,13 +463,13 @@ class ReportTypeImportAttempt(ImportAttempt):
             metrics_and_igs = []
             for metric_data in report_type_data["metrics"]:
                 metric, metric_created = Metric.objects.get_or_create(
-                    short_name=metric_data['short_name']
+                    short_name=metric_data["short_name"]
                 )
                 if metric_created:
                     logger.info(
                         "Metric '%s' was created for report type '%s'",
                         metric.short_name,
-                        report_type_data['short_name'],
+                        report_type_data["short_name"],
                     )
 
                 if ig := InterestGroup.objects.filter(
@@ -508,7 +508,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 # Compare metric interest groups
                 old_rims = report_type.reportinterestmetric_set.filter(
                     interest_group__isnull=False
-                ).values_list('metric__pk', 'interest_group__pk', 'pk')
+                ).values_list("metric__pk", "interest_group__pk", "pk")
                 old_rims = {m: (ig, rim) for m, ig, rim in old_rims}
                 for rim in [e[1] for e in metrics_and_igs if e[1]]:
                     # Update existing rim if necessary
@@ -538,13 +538,13 @@ class ReportTypeImportAttempt(ImportAttempt):
                 orig_dimensions = [
                     (e.position, e.dimension.short_name)
                     for e in report_type.reporttypetodimension_set.order_by(
-                        'position'
-                    ).select_related('dimension')
+                        "position"
+                    ).select_related("dimension")
                 ]
                 if new_dimensions != orig_dimensions:
                     if report_type_used:
-                        old_text = "".join(f'{e[0]}. - {e[1]}\n' for e in orig_dimensions)
-                        new_text = "".join(f'{e[0]}. - {e[1]}\n' for e in new_dimensions)
+                        old_text = "".join(f"{e[0]}. - {e[1]}\n" for e in orig_dimensions)
+                        new_text = "".join(f"{e[0]}. - {e[1]}\n" for e in new_dimensions)
                         async_mail_admins.delay(
                             "Report type dimensions were modified",
                             f"ReportType: {report_type} (source={report_type.source}, "
@@ -567,15 +567,15 @@ class ReportTypeImportAttempt(ImportAttempt):
                         updated = True
 
                 # Set attributes
-                for field in ('short_name', 'name'):
+                for field in ("short_name", "name"):
                     updated = updated or (getattr(report_type, field) != report_type_data[field])
                     setattr(report_type, field, report_type_data[field])
 
                 if updated or ig_updated:
-                    counter['updated'] += 1
+                    counter["updated"] += 1
                     report_type.save()
                 else:
-                    counter['same'] += 1
+                    counter["same"] += 1
 
         # Note that we don't want to delete report types automatically
         # Because it could seriously affect the data
@@ -629,8 +629,8 @@ class ParserDefinitionImportAttempt(ImportAttempt):
             counter["total"] += 1
 
             pk = definition.pop("pk")
-            lowest_nibbler_version = definition.pop('lowest_nibbler_version')
-            highest_nibbler_version = definition.pop('highest_nibbler_version')
+            lowest_nibbler_version = definition.pop("lowest_nibbler_version")
+            highest_nibbler_version = definition.pop("highest_nibbler_version")
 
             # Check version
             if not (

@@ -36,7 +36,7 @@ class TestBatch:
 
         CandidateFactory(batch=batch, content_object=organizations["standalone"])
 
-        with mock.patch('necronomicon.models.tasks') as task_mock:
+        with mock.patch("necronomicon.models.tasks") as task_mock:
             batch.plan_prepare_batch()
             assert task_mock.prepare_batch.delay.called
 
@@ -62,7 +62,7 @@ class TestBatch:
 
         CandidateFactory(batch=batch, content_object=organizations["standalone"])
 
-        with mock.patch('necronomicon.models.tasks') as task_mock:
+        with mock.patch("necronomicon.models.tasks") as task_mock:
             batch.plan_delete_batch_targets()
             assert task_mock.delete_batch_targets.delay.called
 
@@ -88,7 +88,7 @@ class TestBatch:
 
         CandidateFactory(batch=batch, content_object=platforms["standalone"])
 
-        with mock.patch('necronomicon.models.tasks') as task_mock:
+        with mock.patch("necronomicon.models.tasks") as task_mock:
             batch.plan_prepare_batch()
             assert task_mock.prepare_batch.delay.called
 
@@ -114,7 +114,7 @@ class TestBatch:
 
         CandidateFactory(batch=batch, content_object=platforms["standalone"])
 
-        with mock.patch('necronomicon.models.tasks') as task_mock:
+        with mock.patch("necronomicon.models.tasks") as task_mock:
             batch.plan_delete_batch_targets()
             assert task_mock.delete_batch_targets.delay.called
 

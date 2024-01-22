@@ -41,12 +41,12 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        'Cleanup all the organizations and their data from the database. Used when you copy an '
-        'existing db into a new install and want to clean it up.'
+        "Cleanup all the organizations and their data from the database. Used when you copy an "
+        "existing db into a new install and want to clean it up."
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--do-it', dest='doit', action='store_true')
+        parser.add_argument("--do-it", dest="doit", action="store_true")
 
     @classmethod
     def update_stats(cls, stats, details):
@@ -93,12 +93,12 @@ class Command(BaseCommand):
             Session,
             Token,
         ):
-            self.stderr.write(self.style.WARNING(f'Deleting {model.__name__}'))
+            self.stderr.write(self.style.WARNING(f"Deleting {model.__name__}"))
             count, details = model.objects.all().delete()
             self.update_stats(stats, details)
-            self.stderr.write(self.style.WARNING(f'  - deleted: {count} objects'))
+            self.stderr.write(self.style.WARNING(f"  - deleted: {count} objects"))
         # remove some dimension texts
-        for dim_name in ('Publisher', 'Success', 'Platform', 'YOP'):
+        for dim_name in ("Publisher", "Success", "Platform", "YOP"):
             try:
                 dim = Dimension.objects.get(short_name=dim_name)
             except Dimension.DoesNotExist:
@@ -109,9 +109,9 @@ class Command(BaseCommand):
                 self.stderr.write(
                     self.style.WARNING(f'Deleted {count} DimensionTexts for dim "{dim_name}"')
                 )
-        self.stderr.write(self.style.WARNING('Delete stats: '))
+        self.stderr.write(self.style.WARNING("Delete stats: "))
         for key, value in sorted(stats.items()):
-            self.stderr.write(self.style.WARNING(f'  {key}: {value}'))
+            self.stderr.write(self.style.WARNING(f"  {key}: {value}"))
         # fix other things
         site = Site.objects.get(pk=settings.SITE_ID)
         host_name = this_celus_domain()
@@ -127,5 +127,5 @@ class Command(BaseCommand):
             Organization.objects.create(internal_id=org_id, short_name=org_id, name=org_id)
             self.stderr.write(self.style.SUCCESS(f'Created organization "{org_id}"'))
 
-        if not options['doit']:
-            raise ValueError('preventing db commit, use --do-it to really do it ;)')
+        if not options["doit"]:
+            raise ValueError("preventing db commit, use --do-it to really do it ;)")

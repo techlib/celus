@@ -5,8 +5,8 @@ from django.db.models import F
 
 
 def fill_processing_success_from_download_success(apps, schema_editor):
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    SushiFetchAttempt.objects.all().update(processing_success=F('download_success'))
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
+    SushiFetchAttempt.objects.all().update(processing_success=F("download_success"))
 
 
 def noop(apps, schema_editor):
@@ -14,12 +14,12 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0013_auto_20190829_1105')]
+    dependencies = [("sushi", "0013_auto_20190829_1105")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='processing_success',
+            model_name="sushifetchattempt",
+            name="processing_success",
             field=models.BooleanField(default=True),
             preserve_default=False,
         ),

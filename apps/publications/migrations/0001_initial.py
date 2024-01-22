@@ -10,47 +10,47 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Platform',
+            name="Platform",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('ext_id', models.PositiveIntegerField(unique=True)),
-                ('short_name', models.CharField(max_length=100)),
-                ('short_name_en', models.CharField(max_length=100, null=True)),
-                ('short_name_cs', models.CharField(max_length=100, null=True)),
-                ('name', models.CharField(max_length=250)),
-                ('name_en', models.CharField(max_length=250, null=True)),
-                ('name_cs', models.CharField(max_length=250, null=True)),
-                ('provider', models.CharField(max_length=250)),
-                ('provider_en', models.CharField(max_length=250, null=True)),
-                ('provider_cs', models.CharField(max_length=250, null=True)),
-                ('url', models.URLField(blank=True)),
+                ("ext_id", models.PositiveIntegerField(unique=True)),
+                ("short_name", models.CharField(max_length=100)),
+                ("short_name_en", models.CharField(max_length=100, null=True)),
+                ("short_name_cs", models.CharField(max_length=100, null=True)),
+                ("name", models.CharField(max_length=250)),
+                ("name_en", models.CharField(max_length=250, null=True)),
+                ("name_cs", models.CharField(max_length=250, null=True)),
+                ("provider", models.CharField(max_length=250)),
+                ("provider_en", models.CharField(max_length=250, null=True)),
+                ("provider_cs", models.CharField(max_length=250, null=True)),
+                ("url", models.URLField(blank=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Title',
+            name="Title",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('name', models.TextField()),
+                ("name", models.TextField()),
                 (
-                    'pub_type',
-                    models.CharField(choices=[('B', 'Book'), ('J', 'Journal')], max_length=1),
+                    "pub_type",
+                    models.CharField(choices=[("B", "Book"), ("J", "Journal")], max_length=1),
                 ),
-                ('isbn', models.CharField(blank=True, max_length=20)),
-                ('issn', models.CharField(blank=True, max_length=9)),
+                ("isbn", models.CharField(blank=True, max_length=20)),
+                ("issn", models.CharField(blank=True, max_length=9)),
                 (
-                    'eissn',
+                    "eissn",
                     models.CharField(
-                        blank=True, help_text='ISSN of electronic version', max_length=9
+                        blank=True, help_text="ISSN of electronic version", max_length=9
                     ),
                 ),
             ],

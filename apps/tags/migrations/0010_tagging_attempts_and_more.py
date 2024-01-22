@@ -7,44 +7,44 @@ from django.db.models import Count, Prefetch
 
 
 def create_taggingattempts_from_taggingbatches(apps, schema_editor):
-    TaggingBatch = apps.get_model('tags', 'TaggingBatch')
-    TaggingAttempt = apps.get_model('tags', 'TaggingAttempt')
+    TaggingBatch = apps.get_model("tags", "TaggingBatch")
+    TaggingAttempt = apps.get_model("tags", "TaggingAttempt")
     for batch in TaggingBatch.objects.all():
         # preflight and postflight are dicts of the same structure
         # so we can iterate over them
-        for op, attr in [('preflight', 'preflight'), ('import', 'postflight')]:
+        for op, attr in [("preflight", "preflight"), ("import", "postflight")]:
             source = getattr(batch, attr)
             if source:
-                stats = source.get('stats', {})
+                stats = source.get("stats", {})
                 TaggingAttempt.objects.create(
                     batch=batch,
                     operation=op,
-                    success=not source.get('error'),
-                    error=source.get('error', ''),
-                    recognized_columns=source.get('recognized_columns', []),
+                    success=not source.get("error"),
+                    error=source.get("error", ""),
+                    recognized_columns=source.get("recognized_columns", []),
                     tag_stats={},  # this is new
-                    rows_total=stats.get('row_count', 0),
-                    rows_no_match=stats.get('no_match', 0),
-                    rows_no_tag=stats.get('rows_no_tag', 0),
-                    unique_matched_titles=stats.get('unique_matched_titles', 0),
-                    already_tagged_titles=stats.get('already_tagged_titles', 0),
-                    tagged_titles=stats.get('tagged_titles', 0),
-                    exclusively_tagged_titles=stats.get('exclusively_tagged_titles', 0),
+                    rows_total=stats.get("row_count", 0),
+                    rows_no_match=stats.get("no_match", 0),
+                    rows_no_tag=stats.get("rows_no_tag", 0),
+                    unique_matched_titles=stats.get("unique_matched_titles", 0),
+                    already_tagged_titles=stats.get("already_tagged_titles", 0),
+                    tagged_titles=stats.get("tagged_titles", 0),
+                    exclusively_tagged_titles=stats.get("exclusively_tagged_titles", 0),
                 )
 
 
 def add_tagging_attempts(apps, schema_editor):
-    TaggingBatch = apps.get_model('tags', 'TaggingBatch')
-    TaggingAttempt = apps.get_model('tags', 'TaggingAttempt')
+    TaggingBatch = apps.get_model("tags", "TaggingBatch")
+    TaggingAttempt = apps.get_model("tags", "TaggingAttempt")
     for batch in (
         TaggingBatch.objects.all()
-        .annotate(tagged_items=Count('titletag'))
+        .annotate(tagged_items=Count("titletag"))
         .filter(tagged_items__gt=0)
         .prefetch_related(
             Prefetch(
-                'taggingattempts',
-                to_attr='last_imports',
-                queryset=TaggingAttempt.objects.filter(operation='import').order_by('-created'),
+                "taggingattempts",
+                to_attr="last_imports",
+                queryset=TaggingAttempt.objects.filter(operation="import").order_by("-created"),
             )
         )
     ):
@@ -55,127 +55,128 @@ def add_tagging_attempts(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('tags', '0009_usertagclass'),
+        ("tags", "0009_usertagclass"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='taggingbatch',
-            name='reprocess_after',
+            model_name="taggingbatch",
+            name="reprocess_after",
             field=models.DurationField(
                 blank=True,
-                help_text='When not null, it specifies the interval after which the tagging batch '
-                'will be re-imported (new attempt will be created).',
+                help_text="When not null, it specifies the interval after which the tagging batch "
+                "will be re-imported (new attempt will be created).",
                 null=True,
             ),
         ),
         migrations.AddField(
-            model_name='usertagclass',
-            name='created',
+            model_name="usertagclass",
+            name="created",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AddField(
-            model_name='usertagclass',
-            name='last_updated',
+            model_name="usertagclass",
+            name="last_updated",
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.CreateModel(
-            name='TaggingAttempt',
+            name="TaggingAttempt",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'operation',
+                    "operation",
                     models.CharField(
-                        choices=[('preflight', 'Preflight'), ('import', 'Import')], max_length=10
+                        choices=[("preflight", "Preflight"), ("import", "Import")], max_length=10
                     ),
                 ),
                 (
-                    'success',
+                    "success",
                     models.BooleanField(
                         default=True,
-                        help_text='Whether the operation was successful. If not `error` should '
-                        'have more info',
+                        help_text="Whether the operation was successful. If not `error` should "
+                        "have more info",
                     ),
                 ),
                 (
-                    'error',
+                    "error",
                     models.TextField(
-                        blank=True, help_text='In case of failure contains info about the error'
+                        blank=True, help_text="In case of failure contains info about the error"
                     ),
                 ),
                 (
-                    'recognized_columns',
-                    models.JSONField(default=list, help_text='List of column names'),
+                    "recognized_columns",
+                    models.JSONField(default=list, help_text="List of column names"),
                 ),
                 (
-                    'tag_stats',
+                    "tag_stats",
                     models.JSONField(
                         default=dict,
-                        help_text='Dict with tags as keys and dicts with different counts as values',
+                        help_text="Dict with tags as keys and dicts with different counts "
+                        "as values",
                     ),
                 ),
                 (
-                    'rows_total',
+                    "rows_total",
                     models.PositiveIntegerField(
-                        default=0, help_text='Total number of rows in the source file'
+                        default=0, help_text="Total number of rows in the source file"
                     ),
                 ),
                 (
-                    'rows_no_match',
-                    models.PositiveIntegerField(default=0, help_text='Rows with no matched title'),
+                    "rows_no_match",
+                    models.PositiveIntegerField(default=0, help_text="Rows with no matched title"),
                 ),
                 (
-                    'rows_no_tag',
+                    "rows_no_tag",
                     models.PositiveIntegerField(
-                        default=0, help_text='Rows with no tag information'
+                        default=0, help_text="Rows with no tag information"
                     ),
                 ),
                 (
-                    'unique_matched_titles',
+                    "unique_matched_titles",
                     models.PositiveIntegerField(
-                        default=0, help_text='Number of unique matched titles'
+                        default=0, help_text="Number of unique matched titles"
                     ),
                 ),
                 (
-                    'already_tagged_titles',
+                    "already_tagged_titles",
                     models.PositiveIntegerField(
                         default=0,
-                        help_text='Titles already tagged with the tag(s) as hand - these will not '
-                        'be tagged again',
+                        help_text="Titles already tagged with the tag(s) as hand - these will not "
+                        "be tagged again",
                     ),
                 ),
                 (
-                    'tagged_titles',
+                    "tagged_titles",
                     models.PositiveIntegerField(
                         default=0, help_text="In preflight means 'to be tagged'"
                     ),
                 ),
                 (
-                    'exclusively_tagged_titles',
+                    "exclusively_tagged_titles",
                     models.PositiveIntegerField(
                         default=0,
-                        help_text='Number of titles which were already tagged with another tag '
-                        'from a mutually exclusive tag class and thus were not tagged with the '
-                        'tag(s) as hand',
+                        help_text="Number of titles which were already tagged with another tag "
+                        "from a mutually exclusive tag class and thus were not tagged with the "
+                        "tag(s) as hand",
                     ),
                 ),
                 (
-                    'batch',
+                    "batch",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='taggingattempts',
-                        to='tags.taggingbatch',
+                        related_name="taggingattempts",
+                        to="tags.taggingbatch",
                     ),
                 ),
                 (
-                    'last_updated_by',
+                    "last_updated_by",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
@@ -184,53 +185,53 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                'ordering': ('batch_id', 'created'),
+                "ordering": ("batch_id", "created"),
             },
         ),
         migrations.AddField(
-            model_name='organizationtag',
-            name='tagging_attempt',
+            model_name="organizationtag",
+            name="tagging_attempt",
             field=models.ForeignKey(
                 blank=True,
-                help_text='If the tagging was done in a batch, this is the specific attempt',
-                limit_choices_to=models.Q(('operation', 'import')),
+                help_text="If the tagging was done in a batch, this is the specific attempt",
+                limit_choices_to=models.Q(("operation", "import")),
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='tags.taggingattempt',
+                to="tags.taggingattempt",
             ),
         ),
         migrations.AddField(
-            model_name='platformtag',
-            name='tagging_attempt',
+            model_name="platformtag",
+            name="tagging_attempt",
             field=models.ForeignKey(
                 blank=True,
-                help_text='If the tagging was done in a batch, this is the specific attempt',
-                limit_choices_to=models.Q(('operation', 'import')),
+                help_text="If the tagging was done in a batch, this is the specific attempt",
+                limit_choices_to=models.Q(("operation", "import")),
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='tags.taggingattempt',
+                to="tags.taggingattempt",
             ),
         ),
         migrations.AddField(
-            model_name='titletag',
-            name='tagging_attempt',
+            model_name="titletag",
+            name="tagging_attempt",
             field=models.ForeignKey(
                 blank=True,
-                help_text='If the tagging was done in a batch, this is the specific attempt',
-                limit_choices_to=models.Q(('operation', 'import')),
+                help_text="If the tagging was done in a batch, this is the specific attempt",
+                limit_choices_to=models.Q(("operation", "import")),
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='tags.taggingattempt',
+                to="tags.taggingattempt",
             ),
         ),
         migrations.RunPython(create_taggingattempts_from_taggingbatches, migrations.RunPython.noop),
         migrations.RunPython(add_tagging_attempts, migrations.RunPython.noop),
         migrations.RemoveField(
-            model_name='taggingbatch',
-            name='postflight',
+            model_name="taggingbatch",
+            name="postflight",
         ),
         migrations.RemoveField(
-            model_name='taggingbatch',
-            name='preflight',
+            model_name="taggingbatch",
+            name="preflight",
         ),
     ]

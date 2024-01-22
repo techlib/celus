@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Compares the `default` database to the `old` one from the settings and creates a report'
-    annot_keys = ['sum', 'ib_count_active', 'ib_count_complete', 'ib_ids_active', 'title_count']
+    help = "Compares the `default` database to the `old` one from the settings and creates a report"
+    annot_keys = ["sum", "ib_count_active", "ib_count_complete", "ib_ids_active", "title_count"]
 
     def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
         super().__init__(stdout, stderr, no_color, force_color)
@@ -25,55 +25,55 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-l', dest='lang', default='cs', help="language to use for object names"
+            "-l", dest="lang", default="cs", help="language to use for object names"
         )
-        parser.add_argument('outfile')
+        parser.add_argument("outfile")
 
     def handle(self, *args, **options):
         self.ignored_rts = list(
             ReportType.objects.filter(
-                Q(materialization_spec__isnull=False) | Q(short_name='interest')
-            ).values_list('pk', flat=True)
+                Q(materialization_spec__isnull=False) | Q(short_name="interest")
+            ).values_list("pk", flat=True)
         )
         base_qs = AccessLog.objects.exclude(report_type_id__in=self.ignored_rts)
-        activate(options['lang'])
+        activate(options["lang"])
 
-        workbook = xlsxwriter.Workbook(options['outfile'])
-        self.base_fmt_dict = {'font_name': 'Arial', 'font_size': 9}  # , 'num_format': '#,##0'}
+        workbook = xlsxwriter.Workbook(options["outfile"])
+        self.base_fmt_dict = {"font_name": "Arial", "font_size": 9}  # , 'num_format': '#,##0'}
         self.base_fmt = workbook.add_format(self.base_fmt_dict)
-        self.header_fmt = workbook.add_format({'bold': True, **self.base_fmt_dict})
-        self.ok_fmt = workbook.add_format({'bg_color': '#ddffdd', **self.base_fmt_dict})
-        self.warn_fmt = workbook.add_format({'bg_color': '#ffd0b0', **self.base_fmt_dict})
-        self.perc_fmt = workbook.add_format({'num_format': '0.000%', **self.base_fmt_dict})
+        self.header_fmt = workbook.add_format({"bold": True, **self.base_fmt_dict})
+        self.ok_fmt = workbook.add_format({"bg_color": "#ddffdd", **self.base_fmt_dict})
+        self.warn_fmt = workbook.add_format({"bg_color": "#ffd0b0", **self.base_fmt_dict})
+        self.perc_fmt = workbook.add_format({"num_format": "0.000%", **self.base_fmt_dict})
         self.ok_perc_fmt = workbook.add_format(
-            {'num_format': '0.000%', 'bg_color': self.ok_fmt.bg_color, **self.base_fmt_dict}
+            {"num_format": "0.000%", "bg_color": self.ok_fmt.bg_color, **self.base_fmt_dict}
         )
         self.warn_perc_fmt = workbook.add_format(
-            {'num_format': '0.000%', 'bg_color': self.warn_fmt.bg_color, **self.base_fmt_dict}
+            {"num_format": "0.000%", "bg_color": self.warn_fmt.bg_color, **self.base_fmt_dict}
         )
 
         # detail view - all months that have a change
         for spec in [
-            {'name': 'organization', 'key': ('organization',), 'match': 'show'},
-            {'name': 'platform', 'key': ('platform',), 'match': 'show'},
-            {'name': 'report_type', 'key': ('report_type',), 'match': 'show'},
-            {'name': 'date', 'key': ('date',), 'match': 'show'},
+            {"name": "organization", "key": ("organization",), "match": "show"},
+            {"name": "platform", "key": ("platform",), "match": "show"},
+            {"name": "report_type", "key": ("report_type",), "match": "show"},
+            {"name": "date", "key": ("date",), "match": "show"},
             # {'name': 'org-platform', 'key': ('organization', 'platform'), 'match': 'hide'},
             {
-                'name': 'platform-org-report',
-                'key': ('platform', 'organization', 'report_type'),
-                'match': 'hide',
+                "name": "platform-org-report",
+                "key": ("platform", "organization", "report_type"),
+                "match": "hide",
             },
             {
-                'name': 'detail',
-                'key': ('platform', 'organization', 'report_type', 'date'),
-                'match': 'hide',
-                'extra': ['title_count', 'filenames', 'ib_compare'],
+                "name": "detail",
+                "key": ("platform", "organization", "report_type", "date"),
+                "match": "hide",
+                "extra": ["title_count", "filenames", "ib_compare"],
             },
         ]:
-            print("==", spec['name'], "==")
-            sheet = workbook.add_worksheet(spec['name'])
-            key = spec['key']
+            print("==", spec["name"], "==")
+            sheet = workbook.add_worksheet(spec["name"])
+            key = spec["key"]
             mappings = {}
             is_fk = {}
             header_row = []
@@ -83,32 +83,32 @@ class Command(BaseCommand):
                 if isinstance(field, models.ForeignKey):
                     mappings[key_dim] = {obj.pk: obj for obj in field.related_model.objects.all()}
                     is_fk[key_dim] = True
-                    header_row.append(f'{key_dim} id')
+                    header_row.append(f"{key_dim} id")
                     header_row.append(key_dim)
                 else:
                     is_fk[key_dim] = False
                     header_row.append(key_dim)
 
-            header_row += ['before', 'after', 'diff', 'rel. diff']
-            if 'title_count' in spec.get('extra', []):
+            header_row += ["before", "after", "diff", "rel. diff"]
+            if "title_count" in spec.get("extra", []):
                 header_row += [
-                    'titles before',
-                    'titles after',
-                    'IBs before/active',
-                    'IBs before/all',
+                    "titles before",
+                    "titles after",
+                    "IBs before/active",
+                    "IBs before/all",
                 ]
             # add notes column to make sure it is part of the auto-filter created later
-            header_row += ['notes']
+            header_row += ["notes"]
             sheet.write_row(0, 0, header_row, self.header_fmt)
 
-            query_key = tuple(f'{key_dim}_id' if is_fk[key_dim] else key_dim for key_dim in key)
+            query_key = tuple(f"{key_dim}_id" if is_fk[key_dim] else key_dim for key_dim in key)
             qs = (
                 base_qs.values(*query_key)
                 .annotate(
-                    sum=Sum('value'),
-                    title_count=Count('target_id', distinct=True),
-                    ib_count_active=Count('import_batch_id', distinct=True),
-                    ib_ids_active=ArrayAgg('import_batch_id', distinct=True),
+                    sum=Sum("value"),
+                    title_count=Count("target_id", distinct=True),
+                    ib_count_active=Count("import_batch_id", distinct=True),
+                    ib_ids_active=ArrayAgg("import_batch_id", distinct=True),
                 )
                 .order_by(*query_key)
             )
@@ -116,7 +116,7 @@ class Command(BaseCommand):
                 tuple(rec[k] for k in query_key): {
                     _k: _v for _k, _v in rec.items() if _k in self.annot_keys
                 }
-                for rec in qs.using('old')
+                for rec in qs.using("old")
             }
             # ib_count above is only active IBs from ALs, but there may be empty ones
             # we capture them
@@ -125,8 +125,8 @@ class Command(BaseCommand):
                     _k: _v for _k, _v in rec.items() if _k in self.annot_keys
                 }
                 for rec in ImportBatch.objects.values(*query_key)
-                .annotate(ib_count_complete=Count('id'))
-                .using('old')
+                .annotate(ib_count_complete=Count("id"))
+                .using("old")
             }
 
             row_idx = 0
@@ -137,7 +137,7 @@ class Command(BaseCommand):
                 grp_id = tuple(rec[k] for k in query_key)
                 seen_grp_ids.add(grp_id)
                 old_rec = old.get(
-                    grp_id, {k: 0 if k != 'ib_ids_active' else [] for k in self.annot_keys}
+                    grp_id, {k: 0 if k != "ib_ids_active" else [] for k in self.annot_keys}
                 )
                 if self.process_row(
                     row_idx,
@@ -157,10 +157,10 @@ class Command(BaseCommand):
             for grp_id, old_value in old.items():
                 if grp_id not in seen_grp_ids:
                     rec = {
-                        (f'{key_dim}_id' if is_fk[key_dim] else key_dim): grp_id[i]
+                        (f"{key_dim}_id" if is_fk[key_dim] else key_dim): grp_id[i]
                         for i, key_dim in enumerate(key)
                     }
-                    rec['sum'] = 0
+                    rec["sum"] = 0
                     if self.process_row(
                         row_idx,
                         is_fk,
@@ -190,19 +190,19 @@ class Command(BaseCommand):
             # add auto-filter
             sheet.autofilter(0, 0, row_idx, len(header_row) - 1)
             # add conditional formatting
-            rel_diff_idx = header_row.index('rel. diff')
+            rel_diff_idx = header_row.index("rel. diff")
             sheet.conditional_format(
                 1,
                 rel_diff_idx,
                 row_idx,
                 rel_diff_idx,
                 {
-                    'type': '3_color_scale',
-                    'min_color': "#BB2222",
-                    'mid_color': "#FFFFFF",
-                    'max_color': "#22BB22",
-                    'mid_type': 'num',
-                    'mid_value': 0,
+                    "type": "3_color_scale",
+                    "min_color": "#BB2222",
+                    "mid_color": "#FFFFFF",
+                    "max_color": "#22BB22",
+                    "mid_type": "num",
+                    "mid_value": 0,
                 },
             )
 
@@ -223,23 +223,23 @@ class Command(BaseCommand):
         stats,
         ib_counts: dict,
     ):
-        new_value = rec['sum']
-        old_value = old_rec['sum']
+        new_value = rec["sum"]
+        old_value = old_rec["sum"]
         if old_value == new_value:
-            stats['match'] += 1
-            if spec['match'] == 'hide':
+            stats["match"] += 1
+            if spec["match"] == "hide":
                 return False
             fmt = self.ok_fmt
             cur_perc_fmt = self.ok_perc_fmt
         else:
-            fmt = self.warn_fmt if spec['match'] != 'hide' else self.base_fmt
-            cur_perc_fmt = self.warn_perc_fmt if spec['match'] != 'hide' else self.perc_fmt
-            stats['mismatch'] += 1
+            fmt = self.warn_fmt if spec["match"] != "hide" else self.base_fmt
+            cur_perc_fmt = self.warn_perc_fmt if spec["match"] != "hide" else self.perc_fmt
+            stats["mismatch"] += 1
         row = []
         query_key = []
         for key_dim in key:
             if is_fk[key_dim]:
-                key_attr = f'{key_dim}_id'
+                key_attr = f"{key_dim}_id"
                 row.append(rec[key_attr])
                 s = str(mappings[key_dim].get(rec[key_attr], rec[key_attr]))
                 row.append(s)
@@ -254,89 +254,89 @@ class Command(BaseCommand):
         letter1 = string.ascii_letters[len(row) + 1]
         letter2 = string.ascii_letters[len(row)]
         letter3 = string.ascii_letters[len(row) + 2]
-        sheet.write_formula(i + 1, len(row) + 2, f'={letter1}{i + 2}-{letter2}{i + 2}', fmt, '')
+        sheet.write_formula(i + 1, len(row) + 2, f"={letter1}{i + 2}-{letter2}{i + 2}", fmt, "")
         sheet.write_formula(
-            i + 1, len(row) + 3, f'={letter3}{i + 2}/{letter2}{i + 2}', cur_perc_fmt, ''
+            i + 1, len(row) + 3, f"={letter3}{i + 2}/{letter2}{i + 2}", cur_perc_fmt, ""
         )
         last_col = len(row) + 3
         fltr = {k: v for k, v in rec.items() if k not in self.annot_keys}
         # write extra info
-        if 'title_count' in spec.get('extra', []):
+        if "title_count" in spec.get("extra", []):
             sheet.write_row(
                 i + 1,
                 last_col + 1,
                 [
-                    old_rec.get('title_count', 0),
-                    rec.get('title_count', 0),
-                    old_rec.get('ib_count_active', 0),
-                    ib_counts.get(query_key, {}).get('ib_count_complete', 0),
+                    old_rec.get("title_count", 0),
+                    rec.get("title_count", 0),
+                    old_rec.get("ib_count_active", 0),
+                    ib_counts.get(query_key, {}).get("ib_count_complete", 0),
                 ],
                 self.base_fmt,
             )
             last_col += 4
-        if 'filenames' in spec.get('extra', []):
-            ib_ids = old_rec['ib_ids_active']
-            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_ids).using('old')
-            mdus = ManualDataUpload.objects.filter(import_batches__pk__in=ib_ids).using('old')
+        if "filenames" in spec.get("extra", []):
+            ib_ids = old_rec["ib_ids_active"]
+            fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_ids).using("old")
+            mdus = ManualDataUpload.objects.filter(import_batches__pk__in=ib_ids).using("old")
             fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
             if len(fnames) == 0:
                 # no files, try with current DB
-                ib_subq = ImportBatch.objects.filter(**fltr).values('id').distinct()
+                ib_subq = ImportBatch.objects.filter(**fltr).values("id").distinct()
                 fas = SushiFetchAttempt.objects.filter(import_batch_id__in=ib_subq)
                 mdus = ManualDataUpload.objects.filter(import_batches__in=ib_subq)
                 fnames = [fa.data_file.name for fa in [*fas, *mdus]]
 
             fnames.sort()
-            sheet.write_string(i + 1, last_col + 1, '; '.join(fnames), self.base_fmt)
+            sheet.write_string(i + 1, last_col + 1, "; ".join(fnames), self.base_fmt)
             last_col += 1
             file_comp = []
-            if len(fnames) == 2 and 'ib_compare' in spec.get('extra', []):
+            if len(fnames) == 2 and "ib_compare" in spec.get("extra", []):
                 try:
-                    dims1 = self.counter_file_stats(fnames[0], fltr['report_type_id'])
+                    dims1 = self.counter_file_stats(fnames[0], fltr["report_type_id"])
                 except Exception as exc:
-                    logger.error(f'Error reading {fnames[0]}: {exc}')
+                    logger.error(f"Error reading {fnames[0]}: {exc}")
                     dims1 = {}
                 try:
-                    dims2 = self.counter_file_stats(fnames[1], fltr['report_type_id'])
+                    dims2 = self.counter_file_stats(fnames[1], fltr["report_type_id"])
                 except Exception as exc:
-                    logger.error(f'Error reading {fnames[1]}: {exc}')
+                    logger.error(f"Error reading {fnames[1]}: {exc}")
                     dims2 = {}
                 seen_keys = set()
                 for key, values1 in dims1.items():
                     values2 = dims2.get(key, set())
                     if values1 ^ values2:
                         file_comp.append(
-                            f'{key}: {len(values1 - values2)} < {len(values1 & values2)} > '
-                            f'{len(values2 - values1)}'
+                            f"{key}: {len(values1 - values2)} < {len(values1 & values2)} > "
+                            f"{len(values2 - values1)}"
                         )
                     seen_keys.add(key)
                 for key, values2 in dims2.items():
                     if key not in seen_keys:
-                        file_comp.append(f'{key}: 0 < 0 > {len(values2)}')
+                        file_comp.append(f"{key}: 0 < 0 > {len(values2)}")
             if file_comp:
-                sheet.write_string(i + 1, last_col + 1, '; '.join(file_comp), self.base_fmt)
+                sheet.write_string(i + 1, last_col + 1, "; ".join(file_comp), self.base_fmt)
                 logger.debug(file_comp)
         return True
 
     def counter_file_stats(self, filename: str, report_type_id: int):
-        logger.debug(f'reading {filename}')
+        logger.debug(f"reading {filename}")
         crt = CounterReportType.objects.get(report_type_id=report_type_id)
 
         is_json = True
         try:
-            with open('media/' + filename, 'rb') as infile:
+            with open("media/" + filename, "rb") as infile:
                 char = infile.read(1)
                 while char and char.isspace():
                     char = infile.read(1)
-                if char not in b'[{':
+                if char not in b"[{":
                     is_json = False
         except FileNotFoundError:
             return {}
 
         reader = crt.get_reader_class(json_format=is_json)()
         unique_values = {}
-        for rec in reader.file_to_records('media/' + filename):
+        for rec in reader.file_to_records("media/" + filename):
             for key, value in rec.dimension_data.items():
                 if key not in unique_values:
                     unique_values[key] = {value}

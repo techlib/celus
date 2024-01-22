@@ -9,76 +9,76 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
-        ('django_celery_results', '0010_remove_duplicate_indices'),
+        ("contenttypes", "0002_remove_content_type_name"),
+        ("django_celery_results", "0010_remove_duplicate_indices"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Batch',
+            name="Batch",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
                 (
-                    'status',
+                    "status",
                     models.CharField(
                         choices=[
-                            ('initial', 'Initial'),
-                            ('preparing', 'Preparing Stats'),
-                            ('prepared', 'Stats Prepared'),
-                            ('delete', 'Deleting'),
-                            ('deleted', 'Deleted'),
+                            ("initial", "Initial"),
+                            ("preparing", "Preparing Stats"),
+                            ("prepared", "Stats Prepared"),
+                            ("delete", "Deleting"),
+                            ("deleted", "Deleted"),
                         ],
-                        default='initial',
+                        default="initial",
                         max_length=20,
                     ),
                 ),
                 (
-                    'task_result',
+                    "task_result",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        to='django_celery_results.taskresult',
+                        to="django_celery_results.taskresult",
                     ),
                 ),
             ],
-            options={'verbose_name_plural': 'Batches'},
+            options={"verbose_name_plural": "Batches"},
         ),
         migrations.CreateModel(
-            name='Candidate',
+            name="Candidate",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('object_id', models.PositiveIntegerField()),
-                ('info', models.JSONField(blank=True, default=dict, null=True)),
+                ("object_id", models.PositiveIntegerField()),
+                ("info", models.JSONField(blank=True, default=dict, null=True)),
                 (
-                    'batch',
+                    "batch",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='candidates',
-                        to='necronomicon.batch',
+                        related_name="candidates",
+                        to="necronomicon.batch",
                     ),
                 ),
                 (
-                    'content_type',
+                    "content_type",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='contenttypes.contenttype'
+                        on_delete=django.db.models.deletion.CASCADE, to="contenttypes.contenttype"
                     ),
                 ),
             ],
         ),
         migrations.AddIndex(
-            model_name='candidate',
-            index=models.Index(fields=['content_type', 'object_id'], name='content_index'),
+            model_name="candidate",
+            index=models.Index(fields=["content_type", "object_id"], name="content_index"),
         ),
     ]

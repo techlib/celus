@@ -8,35 +8,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('tags', '0008_alter_taggingbatch_source_file'),
+        ("tags", "0008_alter_taggingbatch_source_file"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UserTagClass',
+            name="UserTagClass",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('hidden', models.BooleanField(default=True)),
+                ("hidden", models.BooleanField(default=True)),
                 (
-                    'tag_class',
+                    "tag_class",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='tags.tagclass'
+                        on_delete=django.db.models.deletion.CASCADE, to="tags.tagclass"
                     ),
                 ),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
             ],
             options={
-                'unique_together': {('user', 'tag_class')},
+                "unique_together": {("user", "tag_class")},
             },
         ),
     ]

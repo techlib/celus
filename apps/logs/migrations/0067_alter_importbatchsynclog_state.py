@@ -4,19 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0066_lastaction')]
+    dependencies = [("logs", "0066_lastaction")]
 
     operations = [
         migrations.AlterField(
-            model_name='importbatchsynclog',
-            name='state',
+            model_name="importbatchsynclog",
+            name="state",
             field=models.PositiveSmallIntegerField(
                 choices=[
-                    (0, 'No change'),
-                    (1, 'Sync'),
-                    (2, 'Delete'),
-                    (3, 'Sync interest'),
-                    (4, 'Resync'),
+                    (0, "No change"),
+                    (1, "Sync"),
+                    (2, "Delete"),
+                    (3, "Sync interest"),
+                    (4, "Resync"),
                 ],
                 default=0,
             ),

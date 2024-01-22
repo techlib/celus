@@ -31,8 +31,8 @@ def output_to_poops(poops_or_errors: NibblerOutput) -> typing.List[Poop]:
 
 def celus_format_poops(
     path: Path,
-    default_metric: 'logs.models.Metric',
-    report_type: 'logs.models.ReportType',
+    default_metric: "logs.models.Metric",
+    report_type: "logs.models.ReportType",
     platform: Platform,
 ) -> typing.List[Poop]:
     # Delay nibbler imports to speed up startup
@@ -45,9 +45,9 @@ def celus_format_poops(
     from celus_nibbler.sources import ExtractParams
 
     parser_area = CelusFormatAreaDefinition(
-        title_column_names=['title', 'Title', 'source', 'Source'],
-        organization_column_names=['Organization', 'organization', 'org', 'Org'],
-        metric_column_names=['metric', 'Metric'],
+        title_column_names=["title", "Title", "source", "Source"],
+        organization_column_names=["Organization", "organization", "org", "Org"],
+        metric_column_names=["metric", "Metric"],
         default_metric=default_metric.short_name,
         title_ids_mapping={e: e for e in IDS},
         dimension_mapping={e: e for e in report_type.dimension_short_names},

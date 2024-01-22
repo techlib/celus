@@ -4,15 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('annotations', '0002_no_title_no_report_type')]
+    dependencies = [("annotations", "0002_no_title_no_report_type")]
 
     operations = [
         migrations.AddField(
-            model_name='annotation',
-            name='level',
+            model_name="annotation",
+            name="level",
             field=models.CharField(
-                choices=[('info', 'info'), ('important', 'important')],
-                default='info',
+                choices=[("info", "info"), ("important", "important")],
+                default="info",
                 max_length=20,
             ),
         )

@@ -6,19 +6,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0017_user_extra_data_dismissed_and_seen_last_release'),
-        ('publications', '0034_issn_renormalization'),
+        ("core", "0017_user_extra_data_dismissed_and_seen_last_release"),
+        ("publications", "0034_issn_renormalization"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='platform',
-            name='source',
+            model_name="platform",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='core.datasource',
+                to="core.datasource",
             ),
         )
     ]

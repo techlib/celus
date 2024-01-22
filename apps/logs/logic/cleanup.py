@@ -9,16 +9,16 @@ logger = logging.getLogger(__name__)
 def find_organizationplatform_differences() -> (Set, Set):
     ops = {
         tuple(rec)
-        for rec in OrganizationPlatform.objects.all().values_list('organization_id', 'platform_id')
+        for rec in OrganizationPlatform.objects.all().values_list("organization_id", "platform_id")
     }
-    logger.debug('Found %d OrganizationPlatform records', len(ops))
+    logger.debug("Found %d OrganizationPlatform records", len(ops))
     ibs = {
         tuple(rec)
         for rec in ImportBatch.objects.all()
-        .values_list('organization_id', 'platform_id')
+        .values_list("organization_id", "platform_id")
         .distinct()
     }
-    logger.debug('Found %d ImportBatch records', len(ibs))
+    logger.debug("Found %d ImportBatch records", len(ibs))
 
     missing = ibs - ops
     extra = ops - ibs

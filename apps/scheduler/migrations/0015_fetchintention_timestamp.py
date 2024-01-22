@@ -5,17 +5,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0014_finalizing_import_batch')]
+    dependencies = [("scheduler", "0014_finalizing_import_batch")]
 
     operations = [
         migrations.AddField(
-            model_name='fetchintention',
-            name='last_updated',
+            model_name="fetchintention",
+            name="last_updated",
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.AddField(
-            model_name='fetchintention',
-            name='timestamp',
+            model_name="fetchintention",
+            name="timestamp",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),

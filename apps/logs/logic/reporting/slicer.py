@@ -47,12 +47,12 @@ from logs.models import AccessLog, DimensionText, ReportType
 
 
 class FlexibleDataSlicer:
-    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'report_type']
-    COL_BASE = 'base'
-    COL_COMPARED = 'compared'
-    COL_DIFF = 'diff'
-    COL_REL_DIFF = 'reldiff'
-    COL_TOTAL = '_total'
+    implicit_dims = ["date", "platform", "metric", "organization", "target", "report_type"]
+    COL_BASE = "base"
+    COL_COMPARED = "compared"
+    COL_DIFF = "diff"
+    COL_REL_DIFF = "reldiff"
+    COL_TOTAL = "_total"
 
     TREND_MODE_COLS = (COL_BASE, COL_COMPARED, COL_DIFF, COL_REL_DIFF)
 
@@ -94,15 +94,15 @@ class FlexibleDataSlicer:
         if self.trend_mode:
             if not (self.base_subset_filters and self.compared_subset_filters):
                 raise ValueError(
-                    '`base_subset_filters` and `compared_subset_filters` must be specified when '
-                    '`trend_mode` is True'
+                    "`base_subset_filters` and `compared_subset_filters` must be specified when "
+                    "`trend_mode` is True"
                 )
             if not all(
                 isinstance(f, DateDimensionFilter)
                 for f in self.base_subset_filters + self.compared_subset_filters
             ):
                 raise ValueError(
-                    'Only date filters are implemented for subsets in trend mode for now',
+                    "Only date filters are implemented for subsets in trend mode for now",
                 )
 
         self.dimension_filters: List[DimensionFilter] = []
@@ -161,17 +161,17 @@ class FlexibleDataSlicer:
             if df.dimension not in ignore_dimensions or isinstance(df, TagDimensionFilter):
                 # tag filters are not ignored even if they are for an ignored dimension
                 ret.update(df.query_params(clickhouse_compatible=use_clickhouse))
-        logger.info('filters: %s', ret)
+        logger.info("filters: %s", ret)
         if self.organization_filter is not None:
             # convert organization filter to a list of ids for easier compatibility with
             # clickhouse and for simpler query (even though that is not a big deal)
             org_filter_pks = self._resolve_extra_organization_filter_to_pks()
-            if 'organization_id__in' in ret:
-                orig_orgs = set(ret['organization_id__in'])
-                ret['organization_id__in'] = list(orig_orgs & org_filter_pks)
+            if "organization_id__in" in ret:
+                orig_orgs = set(ret["organization_id__in"])
+                ret["organization_id__in"] = list(orig_orgs & org_filter_pks)
             else:
-                ret['organization_id__in'] = list(org_filter_pks)
-        logger.info('filters with org: %s', ret)
+                ret["organization_id__in"] = list(org_filter_pks)
+        logger.info("filters with org: %s", ret)
         return ret
 
     def _resolve_extra_organization_filter_to_pks(self) -> Set[int]:
@@ -179,7 +179,7 @@ class FlexibleDataSlicer:
             return set()
         if type(self.organization_filter) in (list, tuple, set):
             return set(self.organization_filter)
-        return set(self.organization_filter.values_list('pk', flat=True))
+        return set(self.organization_filter.values_list("pk", flat=True))
 
     def add_extra_organization_filter(self, org_filter: Iterable):
         self.organization_filter = org_filter
@@ -188,12 +188,12 @@ class FlexibleDataSlicer:
         self.dimension_filters.append(dimension_filter)
         if add_group:
             if self.trend_mode:
-                raise ValueError('Cannot group by dimension when trend_mode is True')
+                raise ValueError("Cannot group by dimension when trend_mode is True")
             self.group_by.append(dimension_filter.dimension)
 
     def add_group_by(self, dimension):
         if self.trend_mode:
-            raise ValueError('Cannot group by dimension when trend_mode is True')
+            raise ValueError("Cannot group by dimension when trend_mode is True")
         self.group_by.append(dimension)
 
     def add_split_by(self, dimension):
@@ -205,28 +205,28 @@ class FlexibleDataSlicer:
         """
         has_explicit_dim_group_by = False
         for dim_name in self.group_by:
-            if dim_name.startswith('dim'):
+            if dim_name.startswith("dim"):
                 has_explicit_dim_group_by = True
                 break
-        rt_filter = self.filters.get('report_type_id__in', [])
+        rt_filter = self.filters.get("report_type_id__in", [])
         if has_explicit_dim_group_by and len(rt_filter) != 1:
             raise SlicerConfigError(
-                'It is not possible to group by explicit dimension unless exactly one report '
-                'type is selected by a filter',
+                "It is not possible to group by explicit dimension unless exactly one report "
+                "type is selected by a filter",
                 SlicerConfigErrorCode.E100,
             )
         if self.trend_mode:
             if not self.base_subset_filters or not self.compared_subset_filters:
                 raise SlicerConfigError(
-                    'Both base and compared subset filters must be specified when trend_mode is '
-                    'True',
+                    "Both base and compared subset filters must be specified when trend_mode is "
+                    "True",
                     SlicerConfigErrorCode.E111,
                 )
 
     def check_params_for_data_query(self):
         """
-        Extra checks to be performed before data query is run. These do not apply to other functions,
-        such as getting possible dimension values.
+        Extra checks to be performed before data query is run. These do not apply to other
+        functions, such as getting possible dimension values.
         """
         if not self.group_by and not self.trend_mode:
             raise SlicerConfigError(
@@ -262,24 +262,24 @@ class FlexibleDataSlicer:
                 # If we resolve the tags beforehand and use the pks, the query is much faster
                 tag_ids = set(
                     Tag.objects.filter(*tag_filters, tag_class__scope=tag_scope).values_list(
-                        'pk', flat=True
+                        "pk", flat=True
                     )
                 )
                 qs = (
                     Tag.objects.filter(pk__in=tag_ids)
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
-                            f'{target_attr}__accesslog',
+                            f"{target_attr}__accesslog",
                             condition=Q(
-                                **extend_query_filter(filters, f'{target_attr}__accesslog__')
+                                **extend_query_filter(filters, f"{target_attr}__accesslog__")
                             ),
                         )
                     )
-                    .values('pk')
+                    .values("pk")
                     .annotate(**self._prepare_annotations())
                 )
             elif self.include_all_zero_rows or self.primary_dimension in [
-                ob.lstrip('-').split('__')[0] for ob in self.order_by
+                ob.lstrip("-").split("__")[0] for ob in self.order_by
             ]:
                 # we need to put the primary dimension model into play because zero usage is
                 # requested, or we are sorting by the primary dimension
@@ -290,10 +290,10 @@ class FlexibleDataSlicer:
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
-                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__'))
+                            "accesslog", condition=Q(**extend_query_filter(filters, "accesslog__"))
                         )
                     )
-                    .values('pk')
+                    .values("pk")
                     .annotate(**self._prepare_annotations())
                 )
                 self._primary_dimension_query = True
@@ -303,37 +303,37 @@ class FlexibleDataSlicer:
                 qs = (
                     AccessLog.objects.filter(**filters)
                     .annotate(pk=F(self.primary_dimension))
-                    .values('pk')
+                    .values("pk")
                     .distinct()
-                    .annotate(**self._prepare_annotations(accesslog_prefix=''))
+                    .annotate(**self._prepare_annotations(accesslog_prefix=""))
                 )
-        elif field and self.primary_dimension.startswith('dim'):
+        elif field and self.primary_dimension.startswith("dim"):
             qs = (
                 AccessLog.objects.filter(**filters)
                 .values(self.primary_dimension)
                 .distinct()
-                .annotate(**self._prepare_annotations(accesslog_prefix=''))
+                .annotate(**self._prepare_annotations(accesslog_prefix=""))
             )
         elif field and isinstance(field, DateField):
-            if modifier and modifier != 'year':
+            if modifier and modifier != "year":
                 raise ValueError('The only modifier allowed for date is "year", i.e. date__year')
             qs = (
                 AccessLog.objects.filter(**filters)
                 .values(self.primary_dimension)
                 .distinct()
-                .annotate(**self._prepare_annotations(accesslog_prefix=''))
+                .annotate(**self._prepare_annotations(accesslog_prefix=""))
             )
         elif field:
             raise SlicerConfigError(
-                f'Primary dimension {self.primary_dimension} is not supported',
+                f"Primary dimension {self.primary_dimension} is not supported",
                 SlicerConfigErrorCode.E102,
-                details={'dimension': self.primary_dimension},
+                details={"dimension": self.primary_dimension},
             )
         else:
             raise SlicerConfigError(
-                f'Primary dimension {self.primary_dimension} is not valid',
+                f"Primary dimension {self.primary_dimension} is not valid",
                 SlicerConfigErrorCode.E103,
-                details={'dimension': self.primary_dimension},
+                details={"dimension": self.primary_dimension},
             )
         if not self.include_all_zero_rows:
             # total is added in _prepare_annotations and is a sum of all the value columns
@@ -352,7 +352,7 @@ class FlexibleDataSlicer:
         return ret
 
     def _prepare_annotations(
-        self, max_number=100, accesslog_prefix='relevant_accesslogs__'
+        self, max_number=100, accesslog_prefix="relevant_accesslogs__"
     ) -> dict:
         if self.trend_mode:
 
@@ -366,7 +366,7 @@ class FlexibleDataSlicer:
                 )
 
             def coal_sum(sum_filter):
-                return Coalesce(Sum(f'{accesslog_prefix}value', filter=sum_filter), 0)
+                return Coalesce(Sum(f"{accesslog_prefix}value", filter=sum_filter), 0)
 
             annotations = {
                 self.COL_BASE: coal_sum(getQ(self.base_subset_filters)),
@@ -377,22 +377,22 @@ class FlexibleDataSlicer:
                 # because these rows generate infinite relative difference which may be
                 # undesired in some cases
                 self.COL_TOTAL: coal_sum(getQ(self.base_subset_filters)),
-                self.COL_DIFF: F('compared') - F('base'),
-                self.COL_REL_DIFF: (1.0 * F('compared') - F('base')) / NullIf(F('base'), 0),
+                self.COL_DIFF: F("compared") - F("base"),
+                self.COL_REL_DIFF: (1.0 * F("compared") - F("base")) / NullIf(F("base"), 0),
             }
         else:
             gb_query = self.get_possible_groups_queryset()
             if not gb_query:
                 return {
-                    'total': Coalesce(Sum(f'{accesslog_prefix}value'), 0),
-                    self.COL_TOTAL: Coalesce(Sum(f'{accesslog_prefix}value'), 0),
+                    "total": Coalesce(Sum(f"{accesslog_prefix}value"), 0),
+                    self.COL_TOTAL: Coalesce(Sum(f"{accesslog_prefix}value"), 0),
                 }
             if gb_query.count() > max_number:
                 raise SlicerConfigError(
-                    f'There are too many ({gb_query.count()}) possible groups, please refine '
-                    f'you configuration',
+                    f"There are too many ({gb_query.count()}) possible groups, please refine "
+                    f"you configuration",
                     SlicerConfigErrorCode.E101,
-                    details={'group_count': gb_query.count()},
+                    details={"group_count": gb_query.count()},
                 )
             if gb_query.count() == 0:
                 return {}
@@ -400,28 +400,28 @@ class FlexibleDataSlicer:
             annotations = {}
             for group in gb_query:
                 key = self._group_dict_to_group_key(group)
-                filters = {f'{accesslog_prefix}{dim}': group[dim] for dim in self.group_by}
-                annotations[key] = Coalesce(Sum(f'{accesslog_prefix}value', filter=Q(**filters)), 0)
-                annotations[self.COL_TOTAL] = Coalesce(Sum(f'{accesslog_prefix}value'), 0)
+                filters = {f"{accesslog_prefix}{dim}": group[dim] for dim in self.group_by}
+                annotations[key] = Coalesce(Sum(f"{accesslog_prefix}value", filter=Q(**filters)), 0)
+                annotations[self.COL_TOTAL] = Coalesce(Sum(f"{accesslog_prefix}value"), 0)
         self._annotations = annotations
         return annotations
 
     def _group_dict_to_group_key(self, group: dict) -> str:
         keys = [group[dim] for dim in self.group_by]
-        return 'grp-' + ','.join(map(str, keys))
+        return "grp-" + ",".join(map(str, keys))
 
     def decode_key(self, key: str) -> dict:
-        if not key.startswith('grp-'):
+        if not key.startswith("grp-"):
             raise ValueError('Key must start with "grp-"')
         # 'None' can happen if we group by dimension that is not used and thus has no values
         # present
-        pks = [None if x == 'None' else (int(x) if '-' not in x else x) for x in key[4:].split(',')]
+        pks = [None if x == "None" else (int(x) if "-" not in x else x) for x in key[4:].split(",")]
         return OrderedDict([(dim, pks[i]) for (i, dim) in enumerate(self.group_by)])
 
     @classmethod
-    def _text_to_filter(cls, text, text_fields=('name',)):
+    def _text_to_filter(cls, text, text_fields=("name",)):
         return reduce(
-            operator.or_, (Q(**{f'{text_field}__ilike': text}) for text_field in text_fields)
+            operator.or_, (Q(**{f"{text_field}__ilike": text}) for text_field in text_fields)
         )
 
     def create_text_filter(self, dimension, text_filter, clickhouse_compatible=False) -> dict:
@@ -437,25 +437,25 @@ class FlexibleDataSlicer:
         if isinstance(field, ForeignKey):
             primary_cls = field.remote_field.model
             subfilter = primary_cls.objects.filter(self._text_to_filter(text_filter)).values_list(
-                'pk', flat=True
+                "pk", flat=True
             )
             if clickhouse_compatible:
                 if subfilter.count() > CLICKHOUSE_ID_COUNT_LIMIT:
-                    raise ClickhouseIncompatibleFilter('Too many ids to resolve')
+                    raise ClickhouseIncompatibleFilter("Too many ids to resolve")
                 subfilter = list(subfilter)
-            extra_filter = {f'{dimension}_id__in': subfilter}
-        elif field and dimension.startswith('dim'):
+            extra_filter = {f"{dimension}_id__in": subfilter}
+        elif field and dimension.startswith("dim"):
             subfilter = DimensionText.objects.filter(
-                self._text_to_filter(text_filter, text_fields=('text', 'text_local'))
-            ).values_list('pk', flat=True)
+                self._text_to_filter(text_filter, text_fields=("text", "text_local"))
+            ).values_list("pk", flat=True)
             if clickhouse_compatible:
                 if subfilter.count() > CLICKHOUSE_ID_COUNT_LIMIT:
-                    raise ClickhouseIncompatibleFilter('Too many ids to resolve')
+                    raise ClickhouseIncompatibleFilter("Too many ids to resolve")
                 subfilter = list(subfilter)
-            extra_filter = {f'{dimension}__in': subfilter}
+            extra_filter = {f"{dimension}__in": subfilter}
         else:
             raise SlicerConfigError(
-                'The requested dimension is not supported', SlicerConfigErrorCode.E107
+                "The requested dimension is not supported", SlicerConfigErrorCode.E107
             )
         return extra_filter
 
@@ -467,12 +467,12 @@ class FlexibleDataSlicer:
         """
         field, modifier = AccessLog.get_dimension_field(dimension)
         if isinstance(field, ForeignKey):
-            extra_filter = {f'{dimension}_id__in': pks}
-        elif field and dimension.startswith('dim'):
-            extra_filter = {f'{dimension}__in': pks}
+            extra_filter = {f"{dimension}_id__in": pks}
+        elif field and dimension.startswith("dim"):
+            extra_filter = {f"{dimension}__in": pks}
         else:
             raise SlicerConfigError(
-                'The requested dimension is not supported', SlicerConfigErrorCode.E107
+                "The requested dimension is not supported", SlicerConfigErrorCode.E107
             )
         return extra_filter
 
@@ -504,13 +504,18 @@ class FlexibleDataSlicer:
         # the output should not contain the _id suffix for foreign key fields,
         # but it is contained in clickhouse names, so we need to remap it
         data = [
-            {(k if k != f'{dimension}_id' else dimension): v for k, v in rec._asdict().items()}
+            {(k if k != f"{dimension}_id" else dimension): v for k, v in rec._asdict().items()}
             for rec in result
         ]
-        return {'count': count, 'values': data, 'cropped': cropped}
+        return {"count": count, "values": data, "cropped": cropped}
 
     def get_possible_dimension_values(
-        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None
+        self,
+        dimension,
+        max_values_count=100,
+        ignore_self=False,
+        text_filter=None,
+        pks=None,
     ):
         """
         For a given dimension it returns which values are present in the filtered data and can thus
@@ -549,16 +554,16 @@ class FlexibleDataSlicer:
             query = query.filter(**self.create_pk_filter(dimension, pks))
         # get count and decide if we need to sort
         try:
-            logger.debug('Query: %s', query.query)
+            logger.debug("Query: %s", query.query)
         except EmptyResultSet:
-            logger.debug('Query: EmptyResultSet')
+            logger.debug("Query: EmptyResultSet")
         count = query.count()
         cropped = False
         if max_values_count and count > max_values_count:
             cropped = True
-            query = query.annotate(score=Coalesce(Sum('value'), 0)).order_by('-score')
+            query = query.annotate(score=Coalesce(Sum("value"), 0)).order_by("-score")
             query = query[:max_values_count]
-        return {'count': count, 'values': list(query), 'cropped': cropped}
+        return {"count": count, "values": list(query), "cropped": cropped}
 
     def get_possible_dimension_values_queryset(
         self, dimensions, ignore_self=False, use_clickhouse=False
@@ -573,30 +578,30 @@ class FlexibleDataSlicer:
         if use_clickhouse:
             # clickhouse uses column names with the _id suffix
             dims = [
-                f'{dim}_id' if f'{dim}_id' in AccessLogCube._dimensions else dim
+                f"{dim}_id" if f"{dim}_id" in AccessLogCube._dimensions else dim
                 for dim in dimensions
             ]
             query = (
                 AccessLogCube.query()
                 .filter(**query_params)
                 .group_by(*dims)
-                .aggregate(score=HSum('value'))
-                .order_by('-score')
+                .aggregate(score=HSum("value"))
+                .order_by("-score")
             )
         else:
             # check if we could use a materialized rt
-            if len(rt_fltr := query_params.get('report_type_id__in', [])) == 1:
+            if len(rt_fltr := query_params.get("report_type_id__in", [])) == 1:
                 # we can only use it if there is one RT
                 rt = ReportType.objects.get(pk=rt_fltr[0])
                 used_dimensions = {
-                    dim.split('__')[0] for dim in query_params.keys() if dim != 'report_type_id__in'
+                    dim.split("__")[0] for dim in query_params.keys() if dim != "report_type_id__in"
                 }
                 used_dimensions |= set(dimensions)
                 used_dimensions = [
-                    dim[:-3] if dim.endswith('_id') else dim for dim in used_dimensions
+                    dim[:-3] if dim.endswith("_id") else dim for dim in used_dimensions
                 ]
                 if new_rt := find_best_materialized_view(rt, used_dimensions):
-                    query_params['report_type_id__in'] = [new_rt.pk]
+                    query_params["report_type_id__in"] = [new_rt.pk]
             query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
 
         return query
@@ -611,7 +616,7 @@ class FlexibleDataSlicer:
             return self.get_possible_dimension_values_queryset(self.split_by)
         return None
 
-    def get_data(self, lang='en', part: Optional[list] = None) -> QuerySet[dict]:
+    def get_data(self, lang="en", part: Optional[list] = None) -> QuerySet[dict]:
         """
         :param lang: language in which texts should be obtained - influences sorting
         :param part: when `split_by` is set, this defines for which part the result should be
@@ -623,20 +628,20 @@ class FlexibleDataSlicer:
         qs = self.get_queryset(part=part)
         obs = []
         for ob in self.order_by:
-            prefix = '-' if ob.startswith('-') else ''
-            ob = ob.lstrip('-')
+            prefix = "-" if ob.startswith("-") else ""
+            ob = ob.lstrip("-")
             dealt_with = False
-            if ob == 'tag' and self.tag_roll_up:
+            if ob == "tag" and self.tag_roll_up:
                 dealt_with = True
-                obs.append(prefix + 'name')
-            if ob.startswith('dim'):
+                obs.append(prefix + "name")
+            if ob.startswith("dim"):
                 # when sorting by dimX we need to map the IDs to the corresponding texts
                 # because the mapping does not use a Foreign key relationship, we use a subquery
-                dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values('text')[:1]
-                qs = qs.annotate(**{ob + 'sort': Subquery(dt_query)})
-                obs.append(prefix + ob + 'sort')
+                dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values("text")[:1]
+                qs = qs.annotate(**{ob + "sort": Subquery(dt_query)})
+                obs.append(prefix + ob + "sort")
                 dealt_with = True
-            elif ob.startswith('grp-'):
+            elif ob.startswith("grp-"):
                 if ob not in self._annotations:
                     # we ignore sort groups that are not in the data
                     logger.debug('Ignoring unknown order by "%s"', ob)
@@ -648,21 +653,21 @@ class FlexibleDataSlicer:
                 # implicit columns created for period-over-period
                 obs.append(prefix + ob)
                 dealt_with = True
-            elif ob == self.primary_dimension and not ob.startswith('date'):
-                if ob == 'target':
+            elif ob == self.primary_dimension and not ob.startswith("date"):
+                if ob == "target":
                     # title does not have `short_name`, just `name`
-                    obs.append(prefix + 'name')
+                    obs.append(prefix + "name")
                 else:
                     # if there is a name, we want name, if not, we want short_name
                     # the following simulates this
-                    qs = qs.annotate(sort_name=Concat(F(f'name_{lang}'), F('short_name')))
-                    obs.append(prefix + 'sort_name')
+                    qs = qs.annotate(sort_name=Concat(F(f"name_{lang}"), F("short_name")))
+                    obs.append(prefix + "sort_name")
                 dealt_with = True
             elif ob.startswith(self.primary_dimension):
                 if self._primary_dimension_query:
                     # we are querying the related model, not accesslog, we need to process the
                     # order by definition
-                    start, *rest, end = ob.split('__')
+                    start, *rest, end = ob.split("__")
                     obs.append(prefix + end)
                 else:
                     # we do not validate this, so it could be a problem, but it would crash rather
@@ -676,9 +681,9 @@ class FlexibleDataSlicer:
                 logger.error('Dropping inconsistent order by "%s"', ob)
         qs = qs.order_by(*obs)
         try:
-            logger.debug('Slicer query: %s', qs.query)
+            logger.debug("Slicer query: %s", qs.query)
         except EmptyResultSet:
-            logger.debug('Slicer query: empty')
+            logger.debug("Slicer query: empty")
         return qs
 
     def get_remainder(self, part: Optional[list] = None) -> dict:
@@ -727,10 +732,10 @@ class FlexibleDataSlicer:
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
-                            'accesslog', condition=Q(**extend_query_filter(filters, 'accesslog__'))
+                            "accesslog", condition=Q(**extend_query_filter(filters, "accesslog__"))
                         )
                     )
-                    .values('pk')
+                    .values("pk")
                     .aggregate(**final_annotations)
                 )
                 if self.trend_mode:
@@ -742,10 +747,10 @@ class FlexibleDataSlicer:
                         else None
                     )
                 return result
-            raise ValueError('Remainder can only be computed when `tag_roll_up` is active')
+            raise ValueError("Remainder can only be computed when `tag_roll_up` is active")
         # the following will happen if the primary dimension is not a foreign key
         # and thus cannot be one of the taggable models (Organization, Platform, Title)
-        raise ValueError('Remainder can only be computed when primary dimension supports tags')
+        raise ValueError("Remainder can only be computed when primary dimension supports tags")
 
     def check_part(self, part):
         """
@@ -755,19 +760,19 @@ class FlexibleDataSlicer:
             if not part:
                 raise SlicerConfigError(
                     code=SlicerConfigErrorCode.E108,
-                    message='`part` argument must be given when `split_by` is used',
+                    message="`part` argument must be given when `split_by` is used",
                 )
             if len(self.split_by) != len(part):
                 raise SlicerConfigError(
-                    'The `part` value must be the same length as `split_by`',
+                    "The `part` value must be the same length as `split_by`",
                     code=SlicerConfigErrorCode.E109,
-                    details={'split_by': self.split_by, 'part': part},
+                    details={"split_by": self.split_by, "part": part},
                 )
         elif part:
             # part cannot be used if `split_by` is not set up
             raise SlicerConfigError(
                 code=SlicerConfigErrorCode.E110,
-                message='`split_by` must be set up when `part` argument is given',
+                message="`split_by` must be set up when `part` argument is given",
             )
 
     def resolve_explicit_dimension(self, dim_ref: str):
@@ -783,7 +788,7 @@ class FlexibleDataSlicer:
         """
         query_params = {}
         for fltr in self.dimension_filters:
-            if fltr.dimension == 'report_type':
+            if fltr.dimension == "report_type":
                 query_params = fltr.query_params(primary_filter=True)
                 break
         if query_params:
@@ -798,16 +803,16 @@ class FlexibleDataSlicer:
             dimensions = {fltr.dimension for fltr in self.dimension_filters}
             if not ignore_primary:
                 dimensions.add(self.primary_dimension)
-            dimensions |= {dim.lstrip('-') for dim in self.order_by}
+            dimensions |= {dim.lstrip("-") for dim in self.order_by}
             dimensions |= set(self.group_by)
             if extra_dimensions_to_preserve:
                 dimensions |= set(extra_dimensions_to_preserve)
             materialized_report = find_best_materialized_view(rt, dimensions)
             if materialized_report:
-                logger.info('Using materialized report: %s instead of %s', materialized_report, rt)
+                logger.info("Using materialized report: %s instead of %s", materialized_report, rt)
                 self._used_materialized_report = materialized_report
                 for fltr in self.dimension_filters:
-                    if fltr.dimension == 'report_type':
+                    if fltr.dimension == "report_type":
                         fltr.values = [
                             materialized_report.pk if rt.pk == val else val for val in fltr.values
                         ]
@@ -817,9 +822,9 @@ class FlexibleDataSlicer:
         """
         Finds the right Filter class for the dimension at hand
         """
-        if dimension.startswith('tag__'):
+        if dimension.startswith("tag__"):
             return TagDimensionFilter
-        if dimension.startswith('tag_class__'):
+        if dimension.startswith("tag_class__"):
             return TagClassDimensionFilter
         field, _modifier = AccessLog.get_dimension_field(dimension)
         if isinstance(field, ForeignKey):
@@ -829,7 +834,7 @@ class FlexibleDataSlicer:
         elif isinstance(field, IntegerField):
             return ExplicitDimensionFilter
         else:
-            raise ValueError(f'not supported yet ({dimension}, {field}, {_modifier})')
+            raise ValueError(f"not supported yet ({dimension}, {field}, {_modifier})")
 
     @classmethod
     def filter_instance(cls, dimension: str, value):
@@ -845,129 +850,129 @@ class FlexibleDataSlicer:
                 return filter_class(field.name, start=value, end=value)
             if isinstance(value, int):
                 # we treat int in a special way as the whole year with that number
-                value = {'start': f'{value}-01-01', 'end': f'{value}-12-31'}
+                value = {"start": f"{value}-01-01", "end": f"{value}-12-31"}
             elif isinstance(value, str):
                 start = parse_month(value)
                 end = month_end(start)
-                value = {'start': start, 'end': end}
+                value = {"start": start, "end": end}
             return filter_class(field.name, *date_range_from_params(value))
         elif filter_class is TagDimensionFilter:
-            dimension = dimension[len('tag__') :]  # noqa E203
+            dimension = dimension[len("tag__") :]  # noqa E203
             return filter_class(dimension, value)
         elif filter_class is TagClassDimensionFilter:
-            dimension = dimension[len('tag_class__') :]  # noqa E203
+            dimension = dimension[len("tag_class__") :]  # noqa E203
             return filter_class(dimension, value)
         else:
             return filter_class(dimension, value)
 
     @classmethod
-    def create_from_params(cls, params: dict) -> 'FlexibleDataSlicer':
+    def create_from_params(cls, params: dict) -> "FlexibleDataSlicer":
         """
         Takes the parameters as they would be obtained from the API and creates a new slicer
         instance based on those.
         """
-        if not (primary_dimension := params.get('primary_dimension')):
+        if not (primary_dimension := params.get("primary_dimension")):
             raise SlicerConfigError(
                 '"primary_dimension" key must be present', SlicerConfigErrorCode.E104
             )
         slicer = cls(primary_dimension)
         # filters
-        filters = params.get('filters')
+        filters = params.get("filters")
         filters = parse_b64json(filters) if filters else {}
         for key, value in filters.items():
             slicer.add_filter(cls.filter_instance(key, value))
         # groups
-        groups = params.get('groups')
+        groups = params.get("groups")
         groups = parse_b64json(groups) if groups else []
         for group in groups:
             slicer.add_group_by(group)
         # trend mode
-        if trend_mode := to_bool(params.get('trend_mode')):
+        if trend_mode := to_bool(params.get("trend_mode")):
             slicer.trend_mode = trend_mode
 
             def make_filters(params_name):
                 if filters := params.get(params_name):
                     filters = parse_b64json(filters)
-                    if 'date' in filters:
-                        return [cls.filter_instance('date', filters['date'])]
+                    if "date" in filters:
+                        return [cls.filter_instance("date", filters["date"])]
 
             slicer.base_subset_filters = (
-                make_filters('base_subset_filters') or slicer.base_subset_filters
+                make_filters("base_subset_filters") or slicer.base_subset_filters
             )
             slicer.compared_subset_filters = (
-                make_filters('compared_subset_filters') or slicer.compared_subset_filters
+                make_filters("compared_subset_filters") or slicer.compared_subset_filters
             )
         # split by
-        splits = params.get('split_by')
+        splits = params.get("split_by")
         splits = parse_b64json(splits) if splits else []
         for split in splits:
             slicer.add_split_by(split)
         # ordering
-        if order_by := params.get('order_by'):
+        if order_by := params.get("order_by"):
             slicer.order_by = [order_by]
         # extra stuff
         # the zero_rows value should be recoded to python bool, but we want to make sure
-        slicer.include_all_zero_rows = to_bool(params.get('zero_rows', ''))
-        slicer.include_row_totals = to_bool(params.get('row_totals', ''))
-        slicer.include_col_totals = to_bool(params.get('col_totals', ''))
-        slicer.tag_roll_up = to_bool(params.get('tag_roll_up', ''))
-        slicer.tag_class = params.get('tag_class')
-        slicer.show_untagged_remainder = to_bool(params.get('show_untagged_remainder', ''))
+        slicer.include_all_zero_rows = to_bool(params.get("zero_rows", ""))
+        slicer.include_row_totals = to_bool(params.get("row_totals", ""))
+        slicer.include_col_totals = to_bool(params.get("col_totals", ""))
+        slicer.tag_roll_up = to_bool(params.get("tag_roll_up", ""))
+        slicer.tag_class = params.get("tag_class")
+        slicer.show_untagged_remainder = to_bool(params.get("show_untagged_remainder", ""))
         return slicer
 
     @classmethod
-    def create_from_config(cls, params: dict) -> 'FlexibleDataSlicer':
+    def create_from_config(cls, params: dict) -> "FlexibleDataSlicer":
         """
         Takes the output of self.config() and converts it into a slicer instance
         """
-        primary_dimension = params.get('primary_dimension')
+        primary_dimension = params.get("primary_dimension")
         if not primary_dimension:
             raise SlicerConfigError(
                 '"primary_dimension" key must be present', SlicerConfigErrorCode.E104
             )
         slicer = cls(primary_dimension)
         # filters
-        filters = params.get('filters', [])
+        filters = params.get("filters", [])
         for fltr in filters:
             slicer.add_filter(cls._config_dict_to_filter(fltr))
         # groups
-        slicer.group_by = params.get('group_by', [])
+        slicer.group_by = params.get("group_by", [])
         # split by
-        slicer.split_by = params.get('split_by', [])
+        slicer.split_by = params.get("split_by", [])
         # ordering
-        slicer.order_by = params.get('order_by', [])
+        slicer.order_by = params.get("order_by", [])
         # extra stuff
-        slicer.include_all_zero_rows = params.get('zero_rows', False)
-        slicer.include_row_totals = params.get('row_totals', False)
-        slicer.include_col_totals = params.get('col_totals', False)
-        slicer.tag_roll_up = params.get('tag_roll_up', False)
-        slicer.tag_class = params.get('tag_class')
-        slicer.show_untagged_remainder = params.get('show_untagged_remainder', False)
+        slicer.include_all_zero_rows = params.get("zero_rows", False)
+        slicer.include_row_totals = params.get("row_totals", False)
+        slicer.include_col_totals = params.get("col_totals", False)
+        slicer.tag_roll_up = params.get("tag_roll_up", False)
+        slicer.tag_class = params.get("tag_class")
+        slicer.show_untagged_remainder = params.get("show_untagged_remainder", False)
         # trend mode
-        slicer.trend_mode = params.get('trend_mode', False)
+        slicer.trend_mode = params.get("trend_mode", False)
         if slicer.trend_mode:
             slicer.base_subset_filters = [
-                cls._config_dict_to_filter(fltr) for fltr in params.get('base_subset_filters', [])
+                cls._config_dict_to_filter(fltr) for fltr in params.get("base_subset_filters", [])
             ]
             slicer.compared_subset_filters = [
                 cls._config_dict_to_filter(fltr)
-                for fltr in params.get('compared_subset_filters', [])
+                for fltr in params.get("compared_subset_filters", [])
             ]
         return slicer
 
     @classmethod
     def _config_dict_to_filter(cls, fltr: dict) -> DimensionFilter:
-        dim = fltr['dimension']
-        if 'tag_ids' in fltr:
-            return TagDimensionFilter(dim, fltr['tag_ids'])
-        elif 'tag_class_ids' in fltr:
-            return TagClassDimensionFilter(dim, fltr['tag_class_ids'])
+        dim = fltr["dimension"]
+        if "tag_ids" in fltr:
+            return TagDimensionFilter(dim, fltr["tag_ids"])
+        elif "tag_class_ids" in fltr:
+            return TagClassDimensionFilter(dim, fltr["tag_class_ids"])
         else:
             filter_class = cls.filter_class(dim)
             return (
-                filter_class(dim, fltr['start'], fltr['end'])
+                filter_class(dim, fltr["start"], fltr["end"])
                 if filter_class is DateDimensionFilter
-                else filter_class(dim, fltr['values'])
+                else filter_class(dim, fltr["values"])
             )
 
     def filter_to_str(self, fltr):
@@ -978,27 +983,27 @@ class FlexibleDataSlicer:
         :return:
         """
         dim_to_str = {
-            'target': _('Title'),
-            'organization': _('Organization'),
-            'platform': _('Platform'),
+            "target": _("Title"),
+            "organization": _("Organization"),
+            "platform": _("Platform"),
         }
         if isinstance(fltr, ExplicitDimensionFilter):
             dim = self.resolve_explicit_dimension(fltr.dimension)
-            return f'{dim.short_name}: {fltr.value_str}'
+            return f"{dim.short_name}: {fltr.value_str}"
         elif isinstance(fltr, ForeignKeyDimensionFilter):
             field, _modifier = AccessLog.get_dimension_field(fltr.dimension)
-            return f'{field.remote_field.model._meta.verbose_name}: {fltr.value_str}'
+            return f"{field.remote_field.model._meta.verbose_name}: {fltr.value_str}"
         elif isinstance(fltr, DateDimensionFilter):
             field, _modifier = AccessLog.get_dimension_field(fltr.dimension)
-            return f'{field.verbose_name}: {fltr.value_str}'
+            return f"{field.verbose_name}: {fltr.value_str}"
         elif isinstance(fltr, (TagDimensionFilter, TagClassDimensionFilter)):
             word = (
-                ngettext('tag', 'tags', len(fltr.tag_ids))
+                ngettext("tag", "tags", len(fltr.tag_ids))
                 if isinstance(fltr, TagDimensionFilter)
-                else ngettext('tag class', 'tag classes', len(fltr.tc_ids))
+                else ngettext("tag class", "tag classes", len(fltr.tc_ids))
             )
-            return f'{dim_to_str.get(fltr.dimension, fltr.dimension)} - {word}: {fltr.value_str}'
-        raise NotImplementedError(f'Unsupported filter class: {fltr.__class__.__name__}')
+            return f"{dim_to_str.get(fltr.dimension, fltr.dimension)} - {word}: {fltr.value_str}"
+        raise NotImplementedError(f"Unsupported filter class: {fltr.__class__.__name__}")
 
     def _get_coverage_for_filters(self, **fltrs):
         """
@@ -1010,10 +1015,10 @@ class FlexibleDataSlicer:
             comp = DataCoverageExtractor(report_type=rt, split_by_date=False, **fltrs)
             cov_data = comp.get_coverage_data()
             rt_cov = cov_data.get((), {})  # empty tuple for no split-by
-            coverage['ib_count'] = coverage.get('ib_count', 0) + rt_cov.get('ib_count', 0)
-            coverage['ib_max'] = coverage.get('ib_max', 0) + rt_cov.get('ib_max', 0)
-        coverage['ratio'] = (
-            coverage['ib_count'] / coverage['ib_max'] if coverage['ib_max'] else None
+            coverage["ib_count"] = coverage.get("ib_count", 0) + rt_cov.get("ib_count", 0)
+            coverage["ib_max"] = coverage.get("ib_max", 0) + rt_cov.get("ib_max", 0)
+        coverage["ratio"] = (
+            coverage["ib_count"] / coverage["ib_max"] if coverage["ib_max"] else None
         )
         return coverage
 
@@ -1032,15 +1037,15 @@ class FlexibleDataSlicer:
                     if isinstance(fltr, ForeignKeyDimensionFilter)
                     else set(fltr.get_tagged_obj_pks_qs())
                 )
-                if fltr.dimension == 'platform':
+                if fltr.dimension == "platform":
                     platform_ids = pks if platform_ids is None else (platform_ids | pks)
-                elif fltr.dimension == 'organization':
+                elif fltr.dimension == "organization":
                     organization_ids = pks if organization_ids is None else (organization_ids | pks)
             elif isinstance(fltr, DateDimensionFilter):
                 if not self.trend_mode:
-                    coverage_filters.update({'start_month': fltr.start, 'end_month': fltr.end})
+                    coverage_filters.update({"start_month": fltr.start, "end_month": fltr.end})
                 else:
-                    logger.warning('Ignoring overall date filter in trend mode')
+                    logger.warning("Ignoring overall date filter in trend mode")
 
         if self.organization_filter:
             # apply the extra organization filter to the pks
@@ -1051,9 +1056,9 @@ class FlexibleDataSlicer:
             )
 
         if platform_ids is not None:
-            coverage_filters.update({'platform': platform_ids})
+            coverage_filters.update({"platform": platform_ids})
         if organization_ids is not None:
-            coverage_filters.update({'organization': organization_ids})
+            coverage_filters.update({"organization": organization_ids})
 
         if self.trend_mode:
             # in trend mode, we need to calculate coverage for both base and compared periods
@@ -1061,17 +1066,17 @@ class FlexibleDataSlicer:
             def subset_filters(fltrs):
                 for fltr in fltrs:
                     if isinstance(fltr, DateDimensionFilter):
-                        return {'start_month': fltr.start, 'end_month': fltr.end}
+                        return {"start_month": fltr.start, "end_month": fltr.end}
                 return {}
 
             base_range = subset_filters(self.base_subset_filters)
             base_cov = self._get_coverage_for_filters(**base_range, **coverage_filters)
             compared_range = subset_filters(self.compared_subset_filters)
             compared_cov = self._get_coverage_for_filters(**compared_range, **coverage_filters)
-            return {'base': base_cov, 'compared': compared_cov}
+            return {"base": base_cov, "compared": compared_cov}
         else:
             cov = self._get_coverage_for_filters(**coverage_filters)
-            return {'overall': cov}
+            return {"overall": cov}
 
 
 class SlicerConfigErrorCode(Enum):
@@ -1117,4 +1122,4 @@ class SlicerConfigError(Exception):
         super().__init__(*args, **kwargs)
 
     def __str__(self):
-        return f'SlicerConfigError {self.code}: {self.message}'
+        return f"SlicerConfigError {self.code}: {self.message}"

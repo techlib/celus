@@ -43,12 +43,12 @@ class CandidateInlineModelAdmin(TabularInline):
 class BatchAdmin(admin.ModelAdmin):
     change_form_template = "necronomicon/admin/change_form.html"
     inlines = (CandidateInlineModelAdmin,)
-    list_display = ('pk', 'created', 'object_type', 'candidates_count', 'status')
-    actions = ['plan_delete']
-    readonly_fields = ('created', 'task_result_url', 'status')
+    list_display = ("pk", "created", "object_type", "candidates_count", "status")
+    actions = ["plan_delete"]
+    readonly_fields = ("created", "task_result_url", "status")
 
     def task_result_url(self, obj):
-        url = reverse('admin:django_celery_results_taskresult_change', args=[obj.task_result_id])
+        url = reverse("admin:django_celery_results_taskresult_change", args=[obj.task_result_id])
         if obj.task_result:
             return format_html('<a href="{}">{}</a>', url, obj.task_result)
         else:
@@ -57,10 +57,10 @@ class BatchAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
-            candidates_count=Count('candidates'),
+            candidates_count=Count("candidates"),
             # Batch should the same content type
-            object_type=Max('candidates__content_type__model'),
-        ).prefetch_related('candidates__content_type')
+            object_type=Max("candidates__content_type__model"),
+        ).prefetch_related("candidates__content_type")
 
     def object_type(self, batch):
         return batch.object_type
@@ -84,7 +84,7 @@ class BatchAdmin(admin.ModelAdmin):
         messages.add_message(
             request,
             messages.SUCCESS,
-            _('Planned to delete all related object for %(passed)s/%(total)s batches.')
+            _("Planned to delete all related object for %(passed)s/%(total)s batches.")
             % {"passed": passed, "total": passed + skipped},
         )
 
@@ -97,7 +97,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 class NecronomiconAdminMixin:
     def get_actions(self, request):
-        self.actions = list(self.actions) + ['delete_in_necronomicon']
+        self.actions = list(self.actions) + ["delete_in_necronomicon"]
         return super().get_actions(request)
 
     @admin.action(description=_("Plan to delete"))
@@ -105,7 +105,7 @@ class NecronomiconAdminMixin:
         if batch := Batch.create_from_queryset(queryset):
             batch.plan_prepare_batch()
 
-            url = reverse('admin:necronomicon_batch_change', args=[batch.id])
+            url = reverse("admin:necronomicon_batch_change", args=[batch.id])
             text = _("Deletion is being prepared. You need to confirm it")
             messages.add_message(
                 request, messages.SUCCESS, format_html(f"{text} <a href={url}>{_('here')}</a>.")

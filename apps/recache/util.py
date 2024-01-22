@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def get_empty_result_duration_threshold():
     return (
         settings.RECACHE_EMPTY_RESULT_DURATION_THRESHOLD
-        if hasattr(settings, 'RECACHE_EMPTY_RESULT_DURATION_THRESHOLD')
+        if hasattr(settings, "RECACHE_EMPTY_RESULT_DURATION_THRESHOLD")
         else DEFAULT_EMPTY_RESULT_DURATION_THRESHOLD
     )
 
@@ -30,7 +30,7 @@ def get_empty_result_duration_threshold():
 def get_nonempty_result_duration_threshold():
     return (
         settings.RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD
-        if hasattr(settings, 'RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD')
+        if hasattr(settings, "RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD")
         else DEFAULT_NON_EMPTY_RESULT_DURATION_THRESHOLD
     )
 
@@ -40,7 +40,7 @@ def recache_queryset(
     queryset,
     timeout: timedelta = DEFAULT_TIMEOUT,
     lifetime: timedelta = DEFAULT_LIFETIME,
-    origin: str = '',
+    origin: str = "",
 ):
     """
     Given a queryset, it returns an evaluated queryset and does all the necessary caching stuff
@@ -53,13 +53,13 @@ def recache_queryset(
     - queryset is not cached
       - create a new cache
     """
-    logger.debug('Recaching queryset')
+    logger.debug("Recaching queryset")
     try:
         cq: CachedQuery = CachedQuery.objects.select_for_update().get_for_queryset(queryset)
-        logger.debug('Found existing version: %s (last update: %s)', cq, cq.last_updated)
+        logger.debug("Found existing version: %s (last update: %s)", cq, cq.last_updated)
         if cq.django_version != django.get_version():
             logger.debug(
-                'Stored version is from old Django version, removing: %s vs %s)',
+                "Stored version is from old Django version, removing: %s vs %s)",
                 cq.django_version,
                 django.get_version(),
             )
@@ -68,15 +68,15 @@ def recache_queryset(
             safe_create_cached_query(queryset, timeout, lifetime, origin)
             return queryset
         if cq.is_valid:
-            logger.debug('Returning valid cached version')
+            logger.debug("Returning valid cached version")
             return cq.get_cached_queryset()
         if not cq.is_too_old:
-            logger.debug('Cache slightly stale - returning cached version and scheduling renewal')
+            logger.debug("Cache slightly stale - returning cached version and scheduling renewal")
             qs = cq.get_cached_queryset()
             find_and_renew_first_due_cached_query_task.apply_async()
             return qs
         # it is too old, we need to re-evaluate before returning data
-        logger.debug('Stale cache - renewing cache, scheduling next renew and returning new data')
+        logger.debug("Stale cache - renewing cache, scheduling next renew and returning new data")
         cq.renew()
         return cq.get_cached_queryset()
     except CachedQuery.DoesNotExist:
@@ -84,12 +84,12 @@ def recache_queryset(
         result_count = len(queryset)  # evaluate the queryset to get the duration
         duration = monotonic() - start
         if result_count == 0 and duration < get_empty_result_duration_threshold():
-            logger.debug('Not caching empty result for a fast (%.2f s) query', duration)
+            logger.debug("Not caching empty result for a fast (%.2f s) query", duration)
             return queryset
         elif result_count > 0 and duration < get_nonempty_result_duration_threshold():
-            logger.debug('Not caching non-empty result for a fast (%.2f s) query', duration)
+            logger.debug("Not caching non-empty result for a fast (%.2f s) query", duration)
             return queryset
-        logger.debug('Creating new cache')
+        logger.debug("Creating new cache")
         safe_create_cached_query(queryset, timeout, lifetime, origin, duration=duration)
         return queryset
 
@@ -107,6 +107,6 @@ def safe_create_cached_query(queryset, timeout, lifetime, origin, duration=None)
         # we simply ignore it and return the queryset
         # the worst that can happen is that there would be no cache created
         logger.info(
-            'Could not create CachedQuery, probably due to race condition in its creation: %s', exc
+            "Could not create CachedQuery, probably due to race condition in its creation: %s", exc
         )
     return None

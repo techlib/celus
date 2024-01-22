@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 def fill_missing_start_queue(apps, schema_editor):
     """Fills missing queue_id"""
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
 
     # set queue_id for the first in the queues
     SushiFetchAttempt.objects.annotate(
         is_previous=models.Exists(
-            SushiFetchAttempt.objects.filter(queue_previous=models.OuterRef('pk'))
+            SushiFetchAttempt.objects.filter(queue_previous=models.OuterRef("pk"))
         )
-    ).filter(is_previous=True, queue_previous__isnull=True).update(queue_id=models.F('pk'))
+    ).filter(is_previous=True, queue_previous__isnull=True).update(queue_id=models.F("pk"))
 
     # iterate for seconds, third, ... attempts in the queues
     while True:
@@ -22,8 +22,8 @@ def fill_missing_start_queue(apps, schema_editor):
             # Can't use F('queue_previous__queue_id') here
             # this is a subquery workaround
             queue_id=models.Subquery(
-                SushiFetchAttempt.objects.filter(pk=models.OuterRef('queue_previous')).values(
-                    'queue_id'
+                SushiFetchAttempt.objects.filter(pk=models.OuterRef("queue_previous")).values(
+                    "queue_id"
                 )[:1]
             )
         )
@@ -32,14 +32,14 @@ def fill_missing_start_queue(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0032_unschedule_3030')]
+    dependencies = [("sushi", "0032_unschedule_3030")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='queue_id',
+            model_name="sushifetchattempt",
+            name="queue_id",
             field=models.IntegerField(
-                blank=True, help_text='Identifier for attempt queue', null=True
+                blank=True, help_text="Identifier for attempt queue", null=True
             ),
         ),
         migrations.RunPython(fill_missing_start_queue, migrations.RunPython.noop),

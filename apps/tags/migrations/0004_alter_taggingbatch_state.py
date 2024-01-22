@@ -4,24 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('tags', '0003_tagging_batch')]
+    dependencies = [("tags", "0003_tagging_batch")]
 
     operations = [
         migrations.AlterField(
-            model_name='taggingbatch',
-            name='state',
+            model_name="taggingbatch",
+            name="state",
             field=models.CharField(
                 choices=[
-                    ('initial', 'Initial'),
-                    ('preprocessing', 'Preprocessing'),
-                    ('preflight', 'Preflight'),
-                    ('importing', 'Importing'),
-                    ('imported', 'Imported'),
-                    ('prefailed', 'Preflight failed'),
-                    ('failed', 'Import failed'),
-                    ('undoing', 'Undoing'),
+                    ("initial", "Initial"),
+                    ("preprocessing", "Preprocessing"),
+                    ("preflight", "Preflight"),
+                    ("importing", "Importing"),
+                    ("imported", "Imported"),
+                    ("prefailed", "Preflight failed"),
+                    ("failed", "Import failed"),
+                    ("undoing", "Undoing"),
                 ],
-                default='initial',
+                default="initial",
                 max_length=20,
             ),
         )

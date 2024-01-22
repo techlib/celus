@@ -16,37 +16,37 @@ from .models import (
 class ImportAttemptAdminMixin:
     change_list_template = "knowledgebase/importattempt_changelist.html"
     list_display = (
-        'created_timestamp',
-        'source',
-        'get_status',
-        'created',
-        'updated',
-        'wiped',
-        'same',
-        'total',
+        "created_timestamp",
+        "source",
+        "get_status",
+        "created",
+        "updated",
+        "wiped",
+        "same",
+        "total",
     )
     readonly_fields = (
-        'source',
-        'url',
-        'kind',
-        'created_timestamp',
-        'started_timestamp',
-        'downloaded_timestamp',
-        'processing_timestamp',
-        'end_timestamp',
-        'data_hash',
-        'stats',
-        'error',
+        "source",
+        "url",
+        "kind",
+        "created_timestamp",
+        "started_timestamp",
+        "downloaded_timestamp",
+        "processing_timestamp",
+        "end_timestamp",
+        "data_hash",
+        "stats",
+        "error",
     )
-    list_filter = ('source',)
-    actions = ('plan',)
+    list_filter = ("source",)
+    actions = ("plan",)
 
     def plan(self, request, queryset):
         for attempt in queryset:
             if attempt.status == ImportAttempt.State.QUEUE:
                 attempt.plan()
 
-    plan.short_description = 'Run in background'
+    plan.short_description = "Run in background"
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
@@ -57,13 +57,13 @@ class ImportAttemptAdminMixin:
 
     def get_urls(self):
         urls = super().get_urls()
-        extra_urls = [path('run-sync/', self.run_sync)]
+        extra_urls = [path("run-sync/", self.run_sync)]
         return extra_urls + urls
 
     def get_status(self, obj: ImportAttempt):
         return obj.status
 
-    get_status.short_description = 'Status'
+    get_status.short_description = "Status"
 
     def created(self, obj: ImportAttempt):
         return (obj.stats and obj.stats.get("created", "0")) or ""
@@ -137,23 +137,23 @@ class ReportTypeImportAttemptAdmin(ImportAttemptAdminMixin, admin.ModelAdmin):
 
 @admin.register(RouterSyncAttempt)
 class RouterSyncAttemptAdmin(admin.ModelAdmin):
-    list_display = ('prefix', 'source', 'target', 'created', 'updated', 'done', 'retries')
+    list_display = ("prefix", "source", "target", "created", "updated", "done", "retries")
     readonly_fields = (
-        'prefix',
-        'source',
-        'target',
-        'created',
-        'updated',
-        'done',
-        'retries',
-        'last_error',
+        "prefix",
+        "source",
+        "target",
+        "created",
+        "updated",
+        "done",
+        "retries",
+        "last_error",
     )
-    list_filter = ('source',)
-    actions = ('trigger',)
+    list_filter = ("source",)
+    actions = ("trigger",)
 
     def trigger(self, request, queryset):
         for attempt in queryset:
             if not attempt.done:
                 attempt.plan()
 
-    trigger.short_description = 'Trigger sync in background'
+    trigger.short_description = "Trigger sync in background"

@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 def split_import_batches_and_add_date(apps, schema_editor):
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
+    ImportBatch = apps.get_model("logs", "ImportBatch")
     stats = Counter()
     # those with fetch attempt should be already taken care of. If there are some remaining,
     # it is not for this migration to fix it
     for ib in (
-        ImportBatch.objects.annotate(start=Min('accesslog__date'), end=Max('accesslog__date'))
-        .exclude(end=F('start'))
+        ImportBatch.objects.annotate(start=Min("accesslog__date"), end=Max("accesslog__date"))
+        .exclude(end=F("start"))
         .filter(sushifetchattempt=None)
     ):
         # split the ib into several
@@ -26,7 +26,7 @@ def split_import_batches_and_add_date(apps, schema_editor):
         # In the end, it is cleaner and faster to just drop clickhouse and resync
         new_ibs = []
         for current_date in sorted(
-            [x['date'] for x in ib.accesslog_set.all().values('date').distinct()]
+            [x["date"] for x in ib.accesslog_set.all().values("date").distinct()]
         ):
             current_ib = ImportBatch.objects.create(
                 report_type=ib.report_type,
@@ -54,35 +54,35 @@ def split_import_batches_and_add_date(apps, schema_editor):
         # delete the old ImportBatch - this will delete the accesslogs in cascade and also sync
         # with clickhouse
         logger.info(
-            'Split ib %d into %d batches; mdu pk=%s', ib.pk, len(new_ibs), mdu.pk if mdu else 'None'
+            "Split ib %d into %d batches; mdu pk=%s", ib.pk, len(new_ibs), mdu.pk if mdu else "None"
         )
         ib.delete()
 
-        stats['split'] += 1
-        stats['into'] += len(new_ibs)
-    logger.info('Stats: %s', stats)
+        stats["split"] += 1
+        stats["into"] += len(new_ibs)
+    logger.info("Stats: %s", stats)
     if settings.CLICKHOUSE_SYNC_ACTIVE:
-        logger.warning('You must drop and resync clickhouse after this migration!')
+        logger.warning("You must drop and resync clickhouse after this migration!")
 
 
 def check_long_import_batches_with_fa(apps, schema_editor):
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
+    ImportBatch = apps.get_model("logs", "ImportBatch")
     with_fetch_attempts = (
-        ImportBatch.objects.annotate(start=Min('accesslog__date'), end=Max('accesslog__date'))
-        .exclude(end=F('start'))
+        ImportBatch.objects.annotate(start=Min("accesslog__date"), end=Max("accesslog__date"))
+        .exclude(end=F("start"))
         .filter(sushifetchattempt__isnull=False)
         .count()
     )
     if with_fetch_attempts:
         logger.warning(
-            'Multi-month import batches with fetch attempt exist (%d), have a look at '
-            'it, it is not good!',
+            "Multi-month import batches with fetch attempt exist (%d), have a look at "
+            "it, it is not good!",
             with_fetch_attempts,
         )
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0050_import_batch_date_remove_import_batch_from_mdu')]
+    dependencies = [("logs", "0050_import_batch_date_remove_import_batch_from_mdu")]
 
     operations = [
         migrations.RunPython(split_import_batches_and_add_date, migrations.RunPython.noop),

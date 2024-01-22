@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0048_discard_credentials_broken_state')]
+    dependencies = [("sushi", "0048_discard_credentials_broken_state")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='extracted_data',
+            model_name="sushifetchattempt",
+            name="extracted_data",
             field=models.JSONField(
-                default=dict, help_text='Information extracted from the SUSHI data header'
+                default=dict, help_text="Information extracted from the SUSHI data header"
             ),
         )
     ]

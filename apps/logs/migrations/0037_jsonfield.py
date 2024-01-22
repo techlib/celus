@@ -4,30 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0036_datasource_set_null')]
+    dependencies = [("logs", "0036_datasource_set_null")]
 
     operations = [
         migrations.AlterField(
-            model_name='importbatch',
-            name='materialization_data',
+            model_name="importbatch",
+            name="materialization_data",
             field=models.JSONField(
                 blank=True,
                 default=dict,
-                help_text='Internal information about materialized report data in this batch',
+                help_text="Internal information about materialized report data in this batch",
             ),
         ),
         migrations.AlterField(
-            model_name='manualdataupload',
-            name='extra',
+            model_name="manualdataupload",
+            name="extra",
             field=models.JSONField(
                 blank=True,
                 default=dict,
-                help_text='Internal data related to processing of the upload',
+                help_text="Internal data related to processing of the upload",
             ),
         ),
         migrations.AlterField(
-            model_name='organizationplatform',
-            name='sushi_credentials',
+            model_name="organizationplatform",
+            name="sushi_credentials",
             field=models.JSONField(default=list),
         ),
     ]

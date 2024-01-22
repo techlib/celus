@@ -5,14 +5,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0016_counterreporttype_superseeded_by')]
+    dependencies = [("sushi", "0016_counterreporttype_superseeded_by")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='processing_info',
+            model_name="sushifetchattempt",
+            name="processing_info",
             field=django.contrib.postgres.fields.jsonb.JSONField(
-                default=dict, help_text='Internal info'
+                default=dict, help_text="Internal info"
             ),
         )
     ]

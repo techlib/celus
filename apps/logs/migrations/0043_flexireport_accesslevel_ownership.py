@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 
 def prepare_constraint_on_existing(apps, schema_editor):
-    FlexibleReport = apps.get_model('logs', 'FlexibleReport')
+    FlexibleReport = apps.get_model("logs", "FlexibleReport")
     FlexibleReport.objects.filter(owner__isnull=False, owner_organization__isnull=False).update(
         owner=None
     )
@@ -15,17 +15,17 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0042_flexiblereport_last_updated_by')]
+    dependencies = [("logs", "0042_flexiblereport_last_updated_by")]
 
     operations = [
         migrations.RunPython(prepare_constraint_on_existing, noop),
         migrations.AddConstraint(
-            model_name='flexiblereport',
+            model_name="flexiblereport",
             constraint=models.CheckConstraint(
                 check=models.Q(
-                    ('owner__isnull', False), ('owner_organization__isnull', False), _negated=True
+                    ("owner__isnull", False), ("owner_organization__isnull", False), _negated=True
                 ),
-                name='only-one-owner-field',
+                name="only-one-owner-field",
             ),
         ),
     ]

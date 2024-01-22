@@ -4,32 +4,32 @@ from django.db import migrations, models
 
 
 def derive_state(apps, schema_editor):
-    ManualDataUpload = apps.get_model('logs', 'ManualDataUpload')
+    ManualDataUpload = apps.get_model("logs", "ManualDataUpload")
 
     # Fist mark that all MDUs failed
-    ManualDataUpload.objects.all().update(state='prefailed')
+    ManualDataUpload.objects.all().update(state="prefailed")
 
     # And override the successful
-    ManualDataUpload.objects.filter(import_batches__isnull=False).update(state='imported')
+    ManualDataUpload.objects.filter(import_batches__isnull=False).update(state="imported")
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0058_manualdataupload_error')]
+    dependencies = [("logs", "0058_manualdataupload_error")]
 
     operations = [
         migrations.AddField(
-            model_name='manualdataupload',
-            name='state',
+            model_name="manualdataupload",
+            name="state",
             field=models.CharField(
                 choices=[
-                    ('initial', 'Initial'),
-                    ('preflight', 'Preflight'),
-                    ('importing', 'Importing'),
-                    ('imported', 'Imported'),
-                    ('prefailed', 'Preflight failed'),
-                    ('failed', 'Import failed'),
+                    ("initial", "Initial"),
+                    ("preflight", "Preflight"),
+                    ("importing", "Importing"),
+                    ("imported", "Imported"),
+                    ("prefailed", "Preflight failed"),
+                    ("failed", "Import failed"),
                 ],
-                default='initial',
+                default="initial",
                 max_length=20,
             ),
         ),

@@ -4,40 +4,40 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0010_default_lang_change')]
+    dependencies = [("core", "0010_default_lang_change")]
 
     operations = [
         migrations.AddField(
-            model_name='datasource',
-            name='token',
+            model_name="datasource",
+            name="token",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AlterField(
-            model_name='datasource',
-            name='type',
+            model_name="datasource",
+            name="type",
             field=models.PositiveSmallIntegerField(
-                choices=[(1, 'API'), (2, 'Organization'), (3, 'Knowledgebase')]
+                choices=[(1, "API"), (2, "Organization"), (3, "Knowledgebase")]
             ),
         ),
         migrations.AddConstraint(
-            model_name='datasource',
+            model_name="datasource",
             constraint=models.CheckConstraint(
                 check=models.Q(
                     models.Q(
-                        ('type', 3),
-                        ('token__isnull', False),
-                        models.Q(_negated=True, url__exact=''),
+                        ("type", 3),
+                        ("token__isnull", False),
+                        models.Q(_negated=True, url__exact=""),
                     ),
                     models.Q(_negated=True, type=3),
-                    _connector='OR',
+                    _connector="OR",
                 ),
-                name='knowledgebase-requirements',
+                name="knowledgebase-requirements",
             ),
         ),
         migrations.AddConstraint(
-            model_name='datasource',
+            model_name="datasource",
             constraint=models.UniqueConstraint(
-                condition=models.Q(type=3), fields=('url',), name='unique-url-for-knowledgebase'
+                condition=models.Q(type=3), fields=("url",), name="unique-url-for-knowledgebase"
             ),
         ),
     ]

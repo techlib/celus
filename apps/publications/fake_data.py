@@ -37,9 +37,9 @@ def maybe_blank(fn, likelihood=0.5, fn_kwargs=None):
 class TitleFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Title
-        django_get_or_create = ('name', 'isbn')
+        django_get_or_create = ("name", "isbn")
 
-    name = factory.Faker('sentence')
+    name = factory.Faker("sentence")
     isbn = maybe_blank(fake.isbn13, fn_kwargs={"separator": ""})
     issn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})
     eissn = maybe_blank(fake.bothify, fn_kwargs={"text": "####-####"})
@@ -49,12 +49,12 @@ class TitleFactory(factory.django.DjangoModelFactory):
 class PlatformFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Platform
-        django_get_or_create = ('short_name', 'source')
+        django_get_or_create = ("short_name", "source")
 
     ext_id = factory.Sequence(lambda n: n)
-    name = factory.Faker('name')
+    name = factory.Faker("name")
     short_name = factory.LazyAttribute(lambda x: x.name[:10])
-    url = factory.Faker('url')
+    url = factory.Faker("url")
     source = None
 
 
@@ -65,7 +65,7 @@ class PlatformTitleFactory(factory.django.DjangoModelFactory):
     platform = factory.SubFactory(PlatformFactory)
     organization = factory.SubFactory(OrganizationFactory)
     title = factory.SubFactory(TitleFactory)
-    date = factory.Faker('date_this_century')
+    date = factory.Faker("date_this_century")
 
 
 class TitleOverlapBatchFactory(factory.django.DjangoModelFactory):
@@ -83,9 +83,9 @@ class TitleOverlapBatchFactory(factory.django.DjangoModelFactory):
         We accept a normal file here and preprocess it into ContentFile for convenience
         """
         if not extracted:
-            return ''
+            return ""
 
-        with open(extracted, 'rb') as f:
+        with open(extracted, "rb") as f:
             data_file = ContentFile(f.read())
             data_file.name = "test.csv"
         obj.source_file = data_file

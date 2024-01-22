@@ -8,9 +8,9 @@ from django.db.models import Exists, OuterRef
 
 
 def create_import_batch_sync_logs(apps, schema_editor):
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
-    ImportBatchSyncLog = apps.get_model('logs', 'ImportBatchSyncLog')
-    related_sync_log = ImportBatchSyncLog.objects.filter(import_batch_id=OuterRef('pk'))
+    ImportBatch = apps.get_model("logs", "ImportBatch")
+    ImportBatchSyncLog = apps.get_model("logs", "ImportBatchSyncLog")
+    related_sync_log = ImportBatchSyncLog.objects.filter(import_batch_id=OuterRef("pk"))
     logs_to_add = []
     for ib in ImportBatch.objects.exclude(Exists(related_sync_log)):
         logs_to_add.append(ImportBatchSyncLog(import_batch_id=ib.pk))
@@ -20,33 +20,33 @@ def create_import_batch_sync_logs(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logs', '0047_importbatch_last_updated_clickhoused'),
+        ("logs", "0047_importbatch_last_updated_clickhoused"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ImportBatchSyncLog',
+            name="ImportBatchSyncLog",
             fields=[
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'import_batch_id',
+                    "import_batch_id",
                     models.PositiveBigIntegerField(primary_key=True, serialize=False),
                 ),
                 (
-                    'state',
+                    "state",
                     models.PositiveSmallIntegerField(
                         choices=[
-                            (0, 'No change'),
-                            (1, 'Sync'),
-                            (2, 'Delete'),
-                            (3, 'Sync interest'),
+                            (0, "No change"),
+                            (1, "Sync"),
+                            (2, "Delete"),
+                            (3, "Sync interest"),
                         ],
                         default=0,
                     ),
                 ),
                 (
-                    'last_updated_by',
+                    "last_updated_by",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'abstract': False},
+            options={"abstract": False},
         ),
         migrations.RunPython(create_import_batch_sync_logs, migrations.RunPython.noop),
     ]

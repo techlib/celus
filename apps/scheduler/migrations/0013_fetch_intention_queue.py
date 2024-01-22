@@ -5,13 +5,13 @@ from django.db.migrations import RunPython
 
 
 def create_queues(apps, schema_editor):
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
-    FetchIntentionQueue = apps.get_model('scheduler', 'FetchIntentionQueue')
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
+    FetchIntentionQueue = apps.get_model("scheduler", "FetchIntentionQueue")
     chunk_size = 2000
     queues = []
     for fi in (
-        FetchIntention.objects.values('queue_id')
-        .annotate(min_pk=models.Min('pk'), max_pk=models.Max('pk'))
+        FetchIntention.objects.values("queue_id")
+        .annotate(min_pk=models.Min("pk"), max_pk=models.Max("pk"))
         .iterator(chunk_size)
     ):
         queues.append(
@@ -25,43 +25,43 @@ def create_queues(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0012_fill_queue_id')]
+    dependencies = [("scheduler", "0012_fill_queue_id")]
 
     operations = [
         migrations.CreateModel(
-            name='FetchIntentionQueue',
+            name="FetchIntentionQueue",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
                 (
-                    'end',
+                    "end",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='qend',
-                        to='scheduler.fetchintention',
+                        related_name="qend",
+                        to="scheduler.fetchintention",
                     ),
                 ),
                 (
-                    'start',
+                    "start",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='qstart',
-                        to='scheduler.fetchintention',
+                        related_name="qstart",
+                        to="scheduler.fetchintention",
                     ),
                 ),
             ],
         ),
         RunPython(create_queues, RunPython.noop),
         migrations.AlterField(
-            model_name='fetchintention',
-            name='queue_id',
+            model_name="fetchintention",
+            name="queue_id",
             field=models.ForeignKey(
                 blank=True,
-                help_text='Identifier of retry queue',
+                help_text="Identifier of retry queue",
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='scheduler.fetchintentionqueue',
+                to="scheduler.fetchintentionqueue",
             ),
         ),
         migrations.RenameField(model_name="fetchintention", old_name="queue_id", new_name="queue"),

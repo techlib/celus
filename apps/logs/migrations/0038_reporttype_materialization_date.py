@@ -5,16 +5,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0037_jsonfield')]
+    dependencies = [("logs", "0037_jsonfield")]
 
     operations = [
         migrations.AddField(
-            model_name='reporttype',
-            name='materialization_date',
+            model_name="reporttype",
+            name="materialization_date",
             field=models.DateTimeField(
                 default=django.utils.timezone.now,
-                help_text='All data materialized before this data will be recomputed - can be '
-                'used to force recomputation',
+                help_text="All data materialized before this data will be recomputed - can be "
+                "used to force recomputation",
             ),
         )
     ]

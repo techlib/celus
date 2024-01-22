@@ -12,17 +12,17 @@ class OrganizationSerializer(ModelSerializer):
     class Meta:
         model = Organization
         fields = (
-            'pk',
-            'ext_id',
-            'short_name',
-            'name',
-            'internal_id',
-            'ico',
-            'parent',
-            'is_admin',
-            'is_member',
-            'is_raw_data_import_enabled',
-        ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)
+            "pk",
+            "ext_id",
+            "short_name",
+            "name",
+            "internal_id",
+            "ico",
+            "parent",
+            "is_admin",
+            "is_member",
+            "is_raw_data_import_enabled",
+        ) + tuple("name_" + lang[0] for lang in settings.LANGUAGES)
 
 
 class OrganizationSimpleSerializer(ModelSerializer):
@@ -30,40 +30,40 @@ class OrganizationSimpleSerializer(ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('name', 'url')
+        fields = ("name", "url")
 
 
 class OrganizationShortSerializer(ModelSerializer):
     class Meta:
         model = Organization
-        fields = ('pk', 'short_name', 'name')
+        fields = ("pk", "short_name", "name")
 
 
 class OrganizationAltNameSerializer(ModelSerializer):
     class Meta:
         model = OrganizationAltName
-        fields = ('pk', 'name')
+        fields = ("pk", "name")
 
 
 class OrganizationListSerializer(ModelSerializer):
     is_admin = BooleanField(read_only=True)
     is_member = BooleanField(read_only=True)
     alt_names = OrganizationAltNameSerializer(
-        source='organizationaltname_set', many=True, read_only=True
+        source="organizationaltname_set", many=True, read_only=True
     )
 
     class Meta:
         model = Organization
         fields = (
-            'pk',
-            'ext_id',
-            'short_name',
-            'name',
-            'alt_names',
-            'internal_id',
-            'ico',
-            'parent',
-            'is_admin',
-            'is_member',
-            'is_raw_data_import_enabled',
-        ) + tuple('name_' + lang[0] for lang in settings.LANGUAGES)
+            "pk",
+            "ext_id",
+            "short_name",
+            "name",
+            "alt_names",
+            "internal_id",
+            "ico",
+            "parent",
+            "is_admin",
+            "is_member",
+            "is_raw_data_import_enabled",
+        ) + tuple("name_" + lang[0] for lang in settings.LANGUAGES)

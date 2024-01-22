@@ -7,14 +7,14 @@ import core.models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0018_pgcrypto'),
+        ("core", "0018_pgcrypto"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='user',
+            name="user",
             managers=[
-                ('objects', core.models.CelusUserManager()),
+                ("objects", core.models.CelusUserManager()),
             ],
         ),
     ]

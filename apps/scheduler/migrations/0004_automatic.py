@@ -6,45 +6,45 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('organizations', '0017_add_organizationaltname'),
-        ('scheduler', '0003_harvest'),
+        ("organizations", "0017_add_organizationaltname"),
+        ("scheduler", "0003_harvest"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Automatic',
+            name="Automatic",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('month', models.DateField()),
+                ("month", models.DateField()),
                 (
-                    'harvest',
+                    "harvest",
                     models.OneToOneField(
-                        on_delete=django.db.models.deletion.CASCADE, to='scheduler.Harvest'
+                        on_delete=django.db.models.deletion.CASCADE, to="scheduler.Harvest"
                     ),
                 ),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='automatic_harvest',
-                        to='organizations.Organization',
+                        related_name="automatic_harvest",
+                        to="organizations.Organization",
                     ),
                 ),
             ],
         ),
         migrations.AddConstraint(
-            model_name='automatic',
-            constraint=models.CheckConstraint(check=models.Q(month__day=1), name='fist_month_day'),
+            model_name="automatic",
+            constraint=models.CheckConstraint(check=models.Q(month__day=1), name="fist_month_day"),
         ),
         migrations.AddConstraint(
-            model_name='automatic',
+            model_name="automatic",
             constraint=models.UniqueConstraint(
-                fields=('month', 'organization'), name='unique_month_organization'
+                fields=("month", "organization"), name="unique_month_organization"
             ),
         ),
     ]

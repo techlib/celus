@@ -7,22 +7,22 @@ import logs.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0012_manualdataupload')]
+    dependencies = [("logs", "0012_manualdataupload")]
 
     operations = [
         migrations.AlterField(
-            model_name='accesslog',
-            name='target',
+            model_name="accesslog",
+            name="target",
             field=models.ForeignKey(
-                help_text='Title for which this log was created',
+                help_text="Title for which this log was created",
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='publications.Title',
+                to="publications.Title",
             ),
         ),
         migrations.AlterField(
-            model_name='manualdataupload',
-            name='data_file',
+            model_name="manualdataupload",
+            name="data_file",
             field=models.FileField(
                 upload_to=logs.models.where_to_store, validators=[logs.models.validate_mime_type]
             ),

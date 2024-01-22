@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0046_one_import_batch_per_month')]
+    dependencies = [("logs", "0046_one_import_batch_per_month")]
 
     operations = [
         migrations.AddField(
-            model_name='importbatch',
-            name='last_clickhoused',
+            model_name="importbatch",
+            name="last_clickhoused",
             field=models.DateTimeField(
-                null=True, help_text='When was the import batch last synced with clickhouse'
+                null=True, help_text="When was the import batch last synced with clickhouse"
             ),
         ),
         migrations.AddField(
-            model_name='importbatch', name='last_updated', field=models.DateTimeField(auto_now=True)
+            model_name="importbatch", name="last_updated", field=models.DateTimeField(auto_now=True)
         ),
     ]

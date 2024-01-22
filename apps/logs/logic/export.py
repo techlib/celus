@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 
 class CSVExport:
     implicit_dims = {
-        'platform': 'name',
-        'metric': 'short_name',
-        'organization': 'name',
-        'target': 'name',
-        'report_type': 'short_name',
-        'date': None,
+        "platform": "name",
+        "metric": "short_name",
+        "organization": "name",
+        "target": "name",
+        "report_type": "short_name",
+        "date": None,
     }
-    title_attrs = ['isbn', 'issn', 'eissn']
-    outdir = 'export'
+    title_attrs = ["isbn", "issn", "eissn"]
+    outdir = "export"
 
     def __init__(self, query_params: dict, zip_compress: bool = False, filename_base=None):
         self.query_params = query_params
@@ -38,16 +38,16 @@ class CSVExport:
             self.filename_base = self.create_filename_base()
 
     def create_filename_base(self) -> str:
-        ts = now().strftime('%Y%m%d-%H%M%S.%f')
-        filename = f'raw-data-{ts}'
+        ts = now().strftime("%Y%m%d-%H%M%S.%f")
+        filename = f"raw-data-{ts}"
         return filename
 
     @property
     def filename(self) -> str:
         if self.zip_compress:
-            fname = self.filename_base + '.zip'
+            fname = self.filename_base + ".zip"
         else:
-            fname = self.filename_base + '.csv'
+            fname = self.filename_base + ".csv"
         return os.path.join(self.outdir, fname)
 
     @property
@@ -75,13 +75,13 @@ class CSVExport:
         self.create_outdir()
         queryset = self.create_queryset()
         if self.zip_compress:
-            with ZipFile(self.file_path, 'w', compression=ZIP_DEFLATED) as outzip:
-                with outzip.open(self.filename_base + '.csv', 'w', force_zip64=True) as outfile:
-                    writer = codecs.getwriter('utf-8')
+            with ZipFile(self.file_path, "w", compression=ZIP_DEFLATED) as outzip:
+                with outzip.open(self.filename_base + ".csv", "w", force_zip64=True) as outfile:
+                    writer = codecs.getwriter("utf-8")
                     encoder = writer(outfile)
                     self.export_raw_accesslogs_to_stream_lowlevel(encoder, queryset=queryset)
         else:
-            with open(self.file_path, 'w') as outfile:
+            with open(self.file_path, "w") as outfile:
                 self.export_raw_accesslogs_to_stream_lowlevel(outfile, queryset=queryset)
 
     def store_error(self):
@@ -93,51 +93,51 @@ class CSVExport:
     def export_raw_accesslogs_to_stream_lowlevel(self, stream: IO, queryset: QuerySet):
         start = monotonic()
         text_id_to_text = {
-            dt['id']: dt['text'] for dt in DimensionText.objects.all().values('id', 'text')
+            dt["id"]: dt["text"] for dt in DimensionText.objects.all().values("id", "text")
         }
-        logger.debug('Finished loading text remaps: %.2f s', monotonic() - start)
+        logger.debug("Finished loading text remaps: %.2f s", monotonic() - start)
         rt_to_dimensions = {
             rt.pk: rt.dimensions_sorted
             for rt in ReportType.objects.filter(
-                pk__in=queryset.distinct('report_type_id').values('report_type_id')
+                pk__in=queryset.distinct("report_type_id").values("report_type_id")
             )
         }
-        logger.debug('Finished loading report_types and dimensions: %.2f s', monotonic() - start)
+        logger.debug("Finished loading report_types and dimensions: %.2f s", monotonic() - start)
         # get all field names for the CSV
         field_name_map = {
-            (f'{dim}__{attr}' if attr else dim): dim for dim, attr in self.implicit_dims.items()
+            (f"{dim}__{attr}" if attr else dim): dim for dim, attr in self.implicit_dims.items()
         }
-        field_name_map.update({f'target__{attr}': attr for attr in self.title_attrs})
+        field_name_map.update({f"target__{attr}": attr for attr in self.title_attrs})
         field_names = list(field_name_map.values())
         for dims in rt_to_dimensions.values():
             field_names += [dim.short_name for dim in dims if dim.short_name not in field_names]
-        field_names.append('value')
-        logger.debug('Finished preparing field names: %.2f s', monotonic() - start)
+        field_names.append("value")
+        logger.debug("Finished preparing field names: %.2f s", monotonic() - start)
         # values that will be retrieved from the accesslogs
-        values = ['value', 'report_type_id']
+        values = ["value", "report_type_id"]
         values += list(field_name_map.keys())
-        values += [f'dim{i+1}' for i in range(7)]
+        values += [f"dim{i+1}" for i in range(7)]
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
-        logger.debug('Finished preparing CSV writer: %.2f s', monotonic() - start)
+        logger.debug("Finished preparing CSV writer: %.2f s", monotonic() - start)
         # write the records
         rec_num = 0
         with cachalot_disabled(True):
-            # disable cachalot for this query because it returns a potentially huge number of records
-            # and would clog the cache
+            # disable cachalot for this query because it returns a potentially huge number
+            # of records and would clog the cache
             for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
                 record = {
                     attr_out: log.get(attr_in) for attr_in, attr_out in field_name_map.items()
                 }
-                record['value'] = log['value']
-                record['date'] = log['date']
-                for i, dim in enumerate(rt_to_dimensions[log['report_type_id']]):
-                    value = log.get(f'dim{i+1}')
+                record["value"] = log["value"]
+                record["date"] = log["date"]
+                for i, dim in enumerate(rt_to_dimensions[log["report_type_id"]]):
+                    value = log.get(f"dim{i+1}")
                     record[dim.short_name] = text_id_to_text.get(value, value)
                 writer.writerow(record)
                 if rec_num % 999 == 0:
                     self.store_progress(rec_num + 1)
                 if rec_num % 99999 == 0:
-                    logger.debug('Stored %d records: %.2f s', rec_num, monotonic() - start)
+                    logger.debug("Stored %d records: %.2f s", rec_num, monotonic() - start)
         self.store_progress(rec_num + 1)

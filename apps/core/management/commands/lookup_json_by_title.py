@@ -7,36 +7,36 @@ from core.logic.lookup_json_by_title import lookup_json_by_title
 
 class Command(BaseCommand):
     help = (
-        'Search through all files related to a specific title and print corresponding parts of '
-        'the json to stdout'
+        "Search through all files related to a specific title and print corresponding parts of "
+        "the json to stdout"
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'title_id',
-            help='Title id from publications/title (Title/Database)',
+            "title_id",
+            help="Title id from publications/title (Title/Database)",
         )
         parser.add_argument(
-            '--json',
-            help='Print only valid json',
-            action='store_true',
-            dest='json',
+            "--json",
+            help="Print only valid json",
+            action="store_true",
+            dest="json",
         )
         parser.add_argument(
-            '--indent',
-            help='Number of spaces to indent output with (0 is no indent)',
-            dest='indent',
+            "--indent",
+            help="Number of spaces to indent output with (0 is no indent)",
+            dest="indent",
             type=int,
             default=2,
         )
 
     def handle(self, *args, **options):
-        indent = options['indent']
+        indent = options["indent"]
         indent = indent if indent > 0 else None
 
-        lookup, err = lookup_json_by_title(options['title_id'])
+        lookup, err = lookup_json_by_title(options["title_id"])
 
-        if options['json']:
+        if options["json"]:
             self.stdout.write(json.dumps(lookup, indent=indent, ensure_ascii=False))
         else:
             for file, items in lookup.items():

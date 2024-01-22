@@ -5,17 +5,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0007_timestamps'), ('publications', '0011_unlocalize_short_name')]
+    dependencies = [("core", "0007_timestamps"), ("publications", "0011_unlocalize_short_name")]
 
     operations = [
         migrations.AddField(
-            model_name='platform',
-            name='source',
+            model_name="platform",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         )
     ]

@@ -5,7 +5,7 @@ from publications.logic.sync import erms_sync_platforms
 
 
 class Command(BaseCommand):
-    help = 'Sync platforms between ERMS and the database'
+    help = "Sync platforms between ERMS and the database"
 
     def add_arguments(self, parser):
         pass
@@ -13,4 +13,4 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         stats = erms_sync_platforms()
-        self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
+        self.stderr.write(self.style.WARNING(f"Import stats: {stats}"))

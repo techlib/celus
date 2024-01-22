@@ -39,15 +39,15 @@ class ReportDataView(APIView):
         param_ser.is_valid(raise_exception=True)
         if (
             not request.user.accessible_organizations()
-            .filter(pk=param_ser.validated_data['organization'].pk)
+            .filter(pk=param_ser.validated_data["organization"].pk)
             .exists()
         ):
             raise PermissionDenied(
                 {"error": "User is not allowed to access the selected organization"}
             )
         data = dict(param_ser.validated_data)
-        data['start_date'] = parse_month(data['start_date'])
-        data['end_date'] = parse_month(data['end_date'])
+        data["start_date"] = parse_month(data["start_date"])
+        data["end_date"] = parse_month(data["end_date"])
         return data
 
     def get(self, request, report_name):
@@ -67,6 +67,6 @@ class ReportExportView(ReportDataView):
         export_data = exporter.export()
         return HttpResponse(
             export_data,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={'Content-Disposition': f'attachment; filename="{report.name}.xlsx"'},
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{report.name}.xlsx"'},
         )

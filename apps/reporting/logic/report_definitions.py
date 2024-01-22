@@ -206,9 +206,9 @@ ARL_REPORT = {
             "explanation": "COUNTER 5 DR report is used to get information about federated "
             "searches.",
             "implementationNote": 'The specification states that "Metric options include '
-            '“Searches_Federated”, “Total_Item_Requests for full text databases”, '
+            "“Searches_Federated”, “Total_Item_Requests for full text databases”, "
             'and “Total_Item_Investigations for non-full text databases”." '
-            'Celus cannot automatically assign the database type to decide which metric to use, '
+            "Celus cannot automatically assign the database type to decide which metric to use, "
             'so only "Searches_Federated" is reported.',
             "stages": [{"id": "dr_stage", "name": "DR", "formula": "dr_federated"}],
         },

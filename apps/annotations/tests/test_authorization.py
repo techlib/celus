@@ -25,15 +25,15 @@ class TestAuthorization:
     """
 
     @pytest.mark.parametrize(
-        ['user_type', 'has_access', 'annot_count'],
+        ["user_type", "has_access", "annot_count"],
         [
-            ['no_user', False, 0],
-            ['invalid', False, 0],
-            ['unrelated', True, 0],
-            ['related_user', True, 1],
-            ['related_admin', True, 1],
-            ['master_user', True, 2],
-            ['superuser', True, 2],
+            ["no_user", False, 0],
+            ["invalid", False, 0],
+            ["unrelated", True, 0],
+            ["related_user", True, 1],
+            ["related_admin", True, 1],
+            ["master_user", True, 2],
+            ["superuser", True, 2],
         ],
     )
     def test_annotation_read_api_access(
@@ -48,9 +48,9 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # now create two annotations - one related to org and one unrelated
-        AnnotationFactory(subject='prase', organization=org)
-        AnnotationFactory(subject='hroch', organization=organizations[1])
-        url = reverse('annotations-list')
+        AnnotationFactory(subject="prase", organization=org)
+        AnnotationFactory(subject="hroch", organization=organizations[1])
+        url = reverse("annotations-list")
         resp = client.get(url, **authentication_headers(identity))
         if has_access:
             assert resp.status_code == 200
@@ -59,15 +59,15 @@ class TestAuthorization:
             assert resp.status_code in (403, 401)  # depends on auth backend
 
     @pytest.mark.parametrize(
-        ['user_type', 'can_create_rel', 'can_create_unrel', 'can_create_noorg'],
+        ["user_type", "can_create_rel", "can_create_unrel", "can_create_noorg"],
         [
-            ['no_user', False, False, False],
-            ['invalid', False, False, False],
-            ['unrelated', False, False, False],
-            ['related_user', False, False, False],
-            ['related_admin', True, False, False],
-            ['master_user', True, True, True],
-            ['superuser', True, True, True],
+            ["no_user", False, False, False],
+            ["invalid", False, False, False],
+            ["unrelated", False, False, False],
+            ["related_user", False, False, False],
+            ["related_admin", True, False, False],
+            ["master_user", True, True, True],
+            ["superuser", True, True, True],
         ],
     )
     def test_annotation_create_api_access(
@@ -83,11 +83,11 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        url = reverse('annotations-list')
+        url = reverse("annotations-list")
         resp = client.post(
             url,
-            {'organization_id': org.pk, 'platform_id': None, 'subject_cs': 'X', 'subject_en': 'Y'},
-            content_type='application/json',
+            {"organization_id": org.pk, "platform_id": None, "subject_cs": "X", "subject_en": "Y"},
+            content_type="application/json",
             **authentication_headers(identity),
         )
         expected_status_codes = (201,) if can_create_rel else (403, 401)
@@ -96,12 +96,12 @@ class TestAuthorization:
         resp = client.post(
             url,
             {
-                'organization_id': organizations[1].pk,
-                'platform_id': None,
-                'subject_cs': 'X',
-                'subject_en': 'Y',
+                "organization_id": organizations[1].pk,
+                "platform_id": None,
+                "subject_cs": "X",
+                "subject_en": "Y",
             },
-            content_type='application/json',
+            content_type="application/json",
             **authentication_headers(identity),
         )
         expected_status_codes = (201,) if can_create_unrel else (403, 401)
@@ -109,23 +109,23 @@ class TestAuthorization:
         # test creation of records without organization
         resp = client.post(
             url,
-            {'organization_id': None, 'platform_id': None, 'subject_cs': 'X', 'subject_en': 'Y'},
-            content_type='application/json',
+            {"organization_id": None, "platform_id": None, "subject_cs": "X", "subject_en": "Y"},
+            content_type="application/json",
             **authentication_headers(identity),
         )
         expected_status_codes = (201,) if can_create_noorg else (403, 401)
         assert resp.status_code in expected_status_codes
 
     @pytest.mark.parametrize(
-        ['user_type', 'can_access_unrel', 'can_access_rel', 'can_access_noorg'],
+        ["user_type", "can_access_unrel", "can_access_rel", "can_access_noorg"],
         [
-            ['no_user', False, False, False],
-            ['invalid', False, False, False],
-            ['unrelated', False, False, True],
-            ['related_user', False, True, True],
-            ['related_admin', False, True, True],
-            ['master_user', True, True, True],
-            ['superuser', True, True, True],
+            ["no_user", False, False, False],
+            ["invalid", False, False, False],
+            ["unrelated", False, False, True],
+            ["related_user", False, True, True],
+            ["related_admin", False, True, True],
+            ["master_user", True, True, True],
+            ["superuser", True, True, True],
         ],
     )
     def test_annotation_get_object_api_access(
@@ -141,11 +141,11 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot_rel = AnnotationFactory(subject='foo2', organization=org, owner_level=UL_ORG_ADMIN)
+        annot_rel = AnnotationFactory(subject="foo2", organization=org, owner_level=UL_ORG_ADMIN)
         annot_unrel = AnnotationFactory(
-            subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
+            subject="foo", organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_noorg = AnnotationFactory(subject='bar', organization=None, owner_level=UL_CONS_ADMIN)
+        annot_noorg = AnnotationFactory(subject="bar", organization=None, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_unrel, can_access_unrel),
@@ -153,27 +153,27 @@ class TestAuthorization:
                 (annot_noorg, can_access_noorg),
             )
         ):
-            url = reverse('annotations-detail', args=(annot.pk,))
+            url = reverse("annotations-detail", args=(annot.pk,))
             resp = client.get(url, **authentication_headers(identity))
             expected_status_codes = (200,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"
 
     @pytest.mark.parametrize(
         [
-            'user_type',
-            'can_delete_rel_org_admin',
-            'can_delete_unrel_org_admin',
-            'can_delete_master',
-            'can_delete_superadmin',
+            "user_type",
+            "can_delete_rel_org_admin",
+            "can_delete_unrel_org_admin",
+            "can_delete_master",
+            "can_delete_superadmin",
         ],
         [
-            ['no_user', False, False, False, False],
-            ['invalid', False, False, False, False],
-            ['unrelated', False, False, False, False],
-            ['related_user', False, False, False, False],
-            ['related_admin', True, False, False, False],
-            ['master_user', True, True, True, False],
-            ['superuser', True, True, True, True],
+            ["no_user", False, False, False, False],
+            ["invalid", False, False, False, False],
+            ["unrelated", False, False, False, False],
+            ["related_user", False, False, False, False],
+            ["related_admin", True, False, False, False],
+            ["master_user", True, True, True, False],
+            ["superuser", True, True, True, True],
         ],
     )
     def test_annotation_delete_api_access(
@@ -191,13 +191,13 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
         annot_rel_admin = AnnotationFactory(
-            subject='foo2', organization=org, owner_level=UL_ORG_ADMIN
+            subject="foo2", organization=org, owner_level=UL_ORG_ADMIN
         )
         annot_unrel_admin = AnnotationFactory(
-            subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
+            subject="foo", organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_master = AnnotationFactory(subject='bar', organization=org, owner_level=UL_CONS_STAFF)
-        annot_super = AnnotationFactory(subject='baz', organization=org, owner_level=UL_CONS_ADMIN)
+        annot_master = AnnotationFactory(subject="bar", organization=org, owner_level=UL_CONS_STAFF)
+        annot_super = AnnotationFactory(subject="baz", organization=org, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_rel_admin, can_delete_rel_org_admin),
@@ -206,27 +206,27 @@ class TestAuthorization:
                 (annot_super, can_delete_superadmin),
             )
         ):
-            url = reverse('annotations-detail', args=(annot.pk,))
+            url = reverse("annotations-detail", args=(annot.pk,))
             resp = client.delete(url, **authentication_headers(identity))
             expected_status_codes = (204,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"
 
     @pytest.mark.parametrize(
         [
-            'user_type',
-            'can_modify_rel_org_admin',
-            'can_modify_unrel_org_admin',
-            'can_modify_master',
-            'can_modify_superadmin',
+            "user_type",
+            "can_modify_rel_org_admin",
+            "can_modify_unrel_org_admin",
+            "can_modify_master",
+            "can_modify_superadmin",
         ],
         [
-            ['no_user', False, False, False, False],
-            ['invalid', False, False, False, False],
-            ['unrelated', False, False, False, False],
-            ['related_user', False, False, False, False],
-            ['related_admin', True, False, False, False],
-            ['master_user', True, True, True, False],
-            ['superuser', True, True, True, True],
+            ["no_user", False, False, False, False],
+            ["invalid", False, False, False, False],
+            ["unrelated", False, False, False, False],
+            ["related_user", False, False, False, False],
+            ["related_admin", True, False, False, False],
+            ["master_user", True, True, True, False],
+            ["superuser", True, True, True, True],
         ],
     )
     def test_annotation_modify_api_access(
@@ -244,13 +244,13 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
         annot_rel_admin = AnnotationFactory(
-            subject='foo2', organization=org, owner_level=UL_ORG_ADMIN
+            subject="foo2", organization=org, owner_level=UL_ORG_ADMIN
         )
         annot_unrel_admin = AnnotationFactory(
-            subject='foo', organization=organizations[1], owner_level=UL_ORG_ADMIN
+            subject="foo", organization=organizations[1], owner_level=UL_ORG_ADMIN
         )
-        annot_master = AnnotationFactory(subject='bar', organization=org, owner_level=UL_CONS_STAFF)
-        annot_super = AnnotationFactory(subject='baz', organization=org, owner_level=UL_CONS_ADMIN)
+        annot_master = AnnotationFactory(subject="bar", organization=org, owner_level=UL_CONS_STAFF)
+        annot_super = AnnotationFactory(subject="baz", organization=org, owner_level=UL_CONS_ADMIN)
         for i, (annot, can) in enumerate(
             (
                 (annot_rel_admin, can_modify_rel_org_admin),
@@ -259,22 +259,22 @@ class TestAuthorization:
                 (annot_super, can_modify_superadmin),
             )
         ):
-            url = reverse('annotations-detail', args=(annot.pk,))
+            url = reverse("annotations-detail", args=(annot.pk,))
             resp = client.patch(
                 url,
-                {'subject': 'XXX'},
-                content_type='application/json',
+                {"subject": "XXX"},
+                content_type="application/json",
                 **authentication_headers(identity),
             )
             expected_status_codes = (200,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"
 
     @pytest.mark.parametrize(
-        ['user_type', 'can_set_rel_org', 'can_set_unrel_org', 'can_set_noorg'],
+        ["user_type", "can_set_rel_org", "can_set_unrel_org", "can_set_noorg"],
         [
-            ['related_admin', True, False, False],
-            ['master_user', True, True, True],
-            ['superuser', True, True, True],
+            ["related_admin", True, False, False],
+            ["master_user", True, True, True],
+            ["superuser", True, True, True],
         ],
     )
     def test_annotation_modify_organization_api_access(
@@ -290,16 +290,16 @@ class TestAuthorization:
     ):
         identity, org = identity_by_user_type(user_type)
         # test creation of related record
-        annot = AnnotationFactory(subject='foo', organization=org, owner_level=UL_ORG_ADMIN)
+        annot = AnnotationFactory(subject="foo", organization=org, owner_level=UL_ORG_ADMIN)
         for i, (can, org_obj) in enumerate(
             ((can_set_rel_org, org), (can_set_unrel_org, organizations[1]), (can_set_noorg, None))
         ):
-            url = reverse('annotations-detail', args=(annot.pk,))
+            url = reverse("annotations-detail", args=(annot.pk,))
             resp = client.patch(
                 url,
-                {'organization_id': org_obj.id if org_obj else None},
-                content_type='application/json',
+                {"organization_id": org_obj.id if org_obj else None},
+                content_type="application/json",
                 **authentication_headers(identity),
             )
             expected_status_codes = (200,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"

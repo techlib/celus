@@ -8,8 +8,8 @@ class BadRequestException(APIException):
     """
 
     status_code = 400
-    default_code = 'bad request'
-    default_detail = 'Incorrect input data for the request'
+    default_code = "bad request"
+    default_detail = "Incorrect input data for the request"
 
 
 class ModelUsageError(Exception):

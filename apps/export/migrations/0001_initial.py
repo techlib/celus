@@ -13,35 +13,35 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FlexibleDataExport',
+            name="FlexibleDataExport",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'status',
+                    "status",
                     models.PositiveSmallIntegerField(
-                        choices=[(0, 'not started'), (1, 'in progress'), (2, 'finished')], default=0
+                        choices=[(0, "not started"), (1, "in progress"), (2, "finished")], default=0
                     ),
                 ),
-                ('extra_info', models.JSONField(default=dict, help_text='Internal stuff')),
-                ('output_file', models.FileField(upload_to='export')),
+                ("extra_info", models.JSONField(default=dict, help_text="Internal stuff")),
+                ("output_file", models.FileField(upload_to="export")),
                 (
-                    'export_params',
-                    models.JSONField(default=dict, help_text='Serialized parameters of the export'),
+                    "export_params",
+                    models.JSONField(default=dict, help_text="Serialized parameters of the export"),
                 ),
                 (
-                    'owner',
+                    "owner",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),
                 ),
             ],
-            options={'abstract': False},
+            options={"abstract": False},
         )
     ]

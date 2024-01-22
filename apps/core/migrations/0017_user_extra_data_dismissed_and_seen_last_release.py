@@ -5,7 +5,7 @@ from django.db.migrations.operations import special
 
 
 def insert_dismissed_and_seen_last_release(apps, schema_editor):
-    User = apps.get_model('core', 'User')
+    User = apps.get_model("core", "User")
     for user in User.objects.all():
         user.extra_data["last_seen_release"] = None
         user.extra_data["last_dismissed_release"] = None
@@ -13,7 +13,7 @@ def insert_dismissed_and_seen_last_release(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0016_taskprogress')]
+    dependencies = [("core", "0016_taskprogress")]
 
     operations = [
         migrations.RunPython(

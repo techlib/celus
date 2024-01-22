@@ -17,11 +17,11 @@ class AnnotationFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     author = factory.SubFactory(UserFactory)
 
-    subject = factory.Faker('word')
-    subject_cs = factory.Faker('word', locale='cs_CZ')
+    subject = factory.Faker("word")
+    subject_cs = factory.Faker("word", locale="cs_CZ")
 
-    short_message = factory.Faker('words')
-    short_message_cs = factory.Faker('words', locale='cs_CZ')
+    short_message = factory.Faker("words")
+    short_message_cs = factory.Faker("words", locale="cs_CZ")
 
-    message = factory.Faker('words')
-    message_cs = factory.Faker('words', locale='cs_CZ')
+    message = factory.Faker("words")
+    message_cs = factory.Faker("words", locale="cs_CZ")

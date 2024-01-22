@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0008_importbatch')]
+    dependencies = [("logs", "0008_importbatch")]
 
     operations = [
         migrations.AddField(
-            model_name='accesslog',
-            name='import_batch',
+            model_name="accesslog",
+            name="import_batch",
             field=models.ForeignKey(
-                default=None, on_delete=django.db.models.deletion.CASCADE, to='logs.ImportBatch'
+                default=None, on_delete=django.db.models.deletion.CASCADE, to="logs.ImportBatch"
             ),
             preserve_default=False,
         )

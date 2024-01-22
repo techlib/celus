@@ -21,132 +21,132 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestSushiFetching:
     @pytest.mark.parametrize(
-        ('path', 'counter_report', 'status1', 'status2', 'log', 'breaks', 'checksum'),
+        ("path", "counter_report", "status1", "status2", "log", "breaks", "checksum"),
         (
             (
-                'C5_PR_test.json',
-                'pr',
+                "C5_PR_test.json",
+                "pr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                '',
+                "",
                 False,
-                '9f8a4abbfdc601d9a35e0904c896d843ffd488ee2f7ac0f4cd46e2ab61e2549a',
+                "9f8a4abbfdc601d9a35e0904c896d843ffd488ee2f7ac0f4cd46e2ab61e2549a",
             ),
             (
-                'C5_PR_with_3040.json',
-                'pr',
+                "C5_PR_with_3040.json",
+                "pr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
                 ("Warnings: Warning #3040: Partial Data Returned.\n\n"),
                 False,
-                '634630dea45bde1bd341ffb49ae1baf9ea07088e5ab3d37ebf711712db1171ea',
+                "634630dea45bde1bd341ffb49ae1baf9ea07088e5ab3d37ebf711712db1171ea",
             ),
             (
-                'naked_errors.json',
-                'pr',
+                "naked_errors.json",
+                "pr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Warnings: Warning #1011: Report Queued for Processing; '
-                'Warning #3060: Invalid Report Filter Value\n\n',
+                "Warnings: Warning #1011: Report Queued for Processing; "
+                "Warning #3060: Invalid Report Filter Value\n\n",
                 False,
-                '74214e7abef5686360a1533d63e271663a502709d7790bf2bc966d781bf403d6',
+                "74214e7abef5686360a1533d63e271663a502709d7790bf2bc966d781bf403d6",
             ),
             (
-                'naked_error.json',
-                'pr',
+                "naked_error.json",
+                "pr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Warnings: Warning #1011: Report Queued for Processing\n\n',
+                "Warnings: Warning #1011: Report Queued for Processing\n\n",
                 False,
-                'f2bf80be20ec7f320482bb1e59c58f4aa203e47c5761325935955233a4a51f19',
+                "f2bf80be20ec7f320482bb1e59c58f4aa203e47c5761325935955233a4a51f19",
             ),
             (
-                '5_TR_ProQuestEbookCentral_exception.json',
-                'tr',
+                "5_TR_ProQuestEbookCentral_exception.json",
+                "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                'Errors: Error #3030: No Usage Available for Requested Dates.\n\n',
+                "Errors: Error #3030: No Usage Available for Requested Dates.\n\n",
                 False,
-                '2cff6104b7d2104724425361eeeb5868e99e46b4d663194edcd1813fa4829070',
+                "2cff6104b7d2104724425361eeeb5868e99e46b4d663194edcd1813fa4829070",
             ),
             (
-                'error-in-root.json',
-                'tr',
+                "error-in-root.json",
+                "tr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Errors: Error #2090: Got response code: 404 for request: '
-                'https://example.com/path/path\n\n',
+                "Errors: Error #2090: Got response code: 404 for request: "
+                "https://example.com/path/path\n\n",
                 False,
-                '121bf930d8c54b14e8b6361a68ad77d5cdb1e580133449734c5b6cce532ab81f',
+                "121bf930d8c54b14e8b6361a68ad77d5cdb1e580133449734c5b6cce532ab81f",
             ),
             (
-                'no_data.json',
-                'tr',
+                "no_data.json",
+                "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                '',
+                "",
                 False,
-                '18b7e642cc4e6ffee79da0b42fb824167d2aa3781757c852ec7ef1436b96bd85',
+                "18b7e642cc4e6ffee79da0b42fb824167d2aa3781757c852ec7ef1436b96bd85",
             ),
             (
-                'invalid-customer.json',
-                'dr',
+                "invalid-customer.json",
+                "dr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                'Errors: Error #1030: Invalid Customer Id\n\n',
+                "Errors: Error #1030: Invalid Customer Id\n\n",
                 True,
-                '5c8cea51a470656c1ac4f89c3bf7bbc74d4ad797693e6e4834a9665963963b8c',
+                "5c8cea51a470656c1ac4f89c3bf7bbc74d4ad797693e6e4834a9665963963b8c",
             ),
             (
-                'code-zero.json',
-                'tr',
+                "code-zero.json",
+                "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                'Infos: Info #0: Some description\n\n',
+                "Infos: Info #0: Some description\n\n",
                 False,
-                '4eef561dbeb38022d1f2b171fc51365d87b56f3c6b941b2ac900740d4385e363',
+                "4eef561dbeb38022d1f2b171fc51365d87b56f3c6b941b2ac900740d4385e363",
             ),
             (
-                'no_data_3062.json',
-                'tr',
+                "no_data_3062.json",
+                "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
+                "Infos: Info #3062: Invalid ReportAttribute Value\n\n",
                 False,
-                '46c1b2d43465cd53df256b96ae87b770a1a8d2d3aa7837c6de024cf2ebe1502c',
+                "46c1b2d43465cd53df256b96ae87b770a1a8d2d3aa7837c6de024cf2ebe1502c",
             ),
             (
-                'some_data_3062.json',
-                'tr',
+                "some_data_3062.json",
+                "tr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                'Infos: Info #3062: Invalid ReportAttribute Value\n\n',
+                "Infos: Info #3062: Invalid ReportAttribute Value\n\n",
                 False,
-                '21300b16301c0d696e6c8ea986efc14362c54ba21fd633bbdfac9bb1461470e7',
+                "21300b16301c0d696e6c8ea986efc14362c54ba21fd633bbdfac9bb1461470e7",
             ),
             (
-                'no_data_3050.json',
-                'tr',
+                "no_data_3050.json",
+                "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                'Infos: Info #3050: Parameter Not Recognized in this Context\n\n',
+                "Infos: Info #3050: Parameter Not Recognized in this Context\n\n",
                 False,
-                '38ac8db30e72f965b221004ddd9500acad6b1db0b2fda23c8c718ed45042df3c',
+                "38ac8db30e72f965b221004ddd9500acad6b1db0b2fda23c8c718ed45042df3c",
             ),
             (
-                'some_data_3050.json',
-                'pr',
+                "some_data_3050.json",
+                "pr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                'Infos: Info #3050: Parameter Not Recognized in this Context; '
-                'Info #0: In order to be consistent with chapter-only COUNTER '
-                'metrics available for other publishers, the non-standard '
-                'tandfeBooks:Total_Chapter_Requests metric has been included\n\n',
+                "Infos: Info #3050: Parameter Not Recognized in this Context; "
+                "Info #0: In order to be consistent with chapter-only COUNTER "
+                "metrics available for other publishers, the non-standard "
+                "tandfeBooks:Total_Chapter_Requests metric has been included\n\n",
                 False,
-                'e20be08f4fd0d3a81f37aa6d0a53ee91ec2e5c55d05f8518cae5d858c0a2cb7b',
+                "e20be08f4fd0d3a81f37aa6d0a53ee91ec2e5c55d05f8518cae5d858c0a2cb7b",
             ),
         ),
-        ids=lambda x: "" if isinstance(x, str) and not x.endswith('.json') else x,
+        ids=lambda x: "" if isinstance(x, str) and not x.endswith(".json") else x,
     )
     def test_c5(
         self,
@@ -167,13 +167,13 @@ class TestSushiFetching:
         assert credentials.is_broken() is False
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
-        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+        with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
                 content = datafile.read()
-                m.get(re.compile(f'^{credentials.url}.*'), text=content)
+                m.get(re.compile(f"^{credentials.url}.*"), text=content)
                 file_size = len(content)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types[counter_report], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
             )
             assert m.called
             assert attempt.status == status1
@@ -193,23 +193,23 @@ class TestSushiFetching:
 
         assert credentials.is_broken() == breaks
 
-    @pytest.mark.parametrize('time', ('2020-08-01', '2020-06-15'))
+    @pytest.mark.parametrize("time", ("2020-08-01", "2020-06-15"))
     def test_c4_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time(time):
-            with open(Path(__file__).parent / 'data/counter4/sushi_3030.xml') as datafile:
-                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+            with open(Path(__file__).parent / "data/counter4/sushi_3030.xml") as datafile:
+                m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
+                counter_report_types["db1"], start_date="2020-05-01", end_date="2020-05-31"
             )
             assert m.called
             assert attempt.status == AttemptStatus.NO_DATA
             assert (
                 attempt.checksum
-                == 'c5f4a28d70b72005b4e6862a62fe1fb534745c0cc3039688851e312f2622c740'
+                == "c5f4a28d70b72005b4e6862a62fe1fb534745c0cc3039688851e312f2622c740"
             )
 
     def test_c4_wrong_namespaces(self, counter_report_types, organizations, platforms):
@@ -219,17 +219,17 @@ class TestSushiFetching:
         credentials.counter_reports.add(counter_report_types["db1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
             with open(
-                Path(__file__).parent / 'data/counter4/sushi_exception-with-extra-attrs.xml'
+                Path(__file__).parent / "data/counter4/sushi_exception-with-extra-attrs.xml"
             ) as datafile:
-                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+                m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date='2020-01-01', end_date='2020-01-31'
+                counter_report_types["db1"], start_date="2020-01-01", end_date="2020-01-31"
             )
             assert m.called
             assert attempt.status == AttemptStatus.DOWNLOAD_FAILED
             assert (
                 attempt.checksum
-                == '85e1fd64816d7bd022e38c8beec58c952db793e96d727e997802c66177f51eee'
+                == "85e1fd64816d7bd022e38c8beec58c952db793e96d727e997802c66177f51eee"
             )
 
     def test_c4_non_sushi_exception(self, counter_report_types, organizations, platforms):
@@ -239,18 +239,18 @@ class TestSushiFetching:
         credentials.counter_reports.add(counter_report_types["jr1"])
         with requests_mock.Mocker() as m, freeze_time("2021-01-01"):
             with open(
-                Path(__file__).parent / 'data/counter4/4_JR1_missing_reports_tag.xml'
+                Path(__file__).parent / "data/counter4/4_JR1_missing_reports_tag.xml"
             ) as datafile:
-                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+                m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["jr1"], start_date='2021-10-01', end_date='2021-10-31'
+                counter_report_types["jr1"], start_date="2021-10-01", end_date="2021-10-31"
             )
             assert m.called
             assert attempt.status == AttemptStatus.PARSING_FAILED
             assert "Traceback" not in attempt.log, "no raw exception traceback in the log"
             assert "report not found" in attempt.log
 
-    @pytest.mark.parametrize(('path', 'error_code', 'partial'), (('sushi_3040.xml', '3040', True),))
+    @pytest.mark.parametrize(("path", "error_code", "partial"), (("sushi_3040.xml", "3040", True),))
     def test_c4_partial_data(
         self, path, error_code, partial, counter_report_types, organizations, platforms
     ):
@@ -258,17 +258,17 @@ class TestSushiFetching:
             organization=organizations["empty"], platform=platforms["empty"], counter_version=4
         )
         with requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter4' / path) as datafile:
-                m.post(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
+            with open(Path(__file__).parent / "data/counter4" / path) as datafile:
+                m.post(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["db1"], start_date='2020-05-01', end_date='2020-05-31'
+                counter_report_types["db1"], start_date="2020-05-01", end_date="2020-05-31"
             )
             assert m.called
             assert str(attempt.error_code) == error_code
             assert attempt.partial_data == partial
             assert attempt.status == AttemptStatus.NO_DATA
 
-    @pytest.mark.parametrize('time', ('2017-04-01', '2017-02-15'))
+    @pytest.mark.parametrize("time", ("2017-04-01", "2017-02-15"))
     def test_c5_3030(self, counter_report_types, organizations, platforms, time):
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
@@ -276,22 +276,22 @@ class TestSushiFetching:
         credentials.counter_reports.add(counter_report_types["tr"])
         with requests_mock.Mocker() as m, freeze_time(time):
             with open(
-                Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral_exception.json'
+                Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral_exception.json"
             ) as datafile:
-                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read())
+                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read())
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2017-01-01', end_date='2017-01-31'
+                counter_report_types["pr"], start_date="2017-01-01", end_date="2017-01-31"
             )
             assert m.called
             assert attempt.status == AttemptStatus.NO_DATA
 
     @pytest.mark.parametrize(
-        ('path', 'http_status', 'error_code', 'status'),
+        ("path", "http_status", "error_code", "status"),
         (
-            ('naked_error_3000.json', 400, '3000', AttemptStatus.DOWNLOAD_FAILED),
-            ('naked_error_3000.json', 200, '3000', AttemptStatus.DOWNLOAD_FAILED),
-            ('severity-wrong.json', 200, '1011', AttemptStatus.DOWNLOAD_FAILED),
-            ('no_json.txt', 400, 'non-sushi', AttemptStatus.DOWNLOAD_FAILED),
+            ("naked_error_3000.json", 400, "3000", AttemptStatus.DOWNLOAD_FAILED),
+            ("naked_error_3000.json", 200, "3000", AttemptStatus.DOWNLOAD_FAILED),
+            ("severity-wrong.json", 200, "1011", AttemptStatus.DOWNLOAD_FAILED),
+            ("no_json.txt", 400, "non-sushi", AttemptStatus.DOWNLOAD_FAILED),
         ),
     )
     def test_c5_with_http_error_codes(
@@ -301,14 +301,14 @@ class TestSushiFetching:
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         with requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
                 m.get(
-                    re.compile(f'^{credentials.url}.*'),
+                    re.compile(f"^{credentials.url}.*"),
                     text=datafile.read(),
                     status_code=http_status,
                 )
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
             )
             assert m.called
             assert attempt.status == status
@@ -316,14 +316,14 @@ class TestSushiFetching:
             assert attempt.http_status_code == http_status
 
     @pytest.mark.parametrize(
-        ('path', 'error_code', 'partial'),
+        ("path", "error_code", "partial"),
         (
-            ('partial_data1.json', '3210', True),
-            ('partial_data2.json', '3210', True),
-            ('partial_data3.json', '3040', True),
-            ('5_TR_with_warning.json', '3032', True),
-            ('data_simple.json', '', False),
-            ('C5_PR_with_3040.json', '3040', True),
+            ("partial_data1.json", "3210", True),
+            ("partial_data2.json", "3210", True),
+            ("partial_data3.json", "3040", True),
+            ("5_TR_with_warning.json", "3032", True),
+            ("data_simple.json", "", False),
+            ("C5_PR_with_3040.json", "3040", True),
         ),
     )
     def test_c5_partial_data(
@@ -334,11 +334,11 @@ class TestSushiFetching:
         )
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
-        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
-                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
+        with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
+                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
             )
             assert m.called
             assert attempt.error_code == error_code
@@ -346,7 +346,7 @@ class TestSushiFetching:
             if attempt.error_code == "3040":
                 assert attempt.status == AttemptStatus.IMPORTING
 
-    @pytest.mark.parametrize('delay_days', [1, 20, 50])
+    @pytest.mark.parametrize("delay_days", [1, 20, 50])
     def test_c5_3040_delay(
         self,
         counter_report_types,
@@ -357,45 +357,45 @@ class TestSushiFetching:
         credentials = CredentialsFactory(
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
-        path = 'C5_PR_with_3040.json'
+        path = "C5_PR_with_3040.json"
         with freeze_time(
             datetime(2019, 5, 1) + timedelta(days=delay_days)
         ), requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
-                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
+                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types["pr"], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types["pr"], start_date="2019-04-01", end_date="2019-04-30"
             )
             assert m.called
-            assert attempt.error_code == '3040'
+            assert attempt.error_code == "3040"
             assert attempt.partial_data is True
             assert attempt.status == AttemptStatus.IMPORTING
             import_one_sushi_attempt(attempt)
             assert attempt.status == AttemptStatus.SUCCESS
 
     @pytest.mark.parametrize(
-        ('path', 'counter_report', 'import_passes'),
+        ("path", "counter_report", "import_passes"),
         (
-            ('5_DR_ProQuestEbookCentral_exception.json', 'dr', False),
-            ('5_TR_ProQuestEbookCentral.json', 'tr', True),
-            ('5_TR_ProQuestEbookCentral_exception.json', 'tr', False),
-            ('5_TR_with_warning.json', 'tr', True),
-            ('C5_PR_test.json', 'pr', True),
-            ('counter5_tr_test1.json', 'tr', True),
-            ('data_incorrect.json', 'tr', False),
-            ('data_simple.json', 'tr', True),
-            ('error-in-root.json', 'tr', False),
-            ('naked_error.json', 'tr', False),
-            ('naked_error_3000.json', 'tr', False),
-            ('naked_error_lowercase.json', 'tr', False),
-            ('naked_errors.json', 'tr', False),
-            ('no_data.json', 'tr', False),
-            ('partial_data1.json', 'tr', False),
-            ('partial_data2.json', 'tr', False),
-            ('severity-missing.json', 'dr', False),
-            ('severity-number.json', 'dr', False),
-            ('stringified_error.json', 'tr', False),
-            ('null-in-Item_ID.json', 'tr', True),
+            ("5_DR_ProQuestEbookCentral_exception.json", "dr", False),
+            ("5_TR_ProQuestEbookCentral.json", "tr", True),
+            ("5_TR_ProQuestEbookCentral_exception.json", "tr", False),
+            ("5_TR_with_warning.json", "tr", True),
+            ("C5_PR_test.json", "pr", True),
+            ("counter5_tr_test1.json", "tr", True),
+            ("data_incorrect.json", "tr", False),
+            ("data_simple.json", "tr", True),
+            ("error-in-root.json", "tr", False),
+            ("naked_error.json", "tr", False),
+            ("naked_error_3000.json", "tr", False),
+            ("naked_error_lowercase.json", "tr", False),
+            ("naked_errors.json", "tr", False),
+            ("no_data.json", "tr", False),
+            ("partial_data1.json", "tr", False),
+            ("partial_data2.json", "tr", False),
+            ("severity-missing.json", "dr", False),
+            ("severity-number.json", "dr", False),
+            ("stringified_error.json", "tr", False),
+            ("null-in-Item_ID.json", "tr", True),
         ),
     )
     def test_c5_all_cases(
@@ -407,11 +407,11 @@ class TestSushiFetching:
         )
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
-        with freeze_time('2019-05-10'), requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / 'data/counter5' / path) as datafile:
-                m.get(re.compile(f'^{credentials.url}.*'), text=datafile.read(), status_code=200)
+        with freeze_time("2019-05-10"), requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
+                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                counter_report_types[counter_report], start_date='2019-04-01', end_date='2019-04-30'
+                counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
             )
             if import_passes:
                 import_one_sushi_attempt(attempt)

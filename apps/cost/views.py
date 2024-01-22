@@ -27,16 +27,16 @@ class OrganizationPaymentViewSet(ModelViewSet):
 
     def get_queryset(self):
         org_filter = organization_filter_from_org_id(
-            self.kwargs.get('organization_pk'), self.request.user
+            self.kwargs.get("organization_pk"), self.request.user
         )
         return Payment.objects.filter(**org_filter)
 
-    @action(detail=False, url_path='by-year')
+    @action(detail=False, url_path="by-year")
     def list_by_year(self, request, organization_pk):
         org_filter = organization_filter_from_org_id(organization_pk, request.user)
         qs = (
             Payment.objects.filter(**org_filter)
-            .values('platform', 'year')
-            .annotate(price=Sum('price'))
+            .values("platform", "year")
+            .annotate(price=Sum("price"))
         )
         return Response(qs)

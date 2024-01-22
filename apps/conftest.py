@@ -22,7 +22,7 @@ def clickhouse_raw_connection(request, settings):
     pytest fixture which prepares a clickhouse connection if param `clickhouse_on` is given,
     or adjust settings for clickhouse being disabled if `clickhouse_off` is given
     """
-    if request.param == 'clickhouse_on':
+    if request.param == "clickhouse_on":
         # enforce the settings to make sure it is independent of current environment
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CLICKHOUSE_QUERY_ACTIVE = True
@@ -39,7 +39,7 @@ def clickhouse_connection(request, settings):
     """
     pytest fixture which creates and then destroys the test table
     """
-    if request.param == 'clickhouse_on':
+    if request.param == "clickhouse_on":
         # enforce the settings to make sure it is independent of current environment
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CLICKHOUSE_QUERY_ACTIVE = True
@@ -55,17 +55,17 @@ def clickhouse_connection(request, settings):
         yield
 
 
-clickhouse_on_off = pytest.fixture(params=['clickhouse_on', 'clickhouse_off'])(
+clickhouse_on_off = pytest.fixture(params=["clickhouse_on", "clickhouse_off"])(
     clickhouse_connection
 )
 
-clickhouse_db = pytest.fixture(params=['clickhouse_on'])(clickhouse_connection)
+clickhouse_db = pytest.fixture(params=["clickhouse_on"])(clickhouse_connection)
 
-clickhouse_raw_on_off = pytest.fixture(params=['clickhouse_on', 'clickhouse_off'])(
+clickhouse_raw_on_off = pytest.fixture(params=["clickhouse_on", "clickhouse_off"])(
     clickhouse_raw_connection
 )
 
 
 @pytest.fixture()
 def inmemory_media(settings):
-    settings.DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
+    settings.DEFAULT_FILE_STORAGE = "inmemorystorage.InMemoryStorage"

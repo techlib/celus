@@ -5,16 +5,16 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0008_user_extra_data')]
+    dependencies = [("core", "0008_user_extra_data")]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='extra_data',
+            model_name="user",
+            name="extra_data",
             field=django.contrib.postgres.fields.jsonb.JSONField(
                 blank=True,
                 default=dict,
-                help_text='User state data that do not deserve a dedicated field',
+                help_text="User state data that do not deserve a dedicated field",
             ),
         )
     ]

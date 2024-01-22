@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0056_importbatch_logs_import_date_brin')]
+    dependencies = [("logs", "0056_importbatch_logs_import_date_brin")]
 
     operations = [
         migrations.RenameField(
-            model_name='manualdataupload', old_name='extra', new_name='preflight'
+            model_name="manualdataupload", old_name="extra", new_name="preflight"
         ),
         migrations.AlterField(
-            model_name='manualdataupload',
-            name='preflight',
+            model_name="manualdataupload",
+            name="preflight",
             field=models.JSONField(
-                blank=True, default=dict, help_text='Data derived during pre-flight check'
+                blank=True, default=dict, help_text="Data derived during pre-flight check"
             ),
         ),
     ]

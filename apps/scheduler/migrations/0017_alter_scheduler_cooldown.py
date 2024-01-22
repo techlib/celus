@@ -5,23 +5,23 @@ from django.db.migrations import RunPython
 
 
 def cooldown_to_zero(apps, schema_editor):
-    Scheduler = apps.get_model('scheduler', 'Scheduler')
+    Scheduler = apps.get_model("scheduler", "Scheduler")
     Scheduler.objects.update(cooldown=0)
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('scheduler', '0016_fix_fi_queues'),
+        ("scheduler", "0016_fix_fi_queues"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='scheduler',
-            name='cooldown',
+            model_name="scheduler",
+            name="cooldown",
             field=models.PositiveSmallIntegerField(
                 default=0,
-                help_text='Required number of seconds before between queries '
-                '(to be sure that the queries are not run in parallel)',
+                help_text="Required number of seconds before between queries "
+                "(to be sure that the queries are not run in parallel)",
             ),
         ),
         RunPython(cooldown_to_zero, RunPython.noop),

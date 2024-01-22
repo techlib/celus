@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0007_sushifetchattempt_import_batch')]
+    dependencies = [("sushi", "0007_sushifetchattempt_import_batch")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='import_batch',
+            model_name="sushifetchattempt",
+            name="import_batch",
             field=models.OneToOneField(
-                null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch'
+                null=True, on_delete=django.db.models.deletion.SET_NULL, to="logs.ImportBatch"
             ),
         )
     ]

@@ -62,7 +62,7 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
         # to be picked up by celery cleanup task
         return 0
     else:
-        raise ValueError(f'Unhandled state {sync_log.state}')
+        raise ValueError(f"Unhandled state {sync_log.state}")
 
 
 @needs_clickhouse_sync
@@ -107,7 +107,7 @@ def sync_import_batch_interest_with_clickhouse(import_batch: ImportBatch, batch_
         # the import batch should be deleted, let's get out of here, we do not need to sync
         return 0
     else:
-        raise ValueError(f'Unhandled state {sync_log.state}')
+        raise ValueError(f"Unhandled state {sync_log.state}")
 
 
 @needs_clickhouse_sync
@@ -124,17 +124,17 @@ def sync_accesslogs_with_clickhouse_superfast(batch_size=100_000, ignore_timesta
     import_batch_ids = set()
     qs = ImportBatch.objects.all()
     if not ignore_timestamps:
-        qs = qs.filter(Q(last_clickhoused__isnull=True) | Q(last_clickhoused__lt=F('last_updated')))
+        qs = qs.filter(Q(last_clickhoused__isnull=True) | Q(last_clickhoused__lt=F("last_updated")))
     for al in (
         AccessLog.objects.filter(
             report_type__materialization_spec__isnull=True, import_batch__in=qs
         )
-        .order_by('import_batch_id')
+        .order_by("import_batch_id")
         .values()
         .iterator()
     ):
         to_write.append(AccessLogCube.translate_accesslog_dict_to_cube(al))
-        import_batch_ids.add(al['import_batch_id'])
+        import_batch_ids.add(al["import_batch_id"])
         if len(to_write) >= batch_size:
             ch_backend.store_records(AccessLogCube, to_write)
             total += len(to_write)
@@ -142,7 +142,7 @@ def sync_accesslogs_with_clickhouse_superfast(batch_size=100_000, ignore_timesta
             updated = ImportBatch.objects.filter(pk__in=import_batch_ids).update(
                 last_clickhoused=now()
             )
-            logger.debug('Synced with ClickHouse: %d records, %d import batches', total, updated)
+            logger.debug("Synced with ClickHouse: %d records, %d import batches", total, updated)
             import_batch_ids = set()
     if to_write:
         ch_backend.store_records(AccessLogCube, to_write)
@@ -255,63 +255,63 @@ class ComparisonResult:
     log: List[str] = field(default_factory=list)
 
     def is_ok(self):
-        return not any(key for key in self.stats.keys() if key != 'ok')
+        return not any(key for key in self.stats.keys() if key != "ok")
 
 
 @needs_clickhouse_sync
 def compare_db_with_clickhouse() -> ComparisonResult:
     result = ComparisonResult()
     in_db = (
-        AccessLog.objects.values('import_batch_id', 'metric_id')
+        AccessLog.objects.values("import_batch_id", "metric_id")
         .filter(report_type__materialization_spec__isnull=True)
-        .order_by('import_batch_id', 'metric_id')
-        .annotate(score=Sum('value'))
+        .order_by("import_batch_id", "metric_id")
+        .annotate(score=Sum("value"))
         .iterator()
     )
     in_ch = ch_backend.get_records(
         AccessLogCube.query()
-        .group_by('import_batch_id', 'metric_id')
-        .order_by('import_batch_id', 'metric_id')
-        .aggregate(score=HSum('value'))
+        .group_by("import_batch_id", "metric_id")
+        .order_by("import_batch_id", "metric_id")
+        .aggregate(score=HSum("value"))
     )
 
     ch_rec = next(in_ch, None)
     db_rec = next(in_db, None)
     while db_rec:
-        db_ib_id = db_rec['import_batch_id']
-        db_m_id = db_rec['metric_id']
-        db_score = db_rec['score']
+        db_ib_id = db_rec["import_batch_id"]
+        db_m_id = db_rec["metric_id"]
+        db_score = db_rec["score"]
         if ch_rec and (db_ib_id, db_m_id) == (ch_rec.import_batch_id, ch_rec.metric_id):
             # we are on the same record
             if db_score != ch_rec.score:
-                result.log.append(f'!! {db_ib_id}, {db_m_id}: DB: {db_score}, CH: {ch_rec.score}')
-                result.stats['value mismatch'] += 1
+                result.log.append(f"!! {db_ib_id}, {db_m_id}: DB: {db_score}, CH: {ch_rec.score}")
+                result.stats["value mismatch"] += 1
                 result.import_batches_to_resync.add(db_ib_id)
             else:
-                result.stats['ok'] += 1
+                result.stats["ok"] += 1
             ch_rec = next(in_ch, None)
             db_rec = next(in_db, None)
         elif ch_rec and (db_ib_id, db_m_id) > (ch_rec.import_batch_id, ch_rec.metric_id):
             # this record is only in CH
             while ch_rec and (db_ib_id, db_m_id) > (ch_rec.import_batch_id, ch_rec.metric_id):
                 result.log.append(
-                    f'CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}'
+                    f"CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}"
                 )
-                result.stats['ch extra'] += 1
+                result.stats["ch extra"] += 1
                 result.import_batches_to_delete.add(ch_rec.import_batch_id)
                 ch_rec = next(in_ch, None)
         else:
             # this record is only in DB
-            result.log.append(f'DB {db_ib_id}, {db_m_id}: {db_score}')
-            result.stats['db extra'] += 1
+            result.log.append(f"DB {db_ib_id}, {db_m_id}: {db_score}")
+            result.stats["db extra"] += 1
             result.import_batches_to_resync.add(db_ib_id)
             db_rec = next(in_db, None)
     # we might have some records left in CH
     # if ch was exhausted, ch_rec should be None, if not, we have to add the rest
     all_in_ch = chain([ch_rec], in_ch) if ch_rec else in_ch
     for ch_rec in all_in_ch:
-        result.log.append(f'CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}')
-        result.stats['ch extra'] += 1
+        result.log.append(f"CH {ch_rec.import_batch_id}, {ch_rec.metric_id}: {ch_rec.score}")
+        result.stats["ch extra"] += 1
         result.import_batches_to_delete.add(ch_rec.import_batch_id)
     return result
 
@@ -333,32 +333,32 @@ def compare_titles_with_clickhouse(import_batch_id: Optional[int] = None) -> Com
         for rec in ch_backend.get_records(
             AccessLogCube.query()
             .filter(target_id__not_in=[0], **fltr)
-            .group_by('target_id')
-            .order_by('target_id')
+            .group_by("target_id")
+            .order_by("target_id")
         )
     }
-    logger.info('Titles in ch: %d', len(in_ch))
+    logger.info("Titles in ch: %d", len(in_ch))
     i = 0
     # in order not to create second large set, we simply discard titles from the
     # set of all titles in the db. This is slightly slower, but saves some memory
-    for title_id in Title.objects.values_list('id', flat=True).iterator():
+    for title_id in Title.objects.values_list("id", flat=True).iterator():
         i += 1
         in_ch.discard(title_id)
-    logger.info('Titles in db: %d', i)
+    logger.info("Titles in db: %d", i)
     if in_ch:
         logger.warning("Found %d titles in clickhouse but not in db", len(in_ch))
         logger.warning("First 10 title ids: %s", list(in_ch)[:10])
-        result.log.append(f'Found {len(in_ch)} titles in clickhouse but not in db')
-        result.stats['extra titles'] += len(in_ch)
+        result.log.append(f"Found {len(in_ch)} titles in clickhouse but not in db")
+        result.stats["extra titles"] += len(in_ch)
         ib_ids = {
             rec.import_batch_id
             for rec in ch_backend.get_records(
-                AccessLogCube.query().filter(target_id__in=list(in_ch)).group_by('import_batch_id')
+                AccessLogCube.query().filter(target_id__in=list(in_ch)).group_by("import_batch_id")
             )
         }
         # recheck the ids against the db
         result.import_batches_to_resync = set(
-            ImportBatch.objects.filter(pk__in=ib_ids).values_list('pk', flat=True)
+            ImportBatch.objects.filter(pk__in=ib_ids).values_list("pk", flat=True)
         )
         # the remaining import batches do not exist anymore, so we can delete them
         result.import_batches_to_delete = ib_ids - result.import_batches_to_resync
@@ -368,10 +368,10 @@ def compare_titles_with_clickhouse(import_batch_id: Optional[int] = None) -> Com
 @needs_clickhouse_sync
 def deal_with_comparison_results(results: ComparisonResult):
     for ib in ImportBatch.objects.filter(pk__in=results.import_batches_to_resync):
-        logger.debug('Resyncing #%s', ib.pk)
+        logger.debug("Resyncing #%s", ib.pk)
         resync_import_batch_with_clickhouse(ib)
     for ib_id in results.import_batches_to_delete:
-        logger.debug('Deleting #%s', ib_id)
+        logger.debug("Deleting #%s", ib_id)
         AccessLogCube.delete_import_batch(ch_backend, ib_id)
 
 
@@ -396,7 +396,7 @@ def sync_platformtitle_projection() -> (int, int, bool):
     with ch_backend.pool.get_client() as client:
         no_projection = client.execute(query.format(0))[0][0]
         with_projection = client.execute(query.format(1))[0][0]
-        logger.debug('No projection: %d, with projection: %d', no_projection, with_projection)
+        logger.debug("No projection: %d, with projection: %d", no_projection, with_projection)
         if rebuild := (no_projection != with_projection):
             client.execute(
                 "ALTER TABLE AccessLogCube CLEAR PROJECTION PlatformTitleOrganizationProjection;"

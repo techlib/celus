@@ -7,18 +7,18 @@ from django.db import migrations, models
 
 def get_hash(credentials):
     keys = {
-        'url',
-        'counter_version',
-        'requestor_id',
-        'customer_id',
-        'http_username',
-        'http_password',
-        'api_key',
-        'extra_params',
+        "url",
+        "counter_version",
+        "requestor_id",
+        "customer_id",
+        "http_username",
+        "http_password",
+        "api_key",
+        "extra_params",
     }
     data = {key: getattr(credentials, key) for key in keys}
     dump = json.dumps(data, ensure_ascii=False, sort_keys=True)
-    return blake2b(dump.encode('utf-8'), digest_size=16).hexdigest()
+    return blake2b(dump.encode("utf-8"), digest_size=16).hexdigest()
 
 
 def fill_version_hash(apps, schema_editor):
@@ -26,7 +26,7 @@ def fill_version_hash(apps, schema_editor):
     The model does not have the usual methods, etc. here, so we use a
     local implementation of the hash computation
     """
-    SushiCredentials = apps.get_model('sushi', 'SushiCredentials')
+    SushiCredentials = apps.get_model("sushi", "SushiCredentials")
     for credentials in SushiCredentials.objects.all():
         credentials.version_hash = get_hash(credentials)
         credentials.save()
@@ -37,14 +37,14 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0028_sushifetchattempt_credentials_version_hash')]
+    dependencies = [("sushi", "0028_sushifetchattempt_credentials_version_hash")]
 
     operations = [
         migrations.AddField(
-            model_name='sushicredentials',
-            name='version_hash',
+            model_name="sushicredentials",
+            name="version_hash",
             field=models.CharField(
-                default='', help_text='Current hash of model attributes', max_length=32
+                default="", help_text="Current hash of model attributes", max_length=32
             ),
             preserve_default=False,
         ),

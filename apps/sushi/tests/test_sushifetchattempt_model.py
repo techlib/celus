@@ -33,12 +33,12 @@ class TestFileName:
     """
 
     @pytest.mark.parametrize(
-        ('internal_id', 'platform_name', 'code', 'ext'),
+        ("internal_id", "platform_name", "code", "ext"),
         (
-            ('internal1', 'platform_1', 'tr', 'json'),
-            (None, 'platform_2', 'tr', 'json'),
-            (None, 'platform_1', 'jr1', 'tsv'),
-            ('internal2', 'platform_1', 'jr1', 'tsv'),
+            ("internal1", "platform_1", "tr", "json"),
+            (None, "platform_2", "tr", "json"),
+            (None, "platform_1", "jr1", "tsv"),
+            ("internal2", "platform_1", "jr1", "tsv"),
         ),
     )
     def test_file_name(self, internal_id, platform_name, code, ext, counter_report_types):
@@ -52,7 +52,7 @@ class TestFileName:
             platform=platform,
             counter_version=counter_report_type.counter_version,
             lock_level=UL_ORG_ADMIN,
-            url='http://a.b.c/',
+            url="http://a.b.c/",
         )
 
         data_file = ContentFile("b")
@@ -64,7 +64,7 @@ class TestFileName:
             start_date="2020-01-01",
             end_date="2020-02-01",
             data_file=data_file,
-            checksum='foo',
+            checksum="foo",
             file_size=1,
             credentials_version_hash=credentials.compute_version_hash(),
         )
@@ -81,17 +81,17 @@ class TestSushiFetchAttemptModel:
         fa = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
         )
-        assert fa.conflicting(fully_enclosing=True).count() == 0, 'no conflicts'
+        assert fa.conflicting(fully_enclosing=True).count() == 0, "no conflicts"
         fa2 = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-03-31',
+            start_date="2020-01-01",
+            end_date="2020-03-31",
         )
-        assert fa.conflicting(fully_enclosing=True).count() == 1, 'one conflict'
+        assert fa.conflicting(fully_enclosing=True).count() == 1, "one conflict"
         # results do not have to be symmetrical because of different date ranges
         assert fa.conflicting(fully_enclosing=True).get().pk == fa2.pk
         assert fa2.conflicting(fully_enclosing=True).count() == 0
@@ -100,18 +100,18 @@ class TestSushiFetchAttemptModel:
         fa = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
         )
         # fully_enclosing is False by default, so no need to specify it
-        assert fa.conflicting().count() == 0, 'no conflicts'
+        assert fa.conflicting().count() == 0, "no conflicts"
         fa2 = FetchAttemptFactory.create(
             credentials=credentials["standalone_tr"],
             counter_report=counter_report_types["tr"],
-            start_date='2020-01-01',
-            end_date='2020-03-31',
+            start_date="2020-01-01",
+            end_date="2020-03-31",
         )
-        assert fa.conflicting().count() == 1, 'one conflict'
+        assert fa.conflicting().count() == 1, "one conflict"
         # results should be symmetrical - fa conflicts with fa2, fa2 conflicts with fa
         assert fa.conflicting().get().pk == fa2.pk
         assert fa2.conflicting().get().pk == fa.pk
@@ -215,7 +215,7 @@ class TestSushiFetchAttemptModel:
             import_batch=ImportBatchFactory(report_type=counter_report_types["tr"].report_type),
         )
         assert attempt.broken_credentials is False
-        credentials["standalone_tr"].set_broken(FetchAttemptFactory(), 'http')
+        credentials["standalone_tr"].set_broken(FetchAttemptFactory(), "http")
         assert attempt.broken_credentials is True
 
         attempt = FetchAttemptFactory(
@@ -228,7 +228,7 @@ class TestSushiFetchAttemptModel:
         assert attempt.broken_credentials is False
         CounterReportsToCredentials.objects.get(
             counter_report=counter_report_types["pr"], credentials=credentials["branch_pr"]
-        ).set_broken(FetchAttemptFactory(), 'sushi')
+        ).set_broken(FetchAttemptFactory(), "sushi")
         assert attempt.broken_credentials is True
 
     @pytest.mark.parametrize(
@@ -298,13 +298,13 @@ class TestSushiFetchAttemptModel:
                 http_status_code=200,
             )
 
-        if status == 'SUCCESS':
+        if status == "SUCCESS":
             status = AttemptStatus.SUCCESS
-        elif status == 'NO_DATA':
+        elif status == "NO_DATA":
             status = AttemptStatus.NO_DATA
-        elif status == 'QUEUED':
+        elif status == "QUEUED":
             status = AttemptStatus.DOWNLOADING
-        elif status == 'FAILURE':
+        elif status == "FAILURE":
             status = AttemptStatus.DOWNLOAD_FAILED
         else:
             raise NotImplementedError()
@@ -365,14 +365,14 @@ class TestSushiFetchAttemptModel:
         assert cr2c.broken is None
         assert cr2c.first_broken_attempt is None
 
-    @pytest.mark.parametrize('status', ('SUCCESS', 'NO_DATA', 'QUEUED', 'FAILURE'))
+    @pytest.mark.parametrize("status", ("SUCCESS", "NO_DATA", "QUEUED", "FAILURE"))
     def test_reextract_header_data(self, status, inmemory_media):
         """
         Tests that the FA object has a method for re-extracting header data from the stored
         file and that it does what it should do.
         """
-        with (Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral.json').open(
-            'rb'
+        with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open(
+            "rb"
         ) as f:
             data_file = ContentFile(f.read())
             data_file.name = "something.json"
@@ -381,14 +381,14 @@ class TestSushiFetchAttemptModel:
         assert fa.extracted_data == {}
         fa.reextract_header_data()
         assert fa.extracted_data == {
-            'Institution_Name': 'Hidden',
-            'Institution_ID': [{"Type": "Proprietary", "Value": "EBC:hidden"}],
-            'Created_By': 'ProQuest Ebook Central',
+            "Institution_Name": "Hidden",
+            "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+            "Created_By": "ProQuest Ebook Central",
         }
 
     def test_data_file_names(self, platforms, credentials):
-        with (Path(__file__).parent / 'data/counter5/5_TR_ProQuestEbookCentral.json').open(
-            'rb'
+        with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open(
+            "rb"
         ) as f:
             data_file = ContentFile(f.read())
             data_file.name = "something.json"

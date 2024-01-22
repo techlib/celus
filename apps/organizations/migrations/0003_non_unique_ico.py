@@ -4,13 +4,13 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0002_nullable_internal_id')]
+    dependencies = [("organizations", "0002_nullable_internal_id")]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='ico',
-            field=models.PositiveIntegerField(help_text='Business registration number'),
+            model_name="organization",
+            name="ico",
+            field=models.PositiveIntegerField(help_text="Business registration number"),
         ),
-        migrations.AlterUniqueTogether(name='organization', unique_together={('ico', 'level')}),
+        migrations.AlterUniqueTogether(name="organization", unique_together={("ico", "level")}),
     ]

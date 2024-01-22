@@ -5,16 +5,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0006_fetchintention_retry_id')]
+    dependencies = [("scheduler", "0006_fetchintention_retry_id")]
 
     operations = [
         migrations.AlterField(
-            model_name='fetchintention',
-            name='attempt',
+            model_name="fetchintention",
+            name="attempt",
             field=models.OneToOneField(
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='sushi.SushiFetchAttempt',
+                to="sushi.SushiFetchAttempt",
             ),
         )
     ]

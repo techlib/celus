@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('api', '0001_initial')]
+    dependencies = [("api", "0001_initial")]
 
     operations = [
         migrations.AlterField(
-            model_name='organizationapikey',
-            name='hashed_key',
+            model_name="organizationapikey",
+            name="hashed_key",
             field=models.CharField(editable=False, max_length=150),
         ),
         migrations.AlterField(
-            model_name='organizationapikey',
-            name='id',
+            model_name="organizationapikey",
+            name="id",
             field=models.CharField(
                 editable=False, max_length=150, primary_key=True, serialize=False, unique=True
             ),

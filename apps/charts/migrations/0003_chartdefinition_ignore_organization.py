@@ -4,16 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('charts', '0002_chartdefinition_reportviewtocharttype')]
+    dependencies = [("charts", "0002_chartdefinition_reportviewtocharttype")]
 
     operations = [
         migrations.AddField(
-            model_name='chartdefinition',
-            name='ignore_organization',
+            model_name="chartdefinition",
+            name="ignore_organization",
             field=models.BooleanField(
                 default=False,
-                help_text='When checked, this chart will ignore selected organization. Thus it '
-                'allows creation of charts with organization comparison.',
+                help_text="When checked, this chart will ignore selected organization. Thus it "
+                "allows creation of charts with organization comparison.",
             ),
         )
     ]

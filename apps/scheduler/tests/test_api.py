@@ -45,7 +45,7 @@ class TestHarvestAPI:
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -90,25 +90,25 @@ class TestHarvestAPI:
         assert data[4]["broken"] == 0
         assert data[5]["broken"] == 0
 
-    @pytest.mark.parametrize('column', ['pk', 'created', 'start_date', 'attempt_count'])
-    @pytest.mark.parametrize('desc', ['true', 'false', 'undefined'])
+    @pytest.mark.parametrize("column", ["pk", "created", "start_date", "attempt_count"])
+    @pytest.mark.parametrize("desc", ["true", "false", "undefined"])
     def test_list_order_by(self, basic1, clients, harvests, desc, column):
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
-        url = reverse('harvest-list')
-        resp = clients["master_admin"].get(url, {'order_by': column, 'desc': desc})
+        url = reverse("harvest-list")
+        resp = clients["master_admin"].get(url, {"order_by": column, "desc": desc})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 6
         # to ensure that the sorting is always the same (which is especially important with
         # pagination), we should mix the pk into the sorting on the backend. This is why we use the
         # pk below as a secondary sorting key as well
-        if column == 'attempt_count':
-            values = [(rec['stats'][column], rec['pk']) for rec in data]
+        if column == "attempt_count":
+            values = [(rec["stats"][column], rec["pk"]) for rec in data]
         else:
-            values = [(rec[column], rec['pk']) for rec in data]
-        resorted = sorted(values, reverse=desc == 'true')
+            values = [(rec[column], rec["pk"]) for rec in data]
+        resorted = sorted(values, reverse=desc == "true")
         assert values == resorted
 
     def test_list_filter_finished(self, basic1, clients, harvests):
@@ -118,7 +118,7 @@ class TestHarvestAPI:
         # remove unfinished from one harvest
         harvests["anonymous"].intentions.filter(when_processed__isnull=True).delete()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         # test finished filter
         resp = clients["master_admin"].get(url + "?finished=yes", {})
         assert resp.status_code == 200
@@ -142,7 +142,7 @@ class TestHarvestAPI:
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         # test finished filter
         resp = clients["master_admin"].get(url + "?automatic=1", {})
         assert resp.status_code == 200
@@ -172,7 +172,7 @@ class TestHarvestAPI:
         credentials["standalone_br1_jr1"].first_broken_attempt = fi.attempt
         credentials["standalone_br1_jr1"].save()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         # test finished filter
         resp = clients["master_admin"].get(url + "?broken=1", {})
         assert resp.status_code == 200
@@ -185,7 +185,7 @@ class TestHarvestAPI:
         assert len(data2) == 3
 
     def test_list_filter_month(self, basic1, clients, harvests):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         # test finished filter
         resp = clients["master_admin"].get(url + "?month=2020-01", {})
         assert resp.status_code == 200
@@ -201,7 +201,7 @@ class TestHarvestAPI:
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url + f"?platforms={platforms['branch'].pk}", {})
         assert resp.status_code == 200
         data1 = resp.json()["results"]
@@ -214,28 +214,28 @@ class TestHarvestAPI:
         assert len(data2) == 6
 
     def test_get(self, basic1, clients, harvests):
-        url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-detail", args=(harvests["anonymous"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}
         assert len(data["intentions"]) == 3
 
-        url = reverse('harvest-detail', args=(harvests["admin1"].pk,))
+        url = reverse("harvest-detail", args=(harvests["admin1"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 1, "working": 0}
         assert len(data["intentions"]) == 2
 
-        url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
+        url = reverse("harvest-detail", args=(harvests["automatic"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["stats"] == {"total": 2, "planned": 1, "attempt_count": 0, "working": 0}
         assert len(data["intentions"]) == 2
 
-        url = reverse('harvest-detail', args=(harvests["admin2"].pk,))
+        url = reverse("harvest-detail", args=(harvests["admin2"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -246,14 +246,14 @@ class TestHarvestAPI:
     def test_create(
         self, basic1, clients, harvests, credentials, counter_report_types, users, monkeypatch
     ):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         stored_intentions_count = FetchIntention.objects.count()
         planned_urls = set()
 
         def mocked_trigger_scheduler(url, finish):
             planned_urls.add(url)
 
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+        monkeypatch.setattr(tasks.trigger_scheduler, "delay", mocked_trigger_scheduler)
 
         resp = clients["master_admin"].post(
             url,
@@ -275,7 +275,7 @@ class TestHarvestAPI:
                     ]
                 }
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
 
         assert resp.status_code == 201
@@ -284,15 +284,15 @@ class TestHarvestAPI:
         assert len(data["intentions"]) == 2
         assert data["last_updated_by"] == users["master_admin"].pk
         assert stored_intentions_count + 2 == FetchIntention.objects.count()
-        assert FetchIntention.objects.order_by('-pk')[0].priority >= FetchIntention.PRIORITY_NOW
-        assert FetchIntention.objects.order_by('-pk')[1].priority >= FetchIntention.PRIORITY_NOW
+        assert FetchIntention.objects.order_by("-pk")[0].priority >= FetchIntention.PRIORITY_NOW
+        assert FetchIntention.objects.order_by("-pk")[1].priority >= FetchIntention.PRIORITY_NOW
 
         assert planned_urls == {
             credentials["standalone_tr"].url,
             credentials["standalone_br1_jr1"].url,
         }
 
-    @pytest.mark.parametrize('user_type', ['master_admin', 'admin2'])
+    @pytest.mark.parametrize("user_type", ["master_admin", "admin2"])
     @pytest.mark.django_db(transaction=True)
     def test_create_query_count(
         self,
@@ -309,40 +309,40 @@ class TestHarvestAPI:
         be checked and that can lead to more queries.
         """
         dates = [
-            ('2020-01-01', '2020-01-31'),
-            ('2020-02-01', '2020-02-28'),
-            ('2020-03-01', '2020-03-31'),
-            ('2020-04-01', '2020-04-30'),
-            ('2020-05-01', '2020-05-31'),
-            ('2020-06-01', '2020-06-30'),
-            ('2020-07-01', '2020-07-31'),
-            ('2020-08-01', '2020-08-31'),
-            ('2020-09-01', '2020-09-30'),
-            ('2020-10-01', '2020-10-31'),
-            ('2020-11-01', '2020-11-30'),
-            ('2020-12-01', '2020-12-31'),
+            ("2020-01-01", "2020-01-31"),
+            ("2020-02-01", "2020-02-28"),
+            ("2020-03-01", "2020-03-31"),
+            ("2020-04-01", "2020-04-30"),
+            ("2020-05-01", "2020-05-31"),
+            ("2020-06-01", "2020-06-30"),
+            ("2020-07-01", "2020-07-31"),
+            ("2020-08-01", "2020-08-31"),
+            ("2020-09-01", "2020-09-30"),
+            ("2020-10-01", "2020-10-31"),
+            ("2020-11-01", "2020-11-30"),
+            ("2020-12-01", "2020-12-31"),
         ]
         intentions = []
-        cr_to_rt = [('standalone_tr', ['tr']), ('standalone_br1_jr1', ['br1', 'jr1'])]
+        cr_to_rt = [("standalone_tr", ["tr"]), ("standalone_br1_jr1", ["br1", "jr1"])]
         for start, end in dates:
             for cred, reports in cr_to_rt:
                 for rt in reports:
                     cr = credentials[cred]
                     intentions.append(
                         {
-                            'credentials': cr.pk,
-                            'counter_report': counter_report_types[rt].pk,
-                            'start_date': start,
-                            'end_date': end,
+                            "credentials": cr.pk,
+                            "counter_report": counter_report_types[rt].pk,
+                            "start_date": start,
+                            "end_date": end,
                         }
                     )
         assert len(intentions) == 36
 
         with django_assert_max_num_queries(35):
             resp = clients[user_type].post(
-                reverse('harvest-list'),
+                reverse("harvest-list"),
                 json.dumps({"intentions": intentions}),
-                content_type='application/json',
+                content_type="application/json",
             )
         assert resp.status_code == 201
 
@@ -361,7 +361,7 @@ class TestHarvestAPI:
         # Make sure that automatic are planned
         Automatic.update_for_last_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients[user].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -381,15 +381,15 @@ class TestHarvestAPI:
     def test_get_permissions(
         self, basic1, harvests, clients, user, anonymous_status, automatic_status, admin1_status
     ):
-        url = reverse('harvest-detail', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-detail", args=(harvests["anonymous"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == anonymous_status
 
-        url = reverse('harvest-detail', args=(harvests["automatic"].pk,))
+        url = reverse("harvest-detail", args=(harvests["automatic"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == automatic_status
 
-        url = reverse('harvest-detail', args=(harvests["admin1"].pk,))
+        url = reverse("harvest-detail", args=(harvests["admin1"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == admin1_status
 
@@ -420,12 +420,12 @@ class TestHarvestAPI:
         org2,
         status,
     ):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
 
         def mocked_trigger_scheduler(url, finish):
             pass
 
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+        monkeypatch.setattr(tasks.trigger_scheduler, "delay", mocked_trigger_scheduler)
 
         # can create harvests if user is an organization member
         resp = clients[user].post(
@@ -448,24 +448,24 @@ class TestHarvestAPI:
                     ]
                 }
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == status
 
     def test_create_empty(self, clients):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].post(
-            url, json.dumps({"intentions": []}), content_type='application/json'
+            url, json.dumps({"intentions": []}), content_type="application/json"
         )
         assert resp.status_code == 400, "At least one intention has to be used"
 
     def test_create_broken(self, basic1, clients, counter_report_types, credentials, monkeypatch):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
 
         def mocked_trigger_scheduler(url, finish):
             pass
 
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+        monkeypatch.setattr(tasks.trigger_scheduler, "delay", mocked_trigger_scheduler)
 
         # entire credentails broken
         attempt_tr = FetchAttemptFactory(
@@ -508,7 +508,7 @@ class TestHarvestAPI:
                     ]
                 }
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 201
 
@@ -533,7 +533,7 @@ class TestHarvestAPI:
                     ]
                 }
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 400
 
@@ -558,7 +558,7 @@ class TestHarvestAPI:
                     ]
                 }
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 400
 
@@ -566,7 +566,7 @@ class TestHarvestAPI:
         # remove all automatic harvests
         Harvest.objects.filter(automatic__isnull=False).delete()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -575,28 +575,28 @@ class TestHarvestAPI:
         # this should create automatic harvests
         Automatic.update_for_this_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 2
-        assert data[0]['automatic'].keys() == {"pk", "month", "organization"}
-        assert data[1]['automatic'].keys() == {"pk", "month", "organization"}
+        assert data[0]["automatic"].keys() == {"pk", "month", "organization"}
+        assert data[1]["automatic"].keys() == {"pk", "month", "organization"}
 
         # check whether atomic is are present in details
-        url = reverse('harvest-detail', args=(data[0]['pk'],))
+        url = reverse("harvest-detail", args=(data[0]["pk"],))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
         assert data["automatic"] is not None
-        assert 'month' in data["automatic"]
-        assert 'organization' in data["automatic"]
-        assert 'pk' in data['automatic']['organization']
-        assert 'name' in data['automatic']['organization']
-        assert 'short_name' in data['automatic']['organization']
+        assert "month" in data["automatic"]
+        assert "organization" in data["automatic"]
+        assert "pk" in data["automatic"]["organization"]
+        assert "name" in data["automatic"]["organization"]
+        assert "short_name" in data["automatic"]["organization"]
 
     def test_automatic_no_verified(self, basic1, clients, credentials):
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -605,7 +605,7 @@ class TestHarvestAPI:
         # this should create automatic harvests
         Automatic.update_for_this_month()
 
-        url = reverse('harvest-list')
+        url = reverse("harvest-list")
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -615,7 +615,7 @@ class TestHarvestAPI:
 @pytest.mark.django_db()
 class TestHarvestFetchIntentionAPI:
     def test_list(self, basic1, clients, harvests):
-        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["anonymous"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -624,7 +624,7 @@ class TestHarvestFetchIntentionAPI:
         assert data[2]["previous_intention"] is not None
         assert all("canceled" in record for record in data)
 
-        url = reverse('harvest-intention-list', args=(harvests["admin1"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["admin1"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -632,7 +632,7 @@ class TestHarvestFetchIntentionAPI:
         assert "broken_credentials" in data[0]
         assert all("canceled" in record for record in data)
 
-        url = reverse('harvest-intention-list', args=(harvests["automatic"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["automatic"].pk,))
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         data = resp.json()
@@ -646,10 +646,10 @@ class TestHarvestFetchIntentionAPI:
         """
         Test that it is possible to filter harvest intentions by last_updated date.
         """
-        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["anonymous"].pk,))
 
         def get_data(date):
-            resp = clients["master_admin"].get(url, {'last_updated_after': date} if date else {})
+            resp = clients["master_admin"].get(url, {"last_updated_after": date} if date else {})
             assert resp.status_code == 200
             return resp.json()
 
@@ -666,17 +666,17 @@ class TestHarvestFetchIntentionAPI:
         Similar to `test_list_with_date_filter`, but ensuring that the date serialized to JSON
         format works as input data for the filter.
         """
-        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["anonymous"].pk,))
 
         def json_date(date):
             class S(Serializer):
                 d = DateTimeField()
 
-            return S().to_representation({'d': date})['d']
+            return S().to_representation({"d": date})["d"]
 
         def get_data(date):
             resp = clients["master_admin"].get(
-                url, {'last_updated_after': json_date(date)} if date else {}
+                url, {"last_updated_after": json_date(date)} if date else {}
             )
             assert resp.status_code == 200
             return resp.json()
@@ -703,11 +703,11 @@ class TestHarvestFetchIntentionAPI:
     def test_list_permissions(
         self, basic1, harvests, clients, user, anonymous_status, admin1_status
     ):
-        url = reverse('harvest-intention-list', args=(harvests["anonymous"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["anonymous"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == anonymous_status
 
-        url = reverse('harvest-intention-list', args=(harvests["admin1"].pk,))
+        url = reverse("harvest-intention-list", args=(harvests["admin1"].pk,))
         resp = clients[user].get(url, {})
         assert resp.status_code == admin1_status
 
@@ -718,8 +718,8 @@ class TestHarvestFetchIntentionAPI:
             ("master_user", 404),
             ("user1", 404),
             ("user2", 404),
-            ('admin1', 404),  # admin of root organization
-            ('admin2', 200),  # admin of standalone organization
+            ("admin1", 404),  # admin of root organization
+            ("admin2", 200),  # admin of standalone organization
         ],
     )
     def test_list_permissions_with_organization(self, basic1, clients, harvests, user, status_code):
@@ -727,13 +727,13 @@ class TestHarvestFetchIntentionAPI:
         Test that superuser and admin of the `standalone` organization can see harvest intentions
         for harvest belonging to the `standalone` organization.
         """
-        harvest = harvests['automatic']
-        resp = clients[user].get(reverse('harvest-intention-list', args=(harvest.pk,)))
+        harvest = harvests["automatic"]
+        resp = clients[user].get(reverse("harvest-intention-list", args=(harvest.pk,)))
         assert resp.status_code == status_code
 
     def test_get(self, basic1, clients, harvests):
         url = reverse(
-            'harvest-intention-detail',
+            "harvest-intention-detail",
             args=(harvests["anonymous"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
         resp = clients["master_admin"].get(url, {})
@@ -742,7 +742,7 @@ class TestHarvestFetchIntentionAPI:
         assert "broken_credentials" in data
 
         url = reverse(
-            'harvest-intention-detail',
+            "harvest-intention-detail",
             args=(
                 harvests["admin1"].pk,
                 harvests["anonymous"].latest_intentions.first().pk,
@@ -758,13 +758,13 @@ class TestHarvestFetchIntentionAPI:
         will be preserved
         """
         url = reverse(
-            'harvest-intention-detail',
-            args=(harvests['anonymous'].pk, harvests['anonymous'].latest_intentions.first().pk),
+            "harvest-intention-detail",
+            args=(harvests["anonymous"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
         resp = clients["master_admin"].get(url, {})
         assert resp.status_code == 200
         # create new intention by setting .pk to None and saving
-        old_pk = resp.json()['pk']
+        old_pk = resp.json()["pk"]
         intention = FetchIntention.objects.get(pk=old_pk)
         intention.pk = None
         intention.data_not_ready_retry = 1
@@ -774,24 +774,24 @@ class TestHarvestFetchIntentionAPI:
         intention.queue.save()
 
         # try to get old and new intentions via get
-        resp = clients['master_admin'].get(
-            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, intention.pk))
+        resp = clients["master_admin"].get(
+            reverse("harvest-intention-detail", args=(harvests["anonymous"].pk, intention.pk))
         )
-        assert resp.status_code == 200, 'new intention should be reachable'
-        resp = clients['master_admin'].get(
-            reverse('harvest-intention-detail', args=(harvests['anonymous'].pk, old_pk))
+        assert resp.status_code == 200, "new intention should be reachable"
+        resp = clients["master_admin"].get(
+            reverse("harvest-intention-detail", args=(harvests["anonymous"].pk, old_pk))
         )
-        assert resp.status_code == 200, 'old intention should be reachable as well'
+        assert resp.status_code == 200, "old intention should be reachable as well"
 
         # try to get old and new intentions via list
-        resp = clients['master_admin'].get(
-            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,))
+        resp = clients["master_admin"].get(
+            reverse("harvest-intention-list", args=(harvests["anonymous"].pk,))
         )
         assert resp.status_code == 200
-        assert old_pk not in [e["pk"] for e in resp.json()], 'by default old should be hidden'
+        assert old_pk not in [e["pk"] for e in resp.json()], "by default old should be hidden"
 
-        resp = clients['master_admin'].get(
-            reverse('harvest-intention-list', args=(harvests['anonymous'].pk,)) + '?list_all=1'
+        resp = clients["master_admin"].get(
+            reverse("harvest-intention-list", args=(harvests["anonymous"].pk,)) + "?list_all=1"
         )
         assert resp.status_code == 200
         assert old_pk in [e["pk"] for e in resp.json()], '"list_all" param will show all'
@@ -811,14 +811,14 @@ class TestHarvestFetchIntentionAPI:
         self, basic1, harvests, clients, user, anonymous_status, admin1_status
     ):
         url = reverse(
-            'harvest-intention-detail',
+            "harvest-intention-detail",
             args=(harvests["anonymous"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
         resp = clients[user].get(url, {})
         assert resp.status_code == anonymous_status
 
         url = reverse(
-            'harvest-intention-detail',
+            "harvest-intention-detail",
             args=(harvests["admin1"].pk, harvests["admin1"].latest_intentions.first().pk),
         )
         resp = clients[user].get(url, {})
@@ -849,14 +849,14 @@ class TestHarvestFetchIntentionAPI:
         else:
             intention = harvests["admin1"].latest_intentions.last()
 
-        url = reverse('harvest-intention-trigger', args=(intention.harvest.pk, intention.pk))
+        url = reverse("harvest-intention-trigger", args=(intention.harvest.pk, intention.pk))
 
         planned_urls = set()
 
         def mocked_trigger_scheduler(url, finish):
             planned_urls.add(url)
 
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+        monkeypatch.setattr(tasks.trigger_scheduler, "delay", mocked_trigger_scheduler)
 
         resp = clients[user].post(url, {})
         assert resp.status_code == status, "status code matches"
@@ -881,11 +881,11 @@ class TestHarvestFetchIntentionAPI:
     )
     def test_cancel(self, basic1, harvests, clients, user, cancelable, status):
         if cancelable:
-            intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[1]
+            intention = harvests["admin1"].intentions.latest_intentions().order_by("pk")[1]
         else:
-            intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[0]
+            intention = harvests["admin1"].intentions.latest_intentions().order_by("pk")[0]
 
-        url = reverse('harvest-intention-cancel', args=(intention.harvest.pk, intention.pk))
+        url = reverse("harvest-intention-cancel", args=(intention.harvest.pk, intention.pk))
 
         resp = clients[user].post(url, {})
         assert resp.status_code == status, "status code matches"
@@ -900,17 +900,17 @@ class TestHarvestFetchIntentionAPI:
 @pytest.mark.django_db()
 class TestFetchIntentionAPI:
     @pytest.mark.parametrize(
-        ['user', 'status_code'],
+        ["user", "status_code"],
         [
-            ['unauthenticated', 401],
-            ['invalid', 401],
-            ['user1', 404],
-            ['user2', 404],
-            ['admin1', 200],
-            ['admin2', 404],
-            ['master_admin', 200],
-            ['master_user', 404],
-            ['su', 200],
+            ["unauthenticated", 401],
+            ["invalid", 401],
+            ["user1", 404],
+            ["user2", 404],
+            ["admin1", 200],
+            ["admin2", 404],
+            ["master_admin", 200],
+            ["master_user", 404],
+            ["su", 200],
         ],
     )
     def test_detail(
@@ -928,20 +928,20 @@ class TestFetchIntentionAPI:
         """
         Check whether displaying detail about fetch attempts works properly
         """
-        intention = harvests["admin1"].intentions.latest_intentions().order_by('pk')[0]
-        url = reverse('intention-detail', args=(intention.pk,))
+        intention = harvests["admin1"].intentions.latest_intentions().order_by("pk")[0]
+        url = reverse("intention-detail", args=(intention.pk,))
         resp = clients[user].get(url)
         assert resp.status_code == status_code
 
-    @pytest.mark.parametrize(['attempt_count'], [(1,), (2,), (10,)])
+    @pytest.mark.parametrize(["attempt_count"], [(1,), (2,), (10,)])
     def test_list(self, admin_client, attempt_count, django_assert_max_num_queries):
         cr = CredentialsFactory()
         FetchAttemptFactory.create_batch(attempt_count, credentials=cr)
         FetchIntentionFactory.create_batch(attempt_count, credentials=cr, attempt__credentials=cr)
         with django_assert_max_num_queries(9):  # even 10 attempts should be under 10 requests
-            resp = admin_client.get(reverse('intention-list'))
+            resp = admin_client.get(reverse("intention-list"))
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == attempt_count
+        assert len(resp.json()["results"]) == attempt_count
 
     def test_list_filtering(self, admin_client):
         cr = CredentialsFactory()
@@ -961,138 +961,138 @@ class TestFetchIntentionAPI:
         )
 
         # no mode set (should be the same as all mode
-        resp = admin_client.get(reverse('intention-list'))
+        resp = admin_client.get(reverse("intention-list"))
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 4, "no mode no platform filter"
-        resp = admin_client.get(reverse('intention-list'), {'platform': cr.platform_id})
+        assert len(resp.json()["results"]) == 4, "no mode no platform filter"
+        resp = admin_client.get(reverse("intention-list"), {"platform": cr.platform_id})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 3, "no mode with platform filter"
+        assert len(resp.json()["results"]) == 3, "no mode with platform filter"
 
         # mode all
-        resp = admin_client.get(reverse('intention-list'), {'mode': 'all'})
+        resp = admin_client.get(reverse("intention-list"), {"mode": "all"})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 33, "mode all no platform filter"
+        assert len(resp.json()["results"]) == 33, "mode all no platform filter"
         resp = admin_client.get(
-            reverse('intention-list'), {'platform': cr.platform_id, 'mode': 'all'}
+            reverse("intention-list"), {"platform": cr.platform_id, "mode": "all"}
         )
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 3, "mode all with platform filter"
+        assert len(resp.json()["results"]) == 3, "mode all with platform filter"
 
         # mode current
-        resp = admin_client.get(reverse('intention-list'), {"mode": "current"})
+        resp = admin_client.get(reverse("intention-list"), {"mode": "current"})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 4, "no platform filter"
+        assert len(resp.json()["results"]) == 4, "no platform filter"
         resp = admin_client.get(
-            reverse('intention-list'), {'platform': cr.platform_id, "mode": "current"}
+            reverse("intention-list"), {"platform": cr.platform_id, "mode": "current"}
         )
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 3, "with platform filter"
+        assert len(resp.json()["results"]) == 3, "with platform filter"
 
         # mode success_and_current
 
-        resp = admin_client.get(reverse('intention-list'), {"mode": "success_and_current"})
+        resp = admin_client.get(reverse("intention-list"), {"mode": "success_and_current"})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 4, "no platform filter"
+        assert len(resp.json()["results"]) == 4, "no platform filter"
         resp = admin_client.get(
-            reverse('intention-list'), {'platform': cr.platform_id, "mode": "success_and_current"}
+            reverse("intention-list"), {"platform": cr.platform_id, "mode": "success_and_current"}
         )
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 3, "with platform filter"
+        assert len(resp.json()["results"]) == 3, "with platform filter"
 
     @pytest.mark.parametrize(
-        ['order_by'], (('start_date',), ('end_date',), ('timestamp',), ('error_code',))
+        ["order_by"], (("start_date",), ("end_date",), ("timestamp",), ("error_code",))
     )
-    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    @pytest.mark.parametrize(["desc"], ((True,), (False,), (None,)))
     def test_list_sorting(self, admin_client, order_by, desc):
         cr = CredentialsFactory()
         FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
-        params = {'order_by': order_by}
+        params = {"order_by": order_by}
         if desc is not None:
-            params['desc'] = 'true' if desc else 'false'
-        resp = admin_client.get(reverse('intention-list'), params)
+            params["desc"] = "true" if desc else "false"
+        resp = admin_client.get(reverse("intention-list"), params)
         assert resp.status_code == 200
-        records = resp.json()['results']
+        records = resp.json()["results"]
         assert len(records) == 30
         # to ensure that the sorting is always the same (which is especially important with
         # pagination), we should mix the pk into the sorting on the backend. This is why we use the
         # pk below as a secondary sorting key as well
         if order_by in ["timestamp", "error_code"]:
-            values = [(x['attempt'][order_by], x['pk']) for x in records]
+            values = [(x["attempt"][order_by], x["pk"]) for x in records]
         else:
-            values = [(x[order_by], x['pk']) for x in records]
+            values = [(x[order_by], x["pk"]) for x in records]
         assert values == sorted(values, reverse=bool(desc))
 
     @pytest.mark.parametrize(
-        ['order_by', 'path'],
+        ["order_by", "path"],
         (
-            ('counter_report__code', ['counter_report_verbose', 'code']),
-            ('credentials__platform__short_name', ['platform', 'short_name']),
-            ('credentials__organization__short_name', ['organization', 'short_name']),
+            ("counter_report__code", ["counter_report_verbose", "code"]),
+            ("credentials__platform__short_name", ["platform", "short_name"]),
+            ("credentials__organization__short_name", ["organization", "short_name"]),
         ),
     )
-    @pytest.mark.parametrize(['desc'], ((True,), (False,), (None,)))
+    @pytest.mark.parametrize(["desc"], ((True,), (False,), (None,)))
     def test_list_sorting_nested_values(self, admin_client, order_by, path, desc):
         cr = CredentialsFactory()
         FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
-        params = {'order_by': order_by}
+        params = {"order_by": order_by}
         if desc is not None:
-            params['desc'] = 'true' if desc else 'false'
-        resp = admin_client.get(reverse('intention-list'), params)
+            params["desc"] = "true" if desc else "false"
+        resp = admin_client.get(reverse("intention-list"), params)
         assert resp.status_code == 200
-        records = resp.json()['results']
+        records = resp.json()["results"]
         assert len(records) == 30
         for part in path:
             records = [x[part] for x in records]
         assert records == sorted(records, reverse=bool(desc))
 
-    @pytest.mark.parametrize(['page_size'], ((5,), (10,), (25,)))
+    @pytest.mark.parametrize(["page_size"], ((5,), (10,), (25,)))
     def test_list_page_size(self, admin_client, page_size):
         cr = CredentialsFactory()
         FetchIntentionFactory.create_batch(30, credentials=cr, attempt__credentials=cr)
-        resp = admin_client.get(reverse('intention-list'), {'page_size': page_size})
+        resp = admin_client.get(reverse("intention-list"), {"page_size": page_size})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == page_size
+        assert len(resp.json()["results"]) == page_size
 
     def test_list_attempts_only(self, admin_client):
         cr = CredentialsFactory()
         FetchIntentionFactory.create_batch(23, credentials=cr, attempt__credentials=cr)
         FetchIntentionFactory.create_batch(19, credentials=cr, attempt=None)
-        resp = admin_client.get(reverse('intention-list'), {'attempt': '1', 'mode': 'all'})
+        resp = admin_client.get(reverse("intention-list"), {"attempt": "1", "mode": "all"})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 23
-        resp = admin_client.get(reverse('intention-list'), {'attempt': '0', 'mode': 'all'})
+        assert len(resp.json()["results"]) == 23
+        resp = admin_client.get(reverse("intention-list"), {"attempt": "0", "mode": "all"})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 19
+        assert len(resp.json()["results"]) == 19
 
     def test_list_filter_by_credentials(self, admin_client):
         cr1 = CredentialsFactory()
         cr2 = CredentialsFactory()
         FetchIntentionFactory.create_batch(29, credentials=cr1)
         FetchIntentionFactory.create_batch(31, credentials=cr2)
-        resp = admin_client.get(reverse('intention-list'), {'credentials': cr1.pk})
+        resp = admin_client.get(reverse("intention-list"), {"credentials": cr1.pk})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 29
-        resp = admin_client.get(reverse('intention-list'), {'credentials': cr2.pk})
+        assert len(resp.json()["results"]) == 29
+        resp = admin_client.get(reverse("intention-list"), {"credentials": cr2.pk})
         assert resp.status_code == 200
-        assert len(resp.json()['results']) == 31
+        assert len(resp.json()["results"]) == 31
 
 
 @pytest.mark.django_db(transaction=True)
 class TestIntentionDeleteView:
     @pytest.mark.clickhouse
-    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.parametrize(
-        ['user', 'status_code'],
+        ["user", "status_code"],
         [
-            ['unauthenticated', 401],
-            ['invalid', 401],
-            ['user1', 403],
-            ['user2', 403],
-            ['admin1', 200],
-            ['admin2', 403],
-            ['master_admin', 200],
-            ['master_user', 403],
-            ['su', 200],
+            ["unauthenticated", 401],
+            ["invalid", 401],
+            ["user1", 403],
+            ["user2", 403],
+            ["admin1", 200],
+            ["admin2", 403],
+            ["master_admin", 200],
+            ["master_user", 403],
+            ["su", 200],
         ],
     )
     def test_intention_delete_view(self, basic1, clients, user, status_code, settings):
@@ -1104,10 +1104,10 @@ class TestIntentionDeleteView:
         fi1.attempt.import_batch = ib1
         fi1.attempt.save()
 
-        if user == 'admin1':
+        if user == "admin1":
             # admin1 is not admin of cr1.organization by default, so we make him
             UserOrganization.objects.get_or_create(
-                user=basic1['users']['admin1'], organization=cr1.organization, is_admin=True
+                user=basic1["users"]["admin1"], organization=cr1.organization, is_admin=True
             )
 
         assert FetchIntention.objects.count() == 2
@@ -1119,57 +1119,57 @@ class TestIntentionDeleteView:
                 ch_backend.get_one_record(
                     AccessLogCube.query()
                     .filter(import_batch_id=ib1.pk)
-                    .aggregate(sum=HSum('value'))
+                    .aggregate(sum=HSum("value"))
                 ).sum
-                == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+                == AccessLog.objects.aggregate(sum=Sum("value"))["sum"]
             )
 
         resp = clients[user].post(
-            reverse('intention-purge'),
+            reverse("intention-purge"),
             json.dumps(
                 [
                     {
-                        'credentials': cr1.pk,
-                        'start_date': '2021-01-01',
-                        'counter_report': fi1.counter_report_id,
+                        "credentials": cr1.pk,
+                        "start_date": "2021-01-01",
+                        "counter_report": fi1.counter_report_id,
                     }
                 ]
             ),
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == status_code
         if status_code == 200:
             assert FetchIntention.objects.count() == 1
-            assert FetchIntention.objects.get().pk == fi2.pk, 'intention fi2 should remain'
-            assert SushiFetchAttempt.objects.count() == 1, 'only one attempt should remain'
-            assert ImportBatch.objects.count() == 0, 'import batch is deleted'
-            assert AccessLog.objects.count() == 0, 'no access logs remain'
+            assert FetchIntention.objects.get().pk == fi2.pk, "intention fi2 should remain"
+            assert SushiFetchAttempt.objects.count() == 1, "only one attempt should remain"
+            assert ImportBatch.objects.count() == 0, "import batch is deleted"
+            assert AccessLog.objects.count() == 0, "no access logs remain"
             assert resp.json() == {
-                'logs.AccessLog': 20,
-                'logs.ImportBatch': 1,
-                'sushi.SushiFetchAttempt': 1,
-                'scheduler.FetchIntention': 1,
-            }, 'delete counts should match expectations'
+                "logs.AccessLog": 20,
+                "logs.ImportBatch": 1,
+                "sushi.SushiFetchAttempt": 1,
+                "scheduler.FetchIntention": 1,
+            }, "delete counts should match expectations"
             if settings.CLICKHOUSE_SYNC_ACTIVE:
                 assert (
                     ch_backend.get_one_record(
                         AccessLogCube.query()
                         .filter(import_batch_id=ib1.pk)
-                        .aggregate(sum=HSum('value'))
+                        .aggregate(sum=HSum("value"))
                     ).sum
                     == 0
                 )
         else:
-            assert FetchIntention.objects.count() == 2, 'the number of intentions is the same'
-            assert SushiFetchAttempt.objects.count() == 2, 'number of attempts remains the same'
-            assert ImportBatch.objects.count() == 1, 'no change in number of import batches'
-            assert AccessLog.objects.count() == 20, 'no change in number of access logs'
+            assert FetchIntention.objects.count() == 2, "the number of intentions is the same"
+            assert SushiFetchAttempt.objects.count() == 2, "number of attempts remains the same"
+            assert ImportBatch.objects.count() == 1, "no change in number of import batches"
+            assert AccessLog.objects.count() == 20, "no change in number of access logs"
             if settings.CLICKHOUSE_SYNC_ACTIVE:
                 assert (
                     ch_backend.get_one_record(
                         AccessLogCube.query()
                         .filter(import_batch_id=ib1.pk)
-                        .aggregate(HSum('value'))
+                        .aggregate(HSum("value"))
                     ).sum
-                    == AccessLog.objects.aggregate(sum=Sum('value'))['sum']
+                    == AccessLog.objects.aggregate(sum=Sum("value"))["sum"]
                 )

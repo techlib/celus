@@ -73,10 +73,10 @@ class OrganizationPlatform(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('organization', 'platform')
+        unique_together = ("organization", "platform")
 
     def __str__(self):
-        return f'{self.organization} | {self.platform}'
+        return f"{self.organization} | {self.platform}"
 
 
 class ReportTypeQuerySet(models.QuerySet):
@@ -84,7 +84,7 @@ class ReportTypeQuerySet(models.QuerySet):
         # we use get_or_create to make sure interest is always present
         # this is mostly for tests, because in production it should be always present
         return self.get_or_create(
-            short_name='interest', source__isnull=True, defaults={'name': 'Interest'}
+            short_name="interest", source__isnull=True, defaults={"name": "Interest"}
         )[0]
 
     def only_materialized(self):
@@ -104,17 +104,17 @@ class ReportType(models.Model):
     name = models.CharField(max_length=250)
     desc = models.TextField(blank=True)
     dimensions = models.ManyToManyField(
-        'Dimension', related_name='report_types', through='ReportTypeToDimension'
+        "Dimension", related_name="report_types", through="ReportTypeToDimension"
     )
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     interest_metrics = models.ManyToManyField(
-        'Metric', through='ReportInterestMetric', through_fields=('report_type', 'metric')
+        "Metric", through="ReportInterestMetric", through_fields=("report_type", "metric")
     )
     superseeded_by = models.ForeignKey(
-        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='superseeds'
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="superseeds"
     )
     materialization_spec = models.ForeignKey(
-        'ReportMaterializationSpec', null=True, blank=True, on_delete=models.SET_NULL
+        "ReportMaterializationSpec", null=True, blank=True, on_delete=models.SET_NULL
     )
     default_platform_interest = models.BooleanField(default=False)
     materialization_date = models.DateTimeField(
@@ -124,29 +124,29 @@ class ReportType(models.Model):
     )
     approx_record_count = models.PositiveBigIntegerField(
         default=0,
-        help_text='Automatically filled in by periodic check to have some fast measure of the '
-        'record count',
+        help_text="Automatically filled in by periodic check to have some fast measure of the "
+        "record count",
     )
     controlled_metrics = models.ManyToManyField(
-        'Metric', through='ControlledMetric', related_name='controlled'
+        "Metric", through="ControlledMetric", related_name="controlled"
     )
     ext_id = models.PositiveIntegerField(unique=True, null=True, default=None, blank=True)
 
     objects = ReportTypeQuerySet.as_manager()
 
     class Meta:
-        verbose_name = _('Report type')
+        verbose_name = _("Report type")
         constraints = [
             UniqueConstraint(
-                fields=['short_name', 'source'], name='report_type_short_name_source_not_null'
+                fields=["short_name", "source"], name="report_type_short_name_source_not_null"
             ),
             UniqueConstraint(
-                fields=['source', 'ext_id'], name='report_type_unique_ext_id_per_source'
+                fields=["source", "ext_id"], name="report_type_unique_ext_id_per_source"
             ),
             UniqueConstraint(
-                fields=['short_name'],
+                fields=["short_name"],
                 condition=Q(source=None),
-                name='report_type_short_name_source_null',
+                name="report_type_short_name_source_null",
             ),
         ]
 
@@ -158,10 +158,10 @@ class ReportType(models.Model):
         return [dim.short_name for dim in self.dimensions.all()]
 
     @cached_property
-    def dimensions_sorted(self) -> typing.List['Dimension']:
+    def dimensions_sorted(self) -> typing.List["Dimension"]:
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
-        return list(self.dimensions.all().order_by('reporttypetodimension__position'))
+        return list(self.dimensions.all().order_by("reporttypetodimension__position"))
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -176,11 +176,11 @@ class ReportType(models.Model):
     def public(self) -> bool:
         return self.source is None
 
-    def dimension_by_attr_name(self, attr_name: str) -> typing.Optional['Dimension']:
+    def dimension_by_attr_name(self, attr_name: str) -> typing.Optional["Dimension"]:
         """
         Given an attribute name like `dim1` return the appropriate dimension instance
         """
-        m = re.match(r'dim(\d)', attr_name)
+        m = re.match(r"dim(\d)", attr_name)
         if m:
             idx = int(m.group(1)) - 1
             return self.dimensions_sorted[idx] if idx < len(self.dimensions_sorted) else None
@@ -193,16 +193,16 @@ class ReportType(models.Model):
         """
         for i, dim in enumerate(self.dimensions_sorted):
             if dim.short_name == dim_short_name:
-                return f'dim{i+1}'
+                return f"dim{i+1}"
         return None
 
     @classmethod
     def is_explicit_dimension(cls, dim_name: str) -> bool:
-        return bool(re.match(r'dim(\d)', dim_name))
+        return bool(re.match(r"dim(\d)", dim_name))
 
     @property
     def is_interest_rt(self) -> bool:
-        return self.short_name == 'interest' and self.source is None
+        return self.short_name == "interest" and self.source is None
 
 
 class ReportMaterializationSpec(models.Model):
@@ -217,7 +217,7 @@ class ReportMaterializationSpec(models.Model):
     base_report_type = models.ForeignKey(
         ReportType,
         on_delete=models.CASCADE,
-        limit_choices_to={'materialization_spec__isnull': True},
+        limit_choices_to={"materialization_spec__isnull": True},
     )
     keep_metric = models.BooleanField(default=True)
     keep_organization = models.BooleanField(default=True)
@@ -235,12 +235,12 @@ class ReportMaterializationSpec(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.name} ({self.base_report_type} {self.description})'
+        return f"{self.name} ({self.base_report_type} {self.description})"
 
     @property
     def description(self):
         _keep, missing = self.split_attributes()
-        return ' -' + ' -'.join(missing)
+        return " -" + " -".join(missing)
 
     @cached_property
     def kept_dimensions(self):
@@ -259,21 +259,21 @@ class ReportMaterializationSpec(models.Model):
         """
         keep = []
         remove = []
-        id_postfix = '_id' if add_id_postfix else ''
-        for attr in ('metric', 'organization', 'platform', 'target'):
-            if getattr(self, 'keep_' + attr):
+        id_postfix = "_id" if add_id_postfix else ""
+        for attr in ("metric", "organization", "platform", "target"):
+            if getattr(self, "keep_" + attr):
                 keep.append(attr + id_postfix)
             else:
                 remove.append(attr + id_postfix)
         if self.keep_date:
-            keep.append('date')
+            keep.append("date")
         else:
-            remove.append('date')
+            remove.append("date")
         for i in range(1, 8):
-            if getattr(self, f'keep_dim{i}'):
-                keep.append(f'dim{i}')
+            if getattr(self, f"keep_dim{i}"):
+                keep.append(f"dim{i}")
             else:
-                remove.append(f'dim{i}')
+                remove.append(f"dim{i}")
         return keep, remove
 
 
@@ -290,12 +290,12 @@ class InterestGroup(models.Model):
     short_name = models.CharField(max_length=100)
     name = models.CharField(max_length=250)
     important = models.BooleanField(
-        default=False, help_text='Important interest groups should be shown preferentially to users'
+        default=False, help_text="Important interest groups should be shown preferentially to users"
     )
-    position = models.PositiveSmallIntegerField(help_text='Used for sorting')
+    position = models.PositiveSmallIntegerField(help_text="Used for sorting")
 
     class Meta:
-        ordering = ('position', 'important')
+        ordering = ("position", "important")
 
     def __str__(self):
         return self.name
@@ -311,27 +311,27 @@ class Metric(models.Model):
     name = models.CharField(max_length=250, blank=True)
     desc = models.TextField(blank=True)
     active = models.BooleanField(
-        default=True, help_text='Only active metrics are reported to users'
+        default=True, help_text="Only active metrics are reported to users"
     )
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        ordering = ('short_name', 'name')
-        verbose_name = _('Metric')
+        ordering = ("short_name", "name")
+        verbose_name = _("Metric")
         constraints = [
             UniqueConstraint(
-                fields=['short_name', 'source'], name='metric_short_name_source_not_null'
+                fields=["short_name", "source"], name="metric_short_name_source_not_null"
             ),
             UniqueConstraint(
-                fields=['short_name'],
+                fields=["short_name"],
                 condition=Q(source=None),
-                name='metric_short_name_source_null',
+                name="metric_short_name_source_null",
             ),
         ]
 
     def __str__(self):
         if self.name and self.name != self.short_name:
-            return f'{self.short_name} => {self.name}'
+            return f"{self.short_name} => {self.name}"
         return self.short_name
 
 
@@ -345,8 +345,8 @@ class ControlledMetric(models.Model):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=['metric_id', 'report_type_id'],
-                name='controlled_report_type_and_metric_unique',
+                fields=["metric_id", "report_type_id"],
+                name="controlled_report_type_and_metric_unique",
             )
         ]
 
@@ -366,17 +366,17 @@ class ReportInterestMetric(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='source_report_interest_metrics',
+        related_name="source_report_interest_metrics",
     )
     interest_group = models.ForeignKey(InterestGroup, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('interest_group', 'metric', 'report_type')
+        unique_together = ("interest_group", "metric", "report_type")
 
     def __str__(self):
-        return f'{self.report_type} - {self.metric} ({self.interest_group})'
+        return f"{self.report_type} - {self.metric} ({self.interest_group})"
 
 
 class Dimension(models.Model):
@@ -390,9 +390,9 @@ class Dimension(models.Model):
     desc = models.TextField(blank=True)
 
     class Meta:
-        ordering = ('reporttypetodimension',)
+        ordering = ("reporttypetodimension",)
         constraints = [
-            UniqueConstraint(fields=['short_name'], name='short_name_unique'),
+            UniqueConstraint(fields=["short_name"], name="short_name_unique"),
         ]
 
     def __str__(self):
@@ -411,11 +411,11 @@ class ReportTypeToDimension(models.Model):
     position = models.PositiveSmallIntegerField()
 
     class Meta:
-        unique_together = (('report_type', 'dimension'),)
-        ordering = ('position',)
+        unique_together = (("report_type", "dimension"),)
+        ordering = ("position",)
 
     def __str__(self):
-        return '{}-{} #{}'.format(self.report_type, self.dimension, self.position)
+        return "{}-{} #{}".format(self.report_type, self.dimension, self.position)
 
 
 class ImportBatchQuerySet(models.QuerySet):
@@ -437,12 +437,12 @@ class ImportBatchQuerySet(models.QuerySet):
             self.filter(**filter)
             .order_by("date")
             .annotate(
-                has_logs=Exists(AccessLog.objects.filter(import_batch=OuterRef('pk'))),
-                mdu_id=Max('mdu'),  # max is fine here, there can be only one mdu
-                attempt_id=Max('sushifetchattempt__pk'),
+                has_logs=Exists(AccessLog.objects.filter(import_batch=OuterRef("pk"))),
+                mdu_id=Max("mdu"),  # max is fine here, there can be only one mdu
+                attempt_id=Max("sushifetchattempt__pk"),
             )
-            .select_related('sushifetchattempt')
-            .prefetch_related('mdu')
+            .select_related("sushifetchattempt")
+            .prefetch_related("mdu")
         )
 
 
@@ -453,7 +453,7 @@ class ImportBatch(models.Model):
     and the user who created them.
     """
 
-    PREPROCESSED_DATA_DIR = Path('/tmp/')
+    PREPROCESSED_DATA_DIR = Path("/tmp/")
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -467,28 +467,28 @@ class ImportBatch(models.Model):
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it',
+        help_text="Level of user who created this record - used to determine who can modify it",
     )
     log = models.TextField(blank=True)
     interest_timestamp = models.DateTimeField(
-        null=True, blank=True, help_text='When was interest processed for this batch'
+        null=True, blank=True, help_text="When was interest processed for this batch"
     )
     materialization_data = models.JSONField(
         default=dict,
         blank=True,
-        help_text='Internal information about materialized report data in this batch',
+        help_text="Internal information about materialized report data in this batch",
     )
     last_clickhoused = models.DateTimeField(
-        null=True, help_text='When was the import batch last synced with clickhouse'
+        null=True, help_text="When was the import batch last synced with clickhouse"
     )
 
     objects = ImportBatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "Import batches"
-        indexes = (BrinIndex(fields=('date',)),)
-        ordering = ('id',)
-        unique_together = ('report_type', 'organization', 'platform', 'date')
+        indexes = (BrinIndex(fields=("date",)),)
+        ordering = ("id",)
+        unique_together = ("report_type", "organization", "platform", "date")
 
     @cached_property
     def accesslog_count(self):
@@ -503,8 +503,8 @@ class AccessLogQuerySet(QuerySet):
     def delete(self, i_know_what_i_am_doing=False):
         if not i_know_what_i_am_doing:
             raise ModelUsageError(
-                'Deleting individual AccessLogs is not permitted - they may only be deleted in '
-                'cascade from ImportBatch.'
+                "Deleting individual AccessLogs is not permitted - they may only be deleted in "
+                "cascade from ImportBatch."
             )
         super().delete()
 
@@ -515,23 +515,23 @@ class AccessLog(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
     target = models.ForeignKey(
-        Title, on_delete=models.CASCADE, null=True, help_text='Title for which this log was created'
+        Title, on_delete=models.CASCADE, null=True, help_text="Title for which this log was created"
     )
-    dim1 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #1')
-    dim2 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #2')
-    dim3 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #3')
-    dim4 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #4')
-    dim5 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #5')
-    dim6 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #6')
-    dim7 = models.IntegerField(null=True, blank=True, help_text='Value in dimension #7')
-    value = models.PositiveIntegerField(help_text='The value representing number of accesses')
-    date = models.DateField(verbose_name=_('Date'))
+    dim1 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #1")
+    dim2 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #2")
+    dim3 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #3")
+    dim4 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #4")
+    dim5 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #5")
+    dim6 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #6")
+    dim7 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #7")
+    value = models.PositiveIntegerField(help_text="The value representing number of accesses")
+    date = models.DateField(verbose_name=_("Date"))
     # internal fields
     created = models.DateTimeField(default=now)
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it',
+        help_text="Level of user who created this record - used to determine who can modify it",
     )
     import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE)
 
@@ -539,23 +539,23 @@ class AccessLog(models.Model):
 
     class Meta:
         indexes = (
-            BrinIndex(fields=('report_type',)),
-            BrinIndex(fields=('platform',)),
-            BrinIndex(fields=('organization',)),
-            BrinIndex(fields=('date',)),
-            Index(fields=('report_type', 'organization')),  # these occur often, so we optimize
+            BrinIndex(fields=("report_type",)),
+            BrinIndex(fields=("platform",)),
+            BrinIndex(fields=("organization",)),
+            BrinIndex(fields=("date",)),
+            Index(fields=("report_type", "organization")),  # these occur often, so we optimize
             # the following index makes it possible to answer queries about unique report_type
             # for a platform (and potentially organization) using IndexScan only
             # this speeds up the /api/organization/X/platform/Y/report-views/ endpoint by
             # a factor of 10 when organization is given and factor of 2 for all organizations
             # it takes about 5 % of the table size
-            Index(fields=('platform', 'organization', 'report_type')),
+            Index(fields=("platform", "organization", "report_type")),
         )
 
     def delete(self, using=None, keep_parents=False):
         raise ModelUsageError(
-            'Deleting individual AccessLogs is not permitted - they may only be deleted in cascade '
-            'from ImportBatch.'
+            "Deleting individual AccessLogs is not permitted - they may only be deleted in cascade "
+            "from ImportBatch."
         )
 
     @classmethod
@@ -567,9 +567,9 @@ class AccessLog(models.Model):
         :param dimension:
         :return:
         """
-        modifier = ''
-        if '__' in dimension:
-            dimension, modifier = dimension.split('__', 1)
+        modifier = ""
+        if "__" in dimension:
+            dimension, modifier = dimension.split("__", 1)
         try:
             return cls._meta.get_field(dimension), modifier
         except FieldDoesNotExist:
@@ -595,12 +595,12 @@ class DimensionText(models.Model):
         return self.text
 
 
-def where_to_store(instance: 'ManualDataUpload', filename):
+def where_to_store(instance: "ManualDataUpload", filename):
     root, ext = os.path.splitext(filename)
-    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    ts = now().strftime("%Y%m%d-%H%M%S.%f")
     return (
-        f'custom/{instance.user_id}/{instance.report_type.short_name}-'
-        f'{instance.platform.short_name}_{ts}{ext}'
+        f"custom/{instance.user_id}/{instance.report_type.short_name}-"
+        f"{instance.platform.short_name}_{ts}{ext}"
     )
 
 
@@ -613,14 +613,14 @@ def validate_mime_type(fileobj):
     # to be returned for some CSV files with some version of libmagic
     # (the library magic uses internally)
     allowed_types = [
-        'text/csv',
-        'text/plain',
-        'application/csv',
-        'text/x-Algol68',
-        'application/json',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',  # xls
-        'application/CDFV2',  # xls (sometimes)
+        "text/csv",
+        "text/plain",
+        "application/csv",
+        "text/x-Algol68",
+        "application/json",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",  # xls
+        "application/CDFV2",  # xls (sometimes)
     ]
 
     if fileobj.name and fileobj.name.endswith(".xlsx"):
@@ -637,23 +637,23 @@ def validate_mime_type(fileobj):
 
 
 class MduState(models.TextChoices):
-    INITIAL = 'initial', _("Initial")
-    CONFIRMED = 'confirmed', _("Confirmed")
-    PREFLIGHT = 'preflight', _("Preflight")
-    IMPORTING = 'importing', _("Importing")
-    IMPORTED = 'imported', _("Imported")
-    PREFAILED = 'prefailed', _("Preflight failed")
-    FAILED = 'failed', _("Import failed")
+    INITIAL = "initial", _("Initial")
+    CONFIRMED = "confirmed", _("Confirmed")
+    PREFLIGHT = "preflight", _("Preflight")
+    IMPORTING = "importing", _("Importing")
+    IMPORTED = "imported", _("Imported")
+    PREFAILED = "prefailed", _("Preflight failed")
+    FAILED = "failed", _("Import failed")
 
 
 class MduMethod(models.TextChoices):
-    COUNTER = 'counter', _("Counter format")
-    CELUS = 'celus', _("Celus format")
-    RAW = 'raw', _("Raw data")
+    COUNTER = "counter", _("Counter format")
+    CELUS = "celus", _("Celus format")
+    RAW = "raw", _("Raw data")
 
 
 class ManualDataUpload(SourceFileMixin, models.Model):
-    PREFLIGHT_FORMAT_VERSION = '4'
+    PREFLIGHT_FORMAT_VERSION = "4"
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -664,7 +664,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     owner_level = models.PositiveSmallIntegerField(
         choices=USER_LEVEL_CHOICES,
         default=UL_ROBOT,
-        help_text='Level of user who created this record - used to determine who can modify it',
+        help_text="Level of user who created this record - used to determine who can modify it",
     )
     created = models.DateTimeField(auto_now_add=True)
     data_file = models.FileField(
@@ -679,13 +679,13 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     error_details = models.JSONField(blank=True, null=True)
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batches = models.ManyToManyField(
-        ImportBatch, through='ManualDataUploadImportBatch', related_name='mdu'
+        ImportBatch, through="ManualDataUploadImportBatch", related_name="mdu"
     )
     preflight = models.JSONField(
-        default=dict, blank=True, help_text='Data derived during pre-flight check'
+        default=dict, blank=True, help_text="Data derived during pre-flight check"
     )
     extra = models.JSONField(
-        default=dict, blank=True, help_text='Extra info obtained from parser (e.g. counter headers)'
+        default=dict, blank=True, help_text="Extra info obtained from parser (e.g. counter headers)"
     )
     state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
     method = models.CharField(max_length=20, choices=MduMethod.choices, default=MduMethod.COUNTER)
@@ -694,7 +694,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         constraints = (
             models.CheckConstraint(
                 check=~(models.Q(method=MduMethod.CELUS) & models.Q(report_type__isnull=True)),
-                name='celus-needs-report-type',
+                name="celus-needs-report-type",
             ),
         )
 
@@ -740,22 +740,22 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
     def to_record_dicts(self) -> [dict]:
         # Unwrap django file abstraction
-        file = getattr(self.data_file, 'file', self.data_file)
-        file = getattr(file, 'file', file)
+        file = getattr(self.data_file, "file", self.data_file)
+        file = getattr(file, "file", file)
 
         data = list(get_dict_reader_from_csv(file))
         return data
 
     def prepare_default_metric(self) -> Metric:
         return Metric.objects.get_or_create(
-            short_name='visits',
-            name_en='Visits',
-            name_cs='Návštěvy',
+            short_name="visits",
+            name_en="Visits",
+            name_cs="Návštěvy",
             source=self.report_type.source,
         )[0]
 
     @property
-    def crt(self) -> typing.Optional['logs.models.CounterReportType']:
+    def crt(self) -> typing.Optional["logs.models.CounterReportType"]:
         try:
             return self.report_type.counterreporttype
         except ObjectDoesNotExist:
@@ -855,7 +855,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             yield from custom_data_to_records(
                 self.to_record_dicts(),
                 extra_dims=self.report_type.dimension_short_names,
-                initial_data={'metric': default_metric.pk},
+                initial_data={"metric": default_metric.pk},
             )
 
     def file_is_json(self) -> bool:
@@ -866,16 +866,16 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         while char and char.isspace():
             char = self.data_file.read(1)
         self.data_file.seek(0)
-        if char in b'[{':
+        if char in b"[{":
             return True
         return False
 
     def clashing_batches(self) -> models.QuerySet[ImportBatch]:
         """Get list of all conflicting batches"""
 
-        if self.preflight and 'months' in self.preflight:
+        if self.preflight and "months" in self.preflight:
             # Months can be present in preflight
-            months = self.preflight['months'].keys()
+            months = self.preflight["months"].keys()
         else:
             # Otherwise try to parse data file
             months = {record.start for record in self.data_to_records()}
@@ -930,7 +930,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         )
 
     def preflight_organizations_names(self) -> typing.Optional[typing.List[str]]:
-        if self.preflight and self.preflight.get('organizations'):
+        if self.preflight and self.preflight.get("organizations"):
             return list(self.preflight["organizations"])
 
     @classmethod
@@ -1024,7 +1024,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
                     return False
 
         controlled_metrics = list(
-            self.report_type.controlled_metrics.values_list('short_name', flat=True)
+            self.report_type.controlled_metrics.values_list("short_name", flat=True)
         )
         if controlled_metrics:
             if not set(self.preflight["metrics"]).issubset(controlled_metrics):
@@ -1075,15 +1075,15 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         and a list of all metrics
         """
         # Get all counts for same (org, platform, report_type)
-        filters = {'platform_id': self.platform_id, 'report_type_id': self.report_type_id}
+        filters = {"platform_id": self.platform_id, "report_type_id": self.report_type_id}
         if self.organization_id:
-            filters['organization_id'] = self.organization_id
+            filters["organization_id"] = self.organization_id
         else:
             if orgs_recs := self.organizations_from_data():
                 # If no organization name is resolved return empty
                 # list which should cause that no data are returned
                 org_ids = [org.pk for _, org in orgs_recs if org]
-                filters['organization_id__in'] = org_ids
+                filters["organization_id__in"] = org_ids
             else:
                 # when the .organization is None, we need to extract the organizations
                 # from the data in preflight. In this case, preflight data is missing
@@ -1096,32 +1096,32 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             query = (
                 AccessLogCube.query()
                 .filter(**filters)
-                .group_by('date')
-                .aggregate(count=HCount(), sum=HSum('value'))
-                .order_by('date')
+                .group_by("date")
+                .aggregate(count=HCount(), sum=HSum("value"))
+                .order_by("date")
             )
             counts = {
-                e.date.strftime("%Y-%m-%d"): {'count': e.count, 'sum': e.sum}
+                e.date.strftime("%Y-%m-%d"): {"count": e.count, "sum": e.sum}
                 for e in ch_backend.get_records(query)
             }
             # Get metrics
-            metric_query = AccessLogCube.query().filter(**filters).group_by('metric_id')
+            metric_query = AccessLogCube.query().filter(**filters).group_by("metric_id")
             metric_ids = [e.metric_id for e in ch_backend.get_records(metric_query)]
         else:
             count_qs = (
                 AccessLog.objects.filter(**filters)
-                .values('date')
-                .annotate(count=Coalesce(Count('pk'), 0), sum=Coalesce(Sum('value'), 0))
-                .values('date', 'count', 'sum')
+                .values("date")
+                .annotate(count=Coalesce(Count("pk"), 0), sum=Coalesce(Sum("value"), 0))
+                .values("date", "count", "sum")
             )
             counts = {
-                e['date'].strftime("%Y-%m-%d"): {'count': e['count'], 'sum': e['sum']}
+                e["date"].strftime("%Y-%m-%d"): {"count": e["count"], "sum": e["sum"]}
                 for e in count_qs
             }
             # Get metrics
-            metric_ids = AccessLog.objects.filter(**filters).values_list('metric_id').distinct()
+            metric_ids = AccessLog.objects.filter(**filters).values_list("metric_id").distinct()
 
-        metrics = [e.short_name for e in Metric.objects.filter(pk__in=metric_ids).order_by('pk')]
+        metrics = [e.short_name for e in Metric.objects.filter(pk__in=metric_ids).order_by("pk")]
         return counts, metrics
 
     @property
@@ -1134,14 +1134,14 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
 
 class ManualDataUploadImportBatch(models.Model):
-    import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, related_name='mdu_link')
+    import_batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, related_name="mdu_link")
     mdu = models.ForeignKey(
-        ManualDataUpload, on_delete=models.CASCADE, related_name='import_batch_link'
+        ManualDataUpload, on_delete=models.CASCADE, related_name="import_batch_link"
     )
 
     class Meta:
-        constraints = [UniqueConstraint(fields=('import_batch',), name='one_import_batch_per_mdu')]
-        ordering = ('mdu_id', 'import_batch_id')
+        constraints = [UniqueConstraint(fields=("import_batch",), name="one_import_batch_per_mdu")]
+        ordering = ("mdu_id", "import_batch_id")
 
 
 class FlexibleReport(models.Model):
@@ -1158,7 +1158,7 @@ class FlexibleReport(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='owned_flexible_reports',
+        related_name="owned_flexible_reports",
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
@@ -1167,13 +1167,13 @@ class FlexibleReport(models.Model):
         Organization, on_delete=models.CASCADE, null=True, blank=True
     )
     report_config = models.JSONField(
-        default=dict, help_text='Serialized configuration of the report', blank=True
+        default=dict, help_text="Serialized configuration of the report", blank=True
     )
 
     serialization_models = {
-        'report_type': {'model': ReportType, 'key': 'short_name'},
-        'metric': {'model': Metric, 'key': 'short_name'},
-        **{f'dim{i}': {'model': DimensionText, 'key': 'text'} for i in range(1, 8)},
+        "report_type": {"model": ReportType, "key": "short_name"},
+        "metric": {"model": Metric, "key": "short_name"},
+        **{f"dim{i}": {"model": DimensionText, "key": "text"} for i in range(1, 8)},
     }
 
     class Meta:
@@ -1184,7 +1184,7 @@ class FlexibleReport(models.Model):
                         models.Q(owner__isnull=False) & models.Q(owner_organization__isnull=False)
                     )  # not owner and owner_organization
                 ),
-                name='only-one-owner-field',
+                name="only-one-owner-field",
             ),
         )
 
@@ -1200,7 +1200,7 @@ class FlexibleReport(models.Model):
         return self.Level.CONSORTIUM
 
     @classmethod
-    def create_from_slicer(cls, slicer: 'FlexibleDataSlicer', **kwargs):  # noqa: F821
+    def create_from_slicer(cls, slicer: "FlexibleDataSlicer", **kwargs):  # noqa: F821
         return FlexibleReport.objects.create(
             report_config=cls.serialize_slicer_config(slicer.config()), **kwargs
         )
@@ -1214,7 +1214,7 @@ class FlexibleReport(models.Model):
         """
         new_config = {
             **config,
-            'filters': [cls.serialize_slicer_filter(fltr) for fltr in config['filters']],
+            "filters": [cls.serialize_slicer_filter(fltr) for fltr in config["filters"]],
             # TODO: turn on after demo
             # 'order_by': cls.resolve_order_by(config)
         }
@@ -1222,35 +1222,35 @@ class FlexibleReport(models.Model):
 
     @classmethod
     def serialize_slicer_filter(cls, fltr: dict):
-        model_desc = cls.serialization_models.get(fltr['dimension'])
+        model_desc = cls.serialization_models.get(fltr["dimension"])
         if model_desc:
-            model_cls = model_desc['model']
-            key_attr = model_desc['key']
-            fltr['values'] = [
+            model_cls = model_desc["model"]
+            key_attr = model_desc["key"]
+            fltr["values"] = [
                 obj[key_attr]
-                for obj in model_cls.objects.filter(pk__in=fltr['values']).values(key_attr)
+                for obj in model_cls.objects.filter(pk__in=fltr["values"]).values(key_attr)
             ]
         return fltr
 
     def deserialize_slicer_config(self):
         config = deepcopy(self.report_config)
-        for fltr in config.get('filters', []):
-            dim_name = fltr['dimension']
+        for fltr in config.get("filters", []):
+            dim_name = fltr["dimension"]
             model_desc = self.serialization_models.get(dim_name)
             if model_desc:
-                model_cls = model_desc['model']
-                key_attr = model_desc['key']
+                model_cls = model_desc["model"]
+                key_attr = model_desc["key"]
                 extra_filters = {}
                 if ReportType.is_explicit_dimension(dim_name):
                     # explicit dimensions need an extra query parameter to properly resolve text
                     # back to pk
                     dim = self.resolve_explicit_dimension(dim_name)
                     if dim:
-                        extra_filters = {'dimension_id': dim.pk}
-                fltr['values'] = list(
+                        extra_filters = {"dimension_id": dim.pk}
+                fltr["values"] = list(
                     model_cls.objects.filter(
-                        **{f'{key_attr}__in': fltr['values']}, **extra_filters
-                    ).values_list('pk', flat=True)
+                        **{f"{key_attr}__in": fltr["values"]}, **extra_filters
+                    ).values_list("pk", flat=True)
                 )
         return config
 
@@ -1263,7 +1263,7 @@ class FlexibleReport(models.Model):
         When dimension is called `dimX`, its meaning cannot be resolved without checking which
         report_type is active for this report. This is what we do here.
         """
-        if dim_name.startswith('dim'):
+        if dim_name.startswith("dim"):
             # this is an explicit dimension
             rts = self.used_report_types()
             if len(rts) == 1:
@@ -1278,36 +1278,36 @@ class FlexibleReport(models.Model):
         :return:
         """
         ret = []
-        order_by = config.get('order_by')
+        order_by = config.get("order_by")
         if not order_by:
             return []
-        ob_parts = order_by.split(',')
+        ob_parts = order_by.split(",")
         for i, ob in enumerate(ob_parts):
             # group_by and order_by should be of the same length
-            if ob.startswith('grp-'):
-                groups = config.get('group_by')
+            if ob.startswith("grp-"):
+                groups = config.get("group_by")
                 if i < len(groups):
                     group = groups[i]
                     pk = int(ob[4:])
                     ser_model = cls.serialization_models.get(group)
                     if ser_model:
-                        obj = ser_model['model'].objects.get(pk=pk)
-                        ret.append(getattr(obj, ser_model['key']))
+                        obj = ser_model["model"].objects.get(pk=pk)
+                        ret.append(getattr(obj, ser_model["key"]))
                     else:
-                        raise ValueError(f'unsupported order by: {ob}')
+                        raise ValueError(f"unsupported order by: {ob}")
                 else:
-                    raise ValueError(f'unexpected ordering without matching group: {ob}')
+                    raise ValueError(f"unexpected ordering without matching group: {ob}")
             else:
                 ret.append(ob)
         return ret
 
     def used_report_types(self) -> [ReportType]:
         rt_filters = [
-            f for f in self.report_config.get('filters', []) if f['dimension'] == 'report_type'
+            f for f in self.report_config.get("filters", []) if f["dimension"] == "report_type"
         ]
         rts = []
         for rt_filter in rt_filters:
-            rts += list(ReportType.objects.filter(short_name__in=rt_filter['values']))
+            rts += list(ReportType.objects.filter(short_name__in=rt_filter["values"]))
         return rts
 
 
@@ -1323,11 +1323,11 @@ class ImportBatchSyncLog(CreatedUpdatedMixin, models.Model):
     STATE_SYNC_INTEREST = 3
     STATE_RESYNC = 4
     STATE_CHOICES = (
-        (STATE_NO_CHANGE, 'No change'),
-        (STATE_SYNC, 'Sync'),
-        (STATE_DELETE, 'Delete'),
-        (STATE_SYNC_INTEREST, 'Sync interest'),
-        (STATE_RESYNC, 'Resync'),
+        (STATE_NO_CHANGE, "No change"),
+        (STATE_SYNC, "Sync"),
+        (STATE_DELETE, "Delete"),
+        (STATE_SYNC_INTEREST, "Sync interest"),
+        (STATE_RESYNC, "Resync"),
     )
 
     # Because we need to refer to deleted import batches, we do not use a foreign key here
@@ -1356,7 +1356,8 @@ class LastAction(CreatedUpdatedMixin, models.Model):
     @classmethod
     def should_run(cls, action: str, trigger_action: str) -> bool:
         """
-        If `trigger_action` is newer than `action`, then `action` should run, otherwise it shouldn't.
+        If `trigger_action` is newer than `action`, then `action` should run,
+        otherwise it shouldn't.
         If `trigger_action` does not exist, then `action` should only run if it does not exist,
         otherwise it should not run.
 

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Sync organizations between ERMS and the database'
+    help = "Sync organizations between ERMS and the database"
 
     def add_arguments(self, parser):
         pass
@@ -17,4 +17,4 @@ class Command(BaseCommand):
     @atomic
     def handle(self, *args, **options):
         stats = erms_sync_organizations()
-        self.stderr.write(self.style.WARNING(f'Import stats: {stats}'))
+        self.stderr.write(self.style.WARNING(f"Import stats: {stats}"))

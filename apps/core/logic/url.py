@@ -5,7 +5,7 @@ from rest_framework.request import Request
 
 
 def extract_organization_id_from_request_query(request):
-    return request.query_params.get('organization') or request.query_params.get('organization_id')
+    return request.query_params.get("organization") or request.query_params.get("organization_id")
 
 
 def extract_organization_id_from_request_data(request) -> (int, bool):
@@ -16,10 +16,10 @@ def extract_organization_id_from_request_data(request) -> (int, bool):
     :return:
     """
     for source in (request.data, request.GET):
-        if 'organization' in source:
-            return source.get('organization'), True
-        if 'organization_id' in request.data:
-            return source.get('organization_id'), True
+        if "organization" in source:
+            return source.get("organization"), True
+        if "organization_id" in request.data:
+            return source.get("organization_id"), True
     return None, False
 
 
@@ -33,7 +33,7 @@ def extract_field_from_request(request: Request, field_name: str) -> typing.Opti
         # Try to get value from data
         value = request.data.get(field_name)
     except AttributeError:
-        raise ValidationError('Malformed request') from None
+        raise ValidationError("Malformed request") from None
 
     if not value:
         # Try to get value from query parameters

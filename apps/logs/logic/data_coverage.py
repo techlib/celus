@@ -83,7 +83,7 @@ class DataCoverageExtractor:
                 Q(
                     Exists(
                         PlatformTitle.objects.filter(
-                            title=self.title, platform=OuterRef('platform')
+                            title=self.title, platform=OuterRef("platform")
                         )
                     )
                 )
@@ -93,7 +93,7 @@ class DataCoverageExtractor:
     @property
     def split_by(self) -> list:
         return (
-            ['date', *self.split_by_without_date]
+            ["date", *self.split_by_without_date]
             if self.split_by_date
             else self.split_by_without_date
         )
@@ -106,9 +106,9 @@ class DataCoverageExtractor:
         """
         split_by = []  # this is how the data will be split
         if self.split_by_org:
-            split_by.append('organization_id')
+            split_by.append("organization_id")
         if self.split_by_platform:
-            split_by.append('platform_id')
+            split_by.append("platform_id")
         return split_by
 
     def create_rt_qs(self) -> QuerySet[ReportType]:
@@ -132,14 +132,14 @@ class DataCoverageExtractor:
         if not (self.start_month and self.end_month):
             # we need to get the data range from the data itself
             date_range = self.get_basic_ib_qs().aggregate(
-                min_date=Min('date'), max_date=Max('date')
+                min_date=Min("date"), max_date=Max("date")
             )
-            if date_range['min_date']:
+            if date_range["min_date"]:
                 # min_date could be None if there are no data
                 if not self.start_month:
-                    self.start_month = date_range['min_date']
+                    self.start_month = date_range["min_date"]
                 if not self.end_month:
-                    self.end_month = date_range['max_date']
+                    self.end_month = date_range["max_date"]
                 return True
             else:
                 # there is no ImportBatch
@@ -164,24 +164,24 @@ class DataCoverageExtractor:
             *self.extra_filters,
             Exists(
                 SushiCredentials.objects.filter(
-                    organization=OuterRef('organization'),
-                    platform=OuterRef('platform'),
+                    organization=OuterRef("organization"),
+                    platform=OuterRef("platform"),
                     counterreportstocredentials__counter_report__report_type__in=rt_qs,
                 )
             )
             | Exists(
                 ImportBatch.objects.filter(
                     report_type__in=rt_qs,
-                    organization=OuterRef('organization'),
-                    platform=OuterRef('platform'),
+                    organization=OuterRef("organization"),
+                    platform=OuterRef("platform"),
                 )
             ),
             organization__in=self.accessible_organizations,
         ).annotate(
             has_verified_credentials=Exists(
                 SushiCredentials.objects.annotate_verified().filter(
-                    organization=OuterRef('organization'),
-                    platform=OuterRef('platform'),
+                    organization=OuterRef("organization"),
+                    platform=OuterRef("platform"),
                     counterreportstocredentials__counter_report__report_type__in=rt_qs,
                     verified=True,
                     broken__isnull=True,
@@ -208,21 +208,21 @@ class DataCoverageExtractor:
                     # to do Sum on an aggregate value
                     rt_count=Subquery(
                         ReportType.objects.filter(
-                            platforminterestreport__platform=OuterRef('platform'),
+                            platforminterestreport__platform=OuterRef("platform"),
                             superseeded_by__isnull=True,
                         )
                         .annotate(x=Value(7))
-                        .values('x')
-                        .annotate(c=Count('id'))
-                        .values('c')
+                        .values("x")
+                        .annotate(c=Count("id"))
+                        .values("c")
                     ),
                 )
-                .values('foo', *self.split_by_without_date)
+                .values("foo", *self.split_by_without_date)
                 .annotate(
-                    op_count=Sum('rt_count'),
-                    vc_count=Count('id', filter=Q(has_verified_credentials=True)),
-                    org_count=Count('organization', distinct=True),
-                    platform_count=Count('platform', distinct=True),
+                    op_count=Sum("rt_count"),
+                    vc_count=Count("id", filter=Q(has_verified_credentials=True)),
+                    org_count=Count("organization", distinct=True),
+                    platform_count=Count("platform", distinct=True),
                 )
             )
         else:
@@ -230,20 +230,20 @@ class DataCoverageExtractor:
                 basic_qs.annotate(
                     foo=Value(42)  # dummy value to have something if split_by is empty
                 )
-                .values('foo', *self.split_by_without_date)
+                .values("foo", *self.split_by_without_date)
                 .annotate(
-                    op_count=Count('id'),
-                    vc_count=Count('id', filter=Q(has_verified_credentials=True)),
-                    org_count=Count('organization', distinct=True),
-                    platform_count=Count('platform', distinct=True),
+                    op_count=Count("id"),
+                    vc_count=Count("id", filter=Q(has_verified_credentials=True)),
+                    org_count=Count("organization", distinct=True),
+                    platform_count=Count("platform", distinct=True),
                 )
             )
         op_counts = {
             tuple(rec[key] for key in self.split_by_without_date): MaxDataRec(
-                op_count=rec['op_count'],
-                vc_count=rec['vc_count'],
-                org_count=rec['org_count'],
-                platform_count=rec['platform_count'],
+                op_count=rec["op_count"],
+                vc_count=rec["vc_count"],
+                org_count=rec["org_count"],
+                platform_count=rec["platform_count"],
             )
             for rec in qs
         }
@@ -259,9 +259,9 @@ class DataCoverageExtractor:
             self.get_basic_ib_qs()
             .filter(date__gte=self.start_month, date__lte=self.end_month)
             .annotate(foo=Value(42))  # dummy value to have something if split_by is empty
-            .values('foo', *split_by)
+            .values("foo", *split_by)
             .annotate(
-                ib_count=Count('pk', distinct=True),
+                ib_count=Count("pk", distinct=True),
             )
             .order_by(*split_by)
         )
@@ -272,38 +272,38 @@ class DataCoverageExtractor:
             qs = qs.filter(
                 Exists(
                     AccessLog.objects.filter(
-                        report_type=self.report_type, import_batch_id=OuterRef('pk')
+                        report_type=self.report_type, import_batch_id=OuterRef("pk")
                     )
                 )
             )
 
         # join the data from max_ib_counts with the actual counts of IBs
         data = {
-            tuple(rec[k] for k in split_by): {k: v for k, v in rec.items() if k != 'foo'}
+            tuple(rec[k] for k in split_by): {k: v for k, v in rec.items() if k != "foo"}
             for rec in qs
         }
         if self.split_by_date:
             for month in months_in_range(self.start_month, self.end_month):
                 for key, max_rec in max_ib_counts.items():
                     max_stats = {
-                        'ib_max': max_rec.op_count,
-                        'verified_credentials': max_rec.vc_count,
-                        'org_count': max_rec.org_count,
-                        'platform_count': max_rec.platform_count,
+                        "ib_max": max_rec.op_count,
+                        "verified_credentials": max_rec.vc_count,
+                        "org_count": max_rec.org_count,
+                        "platform_count": max_rec.platform_count,
                     }
                     # key in max_ib_counts does not contain the month
                     super_key = (month, *key)
                     if super_key not in data:
                         data[super_key] = {
                             **dict(zip(split_by, super_key)),  # the key as dict
-                            'ib_count': 0,
-                            'ratio': 0,
+                            "ib_count": 0,
+                            "ratio": 0,
                             **max_stats,
                         }
                     else:
                         data[super_key].update(
                             {
-                                'ratio': data[super_key]['ib_count'] / max_rec.op_count
+                                "ratio": data[super_key]["ib_count"] / max_rec.op_count
                                 if max_rec.op_count
                                 else None,
                                 **max_stats,
@@ -313,15 +313,15 @@ class DataCoverageExtractor:
             month_num = len(list(months_in_range(self.start_month, self.end_month)))
             for key, max_rec in max_ib_counts.items():
                 max_stats = {
-                    'ib_max': max_rec.op_count * month_num,
-                    'verified_credentials': max_rec.vc_count,
-                    'org_count': max_rec.org_count,
-                    'platform_count': max_rec.platform_count,
+                    "ib_max": max_rec.op_count * month_num,
+                    "verified_credentials": max_rec.vc_count,
+                    "org_count": max_rec.org_count,
+                    "platform_count": max_rec.platform_count,
                 }
                 if key in data:
                     data[key].update(
                         {
-                            'ratio': data[key]['ib_count'] / (max_rec.op_count * month_num)
+                            "ratio": data[key]["ib_count"] / (max_rec.op_count * month_num)
                             if max_rec.op_count
                             else None,
                             **max_stats,
@@ -330,8 +330,8 @@ class DataCoverageExtractor:
                 else:
                     data[key] = {
                         **dict(zip(split_by, key)),  # the key as dict
-                        'ib_count': 0,
-                        'ratio': 0,
+                        "ib_count": 0,
+                        "ratio": 0,
                         **max_stats,
                     }
         return data

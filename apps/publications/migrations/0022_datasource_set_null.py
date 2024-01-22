@@ -6,19 +6,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_datasource_set_null'),
-        ('publications', '0021_platform_knowledgebase'),
+        ("core", "0012_datasource_set_null"),
+        ("publications", "0021_platform_knowledgebase"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='platform',
-            name='source',
+            model_name="platform",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         )
     ]

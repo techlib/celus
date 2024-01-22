@@ -11,24 +11,24 @@ import publications.models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('organizations', '0022_organization_raw_enabled'),
-        ('publications', '0035_alter_platform_source'),
+        ("organizations", "0022_organization_raw_enabled"),
+        ("publications", "0035_alter_platform_source"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TitleOverlapBatch',
+            name="TitleOverlapBatch",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'source_file',
+                    "source_file",
                     models.FileField(
                         blank=True,
                         max_length=256,
@@ -38,38 +38,38 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'annotated_file',
+                    "annotated_file",
                     models.FileField(
                         blank=True,
-                        help_text='File with additional data added during processing',
+                        help_text="File with additional data added during processing",
                         max_length=256,
                         null=True,
-                        upload_to='overlap_batch/',
+                        upload_to="overlap_batch/",
                     ),
                 ),
                 (
-                    'processing_info',
+                    "processing_info",
                     models.JSONField(
                         blank=True,
                         default=dict,
-                        help_text='Information gathered during processing of the source file',
+                        help_text="Information gathered during processing of the source file",
                     ),
                 ),
                 (
-                    'state',
+                    "state",
                     models.CharField(
                         choices=[
-                            ('initial', 'Initial'),
-                            ('processing', 'Processing'),
-                            ('failed', 'Import failed'),
-                            ('done', 'Done'),
+                            ("initial", "Initial"),
+                            ("processing", "Processing"),
+                            ("failed", "Import failed"),
+                            ("done", "Done"),
                         ],
-                        default='initial',
+                        default="initial",
                         max_length=20,
                     ),
                 ),
                 (
-                    'last_updated_by',
+                    "last_updated_by",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
@@ -77,16 +77,16 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
                         blank=True,
-                        help_text='Titles will only be looked up for this organization',
+                        help_text="Titles will only be looked up for this organization",
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='organizations.organization',
+                        to="organizations.organization",
                     ),
                 ),
             ],
-            options={'verbose_name_plural': 'Title overlap batches'},
+            options={"verbose_name_plural": "Title overlap batches"},
         )
     ]

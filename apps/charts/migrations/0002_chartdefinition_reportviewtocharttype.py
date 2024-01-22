@@ -5,133 +5,133 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0022_move_some_models_to_charts'), ('charts', '0001_initial')]
+    dependencies = [("logs", "0022_move_some_models_to_charts"), ("charts", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='ChartDefinition',
+            name="ChartDefinition",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('name', models.CharField(max_length=200)),
-                ('name_en', models.CharField(max_length=200, null=True)),
-                ('name_cs', models.CharField(max_length=200, null=True)),
-                ('desc', models.TextField(blank=True)),
-                ('desc_en', models.TextField(blank=True, null=True)),
-                ('desc_cs', models.TextField(blank=True, null=True)),
+                ("name", models.CharField(max_length=200)),
+                ("name_en", models.CharField(max_length=200, null=True)),
+                ("name_cs", models.CharField(max_length=200, null=True)),
+                ("desc", models.TextField(blank=True)),
+                ("desc_en", models.TextField(blank=True, null=True)),
+                ("desc_cs", models.TextField(blank=True, null=True)),
                 (
-                    'primary_implicit_dimension',
+                    "primary_implicit_dimension",
                     models.CharField(
                         blank=True,
                         choices=[
-                            ('date', 'date'),
-                            ('platform', 'platform'),
-                            ('metric', 'metric'),
-                            ('organization', 'organization'),
-                            ('target', 'target'),
+                            ("date", "date"),
+                            ("platform", "platform"),
+                            ("metric", "metric"),
+                            ("organization", "organization"),
+                            ("target", "target"),
                         ],
-                        help_text='The primary dimension when using implicit dimension',
+                        help_text="The primary dimension when using implicit dimension",
                         max_length=20,
                         null=True,
                     ),
                 ),
                 (
-                    'secondary_implicit_dimension',
+                    "secondary_implicit_dimension",
                     models.CharField(
                         blank=True,
                         choices=[
-                            ('date', 'date'),
-                            ('platform', 'platform'),
-                            ('metric', 'metric'),
-                            ('organization', 'organization'),
-                            ('target', 'target'),
+                            ("date", "date"),
+                            ("platform", "platform"),
+                            ("metric", "metric"),
+                            ("organization", "organization"),
+                            ("target", "target"),
                         ],
-                        help_text='The secondary dimension when using implicit dimension',
+                        help_text="The secondary dimension when using implicit dimension",
                         max_length=20,
                         null=True,
                     ),
                 ),
                 (
-                    'chart_type',
+                    "chart_type",
                     models.CharField(
                         choices=[
-                            ('h-bar', 'horizontal bar'),
-                            ('v-bar', 'vertical bar'),
-                            ('line', 'line'),
+                            ("h-bar", "horizontal bar"),
+                            ("v-bar", "vertical bar"),
+                            ("line", "line"),
                         ],
-                        default='v-bar',
+                        default="v-bar",
                         max_length=20,
                     ),
                 ),
                 (
-                    'ordering',
+                    "ordering",
                     models.CharField(
                         blank=True,
-                        help_text='How to order the values in the chart, blank for default - '
-                        'primary dimension based - ordering',
+                        help_text="How to order the values in the chart, blank for default - "
+                        "primary dimension based - ordering",
                         max_length=20,
                     ),
                 ),
                 (
-                    'primary_dimension',
+                    "primary_dimension",
                     models.ForeignKey(
                         blank=True,
-                        help_text='The primary dimension when specified by reference',
+                        help_text="The primary dimension when specified by reference",
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='chart_definitions_primary',
-                        to='logs.Dimension',
+                        related_name="chart_definitions_primary",
+                        to="logs.Dimension",
                     ),
                 ),
                 (
-                    'secondary_dimension',
+                    "secondary_dimension",
                     models.ForeignKey(
                         blank=True,
-                        help_text='The secondary dimension when specified by reference',
+                        help_text="The secondary dimension when specified by reference",
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='chart_definitions_secondary',
-                        to='logs.Dimension',
+                        related_name="chart_definitions_secondary",
+                        to="logs.Dimension",
                     ),
                 ),
             ],
         ),
         migrations.CreateModel(
-            name='ReportViewToChartType',
+            name="ReportViewToChartType",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'position',
+                    "position",
                     models.PositiveIntegerField(
-                        default=0, help_text='Used to sort the chart types for a report view'
+                        default=0, help_text="Used to sort the chart types for a report view"
                     ),
                 ),
                 (
-                    'chart_definition',
+                    "chart_definition",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='charts.ChartDefinition'
+                        on_delete=django.db.models.deletion.CASCADE, to="charts.ChartDefinition"
                     ),
                 ),
                 (
-                    'report_data_view',
+                    "report_data_view",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='charts.ReportDataView'
+                        on_delete=django.db.models.deletion.CASCADE, to="charts.ReportDataView"
                     ),
                 ),
             ],
             options={
-                'unique_together': {
-                    ('report_data_view', 'chart_definition'),
-                    ('report_data_view', 'position'),
+                "unique_together": {
+                    ("report_data_view", "chart_definition"),
+                    ("report_data_view", "position"),
                 }
             },
         ),

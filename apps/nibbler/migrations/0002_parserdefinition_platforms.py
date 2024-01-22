@@ -13,12 +13,12 @@ def fill_platforms(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('nibbler', '0001_initial')]
+    dependencies = [("nibbler", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='parserdefinition',
-            name='platforms',
+            model_name="parserdefinition",
+            name="platforms",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.CharField(max_length=100),
                 blank=True,

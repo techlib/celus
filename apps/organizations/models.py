@@ -10,56 +10,56 @@ from mptt.models import MPTTModel
 
 class Organization(MPTTModel):
     ext_id = models.PositiveIntegerField(
-        unique=True, help_text='object ID taken from EMRS', null=True, default=None, blank=True
+        unique=True, help_text="object ID taken from EMRS", null=True, default=None, blank=True
     )
     parent = TreeForeignKey(
-        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="children"
     )
     ico = models.PositiveIntegerField(
-        help_text='Business registration number', null=True, blank=True
+        help_text="Business registration number", null=True, blank=True
     )
     internal_id = models.CharField(
         max_length=50,
         unique=True,
         null=True,
         blank=True,
-        help_text='special ID used for internal purposes',
+        help_text="special ID used for internal purposes",
     )
     name = models.CharField(max_length=250)
     short_name = models.CharField(max_length=100)
     url = models.URLField(blank=True)
     fte = models.PositiveIntegerField(
-        help_text='Last available FTE number for organization', default=0
+        help_text="Last available FTE number for organization", default=0
     )
     address = models.JSONField(default=dict, blank=True)
     source = models.ForeignKey(
-        'core.DataSource',
+        "core.DataSource",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='defined_organizations',
+        related_name="defined_organizations",
     )
     users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, through='UserOrganization', related_name='organizations'
+        settings.AUTH_USER_MODEL, through="UserOrganization", related_name="organizations"
     )
-    platforms = models.ManyToManyField('publications.Platform', through='logs.OrganizationPlatform')
+    platforms = models.ManyToManyField("publications.Platform", through="logs.OrganizationPlatform")
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     raw_data_import_enabled = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ('name',)
-        unique_together = (('ico', 'level'),)  # duplicated ico can only be between parent and child
-        verbose_name = _('Organization')
+        ordering = ("name",)
+        unique_together = (("ico", "level"),)  # duplicated ico can only be between parent and child
+        verbose_name = _("Organization")
         constraints = (
             models.UniqueConstraint(
-                fields=('short_name',),
+                fields=("short_name",),
                 condition=models.Q(source__isnull=True),
-                name='organization_unique_global_shortname',
+                name="organization_unique_global_shortname",
             ),
             models.UniqueConstraint(
-                fields=('short_name', 'source'),
-                name='organization_unique_short_name_source',
+                fields=("short_name", "source"),
+                name="organization_unique_short_name_source",
                 condition=models.Q(
                     ext_id__isnull=True
                 ),  # external organizations might have empty short_name
@@ -84,7 +84,7 @@ class Organization(MPTTModel):
     def get_or_create_private_source(self):
         def_name = DataSource.create_default_short_name(None, self.name)
         return DataSource.objects.get_or_create(
-            organization=self, type=DataSource.TYPE_ORGANIZATION, defaults={'short_name': def_name}
+            organization=self, type=DataSource.TYPE_ORGANIZATION, defaults={"short_name": def_name}
         )[0]
 
     def validate_unique(self, exclude=None):
@@ -96,7 +96,7 @@ class Organization(MPTTModel):
         if qs.exists():
             raise ValidationError(
                 _("Organization with short name '%(short_name)s' already exists.")
-                % {'short_name': self.short_name}
+                % {"short_name": self.short_name}
             )
 
         if altname := OrganizationAltName.objects.filter(
@@ -106,7 +106,7 @@ class Organization(MPTTModel):
         ).last():
             raise ValidationError(
                 _("An alias for organization {org} clashes with one of organization names.")
-                % {'org': altname.organization}
+                % {"org": altname.organization}
             )
 
 
@@ -118,7 +118,7 @@ class OrganizationAltName(models.Model):
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
-    source = models.ForeignKey('core.DataSource', on_delete=models.SET_NULL, null=True, blank=True)
+    source = models.ForeignKey("core.DataSource", on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -130,8 +130,8 @@ class OrganizationAltName(models.Model):
         # their organization source, it should be allowed because we will take this into account
         # when importing data.
         constraints = [
-            UniqueConstraint(fields=['name', 'source'], name='name_source_not_null'),
-            UniqueConstraint(fields=['name'], condition=Q(source=None), name='name_source_null'),
+            UniqueConstraint(fields=["name", "source"], name="name_source_not_null"),
+            UniqueConstraint(fields=["name"], condition=Q(source=None), name="name_source_null"),
         ]
 
         ordering = ["name"]
@@ -170,12 +170,12 @@ class UserOrganization(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
-    source = models.ForeignKey('core.DataSource', on_delete=models.SET_NULL, null=True, blank=True)
+    source = models.ForeignKey("core.DataSource", on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = (('user', 'organization'),)
+        unique_together = (("user", "organization"),)
 
     def __str__(self):
-        return f'{self.organization} / {self.user}'
+        return f"{self.organization} / {self.user}"

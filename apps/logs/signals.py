@@ -32,7 +32,7 @@ def import_batch_delete_sync_with_clickhouse(sender, instance: ImportBatch, usin
 @receiver(post_save, sender=ImportBatch)
 def import_batch_create_sync_log(sender, instance: ImportBatch, using, **kwargs):
     ImportBatchSyncLog.objects.get_or_create(
-        import_batch_id=instance.pk, defaults={'state': ImportBatchSyncLog.STATE_NO_CHANGE}
+        import_batch_id=instance.pk, defaults={"state": ImportBatchSyncLog.STATE_NO_CHANGE}
     )
 
 

@@ -37,17 +37,17 @@ class Cache(dict):
 
 @dataclass
 class TitleRec:
-    name: str = ''
+    name: str = ""
     pub_type: str = Title.PUB_TYPE_UNKNOWN
-    issn: str = ''
-    eissn: str = ''
-    isbn: str = ''
-    doi: str = ''
+    issn: str = ""
+    eissn: str = ""
+    isbn: str = ""
+    doi: str = ""
     # according to the CoP, there must be max one proprietary ID per title,
     # but I do not believe it 100%, so I prepared this model for the possibility
     # of more than one value
     proprietary_ids: Set[str] = field(default_factory=set)
-    uri: str = ''
+    uri: str = ""
 
     def __post_init__(self):
         # ensure proprietary_ids is a set
@@ -80,7 +80,7 @@ class TitleCompareRec:
 
 
 class TitleManager:
-    id_attrs = ('isbn', 'issn', 'eissn', 'doi')
+    id_attrs = ("isbn", "issn", "eissn", "doi")
 
     def __init__(self):
         self.name_to_records: Dict[str, List[TitleCompareRec]] = {}
@@ -107,34 +107,34 @@ class TitleManager:
             return name
         ret = name.lower()
         # get around a strange unicode case where the turkish İ forms two chars
-        if 'İ' in name and len('İ'.lower()) == 2:
-            remove = 'İ'.lower()[1]
-            return ret.replace(remove, '')
+        if "İ" in name and len("İ".lower()) == 2:
+            remove = "İ".lower()[1]
+            return ret.replace(remove, "")
         return ret
 
     def prefetch_titles(self, records: [TitleRec]):
         title_qs = Title.objects.all()
         names = [self.normalize_title(rec.name) if rec.name else rec.name for rec in records]
-        title_qs = title_qs.annotate(lname=Lower('name')).filter(lname__in=names)
+        title_qs = title_qs.annotate(lname=Lower("name")).filter(lname__in=names)
         self.name_to_records = {}
-        for row in title_qs.order_by('name').values(
-            'name', 'isbn', 'issn', 'eissn', 'doi', 'pk', 'pub_type', 'proprietary_ids', 'uris'
+        for row in title_qs.order_by("name").values(
+            "name", "isbn", "issn", "eissn", "doi", "pk", "pub_type", "proprietary_ids", "uris"
         ):
-            name = row.pop('name').lower()
+            name = row.pop("name").lower()
             if name not in self.name_to_records:
                 self.name_to_records[name] = []
             id_set = {(attr, row[attr]) for attr in self.id_attrs if row[attr]}
             self.name_to_records[name].append(
                 TitleCompareRec(
-                    pk=row['pk'],
-                    pub_type=row['pub_type'],
+                    pk=row["pk"],
+                    pub_type=row["pub_type"],
                     id_set=id_set,
-                    uris=row['uris'],
-                    proprietary_ids=row['proprietary_ids'],
+                    uris=row["uris"],
+                    proprietary_ids=row["proprietary_ids"],
                 )
             )
         self._prefetch_done = True
-        logger.debug('Prefetched %d records', len(self.name_to_records))
+        logger.debug("Prefetched %d records", len(self.name_to_records))
 
     @classmethod
     def title_to_titlecomparerec(cls, title: Title) -> TitleCompareRec:
@@ -190,7 +190,7 @@ class TitleManager:
 
         cache_key = id(record)
         if cache_key in self._title_rec_to_title_cache:
-            self.stats['existing'] += 1
+            self.stats["existing"] += 1
             return self._title_rec_to_title_cache[cache_key]
 
         # make sure that `prefetch_titles` was called at least for this record
@@ -226,9 +226,9 @@ class TitleManager:
                 )
             )
             if created:
-                self.stats['created'] += 1
+                self.stats["created"] += 1
             else:
-                self.stats['existing'] += 1
+                self.stats["existing"] += 1
             self._title_rec_to_title_cache[cache_key] = title.pk
             return title.pk
 
@@ -259,15 +259,15 @@ class TitleManager:
                 title.pub_type = record.pub_type
                 winner.pub_type = record.pub_type
             title.save()
-            self.stats['update'] += 1
+            self.stats["update"] += 1
         else:
-            self.stats['existing'] += 1
+            self.stats["existing"] += 1
         self._title_rec_to_title_cache[cache_key] = winner.pk
         return winner.pk
 
     def find_matching_title(self, record: TitleRec) -> Optional[TitleCompareRec]:
         if not self._prefetch_done:
-            raise ValueError('.prefetch_titles was not done - you must do it before calling this')
+            raise ValueError(".prefetch_titles was not done - you must do it before calling this")
         candidates = self.name_to_records.get(record.name.lower(), [])
         if candidates:
             return self.select_best_candidate(record, candidates)
@@ -342,25 +342,25 @@ class TitleManager:
         proprietary_ids = set()
         for key, value in record.title_ids.items():
             value = value.strip() if value else value
-            if key == 'DOI':
+            if key == "DOI":
                 doi = value
-            elif key == 'Online_ISSN':
+            elif key == "Online_ISSN":
                 eissn = normalize_issn(value) if value else value
-            elif key == 'Print_ISSN':
+            elif key == "Print_ISSN":
                 issn = normalize_issn(value) if value else value
-            elif key == 'ISBN':
+            elif key == "ISBN":
                 isbn = normalize_isbn(value) if value else value
-            elif key == 'Proprietary' and value:
+            elif key == "Proprietary" and value:
                 proprietary_ids.add(value)
-            elif key == 'URI':
+            elif key == "URI":
                 uri = value
         pub_type = self.deduce_pub_type(eissn, isbn, issn, record)
         # convert None values for the following attrs to empty strings
-        isbn = '' if isbn is None else isbn
-        issn = '' if issn is None else issn
-        eissn = '' if eissn is None else eissn
-        doi = '' if doi is None else doi
-        uri = '' if uri is None else uri
+        isbn = "" if isbn is None else isbn
+        issn = "" if issn is None else issn
+        eissn = "" if eissn is None else eissn
+        doi = "" if doi is None else doi
+        uri = "" if uri is None else uri
         ret = TitleRec(
             name=title,
             pub_type=pub_type,
@@ -376,8 +376,8 @@ class TitleManager:
 
     def deduce_pub_type(self, eissn, isbn, issn, record):
         pub_type = Title.PUB_TYPE_UNKNOWN
-        if 'Data_Type' in record.dimension_data:
-            data_type = record.dimension_data['Data_Type']
+        if "Data_Type" in record.dimension_data:
+            data_type = record.dimension_data["Data_Type"]
             pub_type = Title.data_type_to_pub_type(data_type)
         if pub_type == Title.PUB_TYPE_UNKNOWN:
             # we try harder - based on isbn, issn, etc.
@@ -399,12 +399,12 @@ class TitleManager:
         :return:
         """
         # if there is ISBN and both ISSNs are empty -> it is a book
-        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, issn='', eissn='').exclude(
-            isbn=''
+        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, issn="", eissn="").exclude(
+            isbn=""
         ).update(pub_type=Title.PUB_TYPE_BOOK)
         # if there is no ISBN and at least one ISSN is there -> it is likely a Journal
-        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, isbn='').exclude(
-            issn='', eissn=''
+        Title.objects.filter(pub_type=Title.PUB_TYPE_UNKNOWN, isbn="").exclude(
+            issn="", eissn=""
         ).update(pub_type=Title.PUB_TYPE_JOURNAL)
 
 
@@ -417,14 +417,14 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
     start = time()
     qs = (
         Title.objects.all()
-        .annotate(lname=Lower('name'))
-        .values('lname')
-        .order_by('lname')
-        .annotate(title_count=Count('pk'), title_ids=ArrayAgg('pk'))
+        .annotate(lname=Lower("name"))
+        .values("lname")
+        .order_by("lname")
+        .annotate(title_count=Count("pk"), title_ids=ArrayAgg("pk"))
         .filter(title_count__gt=1)
     )
-    logger.info('Found %d potentially mergeable title groups', qs.count())
-    logger.info('Query took %f seconds', time() - start)
+    logger.info("Found %d potentially mergeable title groups", qs.count())
+    logger.info("Query took %f seconds", time() - start)
     start = time()
 
     # because there may be a large number of candidates (tens of thousands), we do not want
@@ -433,10 +433,10 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
     buffer = []
 
     def process_buffer():
-        buffer_ids = reduce(operator.add, [buf_rec['title_ids'] for buf_rec in buffer])
+        buffer_ids = reduce(operator.add, [buf_rec["title_ids"] for buf_rec in buffer])
         buffer_titles = {t.pk: t for t in Title.objects.filter(pk__in=buffer_ids)}
         for record in buffer:
-            titles = [buffer_titles[t_id] for t_id in record['title_ids']]
+            titles = [buffer_titles[t_id] for t_id in record["title_ids"]]
             for group in titles_to_matching_groups(titles):
                 yield sort_mergeable_titles(group)
 
@@ -447,7 +447,7 @@ def find_mergeable_titles(batch_size: int = 100) -> Generator[List[Title], None,
                 yield grp
             buffer = []
         if i % 1000 == 0:
-            logger.info('Processed %d groups in %f seconds', i, time() - start)
+            logger.info("Processed %d groups in %f seconds", i, time() - start)
     if buffer:
         for grp in process_buffer():
             yield grp
@@ -500,8 +500,8 @@ def sort_mergeable_titles(titles: List[Title]) -> List[Title]:
     """
     return list(
         Title.objects.filter(pk__in=[t.pk for t in titles])
-        .annotate(pt_count=Count('platformtitle'))
-        .order_by('-pt_count')
+        .annotate(pt_count=Count("platformtitle"))
+        .order_by("-pt_count")
     )
 
 
@@ -521,7 +521,7 @@ def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
     # have been modified
     ibs_to_resync = set()
     for title in to_remove:
-        for attr in ('issn', 'eissn', 'isbn', 'doi'):
+        for attr in ("issn", "eissn", "isbn", "doi"):
             if not getattr(dest, attr) and (update := getattr(title, attr)):
                 setattr(dest, attr, update)
                 save = True
@@ -533,7 +533,7 @@ def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
             save = True
         ibs_to_resync |= replace_title(title, dest)
     logger.debug(
-        'Deleting merged titles: %s',
+        "Deleting merged titles: %s",
         Title.objects.filter(pk__in=[t.pk for t in to_remove]).delete(),
     )
     if save:
@@ -554,20 +554,20 @@ def replace_title(source: Title, dest: Union[Title, int]) -> Set[int]:
     """
     dest_pk = dest.pk if isinstance(dest, Title) else dest
     ibs_to_resync = set(
-        AccessLog.objects.filter(target=source).values_list('import_batch_id', flat=True).distinct()
+        AccessLog.objects.filter(target=source).values_list("import_batch_id", flat=True).distinct()
     )
     logger.debug(
-        'AccessLog title update: %s',
+        "AccessLog title update: %s",
         AccessLog.objects.filter(target=source).update(target_id=dest_pk),
     )
     logger.debug(
-        'PlatformTitle title update: %d',
+        "PlatformTitle title update: %d",
         len(
             PlatformTitle.objects.bulk_create(
                 [
                     PlatformTitle(title_id=dest_pk, **rec)
                     for rec in PlatformTitle.objects.filter(title=source).values(
-                        'platform_id', 'organization_id', 'date'
+                        "platform_id", "organization_id", "date"
                     )
                 ],
                 ignore_conflicts=True,  # PlatformTitles may already exist, so ignore conflicts

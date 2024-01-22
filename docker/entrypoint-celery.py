@@ -36,7 +36,7 @@ def convert_option(option: str, value: str) -> typing.Optional[typing.Any]:
 def config_to_program(worker_name, options: dict) -> typing.List[str]:
     res = ["celery", "worker", "-A", "config", "--loglevel", "info"]
 
-    queues = ','.join(options['QUEUES'])
+    queues = ",".join(options["QUEUES"])
     res.extend(
         [
             f"--time-limit={options['TIMELIMIT']}",

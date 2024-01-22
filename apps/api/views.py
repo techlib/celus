@@ -46,27 +46,27 @@ class PlatformReportView(APIView):
             # we should not get here as the permission_classes should take care of it
             # but this is a guard just in case
             return HttpResponseBadRequest(
-                'API key authentication not successful - '
-                'you may be missing the api key in the Authorization header'
+                "API key authentication not successful - "
+                "you may be missing the api key in the Authorization header"
             )
         param_serializer = self.ParamSerializer(data=request.GET)
         param_serializer.is_valid(raise_exception=True)
 
         rt = get_object_or_404(ReportType.objects.all(), short_name=report_type)
-        month_date = parse_month(param_serializer.validated_data['month'])
+        month_date = parse_month(param_serializer.validated_data["month"])
         # dimensions
         current_dim_names = {dim.short_name for dim in rt.dimensions_sorted}
-        req_dims_str = param_serializer.validated_data['dims']
-        req_dims = set(req_dims_str.split('|')) if req_dims_str else set()
+        req_dims_str = param_serializer.validated_data["dims"]
+        req_dims = set(req_dims_str.split("|")) if req_dims_str else set()
         if not req_dims.issubset(current_dim_names):
             unknown_dims = "|".join(req_dims - current_dim_names)
-            all_dims = '|'.join(current_dim_names)
+            all_dims = "|".join(current_dim_names)
             return HttpResponseBadRequest(
-                f'Unknown dimensions for this report type: {unknown_dims}. '
-                f'Valid dimensions are: {all_dims}'
+                f"Unknown dimensions for this report type: {unknown_dims}. "
+                f"Valid dimensions are: {all_dims}"
             )
         reported_dims = [
-            f'dim{i+1}' for i, dim in enumerate(rt.dimensions_sorted) if dim.short_name in req_dims
+            f"dim{i+1}" for i, dim in enumerate(rt.dimensions_sorted) if dim.short_name in req_dims
         ]
         # deal with possible uuid being used as platform_id
         if isinstance(platform_id, uuid.UUID):
@@ -77,7 +77,7 @@ class PlatformReportView(APIView):
         if request.USE_CLICKHOUSE:
             # clickhouse does not contain metric names, so we must remap them later on
             metrics = {
-                m['pk']: m['short_name'] for m in Metric.objects.all().values('pk', 'short_name')
+                m["pk"]: m["short_name"] for m in Metric.objects.all().values("pk", "short_name")
             }
             query = AccessLogCube.query().filter(
                 report_type_id=rt.pk,
@@ -88,58 +88,58 @@ class PlatformReportView(APIView):
             data = (
                 {
                     # make the data look the same as the non-clickhouse version
-                    'metric__short_name': metrics[rec.metric_id],
-                    'target': rec.target_id,
+                    "metric__short_name": metrics[rec.metric_id],
+                    "target": rec.target_id,
                     **rec._asdict(),
                 }
                 for rec in ch_backend.get_records(
-                    query.group_by('target_id', 'metric_id', *reported_dims).aggregate(
-                        hits=HSum('value')
+                    query.group_by("target_id", "metric_id", *reported_dims).aggregate(
+                        hits=HSum("value")
                     )
                 )
             )
             title_ids = {
-                rec.target_id for rec in ch_backend.get_records(query.group_by('target_id'))
+                rec.target_id for rec in ch_backend.get_records(query.group_by("target_id"))
             }
 
         else:
             # possibly replace the report type with a materialized version
-            used_rt = find_best_materialized_view(rt, ['target', 'metric', *reported_dims]) or rt
+            used_rt = find_best_materialized_view(rt, ["target", "metric", *reported_dims]) or rt
             qs = AccessLog.objects.filter(
                 report_type=used_rt,
                 platform_id=platform_id,
                 date=month_date,
                 organization=organization,
             )
-            data = qs.values('target', 'metric__short_name', *reported_dims).annotate(
-                hits=Sum('value')
+            data = qs.values("target", "metric__short_name", *reported_dims).annotate(
+                hits=Sum("value")
             )
-            title_ids = qs.values_list('target_id', flat=True).distinct()
+            title_ids = qs.values_list("target_id", flat=True).distinct()
 
         text_id_to_text = {
-            dt['id']: dt['text']
-            for dt in DimensionText.objects.filter(dimension__report_types=rt).values('id', 'text')
+            dt["id"]: dt["text"]
+            for dt in DimensionText.objects.filter(dimension__report_types=rt).values("id", "text")
         }
         out = []
         title_fields = {
-            'name': 'title',
-            'isbn': 'isbn',
-            'issn': 'issn',
-            'eissn': 'eissn',
-            'doi': 'doi',
+            "name": "title",
+            "isbn": "isbn",
+            "issn": "issn",
+            "eissn": "eissn",
+            "doi": "doi",
         }
         titles = {
-            t['pk']: t
-            for t in Title.objects.filter(pk__in=title_ids).values('pk', *title_fields.keys())
+            t["pk"]: t
+            for t in Title.objects.filter(pk__in=title_ids).values("pk", *title_fields.keys())
         }
         for al in data:
-            rec = {'hits': al['hits'], 'metric': al['metric__short_name']}
+            rec = {"hits": al["hits"], "metric": al["metric__short_name"]}
             for i, dim in enumerate(rt.dimensions_sorted):
-                key = f'dim{i + 1}'
+                key = f"dim{i + 1}"
                 if key in al:
                     value = al[key]
                     rec[dim.short_name] = text_id_to_text.get(value, value)
-            title_id = al['target']
+            title_id = al["target"]
             if title_id:
                 title = titles[title_id]
                 for src, target in title_fields.items():
@@ -156,23 +156,23 @@ class PlatformReportView(APIView):
                 )
             except SushiCredentials.DoesNotExist:
                 return self._get_response(
-                    {'status': 'SUSHI credentials not present for this report'}
+                    {"status": "SUSHI credentials not present for this report"}
                 )
             # there is some sushi related to this report
             # check if credentials are active
             if not relevant_sushi.enabled:
                 return self._get_response(
-                    {'status': 'SUSHI credentials are not automatically harvested'}
+                    {"status": "SUSHI credentials are not automatically harvested"}
                 )
             elif relevant_sushi.broken:
-                return self._get_response({'status': 'SUSHI credentials are incorrect'})
+                return self._get_response({"status": "SUSHI credentials are incorrect"})
             # check if the report was marked as broken for current credentials
             report_to_credentials = relevant_sushi.counterreportstocredentials_set.get(
                 counter_report__report_type=rt
             )
             if report_to_credentials.broken:
                 return self._get_response(
-                    {'status': 'Report marked as broken for existing credentials'}
+                    {"status": "Report marked as broken for existing credentials"}
                 )
             # we have active credentials, let's check the attempts
             fetch_attempts = SushiFetchAttempt.objects.filter(
@@ -180,9 +180,9 @@ class PlatformReportView(APIView):
                 counter_report__report_type=rt,
                 start_date__lte=month_date,
                 end_date__gte=month_date,
-            ).order_by('-last_updated')
+            ).order_by("-last_updated")
             if not fetch_attempts:
-                return self._get_response({'status': 'Data not yet harvested'})
+                return self._get_response({"status": "Data not yet harvested"})
             last: SushiFetchAttempt = fetch_attempts[0]
             # before checking the intention, make sure it exists
             try:
@@ -191,14 +191,14 @@ class PlatformReportView(APIView):
                 pass
             else:
                 if fi != fi.queue.end:  # not last in queue
-                    return self._get_response({'status': 'Harvesting ongoing'})
-            if last.error_code == '3030':
+                    return self._get_response({"status": "Harvesting ongoing"})
+            if last.error_code == "3030":
                 return self._get_response(
-                    {'records': out, 'complete_data': True, 'status': 'Empty data'}
+                    {"records": out, "complete_data": True, "status": "Empty data"}
                 )
-            return self._get_response({'status': 'Harvesting error'})
+            return self._get_response({"status": "Harvesting error"})
 
-        return self._get_response({'records': out, 'status': 'OK', 'complete_data': True})
+        return self._get_response({"records": out, "status": "OK", "complete_data": True})
 
     def _get_response(self, data):
         output_serializer = self.OutputSerializer(data=data)

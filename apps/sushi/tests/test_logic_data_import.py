@@ -50,31 +50,31 @@ class TestLogicDataImportXLSX:
     def knowledgebases(self):
         return [
             {
-                'providers': [
+                "providers": [
                     {
-                        'counter_version': 5,
-                        'provider': {'url': fake.url()},
-                        'assigned_report_types': [
-                            {'not_valid_after': None, 'not_valid_before': None, 'report_type': 'TR'}
+                        "counter_version": 5,
+                        "provider": {"url": fake.url()},
+                        "assigned_report_types": [
+                            {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"}
                         ],
                     }
                 ]
             },
             {
-                'providers': [
+                "providers": [
                     {
-                        'counter_version': 5,
-                        'provider': {'url': fake.url()},
-                        'assigned_report_types': [
+                        "counter_version": 5,
+                        "provider": {"url": fake.url()},
+                        "assigned_report_types": [
                             {
-                                'not_valid_after': None,
-                                'not_valid_before': None,
-                                'report_type': 'TR',
+                                "not_valid_after": None,
+                                "not_valid_before": None,
+                                "report_type": "TR",
                             },
                             {
-                                'not_valid_after': None,
-                                'not_valid_before': None,
-                                'report_type': 'DR',
+                                "not_valid_after": None,
+                                "not_valid_before": None,
+                                "report_type": "DR",
                             },
                         ],
                     }
@@ -96,56 +96,56 @@ class TestLogicDataImportXLSX:
     def records_wo_org(self, platforms):
         return [
             {
-                'title': fake.company(),
-                'publisher/vendor/platform': platforms[0].name_en,
-                'requestor id': fake.isbn13(),
-                'customer id': fake.isbn10(),
-                'api key': '',
-                'platform filter': '',
+                "title": fake.company(),
+                "publisher/vendor/platform": platforms[0].name_en,
+                "requestor id": fake.isbn13(),
+                "customer id": fake.isbn10(),
+                "api key": "",
+                "platform filter": "",
             },
             {
-                'title': fake.company(),
-                'publisher/vendor/platform': platforms[1].name_en,
-                'requestor id': fake.isbn13(),
-                'customer id': fake.isbn10(),
-                'api key': fake.uuid4(),
-                'platform filter': fake.company(),
+                "title": fake.company(),
+                "publisher/vendor/platform": platforms[1].name_en,
+                "requestor id": fake.isbn13(),
+                "customer id": fake.isbn10(),
+                "api key": fake.uuid4(),
+                "platform filter": fake.company(),
             },
             {
                 # considered an empty line
-                'title': fake.company(),
-                'publisher/vendor/platform': platforms[1].name_en,
-                'requestor id': fake.isbn13(),
-                'customer id': '',
-                'api key': fake.uuid4(),
-                'platform filter': fake.company(),
+                "title": fake.company(),
+                "publisher/vendor/platform": platforms[1].name_en,
+                "requestor id": fake.isbn13(),
+                "customer id": "",
+                "api key": fake.uuid4(),
+                "platform filter": fake.company(),
             },
         ]
 
     @pytest.fixture
     def records(self, records_wo_org, local_organizations):
         rec = deepcopy(records_wo_org)
-        rec[0]['organization'] = local_organizations[0].name_en
-        rec[1]['organization'] = local_organizations[1].name_en
-        rec[2]['organization'] = local_organizations[2].name_en
+        rec[0]["organization"] = local_organizations[0].name_en
+        rec[1]["organization"] = local_organizations[1].name_en
+        rec[2]["organization"] = local_organizations[2].name_en
         return rec
 
     @pytest.fixture
     def updated_records(self, records):
         rec = deepcopy(records)
-        rec[0]['title'] = fake.company()
-        rec[0]['requestor id'] = fake.isbn13()
-        rec[0]['api key'] = fake.uuid4()
-        rec[1]['title'] = fake.company()
-        rec[1]['requestor id'] = fake.isbn13()
-        rec[1]['api key'] = fake.uuid4()
+        rec[0]["title"] = fake.company()
+        rec[0]["requestor id"] = fake.isbn13()
+        rec[0]["api key"] = fake.uuid4()
+        rec[1]["title"] = fake.company()
+        rec[1]["requestor id"] = fake.isbn13()
+        rec[1]["api key"] = fake.uuid4()
         return rec
 
     def test_sheet_empty_and_test_sheet_out_of_range(self, records):
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
             stats = import_sushi_credentials_from_xlsx(file_name, sheet_no=2)
-            assert stats['added'] == 2
+            assert stats["added"] == 2
             # test sheet empty
             with pytest.raises(ValueError):
                 import_sushi_credentials_from_xlsx(file_name, sheet_no=1)
@@ -153,12 +153,12 @@ class TestLogicDataImportXLSX:
             with pytest.raises(ValueError):
                 import_sushi_credentials_from_xlsx(file_name, sheet_no=3)
 
-    @pytest.mark.parametrize('header', ['customer id', 'publisher/vendor/platform'])
+    @pytest.mark.parametrize("header", ["customer id", "publisher/vendor/platform"])
     def test_essential_headers(self, records, header):
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, [records[0]])
             stats = import_sushi_credentials_from_xlsx(file_name)
-            assert stats['added'] == 1
+            assert stats["added"] == 1
 
             records[0].pop(header)
             file_name = self.create_xlsx_file(tmp_file, [records[0]])
@@ -166,7 +166,7 @@ class TestLogicDataImportXLSX:
                 import_sushi_credentials_from_xlsx(file_name)
 
     @pytest.mark.parametrize(
-        ['single_org_arg', 'org_colum', 'value_error'],
+        ["single_org_arg", "org_colum", "value_error"],
         [
             [False, True, False],
             [True, False, False],
@@ -201,34 +201,34 @@ class TestLogicDataImportXLSX:
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
             stats = import_sushi_credentials_from_xlsx(file_name)
-            assert stats['added'] == 2
+            assert stats["added"] == 2
             assert SushiCredentials.objects.count() == 2
-            credentials = SushiCredentials.objects.all().order_by('pk')
+            credentials = SushiCredentials.objects.all().order_by("pk")
 
             for cr, rec, kb in zip(credentials, records, knowledgebases):
-                assert cr.title == rec['title']
-                assert cr.organization.name_en == rec['organization']
-                assert cr.platform.name_en == rec['publisher/vendor/platform']
-                assert cr.requestor_id == rec['requestor id']
-                assert cr.customer_id == rec['customer id']
-                assert cr.api_key == rec['api key']
+                assert cr.title == rec["title"]
+                assert cr.organization.name_en == rec["organization"]
+                assert cr.platform.name_en == rec["publisher/vendor/platform"]
+                assert cr.requestor_id == rec["requestor id"]
+                assert cr.customer_id == rec["customer id"]
+                assert cr.api_key == rec["api key"]
                 assert cr.extra_params == (
-                    {'platform': rec['platform filter']} if rec['platform filter'] else {}
+                    {"platform": rec["platform filter"]} if rec["platform filter"] else {}
                 )
                 assert cr.counter_version == 5
-                assert cr.url == kb['providers'][0]['provider']['url']
+                assert cr.url == kb["providers"][0]["provider"]["url"]
                 expected_reports = {
-                    rec['report_type'] for rec in kb['providers'][0]['assigned_report_types']
+                    rec["report_type"] for rec in kb["providers"][0]["assigned_report_types"]
                 }
                 assert expected_reports == {rt.code for rt in cr.counter_reports.all()}
 
             # retry
             stats = import_sushi_credentials_new(records)
-            assert stats['skipped'] == 2
+            assert stats["skipped"] == 2
         assert SushiCredentials.objects.count() == 2
 
     @pytest.mark.parametrize(
-        'update_credentials, cr_not_verified_updated, cr_verified_updated, skipped, updated',
+        "update_credentials, cr_not_verified_updated, cr_verified_updated, skipped, updated",
         [
             (Perform.UPDATE_NONE, False, False, 2, 0),
             (Perform.UPDATE_NOT_VERIFIED, True, False, 1, 1),
@@ -249,11 +249,11 @@ class TestLogicDataImportXLSX:
             file_name = self.create_xlsx_file(tmp_file, records)
             assert SushiCredentials.objects.count() == 0
             stats = import_sushi_credentials_from_xlsx(file_name)
-            assert stats['added'] == 2
+            assert stats["added"] == 2
             assert SushiCredentials.objects.count() == 2
 
-            cr_not_verified = SushiCredentials.objects.get(customer_id=records[0]['customer id'])
-            cr_verified = SushiCredentials.objects.get(customer_id=records[1]['customer id'])
+            cr_not_verified = SushiCredentials.objects.get(customer_id=records[0]["customer id"])
+            cr_verified = SushiCredentials.objects.get(customer_id=records[1]["customer id"])
             assert cr_not_verified.is_verified is False
             FetchAttemptFactory(
                 credentials=cr_verified,
@@ -266,8 +266,8 @@ class TestLogicDataImportXLSX:
             stats = import_sushi_credentials_from_xlsx(
                 file_name, update_credentials=update_credentials
             )
-            assert stats['diff_updated'] == updated
-            assert stats['diff_skipped'] == skipped
+            assert stats["diff_updated"] == updated
+            assert stats["diff_skipped"] == skipped
             assert SushiCredentials.objects.count() == 2
             for cr, updated_rec, updated, rec in zip(
                 [cr_not_verified, cr_verified],
@@ -276,11 +276,11 @@ class TestLogicDataImportXLSX:
                 records,
             ):
                 cr.refresh_from_db()
-                assert cr.title == (updated_rec['title'] if updated else rec['title'])
+                assert cr.title == (updated_rec["title"] if updated else rec["title"])
                 assert cr.requestor_id == (
-                    updated_rec['requestor id'] if updated else rec['requestor id']
+                    updated_rec["requestor id"] if updated else rec["requestor id"]
                 )
-                assert cr.api_key == (updated_rec['api key'] if updated else rec['api key'])
+                assert cr.api_key == (updated_rec["api key"] if updated else rec["api key"])
 
     def test_existing_sushi_reimport(self, records, platforms, local_organizations):
         SushiCredentials.objects.create(
@@ -300,11 +300,11 @@ class TestLogicDataImportXLSX:
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
             file_name = self.create_xlsx_file(tmp_file, records)
             stats = import_sushi_credentials_from_xlsx(file_name)
-            assert stats['added'] == 1
-            assert stats['duplicates_skipped'] == 1
+            assert stats["added"] == 1
+            assert stats["duplicates_skipped"] == 1
             assert SushiCredentials.objects.count() == 3
 
-    @pytest.mark.parametrize(['name_is_identical', 'error', 'added'], [[False, 0, 1], [True, 1, 0]])
+    @pytest.mark.parametrize(["name_is_identical", "error", "added"], [[False, 0, 1], [True, 1, 0]])
     def test_conflicting_platform_names(
         self, local_organizations, knowledgebases, name_is_identical, error, added
     ):
@@ -322,15 +322,15 @@ class TestLogicDataImportXLSX:
         PlatformFactory.create(source=ds_type_kb, name_en=name2, knowledgebase=knowledgebases[0])
         records = [
             {
-                'title': fake.company(),
-                'organization': local_organizations[0].name_en,
-                'publisher/vendor/platform': name,
-                'customer id': fake.isbn10(),
+                "title": fake.company(),
+                "organization": local_organizations[0].name_en,
+                "publisher/vendor/platform": name,
+                "customer id": fake.isbn10(),
             }
         ]
         stats = import_sushi_credentials_new(records)
-        assert stats['error'] == error
-        assert stats['added'] == added
+        assert stats["error"] == error
+        assert stats["added"] == added
 
 
 @pytest.mark.django_db
@@ -340,55 +340,55 @@ class TestLogicDataImportCSV:
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations[0].internal_id,
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
-                'version': "4",
+                "platform": "XXX",
+                "organization": organizations[0].internal_id,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
+                "version": "4",
             },
             {
-                'platform': 'XXX',
-                'organization': organizations[1].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': f'auth=un,pass;api_key={"key" * 100};foo=bar',
-                'counter_reports': 'TR, DR',
+                "platform": "XXX",
+                "organization": organizations[1].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 5,
+                "extra_attrs": f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                "counter_reports": "TR, DR",
             },
             {
                 # missing organization and counter version
-                'platform': 'XXX',
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
+                "platform": "XXX",
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
             },
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
         stats = import_sushi_credentials_old(data)
-        assert stats['added'] == 2
-        assert stats['error'] == 1, 'the last record is missing organization'
+        assert stats["added"] == 2
+        assert stats["error"] == 1, "the last record is missing organization"
         assert SushiCredentials.objects.count() == 2
-        credentials = SushiCredentials.objects.all().order_by('pk')
+        credentials = SushiCredentials.objects.all().order_by("pk")
         # check individual objects
         cr1 = credentials[0]
         assert cr1.counter_version == 4
-        assert cr1.url == data[0]['URL']
+        assert cr1.url == data[0]["URL"]
         assert cr1.organization == organizations[0]
         cr2 = credentials[1]
         assert cr2.counter_version == 5
-        assert cr2.url == data[1]['URL']
+        assert cr2.url == data[1]["URL"]
         assert cr2.organization == organizations[1]
-        assert cr2.http_username == 'un'
-        assert cr2.http_password == 'pass'
-        assert cr2.api_key == 'key' * 100
-        assert cr2.extra_params == {'foo': 'bar'}
+        assert cr2.http_username == "un"
+        assert cr2.http_password == "pass"
+        assert cr2.api_key == "key" * 100
+        assert cr2.extra_params == {"foo": "bar"}
         assert cr2.counter_reports.count() == 2
-        assert {crt.code for crt in cr2.counter_reports.all()} == {'TR', 'DR'}
+        assert {crt.code for crt in cr2.counter_reports.all()} == {"TR", "DR"}
         # retry
         stats = import_sushi_credentials_old(data)
-        assert stats['skipped'] == 2
+        assert stats["skipped"] == 2
         assert SushiCredentials.objects.count() == 2
 
     def test_sushi_reimport(self):
@@ -396,135 +396,135 @@ class TestLogicDataImportCSV:
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'platform': 'XXX',
-                'organization': organizations[0].internal_id,
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
-                'version': 4,
+                "platform": "XXX",
+                "organization": organizations[0].internal_id,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
+                "version": 4,
             },
             {
-                'platform': 'XXX',
-                'organization': organizations[1].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': 'auth=un,pass;api_key=kekekeyyy;foo=bar',
+                "platform": "XXX",
+                "organization": organizations[1].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 5,
+                "extra_attrs": "auth=un,pass;api_key=kekekeyyy;foo=bar",
             },
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
         stats = import_sushi_credentials_old(data)
-        assert stats['added'] == 2
+        assert stats["added"] == 2
         assert SushiCredentials.objects.count() == 2
         # retry
-        data[1]['URL'] = 'http://new.url/'
-        data[1]['extra_attrs'] = 'api_key=kekekeyyy;foo=bar'
+        data[1]["URL"] = "http://new.url/"
+        data[1]["extra_attrs"] = "api_key=kekekeyyy;foo=bar"
         stats = import_sushi_credentials_old(data)
-        assert stats['skipped'] == 1
-        assert stats['synced'] == 1
+        assert stats["skipped"] == 1
+        assert stats["synced"] == 1
         assert SushiCredentials.objects.count() == 2
-        credentials = SushiCredentials.objects.get(url='http://new.url/')
-        assert credentials.http_password == ''
-        assert credentials.http_username == ''
+        credentials = SushiCredentials.objects.get(url="http://new.url/")
+        assert credentials.http_password == ""
+        assert credentials.http_username == ""
 
-    @pytest.mark.parametrize('organization_idx', [0, 1])
+    @pytest.mark.parametrize("organization_idx", [0, 1])
     def test_sushi_import_with_custom_platforms(self, organization_idx):
         organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
-        pl_global = PlatformFactory.create(short_name='pl-global', ext_id=10)
+        pl_global = PlatformFactory.create(short_name="pl-global", ext_id=10)
         s1, _ = DataSource.objects.get_or_create(
-            short_name='s1', organization=organizations[0], type=DataSource.TYPE_ORGANIZATION
+            short_name="s1", organization=organizations[0], type=DataSource.TYPE_ORGANIZATION
         )
         s2, _ = DataSource.objects.get_or_create(
-            short_name='s2', organization=organizations[1], type=DataSource.TYPE_ORGANIZATION
+            short_name="s2", organization=organizations[1], type=DataSource.TYPE_ORGANIZATION
         )
-        pl_org1 = PlatformFactory.create(short_name='pl-org1', source=s1, ext_id=11)
-        pl_org2 = PlatformFactory.create(short_name='pl-org2', source=s2, ext_id=12)
+        pl_org1 = PlatformFactory.create(short_name="pl-org1", source=s1, ext_id=11)
+        pl_org2 = PlatformFactory.create(short_name="pl-org2", source=s2, ext_id=12)
         data = [
             {
-                'platform': pl_global.short_name,
-                'organization': organizations[organization_idx].internal_id,
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
-                'version': 4,
+                "platform": pl_global.short_name,
+                "organization": organizations[organization_idx].internal_id,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
+                "version": 4,
             },
             {
-                'platform': pl_org1.short_name,
-                'organization': organizations[organization_idx].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
+                "platform": pl_org1.short_name,
+                "organization": organizations[organization_idx].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 5,
             },
             {
-                'platform': pl_org2.short_name,
-                'organization': organizations[organization_idx].internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
+                "platform": pl_org2.short_name,
+                "organization": organizations[organization_idx].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 5,
             },
         ]
         stats = import_sushi_credentials_old(data)
-        assert stats['added'] == 2, 'one global and one for org specific platform'
-        assert stats['error'] == 1, 'one org specific platform not matching'
-        assert SushiCredentials.objects.count() == 2, 'one global and one for org specific platform'
+        assert stats["added"] == 2, "one global and one for org specific platform"
+        assert stats["error"] == 1, "one org specific platform not matching"
+        assert SushiCredentials.objects.count() == 2, "one global and one for org specific platform"
         used_pl_names = [sc.platform.short_name for sc in SushiCredentials.objects.all()]
         used_pl_names.sort()
         if organization_idx == 0:
-            assert used_pl_names == ['pl-global', 'pl-org1']
+            assert used_pl_names == ["pl-global", "pl-org1"]
         else:
-            assert used_pl_names == ['pl-global', 'pl-org2']
+            assert used_pl_names == ["pl-global", "pl-org2"]
 
     def test_sushi_import_override_organization(self, counter_report_types):
         org1, org2, org3 = OrganizationFactory.create_batch(3)
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'platform': 'XXX',
-                'organization': org1.internal_id,
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
-                'version': 4,
+                "platform": "XXX",
+                "organization": org1.internal_id,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
+                "version": 4,
             },
             {
-                'platform': 'XXX',
-                'organization': org2.internal_id,
-                'customer_id': 'BBB',
-                'requestor_id': 'RRRX',
-                'URL': 'http://this.is/test/2',
-                'version': 5,
-                'extra_attrs': f'auth=un,pass;api_key={"key" * 100};foo=bar',
-                'counter_reports': 'TR, DR',
+                "platform": "XXX",
+                "organization": org2.internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 5,
+                "extra_attrs": f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                "counter_reports": "TR, DR",
             },
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
         stats = import_sushi_credentials_old(data, override_organization=org3)
-        assert stats['added'] == 2
+        assert stats["added"] == 2
         assert SushiCredentials.objects.count() == 2
         assert SushiCredentials.objects.filter(organization=org3).count() == 2
         assert SushiCredentials.objects.filter(organization=org1).count() == 0
         assert SushiCredentials.objects.filter(organization=org2).count() == 0
 
-    @pytest.mark.parametrize('default_version', [4, 5, None])
+    @pytest.mark.parametrize("default_version", [4, 5, None])
     def test_sushi_import_default_version(self, counter_report_types, default_version):
         organization = OrganizationFactory.create()
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'platform': 'XXX',
-                'organization': organization.name,
-                'customer_id': 'AAA',
-                'requestor_id': 'RRR',
-                'URL': 'http://this.is/test/',
+                "platform": "XXX",
+                "organization": organization.name,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
             },
         ]
-        Platform.objects.create(short_name='XXX', name='XXXX', ext_id=10)
-        extra = {'default_version': default_version} if default_version is not None else {}
+        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
+        extra = {"default_version": default_version} if default_version is not None else {}
         stats = import_sushi_credentials_old(data, **extra)
-        assert stats['added'] == 1
+        assert stats["added"] == 1
         cr1 = SushiCredentials.objects.first()
         assert cr1.counter_version == (5 if default_version is None else default_version)

@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0013_nullable_title_mdu_validation')]
+    dependencies = [("logs", "0013_nullable_title_mdu_validation")]
 
     operations = [
         migrations.AlterField(
-            model_name='dimension',
-            name='type',
+            model_name="dimension",
+            name="type",
             field=models.PositiveSmallIntegerField(
-                choices=[(1, 'integer'), (2, 'text')], default=2
+                choices=[(1, "integer"), (2, "text")], default=2
             ),
         )
     ]

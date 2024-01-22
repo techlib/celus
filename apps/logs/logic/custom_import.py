@@ -43,46 +43,46 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
         # fill in pks to organizations
         for name, org_data in organizations.items():
             organization = resolved_organizations[name]
-            org_data['pk'] = organization and organization.pk
+            org_data["pk"] = organization and organization.pk
         # the following is not very nice, but we need the organizations data to be present
         # when doing related_months_data() below;
         # it is not stored to the database, just assigned to the object instance
-        mdu.preflight['organizations'] = organizations
+        mdu.preflight["organizations"] = organizations
 
     # prepare month statistics
     related_months, used_metrics = mdu.related_months_data()
 
     for year_month, data in months.items():
-        year, month, *_ = [int(e) for e in year_month.split('-')]
+        year, month, *_ = [int(e) for e in year_month.split("-")]
         last_year_month = f"{year - 1}-{month:02d}-01"
         last_year_months = {f"{year - 1}-{i:02d}-01" for i in range(1, 13)}
-        data['this_month'] = related_months.get(year_month)
+        data["this_month"] = related_months.get(year_month)
 
         # Display last year average only when all months contain data
         if last_year_months.issubset(related_months.keys()):
-            data['prev_year_avg'] = {"sum": 0, "count": 0}
+            data["prev_year_avg"] = {"sum": 0, "count": 0}
             for ymonth in last_year_months:
-                data['prev_year_avg']['sum'] += related_months[ymonth]['sum']
-                data['prev_year_avg']['count'] += related_months[ymonth]['count']
-            data['prev_year_avg']['sum'] = round(data['prev_year_avg']['sum'] / 12)
-            data['prev_year_avg']['count'] = round(data['prev_year_avg']['count'] / 12)
+                data["prev_year_avg"]["sum"] += related_months[ymonth]["sum"]
+                data["prev_year_avg"]["count"] += related_months[ymonth]["count"]
+            data["prev_year_avg"]["sum"] = round(data["prev_year_avg"]["sum"] / 12)
+            data["prev_year_avg"]["count"] = round(data["prev_year_avg"]["count"] / 12)
         else:
-            data['prev_year_avg'] = None
-        data['prev_year_month'] = related_months.get(last_year_month)
+            data["prev_year_avg"] = None
+        data["prev_year_month"] = related_months.get(last_year_month)
 
     return {
-        'format_version': mdu.PREFLIGHT_FORMAT_VERSION,
-        'celus_version': settings.CELUS_VERSION,
-        'git_hash': settings.SENTRY_RELEASE,
-        'generated': now().isoformat(),
-        'log_count': counts["count"],
-        'hits_total': counts["sum"],
-        'months': months,
-        'metrics': histograms["metrics"],
-        'used_metrics': used_metrics,
-        'title_count': len(histograms["titles"]),
-        'organizations': organizations,
-        'dimensions': dimensions,
+        "format_version": mdu.PREFLIGHT_FORMAT_VERSION,
+        "celus_version": settings.CELUS_VERSION,
+        "git_hash": settings.SENTRY_RELEASE,
+        "generated": now().isoformat(),
+        "log_count": counts["count"],
+        "hits_total": counts["sum"],
+        "months": months,
+        "metrics": histograms["metrics"],
+        "used_metrics": used_metrics,
+        "title_count": len(histograms["titles"]),
+        "organizations": organizations,
+        "dimensions": dimensions,
     }
 
 

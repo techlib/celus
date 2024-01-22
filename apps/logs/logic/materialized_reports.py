@@ -22,7 +22,7 @@ def sync_materialized_reports(report_type_qs: Optional[QuerySet[ReportType]] = N
     for mat_rt in qs.only_materialized():
         if added := create_materialized_accesslogs(mat_rt):
             ReportType.objects.filter(pk=mat_rt.pk).update(
-                approx_record_count=F('approx_record_count') + added
+                approx_record_count=F("approx_record_count") + added
             )
 
 
@@ -36,7 +36,7 @@ def sync_materialized_reports_for_import_batch(ib: ImportBatch):
     ):
         if added := create_materialized_accesslogs_for_importbatches(mat_rt, [ib]):
             ReportType.objects.filter(pk=mat_rt.pk).update(
-                approx_record_count=F('approx_record_count') + added
+                approx_record_count=F("approx_record_count") + added
             )
 
 
@@ -50,7 +50,7 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:
     :param batch_size: maximum number of ImportBatches to process at once, if None, we will guess
     :return:
     """
-    assert rt.materialization_spec, 'This code works only for materialized report types'
+    assert rt.materialization_spec, "This code works only for materialized report types"
     if batch_size is None:
         batch_size = guess_batch_size_for_materialization(rt)
         logger.info('Guessing batch_size for "%s": %d', rt, batch_size)
@@ -61,7 +61,7 @@ def create_materialized_accesslogs(rt: ReportType, batch_size=None) -> int:
         start = monotonic()
         size = create_materialized_accesslogs_for_importbatches(rt, to_process)
         logger.info(
-            'Batch materialization took %.1f s; records created: %d', monotonic() - start, size
+            "Batch materialization took %.1f s; records created: %d", monotonic() - start, size
         )
         total += size
         to_process = materialized_import_batch_queryset(rt)[:batch_size]
@@ -85,14 +85,14 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
         return 1000
     # the annotation bellow causes group by to be run and Import batches counted
     # it is also faster than using distinct for some reason
-    ibs = set(import_batch_qs.values_list('id', flat=True))
+    ibs = set(import_batch_qs.values_list("id", flat=True))
     result_log_count = (
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type,
             import_batch_id__in=ibs,
         )
-        .values('import_batch_id', *keep)
-        .annotate(foo=Count('id'))
+        .values("import_batch_id", *keep)
+        .annotate(foo=Count("id"))
     )
     result_log_count = result_log_count.count()
     if source_batch_count and result_log_count:
@@ -111,7 +111,7 @@ def create_materialized_accesslogs_for_importbatches(
     :param ibs: list or queryset of ImportBatches
     :return:
     """
-    assert rt.materialization_spec, 'This code works only for materialized report types'
+    assert rt.materialization_spec, "This code works only for materialized report types"
     # remove existing materialized stuff from the ImportBatches
     # as we do not sync materialized report data to clickhouse, the code here does not
     # change anything from the clickhouse point of view
@@ -125,14 +125,14 @@ def create_materialized_accesslogs_for_importbatches(
         AccessLog.objects.filter(
             report_type=rt.materialization_spec.base_report_type, import_batch__in=ib_ids
         )
-        .values('import_batch_id', *keep)
-        .annotate(value=Sum('value'))
+        .values("import_batch_id", *keep)
+        .annotate(value=Sum("value"))
     )
     to_insert = [AccessLog(report_type=rt, **log) for log in query]
     AccessLog.objects.bulk_create(to_insert)
     for ib in ibs:
-        ib.materialization_data[f'r{rt.pk}'] = time()
-        ib.save(update_fields=['materialization_data'])
+        ib.materialization_data[f"r{rt.pk}"] = time()
+        ib.save(update_fields=["materialization_data"])
     return len(to_insert)
 
 
@@ -143,7 +143,7 @@ def materialized_import_batch_queryset(rt: ReportType) -> QuerySet:
     :param rt:
     :return: [Q]
     """
-    if rt.materialization_spec.base_report_type.short_name == 'interest':
+    if rt.materialization_spec.base_report_type.short_name == "interest":
         # for interest based materialized report types, we need to check the interest calculation
         # as well. We only include batches
         #  * with interest calculated already and not data materialization
@@ -151,24 +151,24 @@ def materialized_import_batch_queryset(rt: ReportType) -> QuerySet:
         #    (can happen if interest definition is changed)
         # the interest_ts field will be added in annotation later on
         no_materialization = Q(
-            **{f'materialization_data__r{rt.pk}__isnull': True}, interest_timestamp__isnull=False
+            **{f"materialization_data__r{rt.pk}__isnull": True}, interest_timestamp__isnull=False
         )
         stale_materialization = Q(
-            interest_ts__gte=Cast(RawSQL('materialization_data->%s', (f'r{rt.pk}',)), FloatField())
+            interest_ts__gte=Cast(RawSQL("materialization_data->%s", (f"r{rt.pk}",)), FloatField())
         )
         updated_materialization = Q(
-            **{f'materialization_data__r{rt.pk}__lt': rt.materialization_date.timestamp()}
+            **{f"materialization_data__r{rt.pk}__lt": rt.materialization_date.timestamp()}
         )
         # bellow we use RawSQL rather than Extract('interest_timestamp', 'epoch') because it
         # returns the timestamp in active timezone rather than in UTC as time() is presented
         # and thus even new data could appear stale due to the timezone shift :/
         return ImportBatch.objects.annotate(
-            interest_ts=Cast(RawSQL('EXTRACT(EPOCH FROM interest_timestamp)', ()), FloatField())
+            interest_ts=Cast(RawSQL("EXTRACT(EPOCH FROM interest_timestamp)", ()), FloatField())
         ).filter(stale_materialization | updated_materialization | no_materialization)
     else:
-        no_materialization = Q(**{f'materialization_data__r{rt.pk}__isnull': True})
+        no_materialization = Q(**{f"materialization_data__r{rt.pk}__isnull": True})
         updated_materialization = Q(
-            **{f'materialization_data__r{rt.pk}__lt': rt.materialization_date.timestamp()}
+            **{f"materialization_data__r{rt.pk}__lt": rt.materialization_date.timestamp()}
         )
         return ImportBatch.objects.filter(no_materialization | updated_materialization)
 
@@ -194,7 +194,7 @@ def remove_materialized_accesslogs(
     # we iterate stupidly over all import batches, but that's life for you - I did not find
     # a way to batch update json field, so I at least go over each import batch only once for
     # all report types
-    db_rt_keys = [f'r{rt_pk}' for rt_pk in rt_keys]
+    db_rt_keys = [f"r{rt_pk}" for rt_pk in rt_keys]
     for i, ib in enumerate(ImportBatch.objects.filter(materialization_data__has_keys=db_rt_keys)):
         save = False
         for key in db_rt_keys:
@@ -229,6 +229,6 @@ def update_report_approx_record_count():
     """
     Synchronizes the `approx_record_count` values for all report types
     """
-    for rt in ReportType.objects.all().annotate(record_count=Count('accesslog')):
+    for rt in ReportType.objects.all().annotate(record_count=Count("accesslog")):
         rt.approx_record_count = rt.record_count
         rt.save()

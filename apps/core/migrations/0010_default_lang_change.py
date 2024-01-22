@@ -4,15 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0009_user_extra_data_default')]
+    dependencies = [("core", "0009_user_extra_data_default")]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='language',
+            model_name="user",
+            name="language",
             field=models.CharField(
-                choices=[('en', 'English'), ('cs', 'Czech')],
-                default='en',
+                choices=[("en", "English"), ("cs", "Czech")],
+                default="en",
                 help_text="User's preferred language",
                 max_length=2,
             ),

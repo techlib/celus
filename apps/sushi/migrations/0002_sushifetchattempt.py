@@ -7,41 +7,41 @@ import sushi.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0001_initial')]
+    dependencies = [("sushi", "0001_initial")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='counterreporttype',
+            name="counterreporttype",
             options={
-                'verbose_name': 'COUNTER report type',
-                'verbose_name_plural': 'COUNTER report types',
+                "verbose_name": "COUNTER report type",
+                "verbose_name_plural": "COUNTER report types",
             },
         ),
         migrations.CreateModel(
-            name='SushiFetchAttempt',
+            name="SushiFetchAttempt",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('timestamp', models.DateTimeField(auto_now_add=True)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField()),
-                ('success', models.BooleanField()),
-                ('data_file', models.FileField(upload_to=sushi.models.where_to_store)),
-                ('log', models.TextField(blank=True)),
+                ("timestamp", models.DateTimeField(auto_now_add=True)),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField()),
+                ("success", models.BooleanField()),
+                ("data_file", models.FileField(upload_to=sushi.models.where_to_store)),
+                ("log", models.TextField(blank=True)),
                 (
-                    'counter_report',
+                    "counter_report",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='sushi.CounterReportType'
+                        on_delete=django.db.models.deletion.CASCADE, to="sushi.CounterReportType"
                     ),
                 ),
                 (
-                    'credentials',
+                    "credentials",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='sushi.SushiCredentials'
+                        on_delete=django.db.models.deletion.CASCADE, to="sushi.SushiCredentials"
                     ),
                 ),
             ],

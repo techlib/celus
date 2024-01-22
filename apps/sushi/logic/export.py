@@ -18,17 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 class Col(Enum):
-    TITLE = 'title'
-    ORGANIZATION = 'organization'
-    PUBLISHER_VENDOR_PLATFORM = 'publisher/vendor/platform'
-    SUSHI_URL = 'SUSHI url'
-    REQUESTOR_ID = 'requestor id'
-    CUSTOMER_ID = 'customer id'
-    API_KEY = 'api key'
-    PLATFORM_FILTER = 'platform filter'
-    HTTP_USERNAME = 'http username'
-    HTTP_PASSWORD = 'http password'
-    EXTRA_PARAMS = 'extra params'
+    TITLE = "title"
+    ORGANIZATION = "organization"
+    PUBLISHER_VENDOR_PLATFORM = "publisher/vendor/platform"
+    SUSHI_URL = "SUSHI url"
+    REQUESTOR_ID = "requestor id"
+    CUSTOMER_ID = "customer id"
+    API_KEY = "api key"
+    PLATFORM_FILTER = "platform filter"
+    HTTP_USERNAME = "http username"
+    HTTP_PASSWORD = "http password"
+    EXTRA_PARAMS = "extra params"
 
 
 class CredentialsDataFrame:
@@ -58,7 +58,7 @@ class CredentialsDataFrame:
             cols += [Col.HTTP_USERNAME, Col.HTTP_PASSWORD, Col.EXTRA_PARAMS]
         report_types = CounterReportType.objects.filter(
             counter_version=counter_version
-        ).values_list('code', flat=True)
+        ).values_list("code", flat=True)
         report_type_cols = list(report_types)
         cols += report_type_cols
         return cls(counter_version, cols, report_types)
@@ -74,7 +74,7 @@ class CredentialsDataFrame:
             Col.API_KEY,
             Col.PLATFORM_FILTER,
         ]
-        if selected_organization_id != '-1':
+        if selected_organization_id != "-1":
             cols.remove(Col.ORGANIZATION)
         return cls(5, cols)
 
@@ -84,7 +84,7 @@ class CredentialsDataFrame:
             platforms = platforms | Platform.objects.filter(
                 source__organization__in=accessible_organizations
             )
-        return platforms.distinct().order_by('name_en')
+        return platforms.distinct().order_by("name_en")
 
     def create(
         self,
@@ -94,7 +94,7 @@ class CredentialsDataFrame:
         sushicred_dict = {col: [] for col in self.cols}
         credentials = sushi_credentials.filter(
             counter_version=self.counter_version
-        ).prefetch_related('counter_reports__report_type')
+        ).prefetch_related("counter_reports__report_type")
         for cr in credentials:
             sushicred_dict[Col.TITLE].append(cr.title)
             if Col.ORGANIZATION in sushicred_dict:
@@ -113,7 +113,7 @@ class CredentialsDataFrame:
                 sushicred_dict[Col.API_KEY].append(cr.api_key)
             if Col.PLATFORM_FILTER in sushicred_dict:
                 sushicred_dict[Col.PLATFORM_FILTER].append(
-                    cr.extra_params['platform'] if 'platform' in cr.extra_params else ''
+                    cr.extra_params["platform"] if "platform" in cr.extra_params else ""
                 )
             if Col.HTTP_USERNAME in sushicred_dict:
                 sushicred_dict[Col.HTTP_USERNAME].append(cr.http_username)
@@ -145,7 +145,7 @@ class CredentialsDataFrame:
 
 class OrganizationsDataFrame:
     class Col(Enum):
-        ORGANIZATION = 'organization'
+        ORGANIZATION = "organization"
 
     def __init__(self, admin_organizations: QuerySet[Organization]):
         self.admin_organizations = admin_organizations
@@ -191,16 +191,16 @@ class XlsxFile:
         tmp_file = BytesIO()
         template_file = (
             settings.TEMPLATE_FOR_SUSHI_CRED_IMPORT_CONSORTIUM
-            if selected_organization_id == '-1'
+            if selected_organization_id == "-1"
             else settings.TEMPLATE_FOR_SUSHI_CRED_IMPORT_SINGLE_ORG
         )
         openpyxl_workbook = load_workbook(template_file)
         openpyxl_workbook.save(tmp_file)
         return cls(tmp_file, sheets, selected_organization_id)
 
-    def create(self, mode='w', if_sheet_exists: Optional[str] = None) -> BytesIO:
+    def create(self, mode="w", if_sheet_exists: Optional[str] = None) -> BytesIO:
         with pd.ExcelWriter(
-            self.file, engine='openpyxl', mode=mode, if_sheet_exists=if_sheet_exists
+            self.file, engine="openpyxl", mode=mode, if_sheet_exists=if_sheet_exists
         ) as writer:
             for sheet in self.sheets:
                 if sheet.title:

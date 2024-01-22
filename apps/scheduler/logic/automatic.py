@@ -28,7 +28,7 @@ def update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
 
         # There might be an unfinished retry chain
         # we need to obtain the last intention
-        if last_fi := FetchIntention.objects.filter(**attrs).order_by('pk').last():
+        if last_fi := FetchIntention.objects.filter(**attrs).order_by("pk").last():
             # Try to run handler to recreate a retry
             if handler := last_fi.get_handler():
                 handler()

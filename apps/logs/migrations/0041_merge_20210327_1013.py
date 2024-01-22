@@ -5,8 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0040_reporttype_approx_record_count'),
-        ('logs', '0038_reporttype_materialization_date'),
+        ("logs", "0040_reporttype_approx_record_count"),
+        ("logs", "0038_reporttype_materialization_date"),
     ]
 
     operations = []

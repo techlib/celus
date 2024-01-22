@@ -31,7 +31,7 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestTagging:
     @pytest.mark.parametrize(
-        ['tag_scope', 'can_tag'],
+        ["tag_scope", "can_tag"],
         [(TagScope.TITLE, True), (TagScope.ORGANIZATION, False), (TagScope.PLATFORM, False)],
     )
     def test_tag_title(self, tag_scope, can_tag):
@@ -56,23 +56,23 @@ class TestTagging:
 class TestTagClassVisibility:
     @pytest.mark.parametrize(
         [
-            'user_key',
-            'can_see_u1',
-            'can_see_u2',
-            'can_see_org2',
-            'can_see_org2_admin',
-            'can_see_cons',
-            'can_see_evbd',
-            'can_see_system',
+            "user_key",
+            "can_see_u1",
+            "can_see_u2",
+            "can_see_org2",
+            "can_see_org2_admin",
+            "can_see_cons",
+            "can_see_evbd",
+            "can_see_system",
         ],
         [
-            ('user1', True, False, False, False, False, True, False),
-            ('user2', False, True, True, False, False, True, False),
-            ('admin1', False, False, False, False, False, True, False),
-            ('admin2', False, False, True, True, False, True, False),
-            ('master_admin', False, False, True, True, True, True, False),
-            ('master_user', False, False, True, False, False, True, False),
-            ('su', False, False, True, True, True, True, False),
+            ("user1", True, False, False, False, False, True, False),
+            ("user2", False, True, True, False, False, True, False),
+            ("admin1", False, False, False, False, False, True, False),
+            ("admin2", False, False, True, True, False, True, False),
+            ("master_admin", False, False, True, True, True, True, False),
+            ("master_user", False, False, True, False, False, True, False),
+            ("su", False, False, True, True, True, True, False),
         ],
     )
     def test_user_visible_tag_classes(
@@ -94,48 +94,48 @@ class TestTagClassVisibility:
         tags
         """
         tags = {
-            'u1': TagClassFactory.create(owner=users['user1'], can_create_tags=AccessibleBy.OWNER),
-            'u2': TagClassFactory.create(owner=users['user2'], can_create_tags=AccessibleBy.OWNER),
-            'evbd': TagClassFactory.create(can_create_tags=AccessibleBy.EVERYBODY),
-            'org2': TagClassFactory.create(
-                owner_org=organizations['standalone'], can_create_tags=AccessibleBy.ORG_USERS
+            "u1": TagClassFactory.create(owner=users["user1"], can_create_tags=AccessibleBy.OWNER),
+            "u2": TagClassFactory.create(owner=users["user2"], can_create_tags=AccessibleBy.OWNER),
+            "evbd": TagClassFactory.create(can_create_tags=AccessibleBy.EVERYBODY),
+            "org2": TagClassFactory.create(
+                owner_org=organizations["standalone"], can_create_tags=AccessibleBy.ORG_USERS
             ),
-            'org2_admin': TagClassFactory.create(
-                owner_org=organizations['standalone'], can_create_tags=AccessibleBy.ORG_ADMINS
+            "org2_admin": TagClassFactory.create(
+                owner_org=organizations["standalone"], can_create_tags=AccessibleBy.ORG_ADMINS
             ),
-            'cons': TagClassFactory.create(can_create_tags=AccessibleBy.CONS_ADMINS),
-            'system': TagClassFactory.create(can_create_tags=AccessibleBy.SYSTEM),
+            "cons": TagClassFactory.create(can_create_tags=AccessibleBy.CONS_ADMINS),
+            "system": TagClassFactory.create(can_create_tags=AccessibleBy.SYSTEM),
         }
         user = users[user_key]
         for key, tag_cls in tags.items():
-            if locals()[f'can_see_{key}']:
+            if locals()[f"can_see_{key}"]:
                 assert tag_cls in TagClass.objects.user_accessible_tag_classes(
                     user
-                ), f'{user_key} should see {key}'
+                ), f"{user_key} should see {key}"
             else:
                 assert tag_cls not in TagClass.objects.user_accessible_tag_classes(
                     user
-                ), f'{user_key} should not see {key}'
+                ), f"{user_key} should not see {key}"
 
     @pytest.mark.parametrize(
         [
-            'user_key',
-            'can_see_u1',
-            'can_see_u2',
-            'can_see_org2',
-            'can_see_org2_admin',
-            'can_see_cons',
-            'can_see_evbd',
-            'can_see_system',
+            "user_key",
+            "can_see_u1",
+            "can_see_u2",
+            "can_see_org2",
+            "can_see_org2_admin",
+            "can_see_cons",
+            "can_see_evbd",
+            "can_see_system",
         ],
         [
-            ('user1', True, False, False, False, False, True, False),
-            ('user2', False, True, True, False, False, True, False),
-            ('admin1', False, False, False, False, False, True, False),
-            ('admin2', False, False, True, True, False, True, False),
-            ('master_admin', False, False, True, True, True, True, False),
-            ('master_user', False, False, True, False, False, True, False),
-            ('su', False, False, True, True, True, True, False),
+            ("user1", True, False, False, False, False, True, False),
+            ("user2", False, True, True, False, False, True, False),
+            ("admin1", False, False, False, False, False, True, False),
+            ("admin2", False, False, True, True, False, True, False),
+            ("master_admin", False, False, True, True, True, True, False),
+            ("master_user", False, False, True, False, False, True, False),
+            ("su", False, False, True, True, True, True, False),
         ],
     )
     def test_user_score_annotation(
@@ -156,88 +156,88 @@ class TestTagClassVisibility:
         Tests that `annotate_user_score` works as expected - uses the same tests as above
         tags
         """
-        TagClassFactory.create(name='u1', owner=users['user1'], can_create_tags=AccessibleBy.OWNER)
-        TagClassFactory.create(name='u2', owner=users['user2'], can_create_tags=AccessibleBy.OWNER)
-        TagClassFactory.create(name='evbd', can_create_tags=AccessibleBy.EVERYBODY)
+        TagClassFactory.create(name="u1", owner=users["user1"], can_create_tags=AccessibleBy.OWNER)
+        TagClassFactory.create(name="u2", owner=users["user2"], can_create_tags=AccessibleBy.OWNER)
+        TagClassFactory.create(name="evbd", can_create_tags=AccessibleBy.EVERYBODY)
         TagClassFactory.create(
-            name='org2',
-            owner_org=organizations['standalone'],
+            name="org2",
+            owner_org=organizations["standalone"],
             can_create_tags=AccessibleBy.ORG_USERS,
         )
         TagClassFactory.create(
-            name='org2_admin',
-            owner_org=organizations['standalone'],
+            name="org2_admin",
+            owner_org=organizations["standalone"],
             can_create_tags=AccessibleBy.ORG_ADMINS,
         )
-        TagClassFactory.create(name='cons', can_create_tags=AccessibleBy.CONS_ADMINS)
-        TagClassFactory.create(name='system', can_create_tags=AccessibleBy.SYSTEM)
+        TagClassFactory.create(name="cons", can_create_tags=AccessibleBy.CONS_ADMINS)
+        TagClassFactory.create(name="system", can_create_tags=AccessibleBy.SYSTEM)
 
         user = users[user_key]
         for tag_cls in TagClass.objects.all().annotate_user_score(user):
             key = tag_cls.name
-            if locals()[f'can_see_{key}']:
-                assert tag_cls.user_score >= tag_cls.can_create_tags, f'{user_key} should see {key}'
+            if locals()[f"can_see_{key}"]:
+                assert tag_cls.user_score >= tag_cls.can_create_tags, f"{user_key} should see {key}"
             else:
                 assert (
                     tag_cls.user_score < tag_cls.can_create_tags
-                ), f'{user_key} should not see {key}'
+                ), f"{user_key} should not see {key}"
 
     @pytest.mark.parametrize(
-        ['user_key', 'access_permission', 'can_create'],
+        ["user_key", "access_permission", "can_create"],
         [
-            ('user1', AccessibleBy.EVERYBODY, 0),
-            ('admin1', AccessibleBy.EVERYBODY, 0),
-            ('admin2', AccessibleBy.EVERYBODY, 0),
-            ('master_user', AccessibleBy.EVERYBODY, 0),
-            ('master_admin', AccessibleBy.EVERYBODY, 1),
-            ('su', AccessibleBy.EVERYBODY, 1),
-            ('user1', AccessibleBy.ORG_USERS, 0),
-            ('admin1', AccessibleBy.ORG_USERS, 1),
-            ('admin2', AccessibleBy.ORG_USERS, 0),  # unrelated admin
-            ('master_user', AccessibleBy.ORG_USERS, 0),
-            ('master_admin', AccessibleBy.ORG_USERS, 1),
-            ('su', AccessibleBy.ORG_USERS, 1),
-            ('user1', AccessibleBy.ORG_ADMINS, 0),
-            ('admin1', AccessibleBy.ORG_ADMINS, 1),
-            ('admin2', AccessibleBy.ORG_ADMINS, 0),
-            ('master_user', AccessibleBy.ORG_ADMINS, 0),
-            ('master_admin', AccessibleBy.ORG_ADMINS, 1),
-            ('su', AccessibleBy.ORG_ADMINS, 1),
-            ('user1', AccessibleBy.CONS_ADMINS, 0),
-            ('admin1', AccessibleBy.CONS_ADMINS, 0),
-            ('admin2', AccessibleBy.CONS_ADMINS, 0),
-            ('master_user', AccessibleBy.CONS_ADMINS, 0),
-            ('master_admin', AccessibleBy.CONS_ADMINS, 1),
-            ('su', AccessibleBy.CONS_ADMINS, 1),
-            ('user1', AccessibleBy.OWNER, 1),
-            ('admin1', AccessibleBy.OWNER, 1),
-            ('admin2', AccessibleBy.OWNER, 1),
-            ('master_user', AccessibleBy.OWNER, 1),
-            ('master_admin', AccessibleBy.OWNER, 1),
-            ('su', AccessibleBy.OWNER, 1),
-            ('user1', AccessibleBy.SYSTEM, 0),
-            ('admin1', AccessibleBy.SYSTEM, 0),
-            ('admin2', AccessibleBy.SYSTEM, 0),
-            ('master_user', AccessibleBy.SYSTEM, 0),
-            ('master_admin', AccessibleBy.SYSTEM, 0),
-            ('su', AccessibleBy.SYSTEM, 0),
+            ("user1", AccessibleBy.EVERYBODY, 0),
+            ("admin1", AccessibleBy.EVERYBODY, 0),
+            ("admin2", AccessibleBy.EVERYBODY, 0),
+            ("master_user", AccessibleBy.EVERYBODY, 0),
+            ("master_admin", AccessibleBy.EVERYBODY, 1),
+            ("su", AccessibleBy.EVERYBODY, 1),
+            ("user1", AccessibleBy.ORG_USERS, 0),
+            ("admin1", AccessibleBy.ORG_USERS, 1),
+            ("admin2", AccessibleBy.ORG_USERS, 0),  # unrelated admin
+            ("master_user", AccessibleBy.ORG_USERS, 0),
+            ("master_admin", AccessibleBy.ORG_USERS, 1),
+            ("su", AccessibleBy.ORG_USERS, 1),
+            ("user1", AccessibleBy.ORG_ADMINS, 0),
+            ("admin1", AccessibleBy.ORG_ADMINS, 1),
+            ("admin2", AccessibleBy.ORG_ADMINS, 0),
+            ("master_user", AccessibleBy.ORG_ADMINS, 0),
+            ("master_admin", AccessibleBy.ORG_ADMINS, 1),
+            ("su", AccessibleBy.ORG_ADMINS, 1),
+            ("user1", AccessibleBy.CONS_ADMINS, 0),
+            ("admin1", AccessibleBy.CONS_ADMINS, 0),
+            ("admin2", AccessibleBy.CONS_ADMINS, 0),
+            ("master_user", AccessibleBy.CONS_ADMINS, 0),
+            ("master_admin", AccessibleBy.CONS_ADMINS, 1),
+            ("su", AccessibleBy.CONS_ADMINS, 1),
+            ("user1", AccessibleBy.OWNER, 1),
+            ("admin1", AccessibleBy.OWNER, 1),
+            ("admin2", AccessibleBy.OWNER, 1),
+            ("master_user", AccessibleBy.OWNER, 1),
+            ("master_admin", AccessibleBy.OWNER, 1),
+            ("su", AccessibleBy.OWNER, 1),
+            ("user1", AccessibleBy.SYSTEM, 0),
+            ("admin1", AccessibleBy.SYSTEM, 0),
+            ("admin2", AccessibleBy.SYSTEM, 0),
+            ("master_user", AccessibleBy.SYSTEM, 0),
+            ("master_admin", AccessibleBy.SYSTEM, 0),
+            ("su", AccessibleBy.SYSTEM, 0),
         ],
     )
     def test_tag_class_create_access(self, basic1, users, user_key, access_permission, can_create):
-        org = basic1['organizations']['root']
+        org = basic1["organizations"]["root"]
         assert (
             TagClass.can_set_access_level(users[user_key], access_permission, organization=org)
             == can_create
         )
 
     def test_explicit_user_hiding(self, users):
-        user = users['user1']
+        user = users["user1"]
         tc = TagClassFactory.create(can_create_tags=AccessibleBy.OWNER, owner=user)
         assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 0
         tc.change_hidden_for_user(user, True)
         assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1
         tc.change_hidden_for_user(user, True)
-        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1, 'no duplicates'
+        assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1, "no duplicates"
         assert UserTagClass.objects.filter(user=user, tag_class=tc, hidden=True).count() == 1
         tc.change_hidden_for_user(user, False)
         assert UserTagClass.objects.filter(user=user, tag_class=tc).count() == 1
@@ -248,23 +248,23 @@ class TestTagClassVisibility:
 class TestTagVisibility:
     @pytest.mark.parametrize(
         [
-            'user_key',
-            'can_see_u1',
-            'can_see_u2',
-            'can_see_org2',
-            'can_see_org2_admin',
-            'can_see_cons',
-            'can_see_evbd',
-            'can_see_system',
+            "user_key",
+            "can_see_u1",
+            "can_see_u2",
+            "can_see_org2",
+            "can_see_org2_admin",
+            "can_see_cons",
+            "can_see_evbd",
+            "can_see_system",
         ],
         [
-            ('user1', True, False, False, False, False, True, False),
-            ('user2', False, True, True, False, False, True, False),
-            ('admin1', False, False, False, False, False, True, False),
-            ('admin2', False, False, True, True, False, True, False),
-            ('master_admin', False, False, True, True, True, True, False),
-            ('master_user', False, False, True, False, False, True, False),
-            ('su', False, False, True, True, True, True, False),
+            ("user1", True, False, False, False, False, True, False),
+            ("user2", False, True, True, False, False, True, False),
+            ("admin1", False, False, False, False, False, True, False),
+            ("admin2", False, False, True, True, False, True, False),
+            ("master_admin", False, False, True, True, True, True, False),
+            ("master_user", False, False, True, False, False, True, False),
+            ("su", False, False, True, True, True, True, False),
         ],
     )
     def test_user_visible_tags(
@@ -282,46 +282,46 @@ class TestTagVisibility:
         can_see_org2_admin,
     ):
         tags = {
-            'u1': TagFactory.create(owner=users['user1'], can_see=AccessibleBy.OWNER),
-            'u2': TagFactory.create(owner=users['user2'], can_see=AccessibleBy.OWNER),
-            'evbd': TagFactory.create(can_see=AccessibleBy.EVERYBODY),
-            'org2': TagFactory.create(
-                owner_org=organizations['standalone'], can_see=AccessibleBy.ORG_USERS
+            "u1": TagFactory.create(owner=users["user1"], can_see=AccessibleBy.OWNER),
+            "u2": TagFactory.create(owner=users["user2"], can_see=AccessibleBy.OWNER),
+            "evbd": TagFactory.create(can_see=AccessibleBy.EVERYBODY),
+            "org2": TagFactory.create(
+                owner_org=organizations["standalone"], can_see=AccessibleBy.ORG_USERS
             ),
-            'org2_admin': TagFactory.create(
-                owner_org=organizations['standalone'], can_see=AccessibleBy.ORG_ADMINS
+            "org2_admin": TagFactory.create(
+                owner_org=organizations["standalone"], can_see=AccessibleBy.ORG_ADMINS
             ),
-            'cons': TagFactory.create(can_see=AccessibleBy.CONS_ADMINS),
-            'system': TagFactory.create(can_see=AccessibleBy.SYSTEM),
+            "cons": TagFactory.create(can_see=AccessibleBy.CONS_ADMINS),
+            "system": TagFactory.create(can_see=AccessibleBy.SYSTEM),
         }
         user = users[user_key]
         for key, tag in tags.items():
-            if locals()[f'can_see_{key}']:
-                assert tag in Tag.objects.user_accessible_tags(user), f'{user_key} should see {key}'
+            if locals()[f"can_see_{key}"]:
+                assert tag in Tag.objects.user_accessible_tags(user), f"{user_key} should see {key}"
             else:
                 assert tag not in Tag.objects.user_accessible_tags(
                     user
-                ), f'{user_key} should not see {key}'
+                ), f"{user_key} should not see {key}"
 
     @pytest.mark.parametrize(
         [
-            'user_key',
-            'can_assign_u1',
-            'can_assign_u2',
-            'can_assign_org2',
-            'can_assign_org2_admin',
-            'can_assign_cons',
-            'can_assign_evbd',
-            'can_assign_system',
+            "user_key",
+            "can_assign_u1",
+            "can_assign_u2",
+            "can_assign_org2",
+            "can_assign_org2_admin",
+            "can_assign_cons",
+            "can_assign_evbd",
+            "can_assign_system",
         ],
         [
-            ('user1', True, False, False, False, False, True, False),
-            ('user2', False, True, True, False, False, True, False),
-            ('admin1', False, False, False, False, False, True, False),
-            ('admin2', False, False, True, True, False, True, False),
-            ('master_admin', False, False, True, True, True, True, False),
-            ('master_user', False, False, True, False, False, True, False),
-            ('su', False, False, True, True, True, True, False),
+            ("user1", True, False, False, False, False, True, False),
+            ("user2", False, True, True, False, False, True, False),
+            ("admin1", False, False, False, False, False, True, False),
+            ("admin2", False, False, True, True, False, True, False),
+            ("master_admin", False, False, True, True, True, True, False),
+            ("master_user", False, False, True, False, False, True, False),
+            ("su", False, False, True, True, True, True, False),
         ],
     )
     def test_user_assignable_tags(
@@ -339,50 +339,50 @@ class TestTagVisibility:
         can_assign_org2_admin,
     ):
         tags = {
-            'u1': TagFactory.create(name='u1', owner=users['user1'], can_assign=AccessibleBy.OWNER),
-            'u2': TagFactory.create(name='u2', owner=users['user2'], can_assign=AccessibleBy.OWNER),
-            'evbd': TagFactory.create(name='evbd', can_assign=AccessibleBy.EVERYBODY),
-            'org2': TagFactory.create(
-                name='org2',
-                owner_org=organizations['standalone'],
+            "u1": TagFactory.create(name="u1", owner=users["user1"], can_assign=AccessibleBy.OWNER),
+            "u2": TagFactory.create(name="u2", owner=users["user2"], can_assign=AccessibleBy.OWNER),
+            "evbd": TagFactory.create(name="evbd", can_assign=AccessibleBy.EVERYBODY),
+            "org2": TagFactory.create(
+                name="org2",
+                owner_org=organizations["standalone"],
                 can_assign=AccessibleBy.ORG_USERS,
             ),
-            'org2_admin': TagFactory.create(
-                name='org2_admin',
-                owner_org=organizations['standalone'],
+            "org2_admin": TagFactory.create(
+                name="org2_admin",
+                owner_org=organizations["standalone"],
                 can_assign=AccessibleBy.ORG_ADMINS,
             ),
-            'cons': TagFactory.create(name='cons', can_assign=AccessibleBy.CONS_ADMINS),
-            'system': TagFactory.create(name='system', can_assign=AccessibleBy.SYSTEM),
+            "cons": TagFactory.create(name="cons", can_assign=AccessibleBy.CONS_ADMINS),
+            "system": TagFactory.create(name="system", can_assign=AccessibleBy.SYSTEM),
         }
         user = users[user_key]
         for key, tag in tags.items():
-            if locals()[f'can_assign_{key}']:
-                assert tag.can_user_assign(user), f'{user_key} should be able to assign {key}'
+            if locals()[f"can_assign_{key}"]:
+                assert tag.can_user_assign(user), f"{user_key} should be able to assign {key}"
             else:
                 assert not tag.can_user_assign(
                     user
-                ), f'{user_key} should not be able to assign {key}'
+                ), f"{user_key} should not be able to assign {key}"
 
     @pytest.mark.parametrize(
         [
-            'user_key',
-            'can_modify_u1',
-            'can_modify_u2',
-            'can_modify_org2',
-            'can_modify_org2_admin',
-            'can_modify_cons',
-            'can_modify_evbd',
-            'can_modify_system',
+            "user_key",
+            "can_modify_u1",
+            "can_modify_u2",
+            "can_modify_org2",
+            "can_modify_org2_admin",
+            "can_modify_cons",
+            "can_modify_evbd",
+            "can_modify_system",
         ],
         [
-            ('user1', True, False, False, False, False, True, False),
-            ('user2', False, True, True, False, False, True, False),
-            ('admin1', False, False, False, False, False, True, False),
-            ('admin2', False, False, True, True, False, True, False),
-            ('master_admin', False, False, True, True, True, True, False),
-            ('master_user', False, False, True, False, False, True, False),
-            ('su', False, False, True, True, True, True, False),
+            ("user1", True, False, False, False, False, True, False),
+            ("user2", False, True, True, False, False, True, False),
+            ("admin1", False, False, False, False, False, True, False),
+            ("admin2", False, False, True, True, False, True, False),
+            ("master_admin", False, False, True, True, True, True, False),
+            ("master_user", False, False, True, False, False, True, False),
+            ("su", False, False, True, True, True, True, False),
         ],
     )
     def test_user_modifiable_tags(
@@ -400,42 +400,42 @@ class TestTagVisibility:
         can_modify_org2_admin,
     ):
         tag_classes = {
-            'u1': TagClassFactory.create(
-                name='u1', owner=users['user1'], can_create_tags=AccessibleBy.OWNER
+            "u1": TagClassFactory.create(
+                name="u1", owner=users["user1"], can_create_tags=AccessibleBy.OWNER
             ),
-            'u2': TagClassFactory.create(
-                name='u2', owner=users['user2'], can_create_tags=AccessibleBy.OWNER
+            "u2": TagClassFactory.create(
+                name="u2", owner=users["user2"], can_create_tags=AccessibleBy.OWNER
             ),
-            'evbd': TagClassFactory.create(name='evbd', can_create_tags=AccessibleBy.EVERYBODY),
-            'org2': TagClassFactory.create(
-                name='org2',
-                owner_org=organizations['standalone'],
+            "evbd": TagClassFactory.create(name="evbd", can_create_tags=AccessibleBy.EVERYBODY),
+            "org2": TagClassFactory.create(
+                name="org2",
+                owner_org=organizations["standalone"],
                 can_create_tags=AccessibleBy.ORG_USERS,
             ),
-            'org2_admin': TagClassFactory.create(
-                name='org2_admin',
-                owner_org=organizations['standalone'],
+            "org2_admin": TagClassFactory.create(
+                name="org2_admin",
+                owner_org=organizations["standalone"],
                 can_create_tags=AccessibleBy.ORG_ADMINS,
             ),
-            'cons': TagClassFactory.create(name='cons', can_create_tags=AccessibleBy.CONS_ADMINS),
-            'system': TagClassFactory.create(name='system', can_create_tags=AccessibleBy.SYSTEM),
+            "cons": TagClassFactory.create(name="cons", can_create_tags=AccessibleBy.CONS_ADMINS),
+            "system": TagClassFactory.create(name="system", can_create_tags=AccessibleBy.SYSTEM),
         }
         tags = {key: TagFactory.create(tag_class=tc) for key, tc in tag_classes.items()}
         user = users[user_key]
         for key, tag in tags.items():
-            if locals()[f'can_modify_{key}']:
-                assert tag.can_user_modify(user), f'{user_key} should be able to modify {key}'
+            if locals()[f"can_modify_{key}"]:
+                assert tag.can_user_modify(user), f"{user_key} should be able to modify {key}"
             else:
                 assert not tag.can_user_modify(
                     user
-                ), f'{user_key} should not be able to modify {key}'
+                ), f"{user_key} should not be able to modify {key}"
 
 
 @pytest.mark.django_db
 class TestTagClassConstraints:
-    @pytest.mark.parametrize(['access_level_attr'], [('can_modify',), ('can_create_tags',)])
+    @pytest.mark.parametrize(["access_level_attr"], [("can_modify",), ("can_create_tags",)])
     @pytest.mark.parametrize(
-        ['access_level', 'is_owner_set', 'is_ok'],
+        ["access_level", "is_owner_set", "is_ok"],
         [
             (AccessibleBy.EVERYBODY, False, True),
             (AccessibleBy.EVERYBODY, True, True),
@@ -455,28 +455,28 @@ class TestTagClassConstraints:
         self, basic1, users, access_level_attr, access_level, is_owner_set, is_ok
     ):
         other_access_level_attr = (
-            'can_create_tags' if access_level_attr == 'can_modify' else 'can_modify'
+            "can_create_tags" if access_level_attr == "can_modify" else "can_modify"
         )
         params = {
             access_level_attr: access_level,
             other_access_level_attr: AccessibleBy.EVERYBODY,
-            'default_tag_can_see': AccessibleBy.EVERYBODY,
-            'default_tag_can_assign': AccessibleBy.EVERYBODY,
+            "default_tag_can_see": AccessibleBy.EVERYBODY,
+            "default_tag_can_assign": AccessibleBy.EVERYBODY,
         }
         if is_owner_set:
-            params['owner'] = users['user1']
+            params["owner"] = users["user1"]
         if access_level in AccessibleBy.org_related():
             # we need to fill in the owner_org because of other constraints
-            params['owner_org'] = basic1['organizations']['standalone']
+            params["owner_org"] = basic1["organizations"]["standalone"]
         if is_ok:
-            TagClass.objects.create(name='Foo', scope=TagScope.TITLE, **params)
+            TagClass.objects.create(name="Foo", scope=TagScope.TITLE, **params)
         else:
             with pytest.raises(DatabaseError):
-                TagClass.objects.create(name='Foo', scope=TagScope.TITLE, **params)
+                TagClass.objects.create(name="Foo", scope=TagScope.TITLE, **params)
 
-    @pytest.mark.parametrize(['access_level_attr'], [('can_modify',), ('can_create_tags',)])
+    @pytest.mark.parametrize(["access_level_attr"], [("can_modify",), ("can_create_tags",)])
     @pytest.mark.parametrize(
-        ['access_level', 'is_owner_org_set', 'is_ok'],
+        ["access_level", "is_owner_org_set", "is_ok"],
         [
             (AccessibleBy.EVERYBODY, False, True),
             (AccessibleBy.EVERYBODY, True, False),
@@ -497,27 +497,27 @@ class TestTagClassConstraints:
     ):
         TagClassFactory.create()
         other_access_level_attr = (
-            'can_create_tags' if access_level_attr == 'can_modify' else 'can_modify'
+            "can_create_tags" if access_level_attr == "can_modify" else "can_modify"
         )
         params = {
             access_level_attr: access_level,
             other_access_level_attr: AccessibleBy.EVERYBODY,
-            'owner': users['user1'],
+            "owner": users["user1"],
         }
         if is_owner_org_set:
-            params['owner_org'] = basic1['organizations']['standalone']
+            params["owner_org"] = basic1["organizations"]["standalone"]
         if is_ok:
-            TagClass.objects.create(name='Foo', scope=TagScope.TITLE, **params)
+            TagClass.objects.create(name="Foo", scope=TagScope.TITLE, **params)
         else:
             with pytest.raises(DatabaseError):
-                TagClass.objects.create(name='Foo', scope=TagScope.TITLE, **params)
+                TagClass.objects.create(name="Foo", scope=TagScope.TITLE, **params)
 
 
 @pytest.mark.django_db
 class TestTagConstraints:
-    @pytest.mark.parametrize(['access_level_attr'], [('can_see',), ('can_assign',)])
+    @pytest.mark.parametrize(["access_level_attr"], [("can_see",), ("can_assign",)])
     @pytest.mark.parametrize(
-        ['access_level', 'is_owner_set', 'is_ok'],
+        ["access_level", "is_owner_set", "is_ok"],
         [
             (AccessibleBy.EVERYBODY, False, True),
             (AccessibleBy.EVERYBODY, True, True),
@@ -537,22 +537,22 @@ class TestTagConstraints:
         self, basic1, users, access_level_attr, access_level, is_owner_set, is_ok
     ):
         tc = TagClassFactory.create()
-        other_access_level_attr = 'can_see' if access_level_attr == 'can_assign' else 'can_assign'
+        other_access_level_attr = "can_see" if access_level_attr == "can_assign" else "can_assign"
         params = {access_level_attr: access_level, other_access_level_attr: AccessibleBy.EVERYBODY}
         if is_owner_set:
-            params['owner'] = users['user1']
+            params["owner"] = users["user1"]
         if access_level in AccessibleBy.org_related():
             # we need to fill in the owner_org because of other constraints
-            params['owner_org'] = basic1['organizations']['standalone']
+            params["owner_org"] = basic1["organizations"]["standalone"]
         if is_ok:
-            Tag.objects.create(name='Foo', tag_class=tc, **params)
+            Tag.objects.create(name="Foo", tag_class=tc, **params)
         else:
             with pytest.raises(DatabaseError):
-                Tag.objects.create(name='Foo', tag_class=tc, **params)
+                Tag.objects.create(name="Foo", tag_class=tc, **params)
 
-    @pytest.mark.parametrize(['access_level_attr'], [('can_see',), ('can_assign',)])
+    @pytest.mark.parametrize(["access_level_attr"], [("can_see",), ("can_assign",)])
     @pytest.mark.parametrize(
-        ['access_level', 'is_owner_org_set', 'is_ok'],
+        ["access_level", "is_owner_org_set", "is_ok"],
         [
             (AccessibleBy.EVERYBODY, False, True),
             (AccessibleBy.EVERYBODY, True, False),
@@ -572,24 +572,24 @@ class TestTagConstraints:
         self, basic1, users, access_level_attr, access_level, is_owner_org_set, is_ok
     ):
         tc = TagClassFactory.create()
-        other_access_level_attr = 'can_see' if access_level_attr == 'can_assign' else 'can_assign'
+        other_access_level_attr = "can_see" if access_level_attr == "can_assign" else "can_assign"
         params = {
             access_level_attr: access_level,
             other_access_level_attr: AccessibleBy.EVERYBODY,
-            'owner': users['user1'],
+            "owner": users["user1"],
         }
         if is_owner_org_set:
-            params['owner_org'] = basic1['organizations']['standalone']
+            params["owner_org"] = basic1["organizations"]["standalone"]
         if is_ok:
-            Tag.objects.create(name='Foo', tag_class=tc, **params)
+            Tag.objects.create(name="Foo", tag_class=tc, **params)
         else:
             with pytest.raises(DatabaseError):
-                Tag.objects.create(name='Foo', tag_class=tc, **params)
+                Tag.objects.create(name="Foo", tag_class=tc, **params)
 
 
 @pytest.mark.django_db
 class TestItemTagConstraints:
-    @pytest.mark.parametrize(['is_exclusive', 'can_add_two_tags'], [(True, False), (False, True)])
+    @pytest.mark.parametrize(["is_exclusive", "can_add_two_tags"], [(True, False), (False, True)])
     def test_exclusive_tag_class_constraint(self, is_exclusive, can_add_two_tags, admin_user):
         tc = TagClassFactory.create(exclusive=is_exclusive, scope=TagScope.TITLE)
         tag1, tag2 = TagFactory.create_batch(2, tag_class=tc)
@@ -605,7 +605,7 @@ class TestItemTagConstraints:
 @pytest.mark.django_db
 class TestTaggingBatchConstraints:
     @pytest.mark.parametrize(
-        ['state', 'has_tag', 'has_tag_class', 'ok'],
+        ["state", "has_tag", "has_tag_class", "ok"],
         [
             (TaggingBatchState.INITIAL, True, True, True),
             (TaggingBatchState.INITIAL, True, False, True),
@@ -618,11 +618,11 @@ class TestTaggingBatchConstraints:
         ],
     )
     def test_tag_or_tag_class_is_set(self, state, has_tag, has_tag_class, ok):
-        data = {'state': state}
+        data = {"state": state}
         if has_tag:
-            data['tag'] = TagFactory.create()
+            data["tag"] = TagFactory.create()
         if has_tag_class:
-            data['tag_class'] = TagClassFactory.create()
+            data["tag_class"] = TagClassFactory.create()
         if ok:
             TaggingBatch.objects.create(**data)
         else:
@@ -663,7 +663,7 @@ class TestTaggingBatchModel:
         Tests that the `to_reprocess` queryset filter works as expected and returns only objects
         which have the `reprocess_after` set and the last attempt is older than `reprocess_after`.
         """
-        with freeze_time('2023-01-01'):
+        with freeze_time("2023-01-01"):
             tb1 = TaggingBatchFactory.create(
                 reprocess_after=timedelta(days=1), state=TaggingBatchState.IMPORTED
             )
@@ -672,12 +672,12 @@ class TestTaggingBatchModel:
                 reprocess_after=timedelta(days=1), state=TaggingBatchState.PREFLIGHT
             )  # not imported yet, no reprocess
             TaggingBatchFactory.create(reprocess_after=None)  # no reprocess
-        with freeze_time('2023-01-03'):
+        with freeze_time("2023-01-03"):
             assert TaggingBatch.objects.to_reprocess().count() == 1
             assert TaggingBatch.objects.to_reprocess().first() == tb1
 
     @pytest.mark.parametrize(
-        ['state', 'reprocess'],
+        ["state", "reprocess"],
         [
             (TaggingBatchState.INITIAL, False),
             (TaggingBatchState.PREPROCESSING, False),
@@ -693,8 +693,8 @@ class TestTaggingBatchModel:
         """
         Tests that only the `IMPORTED` state may be reprocesed.
         """
-        with freeze_time('2023-01-01'):
+        with freeze_time("2023-01-01"):
             tb1 = TaggingBatchFactory.create(reprocess_after=timedelta(days=1), state=state)
             TaggingAttemptFactory.create(batch=tb1)
-        with freeze_time('2023-01-03'):
+        with freeze_time("2023-01-03"):
             assert TaggingBatch.objects.to_reprocess().first() == (tb1 if reprocess else None)

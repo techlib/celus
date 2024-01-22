@@ -26,11 +26,11 @@ from ..models import CounterReportType, SushiCredentials, SushiFetchAttempt
 @pytest.mark.django_db
 class TestLocking:
     @pytest.mark.parametrize(
-        ['user_code', 'can_lock_super', 'can_lock_staff', 'can_lock_org_admin'],
+        ["user_code", "can_lock_super", "can_lock_staff", "can_lock_org_admin"],
         (
-            ('org_admin', False, False, True),
-            ('staff', False, True, True),
-            ('superuser', True, True, True),
+            ("org_admin", False, False, True),
+            ("staff", False, True, True),
+            ("superuser", True, True, True),
         ),
     )
     def test_can_lock_to_level_permissions(
@@ -61,11 +61,11 @@ class TestLocking:
         self._test_change_lock(credentials, user, UL_CONS_ADMIN, can_lock_super)
 
     @pytest.mark.parametrize(
-        ['user_code', 'can_unlock_super', 'can_unlock_staff', 'can_unlock_org_admin'],
+        ["user_code", "can_unlock_super", "can_unlock_staff", "can_unlock_org_admin"],
         (
-            ('org_admin', False, False, True),
-            ('staff', False, True, True),
-            ('superuser', True, True, True),
+            ("org_admin", False, False, True),
+            ("staff", False, True, True),
+            ("superuser", True, True, True),
         ),
     )
     def test_can_unlock_from_level(
@@ -99,15 +99,15 @@ class TestLocking:
     def _user_code_to_user(
         cls, code: str, organization, admin_user, master_admin_identity, valid_identity
     ):
-        if code == 'org_admin':
+        if code == "org_admin":
             user = Identity.objects.get(identity=valid_identity).user
             UserOrganization.objects.create(user=user, organization=organization, is_admin=True)
             return user
-        elif code == 'superuser':
+        elif code == "superuser":
             return admin_user
-        elif code == 'staff':
+        elif code == "staff":
             return Identity.objects.get(identity=master_admin_identity).user
-        raise ValueError(f'wrong code {code}')
+        raise ValueError(f"wrong code {code}")
 
     @classmethod
     def _test_change_lock(cls, credentials, user, level, can):
@@ -127,27 +127,27 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'organization': organizations['empty'].internal_id,
-                'publisher/vendor/platform': 'XXXX',
-                'requestor id': 'RRRX',
-                'customer id': 'BBB',
-                'api key': 'kekekeyyy',
+                "organization": organizations["empty"].internal_id,
+                "publisher/vendor/platform": "XXXX",
+                "requestor id": "RRRX",
+                "customer id": "BBB",
+                "api key": "kekekeyyy",
             }
         ]
         knowledgebase = {
-            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
         Platform.objects.create(
-            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
         )
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
-        assert cr1.version_hash != ''
+        assert cr1.version_hash != ""
         assert cr1.version_hash == cr1.compute_version_hash()
         old_hash = cr1.version_hash
-        cr1.api_key = 'new_api_key'
-        assert cr1.compute_version_hash() != cr1.version_hash, 'no change without a save'
+        cr1.api_key = "new_api_key"
+        assert cr1.compute_version_hash() != cr1.version_hash, "no change without a save"
         cr1.save()
         assert cr1.compute_version_hash() == cr1.version_hash
         assert cr1.version_hash != old_hash
@@ -159,27 +159,27 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'organization': organizations['empty'].internal_id,
-                'publisher/vendor/platform': 'XXXX',
-                'requestor id': 'RRRX',
-                'customer id': 'BBB',
-                'api key': 'kekekeyyy',
+                "organization": organizations["empty"].internal_id,
+                "publisher/vendor/platform": "XXXX",
+                "requestor id": "RRRX",
+                "customer id": "BBB",
+                "api key": "kekekeyyy",
             }
         ]
         knowledgebase = {
-            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
         Platform.objects.create(
-            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
         )
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         hash1 = cr1.compute_version_hash()
-        cr1.requestor_id = 'new_id'
+        cr1.requestor_id = "new_id"
         hash2 = cr1.compute_version_hash()
         assert hash2 != hash1
-        cr1.api_key = 'new_api_key'
+        cr1.api_key = "new_api_key"
         assert cr1.compute_version_hash() != hash1
         assert cr1.compute_version_hash() != hash2
 
@@ -190,18 +190,18 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'organization': organizations['empty'].internal_id,
-                'publisher/vendor/platform': 'XXXX',
-                'requestor id': 'RRRX',
-                'customer id': 'BBB',
-                'api key': 'kekekeyyy',
+                "organization": organizations["empty"].internal_id,
+                "publisher/vendor/platform": "XXXX",
+                "requestor id": "RRRX",
+                "customer id": "BBB",
+                "api key": "kekekeyyy",
             }
         ]
         knowledgebase = {
-            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
         Platform.objects.create(
-            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
         )
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
@@ -223,36 +223,36 @@ class TestCredentialsVersioning:
         """
         data = [
             {
-                'organization': organizations['empty'].internal_id,
-                'publisher/vendor/platform': 'XXXX',
-                'requestor id': 'RRRX',
-                'customer id': 'BBB',
-                'api key': 'kekekeyyy',
+                "organization": organizations["empty"].internal_id,
+                "publisher/vendor/platform": "XXXX",
+                "requestor id": "RRRX",
+                "customer id": "BBB",
+                "api key": "kekekeyyy",
             }
         ]
         knowledgebase = {
-            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
         Platform.objects.create(
-            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
         )
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
         report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
+            code="tr", name="tr", counter_version=5, report_type=report_type_nd(0)
         )
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
+        monkeypatch.setattr(Sushi5Client, "get_report_data", mock_get_report_data)
         attempt: SushiFetchAttempt = cr1.fetch_report(
-            report, start_date='2020-01-01', end_date='2020-01-31'
+            report, start_date="2020-01-01", end_date="2020-01-31"
         )
-        assert 'credentials_version' in attempt.processing_info
-        assert attempt.credentials_version_hash != ''
+        assert "credentials_version" in attempt.processing_info
+        assert attempt.credentials_version_hash != ""
         assert attempt.credentials_version_hash == cr1.version_hash
 
 
@@ -328,7 +328,7 @@ class TestCredentialsQuerySet:
         assert SushiCredentials.objects.annotate_verified().get(pk=cr1.pk).verified is True
 
     def test_not_fake(self, report_types, counter_report_types, settings):
-        settings.FAKE_SUSHI_URLS = ['https://fake.it', 'https://skip.it']
+        settings.FAKE_SUSHI_URLS = ["https://fake.it", "https://skip.it"]
         c1 = CredentialsFactory(url="https://real.sushi/")
         CredentialsFactory(url="https://skip.it")
         CredentialsFactory(url="https://fake.it/something")

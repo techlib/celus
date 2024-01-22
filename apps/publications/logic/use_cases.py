@@ -15,17 +15,17 @@ def get_use_cases(platforms: QuerySet[Platform]) -> typing.List[dict]:
     )
     return (
         SushiFetchAttempt.objects.filter(
-            credentials_version_hash=F('credentials__version_hash'),
+            credentials_version_hash=F("credentials__version_hash"),
             status=AttemptStatus.SUCCESS,
             credentials__platform__in=platforms,
         )
         .annotate(
-            url=F('credentials__url'),
-            organization=F('credentials__organization'),
-            platform=F('credentials__platform'),
-            counter_version=F('credentials__counter_version'),
+            url=F("credentials__url"),
+            organization=F("credentials__organization"),
+            platform=F("credentials__platform"),
+            counter_version=F("credentials__counter_version"),
         )
         .exclude(fake_cond)
         .values("url", "organization", "platform", "counter_report", "counter_version")
-        .annotate(latest=Max('timestamp'), count=Count('pk'))
+        .annotate(latest=Max("timestamp"), count=Count("pk"))
     )

@@ -4,21 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0023_sushicredentials_last_updated_by')]
+    dependencies = [("sushi", "0023_sushicredentials_last_updated_by")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='lock_level',
+            model_name="sushicredentials",
+            name="lock_level",
             field=models.PositiveSmallIntegerField(
                 choices=[
-                    (0, 'Unlocked'),
-                    (300, 'Organization admin'),
-                    (400, 'Consortium staff'),
-                    (1000, 'Superuser'),
+                    (0, "Unlocked"),
+                    (300, "Organization admin"),
+                    (400, "Consortium staff"),
+                    (1000, "Superuser"),
                 ],
                 default=300,
-                help_text='Only user with the same or higher level can unlock it and/or edit it',
+                help_text="Only user with the same or higher level can unlock it and/or edit it",
             ),
         )
     ]

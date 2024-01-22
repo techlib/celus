@@ -55,7 +55,7 @@ def logged_task(fn):
 
         tid = threading.get_ident()
         start_ch_qc = (
-            ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
+            ch_backend._query_counts.get(tid, {}).get("AccessLogCube", 0)
             if settings.CLICKHOUSE_QUERY_ACTIVE
             else 0
         )
@@ -65,16 +65,16 @@ def logged_task(fn):
 
             # and log the number of queries that were executed
             task_id = celery.current_task.request.id
-            cache.set(f'celery_task_query_count_{task_id}', counter[tid], 60 * 60)
+            cache.set(f"celery_task_query_count_{task_id}", counter[tid], 60 * 60)
 
         end_ch_qc = (
-            ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
+            ch_backend._query_counts.get(tid, {}).get("AccessLogCube", 0)
             if settings.CLICKHOUSE_QUERY_ACTIVE
             else 0
         )
-        cache.set(f'celery_task_ch_query_count_{task_id}', end_ch_qc - start_ch_qc, 60 * 60)
+        cache.set(f"celery_task_ch_query_count_{task_id}", end_ch_qc - start_ch_qc, 60 * 60)
         logger.debug(
-            'Executed %d django queries and %d clickhouse queries in %s',
+            "Executed %d django queries and %d clickhouse queries in %s",
             counter[tid],
             end_ch_qc - start_ch_qc,
             fn.__name__,

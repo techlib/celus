@@ -10,5 +10,5 @@ def mail_customer_care_admins(subject, message):
     # `check_customer_care_admins` check in apps/core/apps.py
     addresses = [a[1] for a in settings.CUSTOMER_CARE_ADMINS]
     send_mail(
-        f'{settings.EMAIL_SUBJECT_PREFIX}{subject}', message, settings.SERVER_EMAIL, addresses
+        f"{settings.EMAIL_SUBJECT_PREFIX}{subject}", message, settings.SERVER_EMAIL, addresses
     )

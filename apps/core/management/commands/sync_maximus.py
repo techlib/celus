@@ -4,7 +4,7 @@ from core.logic.maximus_sync import sync
 
 
 class Command(BaseCommand):
-    help = 'Sync to celus-maximus'
+    help = "Sync to celus-maximus"
 
     def handle(self, *args, **options):
         sync()

@@ -4,20 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('knowledgebase', '0003_routersyncattempt')]
+    dependencies = [("knowledgebase", "0003_routersyncattempt")]
 
     operations = [
         migrations.CreateModel(
-            name='ReportTypeImportAttempt',
+            name="ReportTypeImportAttempt",
             fields=[],
-            options={'proxy': True, 'indexes': [], 'constraints': []},
-            bases=('knowledgebase.importattempt',),
+            options={"proxy": True, "indexes": [], "constraints": []},
+            bases=("knowledgebase.importattempt",),
         ),
         migrations.AlterField(
-            model_name='importattempt',
-            name='kind',
+            model_name="importattempt",
+            name="kind",
             field=models.CharField(
-                choices=[('platform', 'Platform'), ('report_type', 'Report type')], max_length=20
+                choices=[("platform", "Platform"), ("report_type", "Report type")], max_length=20
             ),
         ),
     ]

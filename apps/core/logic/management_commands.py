@@ -16,43 +16,43 @@ class CommandInfo:
     @property
     def arg_parser(self) -> ArgumentParser:
         if self._arg_parser is None:
-            self._arg_parser = self.instance.create_parser('', self.name)
+            self._arg_parser = self.instance.create_parser("", self.name)
         return self._arg_parser
 
     @property
     def uses_doit(self):
-        return any(a.dest == 'doit' for a in self.arg_parser._actions)
+        return any(a.dest == "doit" for a in self.arg_parser._actions)
 
     @property
     def args(self):
         # create a test command to get the arguments which are shared by all commands
         # so that we can filter them out
         base_command = BaseCommand()
-        base_parser = base_command.create_parser('', self.name)
+        base_parser = base_command.create_parser("", self.name)
         default_args = [a.dest for a in base_parser._actions]
         return [
             action
             for action in self.arg_parser._actions
-            if action.dest != 'doit' and action.dest not in default_args
+            if action.dest != "doit" and action.dest not in default_args
         ]
 
     @classmethod
     def serialize_arg(cls, arg):
         return {
-            'name': arg.dest,
-            'help': arg.help,
-            'required': arg.required,
-            'default': arg.default,
-            'metavar': arg.metavar,
-            'type': cls.arg_type_str(arg),
+            "name": arg.dest,
+            "help": arg.help,
+            "required": arg.required,
+            "default": arg.default,
+            "metavar": arg.metavar,
+            "type": cls.arg_type_str(arg),
         }
 
     @classmethod
     def arg_type_str(cls, arg) -> str:
         if isinstance(arg, _StoreTrueAction):
-            typ = 'bool'
+            typ = "bool"
         elif arg.type is open or isinstance(arg.type, FileType):
-            typ = 'file'
+            typ = "file"
         elif arg.type:
             typ = arg.type.__name__
         else:
@@ -91,7 +91,7 @@ class CommandManager:
 
     @classmethod
     def _resolve_command(cls, app, command):
-        module = import_module(f'{app}.management.commands.{command}')
+        module = import_module(f"{app}.management.commands.{command}")
         return module.Command
 
     @property

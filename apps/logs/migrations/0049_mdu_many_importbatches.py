@@ -5,55 +5,55 @@ from django.db import migrations, models
 
 
 def import_batch_to_import_batches(apps, schema_editor):
-    ManualDataUpload = apps.get_model('logs', 'ManualDataUpload')
+    ManualDataUpload = apps.get_model("logs", "ManualDataUpload")
     for mdu in ManualDataUpload.objects.exclude(import_batch__isnull=True):
         mdu.import_batches.add(mdu.import_batch)
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0048_importbatchsynclog')]
+    dependencies = [("logs", "0048_importbatchsynclog")]
 
     operations = [
         migrations.CreateModel(
-            name='ManualDataUploadImportBatch',
+            name="ManualDataUploadImportBatch",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'import_batch',
+                    "import_batch",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='mdu_link',
-                        to='logs.importbatch',
+                        related_name="mdu_link",
+                        to="logs.importbatch",
                     ),
                 ),
                 (
-                    'mdu',
+                    "mdu",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='import_batch_link',
-                        to='logs.manualdataupload',
+                        related_name="import_batch_link",
+                        to="logs.manualdataupload",
                     ),
                 ),
             ],
         ),
         migrations.AddField(
-            model_name='manualdataupload',
-            name='import_batches',
+            model_name="manualdataupload",
+            name="import_batches",
             field=models.ManyToManyField(
-                related_name='mdu',
-                through='logs.ManualDataUploadImportBatch',
-                to='logs.ImportBatch',
+                related_name="mdu",
+                through="logs.ManualDataUploadImportBatch",
+                to="logs.ImportBatch",
             ),
         ),
         migrations.AddConstraint(
-            model_name='manualdatauploadimportbatch',
+            model_name="manualdatauploadimportbatch",
             constraint=models.UniqueConstraint(
-                fields=('import_batch',), name='one_import_batch_per_mdu'
+                fields=("import_batch",), name="one_import_batch_per_mdu"
             ),
         ),
         migrations.RunPython(import_batch_to_import_batches, migrations.RunPython.noop),

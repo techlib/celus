@@ -23,9 +23,9 @@ class ImpersonateViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, Generic
     def get_queryset(self):
         return users_impersonable(self.request).prefetch_related(
             Prefetch(
-                'userorganization_set',
-                queryset=UserOrganization.objects.select_related('organization'),
-                to_attr='userorganization_set_prefetched',
+                "userorganization_set",
+                queryset=UserOrganization.objects.select_related("organization"),
+                to_attr="userorganization_set_prefetched",
             )
         )
 

@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 @logged_task
 @email_if_fails
 @atomic
-def tagging_batch_preflight_task(batch_id: int, domain_name: str = '/'):
+def tagging_batch_preflight_task(batch_id: int, domain_name: str = "/"):
     try:
         tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
         if tb.state == TaggingBatchState.PREPROCESSING:
             tp = TaskProgress(task_id=celery.current_task.request.id)
             tb.do_preflight(
-                title_id_formatter=lambda title_id: f'{domain_name}titles/{title_id}',
+                title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
                 progress_monitor=tp.store_progress,
             )
         else:
@@ -39,13 +39,13 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = '/'):
 @logged_task
 @email_if_fails
 @atomic
-def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = '/'):
+def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = "/"):
     try:
         tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=batch_id)
         if tb.state == TaggingBatchState.IMPORTING:
             tp = TaskProgress(task_id=celery.current_task.request.id)
             tb.assign_tag(
-                title_id_formatter=lambda title_id: f'{domain_name}titles/{title_id}',
+                title_id_formatter=lambda title_id: f"{domain_name}titles/{title_id}",
                 progress_monitor=tp.store_progress,
             )
         else:
@@ -97,7 +97,7 @@ def reprocess_due_tagging_batches_task():
         tb.state = TaggingBatchState.IMPORTING
         tb.save()
         tb.assign_tag(
-            title_id_formatter=lambda title_id: f'https://{domain_name}/titles/{title_id}',
+            title_id_formatter=lambda title_id: f"https://{domain_name}/titles/{title_id}",
         )
         if TaggingBatch.objects.to_reprocess().exists():
             # reschedule the task to run again to process the next batch

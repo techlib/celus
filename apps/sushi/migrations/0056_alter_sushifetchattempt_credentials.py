@@ -6,15 +6,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('sushi', '0055_fill_missing_extracted_data'),
+        ("sushi", "0055_fill_missing_extracted_data"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='credentials',
+            model_name="sushifetchattempt",
+            name="credentials",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.SET_NULL, to='sushi.sushicredentials'
+                null=True, on_delete=django.db.models.deletion.SET_NULL, to="sushi.sushicredentials"
             ),
         ),
     ]

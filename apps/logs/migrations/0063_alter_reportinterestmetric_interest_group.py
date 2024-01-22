@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0062_merge_20220325_1628')]
+    dependencies = [("logs", "0062_merge_20220325_1628")]
 
     operations = [
         migrations.AlterField(
-            model_name='reportinterestmetric',
-            name='interest_group',
+            model_name="reportinterestmetric",
+            name="interest_group",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to='logs.interestgroup'
+                on_delete=django.db.models.deletion.CASCADE, to="logs.interestgroup"
             ),
         )
     ]

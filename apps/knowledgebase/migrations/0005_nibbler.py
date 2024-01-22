@@ -4,23 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('knowledgebase', '0004_report_type_in_knowledgebase')]
+    dependencies = [("knowledgebase", "0004_report_type_in_knowledgebase")]
 
     operations = [
         migrations.CreateModel(
-            name='ParserDefinitionImportAttempt',
+            name="ParserDefinitionImportAttempt",
             fields=[],
-            options={'proxy': True, 'indexes': [], 'constraints': []},
-            bases=('knowledgebase.importattempt',),
+            options={"proxy": True, "indexes": [], "constraints": []},
+            bases=("knowledgebase.importattempt",),
         ),
         migrations.AlterField(
-            model_name='importattempt',
-            name='kind',
+            model_name="importattempt",
+            name="kind",
             field=models.CharField(
                 choices=[
-                    ('platform', 'Platform'),
-                    ('report_type', 'Report type'),
-                    ('parser_definition', 'Parser definition'),
+                    ("platform", "Platform"),
+                    ("report_type", "Report type"),
+                    ("parser_definition", "Parser definition"),
                 ],
                 max_length=20,
             ),

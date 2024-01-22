@@ -17,14 +17,14 @@ from test_scenarios.basic import clients, identities  # noqa - fixtures
 @pytest.fixture
 def exports_for_users(users):
     return (
-        FlexibleDataExport.objects.create(owner=users['user1']),
-        FlexibleDataExport.objects.create(owner=users['master_admin']),
+        FlexibleDataExport.objects.create(owner=users["user1"]),
+        FlexibleDataExport.objects.create(owner=users["master_admin"]),
     )
 
 
 @pytest.fixture
 def export_pk(users, settings):
-    user = users['user1']
+    user = users["user1"]
     not_obsolete = FlexibleDataExport.objects.create(owner=user)
     not_obsolete.created = now() - settings.EXPORT_DELETING_PERIOD + timedelta(days=1)
     not_obsolete.save()
@@ -38,94 +38,94 @@ def export_pk(users, settings):
 @pytest.mark.django_db
 class TestFlexibleExportApi:
     def test_list_no_data(self, admin_client):
-        resp = admin_client.get(reverse('flexible-export-list'))
+        resp = admin_client.get(reverse("flexible-export-list"))
         assert resp.status_code == 200
 
     @pytest.mark.parametrize(
-        ['user_name'], [['user1'], ['user2'], ['master_admin'], ['master_user'], ['admin1']]
+        ["user_name"], [["user1"], ["user2"], ["master_admin"], ["master_user"], ["admin1"]]
     )
     def test_list_user_access(self, exports_for_users, users, user_name, client):
         """Check that user has only access to export created by himself"""
         user = users[user_name]
         client.force_login(user)
-        resp = client.get(reverse('flexible-export-list'))
+        resp = client.get(reverse("flexible-export-list"))
         assert resp.status_code == 200
         for rec in resp.json():
-            export = FlexibleDataExport.objects.get(pk=rec['pk'])
+            export = FlexibleDataExport.objects.get(pk=rec["pk"])
             assert export.owner == user
 
     def test_list_user_only_authenticated(self, exports_for_users, client):
-        resp = client.get(reverse('flexible-export-list'))
+        resp = client.get(reverse("flexible-export-list"))
         assert resp.status_code in (401, 403)
 
     def test_create(self, admin_client, admin_user):
-        with patch('export.views.process_flexible_export_task') as export_task:
+        with patch("export.views.process_flexible_export_task") as export_task:
             resp = admin_client.post(
-                reverse('flexible-export-list'),
-                {'primary_dimension': 'platform', 'groups': b64json(['metric'])},
-                content_type='application/json',
+                reverse("flexible-export-list"),
+                {"primary_dimension": "platform", "groups": b64json(["metric"])},
+                content_type="application/json",
             )
             export_task.apply_async.assert_called_once()
         assert resp.status_code == 201
-        export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
+        export = FlexibleDataExport.objects.get(pk=resp.json()["pk"])
         assert export.owner == admin_user
 
     def test_create_trend_mode(self, flexible_slicer_test_data, admin_client):
-        with patch('export.views.process_flexible_export_task') as export_task:
+        with patch("export.views.process_flexible_export_task") as export_task:
             resp = admin_client.post(
-                reverse('flexible-export-list'),
+                reverse("flexible-export-list"),
                 {
-                    'primary_dimension': 'platform',
-                    'trend_mode': True,
-                    'base_subset_filters': b64json(
-                        {'date': {'start': '2020-01', 'end': '2020-01'}}
+                    "primary_dimension": "platform",
+                    "trend_mode": True,
+                    "base_subset_filters": b64json(
+                        {"date": {"start": "2020-01", "end": "2020-01"}}
                     ),
-                    'compared_subset_filters': b64json(
-                        {'date': {'start': '2020-02', 'end': '2020-02'}}
+                    "compared_subset_filters": b64json(
+                        {"date": {"start": "2020-02", "end": "2020-02"}}
                     ),
-                    'format': 'xlsx',
-                    'include_tags': False,
+                    "format": "xlsx",
+                    "include_tags": False,
                 },
-                content_type='application/json',
+                content_type="application/json",
             )
             export_task.apply_async.assert_called_once()
         assert resp.status_code == 201
-        export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
-        assert export.export_params['trend_mode'] is True
-        assert isinstance(export.export_params['base_subset_filters'], list)
-        assert isinstance(export.export_params['compared_subset_filters'], list)
-        assert len(export.export_params['base_subset_filters']) == 1
-        assert len(export.export_params['compared_subset_filters']) == 1
+        export = FlexibleDataExport.objects.get(pk=resp.json()["pk"])
+        assert export.export_params["trend_mode"] is True
+        assert isinstance(export.export_params["base_subset_filters"], list)
+        assert isinstance(export.export_params["compared_subset_filters"], list)
+        assert len(export.export_params["base_subset_filters"]) == 1
+        assert len(export.export_params["compared_subset_filters"]) == 1
         # test the structure of the content of the export
         out = BytesIO()
         export.write_data(out)
         out.seek(0)
         workbook = openpyxl.load_workbook(out)
-        sheet = workbook['report']
+        sheet = workbook["report"]
         rows = list(sheet.rows)
         assert [cell.value for cell in rows[0]] == [
-            'Platform',
-            'Tags',
-            '2020-01',
-            '2020-02',
-            'Change',
-            'Change %',
+            "Platform",
+            "Tags",
+            "2020-01",
+            "2020-02",
+            "Change",
+            "Change %",
         ]
 
     def test_create_with_date_filter(self, admin_client, admin_user):
-        with patch('export.views.process_flexible_export_task') as export_task:
+        with patch("export.views.process_flexible_export_task") as export_task:
             resp = admin_client.post(
-                reverse('flexible-export-list'),
+                reverse("flexible-export-list"),
                 {
-                    'primary_dimension': 'platform',
-                    'groups': b64json(['metric']),
-                    'filters': b64json({'date': {'start': '2020-01'}}),
+                    "primary_dimension": "platform",
+                    "groups": b64json(["metric"]),
+                    "filters": b64json({"date": {"start": "2020-01"}}),
                 },
-                content_type='application/json',
+                content_type="application/json",
             )
             export_task.apply_async.assert_called_once()
         assert resp.status_code == 201
-        export = FlexibleDataExport.objects.get(pk=resp.json()['pk'])
+        export = FlexibleDataExport.objects.get(pk=resp.json()["pk"])
         assert export.owner == admin_user
 
     def test_delete_not_owned_export(self, exports_for_users, clients):
@@ -139,7 +139,7 @@ class TestFlexibleExportApi:
         assert FlexibleDataExport.objects.filter(id=export.id).exists()
         export.create_output_file()
         assert export.output_file is not None
-        export.output_file.open('r')
+        export.output_file.open("r")
         export.output_file.close()
         res = clients["user1"].delete(reverse("flexible-export-detail", args=(export.id,)))
         assert res.status_code == 204
@@ -147,10 +147,10 @@ class TestFlexibleExportApi:
         assert not Path(export.output_file.path).exists()
 
     def test_list_not_obsolete_exports(self, client, users, export_pk):
-        user = users['user1']
+        user = users["user1"]
         client.force_login(user)
-        resp = client.get(reverse('flexible-export-list'))
-        resp_pks = [export['pk'] for export in resp.json()]
+        resp = client.get(reverse("flexible-export-list"))
+        resp_pks = [export["pk"] for export in resp.json()]
 
         assert export_pk["not_obsolete"] in resp_pks
         assert export_pk["obsolete"] not in resp_pks

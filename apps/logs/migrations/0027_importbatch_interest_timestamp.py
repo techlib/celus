@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0026_interest_group_ordering')]
+    dependencies = [("logs", "0026_interest_group_ordering")]
 
     operations = [
         migrations.AddField(
-            model_name='importbatch',
-            name='interest_timestamp',
+            model_name="importbatch",
+            name="interest_timestamp",
             field=models.DateTimeField(
-                blank=True, help_text='When was interest procesed for this batch', null=True
+                blank=True, help_text="When was interest procesed for this batch", null=True
             ),
         )
     ]

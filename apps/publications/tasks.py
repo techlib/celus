@@ -40,7 +40,7 @@ def merge_titles_task():
     for titles in find_mergeable_titles():
         count += 1
         merge_titles(titles)
-    logger.info('Merged %d sets of titles', count)
+    logger.info("Merged %d sets of titles", count)
 
 
 @celery.shared_task
@@ -68,7 +68,7 @@ def delete_platform_data_task(
 @logged_task
 @email_if_fails
 @atomic
-def process_title_overlap_batch_task(batch_id: int, domain_name: str = '/'):
+def process_title_overlap_batch_task(batch_id: int, domain_name: str = "/"):
     from publications.models import TitleOverlapBatch
 
     batch = TitleOverlapBatch.objects.filter(pk=batch_id).select_for_update().get()
@@ -76,7 +76,7 @@ def process_title_overlap_batch_task(batch_id: int, domain_name: str = '/'):
     if batch.state == TitleOverlapBatchState.PROCESSING:
         batch.process(
             progress_monitor=tp.store_progress,
-            title_id_formatter=(lambda title_id: f'{domain_name}titles/{title_id}'),
+            title_id_formatter=(lambda title_id: f"{domain_name}titles/{title_id}"),
         )
     else:
-        logger.warning('Batch %d is not in processing state (%s)', batch_id, batch.state)
+        logger.warning("Batch %d is not in processing state (%s)", batch_id, batch.state)

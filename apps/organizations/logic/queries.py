@@ -3,7 +3,7 @@ from django.http import Http404
 
 
 def organization_filter_from_org_id(
-    org_id, user: User, prefix='', admin_required: bool = False, clickhouse=False
+    org_id, user: User, prefix="", admin_required: bool = False, clickhouse=False
 ) -> dict:
     """
     Returns a filter parameters in form of a dictionary based on the org_id and the user
@@ -16,7 +16,7 @@ def organization_filter_from_org_id(
     :param user:
     :return:
     """
-    if org_id in ('-1', -1):
+    if org_id in ("-1", -1):
         if user.is_superuser or user.is_user_of_master_organization:
             return {}
         else:
@@ -32,10 +32,10 @@ def organization_filter_from_org_id(
         ):
             # for django, we cannot use `organization_id` as it would not work for m2m links
             # in clickhouse we must use _id as __pk would not :)
-            postfix = '_id' if clickhouse else '__pk'
+            postfix = "_id" if clickhouse else "__pk"
             # if prefix is set to None, it signals direct filter on Organization and we do not
             # use the default 'organization' part of the attribute name
-            attr_name = f'{prefix}organization{postfix}' if prefix is not None else 'pk'
+            attr_name = f"{prefix}organization{postfix}" if prefix is not None else "pk"
             return {attr_name: org_id}
         raise Http404()
 

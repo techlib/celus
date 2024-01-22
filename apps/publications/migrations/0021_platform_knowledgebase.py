@@ -6,20 +6,20 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0011_datasource_knowledgebase'),
-        ('publications', '0020_platform_nullable_ext_id'),
+        ("core", "0011_datasource_knowledgebase"),
+        ("publications", "0020_platform_nullable_ext_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='platform',
-            name='knowledgebase',
+            model_name="platform",
+            name="knowledgebase",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='platform',
-            name='ext_id',
+            model_name="platform",
+            name="ext_id",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
-        migrations.AlterUniqueTogether(name='platform', unique_together={('ext_id', 'source')}),
+        migrations.AlterUniqueTogether(name="platform", unique_together={("ext_id", "source")}),
     ]

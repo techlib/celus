@@ -8,9 +8,9 @@ class ChartDefinitionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ChartDefinition
 
-    name = factory.Faker('name')
-    primary_implicit_dimension = 'date'
-    secondary_implicit_dimension = 'metric'
+    name = factory.Faker("name")
+    primary_implicit_dimension = "date"
+    secondary_implicit_dimension = "metric"
     is_generic = False
 
 

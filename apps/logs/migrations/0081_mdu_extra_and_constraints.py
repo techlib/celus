@@ -5,45 +5,45 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0080_alter_organizationplatform_unique_together'),
+        ("logs", "0080_alter_organizationplatform_unique_together"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='manualdataupload',
-            name='non-raw-needs-report-type',
+            model_name="manualdataupload",
+            name="non-raw-needs-report-type",
         ),
         migrations.AddField(
-            model_name='manualdataupload',
-            name='extra',
+            model_name="manualdataupload",
+            name="extra",
             field=models.JSONField(
                 blank=True,
                 default=dict,
-                help_text='Extra info obtained from parser (e.g. counter headers)',
+                help_text="Extra info obtained from parser (e.g. counter headers)",
             ),
         ),
         migrations.AlterField(
-            model_name='manualdataupload',
-            name='state',
+            model_name="manualdataupload",
+            name="state",
             field=models.CharField(
                 choices=[
-                    ('initial', 'Initial'),
-                    ('confirmed', 'Confirmed'),
-                    ('preflight', 'Preflight'),
-                    ('importing', 'Importing'),
-                    ('imported', 'Imported'),
-                    ('prefailed', 'Preflight failed'),
-                    ('failed', 'Import failed'),
+                    ("initial", "Initial"),
+                    ("confirmed", "Confirmed"),
+                    ("preflight", "Preflight"),
+                    ("importing", "Importing"),
+                    ("imported", "Imported"),
+                    ("prefailed", "Preflight failed"),
+                    ("failed", "Import failed"),
                 ],
-                default='initial',
+                default="initial",
                 max_length=20,
             ),
         ),
         migrations.AddConstraint(
-            model_name='manualdataupload',
+            model_name="manualdataupload",
             constraint=models.CheckConstraint(
-                check=models.Q(('method', 'celus'), ('report_type__isnull', True), _negated=True),
-                name='celus-needs-report-type',
+                check=models.Q(("method", "celus"), ("report_type__isnull", True), _negated=True),
+                name="celus-needs-report-type",
             ),
         ),
     ]

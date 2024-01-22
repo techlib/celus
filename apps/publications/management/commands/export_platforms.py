@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Create export for celus brain'
+    help = "Create export for celus brain"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--output', '-o', dest='output', required=True, type=lambda x: pathlib.Path(x).open("w")
+            "--output", "-o", dest="output", required=True, type=lambda x: pathlib.Path(x).open("w")
         )
         parser.add_argument(
-            '--all',
-            dest='all',
-            action='store_true',
+            "--all",
+            dest="all",
+            action="store_true",
             help="Export all platforms - including those which were made by users",
         )
 
@@ -50,11 +50,11 @@ class Command(BaseCommand):
             report_types = (
                 creds.sushifetchattempt_set.annotate(
                     has_access_log=Exists(
-                        AccessLog.objects.filter(import_batch__sushifetchattempt__pk=OuterRef('pk'))
+                        AccessLog.objects.filter(import_batch__sushifetchattempt__pk=OuterRef("pk"))
                     )
                 )
                 .filter(has_access_log=True, credentials__counter_version=creds.counter_version)
-                .values_list('counter_report__code', flat=True)
+                .values_list("counter_report__code", flat=True)
             )
 
             new_credentials["report_types"] = list(set(report_types))

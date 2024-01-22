@@ -6,7 +6,7 @@ from django.utils.timezone import utc
 
 
 def add_interest_timestamp_where_interest_processed(apps, schema_editor):
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
+    ImportBatch = apps.get_model("logs", "ImportBatch")
     ImportBatch.objects.filter(interest_processed=True, interest_timestamp__isnull=True).update(
         interest_timestamp=datetime(2018, 1, 1, 0, 0, 0, tzinfo=utc)
     )
@@ -17,9 +17,9 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0028_reporttype_superseeded_by')]
+    dependencies = [("logs", "0028_reporttype_superseeded_by")]
 
     operations = [
         migrations.RunPython(add_interest_timestamp_where_interest_processed, noop),
-        migrations.RemoveField(model_name='importbatch', name='interest_processed'),
+        migrations.RemoveField(model_name="importbatch", name="interest_processed"),
     ]

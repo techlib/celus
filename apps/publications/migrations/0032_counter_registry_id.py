@@ -4,18 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0031_alter_title_unique_together')]
+    dependencies = [("publications", "0031_alter_title_unique_together")]
 
     operations = [
         migrations.AddField(
-            model_name='platform',
-            name='counter_registry_id',
+            model_name="platform",
+            name="counter_registry_id",
             field=models.UUIDField(blank=True, null=True),
         ),
         migrations.AddConstraint(
-            model_name='platform',
+            model_name="platform",
             constraint=models.UniqueConstraint(
-                fields=('counter_registry_id',), name='unique_counter_registry_id'
+                fields=("counter_registry_id",), name="unique_counter_registry_id"
             ),
         ),
     ]

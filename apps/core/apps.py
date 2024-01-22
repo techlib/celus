@@ -19,7 +19,7 @@ def version_to_int(version: str):
     >>> version_to_int('4.10.25')
     41025
     """
-    parts = version.split('.')
+    parts = version.split(".")
     result = 0
     for i, part in enumerate(reversed(parts)):
         try:
@@ -31,7 +31,7 @@ def version_to_int(version: str):
 
 
 class CoreConfig(AppConfig):
-    name = 'core'
+    name = "core"
 
     def ready(self):
         super().ready()
@@ -56,8 +56,8 @@ class CoreConfig(AppConfig):
             for app, command in CommandManager.get_invalid_exposed_commands():
                 errors.append(
                     Warning(
-                        f'Exposed command {app}.{command} is not available',
-                        id='core.W001',
+                        f"Exposed command {app}.{command} is not available",
+                        id="core.W001",
                     )
                 )
             return errors
@@ -67,9 +67,9 @@ class CoreConfig(AppConfig):
             if settings.CLICKHOUSE_QUERY_ACTIVE and not settings.CLICKHOUSE_SYNC_ACTIVE:
                 return [
                     Warning(
-                        'Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is '
-                        'likely an error as the data will not be up to date in queries.',
-                        id='core.W002',
+                        "Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is "
+                        "likely an error as the data will not be up to date in queries.",
+                        id="core.W002",
                     )
                 ]
             return []

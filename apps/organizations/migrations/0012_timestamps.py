@@ -5,29 +5,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0011_userorganization_source')]
+    dependencies = [("organizations", "0011_userorganization_source")]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='created',
+            model_name="organization",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='organization',
-            name='last_modified',
+            model_name="organization",
+            name="last_modified",
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.AddField(
-            model_name='userorganization',
-            name='created',
+            model_name="userorganization",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='userorganization',
-            name='last_modified',
+            model_name="userorganization",
+            name="last_modified",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

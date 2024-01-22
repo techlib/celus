@@ -19,14 +19,14 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('api/', include('api.urls')),
+    path("api/", include("api.urls")),
     path(settings.CELUS_ADMIN_SITE_PATH, admin.site.urls),
-    path('', include('django_prometheus.urls')),
+    path("", include("django_prometheus.urls")),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    if 'debug_toolbar' in settings.INSTALLED_APPS:
+    if "debug_toolbar" in settings.INSTALLED_APPS:
         import debug_toolbar
 
-        urlpatterns = [path('__debug__', include(debug_toolbar.urls))] + urlpatterns
+        urlpatterns = [path("__debug__", include(debug_toolbar.urls))] + urlpatterns

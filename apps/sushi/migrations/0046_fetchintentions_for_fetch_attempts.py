@@ -7,9 +7,9 @@ from django.db import migrations
 
 
 def add_fetch_intention(apps, schema_editor):
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    Harvest = apps.get_model('scheduler', 'Harvest')
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
+    Harvest = apps.get_model("scheduler", "Harvest")
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
 
     datestamp = date(2020, 1, 1)
     organization_id = None
@@ -17,8 +17,8 @@ def add_fetch_intention(apps, schema_editor):
 
     for attempt in (
         SushiFetchAttempt.objects.filter(fetchintention__isnull=True)
-        .order_by('credentials__organization', 'timestamp')
-        .select_related('credentials')
+        .order_by("credentials__organization", "timestamp")
+        .select_related("credentials")
         .iterator()
     ):
         # group intentions per organization per day
@@ -49,8 +49,8 @@ def add_fetch_intention(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('sushi', '0045_fetchattempt_statemachine'),
-        ('scheduler', '0011_fetchintention_previous'),
+        ("sushi", "0045_fetchattempt_statemachine"),
+        ("scheduler", "0011_fetchintention_previous"),
     ]
 
     operations = [migrations.RunPython(add_fetch_intention, migrations.RunPython.noop)]

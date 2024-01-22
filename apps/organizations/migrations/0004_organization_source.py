@@ -5,18 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0003_datasource'), ('organizations', '0003_non_unique_ico')]
+    dependencies = [("core", "0003_datasource"), ("organizations", "0003_non_unique_ico")]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='source',
+            model_name="organization",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name='defined_organizations',
-                to='core.DataSource',
+                related_name="defined_organizations",
+                to="core.DataSource",
             ),
         )
     ]

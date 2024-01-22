@@ -5,27 +5,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0011_datasource_knowledgebase')]
+    dependencies = [("core", "0011_datasource_knowledgebase")]
 
     operations = [
         migrations.AlterField(
-            model_name='identity',
-            name='source',
+            model_name="identity",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='source',
+            model_name="user",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
     ]

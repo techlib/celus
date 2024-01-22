@@ -4,29 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0002_title_doi')]
+    dependencies = [("publications", "0002_title_doi")]
 
     operations = [
         migrations.AlterField(
-            model_name='title',
-            name='doi',
+            model_name="title",
+            name="doi",
             field=models.CharField(blank=True, max_length=250, null=True),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='eissn',
+            model_name="title",
+            name="eissn",
             field=models.CharField(
-                blank=True, help_text='ISSN of electronic version', max_length=9, null=True
+                blank=True, help_text="ISSN of electronic version", max_length=9, null=True
             ),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='isbn',
+            model_name="title",
+            name="isbn",
             field=models.CharField(blank=True, max_length=20, null=True),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='issn',
+            model_name="title",
+            name="issn",
             field=models.CharField(blank=True, max_length=9, null=True),
         ),
     ]

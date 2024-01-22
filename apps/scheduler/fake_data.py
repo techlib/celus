@@ -34,7 +34,7 @@ class HarvestFactory(factory.django.DjangoModelFactory):
 
 
 class SchedulerFactory(factory.django.DjangoModelFactory):
-    url = factory.Faker('url')
+    url = factory.Faker("url")
 
     class Meta:
         model = Scheduler
@@ -43,7 +43,7 @@ class SchedulerFactory(factory.django.DjangoModelFactory):
 class FetchIntentionQueueFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FetchIntentionQueue
-        django_get_or_create = ('id',)
+        django_get_or_create = ("id",)
 
 
 class FetchIntentionFactory(factory.django.DjangoModelFactory):
@@ -53,10 +53,10 @@ class FetchIntentionFactory(factory.django.DjangoModelFactory):
     harvest = factory.SubFactory(HarvestFactory)
     attempt = factory.SubFactory(
         FetchAttemptFactory,
-        counter_report=factory.SelfAttribute('..counter_report'),
-        credentials=factory.SelfAttribute('..credentials'),
-        start_date=factory.SelfAttribute('..start_date'),
-        end_date=factory.SelfAttribute('..end_date'),
+        counter_report=factory.SelfAttribute("..counter_report"),
+        credentials=factory.SelfAttribute("..credentials"),
+        start_date=factory.SelfAttribute("..start_date"),
+        end_date=factory.SelfAttribute("..end_date"),
     )
     not_before = timezone.now()
     credentials = factory.SubFactory(CredentialsFactory)

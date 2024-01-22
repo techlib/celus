@@ -7,34 +7,34 @@ from django.db import migrations, models
 
 
 def delete_existing_fetch_intentions(apps, schema_editor):
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
     FetchIntention.objects.all().delete()
 
 
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('scheduler', '0002_fetchintention_duplicit_of'),
+        ("scheduler", "0002_fetchintention_duplicit_of"),
     ]
 
     operations = [
-        migrations.RemoveField(model_name='fetchintention', name='created'),
-        migrations.RemoveField(model_name='fetchintention', name='group_id'),
-        migrations.RemoveField(model_name='fetchintention', name='last_updated'),
-        migrations.RemoveField(model_name='fetchintention', name='last_updated_by'),
+        migrations.RemoveField(model_name="fetchintention", name="created"),
+        migrations.RemoveField(model_name="fetchintention", name="group_id"),
+        migrations.RemoveField(model_name="fetchintention", name="last_updated"),
+        migrations.RemoveField(model_name="fetchintention", name="last_updated_by"),
         migrations.CreateModel(
-            name='Harvest',
+            name="Harvest",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'last_updated_by',
+                    "last_updated_by",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
@@ -42,17 +42,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'abstract': False},
+            options={"abstract": False},
         ),
         migrations.RunPython(delete_existing_fetch_intentions, migrations.RunPython.noop),
         migrations.AddField(
-            model_name='fetchintention',
-            name='harvest',
+            model_name="fetchintention",
+            name="harvest",
             field=models.ForeignKey(
                 default=None,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='scheduler.Harvest',
-                related_name='intentions',
+                to="scheduler.Harvest",
+                related_name="intentions",
             ),
             preserve_default=False,
         ),

@@ -5,18 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0015_help_text')]
+    dependencies = [("sushi", "0015_help_text")]
 
     operations = [
         migrations.AddField(
-            model_name='counterreporttype',
-            name='superseeded_by',
+            model_name="counterreporttype",
+            name="superseeded_by",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='superseeds',
-                to='sushi.CounterReportType',
+                related_name="superseeds",
+                to="sushi.CounterReportType",
             ),
         )
     ]

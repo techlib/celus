@@ -42,11 +42,11 @@ class TestRecacheQueryset:
         assert User.objects.count() == 3
         assert CachedQuery.objects.count() == 1
         qs = recache_queryset(User.objects.all())
-        assert CachedQuery.objects.count() == 1, 'still only one cache object'
-        assert qs.count() == 1, 'should keep the old count'
+        assert CachedQuery.objects.count() == 1, "still only one cache object"
+        assert qs.count() == 1, "should keep the old count"
         assert User.objects.count() == 3
         cq = CachedQuery.objects.get()
-        assert cq.hit_count == 1, 'the cache should have been hit once'
+        assert cq.hit_count == 1, "the cache should have been hit once"
 
     def test_recache_queryset_existing_not_too_old(self, no_threshold):
         """
@@ -63,11 +63,11 @@ class TestRecacheQueryset:
         cq = CachedQuery.objects.get()
         cq.last_updated -= 1.5 * cq.timeout
         cq.save()
-        with patch('recache.util.find_and_renew_first_due_cached_query_task') as renewal_task:
+        with patch("recache.util.find_and_renew_first_due_cached_query_task") as renewal_task:
             qs = recache_queryset(User.objects.all())
             renewal_task.apply_async.assert_called()
-        assert CachedQuery.objects.count() == 1, 'still only one cache object'
-        assert qs.count() == 1, 'should keep the old count'
+        assert CachedQuery.objects.count() == 1, "still only one cache object"
+        assert qs.count() == 1, "should keep the old count"
         assert User.objects.count() == 3
 
     def test_recache_queryset_existing_but_too_old(self, no_threshold):
@@ -86,11 +86,11 @@ class TestRecacheQueryset:
         cq = CachedQuery.objects.get()
         cq.last_updated -= 3 * cq.timeout
         cq.save()
-        with patch('recache.util.find_and_renew_first_due_cached_query_task') as renewal_task:
+        with patch("recache.util.find_and_renew_first_due_cached_query_task") as renewal_task:
             qs = recache_queryset(User.objects.all())
             renewal_task.apply_async.assert_not_called()
-        assert CachedQuery.objects.count() == 1, 'still only one cache object'
-        assert qs.count() == 3, 'should have the new count'
+        assert CachedQuery.objects.count() == 1, "still only one cache object"
+        assert qs.count() == 3, "should have the new count"
         assert User.objects.count() == 3
 
     def test_recache_queryset_existing_but_wrong_django_version(self, no_threshold):
@@ -106,16 +106,16 @@ class TestRecacheQueryset:
         assert CachedQuery.objects.count() == 1
         # fix the CachedQuery to be too old
         cq = CachedQuery.objects.get()
-        cq.django_version = '2.2.foobar'
+        cq.django_version = "2.2.foobar"
         cq.save()
-        with patch('recache.util.find_and_renew_first_due_cached_query_task') as renewal_task:
+        with patch("recache.util.find_and_renew_first_due_cached_query_task") as renewal_task:
             qs = recache_queryset(User.objects.all())
             renewal_task.apply_async.assert_not_called()
-        assert CachedQuery.objects.count() == 2, 'new cache object is created'
-        assert qs.count() == 3, 'should have the new count'
+        assert CachedQuery.objects.count() == 2, "new cache object is created"
+        assert qs.count() == 3, "should have the new count"
         assert User.objects.count() == 3
 
-    @pytest.mark.parametrize('threshold', [0, 10])
+    @pytest.mark.parametrize("threshold", [0, 10])
     def test_recache_duration_threshold(self, settings, threshold):
         settings.RECACHE_NONEMPTY_RESULT_DURATION_THRESHOLD = threshold
         UserFactory.create_batch(1)
@@ -124,7 +124,7 @@ class TestRecacheQueryset:
         if threshold == 0:
             assert CachedQuery.objects.count() == 1
         else:
-            assert CachedQuery.objects.count() == 0, 'no recache for fast query'
+            assert CachedQuery.objects.count() == 0, "no recache for fast query"
 
     def test_recache_queryset_empty(self):
         """

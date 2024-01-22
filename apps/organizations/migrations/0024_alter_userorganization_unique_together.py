@@ -7,12 +7,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('organizations', '0023_alter_organizationaltname_options'),
+        ("organizations", "0023_alter_organizationaltname_options"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='userorganization',
-            unique_together={('user', 'organization')},
+            name="userorganization",
+            unique_together={("user", "organization")},
         ),
     ]

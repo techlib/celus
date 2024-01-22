@@ -26,9 +26,9 @@ class TestPlatformTitleCleanup:
         for ib in ibs:
             ib.delete()
         assert AccessLog.objects.count() == 0
-        assert PlatformTitle.objects.count() == 1, 'the platform-title link is still there'
+        assert PlatformTitle.objects.count() == 1, "the platform-title link is still there"
         sync_platform_title_links()
-        assert PlatformTitle.objects.count() == 0, 'the platform-title link was removed'
+        assert PlatformTitle.objects.count() == 0, "the platform-title link was removed"
 
     def test_cleanup(
         self, counter_records, report_type_nd, organizations, platform, clickhouse_on_off
@@ -38,9 +38,9 @@ class TestPlatformTitleCleanup:
         organization = organizations[0]
         records = list(
             counter_records(
-                [['A', '2020-01-01', 1], ['B', '2020-01-01', 2], ['A', '2020-02-01', 4]],
+                [["A", "2020-01-01", 1], ["B", "2020-01-01", 2], ["A", "2020-02-01", 4]],
                 platform=platform,
-                metric='Hits',
+                metric="Hits",
             )
         )
         ibs, _stats = import_counter_records(report_type, organization, platform, records)
@@ -51,11 +51,11 @@ class TestPlatformTitleCleanup:
         assert PlatformTitle.objects.count() == 3
         # remove accesslogs
         ib1, ib2 = ibs
-        if str(ib1.date) == '2020-02-01':
+        if str(ib1.date) == "2020-02-01":
             ib1, ib2 = ib2, ib1
         ib1.delete()  # delete data for 2020-01-01
         assert AccessLog.objects.count() == 1
-        assert PlatformTitle.objects.count() == 3, 'the platform-title links are all still there'
+        assert PlatformTitle.objects.count() == 3, "the platform-title links are all still there"
         sync_platform_title_links()
-        assert PlatformTitle.objects.count() == 1, 'one platform-title link remains'
-        assert PlatformTitle.objects.get().date.isoformat() == '2020-02-01'
+        assert PlatformTitle.objects.count() == 1, "one platform-title link remains"
+        assert PlatformTitle.objects.get().date.isoformat() == "2020-02-01"

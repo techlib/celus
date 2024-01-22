@@ -6,16 +6,16 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0008_importbatch'),
-        ('sushi', '0006_sushicredentials_active_counter_reports'),
+        ("logs", "0008_importbatch"),
+        ("sushi", "0006_sushicredentials_active_counter_reports"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='import_batch',
+            model_name="sushifetchattempt",
+            name="import_batch",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.SET_NULL, to='logs.ImportBatch'
+                null=True, on_delete=django.db.models.deletion.SET_NULL, to="logs.ImportBatch"
             ),
         )
     ]

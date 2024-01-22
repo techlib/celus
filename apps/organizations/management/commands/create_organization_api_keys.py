@@ -29,7 +29,7 @@ class Command(BaseCommand):
         api_keys = self.create_keys(org_ids=options["org_ids"])
         out = StringIO()
         writer = csv.writer(out)
-        writer.writerow(['organization id', 'organization ext_id', 'organization name', 'api_key'])
+        writer.writerow(["organization id", "organization ext_id", "organization name", "api_key"])
         for api_key, key_value in api_keys:
             writer.writerow(
                 [

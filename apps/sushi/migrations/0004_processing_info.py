@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0003_counterreporttype_active')]
+    dependencies = [("sushi", "0003_counterreporttype_active")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='is_processed',
-            field=models.BooleanField(default=False, help_text='Was the data converted into logs?'),
+            model_name="sushifetchattempt",
+            name="is_processed",
+            field=models.BooleanField(default=False, help_text="Was the data converted into logs?"),
         ),
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='when_processed',
+            model_name="sushifetchattempt",
+            name="when_processed",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

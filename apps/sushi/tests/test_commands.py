@@ -16,28 +16,28 @@ class TestFindMissingAttemptFiles:
     Tests the `find_missing_attempt_files` management command
     """
 
-    COMMAND_NAME = 'find_missing_attempt_files'
+    COMMAND_NAME = "find_missing_attempt_files"
 
     def test_no_delete(self, credentials, counter_report_type_named):
         """
         Test without deleting anything
         """
-        new_rt1 = counter_report_type_named('new1')
+        new_rt1 = counter_report_type_named("new1")
         # the following will have the file missing
         SushiFetchAttempt.objects.create(
             credentials=credentials,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
-            data_file='test/file.txt',
+            data_file="test/file.txt",
             file_size=2,
             checksum="foobarbaz",
         )
         SushiFetchAttempt.objects.create(
             credentials=credentials,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
             file_size=0,
@@ -51,29 +51,29 @@ class TestFindMissingAttemptFiles:
         """
         Test this deleting the attempt with missing file
         """
-        new_rt1 = counter_report_type_named('new1')
+        new_rt1 = counter_report_type_named("new1")
         # the following will have the file missing
         SushiFetchAttempt.objects.create(
             credentials=credentials,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
-            data_file='test/file.txt',
+            data_file="test/file.txt",
             file_size=2,
             checksum="foobarbaz",
         )
         SushiFetchAttempt.objects.create(
             credentials=credentials,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             credentials_version_hash=credentials.version_hash,
             counter_report=new_rt1,
             file_size=0,
             checksum="0",
         )
         assert SushiFetchAttempt.objects.count() == 2
-        call_command(self.COMMAND_NAME, '-d')
+        call_command(self.COMMAND_NAME, "-d")
         assert SushiFetchAttempt.objects.count() == 1
 
 
@@ -83,7 +83,7 @@ class TestRemoveOrphanedFiles:
     Tests the `remove_orphaned_files` management command
     """
 
-    COMMAND_NAME = 'remove_orphaned_files'
+    COMMAND_NAME = "remove_orphaned_files"
 
     @pytest.fixture(scope="function")
     def scenario(self, tmpdir, settings):
@@ -127,7 +127,7 @@ class TestRemoveOrphanedFiles:
 
     def test_30_day_commit(self, scenario):
         media_dir = scenario
-        call_command(self.COMMAND_NAME, '--older-than', '30', '--do-it')
+        call_command(self.COMMAND_NAME, "--older-than", "30", "--do-it")
         assert not (media_dir / "counter/AA-1234/AAA/5_TR_20200101-111111.222222.json").exists()
         assert (media_dir / "counter/AA-1234/AAA/5_TR_XXXXXXXX-333333.444444.json").exists()
         assert (media_dir / "counter/BB-4567/BBB/5_TR_YYYYYYYY-555555.666666.json").exists()
@@ -137,7 +137,7 @@ class TestRemoveOrphanedFiles:
 
     def test_30_day_nocommit(self, scenario):
         media_dir = scenario
-        call_command(self.COMMAND_NAME, '--older-than', '30')
+        call_command(self.COMMAND_NAME, "--older-than", "30")
         assert (media_dir / "counter/AA-1234/AAA/5_TR_20200101-111111.222222.json").exists()
         assert (media_dir / "counter/AA-1234/AAA/5_TR_XXXXXXXX-333333.444444.json").exists()
         assert (media_dir / "counter/BB-4567/BBB/5_TR_YYYYYYYY-555555.666666.json").exists()
@@ -147,7 +147,7 @@ class TestRemoveOrphanedFiles:
 
     def test_1_day_commit(self, scenario):
         media_dir = scenario
-        call_command(self.COMMAND_NAME, '--older-than', '1', '--do-it')
+        call_command(self.COMMAND_NAME, "--older-than", "1", "--do-it")
         assert not (media_dir / "counter/AA-1234/AAA/5_TR_20200101-111111.222222.json").exists()
         assert (media_dir / "counter/AA-1234/AAA/5_TR_XXXXXXXX-333333.444444.json").exists()
         assert not (media_dir / "counter/BB-4567/BBB/5_TR_YYYYYYYY-555555.666666.json").exists()
@@ -157,7 +157,7 @@ class TestRemoveOrphanedFiles:
 
     def test_1_day_nocommit(self, scenario):
         media_dir = scenario
-        call_command(self.COMMAND_NAME, '--older-than', '1')
+        call_command(self.COMMAND_NAME, "--older-than", "1")
         assert (media_dir / "counter/AA-1234/AAA/5_TR_20200101-111111.222222.json").exists()
         assert (media_dir / "counter/AA-1234/AAA/5_TR_XXXXXXXX-333333.444444.json").exists()
         assert (media_dir / "counter/BB-4567/BBB/5_TR_YYYYYYYY-555555.666666.json").exists()

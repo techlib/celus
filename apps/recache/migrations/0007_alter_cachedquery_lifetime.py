@@ -6,16 +6,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('recache', '0006_query_hash_unique_with_django_version')]
+    dependencies = [("recache", "0006_query_hash_unique_with_django_version")]
 
     operations = [
         migrations.AlterField(
-            model_name='cachedquery',
-            name='lifetime',
+            model_name="cachedquery",
+            name="lifetime",
             field=models.DurationField(
                 default=datetime.timedelta(days=10),
-                help_text='Number of seconds from last querying after which the cache will be '
-                'removed',
+                help_text="Number of seconds from last querying after which the cache will be "
+                "removed",
             ),
         )
     ]

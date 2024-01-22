@@ -9,19 +9,19 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Go over all titles and merge those which represent the same title'
+    help = "Go over all titles and merge those which represent the same title"
 
     def add_arguments(self, parser):
-        parser.add_argument('--do-it', dest='do_it', action='store_true')
+        parser.add_argument("--do-it", dest="do_it", action="store_true")
 
     @atomic
     def handle(self, *args, **options):
         count = 0
         for titles in find_mergeable_titles():
-            print('------------')
+            print("------------")
             for title in titles:
                 print(
-                    ', '.join(
+                    ", ".join(
                         map(
                             str,
                             [
@@ -38,8 +38,8 @@ class Command(BaseCommand):
                     )
                 )
             count += 1
-            if options['do_it']:
+            if options["do_it"]:
                 merge_titles(titles)
-        logger.info('Total count: %d', count)
-        if not options['do_it']:
-            logger.warning('Nothing has changed - for merge use --do-it')
+        logger.info("Total count: %d", count)
+        if not options["do_it"]:
+            logger.warning("Nothing has changed - for merge use --do-it")

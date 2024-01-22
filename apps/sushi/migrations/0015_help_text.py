@@ -4,19 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0014_sushifetchattempt_processing_success')]
+    dependencies = [("sushi", "0014_sushifetchattempt_processing_success")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='download_success',
-            field=models.BooleanField(help_text='True if there was no error downloading data'),
+            model_name="sushifetchattempt",
+            name="download_success",
+            field=models.BooleanField(help_text="True if there was no error downloading data"),
         ),
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='processing_success',
+            model_name="sushifetchattempt",
+            name="processing_success",
             field=models.BooleanField(
-                help_text='True if there was no error extracting data from the downloaded material'
+                help_text="True if there was no error extracting data from the downloaded material"
             ),
         ),
     ]

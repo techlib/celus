@@ -4,8 +4,8 @@ from django.db import migrations, models
 
 
 def active_couter_reports_to_counter_reports(apps, schema_editor):
-    CounterReportsToCredentials = apps.get_model('sushi', 'CounterReportsToCredentials')
-    SushiCredentials = apps.get_model('sushi', 'SushiCredentials')
+    CounterReportsToCredentials = apps.get_model("sushi", "CounterReportsToCredentials")
+    SushiCredentials = apps.get_model("sushi", "SushiCredentials")
     for credentials in SushiCredentials.objects.all():
         for counter_report in credentials.active_counter_reports.all():
             CounterReportsToCredentials.objects.create(
@@ -14,50 +14,50 @@ def active_couter_reports_to_counter_reports(apps, schema_editor):
 
 
 def couter_reports_to_active_counter_reports(apps, schema_editor):
-    CounterReportsToCredentials = apps.get_model('sushi', 'CounterReportsToCredentials')
+    CounterReportsToCredentials = apps.get_model("sushi", "CounterReportsToCredentials")
     for cr2c in CounterReportsToCredentials.objects.all():
         cr2c.credentials.active_counter_reports.add(cr2c.counter_report)
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0035_sushifetchattempt_http_status_code')]
+    dependencies = [("sushi", "0035_sushifetchattempt_http_status_code")]
 
     operations = [
         migrations.CreateModel(
-            name='CounterReportsToCredentials',
+            name="CounterReportsToCredentials",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'credentials',
+                    "credentials",
                     models.ForeignKey(
-                        on_delete=models.deletion.CASCADE, to='sushi.SushiCredentials'
+                        on_delete=models.deletion.CASCADE, to="sushi.SushiCredentials"
                     ),
                 ),
                 (
-                    'counter_report',
+                    "counter_report",
                     models.ForeignKey(
-                        on_delete=models.deletion.CASCADE, to='sushi.CounterReportType'
+                        on_delete=models.deletion.CASCADE, to="sushi.CounterReportType"
                     ),
                 ),
             ],
-            options={'unique_together': {('credentials', 'counter_report')}},
+            options={"unique_together": {("credentials", "counter_report")}},
         ),
         migrations.AddField(
-            model_name='sushicredentials',
-            name='counter_reports',
+            model_name="sushicredentials",
+            name="counter_reports",
             field=models.ManyToManyField(
-                through='sushi.CounterReportsToCredentials',
-                to='sushi.CounterReportType',
-                related_name='sushicredentials_set',
+                through="sushi.CounterReportsToCredentials",
+                to="sushi.CounterReportType",
+                related_name="sushicredentials_set",
             ),
         ),
         migrations.RunPython(
             active_couter_reports_to_counter_reports, couter_reports_to_active_counter_reports
         ),
-        migrations.RemoveField(model_name='sushicredentials', name='active_counter_reports'),
+        migrations.RemoveField(model_name="sushicredentials", name="active_counter_reports"),
     ]

@@ -12,31 +12,31 @@ logger = logging.getLogger(__name__)
 
 
 def deduplicate_metrics(apps, schema_editor):
-    Metric = apps.get_model('logs', 'Metric')
-    AccessLog = apps.get_model('logs', 'AccessLog')
-    ControlledMetric = apps.get_model('logs', 'ControlledMetric')
-    ReportInterestMetric = apps.get_model('logs', 'ReportInterestMetric')
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
+    Metric = apps.get_model("logs", "Metric")
+    AccessLog = apps.get_model("logs", "AccessLog")
+    ControlledMetric = apps.get_model("logs", "ControlledMetric")
+    ReportInterestMetric = apps.get_model("logs", "ReportInterestMetric")
+    ImportBatch = apps.get_model("logs", "ImportBatch")
     ibs_to_resync = set()
     for rec in (
         Metric.objects.all()
-        .values('short_name')
-        .annotate(count=Count('short_name'))
+        .values("short_name")
+        .annotate(count=Count("short_name"))
         .filter(count__gt=1)
     ):
-        logger.info('deduplicating %s', rec['short_name'])
-        kept = Metric.objects.get(short_name=rec['short_name'], source__isnull=True)
-        removed = Metric.objects.filter(short_name=rec['short_name'], source__isnull=False)
-        logger.info('  keeping %s', kept.pk)
+        logger.info("deduplicating %s", rec["short_name"])
+        kept = Metric.objects.get(short_name=rec["short_name"], source__isnull=True)
+        removed = Metric.objects.filter(short_name=rec["short_name"], source__isnull=False)
+        logger.info("  keeping %s", kept.pk)
         for metric in removed:
-            logger.info('  removing %s', metric.pk)
+            logger.info("  removing %s", metric.pk)
             ibs_to_resync.update(
-                metric.accesslog_set.distinct('import_batch_id').values_list(
-                    'import_batch_id', flat=True
+                metric.accesslog_set.distinct("import_batch_id").values_list(
+                    "import_batch_id", flat=True
                 )
             )
             logger.info(
-                '  updating %d accesslogs',
+                "  updating %d accesslogs",
                 AccessLog.objects.filter(metric=metric).update(metric=kept),
             )
             # deal with controlled metrics
@@ -56,12 +56,12 @@ def deduplicate_metrics(apps, schema_editor):
                     rim.metric = kept
                     rim.save()
 
-            logger.info('  deleting: %s', metric.delete())
-    logger.info('IBs to resync: %d (%s)', len(ibs_to_resync), ibs_to_resync)
+            logger.info("  deleting: %s", metric.delete())
+    logger.info("IBs to resync: %d (%s)", len(ibs_to_resync), ibs_to_resync)
 
     def resync_clickhouse():
         if ibs_to_resync and settings.CLICKHOUSE_SYNC_ACTIVE:
-            logger.info('Resyncing %d import batches with clickhouse', len(ibs_to_resync))
+            logger.info("Resyncing %d import batches with clickhouse", len(ibs_to_resync))
             for ib in ImportBatch.objects.filter(pk__in=ibs_to_resync):
                 resync_import_batch_with_clickhouse(ib)
 
@@ -69,18 +69,18 @@ def deduplicate_metrics(apps, schema_editor):
 
 
 def empty_dimension_source(apps, schema_editor):
-    Dimension = apps.get_model('logs', 'Dimension')
+    Dimension = apps.get_model("logs", "Dimension")
     Dimension.objects.filter(source__isnull=False).update(source=None)
 
 
 def empty_metric_source(apps, schema_editor):
-    Metric = apps.get_model('logs', 'Metric')
+    Metric = apps.get_model("logs", "Metric")
     Metric.objects.filter(source__isnull=False).update(source=None)
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0075_multimedia_interest'),
+        ("logs", "0075_multimedia_interest"),
     ]
 
     operations = [

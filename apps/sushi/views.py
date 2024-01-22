@@ -63,7 +63,7 @@ class SushiCredentialsViewSet(ModelViewSet):
     def get_queryset(self):
         user_organizations = self.request.user.admin_organizations()
         qs = SushiCredentials.objects.filter(organization__in=user_organizations)
-        organization_id = self.request.query_params.get('organization')
+        organization_id = self.request.query_params.get("organization")
         if organization_id:
             qs = qs.filter(
                 **organization_filter_from_org_id(
@@ -71,13 +71,13 @@ class SushiCredentialsViewSet(ModelViewSet):
                 )
             )
         # platform filter
-        platform_id = self.request.query_params.get('platform')
+        platform_id = self.request.query_params.get("platform")
         if platform_id:
             qs = qs.filter(platform_id=platform_id)
         qs = (
             qs.annotate_verified()
-            .prefetch_related('counterreportstocredentials_set__counter_report')
-            .select_related('organization', 'platform', 'platform__source')
+            .prefetch_related("counterreportstocredentials_set__counter_report")
+            .select_related("organization", "platform", "platform__source")
         )
         return qs
 
@@ -92,7 +92,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     @method_decorator(create_revision())
     def update(self, request, *args, **kwargs):
-        reversion.set_comment('Updated through API')
+        reversion.set_comment("Updated through API")
         super().update(request, *args, **kwargs)
         instance = self.get_object()
 
@@ -104,24 +104,24 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     @method_decorator(create_revision())
     def create(self, request, *args, **kwargs):
-        reversion.set_comment('Created through API')
+        reversion.set_comment("Created through API")
         return super().create(request, *args, **kwargs)
 
     @method_decorator(create_revision())
     def destroy(self, request, *args, **kwargs):
-        delete_data = self.request.query_params.get('delete_data', 'false').lower() == 'true'
+        delete_data = self.request.query_params.get("delete_data", "false").lower() == "true"
         credentials = self.get_object()  # type: SushiCredentials
         if credentials.can_edit(request.user):
-            reversion.set_comment('Deleted through API')
+            reversion.set_comment("Deleted through API")
             if delete_data:
                 fetch_attempts_pks = list(
                     SushiFetchAttempt.objects.filter(credentials=credentials).values_list(
-                        'pk', flat=True
+                        "pk", flat=True
                     )
                 )
 
                 reversion.set_comment(
-                    'Deleted through API with all related FetchAttempts and ImportBatches.'
+                    "Deleted through API with all related FetchAttempts and ImportBatches."
                 )
 
                 # we need to trigger deletion after credentials are deleted
@@ -133,28 +133,28 @@ class SushiCredentialsViewSet(ModelViewSet):
                 )
             return super().destroy(request, *args, **kwargs)
         else:
-            raise PermissionDenied('User is not allowed to delete this object')
+            raise PermissionDenied("User is not allowed to delete this object")
 
-    @action(detail=True, methods=['post'], permission_classes=[SuperuserOrAdminPermission])
+    @action(detail=True, methods=["post"], permission_classes=[SuperuserOrAdminPermission])
     def lock(self, request, pk=None):
         """
         Custom action to lock the SushiCredentials
         """
         credentials = get_object_or_404(SushiCredentials, pk=pk)
         owner_level = request.user.organization_relationship(credentials.organization_id)
-        requested_level = request.data.get('lock_level', owner_level)
+        requested_level = request.data.get("lock_level", owner_level)
         credentials.change_lock(request.user, requested_level)
         return Response(
             {
-                'ok': True,
-                'lock_level': credentials.lock_level,
-                'locked': credentials.lock_level >= UL_CONS_STAFF,
+                "ok": True,
+                "lock_level": credentials.lock_level,
+                "locked": credentials.lock_level >= UL_CONS_STAFF,
             }
         )
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=["post"],
         url_path="unset-broken",
         serializer_class=UnsetBrokenSerializer,
     )
@@ -167,10 +167,10 @@ class SushiCredentialsViewSet(ModelViewSet):
         request_serializer = UnsetBrokenSerializer(instance=credentials, data=dict(request.data))
         request_serializer.is_valid(raise_exception=True)
 
-        if 'counter_reports' in request_serializer.validated_data:
+        if "counter_reports" in request_serializer.validated_data:
             for cr2c in CounterReportsToCredentials.objects.filter(
                 credentials=credentials,
-                counter_report__in=request_serializer.validated_data['counter_reports'],
+                counter_report__in=request_serializer.validated_data["counter_reports"],
             ):
                 cr2c.unset_broken()
         else:
@@ -181,42 +181,42 @@ class SushiCredentialsViewSet(ModelViewSet):
         self._post_process_queryset([credentials])
         return Response(SushiCredentialsSerializer(credentials).data)
 
-    @action(detail=False, methods=['post', 'get'], url_path="export-credentials")
+    @action(detail=False, methods=["post", "get"], url_path="export-credentials")
     def export_credentials(self, request):
-        pks = request.data.getlist('pk')
-        selected_organization_id = request.GET.get('organization', '-1')
+        pks = request.data.getlist("pk")
+        selected_organization_id = request.GET.get("organization", "-1")
         qs = self.get_queryset()
         if pks:
             qs = qs.filter(pk__in=pks)
-        qs = qs.prefetch_related('counter_reports')
+        qs = qs.prefetch_related("counter_reports")
         sheets = [
             Sheet(
-                CredentialsDataFrame.export(counter_version=4).create(qs), 'Credentials-COUNTER4'
+                CredentialsDataFrame.export(counter_version=4).create(qs), "Credentials-COUNTER4"
             ),
             Sheet(
-                CredentialsDataFrame.export(counter_version=5).create(qs), 'Credentials-COUNTER5'
+                CredentialsDataFrame.export(counter_version=5).create(qs), "Credentials-COUNTER5"
             ),
         ]
         excel_file = XlsxFile.new(sheets).create()
         response = HttpResponse(
             excel_file.getvalue(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         today = now().strftime("%Y-%m-%d")
         org_suffix = (
             "consortium"
-            if selected_organization_id == '-1'
+            if selected_organization_id == "-1"
             else Organization.objects.get(id=selected_organization_id).short_name
         )
-        org_suffix = org_suffix.replace('/', '_')
+        org_suffix = org_suffix.replace("/", "_")
         response[
-            'Content-Disposition'
+            "Content-Disposition"
         ] = f'attachment; filename="SushiCredentials-{today}_{org_suffix}.xlsx"'
         return response
 
     @action(
         detail=False,
-        methods=['post'],
+        methods=["post"],
         url_path="update-assigned-counter-reports",
         serializer_class=UpdateAssignedCounterReportsSerializer,
     )
@@ -227,7 +227,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         cr2c_map = {
             (e.credentials_id, e.counter_report_id): e
             for e in CounterReportsToCredentials.objects.select_related(
-                'credentials', 'counter_report'
+                "credentials", "counter_report"
             )
         }
 
@@ -244,55 +244,55 @@ class SushiCredentialsViewSet(ModelViewSet):
                         )
                     matched_count += 1
                     if cr2c.update_last_harvestable_month_by_user(
-                        request.user, record['last_harvestable_month']
+                        request.user, record["last_harvestable_month"]
                     ):
                         updated_count += 1
                 else:
                     unmatched_count += 1
 
         return Response(
-            {'matched': matched_count, 'updated': updated_count, 'unmatched': unmatched_count}
+            {"matched": matched_count, "updated": updated_count, "unmatched": unmatched_count}
         )
 
-    @action(detail=False, methods=['get'], url_name='import-template', url_path="import-template")
+    @action(detail=False, methods=["get"], url_name="import-template", url_path="import-template")
     def get_template_for_import(self, request):
-        selected_organization_id = request.GET.get('organization', '-1')
+        selected_organization_id = request.GET.get("organization", "-1")
         accessible_organizations = request.user.accessible_organizations()
         admin_organizations = request.user.admin_organizations()
         qs = self.get_queryset()
-        qs = qs.prefetch_related('counter_reports')
+        qs = qs.prefetch_related("counter_reports")
         sheets = [
             Sheet(
                 CredentialsDataFrame.template_for_import(selected_organization_id).create(
                     qs, accessible_organizations
                 ),
-                'Credentials-COUNTER5',
+                "Credentials-COUNTER5",
             )
         ]
-        if selected_organization_id == '-1':
+        if selected_organization_id == "-1":
             sheets.append(
-                Sheet(OrganizationsDataFrame(admin_organizations).create(), 'Organizations')
+                Sheet(OrganizationsDataFrame(admin_organizations).create(), "Organizations")
             )
         excel_file = XlsxFile.use_template(sheets, selected_organization_id).create(
-            mode='a', if_sheet_exists="overlay"
+            mode="a", if_sheet_exists="overlay"
         )
         response = HttpResponse(
             excel_file.getvalue(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         org_suffix = (
             "consortium"
-            if selected_organization_id == '-1'
+            if selected_organization_id == "-1"
             else Organization.objects.get(id=selected_organization_id).short_name
         )
         response[
-            'Content-Disposition'
+            "Content-Disposition"
         ] = f'attachment; filename="Template_for_import_SushiCredentials_{org_suffix}.xlsx"'
         return response
 
     @action(
         detail=True,
-        methods=['get'],
+        methods=["get"],
         url_path="data",
         serializer_class=SushiCredentialsDataSerializer,
     )
@@ -302,7 +302,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
         current_time = timezone.now()
         start_year = (
-            credentials.fetchintention_set.aggregate(min_start=Min('start_date'))["min_start"]
+            credentials.fetchintention_set.aggregate(min_start=Min("start_date"))["min_start"]
             or current_time
         ).year - 1
         end_year = current_time.year
@@ -310,7 +310,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         report_types_and_broken = [
             (e.counter_report, e.is_broken())
             for e in credentials.counterreportstocredentials_set.all().select_related(
-                'counter_report', 'counter_report__report_type'
+                "counter_report", "counter_report__report_type"
             )
         ]
         report_types = [e[0] for e in report_types_and_broken]
@@ -355,7 +355,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         # update planned
         for intention in credentials.fetchintention_set.filter(
             counter_report__in=report_types, when_processed__isnull=True, duplicate_of=None
-        ).select_related('counter_report'):
+        ).select_related("counter_report"):
             start = intention.start_date
             end = intention.end_date
             report_type = intention.counter_report.code
@@ -369,7 +369,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         # iterate through attempts
         for attempt in credentials.sushifetchattempt_set.filter(
             counter_report__in=report_types
-        ).select_related('counter_report'):
+        ).select_related("counter_report"):
             start = attempt.start_date
             end = attempt.end_date
             report_type = attempt.counter_report.code
@@ -413,7 +413,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def count(self, request):
         """
         Just simple count of SushiCredentials
@@ -426,14 +426,14 @@ class SushiCredentialsViewSet(ModelViewSet):
         broken_reports = CounterReportsToCredentials.objects.filter(
             credentials__organization__in=user_organizations, broken__isnull=False
         ).count()
-        return Response({'count': count, 'broken': broken, 'broken_reports': broken_reports})
+        return Response({"count": count, "broken": broken, "broken_reports": broken_reports})
 
-    @action(detail=False, methods=['get'], url_name='month-overview', url_path='month-overview')
+    @action(detail=False, methods=["get"], url_name="month-overview", url_path="month-overview")
     def month_overview(self, request):
-        month = request.query_params.get('month')
+        month = request.query_params.get("month")
         if not month:
             return Response(
-                {'error': 'Missing "month" URL param'}, status=status.HTTP_400_BAD_REQUEST
+                {"error": 'Missing "month" URL param'}, status=status.HTTP_400_BAD_REQUEST
             )
 
         month_date = parse_date_fuzzy(month)
@@ -441,14 +441,14 @@ class SushiCredentialsViewSet(ModelViewSet):
         end = month_end(month_date)
         credentials = self.get_queryset()
         enabled_attr = (
-            {'credentials__enabled': True} if 'disabled' not in request.query_params else {}
+            {"credentials__enabled": True} if "disabled" not in request.query_params else {}
         )
         query = (
             FetchIntention.objects.filter(
                 start_date__lte=start,
                 end_date__gte=end,
                 credentials__in=credentials,
-                counter_report=F('credentials__counter_reports'),
+                counter_report=F("credentials__counter_reports"),
                 duplicate_of__isnull=True,  # ignore duplicates
                 **enabled_attr,
             )
@@ -461,7 +461,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 F("attempt__timestamp").desc(nulls_last=True),  # no attempt => last
             )
             .distinct("credentials_id", "counter_report_id")
-            .select_related('credentials', 'counter_report', 'attempt', 'attempt__counter_report')
+            .select_related("credentials", "counter_report", "attempt", "attempt__counter_report")
         )
         records = MonthOverviewSerializer(query, many=True).data
         return Response(records)

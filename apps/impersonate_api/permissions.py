@@ -9,7 +9,7 @@ def users_impersonable(request: Request):
     """Users which can be impersonated"""
     q = Q(is_superuser=False, is_active=True)
 
-    if hasattr(request, 'real_user'):
+    if hasattr(request, "real_user"):
         q |= Q(pk=request.real_user.pk)
 
     return User.objects.filter(q)

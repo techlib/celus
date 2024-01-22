@@ -4,12 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('recache', '0003_cachedquery_origin')]
+    dependencies = [("recache", "0003_cachedquery_origin")]
 
     operations = [
         migrations.AlterField(
-            model_name='cachedquery',
-            name='origin',
+            model_name="cachedquery",
+            name="origin",
             field=models.CharField(
                 blank=True,
                 help_text="Optional identifier of the query's origin. "
@@ -18,10 +18,10 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name='cachedquery',
-            name='query_hash',
+            model_name="cachedquery",
+            name="query_hash",
             field=models.CharField(
-                help_text='Hash of the query string', max_length=32, unique=True
+                help_text="Hash of the query string", max_length=32, unique=True
             ),
         ),
     ]

@@ -12,31 +12,31 @@ from django_prometheus.middleware import (
 from prometheus_client import Counter, Gauge, Summary
 
 report_access_total_counter = Counter(
-    'celus_report_access_total',
-    'The number of times a report type was accessed from a specific type of view. Also '
-    'split by report type',
-    ['view_type', 'report_type'],
+    "celus_report_access_total",
+    "The number of times a report type was accessed from a specific type of view. Also "
+    "split by report type",
+    ["view_type", "report_type"],
 )
 
 report_access_time_summary = Summary(
-    'celus_report_access_time_seconds',
-    'The time it took to process request for data for each report type. Also split by view_type',
-    ['view_type', 'report_type'],
+    "celus_report_access_time_seconds",
+    "The time it took to process request for data for each report type. Also split by view_type",
+    ["view_type", "report_type"],
 )
 
 celus_version_num = Gauge(
-    'celus_version_num',
-    'CELUS version converted to int. For example 4.1.2 => 40102',
+    "celus_version_num",
+    "CELUS version converted to int. For example 4.1.2 => 40102",
     [],
-    multiprocess_mode='livemax',
+    multiprocess_mode="livemax",
 )
 
 celus_sentry_release = Gauge(
-    'celus_git_hash',
-    'In production this is a git hash of deployed commit. It is stored in the hash dimension. '
-    'Value is always 1',
-    ['hash'],
-    multiprocess_mode='livemax',
+    "celus_git_hash",
+    "In production this is a git hash of deployed commit. It is stored in the hash dimension. "
+    "Value is always 1",
+    ["hash"],
+    multiprocess_mode="livemax",
 )
 
 
@@ -60,10 +60,10 @@ def db_credentials_num():
     from sushi.models import SushiCredentials
 
     return {
-        (rec['counter_version'], rec['enabled'], rec['broken'] or '', rec['verified']): rec['count']
+        (rec["counter_version"], rec["enabled"], rec["broken"] or "", rec["verified"]): rec["count"]
         for rec in SushiCredentials.objects.annotate_verified()
-        .values('counter_version', 'enabled', 'broken', 'verified')
-        .annotate(count=Count('id'))
+        .values("counter_version", "enabled", "broken", "verified")
+        .annotate(count=Count("id"))
     }
 
 
@@ -80,9 +80,9 @@ def db_user_num():
 
     counter = CounterDict()
     for user in User.objects.all().annotate(
-        is_admin=Exists(UserOrganization.objects.filter(user_id=OuterRef('id'), is_admin=True))
+        is_admin=Exists(UserOrganization.objects.filter(user_id=OuterRef("id"), is_admin=True))
     ):
-        perm_type = 'superuser' if user.is_superuser else 'org_admin' if user.is_admin else 'normal'
+        perm_type = "superuser" if user.is_superuser else "org_admin" if user.is_admin else "normal"
         counter[(perm_type,)] += 1
     return counter
 
@@ -102,16 +102,16 @@ def db_platform_num():
     for rec in (
         Platform.objects.all()
         .order_by()
-        .annotate(source_type=F('source__type'))
-        .values('source_type')
-        .annotate(count=Count('id'))
+        .annotate(source_type=F("source__type"))
+        .values("source_type")
+        .annotate(count=Count("id"))
     ):
         source_type_name = (
-            next(name for t, name in DataSource.TYPE_CHOICES if t == rec['source_type'])
-            if rec['source_type']
-            else 'local'
+            next(name for t, name in DataSource.TYPE_CHOICES if t == rec["source_type"])
+            if rec["source_type"]
+            else "local"
         )
-        out[(source_type_name,)] = rec['count']
+        out[(source_type_name,)] = rec["count"]
     return out
 
 
@@ -119,8 +119,8 @@ def db_mdu_num():
     from logs.models import ManualDataUpload
 
     return {
-        (rec['method'],): rec['count']
-        for rec in ManualDataUpload.objects.values('method').annotate(count=Count('id'))
+        (rec["method"],): rec["count"]
+        for rec in ManualDataUpload.objects.values("method").annotate(count=Count("id"))
     }
 
 
@@ -137,8 +137,8 @@ def db_recached_queries_num():
     from recache.models import CachedQuery
 
     return {
-        (rec['origin'],): rec['count']
-        for rec in CachedQuery.objects.values('origin').annotate(count=Count('id'))
+        (rec["origin"],): rec["count"]
+        for rec in CachedQuery.objects.values("origin").annotate(count=Count("id"))
     }
 
 
@@ -146,14 +146,14 @@ def db_fetch_intentions_num():
     from scheduler.models import FetchIntention
 
     return {
-        (rec['processed'],): rec['count']
+        (rec["processed"],): rec["count"]
         for rec in FetchIntention.objects.annotate(
             processed=ExpressionWrapper(
                 Q(when_processed__isnull=False), output_field=BooleanField()
             )
         )
-        .values('processed')
-        .annotate(count=Count('id'))
+        .values("processed")
+        .annotate(count=Count("id"))
     }
 
 
@@ -161,12 +161,12 @@ def db_fetch_attempts_num():
     from sushi.models import SushiFetchAttempt
 
     return {
-        (rec['processed'],): rec['count']
+        (rec["processed"],): rec["count"]
         for rec in SushiFetchAttempt.objects.annotate(
             processed=ExpressionWrapper(Q(import_batch__isnull=False), output_field=BooleanField())
         )
-        .values('processed')
-        .annotate(count=Count('id'))
+        .values("processed")
+        .annotate(count=Count("id"))
     }
 
 
@@ -203,7 +203,7 @@ def _db_last_two_years_coverage_data():
         Q(
             Exists(
                 ImportBatch.objects.filter(
-                    report_type_id=OuterRef('pk'), date__gte=start_month, date__lte=end_month
+                    report_type_id=OuterRef("pk"), date__gte=start_month, date__lte=end_month
                 )
             )
         )
@@ -222,10 +222,10 @@ def _db_last_two_years_coverage_data():
         cov_data = extractor.get_coverage_data()
         if cov_data:
             data = cov_data[()]  # empty tuple key because we don't split
-            totals['ib_count'] += data['ib_count']
-            totals['ib_max'] += data['ib_max']
+            totals["ib_count"] += data["ib_count"]
+            totals["ib_max"] += data["ib_max"]
 
-    totals['ratio'] = (totals['ib_count'] / totals['ib_max']) if totals['ib_max'] else 0
+    totals["ratio"] = (totals["ib_count"] / totals["ib_max"]) if totals["ib_max"] else 0
     return totals
 
 
@@ -237,30 +237,30 @@ def db_last_two_years_coverage():
     storage rather than a real cache.
     :return:
     """
-    cached = cache.get('_db_last_two_years_coverage_data')
+    cached = cache.get("_db_last_two_years_coverage_data")
     if cached:
-        return cached['ratio']
+        return cached["ratio"]
     totals = _db_last_two_years_coverage_data()
-    cache.set('_db_last_two_years_coverage_data', totals, 10)
-    return totals['ratio']
+    cache.set("_db_last_two_years_coverage_data", totals, 10)
+    return totals["ratio"]
 
 
 def db_last_two_years_coverage_present_ib_count():
-    cached = cache.get('_db_last_two_years_coverage_data')
+    cached = cache.get("_db_last_two_years_coverage_data")
     if cached:
-        return cached['ib_count']
+        return cached["ib_count"]
     totals = _db_last_two_years_coverage_data()
-    cache.set('_db_last_two_years_coverage_data', totals, 10)
-    return totals['ib_count']
+    cache.set("_db_last_two_years_coverage_data", totals, 10)
+    return totals["ib_count"]
 
 
 def db_last_two_years_coverage_expected_ib_count():
-    cached = cache.get('_db_last_two_years_coverage_data')
+    cached = cache.get("_db_last_two_years_coverage_data")
     if cached:
-        return cached['ib_max']
+        return cached["ib_max"]
     totals = _db_last_two_years_coverage_data()
-    cache.set('_db_last_two_years_coverage_data', totals, 10)
-    return totals['ib_max']
+    cache.set("_db_last_two_years_coverage_data", totals, 10)
+    return totals["ib_max"]
 
 
 # The following metrics will not be updated by any request, but by a celery based task.
@@ -270,75 +270,75 @@ def db_last_two_years_coverage_expected_ib_count():
 CACHE_STORED_GAUAGES = {
     # we use clickhouse in the following because the table is large and query to the postgres
     # database is very slow
-    'celus_db_access_log_num': {
-        'desc': 'Number of access logs in the clickhouse database',
-        'func': db_access_log_num,
+    "celus_db_access_log_num": {
+        "desc": "Number of access logs in the clickhouse database",
+        "func": db_access_log_num,
     },
-    'celus_db_import_batch_num': {
-        'desc': 'Number of import batches in the database',
-        'func': db_import_batch_num,
+    "celus_db_import_batch_num": {
+        "desc": "Number of import batches in the database",
+        "func": db_import_batch_num,
     },
-    'celus_db_credentials_num': {
-        'desc': 'Number of credentials in the database',
-        'dims': ['counter_version', 'is_active', 'broken', 'verified'],
-        'func': db_credentials_num,
+    "celus_db_credentials_num": {
+        "desc": "Number of credentials in the database",
+        "dims": ["counter_version", "is_active", "broken", "verified"],
+        "func": db_credentials_num,
     },
-    'celus_db_organization_num': {
-        'desc': 'Number of organizations in the database',
-        'func': db_organization_num,
+    "celus_db_organization_num": {
+        "desc": "Number of organizations in the database",
+        "func": db_organization_num,
     },
-    'celus_db_user_num': {
-        'desc': 'Number of users in the database',
-        'dims': ['permission_type'],
-        'func': db_user_num,
+    "celus_db_user_num": {
+        "desc": "Number of users in the database",
+        "dims": ["permission_type"],
+        "func": db_user_num,
     },
-    'celus_db_title_num': {'desc': 'Number of titles in the database', 'func': db_title_num},
-    'celus_db_platform_num': {
-        'desc': 'Number of platforms in the database',
-        'dims': ['source_type'],
-        'func': db_platform_num,
+    "celus_db_title_num": {"desc": "Number of titles in the database", "func": db_title_num},
+    "celus_db_platform_num": {
+        "desc": "Number of platforms in the database",
+        "dims": ["source_type"],
+        "func": db_platform_num,
     },
-    'celus_db_mdu_num': {
-        'desc': 'Number of MDUs in the database',
-        'dims': ['method'],
-        'func': db_mdu_num,
+    "celus_db_mdu_num": {
+        "desc": "Number of MDUs in the database",
+        "dims": ["method"],
+        "func": db_mdu_num,
     },
-    'celus_db_reporting_reports_num': {
-        'desc': 'Number of reports in the database',
-        'dims': ['access_level'],
-        'func': db_reporting_reports_num,
+    "celus_db_reporting_reports_num": {
+        "desc": "Number of reports in the database",
+        "dims": ["access_level"],
+        "func": db_reporting_reports_num,
     },
-    'celus_db_recached_queries_num': {
-        'desc': 'Number of recached queries in the database',
-        'dims': ['origin'],
-        'func': db_recached_queries_num,
+    "celus_db_recached_queries_num": {
+        "desc": "Number of recached queries in the database",
+        "dims": ["origin"],
+        "func": db_recached_queries_num,
     },
-    'celus_db_fetch_intentions_num': {
-        'desc': 'Number of fetch intentions in the database',
-        'dims': ['processed'],
-        'func': db_fetch_intentions_num,
+    "celus_db_fetch_intentions_num": {
+        "desc": "Number of fetch intentions in the database",
+        "dims": ["processed"],
+        "func": db_fetch_intentions_num,
     },
-    'celus_db_fetch_attempts_num': {
-        'desc': 'Number of fetch attempts in the database',
-        'dims': ['successfull'],
-        'func': db_fetch_attempts_num,
+    "celus_db_fetch_attempts_num": {
+        "desc": "Number of fetch attempts in the database",
+        "dims": ["successfull"],
+        "func": db_fetch_attempts_num,
     },
-    'celus_db_tag_classes_num': {
-        'desc': 'Number of tag classes in the database',
-        'func': db_tag_classes_num,
+    "celus_db_tag_classes_num": {
+        "desc": "Number of tag classes in the database",
+        "func": db_tag_classes_num,
     },
-    'celus_db_tags_num': {'desc': 'Number of tags in the database', 'func': db_tags_num},
-    'celus_db_last_two_years_coverage': {
-        'desc': 'Overall coverage of the last two years for the whole consortium',
-        'func': db_last_two_years_coverage,
+    "celus_db_tags_num": {"desc": "Number of tags in the database", "func": db_tags_num},
+    "celus_db_last_two_years_coverage": {
+        "desc": "Overall coverage of the last two years for the whole consortium",
+        "func": db_last_two_years_coverage,
     },
-    'celus_db_last_two_years_coverage_present_ib_count': {
-        'desc': 'Number of present IBs in the last two years for the whole consortium',
-        'func': db_last_two_years_coverage_present_ib_count,
+    "celus_db_last_two_years_coverage_present_ib_count": {
+        "desc": "Number of present IBs in the last two years for the whole consortium",
+        "func": db_last_two_years_coverage_present_ib_count,
     },
-    'celus_db_last_two_years_coverage_expected_ib_count': {
-        'desc': 'Number of expected IBs in the last two years for the whole consortium',
-        'func': db_last_two_years_coverage_expected_ib_count,
+    "celus_db_last_two_years_coverage_expected_ib_count": {
+        "desc": "Number of expected IBs in the last two years for the whole consortium",
+        "func": db_last_two_years_coverage_expected_ib_count,
     },
 }
 
@@ -348,10 +348,10 @@ class CelusMetrics(Metrics):
         super().register()
         self.cached_gauges = {}
         for name, params in CACHE_STORED_GAUAGES.items():
-            dims = params.get('dims', [])
-            desc = params['desc']
+            dims = params.get("dims", [])
+            desc = params["desc"]
             self.cached_gauges[name] = self.register_metric(
-                Gauge, name, desc, dims, namespace=NAMESPACE, multiprocess_mode='livemax'
+                Gauge, name, desc, dims, namespace=NAMESPACE, multiprocess_mode="livemax"
             )
 
 
@@ -365,7 +365,7 @@ class CelusPrometheusAfterMiddleware(PrometheusAfterMiddleware):
     def process_request(self, request):
         super().process_request(request)
         for name, params in CACHE_STORED_GAUAGES.items():
-            dims = params.get('dims', [])
+            dims = params.get("dims", [])
             value = cache.get(name, {} if dims else 0)
             if dims:
                 for labels, val in value.items():

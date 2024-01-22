@@ -5,61 +5,61 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0015_change_data_file_validators')]
+    dependencies = [("logs", "0015_change_data_file_validators")]
 
     operations = [
         migrations.CreateModel(
-            name='ReportInterestMetric',
+            name="ReportInterestMetric",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'name',
+                    "name",
                     models.CharField(
                         blank=True,
-                        help_text='How is the metric called in context of interest',
+                        help_text="How is the metric called in context of interest",
                         max_length=100,
                     ),
                 ),
                 (
-                    'name_en',
+                    "name_en",
                     models.CharField(
                         blank=True,
-                        help_text='How is the metric called in context of interest',
-                        max_length=100,
-                        null=True,
-                    ),
-                ),
-                (
-                    'name_cs',
-                    models.CharField(
-                        blank=True,
-                        help_text='How is the metric called in context of interest',
+                        help_text="How is the metric called in context of interest",
                         max_length=100,
                         null=True,
                     ),
                 ),
                 (
-                    'metric',
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.Metric'
+                    "name_cs",
+                    models.CharField(
+                        blank=True,
+                        help_text="How is the metric called in context of interest",
+                        max_length=100,
+                        null=True,
                     ),
                 ),
                 (
-                    'report_type',
+                    "metric",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.Metric"
+                    ),
+                ),
+                (
+                    "report_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.ReportType"
                     ),
                 ),
             ],
         ),
         migrations.AddField(
-            model_name='reporttype',
-            name='interest_metrics',
-            field=models.ManyToManyField(through='logs.ReportInterestMetric', to='logs.Metric'),
+            model_name="reporttype",
+            name="interest_metrics",
+            field=models.ManyToManyField(through="logs.ReportInterestMetric", to="logs.Metric"),
         ),
     ]

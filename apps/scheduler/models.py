@@ -88,11 +88,11 @@ class Scheduler(models.Model):
     service_busy_delay = models.IntegerField(default=DEFAULT_SERVICE_BUSY_DELAY)
 
     current_intention = models.OneToOneField(
-        'scheduler.FetchIntention',
+        "scheduler.FetchIntention",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='current_scheduler',
+        related_name="current_scheduler",
     )
     current_celery_task_id = models.UUIDField(null=True, blank=True)
     current_start = models.DateTimeField(null=True, blank=True)
@@ -106,7 +106,7 @@ class Scheduler(models.Model):
     @property
     def last_time(self) -> typing.Optional[datetime]:
         intetion = (
-            self.intentions.filter(when_processed__isnull=False).order_by('when_processed').last()
+            self.intentions.filter(when_processed__isnull=False).order_by("when_processed").last()
         )
         if not intetion:
             return None
@@ -154,14 +154,14 @@ class Scheduler(models.Model):
                         & models.Q(
                             models.Exists(
                                 CounterReportsToCredentials.objects.filter(
-                                    counter_report=models.OuterRef('counter_report'),
-                                    credentials=models.OuterRef('credentials'),
+                                    counter_report=models.OuterRef("counter_report"),
+                                    credentials=models.OuterRef("credentials"),
                                     broken__isnull=True,
                                 )
                             )
                         )
                     )
-                    .order_by('-priority', '-start_date', 'not_before')
+                    .order_by("-priority", "-start_date", "not_before")
                     .first()
                 )
 
@@ -226,7 +226,7 @@ class Scheduler(models.Model):
     def unlock_stuck_schedulers(cls):
         with transaction.atomic():
 
-            def update_intention(scheduler: 'Scheduler'):
+            def update_intention(scheduler: "Scheduler"):
                 # Remove scheduler for unprocessed intention
                 # so it can be rescheduled
                 if (
@@ -264,18 +264,18 @@ class Scheduler(models.Model):
 class FetchIntentionQuerySet(models.QuerySet):
     def annotate_credentials_state(self) -> models.QuerySet:
         return self.annotate(
-            broken_creds=F('credentials__broken'),
+            broken_creds=F("credentials__broken"),
             broken_mapping=models.Exists(
                 CounterReportsToCredentials.objects.filter(
-                    counter_report=models.OuterRef('counter_report'),
-                    credentials=models.OuterRef('credentials'),
+                    counter_report=models.OuterRef("counter_report"),
+                    credentials=models.OuterRef("credentials"),
                     broken__isnull=False,
                 )
             ),
             missing_mapping=~models.Exists(
                 CounterReportsToCredentials.objects.filter(
-                    counter_report=models.OuterRef('counter_report'),
-                    credentials=models.OuterRef('credentials'),
+                    counter_report=models.OuterRef("counter_report"),
+                    credentials=models.OuterRef("credentials"),
                 )
             ),
         )
@@ -286,11 +286,11 @@ class FetchIntentionQuerySet(models.QuerySet):
             return {name: getattr(self, name) for name in attrs}
 
         res = self.aggregate(
-            total=Coalesce(models.Count('queue_id', distinct=True), 0),
+            total=Coalesce(models.Count("queue_id", distinct=True), 0),
             planned=self.unprocessed_count_query(),
-            attempt_count=Coalesce(models.Count('attempt__pk'), 0),
+            attempt_count=Coalesce(models.Count("attempt__pk"), 0),
             working=models.Count(
-                'pk',
+                "pk",
                 distinct=True,
                 filter=(
                     models.Q(current_scheduler__isnull=False)
@@ -298,7 +298,7 @@ class FetchIntentionQuerySet(models.QuerySet):
                 ),
             ),
         )
-        res['finished'] = res['total'] - res['planned']
+        res["finished"] = res["total"] - res["planned"]
 
         return res
 
@@ -306,15 +306,15 @@ class FetchIntentionQuerySet(models.QuerySet):
         ret: typing.List[Scheduler] = []
         # get unique URLs from unprocessed intentions + extract their highest priority
         url_to_priority = {
-            rec['credentials__url']: rec['max_p']
+            rec["credentials__url"]: rec["max_p"]
             for rec in FetchIntention.objects.filter(
                 not_before__lt=timezone.now(),
                 scheduler__isnull=True,
                 duplicate_of__isnull=True,
                 when_processed__isnull=True,
             )
-            .values('credentials__url')
-            .annotate(max_p=Max('priority'))
+            .values("credentials__url")
+            .annotate(max_p=Max("priority"))
         }
         # get schedulers for the URLs
         url_to_scheduler = {
@@ -342,13 +342,13 @@ class FetchIntentionQuerySet(models.QuerySet):
     def latest_intentions(self) -> models.QuerySet:
         """Only latest intentions, retried intentions are skipped"""
 
-        return self.filter(pk=F('queue__end__pk'))
+        return self.filter(pk=F("queue__end__pk"))
 
     @classmethod
     def unprocessed_count_query(cls):
         return Coalesce(
             models.Count(
-                'pk',
+                "pk",
                 distinct=True,
                 filter=models.Q(when_processed__isnull=True) & models.Q(duplicate_of__isnull=True)
                 | (
@@ -365,10 +365,10 @@ class FetchIntention(models.Model):
     PRIORITY_NORMAL = 50
 
     duplicate_of = models.ForeignKey(
-        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="duplicates"
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="duplicates"
     )
     previous_intention = models.OneToOneField(
-        'self', null=True, blank=True, on_delete=models.SET_NULL
+        "self", null=True, blank=True, on_delete=models.SET_NULL
     )
     not_before = models.DateTimeField(help_text="Don't plan before", default=timezone.now)
     priority = models.SmallIntegerField(default=PRIORITY_NORMAL)
@@ -385,13 +385,13 @@ class FetchIntention(models.Model):
     canceled = models.BooleanField(default=False)
     attempt = models.OneToOneField(SushiFetchAttempt, null=True, on_delete=models.SET_NULL)
     harvest = models.ForeignKey(
-        'scheduler.Harvest', on_delete=models.CASCADE, related_name="intentions"
+        "scheduler.Harvest", on_delete=models.CASCADE, related_name="intentions"
     )
     queue = models.ForeignKey(
-        'scheduler.FetchIntentionQueue',
+        "scheduler.FetchIntentionQueue",
         null=True,
         blank=True,
-        help_text='Identifier of retry queue',
+        help_text="Identifier of retry queue",
         on_delete=models.CASCADE,
     )
     # bookkeeping
@@ -407,10 +407,10 @@ class FetchIntention(models.Model):
 
     class Meta:
         constraints = (
-            CheckConstraint(check=models.Q(start_date__lt=models.F('end_date')), name='timeline'),
+            CheckConstraint(check=models.Q(start_date__lt=models.F("end_date")), name="timeline"),
             UniqueConstraint(
-                fields=['queue_id'],
-                name='only_one_unprocessed_within_queue',
+                fields=["queue_id"],
+                name="only_one_unprocessed_within_queue",
                 condition=models.Q(when_processed__isnull=True),
             ),
         )
@@ -434,9 +434,9 @@ class FetchIntention(models.Model):
     @property
     def broken_credentials(self) -> bool:
         if (
-            hasattr(self, 'broken_creds')
-            and hasattr(self, 'broken_mapping')
-            and hasattr(self, 'missing_mapping')
+            hasattr(self, "broken_creds")
+            and hasattr(self, "broken_mapping")
+            and hasattr(self, "missing_mapping")
         ):
             return self.broken_creds or self.broken_mapping or self.missing_mapping
 
@@ -449,7 +449,7 @@ class FetchIntention(models.Model):
             ).exists()  # skip broken or non existing counter report to credentials mapping
         )
 
-    def get_handler(self) -> typing.Optional[typing.Callable[['FetchIntention'], None]]:
+    def get_handler(self) -> typing.Optional[typing.Callable[["FetchIntention"], None]]:
         attempt = self.attempt
 
         if not attempt:
@@ -587,20 +587,20 @@ class FetchIntention(models.Model):
         inc_data_not_ready_retry: bool = False,
         inc_service_not_available_retry: bool = False,
         inc_service_busy_retry: bool = False,
-    ) -> typing.Optional['FetchIntention']:
+    ) -> typing.Optional["FetchIntention"]:
         if self.broken_credentials:
             logger.warning(
                 "Credentials are broken. Can't create retry for FetchIntention %s", self.pk
             )
 
         kwargs = {
-            'data_not_ready_retry': self.data_not_ready_retry
+            "data_not_ready_retry": self.data_not_ready_retry
             + (1 if inc_data_not_ready_retry else 0)  # always keep data_not_ready counter
         }
         if inc_service_busy_retry:
-            kwargs['service_busy_retry'] = self.service_busy_retry + 1
+            kwargs["service_busy_retry"] = self.service_busy_retry + 1
         if inc_service_not_available_retry:
-            kwargs['service_not_available_retry'] = self.service_not_available_retry + 1
+            kwargs["service_not_available_retry"] = self.service_not_available_retry + 1
 
         with transaction.atomic():
             if not self.queue:
@@ -737,7 +737,7 @@ class FetchIntention(models.Model):
                     platform_id=self.credentials.platform_id,
                     organization_id=self.credentials.organization_id,
                 )
-                .filter(Exists(AccessLog.objects.filter(import_batch_id=OuterRef('id'))))
+                .filter(Exists(AccessLog.objects.filter(import_batch_id=OuterRef("id"))))
                 .get()
             )
         except ImportBatch.DoesNotExist:
@@ -847,7 +847,7 @@ class HarvestQuerySet(models.QuerySet):
     def annotate_stats(self):
         return self.annotate(
             planned=models.Count(
-                'intentions__pk',
+                "intentions__pk",
                 distinct=True,
                 filter=(
                     (
@@ -858,30 +858,30 @@ class HarvestQuerySet(models.QuerySet):
                 ),
             ),
             working=models.Count(
-                'intentions__pk',
+                "intentions__pk",
                 distinct=True,
                 filter=(
                     models.Q(intentions__current_scheduler__isnull=False)
                     | models.Q(intentions__attempt__status=AttemptStatus.IMPORTING)
                 ),
             ),
-            total=models.Count('intentions__queue_id', distinct=True),
-            finished=F('total') - F('planned'),
-            attempt_count=Coalesce(models.Count('intentions__attempt__pk', distinct=True), 0),
+            total=models.Count("intentions__queue_id", distinct=True),
+            finished=F("total") - F("planned"),
+            attempt_count=Coalesce(models.Count("intentions__attempt__pk", distinct=True), 0),
         )
 
 
 class FetchIntentionQueue(models.Model):
     id = models.IntegerField(primary_key=True)
     start = models.ForeignKey(
-        FetchIntention, on_delete=models.SET_NULL, related_name='qstart', null=True
+        FetchIntention, on_delete=models.SET_NULL, related_name="qstart", null=True
     )
     end = models.ForeignKey(
-        FetchIntention, on_delete=models.SET_NULL, related_name='qend', null=True
+        FetchIntention, on_delete=models.SET_NULL, related_name="qend", null=True
     )
 
     def __str__(self):
-        return f'Queue #{self.pk}'
+        return f"Queue #{self.pk}"
 
 
 class Harvest(CreatedUpdatedMixin):
@@ -889,7 +889,7 @@ class Harvest(CreatedUpdatedMixin):
     stats_attrs = ("planned", "total", "attempt_count", "finished", "working")
 
     def __str__(self):
-        return f'Harvest #{self.pk}'
+        return f"Harvest #{self.pk}"
 
     @property
     def stats_loaded(self):
@@ -919,44 +919,44 @@ class Harvest(CreatedUpdatedMixin):
         return {name: getattr(self, name) for name in self.stats_attrs}
 
     def organizations(self) -> typing.List[Organization]:
-        if hasattr(self, 'intentions_credentials'):
+        if hasattr(self, "intentions_credentials"):
             organizations = list({i.credentials.organization for i in self.intentions_credentials})
             organizations.sort(key=lambda e: e.pk)
             return organizations
 
         return list(
             Organization.objects.filter(
-                pk__in=self.intentions.all().values('credentials__organization_id')
+                pk__in=self.intentions.all().values("credentials__organization_id")
             )
             .order_by()
             .distinct()
         )
 
     def platforms(self) -> typing.List[Platform]:
-        if hasattr(self, 'intentions_credentials'):
+        if hasattr(self, "intentions_credentials"):
             platforms = list({i.credentials.platform for i in self.intentions_credentials})
             platforms.sort(key=lambda e: e.pk)
             return platforms
 
         return (
-            Platform.objects.filter(pk__in=self.intentions.all().values('credentials__platform_id'))
+            Platform.objects.filter(pk__in=self.intentions.all().values("credentials__platform_id"))
             .order_by()
             .distinct()
         )
 
     @cached_property
     def max_not_before(self):
-        return self.intentions.aggregate(max=Max('not_before'))['max']
+        return self.intentions.aggregate(max=Max("not_before"))["max"]
 
     @classmethod
     @transaction.atomic
     def plan_harvesting(
         cls,
-        intentions: typing.List['FetchIntention'],
-        harvest: typing.Optional['Harvest'] = None,
+        intentions: typing.List["FetchIntention"],
+        harvest: typing.Optional["Harvest"] = None,
         priority: int = FetchIntention.PRIORITY_NORMAL,
         user: typing.Optional[User] = None,
-    ) -> 'Harvest':
+    ) -> "Harvest":
         """Plans fetching of FetchIntentions
 
         :param intentions: unsaved FetchIntentions (for batch_create)
@@ -987,7 +987,7 @@ class Harvest(CreatedUpdatedMixin):
         FetchIntentionQueue.objects.bulk_create(rec[1] for rec in fi_to_queue)
         for fi, queue in fi_to_queue:
             fi.queue = queue
-        FetchIntention.objects.bulk_update([rec[0] for rec in fi_to_queue], ['queue'])
+        FetchIntention.objects.bulk_update([rec[0] for rec in fi_to_queue], ["queue"])
 
         if priority >= FetchIntention.PRIORITY_NOW:
             from .tasks import trigger_scheduler
@@ -1006,7 +1006,7 @@ class Harvest(CreatedUpdatedMixin):
     def latest_intentions(self):
         """Only latest intentions, retried intentions are skipped"""
 
-        if hasattr(self, 'prefetched_latest_intentions'):
+        if hasattr(self, "prefetched_latest_intentions"):
             return self.prefetched_latest_intentions
 
         return self.intentions.latest_intentions().annotate_credentials_state()
@@ -1019,14 +1019,14 @@ class Harvest(CreatedUpdatedMixin):
 class Automatic(models.Model):
     month = models.DateField()
     organization = models.ForeignKey(
-        Organization, on_delete=models.CASCADE, related_name='automatic_harvest'
+        Organization, on_delete=models.CASCADE, related_name="automatic_harvest"
     )
     harvest = models.OneToOneField(Harvest, on_delete=models.CASCADE)
 
     class Meta:
         constraints = (
-            CheckConstraint(check=models.Q(month__day=1), name='fist_month_day'),
-            UniqueConstraint(fields=['month', 'organization'], name='unique_month_organization'),
+            CheckConstraint(check=models.Q(month__day=1), name="fist_month_day"),
+            UniqueConstraint(fields=["month", "organization"], name="unique_month_organization"),
         )
 
     @staticmethod
@@ -1155,7 +1155,7 @@ class Automatic(models.Model):
         return cls.update_for_month(month_start(this_month() - relativedelta(months=1)))
 
     @classmethod
-    def get_or_create(cls, month: date, organization: Organization) -> 'Automatic':
+    def get_or_create(cls, month: date, organization: Organization) -> "Automatic":
         month = month.replace(day=1)  # normalize month
         try:
             return cls.objects.get(month=month, organization=organization)

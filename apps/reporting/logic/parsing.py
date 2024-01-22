@@ -14,7 +14,7 @@ def formula_parser():
       not present or has zero value
     () parenthesis for grouping
     """
-    ident = Word(alphas, alphanums + '_')
+    ident = Word(alphas, alphanums + "_")
     return infix_notation(
         ident, [(one_of("+ -"), 2, opAssoc.LEFT), ("|", 2, opAssoc.LEFT)], lpar="(", rpar=")"
     )
@@ -27,7 +27,7 @@ def parse_formula(formula):
     try:
         return formula_parser().parse_string(formula).as_list()
     except Exception as e:
-        raise s.ValidationError(f'Invalid formula: {e}') from e
+        raise s.ValidationError(f"Invalid formula: {e}") from e
 
 
 class ReportDataSourceSerializer(s.Serializer):
@@ -47,10 +47,10 @@ class ReportDataSourceSerializer(s.Serializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        if 'name' not in attrs:
-            attrs['name'] = attrs['reportType'] or attrs['id']
-        if 'id' not in attrs:
-            attrs['id'] = attrs['name']
+        if "name" not in attrs:
+            attrs["name"] = attrs["reportType"] or attrs["id"]
+        if "id" not in attrs:
+            attrs["id"] = attrs["name"]
         return attrs
 
 
@@ -62,8 +62,8 @@ class ReportPartStageSerializer(s.Serializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        if 'id' not in attrs:
-            attrs['id'] = attrs['name']
+        if "id" not in attrs:
+            attrs["id"] = attrs["name"]
         return attrs
 
 

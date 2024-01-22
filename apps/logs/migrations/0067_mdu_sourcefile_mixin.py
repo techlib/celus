@@ -7,24 +7,24 @@ import logs.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0066_lastaction')]
+    dependencies = [("logs", "0066_lastaction")]
 
     operations = [
         migrations.AddField(
-            model_name='manualdataupload',
-            name='checksum',
-            field=models.CharField(default='', max_length=128),
+            model_name="manualdataupload",
+            name="checksum",
+            field=models.CharField(default="", max_length=128),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='manualdataupload',
-            name='file_size',
+            model_name="manualdataupload",
+            name="file_size",
             field=models.PositiveIntegerField(default=0),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='manualdataupload',
-            name='data_file',
+            model_name="manualdataupload",
+            name="data_file",
             field=models.FileField(
                 blank=True,
                 max_length=256,

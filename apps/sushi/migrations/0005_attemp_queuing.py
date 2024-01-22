@@ -4,20 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0004_processing_info')]
+    dependencies = [("sushi", "0004_processing_info")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='queued',
+            model_name="sushifetchattempt",
+            name="queued",
             field=models.BooleanField(
                 default=False,
-                help_text='Was the attempt queued by the provider and should be refetched?',
+                help_text="Was the attempt queued by the provider and should be refetched?",
             ),
         ),
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='when_queued',
+            model_name="sushifetchattempt",
+            name="when_queued",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

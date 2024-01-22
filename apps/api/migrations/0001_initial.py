@@ -7,14 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [('organizations', '0020_organization_unique_shortname')]
+    dependencies = [("organizations", "0020_organization_unique_shortname")]
 
     operations = [
         migrations.CreateModel(
-            name='OrganizationAPIKey',
+            name="OrganizationAPIKey",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.CharField(
                         editable=False,
                         max_length=100,
@@ -23,50 +23,50 @@ class Migration(migrations.Migration):
                         unique=True,
                     ),
                 ),
-                ('prefix', models.CharField(editable=False, max_length=8, unique=True)),
-                ('hashed_key', models.CharField(editable=False, max_length=100)),
-                ('created', models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("prefix", models.CharField(editable=False, max_length=8, unique=True)),
+                ("hashed_key", models.CharField(editable=False, max_length=100)),
+                ("created", models.DateTimeField(auto_now_add=True, db_index=True)),
                 (
-                    'name',
+                    "name",
                     models.CharField(
                         default=None,
-                        help_text='A free-form name for the API key. Need not be unique. 50 '
-                        'characters max.',
+                        help_text="A free-form name for the API key. Need not be unique. 50 "
+                        "characters max.",
                         max_length=50,
                     ),
                 ),
                 (
-                    'revoked',
+                    "revoked",
                     models.BooleanField(
                         blank=True,
                         default=False,
-                        help_text='If the API key is revoked, clients cannot use it anymore. '
-                        '(This cannot be undone.)',
+                        help_text="If the API key is revoked, clients cannot use it anymore. "
+                        "(This cannot be undone.)",
                     ),
                 ),
                 (
-                    'expiry_date',
+                    "expiry_date",
                     models.DateTimeField(
                         blank=True,
-                        help_text='Once API key expires, clients cannot use it anymore.',
+                        help_text="Once API key expires, clients cannot use it anymore.",
                         null=True,
-                        verbose_name='Expires',
+                        verbose_name="Expires",
                     ),
                 ),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='api_keys',
-                        to='organizations.organization',
+                        related_name="api_keys",
+                        to="organizations.organization",
                     ),
                 ),
             ],
             options={
-                'verbose_name': 'API key',
-                'verbose_name_plural': 'API keys',
-                'ordering': ('-created',),
-                'abstract': False,
+                "verbose_name": "API key",
+                "verbose_name_plural": "API keys",
+                "ordering": ("-created",),
+                "abstract": False,
             },
         )
     ]

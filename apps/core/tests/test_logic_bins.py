@@ -5,7 +5,7 @@ from core.logic.bins import bin_hits
 
 class TestLogicBins:
     @pytest.mark.parametrize(
-        'data, bins',
+        "data, bins",
         [
             ({15: 1}, {(11, 20): 1}),
             ({15: 1, 18: 5}, {(11, 20): 6}),

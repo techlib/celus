@@ -9,38 +9,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logs', '0007_name_in_interest_group'),
+        ("logs", "0007_name_in_interest_group"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ImportBatch',
+            name="ImportBatch",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('system_created', models.BooleanField(default=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("system_created", models.BooleanField(default=True)),
                 (
-                    'owner_level',
+                    "owner_level",
                     models.PositiveSmallIntegerField(
                         choices=[
-                            (100, 'Normal user'),
-                            (200, 'Robot'),
-                            (300, 'Organization admin'),
-                            (400, 'Consortium staff'),
-                            (1000, 'Consortium admin'),
+                            (100, "Normal user"),
+                            (200, "Robot"),
+                            (300, "Organization admin"),
+                            (400, "Consortium staff"),
+                            (1000, "Consortium admin"),
                         ],
                         default=200,
-                        help_text='Level of user who created this record - used to determine who '
-                        'can modify it',
+                        help_text="Level of user who created this record - used to determine who "
+                        "can modify it",
                     ),
                 ),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         blank=True,
                         null=True,

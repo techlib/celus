@@ -4,37 +4,37 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0043_flexireport_accesslevel_ownership')]
+    dependencies = [("logs", "0043_flexireport_accesslevel_ownership")]
 
     operations = [
-        migrations.AlterUniqueTogether(name='metric', unique_together=set()),
-        migrations.AlterUniqueTogether(name='reporttype', unique_together=set()),
+        migrations.AlterUniqueTogether(name="metric", unique_together=set()),
+        migrations.AlterUniqueTogether(name="reporttype", unique_together=set()),
         migrations.AddConstraint(
-            model_name='metric',
+            model_name="metric",
             constraint=models.UniqueConstraint(
-                fields=('short_name', 'source'), name='metric_short_name_source_not_null'
+                fields=("short_name", "source"), name="metric_short_name_source_not_null"
             ),
         ),
         migrations.AddConstraint(
-            model_name='metric',
+            model_name="metric",
             constraint=models.UniqueConstraint(
                 condition=models.Q(source=None),
-                fields=('short_name',),
-                name='metric_short_name_source_null',
+                fields=("short_name",),
+                name="metric_short_name_source_null",
             ),
         ),
         migrations.AddConstraint(
-            model_name='reporttype',
+            model_name="reporttype",
             constraint=models.UniqueConstraint(
-                fields=('short_name', 'source'), name='report_type_short_name_source_not_null'
+                fields=("short_name", "source"), name="report_type_short_name_source_not_null"
             ),
         ),
         migrations.AddConstraint(
-            model_name='reporttype',
+            model_name="reporttype",
             constraint=models.UniqueConstraint(
                 condition=models.Q(source=None),
-                fields=('short_name',),
-                name='report_type_short_name_source_null',
+                fields=("short_name",),
+                name="report_type_short_name_source_null",
             ),
         ),
     ]

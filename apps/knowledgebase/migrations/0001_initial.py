@@ -8,45 +8,45 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [('core', '0010_default_lang_change')]
+    dependencies = [("core", "0010_default_lang_change")]
 
     operations = [
         migrations.CreateModel(
-            name='ImportAttempt',
+            name="ImportAttempt",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('url', models.URLField()),
-                ('kind', models.CharField(choices=[('platform', 'Platform')], max_length=20)),
-                ('created_timestamp', models.DateTimeField(auto_now_add=True)),
-                ('started_timestamp', models.DateTimeField(blank=True, null=True)),
-                ('downloaded_timestamp', models.DateTimeField(blank=True, null=True)),
-                ('processing_timestamp', models.DateTimeField(blank=True, null=True)),
-                ('end_timestamp', models.DateTimeField(blank=True, null=True)),
+                ("url", models.URLField()),
+                ("kind", models.CharField(choices=[("platform", "Platform")], max_length=20)),
+                ("created_timestamp", models.DateTimeField(auto_now_add=True)),
+                ("started_timestamp", models.DateTimeField(blank=True, null=True)),
+                ("downloaded_timestamp", models.DateTimeField(blank=True, null=True)),
+                ("processing_timestamp", models.DateTimeField(blank=True, null=True)),
+                ("end_timestamp", models.DateTimeField(blank=True, null=True)),
                 (
-                    'data_hash',
+                    "data_hash",
                     models.CharField(
-                        blank=True, help_text='SHA-256 hash of attempt', max_length=64, null=True
+                        blank=True, help_text="SHA-256 hash of attempt", max_length=64, null=True
                     ),
                 ),
-                ('stats', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
-                ('error', models.TextField(blank=True, null=True)),
+                ("stats", django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
+                ("error", models.TextField(blank=True, null=True)),
                 (
-                    'source',
+                    "source",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.DataSource'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.DataSource"
                     ),
                 ),
             ],
         ),
         migrations.CreateModel(
-            name='PlatformImportAttempt',
+            name="PlatformImportAttempt",
             fields=[],
-            options={'proxy': True, 'indexes': [], 'constraints': []},
-            bases=('knowledgebase.importattempt',),
+            options={"proxy": True, "indexes": [], "constraints": []},
+            bases=("knowledgebase.importattempt",),
         ),
     ]

@@ -12,27 +12,27 @@ from .tasks import import_manual_upload_data
 
 @admin.register(models.OrganizationPlatform)
 class OrganizationPlatformAdmin(admin.ModelAdmin):
-    list_display = ['organization', 'platform']
+    list_display = ["organization", "platform"]
 
 
 class IsMaterialized(admin.SimpleListFilter):
-    title = 'is materialized'
-    parameter_name = 'materialized'
+    title = "is materialized"
+    parameter_name = "materialized"
 
     def lookups(self, request, model_admin):
-        return (('yes', 'Yes'), ('no', 'No'))
+        return (("yes", "Yes"), ("no", "No"))
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
+        if self.value() == "yes":
             return queryset.only_materialized()
-        if self.value() == 'no':
+        if self.value() == "no":
             return queryset.exclude_materialized()
         return queryset
 
 
 class ReportInterestMetricInline(TabularInline):
     model = ReportInterestMetric
-    fields = ['metric', 'interest_group', 'target_metric']
+    fields = ["metric", "interest_group", "target_metric"]
 
 
 class ReportTypeForm(forms.ModelForm):
@@ -44,7 +44,7 @@ class ReportTypeForm(forms.ModelForm):
 
     class Meta:
         model = models.ReportType
-        fields = '__all__'  # noqa: DJ007
+        fields = "__all__"  # noqa: DJ007
 
 
 @admin.register(models.ReportType)
@@ -52,54 +52,54 @@ class ReportTypeAdmin(TranslationAdmin):
     form = ReportTypeForm
 
     list_display = [
-        'short_name',
-        'name',
-        'dimension_list',
-        'source',
-        'superseeded_by',
-        'materialized',
-        'rim_count',
-        'cm_count',
-        'record_count',
+        "short_name",
+        "name",
+        "dimension_list",
+        "source",
+        "superseeded_by",
+        "materialized",
+        "rim_count",
+        "cm_count",
+        "record_count",
     ]
-    ordering = ['short_name']
-    list_filter = ['source', IsMaterialized, 'default_platform_interest']
-    readonly_fields = ['approx_record_count']
+    ordering = ["short_name"]
+    list_filter = ["source", IsMaterialized, "default_platform_interest"]
+    readonly_fields = ["approx_record_count"]
     inlines = [ReportInterestMetricInline]
-    list_select_related = ['source__organization']
+    list_select_related = ["source__organization"]
 
     class Media:
-        css = {'all': ['css/report_type.css']}
+        css = {"all": ["css/report_type.css"]}
 
     def get_queryset(self, request):
         return (
             super()
             .get_queryset(request)
             .annotate(
-                rim_count=Count('reportinterestmetric__metric', distinct=True),
-                cm_count=Count('controlled_metrics', distinct=True),
+                rim_count=Count("reportinterestmetric__metric", distinct=True),
+                cm_count=Count("controlled_metrics", distinct=True),
             )
         )
 
     def rim_count(self, obj: models.ReportType):
         return obj.rim_count
 
-    rim_count.short_description = 'interest metrics'
+    rim_count.short_description = "interest metrics"
 
     def cm_count(self, obj: models.ReportType):
         return obj.cm_count
 
-    cm_count.short_description = 'controlled metrics'
+    cm_count.short_description = "controlled metrics"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
-        if db_field.name == 'source':
-            field.queryset = field.queryset.select_related('organization')
+        if db_field.name == "source":
+            field.queryset = field.queryset.select_related("organization")
         return field
 
     @classmethod
     def dimension_list(cls, obj: models.ReportType):
-        return ', '.join(obj.dimension_short_names)
+        return ", ".join(obj.dimension_short_names)
 
     def materialized(self, obj: models.ReportType):
         return bool(obj.materialization_spec)
@@ -108,81 +108,81 @@ class ReportTypeAdmin(TranslationAdmin):
 
     @classmethod
     def record_count(cls, obj: models.ReportType):
-        return f'{obj.approx_record_count:,}'
+        return f"{obj.approx_record_count:,}"
 
 
 @admin.register(models.Metric)
 class MetricAdmin(TranslationAdmin):
-    list_display = ['short_name', 'active', 'name', 'source', 'controlled_report_types']
-    list_editable = ['active']
-    list_filter = ['active', 'source']
-    search_fields = ['short_name', 'name']
+    list_display = ["short_name", "active", "name", "source", "controlled_report_types"]
+    list_editable = ["active"]
+    list_filter = ["active", "source"]
+    search_fields = ["short_name", "name"]
 
     @classmethod
     def controlled_report_types(cls, obj: models.Metric):
-        return ', '.join(str(e) for e in obj.controlled.all())
+        return ", ".join(str(e) for e in obj.controlled.all())
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related('controlled')
+        return qs.prefetch_related("controlled")
 
 
 @admin.register(models.ReportInterestMetric)
 class ReportInterestMetricAdmin(TranslationAdmin):
-    list_display = ['report_type', 'metric', 'interest_group', 'target_metric']
-    list_filter = ['report_type', 'metric', 'interest_group']
-    search_fields = ['report_type__short_name', 'report_type__name', 'metric__name']
-    list_select_related = ['report_type', 'metric', 'target_metric', 'interest_group']
+    list_display = ["report_type", "metric", "interest_group", "target_metric"]
+    list_filter = ["report_type", "metric", "interest_group"]
+    search_fields = ["report_type__short_name", "report_type__name", "metric__name"]
+    list_select_related = ["report_type", "metric", "target_metric", "interest_group"]
 
 
 @admin.register(models.Dimension)
 class DimensionAdmin(TranslationAdmin):
-    list_display = ['short_name', 'name', 'desc']
-    ordering = ['short_name']
+    list_display = ["short_name", "name", "desc"]
+    ordering = ["short_name"]
 
 
 @admin.register(models.DimensionText)
 class DimensionTextAdmin(TranslationAdmin):
-    list_display = ['id', 'dimension', 'text', 'text_local']
-    list_filter = ['dimension']
+    list_display = ["id", "dimension", "text", "text_local"]
+    list_filter = ["dimension"]
 
 
 @admin.register(models.ReportTypeToDimension)
 class ReportTypeToDimensionAdmin(admin.ModelAdmin):
-    list_display = ['report_type', 'dimension', 'position']
-    ordering = ['report_type__short_name', 'position']
-    list_filter = ['report_type', 'dimension']
+    list_display = ["report_type", "dimension", "position"]
+    ordering = ["report_type__short_name", "position"]
+    list_filter = ["report_type", "dimension"]
 
 
 @admin.register(models.AccessLog)
 class AccessLogAdmin(admin.ModelAdmin):
     list_display = [
-        'metric',
-        'report_type',
-        'organization',
-        'platform',
-        'target',
-        'created',
-        'date',
-        'value',
+        "metric",
+        "report_type",
+        "organization",
+        "platform",
+        "target",
+        "created",
+        "date",
+        "value",
     ]
-    list_select_related = ['organization', 'platform', 'target', 'metric', 'report_type']
-    readonly_fields = ['target', 'import_batch', 'organization', 'platform']
-    search_fields = ['platform__name', 'target__name', 'organization__name']
-    list_filter = ['report_type', 'organization', 'platform']
+    list_select_related = ["organization", "platform", "target", "metric", "report_type"]
+    readonly_fields = ["target", "import_batch", "organization", "platform"]
+    search_fields = ["platform__name", "target__name", "organization__name"]
+    list_filter = ["report_type", "organization", "platform"]
 
 
 @admin.register(models.InterestGroup)
 class InterestGroupAdmin(TranslationAdmin):
-    list_display = ['short_name', 'important', 'position', 'name']
-    list_editable = ['important', 'position']
+    list_display = ["short_name", "important", "position", "name"]
+    list_editable = ["important", "position"]
 
 
 @admin.register(models.ImportBatch)
 class ImportBatchAdmin(admin.ModelAdmin):
-    list_display = ['created', 'report_type', 'organization', 'platform', 'date', 'log_count']
-    list_filter = ['report_type', 'organization', 'platform']
-    list_select_related = ['report_type', 'organization', 'platform']
+    list_display = ["created", "report_type", "organization", "platform", "date", "log_count"]
+    list_filter = ["report_type", "organization", "platform"]
+    list_select_related = ["report_type", "organization", "platform"]
 
     @classmethod
     def log_count(cls, obj: models.ImportBatch):
@@ -196,37 +196,37 @@ class ImportBatchAdmin(admin.ModelAdmin):
 
 @admin.register(models.ReportMaterializationSpec)
 class ReportMaterializationSpecAdmin(admin.ModelAdmin):
-    list_display = ['name', 'base_report_type', 'description']
+    list_display = ["name", "base_report_type", "description"]
 
 
 @admin.register(models.FlexibleReport)
 class FlexibleReportAdmin(admin.ModelAdmin):
-    list_display = ['name', 'access_level', 'owner', 'owner_organization']
+    list_display = ["name", "access_level", "owner", "owner_organization"]
 
 
 class HasImportBatch(admin.SimpleListFilter):
-    title = 'has import batch'
-    parameter_name = 'has'
+    title = "has import batch"
+    parameter_name = "has"
 
     def lookups(self, request, model_admin):
-        return (('yes', 'Yes'), ('no', 'No'))
+        return (("yes", "Yes"), ("no", "No"))
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
+        if self.value() == "yes":
             return queryset.filter(import_batches__isnull=False)
-        if self.value() == 'no':
+        if self.value() == "no":
             return queryset.filter(import_batches__isnull=True)
         return queryset
 
 
 @admin.register(models.ManualDataUpload)
 class ManualDataUploadAdmin(admin.ModelAdmin):
-    list_filter = ['state', 'report_type', 'organization', 'platform', HasImportBatch, 'method']
-    list_display = ['created', 'report_type', 'platform', 'organization', 'user', 'state']
-    list_select_related = ['report_type', 'organization', 'platform', 'user']
-    readonly_fields = ['data_file', 'created']
-    search_fields = ['organization__name', 'platform__name', 'pk', 'user__username', 'user__email']
-    actions = ['regenerate_preflight', 'reimport']
+    list_filter = ["state", "report_type", "organization", "platform", HasImportBatch, "method"]
+    list_display = ["created", "report_type", "platform", "organization", "user", "state"]
+    list_select_related = ["report_type", "organization", "platform", "user"]
+    readonly_fields = ["data_file", "created"]
+    search_fields = ["organization__name", "platform__name", "pk", "user__username", "user__email"]
+    actions = ["regenerate_preflight", "reimport"]
 
     @admin.action(description="Regenerate preflight data")
     def regenerate_preflight(self, request, queryset):
@@ -251,7 +251,7 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
     def reimport(self, request, queryset):
         count = 0
         total_count = queryset.count()
-        for mdu in queryset.select_for_update(skip_locked=True, of=('self',)):
+        for mdu in queryset.select_for_update(skip_locked=True, of=("self",)):
             mdu.unprocess()
             # import_manual_upload_data does not work without the state being `IMPORTING`
             mdu.state = MduState.IMPORTING
@@ -264,11 +264,11 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
         )
         messages.info(
             request,
-            f'{count} uploads planned to be reimported.{already_running_text}',
+            f"{count} uploads planned to be reimported.{already_running_text}",
             messages.SUCCESS,
         )
 
 
 @admin.register(models.LastAction)
 class LastActionAdmin(admin.ModelAdmin):
-    list_display = ['action', 'last_updated']
+    list_display = ["action", "last_updated"]

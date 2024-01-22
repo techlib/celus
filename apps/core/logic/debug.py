@@ -11,8 +11,8 @@ def memory_usage_psutil():
     return mem
 
 
-def log_memory(name=''):
+def log_memory(name=""):
     usage = memory_usage_psutil()
-    prefix = f'{name}: ' if name else ''
-    print(f'{prefix}Memory usage: {usage:.2f} MB; time: {time():.3f}', file=sys.stderr)
+    prefix = f"{name}: " if name else ""
+    print(f"{prefix}Memory usage: {usage:.2f} MB; time: {time():.3f}", file=sys.stderr)
     return usage

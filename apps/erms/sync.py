@@ -16,7 +16,7 @@ class SyncerError(Exception):
 
 class Syncer:
     attr_map = {}
-    primary_id = 'id'  # used to find if a value is in the database or not
+    primary_id = "id"  # used to find if a value is in the database or not
     object_class = None
 
     class Status(Enum):
@@ -95,23 +95,23 @@ class Syncer:
 
 
 class ERMSSyncer(Syncer):
-    primary_id = 'ext_id'
+    primary_id = "ext_id"
 
     def translate_value(self, key, value):
         return value[0] if isinstance(value, list) else value
 
     def translate_key(self, key):
-        if '@' in key:
-            start, end = key.split('@')
+        if "@" in key:
+            start, end = key.split("@")
             start = super().translate_key(start)
             if start is None:
                 return None  # we skip those
-            key = f'{start}_{end}'
+            key = f"{start}_{end}"
         return super().translate_key(key)
 
 
 class ERMSObjectSyncer(ERMSSyncer):
     def translate_record(self, record: dict) -> dict:
-        output = super().translate_record(record['vals'])
-        output['ext_id'] = record['id']
+        output = super().translate_record(record["vals"])
+        output["ext_id"] = record["id"]
         return output

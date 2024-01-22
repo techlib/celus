@@ -30,11 +30,11 @@ class DimensionFilter(ABC):
         self.dimension: str = dimension
 
     def __str__(self):
-        return f'{self.dimension}: {self.value_str}'
+        return f"{self.dimension}: {self.value_str}"
 
     @property
     def value_str(self) -> str:
-        return ''
+        return ""
 
     @abstractmethod
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
@@ -56,7 +56,7 @@ class DimensionFilter(ABC):
 
 
 class DateDimensionFilter(DimensionFilter):
-    month_format_matcher = re.compile(r'^\d{4}-\d{2}$')
+    month_format_matcher = re.compile(r"^\d{4}-\d{2}$")
 
     def __init__(self, dimension: str, start, end):
         super().__init__(dimension)
@@ -79,21 +79,21 @@ class DateDimensionFilter(DimensionFilter):
 
     @property
     def value_str(self) -> str:
-        return f'{self.start} - {self.end}'
+        return f"{self.start} - {self.end}"
 
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
         ret = {}
         if self.start:
-            ret[f'{self.dimension}__gte'] = self.start
+            ret[f"{self.dimension}__gte"] = self.start
         if self.end:
-            ret[f'{self.dimension}__lte'] = self.end
+            ret[f"{self.dimension}__lte"] = self.end
         return ret
 
     def config(self):
         return {
-            'dimension': self.dimension,
-            'start': self.serialize_date(self.start),
-            'end': self.serialize_date(self.end),
+            "dimension": self.dimension,
+            "start": self.serialize_date(self.start),
+            "end": self.serialize_date(self.end),
         }
 
     def smart_str(self) -> str:
@@ -109,14 +109,14 @@ class DateDimensionFilter(DimensionFilter):
                 # this is one full year
                 return str(self.start.year)
             # this is a range of years
-            return f'{self.start.year} - {self.end.year}'
+            return f"{self.start.year} - {self.end.year}"
         # if start is the same as end, just return the start
         start_month = format_month(self.start)
         end_month = format_month(self.end)
         if start_month == end_month:
             return start_month
         # return the whole range
-        return f'{start_month} - {end_month}'
+        return f"{start_month} - {end_month}"
 
     @classmethod
     def serialize_date(cls, value):
@@ -140,15 +140,15 @@ class ForeignKeyDimensionFilter(DimensionFilter):
         field, modifier = AccessLog.get_dimension_field(self.dimension)
         objs = field.related_model.objects.filter(pk__in=self.values)
         values = [obj.name or obj.short_name for obj in objs]
-        return '; '.join(str(val) for val in values)
+        return "; ".join(str(val) for val in values)
 
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
         if primary_filter:
-            return {'pk__in': self.values}
-        return {f'{self.dimension}_id__in': self.values}
+            return {"pk__in": self.values}
+        return {f"{self.dimension}_id__in": self.values}
 
     def config(self):
-        return {'dimension': self.dimension, 'values': self.values}
+        return {"dimension": self.dimension, "values": self.values}
 
 
 class ExplicitDimensionFilter(DimensionFilter):
@@ -158,25 +158,25 @@ class ExplicitDimensionFilter(DimensionFilter):
 
     @property
     def value_str(self):
-        return '; '.join(val.text for val in DimensionText.objects.filter(pk__in=self.values))
+        return "; ".join(val.text for val in DimensionText.objects.filter(pk__in=self.values))
 
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
-        return {f'{self.dimension}__in': self.values}
+        return {f"{self.dimension}__in": self.values}
 
     def config(self):
-        return {'dimension': self.dimension, 'values': self.values}
+        return {"dimension": self.dimension, "values": self.values}
 
 
 class TagDimensionFilter(DimensionFilter):
     def __init__(self, dimension, tag_ids):
         super().__init__(dimension)
-        if dimension not in ['target', 'platform', 'organization']:
-            raise ValueError(f'Unsupported dimension for tagging: {dimension}')
+        if dimension not in ["target", "platform", "organization"]:
+            raise ValueError(f"Unsupported dimension for tagging: {dimension}")
         self.tag_ids = [tag.pk if isinstance(tag, Tag) else tag for tag in to_list(tag_ids)]
 
     @property
     def value_str(self):
-        return '; '.join(val.name for val in Tag.objects.filter(pk__in=self.tag_ids))
+        return "; ".join(val.name for val in Tag.objects.filter(pk__in=self.tag_ids))
 
     @property
     def related_model(self) -> Union[Type[Title], Type[Platform], Type[Organization]]:
@@ -189,13 +189,13 @@ class TagDimensionFilter(DimensionFilter):
         """
         return (
             self.related_model.objects.filter(tags__in=self.tag_ids)
-            .values_list('pk', flat=True)
+            .values_list("pk", flat=True)
             .distinct()
         )
 
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
         if primary_filter:
-            return {'tags__in': self.tag_ids}
+            return {"tags__in": self.tag_ids}
         # here we translate the tag ids to related object ids and use it for query,
         # querying tags directly in the query (like `platform__tags__in`) hits a nesting limit
         # inside Django
@@ -217,27 +217,27 @@ class TagDimensionFilter(DimensionFilter):
         if obj_ids_qs.count() > size_limit:
             if clickhouse_compatible:
                 # when clickhouse compatibility is requested, we have to raise an error
-                raise ClickhouseIncompatibleFilter('Too many ids to use in query')
+                raise ClickhouseIncompatibleFilter("Too many ids to use in query")
             # otherwise we just use the queryset
             obj_ids = obj_ids_qs
         else:
             obj_ids = list(obj_ids_qs)
-        return {f'{self.dimension}_id__in': obj_ids}
+        return {f"{self.dimension}_id__in": obj_ids}
 
     def config(self):
-        return {'dimension': self.dimension, 'tag_ids': self.tag_ids}
+        return {"dimension": self.dimension, "tag_ids": self.tag_ids}
 
 
 class TagClassDimensionFilter(DimensionFilter):
     def __init__(self, dimension, tag_class_ids):
-        if dimension not in ['target', 'platform', 'organization']:
-            raise ValueError(f'Unsupported dimension for tagging: {dimension}')
+        if dimension not in ["target", "platform", "organization"]:
+            raise ValueError(f"Unsupported dimension for tagging: {dimension}")
         super().__init__(dimension)
         self.tc_ids = [tc.pk if isinstance(tc, TagClass) else tc for tc in to_list(tag_class_ids)]
 
     @property
     def value_str(self):
-        return '; '.join(val.name for val in TagClass.objects.filter(pk__in=self.tc_ids))
+        return "; ".join(val.name for val in TagClass.objects.filter(pk__in=self.tc_ids))
 
     @property
     def related_model(self) -> Union[Type[Title], Type[Platform], Type[Organization]]:
@@ -250,13 +250,13 @@ class TagClassDimensionFilter(DimensionFilter):
         """
         return (
             self.related_model.objects.filter(tags__tag_class__in=self.tc_ids)
-            .values_list('pk', flat=True)
+            .values_list("pk", flat=True)
             .distinct()
         )
 
     def query_params(self, primary_filter=False, clickhouse_compatible=False) -> dict:
         if primary_filter:
-            return {'tags__tag_class__in': self.tc_ids}
+            return {"tags__tag_class__in": self.tc_ids}
         # here we translate the tag class ids to related object ids and use it for query,
         # querying tags directly in the query (like `platform__tags__tag_class__in`) hits a
         # nesting limit inside Django
@@ -266,12 +266,12 @@ class TagClassDimensionFilter(DimensionFilter):
         if obj_ids_qs.count() > size_limit:
             if clickhouse_compatible:
                 # when clickhouse compatibility is requested, we have to raise an error
-                raise ClickhouseIncompatibleFilter('Too many ids to use in query')
+                raise ClickhouseIncompatibleFilter("Too many ids to use in query")
             # otherwise we just use the queryset
             obj_ids = obj_ids_qs
         else:
             obj_ids = list(obj_ids_qs)
-        return {f'{self.dimension}_id__in': obj_ids}
+        return {f"{self.dimension}_id__in": obj_ids}
 
     def config(self):
-        return {'dimension': self.dimension, 'tag_class_ids': self.tc_ids}
+        return {"dimension": self.dimension, "tag_class_ids": self.tc_ids}

@@ -4,7 +4,7 @@ from django.conf import settings
 
 
 def get_changelog_entries():
-    with open(settings.BASE_DIR / "CHANGELOG.md", 'rt', encoding='utf-8') as f:
+    with open(settings.BASE_DIR / "CHANGELOG.md", "rt", encoding="utf-8") as f:
         return parse_changelog(f.read())
 
 

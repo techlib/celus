@@ -6,11 +6,11 @@ from .models import ReportDataView
 
 
 class ReportDataViewTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ("name", "desc")
 
 
 class ChartDefinitionTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ("name", "desc")
 
 
 translator.register(ReportDataView, ReportDataViewTranslationOptions)

@@ -4,8 +4,8 @@ import re
 from isbnlib import canonical, is_isbn10, is_isbn13, to_isbn13
 
 logger = logging.getLogger(__name__)
-issn_matcher = re.compile(r'(\d{4})-?(\d{3}[\dXx])')
-issn_number_matcher = re.compile(r'^\d{0,7}[\dXx]$')
+issn_matcher = re.compile(r"(\d{4})-?(\d{3}[\dXx])")
+issn_number_matcher = re.compile(r"^\d{0,7}[\dXx]$")
 
 
 def normalize_issn(text: str) -> str:
@@ -13,14 +13,14 @@ def normalize_issn(text: str) -> str:
     Removes all whitespace and checks if ISSN looks like ISSN. But even if not, it still
     returns the original value, so that we can save at least that.
     """
-    clean = ''.join(text.split())  # remove all whitespace
+    clean = "".join(text.split())  # remove all whitespace
     if m := issn_matcher.search(clean):
         # upper() because 'X' can be also lowercase
-        return m.group(1) + '-' + m.group(2).upper()
+        return m.group(1) + "-" + m.group(2).upper()
     # sometimes the leading zeros are missing, so we add them
     if issn_number_matcher.match(clean):
-        clean = (8 - len(clean)) * '0' + clean
-        return clean[:4] + '-' + clean[4:].upper()
+        clean = (8 - len(clean)) * "0" + clean
+        return clean[:4] + "-" + clean[4:].upper()
     if clean:
         logger.warning('Invalid ISSN: "%s"', text)
     # only 9 characters - we do not support more
@@ -39,7 +39,7 @@ def normalize_isbn(isbn: str) -> str:
         # this is crude, but it is here only to handle complete bullshit from the data, so we do
         # not care much - it just needs to fit into our ISBN model
         isbn = isbn.split()[0][:20]
-    isbn = isbn.replace(' ', '').replace('-', '')
+    isbn = isbn.replace(" ", "").replace("-", "")
     if is_isbn13(isbn):
         return canonical(isbn)
     if is_isbn10(isbn):
@@ -48,5 +48,5 @@ def normalize_isbn(isbn: str) -> str:
 
 
 def normalize_title(title: str) -> str:
-    clean = ' '.join(title.split())  # normalize whitespace
+    clean = " ".join(title.split())  # normalize whitespace
     return clean

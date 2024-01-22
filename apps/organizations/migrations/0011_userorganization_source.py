@@ -6,19 +6,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0006_blank_ext_id'),
-        ('organizations', '0010_delete_sushicredentials'),
+        ("core", "0006_blank_ext_id"),
+        ("organizations", "0010_delete_sushicredentials"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userorganization',
-            name='source',
+            model_name="userorganization",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         )
     ]

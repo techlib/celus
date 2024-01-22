@@ -4,7 +4,7 @@ from rest_framework.permissions import BasePermission
 
 class AccessiblePlatformFromOrganization(BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.method == 'POST':
+        if request.method == "POST":
             if organization_id := request.data.get("organization_id"):
                 if (
                     obj.platform.source

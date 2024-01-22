@@ -6,17 +6,17 @@ from django.db.models import F, Q
 
 
 def fix_queues(apps, schema_editor):
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
-    FetchIntentionQueue = apps.get_model('scheduler', 'FetchIntentionQueue')
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
+    FetchIntentionQueue = apps.get_model("scheduler", "FetchIntentionQueue")
 
     # queue start with this fi, but fi has previous fi
-    query = Q(queue__start_id=F('pk'), previous_intention__isnull=False)
+    query = Q(queue__start_id=F("pk"), previous_intention__isnull=False)
 
     to_delete = []
 
     # one iteration should be enough here, we are fixing
     # the queue from the start and fi are sorted by pk
-    for fi in FetchIntention.objects.filter(query).order_by('pk'):
+    for fi in FetchIntention.objects.filter(query).order_by("pk"):
         queue = fi.previous_intention.queue
         if not queue:
             # queue is missing for the previous intention
@@ -40,6 +40,6 @@ def fix_queues(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0015_fetchintention_timestamp')]
+    dependencies = [("scheduler", "0015_fetchintention_timestamp")]
 
     operations = [RunPython(fix_queues, RunPython.noop)]

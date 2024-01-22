@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0016_report_interest_metrics'),
-        ('publications', '0009_even_more_pub_types'),
+        ("logs", "0016_report_interest_metrics"),
+        ("publications", "0009_even_more_pub_types"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='platform',
-            name='interest_reports',
-            field=models.ManyToManyField(to='logs.ReportType'),
+            model_name="platform",
+            name="interest_reports",
+            field=models.ManyToManyField(to="logs.ReportType"),
         )
     ]

@@ -16,15 +16,15 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        'Checks directory were dowloaded files from sushi are downloaded '
-        'and removes files which are not associated with any attempt.'
+        "Checks directory were dowloaded files from sushi are downloaded "
+        "and removes files which are not associated with any attempt."
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--do-it', dest='doit', action='store_true')
+        parser.add_argument("--do-it", dest="doit", action="store_true")
         parser.add_argument(
-            '--older-than',
-            help='Remove only files which are older that X days (default=30)',
+            "--older-than",
+            help="Remove only files which are older that X days (default=30)",
             type=int,
             default="30",
         )
@@ -45,14 +45,14 @@ class Command(BaseCommand):
                 if filepath.exists():
                     stats["existing_attempt_files"] += 1
                 else:
-                    stats['missing_attempt_files'] += 1
+                    stats["missing_attempt_files"] += 1
                     continue
 
                 cache.add(str(filepath), "1", expire=None)  # never expires
 
                 parent = filepath.parent
                 if parent not in dirs:
-                    stats['dirs'] += 1
+                    stats["dirs"] += 1
 
                 dirs.add(parent)
 
@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 for entry in dir_path.iterdir():
                     if entry.is_file() and entry.stat().st_mtime < time_limit:
                         if cache.get(str(entry), "0") == "0":
-                            stats['deleted_orphan_files'] += 1
+                            stats["deleted_orphan_files"] += 1
                             if options["doit"]:
                                 entry.unlink()
             print("\n")

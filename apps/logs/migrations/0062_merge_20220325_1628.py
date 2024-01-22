@@ -5,8 +5,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0057_verbose_names'),
-        ('logs', '0061_remove_manualdataupload_is_processed'),
+        ("logs", "0057_verbose_names"),
+        ("logs", "0061_remove_manualdataupload_is_processed"),
     ]
 
     operations = []

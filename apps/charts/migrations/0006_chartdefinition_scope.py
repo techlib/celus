@@ -4,15 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('charts', '0005_chartdefinition_ignore_platform')]
+    dependencies = [("charts", "0005_chartdefinition_ignore_platform")]
 
     operations = [
         migrations.AddField(
-            model_name='chartdefinition',
-            name='scope',
+            model_name="chartdefinition",
+            name="scope",
             field=models.CharField(
-                choices=[('', 'any'), ('platform', 'platform'), ('title', 'title')],
-                default='',
+                choices=[("", "any"), ("platform", "platform"), ("title", "title")],
+                default="",
                 max_length=10,
             ),
         )

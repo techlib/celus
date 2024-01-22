@@ -6,12 +6,12 @@ import sushi.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0033_sushifetchattempt_queue_id')]
+    dependencies = [("sushi", "0033_sushifetchattempt_queue_id")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='data_file',
+            model_name="sushifetchattempt",
+            name="data_file",
             field=models.FileField(
                 blank=True, max_length=256, null=True, upload_to=sushi.models.where_to_store
             ),

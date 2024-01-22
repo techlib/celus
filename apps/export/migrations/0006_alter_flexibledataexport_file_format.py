@@ -5,20 +5,20 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('export', '0005_flexibledataexport_file_format'),
+        ("export", "0005_flexibledataexport_file_format"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='flexibledataexport',
-            name='file_format',
+            model_name="flexibledataexport",
+            name="file_format",
             field=models.CharField(
                 choices=[
-                    ('XLSX', 'XLSX'),
-                    ('XLSX_NO_CHARTS', 'XLSX without charts'),
-                    ('ZIP_CSV', 'CSV files inside ZIP archive'),
+                    ("XLSX", "XLSX"),
+                    ("XLSX_NO_CHARTS", "XLSX without charts"),
+                    ("ZIP_CSV", "CSV files inside ZIP archive"),
                 ],
-                default='XLSX',
+                default="XLSX",
                 max_length=16,
             ),
         ),

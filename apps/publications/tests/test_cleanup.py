@@ -21,9 +21,9 @@ from publications.models import Platform, PlatformTitle
 @pytest.mark.django_db
 class TestDeletePlatformData:
     @pytest.mark.clickhouse
-    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.django_db(transaction=True)
-    @pytest.mark.parametrize('delete_credentials', (True, False))
+    @pytest.mark.parametrize("delete_credentials", (True, False))
     @pytest.mark.parametrize(
         "org_source,org_source_matches,delete_platform,platform_deleted",
         (
@@ -66,8 +66,8 @@ class TestDeletePlatformData:
         # fetch intention without attempt - it will be kept for future
         FetchIntentionFactory(attempt=None, credentials=fi.credentials)
         # check the data before delete
-        fltr = {'organization': ib.organization, 'platform': ib.platform}
-        cr_fltr = {'credentials': fi.credentials}
+        fltr = {"organization": ib.organization, "platform": ib.platform}
+        cr_fltr = {"credentials": fi.credentials}
         assert AccessLog.objects.filter(**fltr).count() > 0
         assert ImportBatch.objects.filter(**fltr).count() > 0
         assert PlatformTitle.objects.filter(**fltr).count() > 0
@@ -75,9 +75,9 @@ class TestDeletePlatformData:
         assert FetchIntention.objects.filter(**cr_fltr).count() == 2
         assert SushiFetchAttempt.objects.filter(**cr_fltr).count() == 1
         old_credentials_ids = set(
-            SushiCredentials.objects.filter(platform=ib.platform).values_list('pk', flat=True)
+            SushiCredentials.objects.filter(platform=ib.platform).values_list("pk", flat=True)
         )
-        assert len(old_credentials_ids) > 1, 'at least 2 credentials should be present'
+        assert len(old_credentials_ids) > 1, "at least 2 credentials should be present"
 
         def get_ch_count():
             return ch_backend.get_one_record(
@@ -115,11 +115,11 @@ class TestDeletePlatformData:
             assert (
                 set(
                     SushiCredentials.objects.filter(platform=ib.platform).values_list(
-                        'pk', flat=True
+                        "pk", flat=True
                     )
                 )
                 == old_credentials_ids
-            ), 'credentials should be kept'
+            ), "credentials should be kept"
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             assert get_ch_count() == 0
 
@@ -127,7 +127,7 @@ class TestDeletePlatformData:
         ib = ImportBatchFullFactory.create()
         org2 = OrganizationFactory.create()
         ImportBatchFullFactory.create(organization=org2)
-        fltr = {'organization__in': [ib.organization, org2], 'platform': ib.platform}
+        fltr = {"organization__in": [ib.organization, org2], "platform": ib.platform}
         assert AccessLog.objects.filter(**fltr).count() > 0
         assert ImportBatch.objects.filter(**fltr).count() > 0
         assert PlatformTitle.objects.filter(**fltr).count() > 0

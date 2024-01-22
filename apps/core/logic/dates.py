@@ -6,8 +6,8 @@ from typing import Generator, Optional
 import dateparser
 from django.utils import timezone
 
-month_matcher = re.compile(r'^(?P<year>\d{4})-(?P<month>\d{1,2})(-\d{1,2})?$')
-counter_month_matcher = re.compile(r'^(?P<month>\w{3})-(?P<year>\d{2}(\d{2})?)$')
+month_matcher = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{1,2})(-\d{1,2})?$")
+counter_month_matcher = re.compile(r"^(?P<month>\w{3})-(?P<year>\d{2}(\d{2})?)$")
 
 
 def parse_month(text: str) -> Optional[datetime.date]:
@@ -19,8 +19,8 @@ def parse_month(text: str) -> Optional[datetime.date]:
         return None
     m = month_matcher.match(str(text).strip())
     if m:
-        year = int(m.group('year'))
-        month = int(m.group('month'))
+        year = int(m.group("year"))
+        month = int(m.group("month"))
         try:
             return datetime.date(year, month, 1)
         except ValueError:
@@ -65,14 +65,14 @@ def date_range_from_params(params: dict) -> (datetime.date, datetime.date):
     :param params:
     :return:
     """
-    start_date = parse_month(params.get('start'))
-    end_date = parse_month(params.get('end'))
+    start_date = parse_month(params.get("start"))
+    end_date = parse_month(params.get("end"))
     if end_date:
         end_date = month_end(end_date)
     return start_date, end_date
 
 
-def date_filter_from_params(params: dict, key_start='', str_date=False) -> dict:
+def date_filter_from_params(params: dict, key_start="", str_date=False) -> dict:
     """
     Returns dict with params suitable for the filter method of an object specifying dates
     as the are given in the params dict. This dict will typically be the GET dict from a request
@@ -82,18 +82,18 @@ def date_filter_from_params(params: dict, key_start='', str_date=False) -> dict:
     :return:
     """
     result = {}
-    start_date = parse_month(params.get('start'))
+    start_date = parse_month(params.get("start"))
     if start_date:
         if str_date:
             start_date = str(start_date)
-        result[key_start + 'date__gte'] = start_date
+        result[key_start + "date__gte"] = start_date
 
-    end_date = parse_month(params.get('end'))
+    end_date = parse_month(params.get("end"))
     if end_date:
         end_date = month_end(end_date)
         if str_date:
             end_date = str(end_date)
-        result[key_start + 'date__lte'] = end_date
+        result[key_start + "date__lte"] = end_date
     return result
 
 
@@ -112,7 +112,7 @@ def parse_date_fuzzy(date_str: str) -> Optional[datetime.date]:
     Uses dateparser to try to parse a date. Uses only specific locales to make dateparser
     faster, so we extracted it as a function to use throughout the code
     """
-    dt = dateparser.parse(date_str, languages=['en'])
+    dt = dateparser.parse(date_str, languages=["en"])
     return dt and dt.date()
 
 

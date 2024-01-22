@@ -24,12 +24,12 @@ class TagClassFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TagClass
 
-    name = factory.Faker('word')
-    internal = factory.Faker('boolean')
+    name = factory.Faker("word")
+    internal = factory.Faker("boolean")
     scope = factory.fuzzy.FuzzyChoice(TagScope.values)
-    text_color = factory.Faker('safe_hex_color')
-    bg_color = factory.Faker('safe_hex_color')
-    desc = factory.Faker('sentence')
+    text_color = factory.Faker("safe_hex_color")
+    bg_color = factory.Faker("safe_hex_color")
+    desc = factory.Faker("sentence")
     can_modify = AccessibleBy.CONS_ADMINS
     can_create_tags = AccessibleBy.EVERYBODY
     default_tag_can_see = AccessibleBy.EVERYBODY
@@ -42,13 +42,13 @@ class TagClassFactory(factory.django.DjangoModelFactory):
 class TagFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Tag
-        django_get_or_create = ('tag_class', 'name')
+        django_get_or_create = ("tag_class", "name")
 
     tag_class = factory.SubFactory(TagClassFactory)
-    name = factory.Sequence(lambda counter: f'tag-{counter:04d}')  # ensures uniqueness
-    text_color = factory.Faker('safe_hex_color')
-    bg_color = factory.Faker('safe_hex_color')
-    desc = factory.Faker('sentence')
+    name = factory.Sequence(lambda counter: f"tag-{counter:04d}")  # ensures uniqueness
+    text_color = factory.Faker("safe_hex_color")
+    bg_color = factory.Faker("safe_hex_color")
+    desc = factory.Faker("sentence")
     can_see = AccessibleBy.EVERYBODY
     can_assign = AccessibleBy.EVERYBODY
     owner = None
@@ -62,7 +62,7 @@ class TagForTitleFactory(TagFactory):
 class TitleTagFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TitleTag
-        django_get_or_create = ('tag', 'target')
+        django_get_or_create = ("tag", "target")
 
     tag = factory.SubFactory(TagForTitleFactory)
     target = factory.SubFactory(TitleFactory)
@@ -73,10 +73,10 @@ class TitleTagFactory(factory.django.DjangoModelFactory):
 class TitleTagFactoryExistingTitles(factory.django.DjangoModelFactory):
     class Meta:
         model = TitleTag
-        django_get_or_create = ('tag', 'target_id')
+        django_get_or_create = ("tag", "target_id")
 
     tag = factory.SubFactory(TagForTitleFactory)
-    target_id = factory.fuzzy.FuzzyChoice(Title.objects.all().values_list('pk', flat=True))
+    target_id = factory.fuzzy.FuzzyChoice(Title.objects.all().values_list("pk", flat=True))
     _exclusive = factory.LazyAttribute(lambda obj: obj.tag.tag_class.exclusive)
     _tag_class = factory.LazyAttribute(lambda obj: obj.tag.tag_class)
 
@@ -97,9 +97,9 @@ class TaggingBatchFactory(factory.django.DjangoModelFactory):
         We accept a normal file here and preprocess it into ContentFile for convenience
         """
         if not extracted:
-            return ''
+            return ""
 
-        with open(extracted, 'rb') as f:
+        with open(extracted, "rb") as f:
             data_file = ContentFile(f.read())
             data_file.name = "test.csv"
         obj.source_file = data_file
@@ -113,7 +113,7 @@ class TaggingAttemptFactory(factory.django.DjangoModelFactory):
     batch = factory.SubFactory(TaggingBatchFactory)
     operation = factory.fuzzy.FuzzyChoice(TaggingAttemptOperation.values)
     success = True
-    error = ''
+    error = ""
     recognized_columns = factory.LazyFunction(list)
     tag_stats = factory.LazyFunction(dict)
     rows_total = 0
@@ -126,14 +126,14 @@ class TaggingAttemptFactory(factory.django.DjangoModelFactory):
 
 
 class TaggingAttemptFuzzyFactory(TaggingAttemptFactory):
-    recognized_columns = factory.fuzzy.FuzzyChoice(['issn', 'eissn', 'isbn'])
+    recognized_columns = factory.fuzzy.FuzzyChoice(["issn", "eissn", "isbn"])
     tag_stats = factory.lazy_attribute(
         lambda obj: {
             word: {
-                'matched_lines': fake.random_int(0, 1000),
-                'matched_titles': fake.random_int(0, 1000),
+                "matched_lines": fake.random_int(0, 1000),
+                "matched_titles": fake.random_int(0, 1000),
                 **(
-                    {'tagged_titles': fake.random_int(0, 1000)}
+                    {"tagged_titles": fake.random_int(0, 1000)}
                     if obj.operation == TaggingAttemptOperation.IMPORT
                     else {}
                 ),

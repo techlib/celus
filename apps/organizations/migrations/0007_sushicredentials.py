@@ -7,41 +7,41 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0005_auto_20190801_1615'),
-        ('organizations', '0006_organization_platforms'),
+        ("publications", "0005_auto_20190801_1615"),
+        ("organizations", "0006_organization_platforms"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SushiCredentials',
+            name="SushiCredentials",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('url', models.URLField()),
+                ("url", models.URLField()),
                 (
-                    'version',
-                    models.PositiveSmallIntegerField(choices=[(4, 'COUNTER 4'), (5, 'COUNTER 5')]),
+                    "version",
+                    models.PositiveSmallIntegerField(choices=[(4, "COUNTER 4"), (5, "COUNTER 5")]),
                 ),
-                ('requestor_id', models.CharField(max_length=128)),
-                ('client_id', models.CharField(blank=True, max_length=128)),
-                ('http_username', models.CharField(blank=True, max_length=128)),
-                ('http_password', models.CharField(blank=True, max_length=128)),
-                ('api_key', models.CharField(blank=True, max_length=128)),
-                ('extra_params', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
+                ("requestor_id", models.CharField(max_length=128)),
+                ("client_id", models.CharField(blank=True, max_length=128)),
+                ("http_username", models.CharField(blank=True, max_length=128)),
+                ("http_password", models.CharField(blank=True, max_length=128)),
+                ("api_key", models.CharField(blank=True, max_length=128)),
+                ("extra_params", django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'
+                        on_delete=django.db.models.deletion.CASCADE, to="organizations.Organization"
                     ),
                 ),
                 (
-                    'platform',
+                    "platform",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                        on_delete=django.db.models.deletion.CASCADE, to="publications.Platform"
                     ),
                 ),
             ],

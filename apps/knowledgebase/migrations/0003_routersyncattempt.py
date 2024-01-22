@@ -9,41 +9,41 @@ import knowledgebase.models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0015_unique_name_within_organization_data_source'),
-        ('knowledgebase', '0002_jsonfield'),
+        ("core", "0015_unique_name_within_organization_data_source"),
+        ("knowledgebase", "0002_jsonfield"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RouterSyncAttempt',
+            name="RouterSyncAttempt",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'prefix',
+                    "prefix",
                     models.CharField(
                         max_length=8, validators=[django.core.validators.MinLengthValidator(8)]
                     ),
                 ),
                 (
-                    'target',
+                    "target",
                     models.CharField(
-                        choices=[('A', 'absent'), ('P', 'present')], default='P', max_length=1
+                        choices=[("A", "absent"), ("P", "present")], default="P", max_length=1
                     ),
                 ),
-                ('retries', models.PositiveIntegerField(default=0)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('updated', models.DateTimeField(auto_now=True)),
-                ('done', models.DateTimeField(blank=True, null=True)),
-                ('last_error', models.TextField(blank=True, null=True)),
+                ("retries", models.PositiveIntegerField(default=0)),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("updated", models.DateTimeField(auto_now=True)),
+                ("done", models.DateTimeField(blank=True, null=True)),
+                ("last_error", models.TextField(blank=True, null=True)),
                 (
-                    'source',
+                    "source",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='core.datasource'
+                        on_delete=django.db.models.deletion.CASCADE, to="core.datasource"
                     ),
                 ),
             ],

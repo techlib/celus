@@ -128,8 +128,8 @@ class TestMaximusSync:
 
         assert get_users_organizations() == []
 
-        org[0].users.add(usr[1], through_defaults={'is_admin': True})
-        org[1].users.add(usr[1], through_defaults={'is_admin': True})
+        org[0].users.add(usr[1], through_defaults={"is_admin": True})
+        org[1].users.add(usr[1], through_defaults={"is_admin": True})
         org[0].users.add(usr[2])
         check = (
             {"user": usr[1].id, "organization": org[0].id, "is_admin": True},
@@ -139,7 +139,7 @@ class TestMaximusSync:
         for d in json.loads(json.dumps(get_users_organizations())):
             assert d in check
 
-        org[0].users.add(usr[0], through_defaults={'is_admin': True})
+        org[0].users.add(usr[0], through_defaults={"is_admin": True})
         org[0].users.remove(usr[1])
         org[1].users.remove(usr[1])
         check = (
@@ -200,8 +200,8 @@ class TestMaximusSync:
         platforms = PlatformFactory.create_batch(2)
         ct = (
             CounterReportTypeFactory.create(),
-            CounterReportTypeFactory.create(code='X1'),
-            CounterReportTypeFactory.create(code='Y2'),
+            CounterReportTypeFactory.create(code="X1"),
+            CounterReportTypeFactory.create(code="Y2"),
         )
         s = [
             SushiCredentials.objects.create(

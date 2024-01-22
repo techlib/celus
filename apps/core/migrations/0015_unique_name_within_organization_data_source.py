@@ -5,8 +5,8 @@ from django.utils.text import slugify
 
 
 def add_default_short_name(apps, schema_editor):
-    DataSource = apps.get_model('core', 'DataSource')
-    for ds in DataSource.objects.filter(type=2, short_name=''):
+    DataSource = apps.get_model("core", "DataSource")
+    for ds in DataSource.objects.filter(type=2, short_name=""):
         ds.short_name = f"{slugify(ds.organization.name)[:46]}-{ds.pk}"  # pk to ensure uniqueness
         ds.save()
 
@@ -16,16 +16,16 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0014_auto_20210329_1002')]
+    dependencies = [("core", "0014_auto_20210329_1002")]
 
     operations = [
         migrations.RunPython(add_default_short_name, noop),
         migrations.AddConstraint(
-            model_name='datasource',
+            model_name="datasource",
             constraint=models.UniqueConstraint(
                 condition=models.Q(type=2),
-                fields=('short_name',),
-                name='source-unique-global-short_name',
+                fields=("short_name",),
+                name="source-unique-global-short_name",
             ),
         ),
     ]

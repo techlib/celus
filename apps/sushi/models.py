@@ -63,54 +63,54 @@ from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
-COUNTER_VERSIONS = ((4, 'COUNTER 4'), (5, 'COUNTER 5'))
+COUNTER_VERSIONS = ((4, "COUNTER 4"), (5, "COUNTER 5"))
 
 CounterReport = namedtuple(
-    'CounterReport', ['code', 'name', 'version', 'json_format', 'reader', 'sushi_compatible']
+    "CounterReport", ["code", "name", "version", "json_format", "reader", "sushi_compatible"]
 )
 
 COUNTER_REPORTS = (
     # (code, name, version, json_format, reader, sushi_compatible)
     # version 4
-    CounterReport('JR1', 'Counter 4 - Journal Report 1', 4, False, Counter4JR1Report, True),
-    CounterReport('JR1a', 'Counter 4 - Journal Report 1a', 4, False, Counter4JR1Report, True),
+    CounterReport("JR1", "Counter 4 - Journal Report 1", 4, False, Counter4JR1Report, True),
+    CounterReport("JR1a", "Counter 4 - Journal Report 1a", 4, False, Counter4JR1Report, True),
     CounterReport(
-        'JR1GOA', 'Counter 4 - Journal Report 1 Gold Open Access', 4, False, Counter4JR1Report, True
+        "JR1GOA", "Counter 4 - Journal Report 1 Gold Open Access", 4, False, Counter4JR1Report, True
     ),
-    CounterReport('JR2', 'Counter 4 - Journal Report 2', 4, False, Counter4JR2Report, True),
+    CounterReport("JR2", "Counter 4 - Journal Report 2", 4, False, Counter4JR2Report, True),
     # CounterReport# ('JR5',  'Counter X - Report4,, False, , None, True),
-    CounterReport('BR1', 'Counter 4 - Book Report 1', 4, False, Counter4BR1Report, True),
-    CounterReport('BR2', 'Counter 4 - Book Report 2', 4, False, Counter4BR2Report, True),
-    CounterReport('BR3', 'Counter 4 - Book Report 3', 4, False, Counter4BR3Report, True),
-    CounterReport('DB1', 'Counter 4 - Database Report 1', 4, False, Counter4DB1Report, True),
-    CounterReport('DB2', 'Counter 4 - Database Report 2', 4, False, Counter4DB2Report, True),
-    CounterReport('PR1', 'Counter 4 - Platform Report 1', 4, False, Counter4PR1Report, True),
-    CounterReport('MR1', 'Counter 4 - Multimedia Report 1', 4, False, Counter4MR1Report, True),
+    CounterReport("BR1", "Counter 4 - Book Report 1", 4, False, Counter4BR1Report, True),
+    CounterReport("BR2", "Counter 4 - Book Report 2", 4, False, Counter4BR2Report, True),
+    CounterReport("BR3", "Counter 4 - Book Report 3", 4, False, Counter4BR3Report, True),
+    CounterReport("DB1", "Counter 4 - Database Report 1", 4, False, Counter4DB1Report, True),
+    CounterReport("DB2", "Counter 4 - Database Report 2", 4, False, Counter4DB2Report, True),
+    CounterReport("PR1", "Counter 4 - Platform Report 1", 4, False, Counter4PR1Report, True),
+    CounterReport("MR1", "Counter 4 - Multimedia Report 1", 4, False, Counter4MR1Report, True),
     # version 5
-    CounterReport('TR', 'Counter 5 - Title Report', 5, True, Counter5TRReport, True),
-    CounterReport('PR', 'Counter 5 - Platform Report', 5, True, Counter5PRReport, True),
-    CounterReport('DR', 'Counter 5 - Database Report', 5, True, Counter5DRReport, True),
+    CounterReport("TR", "Counter 5 - Title Report", 5, True, Counter5TRReport, True),
+    CounterReport("PR", "Counter 5 - Platform Report", 5, True, Counter5PRReport, True),
+    CounterReport("DR", "Counter 5 - Database Report", 5, True, Counter5DRReport, True),
     CounterReport(
-        'IR_M1', 'Counter 5 - Multimedia Item Report 1', 5, True, Counter5IRM1Report, True
+        "IR_M1", "Counter 5 - Multimedia Item Report 1", 5, True, Counter5IRM1Report, True
     ),
-    CounterReport('TR', 'Counter 5 - Title Report', 5, False, Counter5TableReport, False),
-    CounterReport('PR', 'Counter 5 - Platform Report', 5, False, Counter5TableReport, False),
-    CounterReport('DR', 'Counter 5 - Database Report', 5, False, Counter5TableReport, False),
-    CounterReport('IR', 'Counter 5 - Item Report', 5, False, Counter5TableReport, False),
+    CounterReport("TR", "Counter 5 - Title Report", 5, False, Counter5TableReport, False),
+    CounterReport("PR", "Counter 5 - Platform Report", 5, False, Counter5TableReport, False),
+    CounterReport("DR", "Counter 5 - Database Report", 5, False, Counter5TableReport, False),
+    CounterReport("IR", "Counter 5 - Item Report", 5, False, Counter5TableReport, False),
     CounterReport(
-        'IR_M1', 'Counter 5 - Multimedia Item Report 1', 5, False, Counter5TableReport, False
+        "IR_M1", "Counter 5 - Multimedia Item Report 1", 5, False, Counter5TableReport, False
     ),
 )
 
 
 class BrokenCredentialsMixin(models.Model):
-    BROKEN_HTTP = 'http'
-    BROKEN_SUSHI = 'sushi'
+    BROKEN_HTTP = "http"
+    BROKEN_SUSHI = "sushi"
 
-    BROKEN_CHOICES = ((BROKEN_HTTP, 'HTTP'), (BROKEN_SUSHI, 'SUSHI'))
+    BROKEN_CHOICES = ((BROKEN_HTTP, "HTTP"), (BROKEN_SUSHI, "SUSHI"))
 
     first_broken_attempt = models.OneToOneField(
-        'SushiFetchAttempt',
+        "SushiFetchAttempt",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -127,7 +127,7 @@ class BrokenCredentialsMixin(models.Model):
     class Meta:
         abstract = True
 
-    def set_broken(self, attempt: 'SushiFetchAttempt', broken_type: str):
+    def set_broken(self, attempt: "SushiFetchAttempt", broken_type: str):
         if self.first_broken_attempt is None:
             self.first_broken_attempt = attempt
         self.broken = broken_type
@@ -148,19 +148,19 @@ class CounterReportType(models.Model):
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
     counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
-    report_type = models.OneToOneField('logs.ReportType', on_delete=models.CASCADE)
+    report_type = models.OneToOneField("logs.ReportType", on_delete=models.CASCADE)
     active = models.BooleanField(
         default=True,
-        help_text='When turned off, this type of report will not be ' 'automatically downloaded',
+        help_text="When turned off, this type of report will not be " "automatically downloaded",
     )
 
     class Meta:
-        unique_together = (('code', 'counter_version'),)
-        verbose_name_plural = 'COUNTER report types'
-        verbose_name = 'COUNTER report type'
+        unique_together = (("code", "counter_version"),)
+        verbose_name_plural = "COUNTER report types"
+        verbose_name = "COUNTER report type"
 
     def __str__(self):
-        return f'{self.code} ({self.counter_version}) - {self.name}'
+        return f"{self.code} ({self.counter_version}) - {self.name}"
 
     def get_reader_class(self, json_format: bool = False):
         for cr in COUNTER_REPORTS:
@@ -173,12 +173,12 @@ class CounterReportType(models.Model):
         return None
 
     def get_nibbler_parser(self, json_format: bool = False):
-        name = 'Json' if json_format else 'Tabular'
+        name = "Json" if json_format else "Tabular"
         return f"static\\.counter{self.counter_version}\\.{self.code}\\.{name}"
 
     @classmethod
     def all_nibbler_counter_parsers(cls, json_format: bool = False) -> str:
-        name = 'Json' if json_format else 'Tabular'
+        name = "Json" if json_format else "Tabular"
         return f"static\\.counter[^\\.]+\\.[^\\.]+.{name}"
 
 
@@ -192,9 +192,9 @@ class SushiCredentialsQuerySet(models.QuerySet):
         return self.annotate(
             verified=Exists(
                 SushiFetchAttempt.objects.filter(
-                    credentials_id=OuterRef('pk'),
+                    credentials_id=OuterRef("pk"),
                     status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
-                    credentials_version_hash=OuterRef('version_hash'),
+                    credentials_version_hash=OuterRef("version_hash"),
                 )
             )
         )
@@ -204,7 +204,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         return self.annotate(
             has_access_log=Exists(
                 AccessLog.objects.filter(
-                    import_batch__sushifetchattempt__credentials_id=OuterRef('pk')
+                    import_batch__sushifetchattempt__credentials_id=OuterRef("pk")
                 )
             )
         ).filter(has_access_log=True)
@@ -220,12 +220,11 @@ class SushiCredentialsQuerySet(models.QuerySet):
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     UNLOCKED = 0
-
     LOCK_LEVEL_CHOICES = (
-        (UNLOCKED, 'Unlocked'),
-        (UL_ORG_ADMIN, 'Organization admin'),
-        (UL_CONS_STAFF, 'Consortium staff'),
-        (UL_CONS_ADMIN, 'Superuser'),
+        (UNLOCKED, "Unlocked"),
+        (UL_ORG_ADMIN, "Organization admin"),
+        (UL_CONS_STAFF, "Consortium staff"),
+        (UL_CONS_ADMIN, "Superuser"),
     )
     BLAKE_HASH_SIZE = 16
 
@@ -243,33 +242,33 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     enabled = models.BooleanField(default=True)
     counter_reports = models.ManyToManyField(
         CounterReportType,
-        through='CounterReportsToCredentials',
-        through_fields=('credentials', 'counter_report'),
-        related_name='sushicredentials_set',
+        through="CounterReportsToCredentials",
+        through_fields=("credentials", "counter_report"),
+        related_name="sushicredentials_set",
     )
     outside_consortium = models.BooleanField(
         default=False,
-        help_text='True if these credentials belong to access bought outside of the consortium - '
-        'necessary for proper cost calculation',
+        help_text="True if these credentials belong to access bought outside of the consortium - "
+        "necessary for proper cost calculation",
     )
     # meta info
     lock_level = models.PositiveSmallIntegerField(
         choices=LOCK_LEVEL_CHOICES,
         default=UL_ORG_ADMIN,
-        help_text='Only user with the same or higher level can unlock it and/or edit it',
+        help_text="Only user with the same or higher level can unlock it and/or edit it",
     )
     version_hash = models.CharField(
-        max_length=BLAKE_HASH_SIZE * 2, help_text='Current hash of model attributes'
+        max_length=BLAKE_HASH_SIZE * 2, help_text="Current hash of model attributes"
     )
 
     objects = SushiCredentialsQuerySet.as_manager()
 
     class Meta:
-        unique_together = (('organization', 'platform', 'counter_version', 'title'),)
-        verbose_name_plural = 'Sushi credentials'
+        unique_together = (("organization", "platform", "counter_version", "title"),)
+        verbose_name_plural = "Sushi credentials"
 
     def __str__(self):
-        return f'{self.organization} - {self.platform}, {self.get_counter_version_display()}'
+        return f"{self.organization} - {self.platform}, {self.get_counter_version_display()}"
 
     def save(self, *args, **kwargs):
         """
@@ -297,17 +296,17 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         owner_level = user.organization_relationship(self.organization_id)
         if self.lock_level > self.UNLOCKED and owner_level < self.lock_level:
             raise PermissionDenied(
-                f'User {user} does not have high enough privileges ' f'to lock {self}'
+                f"User {user} does not have high enough privileges " f"to lock {self}"
             )
         if owner_level < level:
             raise PermissionDenied(
-                f'User {user} does not have high enough privileges '
-                f'to lock {self} to level {level}'
+                f"User {user} does not have high enough privileges "
+                f"to lock {self} to level {level}"
             )
         with reversion.create_revision():
             self.lock_level = level
             self.save()
-            reversion.set_comment('Lock changed')
+            reversion.set_comment("Lock changed")
 
     def can_edit(self, user: User):
         owner_level = user.organization_relationship(self.organization_id)
@@ -326,15 +325,15 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     def create_sushi_client(self) -> SushiClientBase:
         attrs = {
-            'url': self.url,
-            'requestor_id': self.requestor_id,
-            'customer_id': self.customer_id,
+            "url": self.url,
+            "requestor_id": self.requestor_id,
+            "customer_id": self.customer_id,
         }
         extra = deepcopy(self.extra_params) or {}
         if self.api_key:
-            extra['api_key'] = self.api_key
+            extra["api_key"] = self.api_key
         if self.http_password and self.http_username and self.counter_version == 4:
-            attrs['auth'] = (self.http_username, self.http_password)
+            attrs["auth"] = (self.http_username, self.http_password)
         if self.counter_version == 4:
             return Sushi4Client(extra_params=extra, **attrs)
         else:
@@ -346,8 +345,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         Creates a name for lock which should be used to ensure only one attempt to fetch data
         from a specific URL at a time.
         """
-        url_hash = blake2b(self.url.encode('utf-8'), digest_size=16).hexdigest()
-        return f'url-lock-{url_hash}'
+        url_hash = blake2b(self.url.encode("utf-8"), digest_size=16).hexdigest()
+        return f"url-lock-{url_hash}"
 
     def version_dict(self) -> Dict:
         """
@@ -359,14 +358,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         :return:
         """
         keys = {
-            'url',
-            'counter_version',
-            'requestor_id',
-            'customer_id',
-            'http_username',
-            'http_password',
-            'api_key',
-            'extra_params',
+            "url",
+            "counter_version",
+            "requestor_id",
+            "customer_id",
+            "http_username",
+            "http_password",
+            "api_key",
+            "extra_params",
         }
         return {key: getattr(self, key) for key in keys}
 
@@ -378,7 +377,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         :return:
         """
         dump = json.dumps(data, ensure_ascii=False, sort_keys=True)
-        return blake2b(dump.encode('utf-8'), digest_size=cls.BLAKE_HASH_SIZE).hexdigest()
+        return blake2b(dump.encode("utf-8"), digest_size=cls.BLAKE_HASH_SIZE).hexdigest()
 
     def compute_version_hash(self):
         """
@@ -393,9 +392,9 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         counter_report: CounterReportType,
         start_date: Union[str, date],
         end_date: Union[str, date],
-        fetch_attempt: 'SushiFetchAttempt' = None,
+        fetch_attempt: "SushiFetchAttempt" = None,
         use_url_lock=True,
-    ) -> 'SushiFetchAttempt':
+    ) -> "SushiFetchAttempt":
         """
         :param counter_report:
         :param start_date:
@@ -424,18 +423,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         else:
             attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
         # add version info to the attempt
-        attempt_params['credentials_version_hash'] = self.version_hash
+        attempt_params["credentials_version_hash"] = self.version_hash
         # now store it - into an existing object or a new one
         if fetch_attempt:
             for key, value in attempt_params.items():
                 setattr(fetch_attempt, key, value)
-            fetch_attempt.processing_info['credentials_version'] = self.version_dict()
+            fetch_attempt.processing_info["credentials_version"] = self.version_dict()
             fetch_attempt.save()
         else:
-            if 'processing_info' in attempt_params:
-                attempt_params['processing_info']['credentials_version'] = self.version_dict()
+            if "processing_info" in attempt_params:
+                attempt_params["processing_info"]["credentials_version"] = self.version_dict()
             else:
-                attempt_params['processing_info'] = {'credentials_version': self.version_dict()}
+                attempt_params["processing_info"] = {"credentials_version": self.version_dict()}
             fetch_attempt = SushiFetchAttempt.objects.create(**attempt_params)
 
         fetch_attempt.update_broken()
@@ -453,11 +452,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         status = AttemptStatus.INITIAL
         partial_data = False
         when_processed = None
-        log = ''
-        error_code = ''
+        log = ""
+        error_code = ""
         params = self.extra_params or {}
-        params['sushi_dump'] = True
-        filename = 'foo.tsv'  # we just need the extension
+        params["sushi_dump"] = True
+        filename = "foo.tsv"  # we just need the extension
         report = None
 
         try:
@@ -470,7 +469,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 errors = client.extract_errors_from_data(file_data)
                 if errors:
                     error_code = errors[0].code
-                    if error_code == 'non-sushi':
+                    if error_code == "non-sushi":
                         # this is an exception in pycounter itself, not an exception extracted
                         # from SUSHI response
                         # lets add the exception to the errors as it cannot be collected by
@@ -479,7 +478,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                         errors.insert(
                             0,
                             SushiError(
-                                code='non-sushi', text=str(e), full_log=str(e), severity='Exception'
+                                code="non-sushi", text=str(e), full_log=str(e), severity="Exception"
                             ),
                         )
                     else:
@@ -512,24 +511,24 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     else:
                         status = AttemptStatus.DOWNLOAD_FAILED
 
-                log = '\n'.join(error.full_log for error in errors)
-                filename = 'foo.xml'  # we just need the extension
+                log = "\n".join(error.full_log for error in errors)
+                filename = "foo.xml"  # we just need the extension
             except Exception as e:
                 # if this happens, it means we were not able to handle the data correctly
                 # and something failed in our own code - we want a traceback and error report
                 # in the logger
                 status = AttemptStatus.PARSING_FAILED
                 logger.error("Incorrect sushi format: %s", e)
-                error_code = 'wrong-sushi'
-                log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-                filename = 'foo.xml'  # we just need the extension
+                error_code = "wrong-sushi"
+                log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+                filename = "foo.xml"  # we just need the extension
 
         except Exception as e:
             status = AttemptStatus.PARSING_FAILED
             logger.error("Error: %s", e)
-            error_code = 'non-sushi'
-            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
-            filename = 'foo.xml'  # we just need the extension
+            error_code = "non-sushi"
+            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+            filename = "foo.xml"  # we just need the extension
         else:
             if len(report.pubs) > 0:
                 status = AttemptStatus.IMPORTING
@@ -558,18 +557,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             pass
 
         return {
-            'status': status,
-            'credentials': self,
-            'counter_report': counter_report,
-            'start_date': start_date,
-            'end_date': end_date,
-            'data_file': data_file,
-            'checksum': checksum,
-            'file_size': file_size,
-            'log': log,
-            'error_code': error_code,
-            'when_processed': when_processed,
-            'partial_data': partial_data,
+            "status": status,
+            "credentials": self,
+            "counter_report": counter_report,
+            "start_date": start_date,
+            "end_date": end_date,
+            "data_file": data_file,
+            "checksum": checksum,
+            "file_size": file_size,
+            "log": log,
+            "error_code": error_code,
+            "when_processed": when_processed,
+            "partial_data": partial_data,
         }
 
     def _fetch_report_v5(
@@ -578,11 +577,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         status = AttemptStatus.INITIAL
         when_processed = None
         partial_data = False
-        filename = 'foo.json'
-        error_code = ''
+        filename = "foo.json"
+        error_code = ""
         # we want extra split data from the report
         # params must be a copy, otherwise we will pollute EXTRA_PARAMS
-        params = deepcopy(client.EXTRA_PARAMS['maximum_split'].get(counter_report.code.lower(), {}))
+        params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(counter_report.code.lower(), {}))
         extra = self.extra_params or {}
         params.update(extra)
         http_status_code = None
@@ -592,18 +591,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             )
             http_status_code = report.http_status_code
         except requests.exceptions.ConnectionError as e:
-            logger.warning('Connection error: %s', e)
-            error_code = 'connection'
-            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            logger.warning("Connection error: %s", e)
+            error_code = "connection"
+            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
             status = AttemptStatus.DOWNLOAD_FAILED
         except (SushiExceptionNigiri, Exception) as e:
             logger.log(
                 logging.WARNING if isinstance(e, SushiExceptionNigiri) else logging.ERROR,
-                'Error: %s',
+                "Error: %s",
                 e,
             )
-            error_code = 'non-sushi'
-            log = f'Exception: {e}\nTraceback: {traceback.format_exc()}'
+            error_code = "non-sushi"
+            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
             status = AttemptStatus.PARSING_FAILED
         else:
             warning_codes = [str(w.code) for w in report.warnings]
@@ -615,23 +614,23 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 error_code = str(ErrorCode.NO_LONGER_AVAILABLE.value)
                 partial_data = True
             else:
-                error_code = ''
+                error_code = ""
                 partial_data = False
 
             # append to log
-            log = ''
+            log = ""
             if report.errors:
-                log += 'Errors: ' + '; '.join(str(e) for e in report.errors) + '\n' * 2
+                log += "Errors: " + "; ".join(str(e) for e in report.errors) + "\n" * 2
             if report.warnings:
-                log += 'Warnings: ' + '; '.join(str(e) for e in report.warnings) + "\n" * 2
+                log += "Warnings: " + "; ".join(str(e) for e in report.warnings) + "\n" * 2
             if report.infos:
-                log += 'Infos: ' + '; '.join(str(e) for e in report.infos) + '\n' * 2
+                log += "Infos: " + "; ".join(str(e) for e in report.infos) + "\n" * 2
 
             # This indicates fatal error
             error = report.errors or (report.warnings and not report.record_found)
             if error:
                 if report.errors:
-                    logger.warning('Found errors: %s', report.errors)
+                    logger.warning("Found errors: %s", report.errors)
                     error_obj = report.errors[0]
                 elif report.warnings:
                     error_obj = report.warnings[0]
@@ -639,9 +638,9 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 if isinstance(error_obj, TransportError):
                     # transport error means something bad and no valid json in response
                     status = AttemptStatus.DOWNLOAD_FAILED
-                    error_code = 'non-sushi'
+                    error_code = "non-sushi"
                 else:
-                    error_code = str(error_obj.code) if hasattr(error_obj, 'code') else ''
+                    error_code = str(error_obj.code) if hasattr(error_obj, "code") else ""
 
                     # Mark that status is no data when there is no data error
                     # Otherwise mark as failed download
@@ -675,58 +674,58 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             pass
 
         return {
-            'credentials': self,
-            'counter_report': counter_report,
-            'start_date': start_date,
-            'end_date': end_date,
-            'status': status,
-            'data_file': django_file,
-            'checksum': checksum,
-            'file_size': file_size,
-            'log': log,
-            'error_code': error_code,
-            'when_processed': when_processed,
-            'http_status_code': http_status_code,
-            'partial_data': partial_data,
+            "credentials": self,
+            "counter_report": counter_report,
+            "start_date": start_date,
+            "end_date": end_date,
+            "status": status,
+            "data_file": django_file,
+            "checksum": checksum,
+            "file_size": file_size,
+            "log": log,
+            "error_code": error_code,
+            "when_processed": when_processed,
+            "http_status_code": http_status_code,
+            "partial_data": partial_data,
         }
 
     def broken_report_types(self):
         return CounterReportsToCredentials.objects.filter(
             credentials=self, broken__isnull=False
-        ).annotate(code=F('counter_report__code'))
+        ).annotate(code=F("counter_report__code"))
 
 
 # the following must stay here as it is used in a migration
 # it is however not used anymore
-def where_to_store(instance: 'SushiFetchAttempt', filename):
+def where_to_store(instance: "SushiFetchAttempt", filename):
     root, ext = os.path.splitext(filename)
-    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    ts = now().strftime("%Y%m%d-%H%M%S.%f")
     organization = instance.credentials.organization
     return (
-        f'counter/{organization.internal_id or organization.pk}/'
-        f'{instance.credentials.platform.short_name}/'
-        f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
+        f"counter/{organization.internal_id or organization.pk}/"
+        f"{instance.credentials.platform.short_name}/"
+        f"{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}"
     )
 
 
 class AttemptStatus(models.TextChoices):
     # -> DOWNLOADING
-    INITIAL = 'initial', _("Initial")
+    INITIAL = "initial", _("Initial")
     # -> PARSING_FAILED, DOWNLOAD_FAILED, NO_DATA, NOT_USED, IMPORTING
-    DOWNLOADING = 'downloading', _("Downloading")
+    DOWNLOADING = "downloading", _("Downloading")
     # -> SUCCESS, IMPORT_FAILED, NO_DATA
-    IMPORTING = 'importing', _("Importing")
+    IMPORTING = "importing", _("Importing")
 
     # Terminators
     # -> IMPORTING
-    SUCCESS = 'success', _("Success")
+    SUCCESS = "success", _("Success")
     # -> IMPORTING
-    NO_DATA = 'no_data', _("No data")
+    NO_DATA = "no_data", _("No data")
     # -> IMPORTING
-    IMPORT_FAILED = 'import_failed', _("Import failed")
-    PARSING_FAILED = 'parsing_failed', _("Parsing failed")
-    DOWNLOAD_FAILED = 'download_failed', _("Download failed")
-    NOT_USED = 'not_used', _("Not used")
+    IMPORT_FAILED = "import_failed", _("Import failed")
+    PARSING_FAILED = "parsing_failed", _("Parsing failed")
+    DOWNLOAD_FAILED = "download_failed", _("Download failed")
+    NOT_USED = "not_used", _("Not used")
 
     @classmethod
     def terminated(cls):
@@ -774,14 +773,14 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     log = models.TextField(blank=True)
     error_code = models.CharField(max_length=12, blank=True)
     http_status_code = models.PositiveSmallIntegerField(null=True)
-    partial_data = models.BooleanField(default=False, help_text='Data may not be complete')
+    partial_data = models.BooleanField(default=False, help_text="Data may not be complete")
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
     credentials_version_hash = models.CharField(
         max_length=2 * SushiCredentials.BLAKE_HASH_SIZE,
-        help_text='Hash computed from the credentials at the time this attempt was made',
+        help_text="Hash computed from the credentials at the time this attempt was made",
     )
-    processing_info = models.JSONField(default=dict, help_text='Internal info')
+    processing_info = models.JSONField(default=dict, help_text="Internal info")
     triggered_by = models.ForeignKey(
         User,
         null=True,
@@ -789,13 +788,13 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         help_text="User who triggered the attempt or null if attempt was triggered by e.g. cron",
     )
     extracted_data = models.JSONField(
-        default=dict, help_text='Information extracted from the SUSHI data header'
+        default=dict, help_text="Information extracted from the SUSHI data header"
     )
 
-    EXTRACTED_DATA_KEYS = ('Created_By', 'Institution_Name', 'Institution_ID')
+    EXTRACTED_DATA_KEYS = ("Created_By", "Institution_Name", "Institution_ID")
 
     def __str__(self):
-        return f'{self.status}: {self.credentials}, {self.counter_report}'
+        return f"{self.status}: {self.credentials}, {self.counter_report}"
 
     def save(self, *args, **kwargs):
         if not self.credentials_version_hash and self.credentials:
@@ -809,27 +808,27 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     def check_importable(self, raise_error=True) -> bool:
         if self.status == AttemptStatus.SUCCESS:
             if raise_error:
-                raise ValueError(f'Data already imported (attempt={self.pk})')
+                raise ValueError(f"Data already imported (attempt={self.pk})")
             return False
 
         elif self.status == AttemptStatus.DOWNLOAD_FAILED:
             if raise_error:
-                raise ValueError(f'Trying to import data when download failed (attempt={self.pk})')
+                raise ValueError(f"Trying to import data when download failed (attempt={self.pk})")
             return False
 
         elif self.status == AttemptStatus.NO_DATA:
             if raise_error:
-                raise ValueError(f'Attempt contains no data (attempt={self.pk})')
+                raise ValueError(f"Attempt contains no data (attempt={self.pk})")
             return False
 
         elif self.status == AttemptStatus.IMPORT_FAILED:
             if raise_error:
-                raise ValueError(f'Import of data already crashed (attempt={self.pk})')
+                raise ValueError(f"Import of data already crashed (attempt={self.pk})")
             return False
 
         elif self.status != AttemptStatus.IMPORTING:
             if raise_error:
-                raise ValueError(f'Could not import data (attempt={self.pk})')
+                raise ValueError(f"Could not import data (attempt={self.pk})")
             return False
 
         if self.import_batch:
@@ -842,7 +841,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
             if raise_error:
                 raise ValueError(
-                    f'Attempt already contains data (attempt={self.pk},ib={self.import_batch.pk})'
+                    f"Attempt already contains data (attempt={self.pk},ib={self.import_batch.pk})"
                 )
             return False
 
@@ -876,8 +875,8 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             char = data_file.read(1)
         data_file.seek(0)
         if char and not isinstance(char, bytes):
-            char = char.encode('utf-8', errors='ignore')
-        return char in b'[{'
+            char = char.encode("utf-8", errors="ignore")
+        return char in b"[{"
 
     def file_is_json(self) -> Optional[bool]:
         """
@@ -887,7 +886,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return None
         return SushiFetchAttempt.file_is_json_s(self.data_file)
 
-    def conflicting(self, fully_enclosing: bool = False) -> Iterable['SushiFetchAttempt']:
+    def conflicting(self, fully_enclosing: bool = False) -> Iterable["SushiFetchAttempt"]:
         """
         Returns a queryset with `SushiFetchAttempts` for the same credentials, report_type and
         times as this one
@@ -905,10 +904,10 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
     def mark_crashed(self, exception):
         if self.log:
-            self.log += '\n'
+            self.log += "\n"
         self.log += str(exception)
         self.status = AttemptStatus.IMPORT_FAILED
-        self.processing_info['import_crash_traceback'] = traceback.format_exc()
+        self.processing_info["import_crash_traceback"] = traceback.format_exc()
         self.save()
 
     @atomic
@@ -929,10 +928,10 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             stats = self.import_batch.delete()  # deletes the access logs as well
             self.import_batch = None
         self.status = AttemptStatus.IMPORTING
-        self.log = ''
+        self.log = ""
         self.extracted_data = {}
-        if 'import_crash_traceback' in self.processing_info:
-            del self.processing_info['import_crash_traceback']
+        if "import_crash_traceback" in self.processing_info:
+            del self.processing_info["import_crash_traceback"]
         self.save()
         return stats
 
@@ -1029,30 +1028,30 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         if not self.data_file:
             return False
         if self.counter_report.counter_version != 5:
-            raise NotImplementedError('Header data is only extracted from COUNTER 5 reports')
+            raise NotImplementedError("Header data is only extracted from COUNTER 5 reports")
         if not self.file_is_json():
-            raise NotImplementedError('Header data is only extracted from JSON reports')
+            raise NotImplementedError("Header data is only extracted from JSON reports")
 
         reader_cls = self.counter_report.get_reader_class(json_format=True)
         reader = reader_cls()
         # the following will parse the header and prepare a generator with the records
         # we do not care about the actual data, so we just discard it
         # reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
-        if hasattr(reader, 'fd_to_dicts') and callable(reader.fd_to_dicts):
+        if hasattr(reader, "fd_to_dicts") and callable(reader.fd_to_dicts):
             header, _records = reader.fd_to_dicts(self.data_file)
             if header:
                 if success := self.extract_header_data(header):
                     self.save()
                 return success
-            logger.info('No header data found in %s', self.data_file.name)
+            logger.info("No header data found in %s", self.data_file.name)
             return False
         else:
-            raise NotImplementedError('Reader does not support header extraction')
+            raise NotImplementedError("Reader does not support header extraction")
 
     def any_import_batch_lately(self, days: int = 3 * 30):
         return SushiFetchAttempt.objects.filter(
             credentials=self.credentials,
-            credentials__version_hash=F('credentials_version_hash'),
+            credentials__version_hash=F("credentials_version_hash"),
             when_processed__gte=now() - timedelta(days=days),
             import_batch__isnull=False,
         ).exists()
@@ -1094,14 +1093,14 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
                     models.Q(last_harvestable_month_attempt__isnull=False)
                     & models.Q(last_harvestable_month_user__isnull=False)
                 ),
-                name='last_harvestable_month_by_attempt_vs_user',
+                name="last_harvestable_month_by_attempt_vs_user",
             ),
             UniqueConstraint(
-                fields=['credentials', 'counter_report'],
-                name='unique_creds_to_cr',
+                fields=["credentials", "counter_report"],
+                name="unique_creds_to_cr",
             ),
         )
-        verbose_name_plural = 'Counter reports to credentials'
+        verbose_name_plural = "Counter reports to credentials"
 
     def update_last_harvestable_month_by_attempt(self, attempt: SushiFetchAttempt) -> bool:
         """Update last_harvestable_month by attempt which reports that it no longer contains data

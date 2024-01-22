@@ -5,12 +5,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0032_counter_registry_id')]
+    dependencies = [("publications", "0032_counter_registry_id")]
 
     operations = [
         migrations.AddField(
-            model_name='platform',
-            name='duplicates',
+            model_name="platform",
+            name="duplicates",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.PositiveIntegerField(),
                 blank=True,

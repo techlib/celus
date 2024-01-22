@@ -27,13 +27,13 @@ from test_scenarios.basic import users  # noqa - fixture
 @pytest.fixture
 def counter_records_0d():
     rec1 = CounterRecord(
-        start='2019-01-01',
-        end='2019-01-31',
-        metric='Metric 1',
+        start="2019-01-01",
+        end="2019-01-31",
+        metric="Metric 1",
         value=50,
         dimension_data={},
-        title='Title X',
-        title_ids={'Print_ISSN': '1234-5678'},
+        title="Title X",
+        title_ids={"Print_ISSN": "1234-5678"},
     )
     return (e for e in [rec1])
 
@@ -52,19 +52,19 @@ def counter_records_nd():
         fake = faker.Faker()
         for i in range(record_number):
             dim_data = {
-                f'dim{i}': fake.word() if dim_value is None else dim_value
+                f"dim{i}": fake.word() if dim_value is None else dim_value
                 for i in range(dim_number)
             }
             if title is None:
-                title = f'title {fake.pyint()}'
+                title = f"title {fake.pyint()}"
             rec = CounterRecord(
-                start='2019-01-01',
-                end='2019-01-31',
-                metric=metric if metric else f'Metric {fake.pyint()}',
+                start="2019-01-01",
+                end="2019-01-31",
+                metric=metric if metric else f"Metric {fake.pyint()}",
                 value=fake.pyint(),
                 dimension_data=dim_data,
                 title=title,
-                title_ids={'ISBN': fake.isbn13()},
+                title_ids={"ISBN": fake.isbn13()},
             )
             yield rec
 
@@ -91,16 +91,16 @@ def counter_records():
             start = row[1]
             end = parse_date_fuzzy(start)
             end = end.replace(day=calendar.monthrange(end.year, end.month)[1])  # last day of month
-            dim_data = {f'dim{i}': value for i, value in enumerate(row[2:-1])}
+            dim_data = {f"dim{i}": value for i, value in enumerate(row[2:-1])}
             value = row[-1]
             rec = CounterRecord(
                 start=start,
                 end=end.isoformat(),
-                metric=metric if metric else f'Metric {fake.pyint()}',
+                metric=metric if metric else f"Metric {fake.pyint()}",
                 value=value,
                 dimension_data=dim_data,
                 title=title,
-                title_ids={'Print_ISSN': '1234-5678'},
+                title_ids={"Print_ISSN": "1234-5678"},
             )
             yield rec
 
@@ -111,16 +111,16 @@ def counter_records():
 def report_type_nd():
     def fn(dim_number, dimension_names=None, short_name=None, name=None):
         rt = ReportType.objects.create(
-            short_name=short_name or f'{dim_number}d',
-            name=name or f'{dim_number} dimensional report',
+            short_name=short_name or f"{dim_number}d",
+            name=name or f"{dim_number} dimensional report",
         )
         for i in range(dim_number):
             if dimension_names and i < len(dimension_names):
                 dim_short_name = dimension_names[i]
             else:
-                dim_short_name = f'dim{i}'
+                dim_short_name = f"dim{i}"
             dim, _ = Dimension.objects.get_or_create(
-                short_name=dim_short_name, name=f'dimension-{i}'
+                short_name=dim_short_name, name=f"dimension-{i}"
             )
             ReportTypeToDimension.objects.create(report_type=rt, dimension=dim, position=i)
         return rt
@@ -131,7 +131,7 @@ def report_type_nd():
 @pytest.fixture
 def platform():
     platform = Platform.objects.create(
-        ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+        ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
     )
     return platform
 
@@ -150,37 +150,37 @@ def flexible_slicer_test_data(report_type_nd):
     """
 
     organizations = [
-        Organization.objects.create(short_name='org1', name='Organization 1'),
-        Organization.objects.create(short_name='org2', name='Organization 2'),
-        Organization.objects.create(short_name='org3', name='Organization 3'),
+        Organization.objects.create(short_name="org1", name="Organization 1"),
+        Organization.objects.create(short_name="org2", name="Organization 2"),
+        Organization.objects.create(short_name="org3", name="Organization 3"),
     ]
     platforms = [
         Platform.objects.create(
-            short_name='pl1',
-            name='Platform 1',
-            counter_registry_id='11111111-1111-1111-1111-111111111111',
+            short_name="pl1",
+            name="Platform 1",
+            counter_registry_id="11111111-1111-1111-1111-111111111111",
         ),
-        Platform.objects.create(short_name='pl2', name='Platform 2'),
-        Platform.objects.create(short_name='pl3', name='Platform 3'),
+        Platform.objects.create(short_name="pl2", name="Platform 2"),
+        Platform.objects.create(short_name="pl3", name="Platform 3"),
     ]
     metrics = [
-        Metric.objects.create(short_name='m1', name='Metric 1'),
-        Metric.objects.create(short_name='m2', name='Metric 2'),
-        Metric.objects.create(short_name='m3', name='Metric 3'),
+        Metric.objects.create(short_name="m1", name="Metric 1"),
+        Metric.objects.create(short_name="m2", name="Metric 2"),
+        Metric.objects.create(short_name="m3", name="Metric 3"),
     ]
     targets = [
-        Title.objects.create(name='Title 1', isbn='123456789'),
-        Title.objects.create(name='Title 2', issn='964326665'),
-        Title.objects.create(name='Title 3', issn='656893466'),
+        Title.objects.create(name="Title 1", isbn="123456789"),
+        Title.objects.create(name="Title 2", issn="964326665"),
+        Title.objects.create(name="Title 3", issn="656893466"),
     ]
     report_types = [
-        report_type_nd(1, ['dim1name'], short_name='rt1', name='Report type 1'),
-        report_type_nd(2, ['dim1name', 'dim2name'], short_name='rt2', name='Report type 2'),
+        report_type_nd(1, ["dim1name"], short_name="rt1", name="Report type 1"),
+        report_type_nd(2, ["dim1name", "dim2name"], short_name="rt2", name="Report type 2"),
     ]
-    dates = ['2019-12-01', '2020-01-01', '2020-02-01', '2020-03-01']
+    dates = ["2019-12-01", "2020-01-01", "2020-02-01", "2020-03-01"]
     dimension_values = [
-        ['A', 'B', 'C'],
-        ['XX', 'YY', 'ZZ', 'A'],  # "A" is intentionally in both - we want to check for clashes
+        ["A", "B", "C"],
+        ["XX", "YY", "ZZ", "A"],  # "A" is intentionally in both - we want to check for clashes
     ]
     values = value_generator()
     accesslogs = []
@@ -202,7 +202,7 @@ def flexible_slicer_test_data(report_type_nd):
             for metric, target, *dim_values in product(metrics, targets, *dim_options):
                 dim_data = {}
                 for i, value_str in enumerate(dim_values):
-                    attr = f'dim{i+1}'
+                    attr = f"dim{i+1}"
                     value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
                     dim_data[attr] = value_key.pk
                 value = next(values)
@@ -247,7 +247,8 @@ def flexible_slicer_test_data(report_type_nd):
     #         ]
     #     )
     #     text_reverse_map = {
-    #         (dim_id, text.pk): dim_value for ((dim_id, dim_value), text) in dimension_texts.items()
+    #         (dim_id, text.pk): dim_value
+    #         for ((dim_id, dim_value), text) in dimension_texts.items()
     #     }
     #     for al in accesslogs:
     #         writer.writerow(
@@ -269,13 +270,13 @@ def flexible_slicer_test_data(report_type_nd):
     #         )
     sync_accesslogs_with_clickhouse_superfast()
     return {
-        'report_types': report_types,
-        'organizations': organizations,
-        'platforms': platforms,
-        'metrics': metrics,
-        'targets': targets,
-        'dates': dates,
-        'dimension_values': dimension_values,
+        "report_types": report_types,
+        "organizations": organizations,
+        "platforms": platforms,
+        "metrics": metrics,
+        "targets": targets,
+        "dates": dates,
+        "dimension_values": dimension_values,
     }
 
 
@@ -288,28 +289,28 @@ def flexible_slicer_test_data2(report_type_nd):
     """
 
     organizations = [
-        Organization.objects.create(short_name='org1', name='Organization 1'),
-        Organization.objects.create(short_name='org2', name='Organization 2'),
+        Organization.objects.create(short_name="org1", name="Organization 1"),
+        Organization.objects.create(short_name="org2", name="Organization 2"),
     ]
     platforms = [
-        Platform.objects.create(short_name='pl1', name='Platform 1'),
-        Platform.objects.create(short_name='pl2', name='Platform 2'),
+        Platform.objects.create(short_name="pl1", name="Platform 1"),
+        Platform.objects.create(short_name="pl2", name="Platform 2"),
     ]
     metrics = [
-        Metric.objects.create(short_name='m1', name='Metric 1'),
-        Metric.objects.create(short_name='m2', name='Metric 2'),
+        Metric.objects.create(short_name="m1", name="Metric 1"),
+        Metric.objects.create(short_name="m2", name="Metric 2"),
     ]
     targets = [
-        Title.objects.create(name='Title 1', isbn='123456789'),
-        Title.objects.create(name='Title 2', issn='964326665'),
+        Title.objects.create(name="Title 1", isbn="123456789"),
+        Title.objects.create(name="Title 2", issn="964326665"),
     ]
     report_types = [
-        report_type_nd(1, ['dim1name'], short_name='rt1', name='Report type 1'),
-        report_type_nd(2, ['dim1name', 'dim2name'], short_name='rt2', name='Report type 2'),
+        report_type_nd(1, ["dim1name"], short_name="rt1", name="Report type 1"),
+        report_type_nd(2, ["dim1name", "dim2name"], short_name="rt2", name="Report type 2"),
     ]
 
-    dates = ['2019-12-01', '2020-01-01', '2020-02-01']
-    dimension_values = [['A', 'B', 'C'], [1999, 2000, 2001, 2002, 2003, 2004]]
+    dates = ["2019-12-01", "2020-01-01", "2020-02-01"]
+    dimension_values = [["A", "B", "C"], [1999, 2000, 2001, 2002, 2003, 2004]]
     values = value_generator()
     accesslogs = []
     dimension_texts = {}
@@ -326,7 +327,7 @@ def flexible_slicer_test_data2(report_type_nd):
             organization, platform, metric, target, date = rec[:5]
             dim_data = {}
             for i in range(dim_count):
-                attr = f'dim{i+1}'
+                attr = f"dim{i+1}"
                 value_str = rec[5 + i]
                 if (rt.dimensions_sorted[i].pk, value_str) in dimension_texts:
                     # this is a remapped text value
@@ -352,13 +353,13 @@ def flexible_slicer_test_data2(report_type_nd):
     AccessLog.objects.bulk_create(accesslogs)
     sync_accesslogs_with_clickhouse_superfast()
     return {
-        'report_types': report_types,
-        'organizations': organizations,
-        'platforms': platforms,
-        'metrics': metrics,
-        'targets': targets,
-        'dates': dates,
-        'dimension_values': dimension_values,
+        "report_types": report_types,
+        "organizations": organizations,
+        "platforms": platforms,
+        "metrics": metrics,
+        "targets": targets,
+        "dates": dates,
+        "dimension_values": dimension_values,
     }
 
 
@@ -367,25 +368,25 @@ def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):  # no
     """
     The same data as `flexible_slicer_test_data`, but adds tags to the titles
     """
-    t1, t2, t3 = flexible_slicer_test_data['targets']
+    t1, t2, t3 = flexible_slicer_test_data["targets"]
     tc1 = TagClassFactory.create(scope=TagScope.TITLE)
-    tag1 = TagForTitleFactory.create(tag_class=tc1, name='tag1', owner=users['su'])
+    tag1 = TagForTitleFactory.create(tag_class=tc1, name="tag1", owner=users["su"])
     tag2 = TagForTitleFactory.create(
-        tag_class=tc1, name='tag2', owner=users['admin2'], can_see=AccessibleBy.OWNER
+        tag_class=tc1, name="tag2", owner=users["admin2"], can_see=AccessibleBy.OWNER
     )
-    tag3 = TagForTitleFactory.create(name='tag3', owner=users['su'])
-    tag1.tag(t1, users['su'])
-    tag1.tag(t2, users['su'])
-    tag2.tag(t3, users['admin2'])
+    tag3 = TagForTitleFactory.create(name="tag3", owner=users["su"])
+    tag1.tag(t1, users["su"])
+    tag1.tag(t2, users["su"])
+    tag2.tag(t3, users["admin2"])
     # connect users with some organizations
     UserOrganization.objects.create(
-        user=users['admin1'], organization=flexible_slicer_test_data['organizations'][0]
+        user=users["admin1"], organization=flexible_slicer_test_data["organizations"][0]
     )
     UserOrganization.objects.create(
-        user=users['admin2'], organization=flexible_slicer_test_data['organizations'][1]
+        user=users["admin2"], organization=flexible_slicer_test_data["organizations"][1]
     )
     return {
-        'tags': [tag1, tag2, tag3],
-        'tag_classes': [tc1, tag3.tag_class],
+        "tags": [tag1, tag2, tag3],
+        "tag_classes": [tc1, tag3.tag_class],
         **flexible_slicer_test_data,
     }

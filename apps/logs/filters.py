@@ -17,20 +17,20 @@ class ModifiableFilter(filters.BaseFilterBackend):
 
 class UserFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if user := request.GET.get('user'):
+        if user := request.GET.get("user"):
             queryset = queryset.filter(user_id=user)
         return queryset
 
 
 class OrderByFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        order_by = request.GET.get('order_by', 'created')
-        if request.GET.get('desc') in ('true', 1):
-            order_by = '-' + order_by
+        order_by = request.GET.get("order_by", "created")
+        if request.GET.get("desc") in ("true", 1):
+            order_by = "-" + order_by
         # ensure that .created is always part of ordering because it is the only value we can
         # be reasonably sure is different between instances
-        if order_by != 'created':
-            order_by = [order_by, 'created']
+        if order_by != "created":
+            order_by = [order_by, "created"]
         else:
             order_by = [order_by]
         return queryset.order_by(*order_by)
@@ -38,13 +38,13 @@ class OrderByFilter(filters.BaseFilterBackend):
 
 class DimensionFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if dimension_id := request.GET.get('dimension'):
+        if dimension_id := request.GET.get("dimension"):
             queryset = queryset.filter(dimension_id=dimension_id)
         return queryset
 
 
 class PrimaryDimensionFlexiReportFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        if primary_dimension := request.GET.get('primary_dimension'):
+        if primary_dimension := request.GET.get("primary_dimension"):
             queryset = queryset.filter(report_config__primary_dimension=primary_dimension)
         return queryset

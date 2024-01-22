@@ -6,50 +6,50 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0009_user_extra_data_default'),
-        ('organizations', '0016_more_blank_fields'),
+        ("core", "0009_user_extra_data_default"),
+        ("organizations", "0016_more_blank_fields"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='OrganizationAltName',
+            name="OrganizationAltName",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('name', models.CharField(max_length=250)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('last_modified', models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=250)),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("last_modified", models.DateTimeField(auto_now=True)),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='organizations.Organization'
+                        on_delete=django.db.models.deletion.CASCADE, to="organizations.Organization"
                     ),
                 ),
                 (
-                    'source',
+                    "source",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='core.DataSource',
+                        to="core.DataSource",
                     ),
                 ),
             ],
         ),
         migrations.AddConstraint(
-            model_name='organizationaltname',
+            model_name="organizationaltname",
             constraint=models.UniqueConstraint(
-                fields=('name', 'source'), name='name_source_not_null'
+                fields=("name", "source"), name="name_source_not_null"
             ),
         ),
         migrations.AddConstraint(
-            model_name='organizationaltname',
+            model_name="organizationaltname",
             constraint=models.UniqueConstraint(
-                condition=models.Q(source=None), fields=('name',), name='name_source_null'
+                condition=models.Q(source=None), fields=("name",), name="name_source_null"
             ),
         ),
     ]

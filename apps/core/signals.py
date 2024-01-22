@@ -23,7 +23,7 @@ def verify_user_email(request, user, **kwargs):
     """
     if user.email and not user.email_verified:
         email_obj, created = EmailAddress.objects.get_or_create(
-            user=user, email=user.email, defaults={'verified': True}
+            user=user, email=user.email, defaults={"verified": True}
         )
         if not created:
             email_obj.verified = True

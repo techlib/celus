@@ -61,48 +61,48 @@ class TestCustomImport:
         access_log_orig_count = AccessLog.objects.count()
 
         settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
-        report_type = report_types['custom1']
-        organization = organizations['standalone']
-        platform = platforms['standalone']
-        csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        report_type = report_types["custom1"]
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
+        csv_content = "Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n"
         file = ContentFile(csv_content)
         file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-list'),
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-list"),
             data={
-                'platform': platform.id,
-                'organization': organization.pk,
-                'report_type_id': report_type.pk,
-                'data_file': file,
-                'method': MduMethod.CELUS,
+                "platform": platform.id,
+                "organization": organization.pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
             },
         )
         assert response.status_code == 201
-        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+        mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
         assert mdu.organization == organization
-        assert mdu.import_batches.count() == 0, 'no import batches yet'
+        assert mdu.import_batches.count() == 0, "no import batches yet"
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
         )
         assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = clients['master_admin'].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
+        assert data["preflight"]["hits_total"] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
 
         # let's process the mdu
         assert AccessLog.objects.count() == access_log_orig_count + 0
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
         assert response.status_code == 200
         # import data (this should be handled via celery)
@@ -110,55 +110,55 @@ class TestCustomImport:
 
         mdu.refresh_from_db()
         assert mdu.is_processed
-        assert mdu.user == users['master_admin']
+        assert mdu.user == users["master_admin"]
         assert AccessLog.objects.count() == access_log_orig_count + 6
-        assert mdu.import_batches.count() == 3, '3 months of data'
+        assert mdu.import_batches.count() == 3, "3 months of data"
 
         # reprocess
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
         assert response.status_code == 200, "already imported, nothing needs to be done"
-        assert AccessLog.objects.count() == access_log_orig_count + 6, 'no new AccessLogs'
+        assert AccessLog.objects.count() == access_log_orig_count + 6, "no new AccessLogs"
 
         # the whole thing once again
         file.seek(0)
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-list'),
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-list"),
             data={
-                'platform': platform.id,
-                'organization': organization.pk,
-                'report_type_id': report_type.pk,
-                'data_file': file,
-                'method': MduMethod.CELUS,
+                "platform": platform.id,
+                "organization": organization.pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
             },
         )
         assert response.status_code == 201
 
-        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+        mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
         )
         assert response.status_code == 200
 
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = clients['master_admin'].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+        response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
         assert response.status_code == 200
         data = response.json()
-        assert data['preflight']['hits_total'] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
-        assert len(data['clashing_months']) == 3, 'all 3 months are already there'
-        assert data['can_import'] is False, 'preflight signals that import is not possible'
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        assert data["preflight"]["hits_total"] == 10 + 7 + 11 + 1 + 2 + 3  # see the csv_content
+        assert len(data["clashing_months"]) == 3, "all 3 months are already there"
+        assert data["can_import"] is False, "preflight signals that import is not possible"
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
         assert response.status_code == 409
-        assert AccessLog.objects.count() == access_log_orig_count + 6, 'no new AccessLogs'
+        assert AccessLog.objects.count() == access_log_orig_count + 6, "no new AccessLogs"
         mdu.refresh_from_db()
-        assert not mdu.is_processed, 'crash - should not mark mdu as processed'
+        assert not mdu.is_processed, "crash - should not mark mdu as processed"
 
     def test_manual_data_upload_api_delete(
         self, organizations, platforms, report_types, tmp_path, settings, clients, users, basic1
@@ -170,31 +170,31 @@ class TestCustomImport:
         access_log_orig_count = AccessLog.objects.count()
         ib_orig_count = ImportBatch.objects.count()
 
-        report_type = report_types['custom1']
-        organization = organizations['standalone']
-        platform = platforms['standalone']
+        report_type = report_types["custom1"]
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
 
-        csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        csv_content = "Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n"
         file = ContentFile(csv_content)
         file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-list'),
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-list"),
             data={
-                'platform': platform.id,
-                'organization': organization.pk,
-                'report_type_id': report_type.pk,
-                'data_file': file,
-                'method': MduMethod.CELUS,
+                "platform": platform.id,
+                "organization": organization.pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
             },
         )
         assert response.status_code == 201
-        mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+        mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse('manual-data-upload-confirm', args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
         )
         assert response.status_code == 200
 
@@ -205,8 +205,8 @@ class TestCustomImport:
         # calculate preflight in celery
         prepare_preflight(mdu.pk)
 
-        response = clients['master_admin'].post(
-            reverse('manual-data-upload-import-data', args=(mdu.pk,))
+        response = clients["master_admin"].post(
+            reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -214,14 +214,14 @@ class TestCustomImport:
 
         mdu.refresh_from_db()
         assert mdu.is_processed
-        assert mdu.user == users['master_admin']
+        assert mdu.user == users["master_admin"]
         assert AccessLog.objects.count() == 6 + access_log_orig_count
-        assert mdu.import_batches.count() == 3, '3 months of data = 3 import batches'
+        assert mdu.import_batches.count() == 3, "3 months of data = 3 import batches"
         assert mdu.accesslogs.count() == 6
         assert ImportBatch.objects.count() == 3 + ib_orig_count
         # let's delete the object
-        response = clients['master_admin'].delete(
-            reverse('manual-data-upload-detail', args=(mdu.pk,))
+        response = clients["master_admin"].delete(
+            reverse("manual-data-upload-detail", args=(mdu.pk,))
         )
         assert response.status_code == 204
         assert ManualDataUpload.objects.filter(pk=mdu.pk).count() == 0
@@ -229,15 +229,15 @@ class TestCustomImport:
         assert AccessLog.objects.count() == 0 + access_log_orig_count
 
     @pytest.mark.parametrize(
-        ['client', 'allowed'],
+        ["client", "allowed"],
         [
-            ['user1', False],  # unrelated user
-            ['user2', False],  # related user
-            ['admin1', False],  # unrelated admin
-            ['admin2', True],  # related admin
-            ['master_admin', True],  # master admin
-            ['master_user', False],  # master user
-            ['su', True],
+            ["user1", False],  # unrelated user
+            ["user2", False],  # related user
+            ["admin1", False],  # unrelated admin
+            ["admin2", True],  # related admin
+            ["master_admin", True],  # master admin
+            ["master_user", False],  # master user
+            ["su", True],
         ],
     )
     def test_custom_data_import_api_owner_level(
@@ -255,49 +255,49 @@ class TestCustomImport:
     ):
         settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
 
-        organization = organizations['standalone']
-        platform = platforms['standalone']
-        report_type = report_types['custom1']
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
+        report_type = report_types["custom1"]
 
-        csv_content = 'Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        csv_content = "Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n"
         file = ContentFile(csv_content)
         file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
 
         # upload the data
         response = clients[client].post(
-            reverse('manual-data-upload-list'),
+            reverse("manual-data-upload-list"),
             data={
-                'platform': platform.id,
-                'organization': organization.pk,
-                'report_type_id': report_type.pk,
-                'data_file': file,
-                'method': MduMethod.CELUS,
+                "platform": platform.id,
+                "organization": organization.pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
             },
         )
         assert response.status_code == 201 if allowed else 403
         if allowed:
-            mdu = ManualDataUpload.objects.get(pk=response.json()['pk'])
+            mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
-            response = clients[client].post(reverse('manual-data-upload-confirm', args=(mdu.pk,)))
+            response = clients[client].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
             assert response.status_code == 200
 
             # calculate preflight in celery
             prepare_preflight(mdu.pk)
 
-            response = clients[client].get(reverse('manual-data-upload-detail', args=(mdu.pk,)))
+            response = clients[client].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
             assert response.status_code == 200
 
             # let's process the mdu
             response = clients[client].post(
-                reverse('manual-data-upload-import-data', args=(mdu.pk,))
+                reverse("manual-data-upload-import-data", args=(mdu.pk,))
             )
 
             assert response.status_code == 200
 
     @pytest.mark.parametrize(
-        ['user', 'owner_level'],
-        [['admin2', UL_ORG_ADMIN], ['master_user', UL_CONS_STAFF], ['su', UL_CONS_STAFF]],
+        ["user", "owner_level"],
+        [["admin2", UL_ORG_ADMIN], ["master_user", UL_CONS_STAFF], ["su", UL_CONS_STAFF]],
     )
     def test_custom_data_import_owner_level(
         self,
@@ -312,9 +312,9 @@ class TestCustomImport:
         tmp_path,
     ):
         settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = True
-        organization = organizations['standalone']
-        platform = platforms['standalone']
-        report_type = report_types['custom1']
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
+        report_type = report_types["custom1"]
 
         csv_content = "Source,2019-01\naaaa,9\n"
         file = ContentFile(csv_content)
@@ -341,14 +341,14 @@ class TestCustomImport:
             assert ib.owner_level == mdu.owner_level
 
     @pytest.mark.parametrize(
-        ['settings_value', 'raw_enabled', 'passed'],
+        ["settings_value", "raw_enabled", "passed"],
         [
-            ['None', True, False],
-            ['None', False, False],
-            ['All', True, True],
-            ['All', False, True],
-            ['PerOrg', False, False],
-            ['PerOrg', True, True],
+            ["None", True, False],
+            ["None", False, False],
+            ["All", True, True],
+            ["All", False, True],
+            ["PerOrg", False, False],
+            ["PerOrg", True, True],
         ],
     )
     def test_custom_data_organization_permissions(
@@ -370,8 +370,8 @@ class TestCustomImport:
             data_file = ContentFile(f.read())
             data_file.name = "nibbler.csv"
 
-        organization = organizations['standalone']
-        platform = platforms['brain']
+        organization = organizations["standalone"]
+        platform = platforms["brain"]
         settings.MEDIA_ROOT = tmp_path
 
         checksum, size = SourceFileMixin.checksum_fileobj(data_file)
@@ -383,7 +383,7 @@ class TestCustomImport:
             checksum=checksum,
             file_size=size,
             data_file=data_file,
-            user=users['su'],
+            user=users["su"],
         )
 
         mdu.organization.raw_data_import_enabled = raw_enabled
@@ -392,14 +392,14 @@ class TestCustomImport:
         assert mdu.import_batches.count() == 0
 
         if passed:
-            import_custom_data(mdu, users['su'])
+            import_custom_data(mdu, users["su"])
             assert mdu.import_batches.count() == 1
         else:
             with pytest.raises(OrganizationNotAllowedToImportRawData):
-                import_custom_data(mdu, users['su'])
+                import_custom_data(mdu, users["su"])
             assert mdu.import_batches.count() == 0
 
-    @pytest.mark.parametrize(['content_prefix'], [[''], ['\ufeff']])
+    @pytest.mark.parametrize(["content_prefix"], [[""], ["\ufeff"]])
     def test_mdu_data_to_records(
         self,
         organizations,
@@ -414,11 +414,11 @@ class TestCustomImport:
         Check that CSV data are correctly ingested - regardless of BOM presence
         """
         settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
-        report_type = report_types['custom1']
-        organization = organizations['standalone']
-        platform = platforms['standalone']
+        report_type = report_types["custom1"]
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
 
-        csv_content = f'{content_prefix}Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n'
+        csv_content = f"{content_prefix}Metric,Jan-2019,Feb 2019,2019-03\nM1,10,7,11\nM2,1,2,3\n"
         file = ContentFile(csv_content)
         file.name = "something.csv"
         settings.MEDIA_ROOT = tmp_path
@@ -436,16 +436,16 @@ class TestCustomImport:
         assert len(list(mdu.data_to_records())) == 6
 
     @pytest.mark.parametrize(
-        ['content', 'is_json'],
+        ["content", "is_json"],
         [
-            ['Whatever', False],
-            ['  !', False],
-            ['  {', True],
-            ['  [', True],
-            ['[', True],
-            ['{', True],
-            ['\t[', True],
-            ['\t{', True],
+            ["Whatever", False],
+            ["  !", False],
+            ["  {", True],
+            ["  [", True],
+            ["[", True],
+            ["{", True],
+            ["\t[", True],
+            ["\t{", True],
         ],
     )
     def test_mdu_json(
@@ -454,9 +454,9 @@ class TestCustomImport:
         """
         Check that JSON data are properly recognized during import
         """
-        report_type = report_types['custom1']
-        organization = organizations['standalone']
-        platform = platforms['standalone']
+        report_type = report_types["custom1"]
+        organization = organizations["standalone"]
+        platform = platforms["standalone"]
 
         file = ContentFile(content)
         file.name = "something.csv"
@@ -479,6 +479,6 @@ class TestCustomImport:
         """
         mdus = ManualDataUploadFullFactory.create_batch(5, state=MduState.INITIAL)
         mdus += ManualDataUploadFullFactory.create_batch(5, state=MduState.IMPORTED)
-        resp = clients['su'].get(reverse('organization-manual-data-upload-list', args=(-1,)))
+        resp = clients["su"].get(reverse("organization-manual-data-upload-list", args=(-1,)))
         assert resp.status_code == 200
         assert len(resp.json()) == 10

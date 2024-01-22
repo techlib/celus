@@ -4,12 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0063_alter_reportinterestmetric_interest_group')]
+    dependencies = [("logs", "0063_alter_reportinterestmetric_interest_group")]
 
     operations = [
         migrations.AddField(
-            model_name='manualdataupload',
-            name='error_details',
+            model_name="manualdataupload",
+            name="error_details",
             field=models.JSONField(blank=True, null=True),
         )
     ]

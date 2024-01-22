@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0025_remove_counterreporttype_superseeded_by')]
+    dependencies = [("sushi", "0025_remove_counterreporttype_superseeded_by")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='customer_id',
+            model_name="sushicredentials",
+            name="customer_id",
             field=models.CharField(max_length=128),
         ),
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='requestor_id',
+            model_name="sushicredentials",
+            name="requestor_id",
             field=models.CharField(blank=True, max_length=128),
         ),
     ]

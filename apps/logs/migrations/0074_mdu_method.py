@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 
 def derive_method(apps, schema_editor):
-    ManualDataUpload = apps.get_model('logs', 'ManualDataUpload')
+    ManualDataUpload = apps.get_model("logs", "ManualDataUpload")
     for mdu in ManualDataUpload.objects.all():
         if mdu.use_nibbler:
             mdu.method = "raw"
@@ -20,7 +20,7 @@ def derive_method(apps, schema_editor):
 
 
 def derive_use_nibbler(apps, schema_editor):
-    ManualDataUpload = apps.get_model('logs', 'ManualDataUpload')
+    ManualDataUpload = apps.get_model("logs", "ManualDataUpload")
     for mdu in ManualDataUpload.objects.all():
         if mdu.method == "raw":
             mdu.use_nibbler = True
@@ -30,36 +30,36 @@ def derive_use_nibbler(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0073_alter_reportinterestmetric_unique_together')]
+    dependencies = [("logs", "0073_alter_reportinterestmetric_unique_together")]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='manualdataupload', name='non-nibbler-needs-report-type'
+            model_name="manualdataupload", name="non-nibbler-needs-report-type"
         ),
         migrations.AddField(
-            model_name='manualdataupload',
-            name='method',
+            model_name="manualdataupload",
+            name="method",
             field=models.CharField(
                 choices=[
-                    ('counter', 'Counter format'),
-                    ('celus', 'Celus format'),
-                    ('raw', 'Raw data'),
+                    ("counter", "Counter format"),
+                    ("celus", "Celus format"),
+                    ("raw", "Raw data"),
                 ],
-                default='counter',
+                default="counter",
                 max_length=20,
             ),
         ),
         migrations.RunPython(derive_method, derive_use_nibbler),
-        migrations.RemoveField(model_name='manualdataupload', name='use_nibbler'),
+        migrations.RemoveField(model_name="manualdataupload", name="use_nibbler"),
         migrations.AddConstraint(
-            model_name='manualdataupload',
+            model_name="manualdataupload",
             constraint=models.CheckConstraint(
                 check=models.Q(
-                    ('method__in', ['counter', 'celus']),
-                    ('report_type__isnull', True),
+                    ("method__in", ["counter", "celus"]),
+                    ("report_type__isnull", True),
                     _negated=True,
                 ),
-                name='non-raw-needs-report-type',
+                name="non-raw-needs-report-type",
             ),
         ),
     ]

@@ -6,7 +6,7 @@ from scheduler.models import FetchIntentionQueue
 
 
 def split_fetch_intentions(accesslog_model, fetchintention_model):
-    max_queue_id = fetchintention_model.objects.all().aggregate(Max('queue_id'))['queue_id__max']
+    max_queue_id = fetchintention_model.objects.all().aggregate(Max("queue_id"))["queue_id__max"]
     queue_id_remap = {}
     previous_id_remap = {}
     # when duplicate_of_id cannot be resolved immediately because the duplicated fi has not been
@@ -15,9 +15,9 @@ def split_fetch_intentions(accesslog_model, fetchintention_model):
 
     for fi in (
         fetchintention_model.objects.exclude(
-            start_date__month=F('end_date__month'), start_date__year=F('end_date__year')
+            start_date__month=F("end_date__month"), start_date__year=F("end_date__year")
         )
-        .order_by('pk')
+        .order_by("pk")
         .select_for_update()
     ):
         # ordering by pk should ensure that we do not catch reference to pk in previous_intentions

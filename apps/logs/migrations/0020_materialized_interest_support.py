@@ -5,28 +5,28 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0019_virtualreporttype_primary_dimension')]
+    dependencies = [("logs", "0019_virtualreporttype_primary_dimension")]
 
     operations = [
         migrations.AddField(
-            model_name='reportinterestmetric',
-            name='interest_group',
+            model_name="reportinterestmetric",
+            name="interest_group",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='logs.InterestGroup',
+                to="logs.InterestGroup",
             ),
         ),
         migrations.AddField(
-            model_name='reportinterestmetric',
-            name='target_metric',
+            model_name="reportinterestmetric",
+            name="target_metric",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='source_report_interest_metrics',
-                to='logs.Metric',
+                related_name="source_report_interest_metrics",
+                to="logs.Metric",
             ),
         ),
     ]

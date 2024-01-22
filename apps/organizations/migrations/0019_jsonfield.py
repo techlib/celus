@@ -4,12 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0018_datasource_set_null')]
+    dependencies = [("organizations", "0018_datasource_set_null")]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='address',
+            model_name="organization",
+            name="address",
             field=models.JSONField(blank=True, default=dict),
         )
     ]

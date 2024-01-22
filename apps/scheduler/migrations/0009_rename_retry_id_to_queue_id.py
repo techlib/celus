@@ -4,23 +4,23 @@ from django.db import migrations, models
 
 
 def fill_in_empty_queue_id(apps, schema_editor):
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
-    FetchIntention.objects.filter(queue_id__isnull=True).update(queue_id=models.F('pk'))
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
+    FetchIntention.objects.filter(queue_id__isnull=True).update(queue_id=models.F("pk"))
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0008_current_task')]
+    dependencies = [("scheduler", "0008_current_task")]
 
     operations = [
         migrations.RenameField(
-            model_name='fetchintention', old_name='retry_id', new_name='queue_id'
+            model_name="fetchintention", old_name="retry_id", new_name="queue_id"
         ),
         migrations.AddConstraint(
-            model_name='fetchintention',
+            model_name="fetchintention",
             constraint=models.UniqueConstraint(
                 condition=models.Q(when_processed__isnull=True),
-                fields=('queue_id',),
-                name='only_one_unprocessed_within_queue',
+                fields=("queue_id",),
+                name="only_one_unprocessed_within_queue",
             ),
         ),
         migrations.RunPython(fill_in_empty_queue_id, migrations.RunPython.noop),

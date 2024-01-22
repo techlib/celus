@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class NecronomiconConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'necronomicon'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "necronomicon"

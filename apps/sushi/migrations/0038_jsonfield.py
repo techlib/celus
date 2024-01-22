@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0037_broken_credentials')]
+    dependencies = [("sushi", "0037_broken_credentials")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='extra_params',
+            model_name="sushicredentials",
+            name="extra_params",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='processing_info',
-            field=models.JSONField(default=dict, help_text='Internal info'),
+            model_name="sushifetchattempt",
+            name="processing_info",
+            field=models.JSONField(default=dict, help_text="Internal info"),
         ),
     ]

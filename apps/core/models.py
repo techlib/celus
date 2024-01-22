@@ -30,11 +30,11 @@ UL_CONS_STAFF = 400
 UL_CONS_ADMIN = 1000
 
 USER_LEVEL_CHOICES = (
-    (UL_NORMAL, _('Normal user')),
-    (UL_ROBOT, _('Robot')),
-    (UL_ORG_ADMIN, _('Organization admin')),
-    (UL_CONS_STAFF, _('Consortium staff')),
-    (UL_CONS_ADMIN, _('Consortium admin')),
+    (UL_NORMAL, _("Normal user")),
+    (UL_ROBOT, _("Robot")),
+    (UL_ORG_ADMIN, _("Organization admin")),
+    (UL_CONS_STAFF, _("Consortium staff")),
+    (UL_CONS_ADMIN, _("Consortium admin")),
 )
 
 # relationship between user and accessed resource
@@ -64,9 +64,9 @@ class DataSource(models.Model):
     TYPE_ORGANIZATION = DATA_SOURCE_TYPE_ORGANIZATION
     TYPE_KNOWLEDGEBASE = DATA_SOURCE_TYPE_KNOWLEDGEBASE
     TYPE_CHOICES = (
-        (TYPE_API, 'API'),
-        (TYPE_ORGANIZATION, 'Organization'),
-        (TYPE_KNOWLEDGEBASE, 'Knowledgebase'),
+        (TYPE_API, "API"),
+        (TYPE_ORGANIZATION, "Organization"),
+        (TYPE_KNOWLEDGEBASE, "Knowledgebase"),
     )
 
     short_name = models.SlugField()
@@ -74,12 +74,12 @@ class DataSource(models.Model):
     url = models.URLField(blank=True)
     token = models.CharField(max_length=64, null=True, blank=True)  # noqa: DJ001
     organization = models.OneToOneField(
-        'organizations.Organization',
+        "organizations.Organization",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='private_data_source',
-        help_text='Used to define data sources private to an organization',
+        related_name="private_data_source",
+        help_text="Used to define data sources private to an organization",
     )
 
     class Meta:
@@ -91,28 +91,28 @@ class DataSource(models.Model):
                     & ~models.Q(url__exact="")  # non-empty url
                 )
                 | ~models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE),
-                name='knowledgebase-requirements',
+                name="knowledgebase-requirements",
             ),
             models.UniqueConstraint(
-                fields=('url',),
+                fields=("url",),
                 condition=models.Q(type=DATA_SOURCE_TYPE_KNOWLEDGEBASE),
-                name='unique-url-for-knowledgebase',
+                name="unique-url-for-knowledgebase",
             ),
             models.UniqueConstraint(
-                fields=('short_name',),
+                fields=("short_name",),
                 condition=models.Q(type=DATA_SOURCE_TYPE_ORGANIZATION),
-                name='source-unique-global-short_name',
+                name="source-unique-global-short_name",
             ),
         )
 
     def __str__(self):
         if self.type == self.TYPE_ORGANIZATION and self.organization_id:
-            return f'Org: {self.organization}'
-        return f'{self.short_name}: {self.get_type_display()}'
+            return f"Org: {self.organization}"
+        return f"{self.short_name}: {self.get_type_display()}"
 
     @classmethod
-    def create_default_short_name(cls, user: Optional['User'], organization_name: str):
-        user_part = slugify(user.username) if user else 'internal'
+    def create_default_short_name(cls, user: Optional["User"], organization_name: str):
+        user_part = slugify(user.username) if user else "internal"
         return f"{user_part}#{ slugify(organization_name) }"[:50]
 
 
@@ -124,7 +124,7 @@ class UserQuerySet(models.QuerySet):
             return self.annotate(_email_verified=Value(True, output_field=BooleanField()))
         else:
             verified_email_addresses = EmailAddress.objects.filter(
-                user=OuterRef('pk'), verified=True
+                user=OuterRef("pk"), verified=True
             )
             return self.annotate(_email_verified=Exists(verified_email_addresses))
 
@@ -148,18 +148,18 @@ class User(AbstractUser):
     )
 
     ext_id = models.PositiveIntegerField(
-        null=True, blank=True, help_text='ID used in original source of this user data'
+        null=True, blank=True, help_text="ID used in original source of this user data"
     )
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     language = models.CharField(
         max_length=2,
         choices=settings.AVAILABLE_LANGUAGES,
         default=settings.LANGUAGES[0][0],
-        help_text='User\'s preferred language',
+        help_text="User's preferred language",
     )
 
     extra_data = models.JSONField(
-        default=dict, help_text='User state data that do not deserve a dedicated field', blank=True
+        default=dict, help_text="User state data that do not deserve a dedicated field", blank=True
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -174,14 +174,14 @@ class User(AbstractUser):
         return self.email
 
     def accessible_organizations(self):
-        Organization = apps.get_model(app_label='organizations', model_name='Organization')
+        Organization = apps.get_model(app_label="organizations", model_name="Organization")
         if self.is_superuser or self.is_user_of_master_organization:
             # user is part of one of the master organizations - he should have access to all orgs
             return Organization.objects.all()
         return (
             self.organizations.all()
             | Organization.objects.filter(
-                tree_id__in=self.organizations.all().filter(level=0).values('tree_id').distinct()
+                tree_id__in=self.organizations.all().filter(level=0).values("tree_id").distinct()
             )
         ).distinct()
         # the following is an old version where siblings could see each other
@@ -197,7 +197,7 @@ class User(AbstractUser):
         :param: organization:
         :returns: queryset with accessible platforms
         """
-        Platform = apps.get_model(app_label='publications', model_name='Platform')
+        Platform = apps.get_model(app_label="publications", model_name="Platform")
 
         # Platforms with empty source are considered as public
         # + all platforms which belong to the one of user's organization
@@ -212,7 +212,7 @@ class User(AbstractUser):
 
     @cached_property
     def is_admin_of_master_organization(self):
-        if hasattr(self, 'userorganization_set_prefetched'):
+        if hasattr(self, "userorganization_set_prefetched"):
             return any(
                 user_org.organization.internal_id in settings.MASTER_ORGANIZATIONS
                 and user_org.is_admin
@@ -224,7 +224,7 @@ class User(AbstractUser):
 
     @cached_property
     def is_user_of_master_organization(self):
-        if hasattr(self, 'userorganization_set_prefetched'):
+        if hasattr(self, "userorganization_set_prefetched"):
             return any(
                 user_org.organization.internal_id in settings.MASTER_ORGANIZATIONS
                 for user_org in self.userorganization_set_prefetched
@@ -284,7 +284,7 @@ class User(AbstractUser):
             return Organization.objects.all()
         return Organization.objects.filter(
             pk__in=UserOrganization.objects.filter(user=self, is_admin=True).values_list(
-                'organization_id', flat=True
+                "organization_id", flat=True
             )
         )
 
@@ -315,7 +315,7 @@ class User(AbstractUser):
         if settings.ALLOW_EDUID_LOGIN:
             # we consider EduID users as validated if EduID login is turned on,
             # we consider all users as using EduID.
-            res['status'] = self.EMAIL_VERIFICATION_STATUS_VERIFIED
+            res["status"] = self.EMAIL_VERIFICATION_STATUS_VERIFIED
         else:
             try:
                 # get current email address from allauth
@@ -335,10 +335,10 @@ class User(AbstractUser):
 
     @cached_property
     def email_verified(self):
-        if hasattr(self, '_email_verified'):
+        if hasattr(self, "_email_verified"):
             return self._email_verified
         else:
-            return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification['status']
+            return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification["status"]
 
 
 class Identity(models.Model):
@@ -347,14 +347,14 @@ class Identity(models.Model):
         max_length=100,
         unique=True,
         db_index=True,
-        help_text='External identifier of the person, usually email',
+        help_text="External identifier of the person, usually email",
     )
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = 'identities'
+        verbose_name_plural = "identities"
 
     def __str__(self):
         return self.identity
@@ -371,34 +371,34 @@ class CreatedUpdatedMixin(models.Model):
 
 def where_to_store(instance: models.Model, filename):
     root, ext = os.path.splitext(filename)
-    ts = now().strftime('%Y%m%d-%H%M%S.%f')
+    ts = now().strftime("%Y%m%d-%H%M%S.%f")
 
     # we do not use `isinstance` as it would require importing the models modules which
     # would create circular imports unless we did it locally, which still seems strange.
-    if instance.__class__.__name__ == 'SushiFetchAttempt':
+    if instance.__class__.__name__ == "SushiFetchAttempt":
         organization = instance.credentials.organization
         platform = instance.credentials.platform
 
         return (
-            f'counter/{organization.internal_id or organization.pk}/'
-            f'{platform.slugified_name}/'
-            f'{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}'
+            f"counter/{organization.internal_id or organization.pk}/"
+            f"{platform.slugified_name}/"
+            f"{instance.credentials.counter_version}_{instance.counter_report.code}_{ts}{ext}"
         )
 
-    elif instance.__class__.__name__ == 'ManualDataUpload':
+    elif instance.__class__.__name__ == "ManualDataUpload":
         platform = instance.platform
 
         if instance.report_type:
             # make sure that rt short name doens't contain `/`
             report_type_short_name = slugify(instance.report_type.short_name, allow_unicode=True)
             return (
-                f'custom/{instance.user_id}/{report_type_short_name}-'
-                f'{platform.slugified_name}_{ts}{ext}'
+                f"custom/{instance.user_id}/{report_type_short_name}-"
+                f"{platform.slugified_name}_{ts}{ext}"
             )
         else:
-            return f'custom/{instance.user_id}/RAW-{platform.slugified_name}_{ts}{ext}'
+            return f"custom/{instance.user_id}/RAW-{platform.slugified_name}_{ts}{ext}"
     else:
-        return f'other/{ts}{ext}'
+        return f"other/{ts}{ext}"
 
 
 class SourceFileMixin(models.Model):
@@ -423,7 +423,7 @@ class SourceFileMixin(models.Model):
         size = 0
         while chunk := fileobj.read(1024 * 1024):
             if isinstance(chunk, str):
-                chunk = chunk.encode('utf-8')
+                chunk = chunk.encode("utf-8")
             hasher.update(chunk)
             size += len(chunk)
         fileobj.seek(orig_pos)
@@ -440,7 +440,7 @@ class SourceFileMixin(models.Model):
         if file_checksum != self.checksum:
             self._send_error_mail(fileobj, file_checksum)
             raise FileConsistencyError(
-                f'File checksum does not match stored value: '
+                f"File checksum does not match stored value: "
                 f'got "{file_checksum}", expected "{self.checksum}"'
             )
 
@@ -454,10 +454,10 @@ class SourceFileMixin(models.Model):
         from core.tasks import async_mail_admins
 
         async_mail_admins.delay(
-            'File checksum mismatch',
+            "File checksum mismatch",
             f'File: {getattr(fileobj, "name", "unknown")}\n'
-            f'Expected: {self.checksum}\n'
-            f'Got: {file_checksum}\n',
+            f"Expected: {self.checksum}\n"
+            f"Got: {file_checksum}\n",
         )
 
 
@@ -467,11 +467,11 @@ class TaskProgress(TaskResult):
 
     @property
     def cache_key_total(self) -> str:
-        return f'{self.task_id}-total'
+        return f"{self.task_id}-total"
 
     @property
     def cache_key_current(self) -> str:
-        return f'{self.task_id}-current'
+        return f"{self.task_id}-current"
 
     @property
     def progress_current(self) -> Optional[int]:

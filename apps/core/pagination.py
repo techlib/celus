@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 
 class SmartPageNumberPagination(PageNumberPagination):
-    COUNT_ATTR = '_count'
+    COUNT_ATTR = "_count"
 
     def __init__(self) -> None:
         super().__init__()
@@ -20,7 +20,7 @@ class SmartPageNumberPagination(PageNumberPagination):
             page_number = int(request.query_params.get(self.page_query_param, 1))
         except ValueError:
             page_number = 1
-        queryset = queryset.annotate(**{self.COUNT_ATTR: Window(Count('*'))})
+        queryset = queryset.annotate(**{self.COUNT_ATTR: Window(Count("*"))})
         result = queryset[(page_number - 1) * page_size : page_number * page_size]  # noqa E203
         if result:
             first = result[0]
@@ -34,10 +34,10 @@ class SmartPageNumberPagination(PageNumberPagination):
         return Response(
             OrderedDict(
                 [
-                    ('count', self.count_),
+                    ("count", self.count_),
                     # ('next', self.get_next_link()),
                     # ('previous', self.get_previous_link()),
-                    ('results', data),
+                    ("results", data),
                 ]
             )
         )

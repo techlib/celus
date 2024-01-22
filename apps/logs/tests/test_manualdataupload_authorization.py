@@ -16,16 +16,16 @@ from logs.models import ManualDataUpload, MduMethod, MduState
 def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authentication_headers):
     def do_it(organization, identity):
         report_type = report_type_nd(0)
-        file = StringIO('Source,2019-01\naaaa,9\n')
+        file = StringIO("Source,2019-01\naaaa,9\n")
         settings.MEDIA_ROOT = tmp_path
         response = client.post(
-            reverse('manual-data-upload-list'),
+            reverse("manual-data-upload-list"),
             data={
-                'platform': platforms[0].id,
-                'organization': organization.pk,
-                'report_type_id': report_type.pk,
-                'data_file': file,
-                'method': MduMethod.CELUS,
+                "platform": platforms[0].id,
+                "organization": organization.pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
             },
             **authentication_headers(identity),
         )
@@ -34,7 +34,7 @@ def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authenti
     return do_it
 
 
-MDUSet = namedtuple('MDUSet', ['rel_admin', 'unrel_admin', 'master', 'super'])
+MDUSet = namedtuple("MDUSet", ["rel_admin", "unrel_admin", "master", "super"])
 
 
 @pytest.fixture()
@@ -94,15 +94,15 @@ class TestAuthorization:
     """
 
     @pytest.mark.parametrize(
-        ['user_type', 'has_access'],
+        ["user_type", "has_access"],
         [
-            ['no_user', False],
-            ['invalid', False],
-            ['unrelated', False],
-            ['related_user', False],
-            ['related_admin', True],
-            ['master_user', True],
-            ['superuser', True],
+            ["no_user", False],
+            ["invalid", False],
+            ["unrelated", False],
+            ["related_user", False],
+            ["related_admin", True],
+            ["master_user", True],
+            ["superuser", True],
         ],
     )
     def test_mdu_create_access(self, mdu_api_post, user_type, has_access, identity_by_user_type):
@@ -114,11 +114,11 @@ class TestAuthorization:
             assert resp.status_code in (403, 401)  # depends on auth backend
 
     @pytest.mark.parametrize(
-        ['user_type', 'owner_level'],
+        ["user_type", "owner_level"],
         [
-            ['related_admin', UL_ORG_ADMIN],
-            ['master_user', UL_CONS_STAFF],
-            ['superuser', UL_CONS_STAFF],
+            ["related_admin", UL_ORG_ADMIN],
+            ["master_user", UL_CONS_STAFF],
+            ["superuser", UL_CONS_STAFF],
         ],
     )
     def test_mdu_create_owner_level(
@@ -127,19 +127,19 @@ class TestAuthorization:
         identity, org = identity_by_user_type(user_type)
         resp = mdu_api_post(org, identity)
         assert resp.status_code == 201
-        obj = ManualDataUpload.objects.get(pk=resp.json()['pk'])
+        obj = ManualDataUpload.objects.get(pk=resp.json()["pk"])
         assert obj.owner_level == owner_level
 
     @pytest.mark.parametrize(
-        ['user_type', 'can_access_unrel', 'can_access_rel'],
+        ["user_type", "can_access_unrel", "can_access_rel"],
         [
-            ['no_user', False, False],
-            ['invalid', False, False],
-            ['unrelated', False, False],
-            ['related_user', False, True],
-            ['related_admin', False, True],
-            ['master_user', True, True],
-            ['superuser', True, True],
+            ["no_user", False, False],
+            ["invalid", False, False],
+            ["unrelated", False, False],
+            ["related_user", False, True],
+            ["related_admin", False, True],
+            ["master_user", True, True],
+            ["superuser", True, True],
         ],
     )
     def test_mdu_get_object_api_access(
@@ -166,27 +166,27 @@ class TestAuthorization:
             owner_level=UL_ORG_ADMIN,
         )
         for i, (mdu, can) in enumerate(((mdu_unrel, can_access_unrel), (mdu_rel, can_access_rel))):
-            url = reverse('manual-data-upload-detail', args=(mdu.pk,))
+            url = reverse("manual-data-upload-detail", args=(mdu.pk,))
             resp = client.get(url, **authentication_headers(identity))
             expected_status_codes = (200,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"
 
     @pytest.mark.parametrize(
         [
-            'user_type',
-            'can_delete_rel_org_admin',
-            'can_delete_unrel_org_admin',
-            'can_delete_master',
-            'can_delete_superadmin',
+            "user_type",
+            "can_delete_rel_org_admin",
+            "can_delete_unrel_org_admin",
+            "can_delete_master",
+            "can_delete_superadmin",
         ],
         [
-            ['no_user', False, False, False, False],
-            ['invalid', False, False, False, False],
-            ['unrelated', False, False, False, False],
-            ['related_user', False, False, False, False],
-            ['related_admin', True, False, False, False],
-            ['master_user', True, True, True, False],
-            ['superuser', True, True, True, True],
+            ["no_user", False, False, False, False],
+            ["invalid", False, False, False, False],
+            ["unrelated", False, False, False, False],
+            ["related_user", False, False, False, False],
+            ["related_admin", True, False, False, False],
+            ["master_user", True, True, True, False],
+            ["superuser", True, True, True, True],
         ],
     )
     def test_mdu_delete_api_access(
@@ -211,7 +211,7 @@ class TestAuthorization:
                 (mdu_set.super, can_delete_superadmin),
             )
         ):
-            url = reverse('manual-data-upload-detail', args=(mdu.pk,))
+            url = reverse("manual-data-upload-detail", args=(mdu.pk,))
             resp = client.delete(url, **authentication_headers(identity))
             expected_status_codes = (204,) if can else (403, 401, 404)
-            assert resp.status_code in expected_status_codes, f'i = {i}'
+            assert resp.status_code in expected_status_codes, f"i = {i}"

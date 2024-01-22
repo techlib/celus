@@ -40,7 +40,7 @@ class TitleListReader(abc.ABC):
         ):
             if dump_file:
                 if not dump_writer:
-                    dump_stream = codecs.getwriter('utf-8')(dump_file)
+                    dump_stream = codecs.getwriter("utf-8")(dump_file)
                     dump_writer = csv.DictWriter(
                         dump_stream,
                         fieldnames=list(rec.source_data.keys()) + self.extra_column_names(),
@@ -99,11 +99,11 @@ class TitleListReader(abc.ABC):
             issn_set = eissn_set = set()
         else:
             issn_set, eissn_set = set(), set()
-        filters = {'isbn': set(), 'issn': issn_set, 'eissn': eissn_set, 'doi': set()}
+        filters = {"isbn": set(), "issn": issn_set, "eissn": eissn_set, "doi": set()}
         for record in records:
             if not record.title_ids:
                 for attr, array in filters.items():
-                    if value := getattr(record.title_rec, attr, ''):
+                    if value := getattr(record.title_rec, attr, ""):
                         array.add(value)
 
         # prepare a mapping between some title identifier (like issn, isbn) and title pks
@@ -113,21 +113,21 @@ class TitleListReader(abc.ABC):
             issn_dict, eissn_dict = defaultdict(set), defaultdict(set)
 
         id_to_titles = {
-            'isbn': defaultdict(set),
-            'issn': issn_dict,
-            'eissn': eissn_dict,
-            'doi': defaultdict(set),
+            "isbn": defaultdict(set),
+            "issn": issn_dict,
+            "eissn": eissn_dict,
+            "doi": defaultdict(set),
         }
-        q_filters = [Q(**{f'{attr}__in': array}) for attr, array in filters.items() if array]
+        q_filters = [Q(**{f"{attr}__in": array}) for attr, array in filters.items() if array]
         if q_filters:
             for title_rec in (
                 self.title_qs()
                 .filter(reduce(operator.or_, q_filters))
-                .values('pk', *id_to_titles.keys())
+                .values("pk", *id_to_titles.keys())
             ):
                 for attr, storage in id_to_titles.items():
                     if value := title_rec.get(attr):
-                        storage[value].add(title_rec['pk'])
+                        storage[value].add(title_rec["pk"])
         # now process the records
         for record in records:
             title_ids = set()
@@ -142,15 +142,15 @@ class TitleListReader(abc.ABC):
 
 class CsvReaderMixin:
     attrs = {
-        'isbn': {'normalize': normalize_isbn},
-        'issn': {'normalize': lambda x: normalize_issn(x)},
-        'eissn': {'normalize': lambda x: normalize_issn(x)},
-        'doi': {'normalize': None},
+        "isbn": {"normalize": normalize_isbn},
+        "issn": {"normalize": lambda x: normalize_issn(x)},
+        "eissn": {"normalize": lambda x: normalize_issn(x)},
+        "doi": {"normalize": None},
     }
 
     def _remove_django_file_wrappers(self, source):
-        file = getattr(source, 'file', source)
-        file = getattr(file, 'file', file)
+        file = getattr(source, "file", source)
+        file = getattr(file, "file", file)
         return file
 
     def __init__(self, tag_name_column: Optional[str] = None, **kwargs):
@@ -189,8 +189,8 @@ class CsvReaderMixin:
         for rec in reader:
             data = {}
             for attr_name, column_name in self.column_names.items():
-                if value := rec.get(column_name, '').strip():
-                    if normalizer := self.attrs[attr_name].get('normalize'):
+                if value := rec.get(column_name, "").strip():
+                    if normalizer := self.attrs[attr_name].get("normalize"):
                         value = normalizer(value)
                 data[attr_name] = value
             tag_names = []
@@ -203,7 +203,7 @@ class CsvReaderMixin:
 
 
 class CsvTitleListReader(CsvReaderMixin, TitleListReader):
-    annotation_column = '_Celus info_'
+    annotation_column = "_Celus info_"
 
     def __init__(
         self,
@@ -218,8 +218,8 @@ class CsvTitleListReader(CsvReaderMixin, TitleListReader):
 
     def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
         count = len(record.title_ids)
-        annotation = ngettext('{} match', '{} matches', count).format(count)
+        annotation = ngettext("{} match", "{} matches", count).format(count)
         if count:
-            title_ids = ', '.join(map(self.dump_id_formatter, sorted(record.title_ids)))
-            annotation += f' ({title_ids})'
+            title_ids = ", ".join(map(self.dump_id_formatter, sorted(record.title_ids)))
+            annotation += f" ({title_ids})"
         return {self.annotation_column: annotation}

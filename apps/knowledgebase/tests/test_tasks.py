@@ -78,7 +78,7 @@ class TestCeleryTasks:
             assert Platform.objects.count() == platform_count + 3
             assert ReportType.objects.count() == report_type_count + 3
             assert ParserDefinition.objects.count() == parser_definition_count + 1
-            assert Metric.objects.count() == metric_count, 'no new metrics should be created'
+            assert Metric.objects.count() == metric_count, "no new metrics should be created"
             assert ReportInterestMetric.objects.count() == rim_count + 3
             # 5 report_types with default_platform_interest * 3 new platforms
             # + 1 from parser_definition
@@ -104,18 +104,18 @@ class TestCeleryTasks:
                 text=json.dumps({"wrong": "format"}),
             )
 
-            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+            with patch("knowledgebase.tasks.async_mail_admins") as email_task:
                 tasks.sync_all_with_knowledgebase_task()
                 assert email_task.delay.called
 
-            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+            with patch("knowledgebase.tasks.async_mail_admins") as email_task:
                 tasks.sync_report_types_with_knowledgebase_task()
                 assert email_task.delay.called
 
-            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+            with patch("knowledgebase.tasks.async_mail_admins") as email_task:
                 tasks.sync_parser_definitions_with_knowledgebase_task()
                 assert email_task.delay.called
 
-            with patch('knowledgebase.tasks.async_mail_admins') as email_task:
+            with patch("knowledgebase.tasks.async_mail_admins") as email_task:
                 tasks.sync_platforms_with_knowledgebase_task()
                 assert email_task.delay.called

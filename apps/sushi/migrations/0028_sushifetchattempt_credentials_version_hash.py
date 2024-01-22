@@ -4,15 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0027_queue_previous_reverse_name')]
+    dependencies = [("sushi", "0027_queue_previous_reverse_name")]
 
     operations = [
         migrations.AddField(
-            model_name='sushifetchattempt',
-            name='credentials_version_hash',
+            model_name="sushifetchattempt",
+            name="credentials_version_hash",
             field=models.CharField(
-                default='',
-                help_text='Hash computed from the credentials at the time this attempt was made',
+                default="",
+                help_text="Hash computed from the credentials at the time this attempt was made",
                 max_length=32,
             ),
             preserve_default=False,

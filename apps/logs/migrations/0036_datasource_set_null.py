@@ -6,39 +6,39 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_datasource_set_null'),
-        ('logs', '0035_reporttype_default_platform_interest'),
+        ("core", "0012_datasource_set_null"),
+        ("logs", "0035_reporttype_default_platform_interest"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dimension',
-            name='source',
+            model_name="dimension",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
         migrations.AlterField(
-            model_name='metric',
-            name='source',
+            model_name="metric",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
         migrations.AlterField(
-            model_name='reporttype',
-            name='source',
+            model_name="reporttype",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
     ]

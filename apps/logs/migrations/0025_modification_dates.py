@@ -5,18 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0024_no_reportinterestmetric_name')]
+    dependencies = [("logs", "0024_no_reportinterestmetric_name")]
 
     operations = [
         migrations.AddField(
-            model_name='reportinterestmetric',
-            name='created',
+            model_name="reportinterestmetric",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='reportinterestmetric',
-            name='last_modified',
+            model_name="reportinterestmetric",
+            name="last_modified",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

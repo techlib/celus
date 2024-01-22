@@ -44,8 +44,8 @@ def users():
 @pytest.fixture
 def organizations():
     empty = OrganizationFactory(name="empty")
-    # sometimes this fixture is called twice and there is an error because the internal_id is unique,
-    # we deal with it here
+    # sometimes this fixture is called twice and there is an error because the internal_id
+    # is unique, we deal with it here
     try:
         master = Organization.objects.get(internal_id=settings.MASTER_ORGANIZATIONS[0])
     except Organization.DoesNotExist:
@@ -58,12 +58,12 @@ def organizations():
 
 @pytest.fixture
 def data_sources(organizations):
-    api = DataSourceFactory(short_name='api', type=DataSource.TYPE_API)
+    api = DataSourceFactory(short_name="api", type=DataSource.TYPE_API)
 
     brain = DataSourceFactory(
-        short_name='brain.celus.net',
+        short_name="brain.celus.net",
         type=DataSource.TYPE_KNOWLEDGEBASE,
-        url='https://brain.celus.net',
+        url="https://brain.celus.net",
         token="a" * 64,
     )
 
@@ -228,7 +228,7 @@ def report_types(data_sources):
     mr1 = ReportTypeFactory(name="Counter 4 - Multimedia report 1", short_name="MR1")
 
     custom1 = ReportTypeFactory(
-        name="Custom1", short_name="custom1", source=data_sources['brain'], ext_id=999
+        name="Custom1", short_name="custom1", source=data_sources["brain"], ext_id=999
     )
 
     return locals()
@@ -393,7 +393,7 @@ def harvests(users, credentials, counter_report_types, schedulers, organizations
             ),
         ),
     )
-    last_queue = anonymous.intentions.order_by('pk').last().queue
+    last_queue = anonymous.intentions.order_by("pk").last().queue
     anonymous.intentions.add(
         FetchIntentionFactory(
             credentials=credentials["standalone_br1_jr1"],
@@ -494,12 +494,12 @@ def metrics(report_types, platforms):
 @pytest.fixture
 def interests(report_types, platforms, metrics):
     # Create interest groups
-    ig = InterestGroupFactory(short_name='full_text', name='Full Text', position=1)
-    InterestGroupFactory(short_name='search', name='Search', position=2)
-    InterestGroupFactory(short_name='full_text_denial', name='Denial - full text', position=4)
-    InterestGroupFactory(short_name='search_denial', name='Denial - search', position=7)
-    InterestGroupFactory(short_name='other', name='Other', position=10)
-    InterestGroupFactory(short_name='multimedia', name='Multimedia', position=11)
+    ig = InterestGroupFactory(short_name="full_text", name="Full Text", position=1)
+    InterestGroupFactory(short_name="search", name="Search", position=2)
+    InterestGroupFactory(short_name="full_text_denial", name="Denial - full text", position=4)
+    InterestGroupFactory(short_name="search_denial", name="Denial - search", position=7)
+    InterestGroupFactory(short_name="other", name="Other", position=10)
+    InterestGroupFactory(short_name="multimedia", name="Multimedia", position=11)
 
     for rt_name, metric_names in {
         "jr1": ["metric1", "metric3"],
@@ -519,24 +519,24 @@ def interests(report_types, platforms, metrics):
 @pytest.fixture
 def client_by_user_type(clients, organizations, basic1):
     def fn(user_type):
-        if user_type == 'no_user':
+        if user_type == "no_user":
             return clients["unauthenticated"], organizations["branch"]
-        elif user_type == 'invalid':
+        elif user_type == "invalid":
             return clients["invalid"], organizations["branch"]
-        elif user_type == 'unrelated':
+        elif user_type == "unrelated":
             return clients["user2"], organizations["branch"]
-        elif user_type == 'related_user':
+        elif user_type == "related_user":
             return clients["user1"], organizations["branch"]
-        elif user_type == 'related_admin':
+        elif user_type == "related_admin":
             return clients["admin2"], organizations["standalone"]
-        elif user_type == 'master_user':
+        elif user_type == "master_user":
             return clients["master_user"], organizations["branch"]
-        elif user_type == 'master_admin':
+        elif user_type == "master_admin":
             return clients["master_admin"], organizations["branch"]
-        elif user_type == 'superuser':
+        elif user_type == "superuser":
             return clients["su"], organizations["branch"]
         else:
-            raise ValueError(f'Unsupported user_type: {user_type}')
+            raise ValueError(f"Unsupported user_type: {user_type}")
 
     return fn
 
@@ -600,23 +600,23 @@ def parser_definitions(data_sources, platforms, metrics, report_types):
 
 
 __all__ = [
-    'basic1',
-    'client_by_user_type',
-    'clients',
-    'counter_report_types',
-    'credentials',
-    'data_sources',
-    'harvests',
-    'identities',
-    'import_batches',
-    'interests',
-    'make_client',
-    'metrics',
-    'organizations',
-    'platforms',
-    'parser_definitions',
-    'report_types',
-    'schedulers',
-    'users',
-    'verified_credentials',
+    "basic1",
+    "client_by_user_type",
+    "clients",
+    "counter_report_types",
+    "credentials",
+    "data_sources",
+    "harvests",
+    "identities",
+    "import_batches",
+    "interests",
+    "make_client",
+    "metrics",
+    "organizations",
+    "platforms",
+    "parser_definitions",
+    "report_types",
+    "schedulers",
+    "users",
+    "verified_credentials",
 ]

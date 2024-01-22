@@ -13,18 +13,18 @@ def compute_checksum(fileobj):
     size = 0
     while chunk := fileobj.read(1024 * 1024):
         if isinstance(chunk, str):
-            chunk = chunk.encode('utf-8')
+            chunk = chunk.encode("utf-8")
         hasher.update(chunk)
         size += len(chunk)
     return hasher.hexdigest(), size
 
 
 def add_missing_checksums(apps, schema_editor):
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
     to_update = []
     missing_files = 0
     updated = 0
-    for fa in SushiFetchAttempt.objects.filter(checksum='').exclude(data_file=''):
+    for fa in SushiFetchAttempt.objects.filter(checksum="").exclude(data_file=""):
         if os.path.isfile(fa.data_file.path):
             fa.checksum, fa.file_size = compute_checksum(fa.data_file)
             fa.data_file.close()
@@ -32,15 +32,15 @@ def add_missing_checksums(apps, schema_editor):
         else:
             missing_files += 1
         if len(to_update) >= 1000:
-            SushiFetchAttempt.objects.bulk_update(to_update, ['checksum', 'file_size'])
+            SushiFetchAttempt.objects.bulk_update(to_update, ["checksum", "file_size"])
             updated += len(to_update)
             to_update = []
-    SushiFetchAttempt.objects.bulk_update(to_update, ['checksum', 'file_size'])
+    SushiFetchAttempt.objects.bulk_update(to_update, ["checksum", "file_size"])
     updated += len(to_update)
-    logger.info('Updated checkums of %d FAs, %d files missing', updated, missing_files)
+    logger.info("Updated checkums of %d FAs, %d files missing", updated, missing_files)
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0053_sourcefile_mixin')]
+    dependencies = [("sushi", "0053_sourcefile_mixin")]
 
     operations = [migrations.RunPython(add_missing_checksums, migrations.RunPython.noop)]

@@ -6,20 +6,20 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_datasource_set_null'),
-        ('charts', '0007_chartdefinition_scope_blank'),
+        ("core", "0012_datasource_set_null"),
+        ("charts", "0007_chartdefinition_scope_blank"),
     ]
 
     operations = [
-        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('short_name',)}),
+        migrations.AlterModelOptions(name="reportdataview", options={"ordering": ("short_name",)}),
         migrations.AlterField(
-            model_name='reportdataview',
-            name='source',
+            model_name="reportdataview",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
     ]

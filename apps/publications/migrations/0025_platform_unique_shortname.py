@@ -4,23 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0024_better_source_related_constraints')]
+    dependencies = [("publications", "0024_better_source_related_constraints")]
 
     operations = [
         migrations.AddConstraint(
-            model_name='platform',
+            model_name="platform",
             constraint=models.UniqueConstraint(
                 condition=models.Q(source__isnull=True),
-                fields=('short_name',),
-                name='platform_unique_global_shortname',
+                fields=("short_name",),
+                name="platform_unique_global_shortname",
             ),
         ),
         migrations.AddConstraint(
-            model_name='platform',
+            model_name="platform",
             constraint=models.UniqueConstraint(
                 condition=models.Q(ext_id__isnull=True),
-                fields=('short_name', 'source'),
-                name='platform_unique_short_name_source',
+                fields=("short_name", "source"),
+                name="platform_unique_short_name_source",
             ),
         ),
     ]

@@ -16,16 +16,16 @@ class FlexibleDataExportViewSet(ModelViewSet):
         return (
             FlexibleDataExport.objects.annotate_obsolete()
             .filter(owner=self.request.user, obsolete=False)
-            .order_by('-created')
+            .order_by("-created")
         )
 
     def create(self, request, *args, **kwargs):
         try:
             slicer = FlexibleDataSlicer.create_from_params(request.data)
         except SlicerConfigError as e:
-            return Response({'error': str(e)}, status=HTTP_400_BAD_REQUEST)
-        fmt = request.data.get('format')
-        name = request.data.get('name', '')
+            return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)
+        fmt = request.data.get("format")
+        name = request.data.get("name", "")
         export = FlexibleDataExport.create_from_slicer(slicer, request.user, fmt=fmt, name=name)
         process_flexible_export_task.apply_async(args=(export.pk,), countdown=2)
         serializer = self.get_serializer(export)

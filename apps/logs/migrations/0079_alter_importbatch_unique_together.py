@@ -5,14 +5,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0037_add_ir_m1_interest_to_all_platforms'),
-        ('organizations', '0024_alter_userorganization_unique_together'),
-        ('logs', '0078_remove_organizationplatform_sushi_credentials'),
+        ("publications", "0037_add_ir_m1_interest_to_all_platforms"),
+        ("organizations", "0024_alter_userorganization_unique_together"),
+        ("logs", "0078_remove_organizationplatform_sushi_credentials"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='importbatch',
-            unique_together={('report_type', 'organization', 'platform', 'date')},
+            name="importbatch",
+            unique_together={("report_type", "organization", "platform", "date")},
         ),
     ]

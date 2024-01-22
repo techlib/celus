@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Import all data from yet unprocessed SushiFetchAttempts'
+    help = "Import all data from yet unprocessed SushiFetchAttempts"
 
     def add_arguments(self, parser):
-        parser.add_argument('-r', dest='report_type', help='code of the counter report to fetch')
+        parser.add_argument("-r", dest="report_type", help="code of the counter report to fetch")
         parser.add_argument(
-            '-n', dest='number_of_items', type=int, help='number of attempts to process'
+            "-n", dest="number_of_items", type=int, help="number of attempts to process"
         )
 
     @atomic
@@ -23,12 +23,12 @@ class Command(BaseCommand):
         queryset = SushiFetchAttempt.objects.select_for_update(skip_locked=True).filter(
             status=AttemptStatus.IMPORTING
         )
-        if options['report_type']:
-            queryset = queryset.filter(counter_report__code=options['report_type'])
+        if options["report_type"]:
+            queryset = queryset.filter(counter_report__code=options["report_type"])
         count = queryset.count()
-        if options['number_of_items']:
-            queryset = queryset[: options['number_of_items']]
-        logger.info('Found %d unprocessed successful download attempts matching criteria', count)
+        if options["number_of_items"]:
+            queryset = queryset[: options["number_of_items"]]
+        logger.info("Found %d unprocessed successful download attempts matching criteria", count)
         for i, attempt in enumerate(queryset):
-            logger.info('----- Attempt #%d -----', i)
+            logger.info("----- Attempt #%d -----", i)
             import_one_sushi_attempt(attempt)

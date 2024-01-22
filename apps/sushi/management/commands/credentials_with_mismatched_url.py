@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        'Finds all SUSHI credentials where the platform has URL from brain and the credentials '
-        'use some other URL.'
+        "Finds all SUSHI credentials where the platform has URL from brain and the credentials "
+        "use some other URL."
     )
 
     def add_arguments(self, parser):
@@ -26,19 +26,19 @@ class Command(BaseCommand):
         writer = csv.DictWriter(
             out,
             fieldnames=[
-                'platform',
-                'organization',
-                'counter_version',
-                'verified',
-                'url',
-                'brain_url',
+                "platform",
+                "organization",
+                "counter_version",
+                "verified",
+                "url",
+                "brain_url",
             ],
         )
         writer.writeheader()
         for platform in Platform.objects.filter(knowledgebase__providers__isnull=False):
-            for provider in platform.knowledgebase['providers']:
-                if (url := provider.get('provider', {}).get('url')) and (
-                    counter_version := provider.get('counter_version')
+            for provider in platform.knowledgebase["providers"]:
+                if (url := provider.get("provider", {}).get("url")) and (
+                    counter_version := provider.get("counter_version")
                 ):
                     for cred in (
                         SushiCredentials.objects.filter(
@@ -46,21 +46,21 @@ class Command(BaseCommand):
                         )
                         .exclude(url=url)
                         .annotate_verified()
-                        .select_related('organization')
+                        .select_related("organization")
                     ):
-                        if cred.url.rstrip('/') != url.rstrip('/'):
-                            stats[f'{platform.pk}-{platform.short_name}'] += 1
+                        if cred.url.rstrip("/") != url.rstrip("/"):
+                            stats[f"{platform.pk}-{platform.short_name}"] += 1
                             writer.writerow(
                                 {
-                                    'platform': platform.short_name,
-                                    'organization': cred.organization.short_name,
-                                    'counter_version': counter_version,
-                                    'url': cred.url,
-                                    'brain_url': url,
-                                    'verified': cred.verified,
+                                    "platform": platform.short_name,
+                                    "organization": cred.organization.short_name,
+                                    "counter_version": counter_version,
+                                    "url": cred.url,
+                                    "brain_url": url,
+                                    "verified": cred.verified,
                                 }
                             )
 
-        logger.info('Stats: %s', stats)
-        logger.info('Total mismatches: %d', sum(stats.values()))
+        logger.info("Stats: %s", stats)
+        logger.info("Total mismatches: %d", sum(stats.values()))
         self.stdout.write(out.getvalue())

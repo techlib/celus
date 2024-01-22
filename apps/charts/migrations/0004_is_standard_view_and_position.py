@@ -4,20 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('charts', '0003_chartdefinition_ignore_organization')]
+    dependencies = [("charts", "0003_chartdefinition_ignore_organization")]
 
     operations = [
-        migrations.AlterModelOptions(name='reportdataview', options={'ordering': ('position',)}),
+        migrations.AlterModelOptions(name="reportdataview", options={"ordering": ("position",)}),
         migrations.AddField(
-            model_name='reportdataview',
-            name='is_standard_view',
+            model_name="reportdataview",
+            name="is_standard_view",
             field=models.BooleanField(
-                default=True, help_text='Standard view are shown separately from other views'
+                default=True, help_text="Standard view are shown separately from other views"
             ),
         ),
         migrations.AddField(
-            model_name='reportdataview',
-            name='position',
+            model_name="reportdataview",
+            name="position",
             field=models.PositiveIntegerField(default=100),
         ),
     ]

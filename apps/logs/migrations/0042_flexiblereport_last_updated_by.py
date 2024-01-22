@@ -8,18 +8,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logs', '0041_merge_20210327_1013'),
+        ("logs", "0041_merge_20210327_1013"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='flexiblereport',
-            name='last_updated_by',
+            model_name="flexiblereport",
+            name="last_updated_by",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='owned_flexible_reports',
+                related_name="owned_flexible_reports",
                 to=settings.AUTH_USER_MODEL,
             ),
         )

@@ -13,7 +13,7 @@ from django.urls import resolve
 
 class CelusAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
-        url = f'/verify-email/?key={emailconfirmation.key}'
+        url = f"/verify-email/?key={emailconfirmation.key}"
         return build_absolute_uri(request, url)
 
     def send_invitation_email(self, request, user):
@@ -25,26 +25,26 @@ class CelusAccountAdapter(DefaultAccountAdapter):
         domain = current_site.domain
         # rudimentary checks that the domain is properly set - nothing fancy, we just need
         # to catch wildcards and strange names
-        if '.' not in domain or '*' in domain:
-            raise ValueError(f'Invalid site.domain: {domain}')
+        if "." not in domain or "*" in domain:
+            raise ValueError(f"Invalid site.domain: {domain}")
         elif domain not in settings.ALLOWED_HOSTS:
             raise ValueError(
-                f'site.domain ({domain}) is not present in ALLOWED_HOSTS, probably a '
-                'misconfiguration'
+                f"site.domain ({domain}) is not present in ALLOWED_HOSTS, probably a "
+                "misconfiguration"
             )
         context = {
-            'email': user.email,
-            'domain': domain,
-            'site_name': site_name,
-            'uid': uid_encoder(user),
-            'user': user,
-            'token': default_token_generator.make_token(user),
-            'protocol': request.scheme,
+            "email": user.email,
+            "domain": domain,
+            "site_name": site_name,
+            "uid": uid_encoder(user),
+            "user": user,
+            "token": default_token_generator.make_token(user),
+            "protocol": request.scheme,
         }
-        subject = loader.render_to_string('registration/invitation_subject.txt', context)
+        subject = loader.render_to_string("registration/invitation_subject.txt", context)
         # Email subject *must not* contain newlines
-        subject = ''.join(subject.splitlines())
-        body = loader.render_to_string('registration/invitation_email.html', context)
+        subject = "".join(subject.splitlines())
+        body = loader.render_to_string("registration/invitation_email.html", context)
         email_message = EmailMultiAlternatives(subject, body, to=[user.email])
         email_message.send()
 
@@ -54,8 +54,8 @@ class CelusAccountAdapter(DefaultAccountAdapter):
             # get user_id and token from url
             orig_url = urlparse(context["password_reset_url"])
             kwargs = resolve(orig_url.path).kwargs
-            uid = kwargs.get('uidb64')
-            token = kwargs.get('token')
+            uid = kwargs.get("uidb64")
+            token = kwargs.get("token")
             context[
                 "reset_url"
             ] = f"{orig_url.scheme}://{orig_url.netloc}/reset-password/?uid={uid}&token={token}"

@@ -8,31 +8,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sushi', '0058_help_text_fix'),
+        ("sushi", "0058_help_text_fix"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='counterreportstocredentials',
-            name='last_harvestable_month',
+            model_name="counterreportstocredentials",
+            name="last_harvestable_month",
             field=models.DateField(
                 help_text="When we know that data before this date are not available", null=True
             ),
         ),
         migrations.AddField(
-            model_name='counterreportstocredentials',
-            name='last_harvestable_month_attempt',
+            model_name="counterreportstocredentials",
+            name="last_harvestable_month_attempt",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='cr2c_last_harvestable_month',
-                to='sushi.sushifetchattempt',
+                related_name="cr2c_last_harvestable_month",
+                to="sushi.sushifetchattempt",
             ),
         ),
         migrations.AddField(
-            model_name='counterreportstocredentials',
-            name='last_harvestable_month_user',
+            model_name="counterreportstocredentials",
+            name="last_harvestable_month_user",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
@@ -41,24 +41,24 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name='counterreportstocredentials',
+            name="counterreportstocredentials",
             unique_together=set(),
         ),
         migrations.AddConstraint(
-            model_name='counterreportstocredentials',
+            model_name="counterreportstocredentials",
             constraint=models.CheckConstraint(
                 check=models.Q(
-                    ('last_harvestable_month_attempt__isnull', False),
-                    ('last_harvestable_month_user__isnull', False),
+                    ("last_harvestable_month_attempt__isnull", False),
+                    ("last_harvestable_month_user__isnull", False),
                     _negated=True,
                 ),
-                name='last_harvestable_month_by_attempt_vs_user',
+                name="last_harvestable_month_by_attempt_vs_user",
             ),
         ),
         migrations.AddConstraint(
-            model_name='counterreportstocredentials',
+            model_name="counterreportstocredentials",
             constraint=models.UniqueConstraint(
-                fields=('credentials', 'counter_report'), name='unique_creds_to_cr'
+                fields=("credentials", "counter_report"), name="unique_creds_to_cr"
             ),
         ),
     ]

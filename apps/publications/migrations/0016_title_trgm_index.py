@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0015_platformtitle')]
+    dependencies = [("publications", "0015_platformtitle")]
 
     operations = [
         TrigramExtension(),

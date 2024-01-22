@@ -4,9 +4,9 @@ from django.db import migrations
 
 
 def remove_import_crashed_from_already_imported_attempts(apps, schema_editor):
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
     SushiFetchAttempt.objects.filter(
-        is_processed=True, import_crashed=True, log__contains='Data already imported'
+        is_processed=True, import_crashed=True, log__contains="Data already imported"
     ).update(import_crashed=False)
 
 
@@ -15,6 +15,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0043_sushifetchattempt_partial_data')]
+    dependencies = [("sushi", "0043_sushifetchattempt_partial_data")]
 
     operations = [migrations.RunPython(remove_import_crashed_from_already_imported_attempts, noop)]

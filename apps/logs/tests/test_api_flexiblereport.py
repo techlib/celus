@@ -12,165 +12,165 @@ from test_scenarios.basic import users  # noqa
 @pytest.mark.django_db
 class TestFlexibleReportAPI:
     def test_list_simple(self, admin_client):
-        url = reverse('flexible-report-list')
+        url = reverse("flexible-report-list")
         resp = admin_client.get(url)
         assert resp.status_code == 200
 
     @pytest.mark.parametrize(
-        ['user', 'accessible_reports'],
+        ["user", "accessible_reports"],
         [
-            ['user1', {'public', 'user1 report'}],
-            ['user2', {'public', 'user2 report'}],
-            ['admin1', {'public', 'org1 report'}],
-            ['admin2', {'public', 'org2 report'}],
-            ['empty', {'public', 'org1 report', 'org2 report'}],
-            ['master_admin', {'public'}],
-            ['master_user', {'public'}],
-            ['su', {'public', 'org1 report', 'org2 report'}],  # cannot see private
+            ["user1", {"public", "user1 report"}],
+            ["user2", {"public", "user2 report"}],
+            ["admin1", {"public", "org1 report"}],
+            ["admin2", {"public", "org2 report"}],
+            ["empty", {"public", "org1 report", "org2 report"}],
+            ["master_admin", {"public"}],
+            ["master_user", {"public"}],
+            ["su", {"public", "org1 report", "org2 report"}],  # cannot see private
         ],
     )
     def test_list_access(self, client, users, organizations, user, accessible_reports):
         organization1 = organizations[0]
         organization2 = organizations[1]
-        FlexibleReport.objects.create(name='public')
-        FlexibleReport.objects.create(name='user1 report', owner=users['user1'])
-        FlexibleReport.objects.create(name='user2 report', owner=users['user2'])
-        FlexibleReport.objects.create(name='org1 report', owner_organization=organization1)
-        FlexibleReport.objects.create(name='org2 report', owner_organization=organization2)
-        UserOrganization.objects.create(user=users['admin1'], organization=organization1)
-        UserOrganization.objects.create(user=users['admin2'], organization=organization2)
-        UserOrganization.objects.create(user=users['empty'], organization=organization1)
-        UserOrganization.objects.create(user=users['empty'], organization=organization2)
+        FlexibleReport.objects.create(name="public")
+        FlexibleReport.objects.create(name="user1 report", owner=users["user1"])
+        FlexibleReport.objects.create(name="user2 report", owner=users["user2"])
+        FlexibleReport.objects.create(name="org1 report", owner_organization=organization1)
+        FlexibleReport.objects.create(name="org2 report", owner_organization=organization2)
+        UserOrganization.objects.create(user=users["admin1"], organization=organization1)
+        UserOrganization.objects.create(user=users["admin2"], organization=organization2)
+        UserOrganization.objects.create(user=users["empty"], organization=organization1)
+        UserOrganization.objects.create(user=users["empty"], organization=organization2)
 
-        url = reverse('flexible-report-list')
+        url = reverse("flexible-report-list")
         client.force_login(users[user])
         resp = client.get(url)
         assert resp.status_code == 200
-        assert accessible_reports == {rec['name'] for rec in resp.json()}
+        assert accessible_reports == {rec["name"] for rec in resp.json()}
 
     def test_create(self, admin_client, admin_user):
         resp = admin_client.post(
-            reverse('flexible-report-list'),
+            reverse("flexible-report-list"),
             {
-                'name': 'test report',
-                'config': {'primary_dimension': 'platform', 'groups': b64json(['metric'])},
+                "name": "test report",
+                "config": {"primary_dimension": "platform", "groups": b64json(["metric"])},
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 201
-        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        report = FlexibleReport.objects.get(pk=resp.json()["pk"])
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config['primary_dimension'] == 'platform'
-        assert report.report_config['group_by'] == ['metric']
+        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["group_by"] == ["metric"]
 
     def test_create_with_tag_roll_up(self, admin_client, admin_user):
         resp = admin_client.post(
-            reverse('flexible-report-list'),
+            reverse("flexible-report-list"),
             {
-                'name': 'test report',
-                'config': {
-                    'primary_dimension': 'platform',
-                    'groups': b64json(['metric']),
-                    'tag_roll_up': 'true',
-                    'tag_class': 1,
+                "name": "test report",
+                "config": {
+                    "primary_dimension": "platform",
+                    "groups": b64json(["metric"]),
+                    "tag_roll_up": "true",
+                    "tag_class": 1,
                 },
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 201
-        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        report = FlexibleReport.objects.get(pk=resp.json()["pk"])
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config['primary_dimension'] == 'platform'
-        assert report.report_config['group_by'] == ['metric']
-        assert report.report_config['tag_roll_up'] is True
-        assert report.report_config['tag_class'] == 1
+        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["group_by"] == ["metric"]
+        assert report.report_config["tag_roll_up"] is True
+        assert report.report_config["tag_class"] == 1
 
     def test_create_with_tag_filter(self, admin_client, admin_user):
         tag = TagForTitleFactory.create()
         resp = admin_client.post(
-            reverse('flexible-report-list'),
+            reverse("flexible-report-list"),
             {
-                'name': 'test report',
-                'config': {
-                    'primary_dimension': 'target',
-                    'groups': b64json(['metric']),
-                    'filters': b64json({'tag__target': [tag.pk]}),
+                "name": "test report",
+                "config": {
+                    "primary_dimension": "target",
+                    "groups": b64json(["metric"]),
+                    "filters": b64json({"tag__target": [tag.pk]}),
                 },
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 201
-        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        report = FlexibleReport.objects.get(pk=resp.json()["pk"])
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config['primary_dimension'] == 'target'
-        assert report.report_config['group_by'] == ['metric']
-        assert report.report_config['filters'][0]['dimension'] == 'target'
-        assert report.report_config['filters'][0]['tag_ids'] == [tag.pk]
+        assert report.report_config["primary_dimension"] == "target"
+        assert report.report_config["group_by"] == ["metric"]
+        assert report.report_config["filters"][0]["dimension"] == "target"
+        assert report.report_config["filters"][0]["tag_ids"] == [tag.pk]
 
     def test_create_in_trend_mode(self, admin_client, admin_user):
         resp = admin_client.post(
-            reverse('flexible-report-list'),
+            reverse("flexible-report-list"),
             {
-                'name': 'test report',
-                'config': {
-                    'primary_dimension': 'platform',
-                    'trend_mode': True,
-                    'base_subset_filters': b64json(
-                        {'date': {'start': '2019-01', 'end': '2019-02'}}
+                "name": "test report",
+                "config": {
+                    "primary_dimension": "platform",
+                    "trend_mode": True,
+                    "base_subset_filters": b64json(
+                        {"date": {"start": "2019-01", "end": "2019-02"}}
                     ),
-                    'compared_subset_filters': b64json(
-                        {'date': {'start': '2019-03', 'end': '2019-04'}}
+                    "compared_subset_filters": b64json(
+                        {"date": {"start": "2019-03", "end": "2019-04"}}
                     ),
                 },
             },
-            content_type='application/json',
+            content_type="application/json",
         )
         assert resp.status_code == 201
-        report = FlexibleReport.objects.get(pk=resp.json()['pk'])
+        report = FlexibleReport.objects.get(pk=resp.json()["pk"])
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config['primary_dimension'] == 'platform'
-        assert report.report_config['trend_mode'] is True
-        assert report.report_config['base_subset_filters'][0]['dimension'] == 'date'
-        assert report.report_config['base_subset_filters'][0]['start'] == '2019-01-01'
-        assert report.report_config['base_subset_filters'][0]['end'] == '2019-02-28'
-        assert report.report_config['compared_subset_filters'][0]['dimension'] == 'date'
-        assert report.report_config['compared_subset_filters'][0]['start'] == '2019-03-01'
-        assert report.report_config['compared_subset_filters'][0]['end'] == '2019-04-30'
+        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["trend_mode"] is True
+        assert report.report_config["base_subset_filters"][0]["dimension"] == "date"
+        assert report.report_config["base_subset_filters"][0]["start"] == "2019-01-01"
+        assert report.report_config["base_subset_filters"][0]["end"] == "2019-02-28"
+        assert report.report_config["compared_subset_filters"][0]["dimension"] == "date"
+        assert report.report_config["compared_subset_filters"][0]["start"] == "2019-03-01"
+        assert report.report_config["compared_subset_filters"][0]["end"] == "2019-04-30"
 
     @pytest.fixture()
     def user_organizations(self, users, organizations):
         org1 = organizations[0]
         org2 = organizations[1]
-        UserOrganization.objects.create(user=users['user1'], organization=org1)
-        UserOrganization.objects.create(user=users['user2'], organization=org2)
-        UserOrganization.objects.create(user=users['admin1'], organization=org1, is_admin=True)
-        UserOrganization.objects.create(user=users['admin2'], organization=org2, is_admin=True)
+        UserOrganization.objects.create(user=users["user1"], organization=org1)
+        UserOrganization.objects.create(user=users["user2"], organization=org2)
+        UserOrganization.objects.create(user=users["admin1"], organization=org1, is_admin=True)
+        UserOrganization.objects.create(user=users["admin2"], organization=org2, is_admin=True)
         UserOrganization.objects.create(
-            user=users['master_admin'], organization=org1, is_admin=True
+            user=users["master_admin"], organization=org1, is_admin=True
         )
         UserOrganization.objects.create(
-            user=users['master_admin'], organization=org2, is_admin=True
+            user=users["master_admin"], organization=org2, is_admin=True
         )
 
     @pytest.mark.parametrize(
-        ['user', 'can_private', 'can_org1', 'can_org2', 'can_consortium'],
+        ["user", "can_private", "can_org1", "can_org2", "can_consortium"],
         [
             #         private, org1, org2, consortium
-            ['user1', True, False, False, False],  # normal user, connected to org1
-            ['user2', True, False, False, False],  # normal user, connected to org2
-            ['admin1', True, True, False, False],  # admin of org1
-            ['admin2', True, False, True, False],  # admin of org2
-            ['master_admin', True, True, True, False],  # admin of org1 and org2
-            ['master_user', True, False, False, False],  # only private
-            ['su', True, True, True, True],  # superuser
+            ["user1", True, False, False, False],  # normal user, connected to org1
+            ["user2", True, False, False, False],  # normal user, connected to org2
+            ["admin1", True, True, False, False],  # admin of org1
+            ["admin2", True, False, True, False],  # admin of org2
+            ["master_admin", True, True, True, False],  # admin of org1 and org2
+            ["master_user", True, False, False, False],  # only private
+            ["su", True, True, True, True],  # superuser
         ],
     )
     def test_create_accesslevel(
@@ -192,46 +192,46 @@ class TestFlexibleReportAPI:
         org1 = organizations[0]
         org2 = organizations[1]
         data_base = {
-            'name': 'test report',
-            'config': {'primary_dimension': 'platform', 'groups': b64json(['metric'])},
+            "name": "test report",
+            "config": {"primary_dimension": "platform", "groups": b64json(["metric"])},
         }
-        url = reverse('flexible-report-list')
+        url = reverse("flexible-report-list")
         client.force_login(users[user])
 
         # private
-        resp = client.post(url, data_base, content_type='application/json')
+        resp = client.post(url, data_base, content_type="application/json")
         assert resp.status_code == (201 if can_private else 403)
-        assert resp.json()['owner'] == users[user].pk
-        assert resp.json()['owner_organization'] is None
+        assert resp.json()["owner"] == users[user].pk
+        assert resp.json()["owner_organization"] is None
 
         # org1
         resp = client.post(
             url,
-            {**data_base, 'owner_organization': org1.pk, 'owner': None},
-            content_type='application/json',
+            {**data_base, "owner_organization": org1.pk, "owner": None},
+            content_type="application/json",
         )
         assert resp.status_code == (201 if can_org1 else 403)
         if can_org1:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] == org1.pk
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] == org1.pk
 
         # org2
         resp = client.post(
             url,
-            {**data_base, 'owner_organization': org2.pk, 'owner': None},
-            content_type='application/json',
+            {**data_base, "owner_organization": org2.pk, "owner": None},
+            content_type="application/json",
         )
         assert resp.status_code == (201 if can_org2 else 403)
         if can_org2:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] == org2.pk
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] == org2.pk
 
         # consortium
-        resp = client.post(url, {**data_base, 'owner': None}, content_type='application/json')
+        resp = client.post(url, {**data_base, "owner": None}, content_type="application/json")
         assert resp.status_code == (201 if can_consortium else 403)
         if can_consortium:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] is None
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] is None
 
     @classmethod
     def access_to_code(cls, access, delete=False):
@@ -243,110 +243,110 @@ class TestFlexibleReportAPI:
 
     @pytest.fixture(params=["user1", "user2", "org1", "org2", "admin1", "admin2", "consortium"])
     def flexible_report(self, request, organizations, users):
-        data = {'report_config': {'primary_dimension': 'platform', 'group_by': ['metric']}}
-        if request.param in ('user1', 'user2', 'admin1', 'admin2'):
+        data = {"report_config": {"primary_dimension": "platform", "group_by": ["metric"]}}
+        if request.param in ("user1", "user2", "admin1", "admin2"):
             # user owned
-            data['owner'] = users[request.param]
-        elif request.param == 'org1':
+            data["owner"] = users[request.param]
+        elif request.param == "org1":
             # organization owned
-            data['owner_organization'] = organizations[0]
-        elif request.param == 'org2':
+            data["owner_organization"] = organizations[0]
+        elif request.param == "org2":
             # organization owned
-            data['owner_organization'] = organizations[1]
-        elif request.param == 'consortium':
+            data["owner_organization"] = organizations[1]
+        elif request.param == "consortium":
             # consortium owned
-            data['owner'] = None
+            data["owner"] = None
         return {
-            'level': request.param,
-            'report': FlexibleReport.objects.create(name=f'test {request.param}', **data),
+            "level": request.param,
+            "report": FlexibleReport.objects.create(name=f"test {request.param}", **data),
         }
 
     @pytest.mark.parametrize(
-        ['user', 'can'],
+        ["user", "can"],
         [
             #         change_spec, private, org1, org2, consortium (None => cannot see)
             [
-                'user1',  # normal user, connected to org1
+                "user1",  # normal user, connected to org1
                 {
-                    'user1': (True, True, False, False, False),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (False, False, False, False, False),  # what he can do to report org1
-                    'org2': (None, None, None, None, None),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (True, True, False, False, False),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (False, False, False, False, False),  # what he can do to report org1
+                    "org2": (None, None, None, None, None),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'user2',  # normal user, connected to org2
+                "user2",  # normal user, connected to org2
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (True, True, False, False, False),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (None, None, None, None, None),  # what he can do to report org1
-                    'org2': (False, False, False, False, False),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (True, True, False, False, False),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (None, None, None, None, None),  # what he can do to report org1
+                    "org2": (False, False, False, False, False),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'admin1',  # admin of org1
+                "admin1",  # admin of org1
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (True, True, True, False, False),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (True, True, True, False, False),  # what he can do to report org1
-                    'org2': (None, None, None, None, None),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (True, True, True, False, False),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (True, True, True, False, False),  # what he can do to report org1
+                    "org2": (None, None, None, None, None),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'admin2',  # admin of org2
+                "admin2",  # admin of org2
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (True, True, False, True, False),  # what he can do to report admin2
-                    'org1': (None, None, None, None, None),  # what he can do to report org1
-                    'org2': (True, True, False, True, False),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (True, True, False, True, False),  # what he can do to report admin2
+                    "org1": (None, None, None, None, None),  # what he can do to report org1
+                    "org2": (True, True, False, True, False),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'master_admin',  # admin of org1 and org2
+                "master_admin",  # admin of org1 and org2
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (True, True, True, True, False),  # what he can do to report org1
-                    'org2': (True, True, True, True, False),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (True, True, True, True, False),  # what he can do to report org1
+                    "org2": (True, True, True, True, False),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'master_user',  # user of org1 and org2
+                "master_user",  # user of org1 and org2
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (None, None, None, None, None),  # what he can do to report org1
-                    'org2': (None, None, None, None, None),  # what he can do to report org2
-                    'consortium': (False, False, False, False, False),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (None, None, None, None, None),  # what he can do to report org1
+                    "org2": (None, None, None, None, None),  # what he can do to report org2
+                    "consortium": (False, False, False, False, False),  # what he can do to cons...
                 },
             ],
             [
-                'su',  # superuser
+                "su",  # superuser
                 {
-                    'user1': (None, None, None, None, None),  # what he can do to report user1
-                    'user2': (None, None, None, None, None),  # what he can do to report user2
-                    'admin1': (None, None, None, None, None),  # what he can do to report admin1
-                    'admin2': (None, None, None, None, None),  # what he can do to report admin2
-                    'org1': (True, True, True, True, True),  # what he can do to report org1
-                    'org2': (True, True, True, True, True),  # what he can do to report org2
-                    'consortium': (True, True, True, True, True),  # what he can do to cons...
+                    "user1": (None, None, None, None, None),  # what he can do to report user1
+                    "user2": (None, None, None, None, None),  # what he can do to report user2
+                    "admin1": (None, None, None, None, None),  # what he can do to report admin1
+                    "admin2": (None, None, None, None, None),  # what he can do to report admin2
+                    "org1": (True, True, True, True, True),  # what he can do to report org1
+                    "org2": (True, True, True, True, True),  # what he can do to report org2
+                    "consortium": (True, True, True, True, True),  # what he can do to cons...
                 },
             ],
         ],
@@ -360,144 +360,144 @@ class TestFlexibleReportAPI:
         """
         org1 = organizations[0]
         org2 = organizations[1]
-        fr = flexible_report['report']
-        url = reverse('flexible-report-detail', args=(fr.pk,))
+        fr = flexible_report["report"]
+        url = reverse("flexible-report-detail", args=(fr.pk,))
         client.force_login(users[user])
         can_change_spec, can_private, can_org1, can_org2, can_consortium = can[
-            flexible_report['level']
+            flexible_report["level"]
         ]
 
         # change spec
-        resp = client.patch(url, {'name': 'foobar'}, content_type='application/json')
+        resp = client.patch(url, {"name": "foobar"}, content_type="application/json")
         assert resp.status_code == self.access_to_code(can_change_spec)
         if can_change_spec:
-            assert resp.json()['owner'] == fr.owner_id
-            assert resp.json()['owner_organization'] == fr.owner_organization_id
+            assert resp.json()["owner"] == fr.owner_id
+            assert resp.json()["owner_organization"] == fr.owner_organization_id
 
         # private
         resp = client.patch(
             url,
-            {'owner': users[user].pk, 'owner_organization': None},
-            content_type='application/json',
+            {"owner": users[user].pk, "owner_organization": None},
+            content_type="application/json",
         )
         assert resp.status_code == self.access_to_code(can_private)
         if can_private:
-            assert resp.json()['owner'] == users[user].pk
-            assert resp.json()['owner_organization'] is None
+            assert resp.json()["owner"] == users[user].pk
+            assert resp.json()["owner_organization"] is None
 
         # org1
         resp = client.patch(
-            url, {'owner_organization': org1.pk, 'owner': None}, content_type='application/json'
+            url, {"owner_organization": org1.pk, "owner": None}, content_type="application/json"
         )
         assert resp.status_code == self.access_to_code(can_org1)
         if can_org1:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] == org1.pk
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] == org1.pk
 
         # org2
         resp = client.patch(
-            url, {'owner_organization': org2.pk, 'owner': None}, content_type='application/json'
+            url, {"owner_organization": org2.pk, "owner": None}, content_type="application/json"
         )
         assert resp.status_code == self.access_to_code(can_org2)
         if can_org2:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] == org2.pk
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] == org2.pk
 
         # consortium
         resp = client.patch(
-            url, {'owner_organization': None, 'owner': None}, content_type='application/json'
+            url, {"owner_organization": None, "owner": None}, content_type="application/json"
         )
         assert resp.status_code == self.access_to_code(can_consortium)
         if can_consortium:
-            assert resp.json()['owner'] is None
-            assert resp.json()['owner_organization'] is None
+            assert resp.json()["owner"] is None
+            assert resp.json()["owner_organization"] is None
 
     @pytest.mark.parametrize(
-        ['user', 'can'],
+        ["user", "can"],
         [
             #         change_spec, private, org1, org2, consortium (None => cannot see)
             [
-                'user1',  # normal user, connected to org1
+                "user1",  # normal user, connected to org1
                 {
-                    'user1': True,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': False,  # what he can do to report org1
-                    'org2': None,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": True,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": False,  # what he can do to report org1
+                    "org2": None,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'user2',  # normal user, connected to org2
+                "user2",  # normal user, connected to org2
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': True,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': None,  # what he can do to report org1
-                    'org2': False,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": True,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": None,  # what he can do to report org1
+                    "org2": False,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'admin1',  # admin of org1
+                "admin1",  # admin of org1
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': True,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': True,  # what he can do to report org1
-                    'org2': None,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": True,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": True,  # what he can do to report org1
+                    "org2": None,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'admin2',  # admin of org2
+                "admin2",  # admin of org2
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': True,  # what he can do to report admin2
-                    'org1': None,  # what he can do to report org1
-                    'org2': True,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": True,  # what he can do to report admin2
+                    "org1": None,  # what he can do to report org1
+                    "org2": True,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'master_admin',  # admin of org1 and org2
+                "master_admin",  # admin of org1 and org2
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': True,  # what he can do to report org1
-                    'org2': True,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": True,  # what he can do to report org1
+                    "org2": True,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'master_user',  # user of org1 and org2
+                "master_user",  # user of org1 and org2
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': None,  # what he can do to report org1
-                    'org2': None,  # what he can do to report org2
-                    'consortium': False,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": None,  # what he can do to report org1
+                    "org2": None,  # what he can do to report org2
+                    "consortium": False,  # what he can do to cons...
                 },
             ],
             [
-                'su',  # superuser
+                "su",  # superuser
                 {
-                    'user1': None,  # what he can do to report user1
-                    'user2': None,  # what he can do to report user2
-                    'admin1': None,  # what he can do to report admin1
-                    'admin2': None,  # what he can do to report admin2
-                    'org1': True,  # what he can do to report org1
-                    'org2': True,  # what he can do to report org2
-                    'consortium': True,  # what he can do to cons...
+                    "user1": None,  # what he can do to report user1
+                    "user2": None,  # what he can do to report user2
+                    "admin1": None,  # what he can do to report admin1
+                    "admin2": None,  # what he can do to report admin2
+                    "org1": True,  # what he can do to report org1
+                    "org2": True,  # what he can do to report org2
+                    "consortium": True,  # what he can do to cons...
                 },
             ],
         ],
@@ -509,10 +509,10 @@ class TestFlexibleReportAPI:
         Test that when updating a report with specific access level, the user can/cannot
         change the definition and/or access level.
         """
-        fr = flexible_report['report']
-        url = reverse('flexible-report-detail', args=(fr.pk,))
+        fr = flexible_report["report"]
+        url = reverse("flexible-report-detail", args=(fr.pk,))
         client.force_login(users[user])
-        can_delete = can[flexible_report['level']]
+        can_delete = can[flexible_report["level"]]
 
         resp = client.delete(url)
         assert resp.status_code == self.access_to_code(can_delete, delete=True)

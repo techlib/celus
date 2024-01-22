@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 
 class IdentitySyncer(ERMSSyncer):
     attr_map = {
-        'identity': 'identity',
+        "identity": "identity",
         # 'user': 'user',   # this syncer does not use the mapping anyway, so this is for docs...
     }
 
     object_class = Identity
-    primary_id = 'identity'
+    primary_id = "identity"
 
     def __init__(self, data_source):
         super().__init__(data_source)
@@ -36,17 +36,17 @@ class IdentitySyncer(ERMSSyncer):
 
     def translate_record(self, record: dict) -> dict:
         return {
-            'user': self.user_id_to_user.get(record.get('person')),
-            'identity': record.get('identity'),
+            "user": self.user_id_to_user.get(record.get("person")),
+            "identity": record.get("identity"),
         }
 
 
 class UserSyncer(ERMSObjectSyncer):
     object_class = User
 
-    allowed_attrs = ['username', 'first_name', 'last_name', 'ext_id', 'email']
+    allowed_attrs = ["username", "first_name", "last_name", "ext_id", "email"]
 
-    attr_map = {'name': 'name', 'name_cs': 'name_cs', 'name_en': 'name_en', 'email': 'email'}
+    attr_map = {"name": "name", "name_cs": "name_cs", "name_en": "name_en", "email": "email"}
 
     def __init__(self, data_source: DataSource):
         self._org_user_status = {}
@@ -54,29 +54,29 @@ class UserSyncer(ERMSObjectSyncer):
 
     def translate_record(self, record: dict) -> dict:
         result = super().translate_record(record)
-        result['username'] = result.get('name_cs', '') + str(result['ext_id'])
-        if 'name_cs' in result:
-            parts = result['name_cs'].split()
+        result["username"] = result.get("name_cs", "") + str(result["ext_id"])
+        if "name_cs" in result:
+            parts = result["name_cs"].split()
             if parts:
-                result['first_name'] = ' '.join(parts[:-1])
-                result['last_name'] = parts[-1]
-        if 'first_name' not in result:
-            result['first_name'] = ''
-        if 'last_name' not in result:
-            result['last_name'] = ''
-        if 'email' not in result:
-            result['email'] = ''
+                result["first_name"] = " ".join(parts[:-1])
+                result["last_name"] = parts[-1]
+        if "first_name" not in result:
+            result["first_name"] = ""
+        if "last_name" not in result:
+            result["last_name"] = ""
+        if "email" not in result:
+            result["email"] = ""
         # create output with only attrs in allowed_attrs
         new_result = {}
         for key in self.allowed_attrs:
             new_result[key] = result.get(key)
         # before we go, we process the relationships and store them in self._org_user_status
         # to be processed later after all records were synced
-        ref = record.get('refs', {})
-        for employer in ref.get('employee of', []):
-            self._org_user_status[(employer, record['id'])] = False
-        for admin_of in ref.get('administrator of', []):
-            self._org_user_status[(admin_of, record['id'])] = True
+        ref = record.get("refs", {})
+        for employer in ref.get("employee of", []):
+            self._org_user_status[(employer, record["id"])] = False
+        for admin_of in ref.get("administrator of", []):
+            self._org_user_status[(admin_of, record["id"])] = True
         return new_result
 
     def sync_data(self, records: [dict]) -> dict:
@@ -90,7 +90,7 @@ class UserSyncer(ERMSObjectSyncer):
         org_user_to_db_obj = {
             (uo.organization.ext_id, uo.user.ext_id): uo
             for uo in UserOrganization.objects.filter(source=self.data_source).select_related(
-                'organization', 'user'
+                "organization", "user"
             )
         }
         org_ext_id_to_db_obj = {org.ext_id: org for org in Organization.objects.all()}
@@ -101,36 +101,36 @@ class UserSyncer(ERMSObjectSyncer):
                 user = self.db_key_to_obj.get(user_ext_id)
                 if not user:
                     logger.warning(
-                        'User with ext_id %s not found even though present in data', user_ext_id
+                        "User with ext_id %s not found even though present in data", user_ext_id
                     )
-                    stats['User-Org no user'] += 1
+                    stats["User-Org no user"] += 1
                     continue
                 organization = org_ext_id_to_db_obj.get(org_ext_id)
                 if not organization:
-                    logger.warning('Organization with ext_id %s not found in db', org_ext_id)
-                    stats['User-Org no org'] += 1
+                    logger.warning("Organization with ext_id %s not found in db", org_ext_id)
+                    stats["User-Org no org"] += 1
                     continue
                 uo = UserOrganization.objects.create(
                     user=user, organization=organization, is_admin=is_admin, source=self.data_source
                 )
                 org_user_to_db_obj[(org_ext_id, user_ext_id)] = uo
                 seen_user_orgs.add(uo.pk)
-                stats['User-Org created'] += 1
+                stats["User-Org created"] += 1
             else:
                 if uo.is_admin != is_admin:
                     uo.is_admin = is_admin
                     uo.save()
-                    stats['User-Org synced'] += 1
+                    stats["User-Org synced"] += 1
                 else:
-                    stats['User-Org unchanged'] += 1
+                    stats["User-Org unchanged"] += 1
                 seen_user_orgs.add(uo.pk)
         # now delete extra UserOrganizations - only for users we have seen in the data
         # those that were not seen should be removed altogether elsewhere
-        uo_filter = {'source': self.data_source, 'user_id__in': self._seen_pks}
+        uo_filter = {"source": self.data_source, "user_id__in": self._seen_pks}
         deleted, _details = (
             UserOrganization.objects.exclude(pk__in=seen_user_orgs).filter(**uo_filter).delete()
         )
-        stats['User-Org deleted'] = deleted
+        stats["User-Org deleted"] = deleted
         return stats
 
 
@@ -154,14 +154,14 @@ def sync_users(data_source: DataSource, records: [dict], partial_data: bool = Fa
     # this means that manually created users will not be removed
     # and users from other source neither
     if not partial_data:
-        seen_external_ids = {int(rec['id']) for rec in records}
+        seen_external_ids = {int(rec["id"]) for rec in records}
         info = (
             get_user_model()
             .objects.filter(source=data_source)
             .exclude(ext_id__in=seen_external_ids)
             .delete()
         )
-        stats['removed'] = info
+        stats["removed"] = info
     return stats
 
 

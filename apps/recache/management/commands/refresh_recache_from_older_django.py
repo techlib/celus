@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        'Looks at all the cached queries and plans their update to current Django. Is meant '
-        'to be run during updates'
+        "Looks at all the cached queries and plans their update to current Django. Is meant "
+        "to be run during updates"
     )
 
     @atomic
@@ -23,8 +23,8 @@ class Command(BaseCommand):
         }
         for cq in CachedQuery.objects.exclude(django_version=django.get_version()):
             if cq.query_hash not in current_caches:
-                logger.debug('Scheduling renewal of %s', cq)
+                logger.debug("Scheduling renewal of %s", cq)
                 renew_cached_query_task.apply_async(args=(cq.pk,))
             else:
-                logger.info('Current cache already exists: removing %s', cq)
+                logger.info("Current cache already exists: removing %s", cq)
                 cq.delete()

@@ -27,11 +27,11 @@ class TestFetchIntentionSplittingMigration:
 
         # prepare some shared instances
         report_type = ReportType.objects.create(short_name="foo_rt")
-        metric_a = Metric.objects.create(short_name='A')
-        metric_b = Metric.objects.create(short_name='B')
+        metric_a = Metric.objects.create(short_name="A")
+        metric_b = Metric.objects.create(short_name="B")
         platform = Platform.objects.create(short_name="foo_pl", ext_id=100)
         organization = Organization.objects.create(
-            short_name='foo_org',
+            short_name="foo_org",
             ext_id=1,
             parent=None,
             # mptt related fields which are not auto-populated for some reason
@@ -44,7 +44,7 @@ class TestFetchIntentionSplittingMigration:
             organization=organization, platform=platform, counter_version=5
         )
         counter_rt = CounterReportType.objects.create(
-            code='foo_x1', counter_version=5, report_type=report_type
+            code="foo_x1", counter_version=5, report_type=report_type
         )
 
         # prepare data
@@ -52,12 +52,12 @@ class TestFetchIntentionSplittingMigration:
         # one of the import batches will be connected to FetchAttempt and FetchIntention
         # the other not
         basic_attrs = {
-            'platform': platform,
-            'report_type': report_type,
-            'organization': organization,
+            "platform": platform,
+            "report_type": report_type,
+            "organization": organization,
         }
         ib1 = ImportBatch.objects.create(**basic_attrs)
-        for i, date in enumerate(['2020-01-01', '2020-02-01', '2020-03-01']):
+        for i, date in enumerate(["2020-01-01", "2020-02-01", "2020-03-01"]):
             for j, metric in enumerate([metric_b, metric_a]):
                 AccessLog.objects.create(
                     **basic_attrs,
@@ -66,9 +66,9 @@ class TestFetchIntentionSplittingMigration:
                     value=(i + 1) * (j + 1),
                     import_batch=ib1,
                 )
-        assert ib1.accesslog_set.aggregate(total=Sum('value')) == {'total': 18}
+        assert ib1.accesslog_set.aggregate(total=Sum("value")) == {"total": 18}
         ib2 = ImportBatch.objects.create(**basic_attrs)
-        for i, date in enumerate(['2020-03-01', '2020-04-01', '2020-05-01']):
+        for i, date in enumerate(["2020-03-01", "2020-04-01", "2020-05-01"]):
             for j, metric in enumerate([metric_b, metric_a]):
                 AccessLog.objects.create(
                     **basic_attrs,
@@ -77,17 +77,17 @@ class TestFetchIntentionSplittingMigration:
                     value=(i + 2) * (j + 1),
                     import_batch=ib2,
                 )
-        assert ib2.accesslog_set.aggregate(total=Sum('value')) == {'total': 27}
+        assert ib2.accesslog_set.aggregate(total=Sum("value")) == {"total": 27}
         ib3 = ImportBatch.objects.create(**basic_attrs)
         for i, metric in enumerate([metric_b, metric_a]):
             AccessLog.objects.create(
-                **basic_attrs, metric=metric, date='2020-01-01', value=i, import_batch=ib3
+                **basic_attrs, metric=metric, date="2020-01-01", value=i, import_batch=ib3
             )
         h1 = Harvest.objects.create()
         fa1 = FetchAttemptFactory.create(
             import_batch=ib1,
-            start_date='2020-01-01',
-            end_date='2020-03-31',
+            start_date="2020-01-01",
+            end_date="2020-03-31",
             counter_report=counter_rt,
             credentials=credentials,
         )
@@ -98,7 +98,7 @@ class TestFetchIntentionSplittingMigration:
             counter_report=fa1.counter_report,
             credentials=fa1.credentials,
             harvest=h1,
-            when_processed='2021-01-01',
+            when_processed="2021-01-01",
             queue=queue,
         )
         fi1_2 = FetchIntention.objects.create(  # noqa: F841
@@ -113,8 +113,8 @@ class TestFetchIntentionSplittingMigration:
         )
         fa3 = FetchAttemptFactory.create(
             import_batch=ib3,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             counter_report=counter_rt,
             credentials=credentials,
         )
@@ -130,8 +130,8 @@ class TestFetchIntentionSplittingMigration:
         # FetchAttempt without ImportBatch
         h2 = Harvest.objects.create()
         fa4 = FetchAttemptFactory.create(
-            start_date='2020-01-01',
-            end_date='2020-02-28',
+            start_date="2020-01-01",
+            end_date="2020-02-28",
             counter_report=counter_rt,
             credentials=credentials,
         )
@@ -145,8 +145,8 @@ class TestFetchIntentionSplittingMigration:
         )
         # FetchIntention without FetchAttempt
         fi5 = FetchIntention.objects.create(  # noqa: F841
-            start_date='2019-12-01',
-            end_date='2020-02-28',
+            start_date="2019-12-01",
+            end_date="2020-02-28",
             counter_report=counter_rt,
             credentials=credentials,
             harvest=h2,
@@ -155,7 +155,7 @@ class TestFetchIntentionSplittingMigration:
         assert SushiFetchAttempt.objects.count() == 3
         assert FetchIntention.objects.count() == 5
         assert (
-            FetchIntention.objects.all().values('queue_id').distinct().count() == 4
+            FetchIntention.objects.all().values("queue_id").distinct().count() == 4
         ), "one explicit, three auto-generated"
 
         # Migrate and test
@@ -165,43 +165,46 @@ class TestFetchIntentionSplittingMigration:
         # the tests
         assert (
             FetchIntention.objects.count() == 5 + 2 + 2 + 2 + 1
-        ), 'fi1+fi1_2 and fi5 split to 3, fi4 to 2'
-        assert SushiFetchAttempt.objects.count() == 3 + 2 + 1, 'fa1 splits to 3, fa4 to 2'
-        assert ImportBatch.objects.count() == 3 + 2, 'ib1 should split to 3'
+        ), "fi1+fi1_2 and fi5 split to 3, fi4 to 2"
+        assert SushiFetchAttempt.objects.count() == 3 + 2 + 1, "fa1 splits to 3, fa4 to 2"
+        assert ImportBatch.objects.count() == 3 + 2, "ib1 should split to 3"
         assert (
-            ImportBatch.objects.annotate(log_count=Count('accesslog')).filter(log_count=0).count()
+            ImportBatch.objects.annotate(log_count=Count("accesslog")).filter(log_count=0).count()
             == 0
-        ), 'no import batches without accesslogs'
-        FetchIntention.objects.exclude(
-            start_date__month=F('end_date__month'), start_date__year=F('end_date__year')
-        ).count(), "no fetch intention spanning more than one month"
+        ), "no import batches without accesslogs"
+        assert (
+            FetchIntention.objects.exclude(
+                start_date__month=F("end_date__month"), start_date__year=F("end_date__year")
+            ).count()
+            == 0
+        ), "no fetch intention spanning more than one month"
         # do some math
         ib1 = ImportBatch.objects.get(pk=ib1.pk)
-        assert ib1.accesslog_set.aggregate(total=Sum('value')) == {'total': 3}, 'split occurred'
+        assert ib1.accesslog_set.aggregate(total=Sum("value")) == {"total": 3}, "split occurred"
         ib2 = ImportBatch.objects.get(pk=ib2.pk)
-        assert ib2.accesslog_set.aggregate(total=Sum('value')) == {'total': 27}, 'no split here'
+        assert ib2.accesslog_set.aggregate(total=Sum("value")) == {"total": 27}, "no split here"
         h1 = Harvest.objects.get(pk=h1.pk)
-        assert h1.intentions.count() == 3 + 3 + 1, 'fi1 split into 3, fi1_2 as well'
+        assert h1.intentions.count() == 3 + 3 + 1, "fi1 split into 3, fi1_2 as well"
         # test queue IDs
         # fi1 and fi3 share the same queue ID, so the split intentions should share it as well
         queue_ids = {
-            rec['queue_id'] for rec in FetchIntention.objects.all().values('queue_id').distinct()
+            rec["queue_id"] for rec in FetchIntention.objects.all().values("queue_id").distinct()
         }
         assert (
             len(queue_ids) == 9
-        ), 'fi1+fi1_2 should split to 3, fi3 stays at 1, fi4 should split to 2, fi5 to 3'
+        ), "fi1+fi1_2 should split to 3, fi3 stays at 1, fi4 should split to 2, fi5 to 3"
         for queue_id in queue_ids:
             assert (
                 FetchIntention.objects.filter(queue_id=queue_id)
-                .values('start_date')
+                .values("start_date")
                 .distinct()
                 .count()
                 == 1
-            ), 'all queues should be for one month only'
+            ), "all queues should be for one month only"
         # test previous intentions
         assert (
             h1.intentions.filter(previous_intention__isnull=False).count() == 3
-        ), 'fi1_2 should split into 3'
+        ), "fi1_2 should split into 3"
         for fi in h1.intentions.filter(previous_intention__isnull=False):
             assert fi.start_date == fi.previous_intention.start_date
             assert fi.queue_id == fi.previous_intention.queue_id

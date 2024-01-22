@@ -21,7 +21,7 @@ class XlsxExporter:
         "#009688",
     ]
 
-    base_fmt_dict = {'font_name': 'Arial', 'font_size': 9, 'num_format': '#,##0'}
+    base_fmt_dict = {"font_name": "Arial", "font_size": 9, "num_format": "#,##0"}
 
     data_col_shift = 3  # how many columns there are in the output before the month columns
 
@@ -39,21 +39,21 @@ class XlsxExporter:
 
     @classmethod
     def sanitize_sheet_name(cls, name: str) -> str:
-        return name.replace('/', '|')[:31]
+        return name.replace("/", "|")[:31]
 
     def export(self) -> bytes:
-        with tempfile.NamedTemporaryFile('wb') as tmp_file:
-            self.workbook = xlsxwriter.Workbook(tmp_file.name, {'constant_memory': True})
+        with tempfile.NamedTemporaryFile("wb") as tmp_file:
+            self.workbook = xlsxwriter.Workbook(tmp_file.name, {"constant_memory": True})
             self.base_fmt = self.workbook.add_format(self.base_fmt_dict)
             self.empty_data_fmt = self.workbook.add_format(
-                {'font_color': '#888888', **self.base_fmt_dict}
+                {"font_color": "#888888", **self.base_fmt_dict}
             )
-            self.header_fmt = self.workbook.add_format({'bold': True, **self.base_fmt_dict})
+            self.header_fmt = self.workbook.add_format({"bold": True, **self.base_fmt_dict})
             self.superheader_fmt = self.workbook.add_format(
-                {'bold': True, 'bg_color': '#d0d0d0', **self.base_fmt_dict}
+                {"bold": True, "bg_color": "#d0d0d0", **self.base_fmt_dict}
             )
 
-            cover_sheet = self.workbook.add_worksheet('Summary')
+            cover_sheet = self.workbook.add_worksheet("Summary")
             self.report_output = self.report.get_output()
             for part_idx, part in enumerate(self.report.parts):
                 results = self.report_output[part.name]
@@ -61,11 +61,11 @@ class XlsxExporter:
                 for i, stage in enumerate(part.stages):
                     self.report.context.set_current_part(part.name)
                     self.create_stage_sheet(
-                        part, stage, results['stages'][i]['data'], tab_color=tab_color
+                        part, stage, results["stages"][i]["data"], tab_color=tab_color
                     )
             self.create_cover_sheet(cover_sheet)
             self.workbook.close()
-            with open(tmp_file.name, 'rb') as outfile:
+            with open(tmp_file.name, "rb") as outfile:
                 return outfile.read()
 
     def create_cover_sheet(self, sheet):
@@ -74,19 +74,19 @@ class XlsxExporter:
         context = self.report.context
         sheet.write_string(current_row, 0, self.report.name, self.header_fmt)
         current_row += 2  # leave some space
-        sheet.write_string(current_row, 0, 'Organization', self.header_fmt)
+        sheet.write_string(current_row, 0, "Organization", self.header_fmt)
         sheet.write_string(current_row, 1, context.organization.name, self.base_fmt)
         current_row += 1
-        sheet.write_string(current_row, 0, 'Covered period', self.header_fmt)
+        sheet.write_string(current_row, 0, "Covered period", self.header_fmt)
         sheet.write_string(
-            current_row, 1, f'{context.start_date} - {context.end_date}', self.base_fmt
+            current_row, 1, f"{context.start_date} - {context.end_date}", self.base_fmt
         )
         current_row += 1
-        sheet.write_string(current_row, 0, 'Created', self.header_fmt)
+        sheet.write_string(current_row, 0, "Created", self.header_fmt)
         sheet.write_string(
             current_row,
             1,
-            timezone.now().astimezone(timezone.get_current_timezone()).strftime('%Y-%m-%d %H:%M'),
+            timezone.now().astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d %H:%M"),
             self.base_fmt,
         )
 
@@ -96,17 +96,17 @@ class XlsxExporter:
             # for each part, we use the last stage as this should be the one with the final data
             color = self.tab_palette[i % len(self.tab_palette)]
             bg_format = self.workbook.add_format(
-                {'bg_color': color, 'font_color': '#ffffff', 'bold': True, **self.base_fmt_dict}
+                {"bg_color": color, "font_color": "#ffffff", "bold": True, **self.base_fmt_dict}
             )
             stage = part.stages[-1]
             sheet_name = self.sheet_names[(part.name, stage.name)]
             first_row = self.sheet_first_row[sheet_name]
-            stage_data = self.report_output[part.name]['stages'][-1]['data']
+            stage_data = self.report_output[part.name]["stages"][-1]["data"]
             last_row = first_row + len(stage_data) - 1
             total = sum(row.total for row in stage_data)
             sheet.write_string(current_row, 0, part.name, bg_format)
             if part.implementation_note:
-                sheet.write_comment(current_row, 0, part.implementation_note, {'x_scale': 4})
+                sheet.write_comment(current_row, 0, part.implementation_note, {"x_scale": 4})
             sheet.write_string(current_row, 1, part.description, self.base_fmt)
             sheet.write_formula(
                 current_row,
@@ -121,7 +121,7 @@ class XlsxExporter:
         widths = [
             max(
                 len(self.report.name),
-                len('Covered period'),
+                len("Covered period"),
                 max(len(part.name) for part in self.report.parts),
             )
             * 1.5,  # 1.5 is a magic number to make it look better,
@@ -137,7 +137,7 @@ class XlsxExporter:
     ) -> None:
         # if the part has the same name as the stage, we don't want to repeat it in the sheet name
         sheet_name = self.sanitize_sheet_name(
-            f'{part.name} ({stage.name})' if part.name != stage.name else stage.name
+            f"{part.name} ({stage.name})" if part.name != stage.name else stage.name
         )
         self.sheet_names[(part.name, stage.name)] = sheet_name
         sheet = self.workbook.add_worksheet(sheet_name)
@@ -145,7 +145,7 @@ class XlsxExporter:
             sheet.set_tab_color(tab_color)
         current_row = 0
         covered_months = self.report.context.covered_months
-        month_cols = [month.strftime('%Y-%m') for month in covered_months]
+        month_cols = [month.strftime("%Y-%m") for month in covered_months]
         max_col = len(month_cols) + 3
         # add description if requested
         if self.include_part_definition:
@@ -155,11 +155,11 @@ class XlsxExporter:
             current_row += 2  # leave some space
             for source_id in stage.get_used_data_sources():
                 source = self.report.get_source(source_id)
-                report_title = 'Source report' if not source.fallback_for else 'Fallback report'
+                report_title = "Source report" if not source.fallback_for else "Fallback report"
                 sheet.write_string(current_row, 0, report_title, self.header_fmt)
                 sheet.write_string(current_row, 1, source.name, self.base_fmt)
                 # write description of the filters
-                filters = ', '.join(f'{k}={v}' for k, v in source.filters.items()) or '-'
+                filters = ", ".join(f"{k}={v}" for k, v in source.filters.items()) or "-"
                 sheet.merge_range(
                     current_row,
                     2,
@@ -173,7 +173,7 @@ class XlsxExporter:
             current_row += 2  # leave some space
 
         # write the header
-        header_row = ['Platform', 'Used report', 'Total', *month_cols]
+        header_row = ["Platform", "Used report", "Total", *month_cols]
         sheet.write_row(row=current_row, col=0, data=header_row, cell_format=self.superheader_fmt)
         current_row += 1
         # at least 7 chars per column
@@ -195,7 +195,7 @@ class XlsxExporter:
             # total as formula
             start = xl_rowcol_to_cell(current_row, 3)
             end = xl_rowcol_to_cell(current_row, 3 + len(covered_months) - 1)
-            sheet.write_formula(current_row, 2, f'=SUM({start}:{end})', self.base_fmt, rec.total)
+            sheet.write_formula(current_row, 2, f"=SUM({start}:{end})", self.base_fmt, rec.total)
             widths[2] = max(widths[2], len(str(rec.total)) + 1)  # +1 for extra space
             # monthly data
             for i, month in enumerate(covered_months):
@@ -324,8 +324,8 @@ class XlsxExporter:
                         f" {parsed_formula}"
                     )
             if op == "-":
-                return f'{left_data} - {right_data}', None
+                return f"{left_data} - {right_data}", None
             if op == "+":
-                return f'{left_data} + {right_data}', None
+                return f"{left_data} + {right_data}", None
             raise ValueError(f"Unsupported operator: {op}")
         raise ValueError(f"Unsupported formula: {parsed_formula}")

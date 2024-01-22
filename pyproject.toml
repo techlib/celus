@@ -2,13 +2,8 @@
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-[tool.black]
-line-length = 100
-skip-string-normalization = true
-target-version = ["py38"]
-
 [tool.ruff]
-line-length = 101
+line-length = 100
 ignore = [
     "A001", # Variable `Warning` is shadowing a Python builtin
     "A002", # Argument `id` is shadowing a Python builtin
@@ -25,7 +20,7 @@ select = [
     'I',  # isort
     'W',  # pycodestyle - warnings
 ]
-target-version = "py38"  # same as black
+target-version = "py38"
 fixable = ['I001']  # isort: imports are incorrectly sorted
 
 [tool.ruff.per-file-ignores]
@@ -96,7 +91,6 @@ XlsxWriter = "^3.0.3"
 zstandard = "^0.21.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.10.1"
 clickhouse-driver = "^0.2.6"
 deptry = "^0.12.0"
 dj-inmemorystorage = "^2.1.0"

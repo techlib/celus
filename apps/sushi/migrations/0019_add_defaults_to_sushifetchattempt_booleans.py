@@ -6,27 +6,27 @@ import sushi.models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0018_sushifetchattempt_in_progress')]
+    dependencies = [("sushi", "0018_sushifetchattempt_in_progress")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='data_file',
+            model_name="sushifetchattempt",
+            name="data_file",
             field=models.FileField(blank=True, null=True, upload_to=sushi.models.where_to_store),
         ),
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='download_success',
+            model_name="sushifetchattempt",
+            name="download_success",
             field=models.BooleanField(
-                default=False, help_text='True if there was no error downloading data'
+                default=False, help_text="True if there was no error downloading data"
             ),
         ),
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='processing_success',
+            model_name="sushifetchattempt",
+            name="processing_success",
             field=models.BooleanField(
                 default=False,
-                help_text='True if there was no error extracting data from the downloaded material',
+                help_text="True if there was no error extracting data from the downloaded material",
             ),
         ),
     ]

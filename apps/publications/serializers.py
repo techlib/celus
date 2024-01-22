@@ -20,7 +20,7 @@ from .models import Platform, Title, TitleOverlapBatch
 class SimplePlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
-        fields = ('pk', 'ext_id', 'short_name', 'name', 'provider', 'url', 'counter_registry_id')
+        fields = ("pk", "ext_id", "short_name", "name", "provider", "url", "counter_registry_id")
 
 
 class DataSourceSerializer(ModelSerializer):
@@ -28,7 +28,7 @@ class DataSourceSerializer(ModelSerializer):
 
     class Meta:
         model = DataSource
-        fields = ('short_name', 'organization', 'type')
+        fields = ("short_name", "organization", "type")
 
 
 class PlatformSerializer(ModelSerializer):
@@ -38,15 +38,15 @@ class PlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
         fields = (
-            'pk',
-            'ext_id',
-            'short_name',
-            'name',
-            'provider',
-            'url',
-            'knowledgebase',
-            'source',
-            'counter_registry_id',
+            "pk",
+            "ext_id",
+            "short_name",
+            "name",
+            "provider",
+            "url",
+            "knowledgebase",
+            "source",
+            "counter_registry_id",
         )
 
 
@@ -58,16 +58,16 @@ class AllPlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
         fields = (
-            'pk',
-            'ext_id',
-            'short_name',
-            'name',
-            'provider',
-            'url',
-            'knowledgebase',
-            'source',
-            'has_raw_parser',
-            'counter_registry_id',
+            "pk",
+            "ext_id",
+            "short_name",
+            "name",
+            "provider",
+            "url",
+            "knowledgebase",
+            "source",
+            "has_raw_parser",
+            "counter_registry_id",
         )
 
 
@@ -79,25 +79,25 @@ class DetailedPlatformSerializer(ModelSerializer):
     class Meta:
         model = Platform
         fields = (
-            'pk',
-            'ext_id',
-            'short_name',
-            'name',
-            'provider',
-            'url',
-            'title_count',
-            'interests',
-            'has_data',
-            'counter_registry_id',
+            "pk",
+            "ext_id",
+            "short_name",
+            "name",
+            "provider",
+            "url",
+            "title_count",
+            "interests",
+            "has_data",
+            "counter_registry_id",
         )
 
 
 class PlatformSushiCredentialsSerializer(ModelSerializer):
-    count = IntegerField(read_only=True, source='sushi_credentials_count')
+    count = IntegerField(read_only=True, source="sushi_credentials_count")
 
     class Meta:
         model = Platform
-        fields = ('pk', 'count')
+        fields = ("pk", "count")
 
 
 class TitleSerializer(ModelSerializer):
@@ -105,7 +105,7 @@ class TitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('pk', 'name', 'pub_type', 'isbn', 'issn', 'eissn', 'doi', 'pub_type_name')
+        fields = ("pk", "name", "pub_type", "isbn", "issn", "eissn", "doi", "pub_type_name")
 
     def get_pub_type_name(self, obj: Title):
         return obj.get_pub_type_display()
@@ -123,20 +123,20 @@ class TitleCountSerializer(ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'pk',
-            'name',
-            'pub_type',
-            'isbn',
-            'issn',
-            'eissn',
-            'doi',
-            'interests',
-            'pub_type_name',
-            'platform_count',
-            'nonzero_platform_count',
-            'platform_ids',
-            'total_interest',
-            'yops',
+            "pk",
+            "name",
+            "pub_type",
+            "isbn",
+            "issn",
+            "eissn",
+            "doi",
+            "interests",
+            "pub_type_name",
+            "platform_count",
+            "nonzero_platform_count",
+            "platform_ids",
+            "total_interest",
+            "yops",
         )
 
     def get_pub_type_name(self, obj: Title):
@@ -159,14 +159,14 @@ class TitleOverlapBatchSerializer(ModelSerializer):
     class Meta:
         model = TitleOverlapBatch
         fields = (
-            'pk',
-            'organization',
-            'created',
-            'last_updated',
-            'state',
-            'source_file',
-            'annotated_file',
-            'processing_info',
+            "pk",
+            "organization",
+            "created",
+            "last_updated",
+            "state",
+            "source_file",
+            "annotated_file",
+            "processing_info",
         )
 
 
@@ -175,21 +175,21 @@ class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
     organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
 
     class Meta(TitleOverlapBatchSerializer.Meta):
-        fields = TitleOverlapBatchSerializer.Meta.fields + ('last_updated_by',)
+        fields = TitleOverlapBatchSerializer.Meta.fields + ("last_updated_by",)
 
     def validate(self, attrs):
         result = super().validate(attrs)
-        user = attrs['last_updated_by']
-        if attrs.get('organization'):
-            if not user.accessible_organizations().filter(pk=attrs['organization'].pk).exists():
-                raise PermissionDenied('User does not have access to this organization')
+        user = attrs["last_updated_by"]
+        if attrs.get("organization"):
+            if not user.accessible_organizations().filter(pk=attrs["organization"].pk).exists():
+                raise PermissionDenied("User does not have access to this organization")
         else:
             if (
                 not user.is_superuser
                 and not user.is_admin_of_master_organization
                 and not user.is_user_of_master_organization
             ):
-                raise PermissionDenied('User cannot set empty organization')
+                raise PermissionDenied("User cannot set empty organization")
         return result
 
 

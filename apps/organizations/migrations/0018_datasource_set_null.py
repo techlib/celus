@@ -6,40 +6,40 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_datasource_set_null'),
-        ('organizations', '0017_add_organizationaltname'),
+        ("core", "0012_datasource_set_null"),
+        ("organizations", "0017_add_organizationaltname"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='source',
+            model_name="organization",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='defined_organizations',
-                to='core.DataSource',
+                related_name="defined_organizations",
+                to="core.DataSource",
             ),
         ),
         migrations.AlterField(
-            model_name='organizationaltname',
-            name='source',
+            model_name="organizationaltname",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
         migrations.AlterField(
-            model_name='userorganization',
-            name='source',
+            model_name="userorganization",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
     ]

@@ -13,18 +13,18 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='UserActivity',
+            name="UserActivity",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('action_type', models.CharField(choices=[('LGN', 'Login')], max_length=3)),
-                ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
+                ("action_type", models.CharField(choices=[("LGN", "Login")], max_length=3)),
+                ("timestamp", models.DateTimeField(default=django.utils.timezone.now)),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
                     ),

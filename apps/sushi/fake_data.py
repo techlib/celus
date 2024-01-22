@@ -26,11 +26,11 @@ fake = Faker()
 class CounterReportTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CounterReportType
-        django_get_or_create = ('code',)
+        django_get_or_create = ("code",)
 
-    code = 'TR'
+    code = "TR"
     counter_version = 5
-    report_type = factory.SubFactory(ReportTypeFactory, short_name=factory.SelfAttribute('..code'))
+    report_type = factory.SubFactory(ReportTypeFactory, short_name=factory.SelfAttribute("..code"))
     active = True
 
 
@@ -41,21 +41,21 @@ class CredentialsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SushiCredentials
 
-    title = factory.Faker('name')
+    title = factory.Faker("name")
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
-    url = factory.Faker('url')
+    url = factory.Faker("url")
     counter_version = FuzzyChoice(COUNTER_VERSIONS, getter=lambda e: e[0])
     lock_level = UL_ORG_ADMIN
-    requestor_id = factory.Faker('password')
-    customer_id = factory.Faker('password')
+    requestor_id = factory.Faker("password")
+    customer_id = factory.Faker("password")
     http_username = factory.LazyAttribute(
-        lambda obj: fake.simple_profile()["username"] if obj.counter_version == 4 else ''
+        lambda obj: fake.simple_profile()["username"] if obj.counter_version == 4 else ""
     )
     http_password = factory.LazyAttribute(
-        lambda obj: fake.password() if obj.counter_version == 4 else ''
+        lambda obj: fake.password() if obj.counter_version == 4 else ""
     )
-    api_key = factory.LazyAttribute(lambda obj: fake.uuid4() if obj.counter_version == 5 else '')
+    api_key = factory.LazyAttribute(lambda obj: fake.uuid4() if obj.counter_version == 5 else "")
 
     @factory.post_generation
     def report_types(obj, create, extracted, **kwargs):  # noqa - obj name is ok here
@@ -85,10 +85,10 @@ class FetchAttemptFactory(factory.django.DjangoModelFactory):
     status = AttemptStatus.SUCCESS
     data_file = factory.django.FileField()
     file_size = factory.LazyAttribute(
-        lambda x: x.data_file.size if hasattr(x.data_file, 'size') else 0
+        lambda x: x.data_file.size if hasattr(x.data_file, "size") else 0
     )
     checksum = factory.LazyAttribute(
         lambda x: SushiFetchAttempt.checksum_fileobj(x.data_file)[0]
-        if hasattr(x.data_file, 'seek')
-        else 'foobar'
+        if hasattr(x.data_file, "seek")
+        else "foobar"
     )

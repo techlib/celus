@@ -4,8 +4,8 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0022_organization_raw_enabled')]
+    dependencies = [("organizations", "0022_organization_raw_enabled")]
 
     operations = [
-        migrations.AlterModelOptions(name='organizationaltname', options={'ordering': ['name']})
+        migrations.AlterModelOptions(name="organizationaltname", options={"ordering": ["name"]})
     ]

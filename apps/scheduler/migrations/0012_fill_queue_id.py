@@ -6,12 +6,12 @@ from django.db.models import F
 
 
 def add_queue_id(apps, schema_editor):
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
-    FetchIntention.objects.filter(queue_id__isnull=True).update(queue_id=F('pk'))
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
+    FetchIntention.objects.filter(queue_id__isnull=True).update(queue_id=F("pk"))
     assert FetchIntention.objects.filter(queue_id__isnull=True).count() == 0
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0011_fetchintention_previous')]
+    dependencies = [("scheduler", "0011_fetchintention_previous")]
 
     operations = [RunPython(add_queue_id, RunPython.noop)]

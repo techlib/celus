@@ -32,33 +32,33 @@ class ExportBase(models.Model):
     ERROR = 3
 
     STATUS_CHOICES = (
-        (NOT_STARTED, 'not started'),
-        (IN_PROGRESS, 'in progress'),
-        (FINISHED, 'finished'),
-        (ERROR, 'error'),
+        (NOT_STARTED, "not started"),
+        (IN_PROGRESS, "in progress"),
+        (FINISHED, "finished"),
+        (ERROR, "error"),
     )
 
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES, default=NOT_STARTED)
-    extra_info = models.JSONField(default=dict, help_text='Internal stuff', blank=True)
-    output_file = models.FileField(upload_to='export', null=True, blank=True)
+    extra_info = models.JSONField(default=dict, help_text="Internal stuff", blank=True)
+    output_file = models.FileField(upload_to="export", null=True, blank=True)
 
     class Meta:
         abstract = True
 
     @property
     def cache_key_base(self):
-        return f'_export_{self.__class__.__name__}_{self.pk}'
+        return f"_export_{self.__class__.__name__}_{self.pk}"
 
     @property
     def cache_key_total(self):
-        return self.cache_key_base + '_total'
+        return self.cache_key_base + "_total"
 
     @property
     def cache_key_current(self):
-        return self.cache_key_base + '_current'
+        return self.cache_key_base + "_current"
 
     def progress(self) -> Tuple[int, int]:
         if self.status == self.IN_PROGRESS:
@@ -66,13 +66,13 @@ class ExportBase(models.Model):
             current = cache.get(self.cache_key_current, 0)
             return current, total
         elif self.status == self.FINISHED:
-            total = self.extra_info.get('record_count', 0)
+            total = self.extra_info.get("record_count", 0)
             return total, total
         else:
             return 0, 0
 
     def file_size(self) -> int:
-        size = self.extra_info.get('file_size')
+        size = self.extra_info.get("file_size")
         if size:
             return size
         if self.output_file:
@@ -80,9 +80,9 @@ class ExportBase(models.Model):
         return 0
 
     def error_info(self) -> dict:
-        error_detail = self.extra_info.get('error_detail')
-        error_code = self.extra_info.get('error_code')
-        return {'detail': error_detail, 'code': error_code}
+        error_detail = self.extra_info.get("error_detail")
+        error_code = self.extra_info.get("error_code")
+        return {"detail": error_detail, "code": error_code}
 
 
 class FlexibleDataExport(ExportBase):
@@ -93,24 +93,24 @@ class FlexibleDataExport(ExportBase):
     }
 
     export_params = models.JSONField(
-        default=dict, help_text='Serialized parameters of the export', blank=True
+        default=dict, help_text="Serialized parameters of the export", blank=True
     )
     file_format = models.CharField(
         max_length=16, choices=FileFormat.choices, default=FileFormat.XLSX
     )
-    name = models.CharField(max_length=120, default='', blank=True)
+    name = models.CharField(max_length=120, default="", blank=True)
 
     objects = AnnotateObsoleteQueryset.as_manager()
 
     def __str__(self):
-        return f'Export: {self.created}'
+        return f"Export: {self.created}"
 
     @classmethod
     def create_from_slicer(
         cls,
         slicer: FlexibleDataSlicer,
         user,
-        name: str = '',
+        name: str = "",
         fmt: Optional[Union[str, FileFormat]] = None,
     ):
         this = FlexibleDataExport(
@@ -127,8 +127,8 @@ class FlexibleDataExport(ExportBase):
         if fmt in FileFormat.values:
             return FileFormat(fmt)
         if not fmt:
-            return cls._meta.get_field('file_format').default
-        if fmt.lstrip('.').lower() in ('zip', 'csv'):
+            return cls._meta.get_field("file_format").default
+        if fmt.lstrip(".").lower() in ("zip", "csv"):
             return FileFormat.ZIP_CSV
         return FileFormat.XLSX
 
@@ -141,8 +141,8 @@ class FlexibleDataExport(ExportBase):
             report_name=self.name,
             report_owner=self.owner,
             include_tags=True,
-            include_row_totals=self.export_params['row_totals'],
-            include_col_totals=self.export_params['col_totals'],
+            include_row_totals=self.export_params["row_totals"],
+            include_col_totals=self.export_params["col_totals"],
         )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 
@@ -151,33 +151,33 @@ class FlexibleDataExport(ExportBase):
         self.save()
         self.output_file.name = self.generate_filename()
         try:
-            with self.output_file.open('wb') as outfile:
+            with self.output_file.open("wb") as outfile:
                 rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
         except SlicerConfigError as e:
-            self.extra_info['error_detail'] = e.message
-            self.extra_info['error_code'] = e.code
+            self.extra_info["error_detail"] = e.message
+            self.extra_info["error_code"] = e.code
             self.status = self.ERROR
             if raise_exception:
                 raise e
         except Exception as e:
             error_detail = str(e)
             if len(error_detail) > 1000:
-                error_detail = error_detail[:1000] + '...'
-            self.extra_info['error_detail'] = error_detail
+                error_detail = error_detail[:1000] + "..."
+            self.extra_info["error_detail"] = error_detail
             mail = "Export id: {}\nOwner: {}\nException class: {}\nException details: {}\n".format(
                 self.pk, self.owner, e.__class__.__name__, error_detail
             )
-            async_mail_admins.delay('Export error', mail)
+            async_mail_admins.delay("Export error", mail)
             self.status = self.ERROR
             if raise_exception:
                 raise e
         else:
-            self.extra_info['record_count'] = rec_count
-            self.extra_info['file_size'] = self.output_file.size
+            self.extra_info["record_count"] = rec_count
+            self.extra_info["file_size"] = self.output_file.size
             self.status = self.FINISHED
         self.save()
 
     def generate_filename(self):
-        ts = now().strftime('%Y%m%d-%H%M%S')
+        ts = now().strftime("%Y%m%d-%H%M%S")
         ext = FileFormat.file_extension(self.file_format)
-        return f'export-{self.pk}-{ts}.{ext}'
+        return f"export-{self.pk}-{ts}.{ext}"

@@ -30,14 +30,14 @@ class SiteOverview(APIView):
     def get(self, request):
         site = Site.objects.get(pk=settings.SITE_ID)
         footer_images = [
-            {'img': settings.MEDIA_URL + fim['img'], 'alt_text': fim['alt_text']}
+            {"img": settings.MEDIA_URL + fim["img"], "alt_text": fim["alt_text"]}
             for fim in FooterImage.objects.filter(site_id=settings.SITE_ID)
-            .order_by('position')
-            .values('img', 'alt_text')
+            .order_by("position")
+            .values("img", "alt_text")
         ]
-        site_logo = SiteLogo.objects.filter(site_id=settings.SITE_ID).values('img', 'alt_text')
-        data = {'site_name': site.name, 'site_domain': site.domain, 'footer_images': footer_images}
+        site_logo = SiteLogo.objects.filter(site_id=settings.SITE_ID).values("img", "alt_text")
+        data = {"site_name": site.name, "site_domain": site.domain, "footer_images": footer_images}
         if site_logo:
-            data['site_logo'] = site_logo[0]  # it is an iterable from the query
-            data['site_logo']['img'] = settings.MEDIA_URL + data['site_logo']['img']
+            data["site_logo"] = site_logo[0]  # it is an iterable from the query
+            data["site_logo"]["img"] = settings.MEDIA_URL + data["site_logo"]["img"]
         return Response(data)

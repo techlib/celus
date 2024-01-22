@@ -7,17 +7,17 @@ from django.db.models import Count, Max
 
 
 def remove_duplicities(apps, schema_editor):
-    PlatformTitle = apps.get_model('publications', 'PlatformTitle')
+    PlatformTitle = apps.get_model("publications", "PlatformTitle")
     duplicities = (
-        PlatformTitle.objects.values('title_id', 'platform_id', 'organization_id', 'date')
+        PlatformTitle.objects.values("title_id", "platform_id", "organization_id", "date")
         .order_by()
-        .annotate(max_pk=Max('pk'), count=Count('pk'))
+        .annotate(max_pk=Max("pk"), count=Count("pk"))
         .filter(count__gt=1)
     )
 
     print(f"Total records: {PlatformTitle.objects.count()}", file=sys.stderr)
     distinct = (
-        PlatformTitle.objects.values('title_id', 'platform_id', 'organization_id', 'date')
+        PlatformTitle.objects.values("title_id", "platform_id", "organization_id", "date")
         .distinct()
         .count()
     )
@@ -26,9 +26,9 @@ def remove_duplicities(apps, schema_editor):
     total_count = 0
     dup_count = 0
     for duplicity in duplicities:
-        field_filter = {k: v for k, v in duplicity.items() if k not in ('max_pk', 'count')}
+        field_filter = {k: v for k, v in duplicity.items() if k not in ("max_pk", "count")}
         count, _ = (
-            PlatformTitle.objects.filter(**field_filter).exclude(pk=duplicity['max_pk']).delete()
+            PlatformTitle.objects.filter(**field_filter).exclude(pk=duplicity["max_pk"]).delete()
         )
         total_count += count
         dup_count += 1
@@ -38,6 +38,6 @@ def remove_duplicities(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0016_title_trgm_index')]
+    dependencies = [("publications", "0016_title_trgm_index")]
 
     operations = [migrations.RunPython(remove_duplicities, reverse_code=migrations.RunPython.noop)]

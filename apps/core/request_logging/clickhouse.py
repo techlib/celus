@@ -26,58 +26,58 @@ class RequestLogCube(Cube):
     backend = None
 
     # model attributes
-    hostname = StringDimension(clickhouse={'low_cardinality': True})
-    db_server = StringDimension(clickhouse={'low_cardinality': True})
-    clickhouse_db_server = StringDimension(clickhouse={'low_cardinality': True})
+    hostname = StringDimension(clickhouse={"low_cardinality": True})
+    db_server = StringDimension(clickhouse={"low_cardinality": True})
+    clickhouse_db_server = StringDimension(clickhouse={"low_cardinality": True})
     timestamp = DateTimeDimension(clickhouse={"compression_codec": "Delta"})
     ipv4 = IPv4Dimension()
     ipv6 = IPv6Dimension()
-    request_method = StringDimension(clickhouse={'low_cardinality': True})
-    request_path = StringDimension(clickhouse={'low_cardinality': True})
-    request_view = StringDimension(clickhouse={'low_cardinality': True})
-    request_url_name = StringDimension(clickhouse={'low_cardinality': True})
+    request_method = StringDimension(clickhouse={"low_cardinality": True})
+    request_path = StringDimension(clickhouse={"low_cardinality": True})
+    request_view = StringDimension(clickhouse={"low_cardinality": True})
+    request_url_name = StringDimension(clickhouse={"low_cardinality": True})
     request_view_args = ArrayDimension(
-        dimension=StringDimension(clickhouse={'low_cardinality': True})
+        dimension=StringDimension(clickhouse={"low_cardinality": True})
     )
     request_view_kwargs = MapDimension(
-        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        key_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        value_dimension=StringDimension(clickhouse={"low_cardinality": True}),
     )
     request_query_params = MapDimension(
-        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        key_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        value_dimension=StringDimension(clickhouse={"low_cardinality": True}),
     )
     request_data = StringDimension()
     request_headers = MapDimension(
-        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
+        key_dimension=StringDimension(clickhouse={"low_cardinality": True}),
         value_dimension=StringDimension(),
     )
-    request_content_type = StringDimension(clickhouse={'low_cardinality': True})
-    ref_path = StringDimension(clickhouse={'low_cardinality': True}, help_text='Referrer path')
+    request_content_type = StringDimension(clickhouse={"low_cardinality": True})
+    ref_path = StringDimension(clickhouse={"low_cardinality": True}, help_text="Referrer path")
     ref_query_params = MapDimension(
-        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        help_text='Referrer query params',
+        key_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        value_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        help_text="Referrer query params",
     )
     response_status_code = IntDimension()
     user_id = IntDimension()
-    user_email = StringDimension(clickhouse={'low_cardinality': True})
-    user_username = StringDimension(clickhouse={'low_cardinality': True})
+    user_email = StringDimension(clickhouse={"low_cardinality": True})
+    user_username = StringDimension(clickhouse={"low_cardinality": True})
     user_is_staff = BooleanDimension()
     user_is_superuser = BooleanDimension()
     user_is_active = BooleanDimension()
     debug = BooleanDimension()
     # celus specific dimensions
-    celus_version = StringDimension(clickhouse={'low_cardinality': True})
-    celus_git_hash = StringDimension(clickhouse={'low_cardinality': True})
+    celus_version = StringDimension(clickhouse={"low_cardinality": True})
+    celus_git_hash = StringDimension(clickhouse={"low_cardinality": True})
     clickhouse_query_active = BooleanDimension()
     # impersonation
-    real_user_id = IntDimension(help_text='When impersonating, this is the real user')
+    real_user_id = IntDimension(help_text="When impersonating, this is the real user")
     real_user_email = StringDimension(
-        clickhouse={'low_cardinality': True}, help_text='When impersonating, this is the real user'
+        clickhouse={"low_cardinality": True}, help_text="When impersonating, this is the real user"
     )
     real_user_username = StringDimension(
-        clickhouse={'low_cardinality': True}, help_text='When impersonating, this is the real user'
+        clickhouse={"low_cardinality": True}, help_text="When impersonating, this is the real user"
     )
     impersonified = BooleanDimension()
     # metrics
@@ -106,27 +106,27 @@ RequestLogRecord = RequestLogCube.record_type()
 
 class CeleryTaskLogCube(Cube):
     # model attributes
-    hostname = StringDimension(clickhouse={'low_cardinality': True})
-    db_server = StringDimension(clickhouse={'low_cardinality': True})
-    clickhouse_db_server = StringDimension(clickhouse={'low_cardinality': True})
+    hostname = StringDimension(clickhouse={"low_cardinality": True})
+    db_server = StringDimension(clickhouse={"low_cardinality": True})
+    clickhouse_db_server = StringDimension(clickhouse={"low_cardinality": True})
     debug = BooleanDimension()
     timestamp = DateTimeDimension(clickhouse={"compression_codec": "Delta"})
     task_name = StringDimension(
-        clickhouse={'low_cardinality': True}, help_text='Name of the task function'
+        clickhouse={"low_cardinality": True}, help_text="Name of the task function"
     )
     task_args = ArrayDimension(
-        dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        help_text='Task positional arguments',
+        dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        help_text="Task positional arguments",
     )
     task_kwargs = MapDimension(
-        key_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        value_dimension=StringDimension(clickhouse={'low_cardinality': True}),
-        help_text='Task keyword arguments',
+        key_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        value_dimension=StringDimension(clickhouse={"low_cardinality": True}),
+        help_text="Task keyword arguments",
     )
-    status = StringDimension(clickhouse={'low_cardinality': True})
+    status = StringDimension(clickhouse={"low_cardinality": True})
     # celus specific dimensions
-    celus_version = StringDimension(clickhouse={'low_cardinality': True})
-    celus_git_hash = StringDimension(clickhouse={'low_cardinality': True})
+    celus_version = StringDimension(clickhouse={"low_cardinality": True})
+    celus_git_hash = StringDimension(clickhouse={"low_cardinality": True})
     clickhouse_query_active = BooleanDimension()
     # metrics
     query_count_django = IntMetric()

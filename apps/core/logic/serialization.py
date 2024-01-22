@@ -4,7 +4,7 @@ from typing import Union
 
 
 def b64json(data):
-    return b64encode(json.dumps(data).encode('utf-8')).decode('ascii')
+    return b64encode(json.dumps(data).encode("utf-8")).decode("ascii")
 
 
 def parse_b64json(data: str) -> Union[dict, list]:

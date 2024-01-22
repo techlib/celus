@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0013_auto_20191113_0939')]
+    dependencies = [("organizations", "0013_auto_20191113_0939")]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='ico',
+            model_name="organization",
+            name="ico",
             field=models.PositiveIntegerField(
-                blank=True, help_text='Business registration number', null=True
+                blank=True, help_text="Business registration number", null=True
             ),
         )
     ]

@@ -22,10 +22,10 @@ class TestCachedQuery:
     def test_objects_create_from_queryset_with_origin(self):
         UserFactory.create_batch(1)
         queryset = User.objects.all()
-        cq = CachedQuery.objects.create_from_queryset(queryset, origin='Test')
+        cq = CachedQuery.objects.create_from_queryset(queryset, origin="Test")
         assert CachedQuery.objects.count() == 1
         assert cq.model.model_class() is User
-        assert cq.origin == 'Test'
+        assert cq.origin == "Test"
 
     def test_objects_get_for_queryset(self):
         UserFactory.create_batch(1)
@@ -79,12 +79,12 @@ class TestCachedQuery:
         cq = CachedQuery.objects.create_from_queryset(queryset)
         assert cq.get_cached_queryset().count() == 1
         UserFactory.create_batch(3)  # add three more users
-        assert cq.get_fresh_queryset().count() == 4, '4 users, newly evaluated queryset'
-        assert cq.get_cached_queryset().count() == 1, '1 user, still old cached queryset'
-        assert len(cq.query_durations) == 1, 'query was not yet renewed'
+        assert cq.get_fresh_queryset().count() == 4, "4 users, newly evaluated queryset"
+        assert cq.get_cached_queryset().count() == 1, "1 user, still old cached queryset"
+        assert len(cq.query_durations) == 1, "query was not yet renewed"
         cq.force_renew()
-        assert cq.get_cached_queryset().count() == 4, '4 users, updated queryset'
-        assert len(cq.query_durations) == 2, 'query was renewed once + 1 original query'
+        assert cq.get_cached_queryset().count() == 4, "4 users, updated queryset"
+        assert len(cq.query_durations) == 2, "query was renewed once + 1 original query"
 
     def test_renew(self):
         UserFactory.create_batch(1)
@@ -96,11 +96,11 @@ class TestCachedQuery:
         cq.last_updated -= 2 * DEFAULT_TIMEOUT
         cq.renew()
         assert cq.last_updated > last_updated, "should be renewed"
-        assert len(cq.query_durations) == 2, 'query was renewed once + 1 original query'
+        assert len(cq.query_durations) == 2, "query was renewed once + 1 original query"
 
     def test_annotations_work(self):
         UserFactory.create_batch(3)
-        queryset = User.objects.values('is_staff').annotate(count=Count('pk'))
+        queryset = User.objects.values("is_staff").annotate(count=Count("pk"))
         data = list(queryset)
         cq = CachedQuery.objects.create_from_queryset(queryset)
         cq.force_renew()
@@ -115,13 +115,13 @@ class TestCachedQuery:
         UserFactory.create_batch(1)
         queryset = User.objects.all()
         cq = CachedQuery.objects.create_from_queryset(queryset)
-        fake_django_version = '2.2.foobar'
+        fake_django_version = "2.2.foobar"
         cq.django_version = fake_django_version
         cq.save()
         cq.renew()
         assert cq.django_version != fake_django_version, "django_version should change"
         assert cq.django_version == django.get_version()
-        assert CachedQuery.objects.count() == 1, 'there should be only one cache'
+        assert CachedQuery.objects.count() == 1, "there should be only one cache"
 
     def test_renew_with_clashing_django_version(self):
         """
@@ -133,15 +133,15 @@ class TestCachedQuery:
         UserFactory.create_batch(1)
         queryset = User.objects.all()
         cq_orig = CachedQuery.objects.create_from_queryset(queryset)
-        fake_django_version = '2.2.foobar'
+        fake_django_version = "2.2.foobar"
         cq_orig.django_version = fake_django_version
         cq_orig.save()
         # now create the clashing current CachedQuery
         cq_new = CachedQuery.objects.create_from_queryset(queryset)
-        assert CachedQuery.objects.count() == 2, 'there should be the old and the new cache'
+        assert CachedQuery.objects.count() == 2, "there should be the old and the new cache"
         # let's try to renew the old one
         with pytest.raises(RenewalError):
             cq_orig.renew()
         assert cq_orig.django_version == fake_django_version, "django_version should be the same"
         assert cq_new.django_version == django.get_version()
-        assert CachedQuery.objects.count() == 2, 'there should still be the old and the new cache'
+        assert CachedQuery.objects.count() == 2, "there should still be the old and the new cache"

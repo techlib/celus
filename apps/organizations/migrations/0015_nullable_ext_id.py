@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0014_nullable_ico')]
+    dependencies = [("organizations", "0014_nullable_ico")]
 
     operations = [
         migrations.AlterField(
-            model_name='organization',
-            name='ext_id',
+            model_name="organization",
+            name="ext_id",
             field=models.PositiveIntegerField(
-                default=None, help_text='object ID taken from EMRS', null=True, unique=True
+                default=None, help_text="object ID taken from EMRS", null=True, unique=True
             ),
         )
     ]

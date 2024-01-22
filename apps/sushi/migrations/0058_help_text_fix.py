@@ -5,28 +5,28 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('sushi', '0057_alter_sushifetchattempt_status'),
+        ("sushi", "0057_alter_sushifetchattempt_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='counterreportstocredentials',
-            name='broken',
+            model_name="counterreportstocredentials",
+            name="broken",
             field=models.CharField(
                 blank=True,
-                choices=[('http', 'HTTP'), ('sushi', 'SUSHI')],
-                help_text='Indication that credentials are broken',
+                choices=[("http", "HTTP"), ("sushi", "SUSHI")],
+                help_text="Indication that credentials are broken",
                 max_length=20,
                 null=True,
             ),
         ),
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='broken',
+            model_name="sushicredentials",
+            name="broken",
             field=models.CharField(
                 blank=True,
-                choices=[('http', 'HTTP'), ('sushi', 'SUSHI')],
-                help_text='Indication that credentials are broken',
+                choices=[("http", "HTTP"), ("sushi", "SUSHI")],
+                help_text="Indication that credentials are broken",
                 max_length=20,
                 null=True,
             ),

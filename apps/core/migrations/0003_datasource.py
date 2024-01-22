@@ -5,55 +5,55 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('organizations', '0003_non_unique_ico'), ('core', '0002_identity')]
+    dependencies = [("organizations", "0003_non_unique_ico"), ("core", "0002_identity")]
 
     operations = [
         migrations.CreateModel(
-            name='DataSource',
+            name="DataSource",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('short_name', models.SlugField()),
+                ("short_name", models.SlugField()),
                 (
-                    'type',
-                    models.PositiveSmallIntegerField(choices=[(1, 'API'), (2, 'Organization')]),
+                    "type",
+                    models.PositiveSmallIntegerField(choices=[(1, "API"), (2, "Organization")]),
                 ),
-                ('url', models.URLField(blank=True)),
+                ("url", models.URLField(blank=True)),
                 (
-                    'organization',
+                    "organization",
                     models.OneToOneField(
                         blank=True,
-                        help_text='Used to define data sources private to an organization',
+                        help_text="Used to define data sources private to an organization",
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='private_data_source',
-                        to='organizations.Organization',
+                        related_name="private_data_source",
+                        to="organizations.Organization",
                     ),
                 ),
             ],
         ),
         migrations.AddField(
-            model_name='identity',
-            name='source',
+            model_name="identity",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
         migrations.AddField(
-            model_name='user',
-            name='source',
+            model_name="user",
+            name="source",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='core.DataSource',
+                to="core.DataSource",
             ),
         ),
     ]

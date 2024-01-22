@@ -13,36 +13,36 @@ logger = logging.getLogger(__name__)
 local_urls = [
     # add platform report data views for two different platform_id types - uuid and int
     path(
-        f'platform/<{id_type}:platform_id>/report/<str:report_type>',
+        f"platform/<{id_type}:platform_id>/report/<str:report_type>",
         views.PlatformReportView.as_view(),
-        name='api_platform_report_data',
+        name="api_platform_report_data",
     )
-    for id_type in ['uuid', 'int']
+    for id_type in ["uuid", "int"]
 ]
 
 urlpatterns = [
-    path('accounts/', include('django.contrib.auth.urls')),  # contains link to reset password
-    path('rest-auth/', include('dj_rest_auth.urls')),
-    path('', include('logs.urls')),
-    path('', include('organizations.urls')),
-    path('', include('publications.urls')),
-    path('', include('core.urls')),
-    path('', include('sushi.urls')),
-    path('', include('charts.urls')),
-    path('', include('annotations.urls')),
-    path('', include('cost.urls')),
-    path('', include('impersonate_api.urls')),
-    path('', include('releases.urls')),
-    path('', include('reporting.urls')),
+    path("accounts/", include("django.contrib.auth.urls")),  # contains link to reset password
+    path("rest-auth/", include("dj_rest_auth.urls")),
+    path("", include("logs.urls")),
+    path("", include("organizations.urls")),
+    path("", include("publications.urls")),
+    path("", include("core.urls")),
+    path("", include("sushi.urls")),
+    path("", include("charts.urls")),
+    path("", include("annotations.urls")),
+    path("", include("cost.urls")),
+    path("", include("impersonate_api.urls")),
+    path("", include("releases.urls")),
+    path("", include("reporting.urls")),
     *local_urls,
-    path('export/', include('export.urls')),
-    path('scheduler/', include('scheduler.urls')),
-    path('deployment/', include('deployment.urls')),
-    path('tags/', include('tags.urls')),
+    path("export/", include("export.urls")),
+    path("scheduler/", include("scheduler.urls")),
+    path("deployment/", include("deployment.urls")),
+    path("tags/", include("tags.urls")),
 ]
 
 if settings.ALLOW_USER_REGISTRATION:
-    urlpatterns.append(path('rest-auth/registration/', include('dj_rest_auth.registration.urls')))
+    urlpatterns.append(path("rest-auth/registration/", include("dj_rest_auth.registration.urls")))
 else:
     # even if users cannot register, we still want to be able to verify their email addresses
     from dj_rest_auth.registration.urls import urlpatterns as registration_urlpatterns
@@ -50,9 +50,9 @@ else:
     verification_paths = [
         path
         for path in registration_urlpatterns
-        if path.name in ('rest_verify_email', 'rest_resend_email')
+        if path.name in ("rest_verify_email", "rest_resend_email")
     ]
-    urlpatterns.append(path('rest-auth/registration/', include(verification_paths)))
+    urlpatterns.append(path("rest-auth/registration/", include(verification_paths)))
 
 
 if settings.DEBUG:
@@ -76,6 +76,6 @@ if settings.DEBUG:
         generator_class=CustomSchemaGenerator,
     )
     urlpatterns = [
-        path('openapi.json', schema_view, name='openapi-schema'),
-        path('redoc', views.RedocView.as_view()),
+        path("openapi.json", schema_view, name="openapi-schema"),
+        path("redoc", views.RedocView.as_view()),
     ] + urlpatterns

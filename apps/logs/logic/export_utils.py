@@ -19,7 +19,7 @@ def xslx_scale_column_width(width, max_col_width=60):
 class Formula:
     key: str  # key of the column where the formula should be written
     refs: List[str]  # keys of the columns to be used in the formula
-    operation: str = 'sum'  # function to be applied to the values in refs
+    operation: str = "sum"  # function to be applied to the values in refs
     fn: Callable = None  # function to be applied to the values in refs to get the value
     # fn is used to get the correct number in the totals column if the column sum is not the
     # sum of individual values (e.g. when dealing with difference in % or something)
@@ -105,17 +105,17 @@ class MappingXlsxDictWriter(DictWriter):
             xl_rowcol_to_cell(self._current_row, self.field_order.index(col))
             for col in formula.refs
         ]
-        if formula.operation == 'sum':
+        if formula.operation == "sum":
             return f'=SUM({",".join(cells)})'
         else:
             # the formula may simply be a string which should be filled in with the cell refs
-            if '{' in formula.operation:
+            if "{" in formula.operation:
                 try:
                     return formula.operation.format(*cells)
                 except IndexError:
                     # the formatting failed, let it fall through to the ValueError
                     pass
-            raise ValueError(f'Unknown operation {formula.operation}')
+            raise ValueError(f"Unknown operation {formula.operation}")
 
     def writerow(self, values: dict):
         for i, col in enumerate(self.field_order):
@@ -146,9 +146,9 @@ class MappingXlsxDictWriter(DictWriter):
         # write the totals row
         if self.include_col_totals and self.sum_row_skip_cols is not None:
             for i, col in enumerate(self.field_order):
-                value = ''
+                value = ""
                 if i == 0:
-                    value = 'Total'
+                    value = "Total"
                     self.sheet.write(self._current_row, i, value, self.header_format)
                 elif i >= self.sum_row_skip_cols:
                     fmt = self.col_formats.get(col, self.header_format)
@@ -173,7 +173,7 @@ class MappingXlsxDictWriter(DictWriter):
                         self.sheet.write_formula(
                             self._current_row,
                             i,
-                            f'=SUM({start}:{end})',
+                            f"=SUM({start}:{end})",
                             fmt,
                             value=value,
                         )
@@ -219,9 +219,9 @@ class MappingCSVDictWriter(DictWriter):
         if self.include_col_totals and self.sum_row_skip_cols is not None:
             row = []
             for i, col in enumerate(self.field_order):
-                value = ''
+                value = ""
                 if i == 0:
-                    value = 'Total'
+                    value = "Total"
                 elif i >= self.sum_row_skip_cols:
                     if (formula := self.row_formulas.get(col)) and formula.fn:
                         # if there is a formula assigned to the column, we use it in the totals row

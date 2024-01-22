@@ -39,7 +39,7 @@ from logs.tasks import (
 
 
 @pytest.mark.clickhouse
-@pytest.mark.usefixtures('clickhouse_db')
+@pytest.mark.usefixtures("clickhouse_db")
 class TestClickhouse:
     def test_clickhouse_cube_definition(self):
         from ..cubes import AccessLogCube, ch_backend
@@ -67,7 +67,7 @@ class TestClickhouse:
                     dim5=5,
                     dim6=6,
                     dim7=0,
-                    date='2021-10-10',
+                    date="2021-10-10",
                     import_batch_id=1,
                     value=1243,
                 )
@@ -75,7 +75,7 @@ class TestClickhouse:
         )
         result = list(
             ch_backend.get_records(
-                AccessLogCube.query().group_by('report_type_id').aggregate(HSum('value'))
+                AccessLogCube.query().group_by("report_type_id").aggregate(HSum("value"))
             )
         )
         assert len(result) == 1
@@ -85,7 +85,7 @@ class TestClickhouse:
 
 
 @pytest.mark.clickhouse
-@pytest.mark.usefixtures('clickhouse_db')
+@pytest.mark.usefixtures("clickhouse_db")
 @pytest.mark.django_db(transaction=True)
 class TestClickhouseSync:
     def _prepare_counter_records(
@@ -93,7 +93,7 @@ class TestClickhouseSync:
         counter_records,
         organizations,
         report_type_nd,
-        metric: Union[dict, str] = 'Hits',
+        metric: Union[dict, str] = "Hits",
         lowlevel=False,
         report_type=None,
     ) -> [ImportBatch]:
@@ -102,31 +102,31 @@ class TestClickhouseSync:
         which does not force clickhouse sync on its own.
         """
         platform, _created = Platform.objects.get_or_create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         # metric may be a dict of name->multiplier or string
         metric_to_multi = metric if isinstance(metric, dict) else {metric: 1}
         crs = []
         for m_name, multi in metric_to_multi.items():
             data = [
-                ['Title1', '2018-01-01', '1v1', '2v1', '3v1', multi * 1],
-                ['Title1', '2018-01-01', '1v2', '2v1', '3v1', multi * 2],
-                ['Title2', '2018-01-01', '1v2', '2v2', '3v1', multi * 4],
-                ['Title1', '2018-02-01', '1v1', '2v1', '3v1', multi * 8],
-                ['Title2', '2018-02-01', '1v1', '2v2', '3v2', multi * 16],
-                ['Title1', '2018-03-01', '1v1', '2v3', '3v2', multi * 32],
+                ["Title1", "2018-01-01", "1v1", "2v1", "3v1", multi * 1],
+                ["Title1", "2018-01-01", "1v2", "2v1", "3v1", multi * 2],
+                ["Title2", "2018-01-01", "1v2", "2v2", "3v1", multi * 4],
+                ["Title1", "2018-02-01", "1v1", "2v1", "3v1", multi * 8],
+                ["Title2", "2018-02-01", "1v1", "2v2", "3v2", multi * 16],
+                ["Title1", "2018-03-01", "1v1", "2v3", "3v2", multi * 32],
             ]
-            crs += list(counter_records(data, metric=m_name, platform='Platform1'))
+            crs += list(counter_records(data, metric=m_name, platform="Platform1"))
         organization = organizations[0]
         if not report_type:
             report_type = report_type_nd(3)
         # prepare interest
-        report_type_nd(1, short_name='interest')
+        report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
-            metric=MetricFactory.create(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='aaa', position=1),
+            metric=MetricFactory.create(short_name="Hits"),
+            interest_group=InterestGroup.objects.create(short_name="aaa", position=1),
         )
         # import the data
         import_batches, _stats = import_counter_records(
@@ -158,7 +158,7 @@ class TestClickhouseSync:
         assert ch_backend.get_count(AccessLogCube.query()) == 11
 
         # retry to check no more syncs will be done
-        assert sync_accesslogs_with_clickhouse_superfast() == 0, 'no more syncs'
+        assert sync_accesslogs_with_clickhouse_superfast() == 0, "no more syncs"
 
     def test_one_import_batch_sync_interest_calculation(
         self, counter_records, organizations, report_type_nd
@@ -170,7 +170,7 @@ class TestClickhouseSync:
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
-        assert ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum == 126
+        assert ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum == 126
 
     def test_import_batch_delete_from_model_instance(
         self, counter_records, organizations, report_type_nd
@@ -184,8 +184,8 @@ class TestClickhouseSync:
         for ib in ibs:
             ib.delete()
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 0, 'all records should be deleted from clickhouse'
-        assert ImportBatchSyncLog.objects.count() == 0, 'sync log was removed as well'
+        assert len(ch_recs) == 0, "all records should be deleted from clickhouse"
+        assert ImportBatchSyncLog.objects.count() == 0, "sync log was removed as well"
 
     def test_import_batch_delete_from_queryset_method(
         self, counter_records, organizations, report_type_nd
@@ -198,8 +198,8 @@ class TestClickhouseSync:
         for ib in ibs:
             ImportBatch.objects.filter(pk=ib.pk).delete()
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
-        assert len(ch_recs) == 0, 'all records should be deleted from clickhouse'
-        assert ImportBatchSyncLog.objects.count() == 0, 'sync log was removed as well'
+        assert len(ch_recs) == 0, "all records should be deleted from clickhouse"
+        assert ImportBatchSyncLog.objects.count() == 0, "sync log was removed as well"
 
     def test_import_batch_outdated_sync_logs(self, counter_records, organizations, report_type_nd):
         """
@@ -216,8 +216,8 @@ class TestClickhouseSync:
         sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
         sync_log.state = ImportBatchSyncLog.STATE_SYNC
         sync_log.save()
-        with patch('logs.tasks.process_one_import_batch_sync_log_task') as sync_task, patch(
-            'logs.tasks.async_mail_admins'
+        with patch("logs.tasks.process_one_import_batch_sync_log_task") as sync_task, patch(
+            "logs.tasks.async_mail_admins"
         ) as mail_task:
             process_outstanding_import_batch_sync_logs_task(age_threshold=0)
             sync_task.delay.assert_called_once()
@@ -262,7 +262,7 @@ class TestClickhouseSync:
         smart_interest_sync()
         # check again
         assert AccessLog.objects.count() == 6, "6 orig + 0 interest"
-        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6, 'back to 6 in CH'
+        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6, "back to 6 in CH"
 
     def test_import_batch_sync_after_interest_recalculation_with_change(
         self, counter_records, organizations, report_type_nd
@@ -272,47 +272,47 @@ class TestClickhouseSync:
         will be synced correctly.
         """
         self._prepare_counter_records(
-            counter_records, organizations, report_type_nd, metric={'Hits': 1, 'Visits': 2}
+            counter_records, organizations, report_type_nd, metric={"Hits": 1, "Visits": 2}
         )
         interest_rt = ReportType.objects.get_interest_rt()
         # check result
         assert AccessLog.objects.count() == 17, "12 orig + 5 interest"
         interest_al_pks = set(
-            AccessLog.objects.filter(report_type=interest_rt).values_list('pk', flat=True)
+            AccessLog.objects.filter(report_type=interest_rt).values_list("pk", flat=True)
         )
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 17
-        old_sum_db = interest_rt.accesslog_set.aggregate(int_sum=Sum('value'))['int_sum']
+        old_sum_db = interest_rt.accesslog_set.aggregate(int_sum=Sum("value"))["int_sum"]
         old_sum_cube = ch_backend.get_one_record(
             AccessLogCube.query()
             .filter(report_type_id__in=[interest_rt.pk])
-            .aggregate(HSum('value'))
+            .aggregate(HSum("value"))
         ).sum
         assert old_sum_cube == old_sum_db
         # redefine interest by dropping the ReportInterestMetric - it will remove all the interest
         rim = ReportInterestMetric.objects.get()
-        rim.metric = Metric.objects.get(short_name='Visits')
+        rim.metric = Metric.objects.get(short_name="Visits")
         rim.save()
         smart_interest_sync()
         # check again
         assert AccessLog.objects.count() == 17, "12 orig + 5 new interest"
-        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 17, 'also 17 in CH'
+        assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 17, "also 17 in CH"
         new_interest_al_pks = set(
-            AccessLog.objects.filter(report_type=interest_rt).values_list('pk', flat=True)
+            AccessLog.objects.filter(report_type=interest_rt).values_list("pk", flat=True)
         )
         assert (
             len(new_interest_al_pks & interest_al_pks) == 0
-        ), 'all interest accesslogs were removed and recreated'
+        ), "all interest accesslogs were removed and recreated"
         assert (
-            interest_rt.accesslog_set.aggregate(int_sum=Sum('value'))['int_sum'] == 2 * old_sum_db
-        ), 'the interest with the new metric should be doubled'
+            interest_rt.accesslog_set.aggregate(int_sum=Sum("value"))["int_sum"] == 2 * old_sum_db
+        ), "the interest with the new metric should be doubled"
         assert (
             ch_backend.get_one_record(
                 AccessLogCube.query()
                 .filter(report_type_id__in=[interest_rt.pk])
-                .aggregate(HSum('value'))
+                .aggregate(HSum("value"))
             ).sum
             == 2 * old_sum_cube
-        ), 'the interest with the new metric should be doubled'
+        ), "the interest with the new metric should be doubled"
 
     def test_sync_import_batch_with_clickhouse_with_exception(
         self, counter_records, organizations, report_type_nd
@@ -320,31 +320,31 @@ class TestClickhouseSync:
         *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
         with pytest.raises(TypeError):
             # value error about string not being comparable to int should be raised
-            sync_import_batch_with_clickhouse(ibs[0], batch_size='aaaa')
+            sync_import_batch_with_clickhouse(ibs[0], batch_size="aaaa")
 
     def test_resync_import_batch_with_clickhouse(self):
         """
         Tests that resync really works
         """
         ib = ImportBatchFullFactory.create()
-        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum("value"))["sum"]
         assert sum_db_orig > 0
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
         assert sum_db_orig == sum_cube
         # modify one of the accesslogs
         al = AccessLog.objects.filter(import_batch=ib).first()
         diff = al.value + 1
         al.value = al.value + diff
         al.save()
-        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum("value"))["sum"]
         assert sum_db == sum_db_orig + diff
         # resync and check
         resync_import_batch_with_clickhouse(ib)
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
         assert sum_db == sum_cube
         # and once again
         resync_import_batch_with_clickhouse(ib)
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
         assert sum_db == sum_cube
 
     def test_resync_import_batch_with_clickhouse_with_al_replacement(self):
@@ -352,9 +352,9 @@ class TestClickhouseSync:
         Tests that resync really works when we replace accesslogs inside an import batch
         """
         ib = ImportBatchFullFactory.create()
-        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        sum_db_orig = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum("value"))["sum"]
         assert sum_db_orig > 0
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
         assert sum_db_orig == sum_cube
         # modify one of the accesslogs
         al = AccessLog.objects.filter(import_batch=ib).first()
@@ -363,24 +363,24 @@ class TestClickhouseSync:
         al.value = al.value + diff
         al.id = None  # create new al with new id
         al.save()
-        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum('value'))['sum']
+        sum_db = AccessLog.objects.filter(import_batch=ib).aggregate(sum=Sum("value"))["sum"]
         assert sum_db == sum_db_orig + diff
         # resync and check
         resync_import_batch_with_clickhouse(ib)
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
-        assert sum_db == sum_cube, 'first resync'
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
+        assert sum_db == sum_cube, "first resync"
         # and once again
         resync_import_batch_with_clickhouse(ib)
-        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum('value'))).sum
-        assert sum_db == sum_cube, 'second resync'
+        sum_cube = ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum
+        assert sum_db == sum_cube, "second resync"
 
 
 @pytest.mark.clickhouse
-@pytest.mark.usefixtures('clickhouse_db')
+@pytest.mark.usefixtures("clickhouse_db")
 @pytest.mark.django_db(transaction=True)
 class TestClickhouseCompare:
     @pytest.mark.parametrize(
-        ['in_db', 'in_ch'],
+        ["in_db", "in_ch"],
         [
             ([0, 1, 2], [0, 1, 2]),  # all ibs are in db and in ch
             ([0, 1, 2], [0, 1]),  # ib 2 is missing in ch
@@ -396,17 +396,17 @@ class TestClickhouseCompare:
         self, counter_records, organizations, report_type_nd, in_db, in_ch
     ):
         platform, _created = Platform.objects.get_or_create(
-            ext_id=1234, short_name='Platform1', name='Platform 1', provider='Provider 1'
+            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         data = [
-            ['Title1', '2018-01-01', '1v1', '2v1', '3v1', 1],
-            ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
-            ['Title2', '2018-01-01', '1v2', '2v2', '3v1', 4],
-            ['Title1', '2018-02-01', '1v1', '2v1', '3v1', 8],
-            ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
-            ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
+            ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],
+            ["Title1", "2018-01-01", "1v2", "2v1", "3v1", 2],
+            ["Title2", "2018-01-01", "1v2", "2v2", "3v1", 4],
+            ["Title1", "2018-02-01", "1v1", "2v1", "3v1", 8],
+            ["Title2", "2018-02-01", "1v1", "2v2", "3v2", 16],
+            ["Title1", "2018-03-01", "1v1", "2v3", "3v2", 32],
         ]
-        crs = counter_records(data, metric='hits', platform='Platform1')
+        crs = counter_records(data, metric="hits", platform="Platform1")
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_batches, _stats = import_counter_records(
@@ -418,8 +418,8 @@ class TestClickhouseCompare:
                 with connection.cursor() as cursor:
                     # we must do a low level query to delete the ibs from db
                     # without disturbing clickhouse
-                    cursor.execute('DELETE FROM logs_accesslog WHERE import_batch_id=%s', [ib.pk])
-                    cursor.execute('DELETE FROM logs_importbatch WHERE id = %s', [ib.pk])
+                    cursor.execute("DELETE FROM logs_accesslog WHERE import_batch_id=%s", [ib.pk])
+                    cursor.execute("DELETE FROM logs_importbatch WHERE id = %s", [ib.pk])
                 assert ImportBatch.objects.filter(pk=ib.pk).count() == 0
             if ib_idx not in in_ch:
                 ch_backend.delete_records(AccessLogCube.query().filter(import_batch_id=ib.pk))
@@ -434,18 +434,18 @@ class TestClickhouseCompare:
         """
         platform = PlatformFactory.create()
         data = [
-            ['Title1', '2018-01-01', '1v1', '2v1', '3v1', 1],
-            ['Title1', '2018-01-01', '1v2', '2v1', '3v1', 2],
-            ['Title2', '2018-01-01', '1v2', '2v2', '3v1', 4],
-            ['Title1', '2018-02-01', '1v1', '2v1', '3v1', 8],
-            ['Title2', '2018-02-01', '1v1', '2v2', '3v2', 16],
-            ['Title1', '2018-03-01', '1v1', '2v3', '3v2', 32],
+            ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],
+            ["Title1", "2018-01-01", "1v2", "2v1", "3v1", 2],
+            ["Title2", "2018-01-01", "1v2", "2v2", "3v1", 4],
+            ["Title1", "2018-02-01", "1v1", "2v1", "3v1", 8],
+            ["Title2", "2018-02-01", "1v1", "2v2", "3v2", 16],
+            ["Title1", "2018-03-01", "1v1", "2v3", "3v2", 32],
         ]
-        crs = counter_records(data, metric='hits', platform='Platform1')
+        crs = counter_records(data, metric="hits", platform="Platform1")
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs, skip_clickhouse_sync=False)
-        old_title = Title.objects.get(name='Title2')
+        old_title = Title.objects.get(name="Title2")
         new_title = TitleFactory.create()
         assert Title.objects.count() == 3
         AccessLog.objects.filter(target_id=old_title.pk).update(target_id=new_title.pk)
@@ -455,38 +455,38 @@ class TestClickhouseCompare:
         assert len(result.import_batches_to_resync) == 0
         # now use compare_titles_with_clickhouse - it should work correctly
         result = compare_titles_with_clickhouse()
-        assert len(result.import_batches_to_resync) == 2, 'the last ib does not have Title2'
+        assert len(result.import_batches_to_resync) == 2, "the last ib does not have Title2"
 
 
 @pytest.mark.django_db
 class TestClickhouseCompareDetection:
     @pytest.mark.parametrize(
-        ['stats', 'is_ok'],
-        [({}, True), ({'ok': 1}, True), ({'ok': 1, 'x': 2}, False), ({'x': 2}, False)],
+        ["stats", "is_ok"],
+        [({}, True), ({"ok": 1}, True), ({"ok": 1, "x": 2}, False), ({"x": 2}, False)],
     )
     def test_compare_db_with_clickhouse_task_problem_detection(self, stats, is_ok):
         # we need to mock both functions so that it works without clickhouse and data
-        with patch('logs.tasks.compare_db_with_clickhouse') as mock, patch(
-            'logs.tasks.compare_titles_with_clickhouse'
-        ) as mock2, patch('logs.tasks.async_mail_admins') as mailmock:
+        with patch("logs.tasks.compare_db_with_clickhouse") as mock, patch(
+            "logs.tasks.compare_titles_with_clickhouse"
+        ) as mock2, patch("logs.tasks.async_mail_admins") as mailmock:
             mock.return_value = ComparisonResult(stats=stats)
-            mock.__name__ = 'compare_db_with_clickhouse'
+            mock.__name__ = "compare_db_with_clickhouse"
             compare_db_with_clickhouse_task()
             mock.assert_called_once()
             mock2.assert_called_once()
             assert mailmock.delay.call_count == (1 if not is_ok else 0)
 
     @pytest.mark.parametrize(
-        ['stats', 'is_ok'],
-        [({}, True), ({'ok': 1}, True), ({'ok': 1, 'x': 2}, False), ({'x': 2}, False)],
+        ["stats", "is_ok"],
+        [({}, True), ({"ok": 1}, True), ({"ok": 1, "x": 2}, False), ({"x": 2}, False)],
     )
     def test_compare_titles_with_clickhouse_task_problem_detection(self, stats, is_ok):
         # we need to mock both functions so that it works without clickhouse and data
-        with patch('logs.tasks.compare_db_with_clickhouse') as mock, patch(
-            'logs.tasks.compare_titles_with_clickhouse'
-        ) as mock2, patch('logs.tasks.async_mail_admins') as mailmock:
+        with patch("logs.tasks.compare_db_with_clickhouse") as mock, patch(
+            "logs.tasks.compare_titles_with_clickhouse"
+        ) as mock2, patch("logs.tasks.async_mail_admins") as mailmock:
             mock2.return_value = ComparisonResult(stats=stats)
-            mock2.__name__ = 'compare_titles_with_clickhouse'
+            mock2.__name__ = "compare_titles_with_clickhouse"
             compare_db_with_clickhouse_task()
             mock.assert_called_once()
             mock2.assert_called_once()
@@ -500,18 +500,19 @@ class TestManagementCommands:
         client = clickhouse_raw_on_off
         if client is None:
             # just test that there is no crash or something
-            call_command('sync_clickhouse_db')
+            call_command("sync_clickhouse_db")
         else:
             client.execute(f"DROP TABLE IF EXISTS {settings.CLICKHOUSE_DB}.AccessLogCube;")
 
             def access_log_cubes_tables_count():
                 return len(
                     client.execute(
-                        "SELECT * FROM system.tables WHERE name='AccessLogCube' AND database=%(db)s",
+                        "SELECT * FROM system.tables "
+                        "WHERE name='AccessLogCube' AND database=%(db)s",
                         {"db": settings.CLICKHOUSE_DB},
                     )
                 )
 
             assert access_log_cubes_tables_count() == 0
-            call_command('sync_clickhouse_db')
+            call_command("sync_clickhouse_db")
             assert access_log_cubes_tables_count() == 1

@@ -22,7 +22,7 @@ class Noop(metaclass=NoopMeta):
 
 
 class AnalyticalExportBackend:
-    NAME = 'dummy'
+    NAME = "dummy"
     COLS = {
         "id": "id",
         "metric_id": "metric_id",
@@ -46,10 +46,10 @@ class AnalyticalExportBackend:
     DIM_BEFORE = ("value", "date", "import_batch_id")
 
     def __init__(self, **kwargs):
-        self.rt = kwargs.get('report_type', None)
-        self.stdout = kwargs.get('stdout', Noop)
-        self.stderr = kwargs.get('stderr', Noop)
-        self.style = kwargs.get('style', Noop)
+        self.rt = kwargs.get("report_type", None)
+        self.stdout = kwargs.get("stdout", Noop)
+        self.stderr = kwargs.get("stderr", Noop)
+        self.style = kwargs.get("style", Noop)
         self.cols = self.COLS.copy()
 
     def _pre_export(self):
@@ -91,10 +91,10 @@ class AnalyticalExportBackend:
             self._export_row(al)
             c += 1
             if c % 10000 == 1:
-                percent = ''
+                percent = ""
                 if self.rt.approx_record_count > 0:
-                    percent = f' {c / self.rt.approx_record_count * 100: >6.2f}%'
-                self.stderr.write('\r' + "/-\\|"[c // 10000 % 4] + percent, ending='')
+                    percent = f" {c / self.rt.approx_record_count * 100: >6.2f}%"
+                self.stderr.write("\r" + "/-\\|"[c // 10000 % 4] + percent, ending="")
 
     def export(self):
         raise NotImplementedError
@@ -106,7 +106,7 @@ class DbBackend(AnalyticalExportBackend):
     def _get_col(self, orig, translated):
         for k, v in self.COLS_TYPES.items():
             if orig.startswith(k):
-                return translated + ' ' + v
+                return translated + " " + v
         raise KeyError
 
     def generate_table(self, tb_name):
@@ -117,7 +117,7 @@ class DbBackend(AnalyticalExportBackend):
 
 
 class PostgresqlBackend(DbBackend):
-    NAME = 'postgresql'
+    NAME = "postgresql"
     COLS_TYPES = {
         "id": "integer NOT NULL",
         "metric_id": "integer",
@@ -144,8 +144,8 @@ class PostgresqlBackend(DbBackend):
         return f"CREATE TABLE {tb_name} (\n  {s}\n);"
 
     def generate_csv_import(self, tb_name, file):
-        if file.endswith('.gz') or file.endswith('.zst') or file.endswith('.zstd'):
-            program = 'zcat' if file.endswith('.gz') else 'zstdcat'
+        if file.endswith(".gz") or file.endswith(".zst") or file.endswith(".zstd"):
+            program = "zcat" if file.endswith(".gz") else "zstdcat"
             return (
                 f"COPY {tb_name} FROM PROGRAM '{program} {file}'"
                 " WITH ( FORMAT CSV, DELIMITER ',', HEADER MATCH );\n"
@@ -160,7 +160,7 @@ class PostgresqlBackend(DbBackend):
 
 
 class ClickhouseBackend(DbBackend):
-    NAME = 'clickhouse'
+    NAME = "clickhouse"
     COLS_TYPES = {
         "id": "Int32",
         "metric_id": "Int32",
@@ -187,21 +187,21 @@ class ClickhouseBackend(DbBackend):
         return f"CREATE TABLE {tb_name} (\n  {s}\n) ENGINE = MergeTree ORDER BY id;"
 
     def generate_csv_import(self, tb_name, file):
-        compression = ''
-        if file.endswith('.gz') or file.endswith('.zst') or file.endswith('.zstd'):
-            method = 'gzip' if file.endswith('.gz') else 'zstd'
+        compression = ""
+        if file.endswith(".gz") or file.endswith(".zst") or file.endswith(".zstd"):
+            method = "gzip" if file.endswith(".gz") else "zstd"
             compression = f"COMPRESSION '{method}' "
         return f"INSERT INTO {tb_name} FROM INFILE '{file}' {compression}FORMAT CSV;"
 
 
 class CsvBackend(AnalyticalExportBackend):
-    NAME = 'csv'
+    NAME = "csv"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.path = kwargs['path']
+        self.path = kwargs["path"]
         if self.path is None:
-            self.path = os.path.abspath(self.rt.short_name + '.csv.zst')
+            self.path = os.path.abspath(self.rt.short_name + ".csv.zst")
         self._writer = None
         self._header_done = False
 
@@ -213,15 +213,15 @@ class CsvBackend(AnalyticalExportBackend):
 
     def export(self):
         o = open
-        if self.path.endswith('.gz'):
+        if self.path.endswith(".gz"):
             o = gzip.open
-        elif self.path.endswith('.zst') or self.path.endswith('.zstd'):
+        elif self.path.endswith(".zst") or self.path.endswith(".zstd"):
             # level=6 seems to give a very good compression ratio while not slowing down the
             # export too much
             cctx = zstandard.ZstdCompressor(level=6)
             o = partial(zstandard.open, cctx=cctx)
         try:
-            fp = o(self.path, 'xt', newline='')
+            fp = o(self.path, "xt", newline="")
         except FileExistsError:
             self.stderr.write(self.style.ERROR("The file already exists! Exiting"))
             self.stderr.write(self.style.ERROR(self.path))
@@ -237,10 +237,10 @@ class CsvBackend(AnalyticalExportBackend):
             self.stderr.style_func = None
             self.stderr.write("\n---")
             self.stderr.write(self.style.WARNING(f"Import to: {db.NAME}"))
-            self.stderr.write('')
+            self.stderr.write("")
             db = db()
             db.cols = self.cols
-            tb_name = 'report_' + self.rt.short_name
+            tb_name = "report_" + self.rt.short_name
             try:
                 ReportType.objects.get(short_name=self.rt.short_name)
             except MultipleObjectsReturned:
@@ -250,7 +250,7 @@ class CsvBackend(AnalyticalExportBackend):
                     )
                 )
             self.stderr.write(db.generate_table(tb_name))
-            self.stderr.write('')
+            self.stderr.write("")
             self.stderr.write(db.generate_csv_import(tb_name, self.path))
 
 

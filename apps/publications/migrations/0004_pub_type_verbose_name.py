@@ -4,16 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0003_nullable_title_attrs')]
+    dependencies = [("publications", "0003_nullable_title_attrs")]
 
     operations = [
         migrations.AlterField(
-            model_name='title',
-            name='pub_type',
+            model_name="title",
+            name="pub_type",
             field=models.CharField(
-                choices=[('B', 'Book'), ('J', 'Journal')],
+                choices=[("B", "Book"), ("J", "Journal")],
                 max_length=1,
-                verbose_name='Publication type',
+                verbose_name="Publication type",
             ),
         )
     ]

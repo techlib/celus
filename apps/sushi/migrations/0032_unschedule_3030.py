@@ -11,13 +11,13 @@ def mark_older_3030_as_unqueued(apps, schema_editor):
     """Removes queued flag from some fetchattempts
     The attempts are supposed to have 3030 code and have distant end_data
     """
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
     SushiFetchAttempt.objects.filter(error_code="3030").exclude(
-        end_date__gt=F('timestamp') - timedelta(days=45)
+        end_date__gt=F("timestamp") - timedelta(days=45)
     ).update(queued=False, is_processed=True, when_processed=now())
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0031_sushifetchattempt_last_updated')]
+    dependencies = [("sushi", "0031_sushifetchattempt_last_updated")]
 
     operations = [migrations.RunPython(mark_older_3030_as_unqueued)]

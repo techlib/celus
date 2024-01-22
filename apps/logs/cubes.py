@@ -21,7 +21,7 @@ def create_ch_backend():
 
 
 ch_backend = create_ch_backend()
-django_db = settings.DATABASES['default']
+django_db = settings.DATABASES["default"]
 
 
 class AccessLogCube(Cube):
@@ -46,38 +46,38 @@ class AccessLogCube(Cube):
 
     class Clickhouse:
         # primary key must be prefix of the sorting key
-        primary_key = ['report_type_id', 'organization_id', 'platform_id']
+        primary_key = ["report_type_id", "organization_id", "platform_id"]
         # sorting key must contain all dimensions to prevent collapsing in CH
         sorting_key = [
-            'report_type_id',
-            'organization_id',
-            'platform_id',
-            'date',
-            'metric_id',
-            'target_id',
-            'dim1',
-            'dim2',
-            'dim3',
-            'dim4',
-            'dim5',
-            'dim6',
-            'dim7',
-            'import_batch_id',
-            'id',
+            "report_type_id",
+            "organization_id",
+            "platform_id",
+            "date",
+            "metric_id",
+            "target_id",
+            "dim1",
+            "dim2",
+            "dim3",
+            "dim4",
+            "dim5",
+            "dim6",
+            "dim7",
+            "import_batch_id",
+            "id",
         ]
         indexes = [
             # skipping index to make finding data by import batch faster
             # reduces time to delete import batch data by several factors of magnitude for big dbs
             IndexDefinition(
-                name='idx_import_batch_id',
-                expression='import_batch_id',
-                type='set(0)',
+                name="idx_import_batch_id",
+                expression="import_batch_id",
+                type="set(0)",
                 granularity=1,
             )
         ]
 
     @classmethod
-    def translate_accesslog_to_cube(cls, accesslog: AccessLog) -> 'AccessLogCubeRecord':
+    def translate_accesslog_to_cube(cls, accesslog: AccessLog) -> "AccessLogCubeRecord":
         return AccessLogCubeRecord(
             id=accesslog.id,
             report_type_id=accesslog.report_type_id or 0,
@@ -98,24 +98,24 @@ class AccessLogCube(Cube):
         )
 
     @classmethod
-    def translate_accesslog_dict_to_cube(cls, accesslog: dict) -> 'AccessLogCubeRecord':
+    def translate_accesslog_dict_to_cube(cls, accesslog: dict) -> "AccessLogCubeRecord":
         return AccessLogCubeRecord(
-            id=accesslog['id'],
-            report_type_id=accesslog['report_type_id'] or 0,
-            metric_id=accesslog['metric_id'] or 0,
-            organization_id=accesslog['organization_id'] or 0,
-            platform_id=accesslog['platform_id'] or 0,
-            target_id=accesslog['target_id'] or 0,
-            dim1=accesslog['dim1'] or 0,
-            dim2=accesslog['dim2'] or 0,
-            dim3=accesslog['dim3'] or 0,
-            dim4=accesslog['dim4'] or 0,
-            dim5=accesslog['dim5'] or 0,
-            dim6=accesslog['dim6'] or 0,
-            dim7=accesslog['dim7'] or 0,
-            date=accesslog['date'] or 0,
-            import_batch_id=accesslog['import_batch_id'],
-            value=accesslog['value'],
+            id=accesslog["id"],
+            report_type_id=accesslog["report_type_id"] or 0,
+            metric_id=accesslog["metric_id"] or 0,
+            organization_id=accesslog["organization_id"] or 0,
+            platform_id=accesslog["platform_id"] or 0,
+            target_id=accesslog["target_id"] or 0,
+            dim1=accesslog["dim1"] or 0,
+            dim2=accesslog["dim2"] or 0,
+            dim3=accesslog["dim3"] or 0,
+            dim4=accesslog["dim4"] or 0,
+            dim5=accesslog["dim5"] or 0,
+            dim6=accesslog["dim6"] or 0,
+            dim7=accesslog["dim7"] or 0,
+            date=accesslog["date"] or 0,
+            import_batch_id=accesslog["import_batch_id"],
+            value=accesslog["value"],
         )
 
     @classmethod
@@ -185,6 +185,6 @@ AccessLogCubeRecord = AccessLogCube.record_type()
 
 class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
     cube = AccessLogCube
-    preserved_dimensions = ['target_id', 'platform_id', 'organization_id', 'date']
-    aggregated_metrics = ['value']
+    preserved_dimensions = ["target_id", "platform_id", "organization_id", "date"]
+    aggregated_metrics = ["value"]
     projection = True

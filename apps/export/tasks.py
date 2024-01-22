@@ -19,7 +19,7 @@ def process_flexible_export_task(export_id: int):
             cache.set(export.cache_key_total, total)
             cache.set(export.cache_key_current, now)
 
-        with translation.override(export.owner.language or 'en'):
+        with translation.override(export.owner.language or "en"):
             # set the language of the export to the one preferred by the owner
             export.create_output_file(progress_monitor=monitor)
 

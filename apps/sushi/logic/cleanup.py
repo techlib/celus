@@ -64,8 +64,8 @@ def cleanup_fetch_attempts_with_no_data(
         SushiFetchAttempt.objects.values(
             "start_date", "end_date", "counter_report_id", "credentials_id"
         )
-        .annotate(latest=Max('timestamp'))
-        .values_list('start_date', 'end_date', 'counter_report_id', 'credentials_id', 'latest')
+        .annotate(latest=Max("timestamp"))
+        .values_list("start_date", "end_date", "counter_report_id", "credentials_id", "latest")
     )
     latest = {(e[0], e[1], e[2], e[3]): e[4] for e in latest}
 
@@ -109,17 +109,17 @@ def fetch_attempt_fill_in_missing_header_data():
     attempts = SushiFetchAttempt.objects.filter(
         extracted_data={}, counter_report__counter_version=5, data_file__isnull=False
     )
-    logger.debug('Found %s attempts to process', attempts.count())
+    logger.debug("Found %s attempts to process", attempts.count())
     for attempt in attempts:
         try:
             success = attempt.reextract_header_data()
         except Exception as e:
-            logger.warning('Error: %s', e)
+            logger.warning("Error: %s", e)
             stats[e.__class__.__name__] += 1
         else:
-            state = 'success' if success else 'failure'
+            state = "success" if success else "failure"
             stats[state] += 1
         finally:
             attempt.data_file.close()
 
-    logger.debug('Stats: %s', stats)
+    logger.debug("Stats: %s", stats)

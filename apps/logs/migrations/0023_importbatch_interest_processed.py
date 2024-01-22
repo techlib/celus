@@ -4,14 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0022_move_some_models_to_charts')]
+    dependencies = [("logs", "0022_move_some_models_to_charts")]
 
     operations = [
         migrations.AddField(
-            model_name='importbatch',
-            name='interest_processed',
+            model_name="importbatch",
+            name="interest_processed",
             field=models.BooleanField(
-                default=False, help_text='Was interest already calculated for this import batch'
+                default=False, help_text="Was interest already calculated for this import batch"
             ),
         )
     ]

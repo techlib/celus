@@ -5,17 +5,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0018_virtual_report_types_translation')]
+    dependencies = [("logs", "0018_virtual_report_types_translation")]
 
     operations = [
         migrations.AddField(
-            model_name='virtualreporttype',
-            name='primary_dimension',
+            model_name="virtualreporttype",
+            name="primary_dimension",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='logs.Dimension',
+                to="logs.Dimension",
             ),
         )
     ]

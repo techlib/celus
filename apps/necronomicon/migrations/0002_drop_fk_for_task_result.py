@@ -4,13 +4,13 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('necronomicon', '0001_initial')]
+    dependencies = [("necronomicon", "0001_initial")]
 
     operations = [
-        migrations.RemoveField(model_name='batch', name='task_result'),
+        migrations.RemoveField(model_name="batch", name="task_result"),
         migrations.AddField(
-            model_name='batch',
-            name='task_result_id',
+            model_name="batch",
+            name="task_result_id",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

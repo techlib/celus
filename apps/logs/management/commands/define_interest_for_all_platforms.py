@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = 'Go over all platforms and assign "standard" set of interest report to all'
 
     def add_arguments(self, parser):
-        parser.add_argument('--do-it', dest='doit', action='store_true')
+        parser.add_argument("--do-it", dest="doit", action="store_true")
 
     @atomic
     def handle(self, *args, **options):
@@ -20,5 +20,5 @@ class Command(BaseCommand):
         for platform in Platform.objects.all():
             stats += platform.create_default_interests()
         print(stats)
-        if not options['doit']:
-            raise ValueError('preventing db commit, use --do-it to really do it ;)')
+        if not options["doit"]:
+            raise ValueError("preventing db commit, use --do-it to really do it ;)")

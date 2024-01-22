@@ -6,36 +6,36 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0009_even_more_pub_types'),
-        ('organizations', '0012_timestamps'),
-        ('logs', '0010_verbose_name_plural'),
+        ("publications", "0009_even_more_pub_types"),
+        ("organizations", "0012_timestamps"),
+        ("logs", "0010_verbose_name_plural"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='importbatch', name='log', field=models.TextField(blank=True)
+            model_name="importbatch", name="log", field=models.TextField(blank=True)
         ),
         migrations.AddField(
-            model_name='importbatch',
-            name='organization',
+            model_name="importbatch",
+            name="organization",
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='organizations.Organization',
+                to="organizations.Organization",
             ),
         ),
         migrations.AddField(
-            model_name='importbatch',
-            name='platform',
+            model_name="importbatch",
+            name="platform",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                null=True, on_delete=django.db.models.deletion.CASCADE, to="publications.Platform"
             ),
         ),
         migrations.AddField(
-            model_name='importbatch',
-            name='report_type',
+            model_name="importbatch",
+            name="report_type",
             field=models.ForeignKey(
-                default=None, on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                default=None, on_delete=django.db.models.deletion.CASCADE, to="logs.ReportType"
             ),
             preserve_default=False,
         ),

@@ -13,27 +13,27 @@ def remove_obsolete_3030_fas_with_empty_ib(apps, schema_editor):
     and deletes them.
     These are probably artifacts of not completely correct migrations of old data
     """
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
-    AccessLog = apps.get_model('logs', 'AccessLog')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
+    ImportBatch = apps.get_model("logs", "ImportBatch")
+    AccessLog = apps.get_model("logs", "AccessLog")
     to_delete_fas = []
     to_delete_ibs = []
     # the following is a queryset to the newer FAs replacing the ones we are testing
     # these have to have an import batch and some data and match the FA at hand
     other_fa_qs = (
         SushiFetchAttempt.objects.filter(
-            credentials_id=OuterRef('credentials_id'),
-            counter_report_id=OuterRef('counter_report_id'),
-            start_date=OuterRef('start_date'),
-            end_date=OuterRef('end_date'),
+            credentials_id=OuterRef("credentials_id"),
+            counter_report_id=OuterRef("counter_report_id"),
+            start_date=OuterRef("start_date"),
+            end_date=OuterRef("end_date"),
         )
-        .exclude(data_file='')
+        .exclude(data_file="")
         .filter(import_batch_id__isnull=False)
-        .filter(Exists(AccessLog.objects.filter(import_batch_id=OuterRef('import_batch_id'))))
+        .filter(Exists(AccessLog.objects.filter(import_batch_id=OuterRef("import_batch_id"))))
     )
     for fa in (
-        SushiFetchAttempt.objects.filter(import_batch_id__isnull=False, error_code='3030')
-        .exclude(Exists(AccessLog.objects.filter(import_batch_id=OuterRef('import_batch_id'))))
+        SushiFetchAttempt.objects.filter(import_batch_id__isnull=False, error_code="3030")
+        .exclude(Exists(AccessLog.objects.filter(import_batch_id=OuterRef("import_batch_id"))))
         .filter(Exists(other_fa_qs))
     ):
         to_delete_fas.append(fa.pk)
@@ -56,14 +56,14 @@ def fix_3030_fas_with_ib_and_empty_data_file(apps, schema_editor):
     So this whole code is about replacing one empty FA with another empty FA, but which has
     a file associated, so it can be reimported
     """
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
-    AccessLog = apps.get_model('logs', 'AccessLog')
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
+    ImportBatch = apps.get_model("logs", "ImportBatch")
+    AccessLog = apps.get_model("logs", "AccessLog")
     to_delete = []
     stats = Counter()
     for fa in SushiFetchAttempt.objects.filter(
-        import_batch_id__isnull=False, data_file='', error_code='3030'
-    ).exclude(Exists(AccessLog.objects.filter(import_batch_id=OuterRef('import_batch_id')))):
+        import_batch_id__isnull=False, data_file="", error_code="3030"
+    ).exclude(Exists(AccessLog.objects.filter(import_batch_id=OuterRef("import_batch_id")))):
         other_fas = (
             SushiFetchAttempt.objects.filter(
                 credentials_id=fa.credentials_id,
@@ -71,9 +71,9 @@ def fix_3030_fas_with_ib_and_empty_data_file(apps, schema_editor):
                 start_date=fa.start_date,
                 end_date=fa.end_date,
             )
-            .exclude(data_file='')
+            .exclude(data_file="")
             .filter(import_batch_id__isnull=True)
-            .order_by('-last_updated')
+            .order_by("-last_updated")
         )
         if other_fas.exists():
             winner = other_fas[0]
@@ -86,17 +86,17 @@ def fix_3030_fas_with_ib_and_empty_data_file(apps, schema_editor):
                 date=fa.start_date,
             )
             winner.save()
-            stats['replaced'] += 1
+            stats["replaced"] += 1
         else:
-            stats['unreplacable'] += 1
+            stats["unreplacable"] += 1
     SushiFetchAttempt.objects.filter(pk__in=to_delete).delete()
     print("Stats:", stats, file=sys.stderr)
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('sushi', '0051_fetchattempt_remove_queue_stuff'),
-        ('logs', '0065_remove_dimension_type'),
+        ("sushi", "0051_fetchattempt_remove_queue_stuff"),
+        ("logs", "0065_remove_dimension_type"),
     ]
 
     operations = [

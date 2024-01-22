@@ -28,11 +28,11 @@ from test_scenarios.basic import (  # noqa - fixtures
 @pytest.mark.django_db
 class TestOrganizationAPI:
     def test_unauthorized_user(self, client, invalid_identity, authentication_headers):
-        resp = client.get(reverse('organization-list'), **authentication_headers(invalid_identity))
+        resp = client.get(reverse("organization-list"), **authentication_headers(invalid_identity))
         assert resp.status_code in (403, 401)  # depends on auth backend
 
     def test_authorized_user_no_orgs(self, authenticated_client):
-        resp = authenticated_client.get(reverse('organization-list'))
+        resp = authenticated_client.get(reverse("organization-list"))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -43,7 +43,7 @@ class TestOrganizationAPI:
         :param organizations:
         :return:
         """
-        resp = authenticated_client.get(reverse('organization-list'))
+        resp = authenticated_client.get(reverse("organization-list"))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -53,21 +53,21 @@ class TestOrganizationAPI:
         """
         User is authenticated and belongs to a single organization
         """
-        identity = Identity.objects.select_related('user').get(identity=valid_identity)
+        identity = Identity.objects.select_related("user").get(identity=valid_identity)
         UserOrganization.objects.create(
             user=identity.user, organization=organizations["standalone"]
         )
-        resp = authenticated_client.get(reverse('organization-list'))
+        resp = authenticated_client.get(reverse("organization-list"))
         assert resp.status_code == 200
         assert len(resp.json()) == 1
-        assert resp.json()[0]['pk'] == organizations["standalone"].pk
+        assert resp.json()[0]["pk"] == organizations["standalone"].pk
 
     @pytest.mark.parametrize(
-        ['settings_nibbler', 'result'],
+        ["settings_nibbler", "result"],
         (
-            ('All', [True, True, True, True, True]),
-            ('None', [False, False, False, False, False]),
-            ('PerOrg', [False, False, False, False, True]),
+            ("All", [True, True, True, True, True]),
+            ("None", [False, False, False, False, False]),
+            ("PerOrg", [False, False, False, False, True]),
         ),
     )
     def test_list_nibbler(self, clients, organizations, settings, settings_nibbler, result):
@@ -79,9 +79,9 @@ class TestOrganizationAPI:
         organizations["standalone"].save()
         a1 = OrganizationAltNameFactory(organization=organizations["standalone"], name="Alt1")
         a2 = OrganizationAltNameFactory(organization=organizations["standalone"], name="Alt2")
-        resp = clients["su"].get(reverse('organization-list'))
+        resp = clients["su"].get(reverse("organization-list"))
         assert resp.status_code == 200
-        data = sorted(resp.json(), key=lambda x: x['pk'])
+        data = sorted(resp.json(), key=lambda x: x["pk"])
         assert len(data) == 5
         assert [e["is_raw_data_import_enabled"] for e in data] == result
         assert data[4]["alt_names"] == [
@@ -97,80 +97,80 @@ class TestOrganizationAPI:
         :return:
         """
         resp = authenticated_client.get(
-            reverse('organization-detail', args=[organizations["standalone"].pk])
+            reverse("organization-detail", args=[organizations["standalone"].pk])
         )
         assert resp.status_code == 404
 
     def test_user_default_organization_creation(self, authenticated_client, settings):
         settings.ALLOW_USER_REGISTRATION = True
-        url = reverse('organization-create-user-default')
+        url = reverse("organization-create-user-default")
         assert Organization.objects.count() == 0
-        with patch('organizations.views.async_mail_customer_care_admins') as email_task:
+        with patch("organizations.views.async_mail_customer_care_admins") as email_task:
             resp = authenticated_client.post(
-                url, {'name': 'test organization'}, content_type='application/json'
+                url, {"name": "test organization"}, content_type="application/json"
             )
             assert (
                 email_task.delay.called
-            ), 'email about a default organization created by user was sent to admin'
+            ), "email about a default organization created by user was sent to admin"
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         org = Organization.objects.get()
-        assert org.name == 'test organization'
+        assert org.name == "test organization"
         # All language mutations are supposed to be set to the same name
-        assert org.name_en == 'test organization'
-        assert org.name_cs == 'test organization'
-        assert org.internal_id == 'test#test-organization'
+        assert org.name_en == "test organization"
+        assert org.name_cs == "test organization"
+        assert org.internal_id == "test#test-organization"
         assert org in authenticated_client.user.organizations.all()
         assert (
             org.private_data_source == org.source
-        ), 'organization object data source should be the organizations own private data-source'
+        ), "organization object data source should be the organizations own private data-source"
         userorg = UserOrganization.objects.get(organization=org, user=authenticated_client.user)
         assert (
             org.private_data_source == userorg.source
-        ), 'user-organization data source should be the organizations own private data-source'
+        ), "user-organization data source should be the organizations own private data-source"
 
     def test_user_default_organization_creation_not_allowed(self, authenticated_client, settings):
         settings.ALLOW_USER_REGISTRATION = False
-        url = reverse('organization-create-user-default')
+        url = reverse("organization-create-user-default")
         assert Organization.objects.count() == 0
         resp = authenticated_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
+            url, {"name": "test organization"}, content_type="application/json"
         )
         assert resp.status_code == 400
         assert Organization.objects.count() == 0
 
     def test_user_default_organization_creation_twice(self, authenticated_client, settings):
         settings.ALLOW_USER_REGISTRATION = True
-        url = reverse('organization-create-user-default')
+        url = reverse("organization-create-user-default")
         assert Organization.objects.count() == 0
         resp = authenticated_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
+            url, {"name": "test organization"}, content_type="application/json"
         )
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         # second time
         resp = authenticated_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
+            url, {"name": "test organization"}, content_type="application/json"
         )
-        assert resp.status_code == 400, 'only one organization per user'
+        assert resp.status_code == 400, "only one organization per user"
         assert Organization.objects.count() == 1
 
     def test_user_default_organization_different_users(
         self, admin_client, authenticated_client, settings
     ):
         settings.ALLOW_USER_REGISTRATION = True
-        url = reverse('organization-create-user-default')
+        url = reverse("organization-create-user-default")
         assert Organization.objects.count() == 0
         resp = admin_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
+            url, {"name": "test organization"}, content_type="application/json"
         )
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         # second time
         resp = authenticated_client.post(
-            url, {'name': 'test organization'}, content_type='application/json'
+            url, {"name": "test organization"}, content_type="application/json"
         )
-        assert resp.status_code == 201, 'no problem for different user'
+        assert resp.status_code == 201, "no problem for different user"
         assert Organization.objects.count() == 2
         # each user should have one organization
         assert authenticated_client.user.organizations.count() == 1
@@ -181,26 +181,26 @@ class TestOrganizationAPI:
         """
         Test the `interest` custom action of organization ViewSet without any data
         """
-        resp = master_user_client.get(reverse('organization-interest', args=('-1',)))
+        resp = master_user_client.get(reverse("organization-interest", args=("-1",)))
         assert resp.status_code == 200
-        assert resp.json() == {'days': 0, 'interest_sum': None, 'max_date': None, 'min_date': None}
+        assert resp.json() == {"days": 0, "interest_sum": None, "max_date": None, "min_date": None}
 
     def test_organization_interest_data(self, master_user_client, interest_rt):
         """
         Test the `interest` custom action of organization ViewSet with some data
         """
-        metric = Metric.objects.create(short_name='a', name='a')
+        metric = Metric.objects.create(short_name="a", name="a")
         ib = ImportBatch.objects.create(report_type=interest_rt)
         AccessLog.objects.create(
-            report_type=interest_rt, value=5, date='2020-01-01', metric=metric, import_batch=ib
+            report_type=interest_rt, value=5, date="2020-01-01", metric=metric, import_batch=ib
         )
-        resp = master_user_client.get(reverse('organization-interest', args=('-1',)))
+        resp = master_user_client.get(reverse("organization-interest", args=("-1",)))
         assert resp.status_code == 200
         assert resp.json() == {
-            'days': 31,
-            'interest_sum': 5,
-            'max_date': '2020-01-31',
-            'min_date': '2020-01-01',
+            "days": 31,
+            "interest_sum": 5,
+            "max_date": "2020-01-31",
+            "min_date": "2020-01-01",
         }
 
     def test_organization_interest_data_organizations(
@@ -210,12 +210,12 @@ class TestOrganizationAPI:
         Test the `interest` custom action of organization ViewSet with some data and a specific
         organization
         """
-        metric = Metric.objects.create(short_name='a', name='a')
+        metric = Metric.objects.create(short_name="a", name="a")
         ib = ImportBatch.objects.create(report_type=interest_rt)
         AccessLog.objects.create(
             report_type=interest_rt,
             value=5,
-            date='2020-01-01',
+            date="2020-01-01",
             metric=metric,
             import_batch=ib,
             organization=organizations["standalone"],
@@ -223,37 +223,37 @@ class TestOrganizationAPI:
         AccessLog.objects.create(
             report_type=interest_rt,
             value=7,
-            date='2020-02-01',
+            date="2020-02-01",
             metric=metric,
             import_batch=ib,
             organization=organizations["standalone"],
         )
         resp = master_user_client.get(
-            reverse('organization-interest', args=(organizations["standalone"].pk,))
+            reverse("organization-interest", args=(organizations["standalone"].pk,))
         )
         assert resp.status_code == 200
         assert resp.json() == {
-            'days': 60,
-            'interest_sum': 12,
-            'max_date': '2020-02-29',
-            'min_date': '2020-01-01',
+            "days": 60,
+            "interest_sum": 12,
+            "max_date": "2020-02-29",
+            "min_date": "2020-01-01",
         }
         resp = master_user_client.get(
-            reverse('organization-interest', args=(organizations["branch"].pk,))
+            reverse("organization-interest", args=(organizations["branch"].pk,))
         )
         assert resp.status_code == 200
-        assert resp.json() == {'days': 0, 'interest_sum': None, 'max_date': None, 'min_date': None}
+        assert resp.json() == {"days": 0, "interest_sum": None, "max_date": None, "min_date": None}
 
 
 @pytest.mark.django_db
 class TestOrganizationAltNameAPI:
     @pytest.mark.parametrize(
-        ['client', 'passes'],
+        ["client", "passes"],
         (
-            ('su', True),
-            ('master_admin', True),
-            ('admin1', False),
-            ('admin2', False),
+            ("su", True),
+            ("master_admin", True),
+            ("admin1", False),
+            ("admin2", False),
             ("master_user", False),
         ),
     )
@@ -263,21 +263,21 @@ class TestOrganizationAltNameAPI:
         OrganizationAltNameFactory(organization=organizations["standalone"], name="alt1")
 
         # Success
-        resp = clients[client].post(reverse('alt-name-list', args=(org_id,)), {"name": "alt2"})
+        resp = clients[client].post(reverse("alt-name-list", args=(org_id,)), {"name": "alt2"})
         if passes:
             assert resp.status_code == 201
         else:
             assert resp.status_code == 403
 
         # Organization not found
-        resp = clients[client].post(reverse('alt-name-list', args=(0,)), {"name": "alt2"})
+        resp = clients[client].post(reverse("alt-name-list", args=(0,)), {"name": "alt2"})
         if passes:
             assert resp.status_code == 404
         else:
             assert resp.status_code == 403
 
         # Name conflict with existing alt name
-        resp = clients[client].post(reverse('alt-name-list', args=(org_id,)), {"name": "alt1"})
+        resp = clients[client].post(reverse("alt-name-list", args=(org_id,)), {"name": "alt1"})
         if passes:
             assert resp.status_code == 400
         else:
@@ -285,7 +285,7 @@ class TestOrganizationAltNameAPI:
 
         # Name conflict with existing organization name
         resp = clients[client].post(
-            reverse('alt-name-list', args=(org_id,)), {"name": "standalone"}
+            reverse("alt-name-list", args=(org_id,)), {"name": "standalone"}
         )
         if passes:
             assert resp.status_code == 400
@@ -293,12 +293,12 @@ class TestOrganizationAltNameAPI:
             assert resp.status_code == 403
 
     @pytest.mark.parametrize(
-        ['client', 'passes'],
+        ["client", "passes"],
         (
-            ('su', True),
-            ('master_admin', True),
-            ('admin1', False),
-            ('admin2', False),
+            ("su", True),
+            ("master_admin", True),
+            ("admin1", False),
+            ("admin2", False),
             ("master_user", False),
         ),
     )
@@ -310,28 +310,28 @@ class TestOrganizationAltNameAPI:
         ).id
 
         # Organization not found
-        resp = clients[client].delete(reverse('alt-name-detail', args=(0, alt_id)))
+        resp = clients[client].delete(reverse("alt-name-detail", args=(0, alt_id)))
         if passes:
             assert resp.status_code == 404
         else:
             assert resp.status_code == 403
 
         # Alt name not found
-        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, 0)))
+        resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, 0)))
         if passes:
             assert resp.status_code == 404
         else:
             assert resp.status_code == 403
 
         # Success
-        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, alt_id)))
+        resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, alt_id)))
         if passes:
             assert resp.status_code == 204
         else:
             assert resp.status_code == 403
 
         # Already deleted
-        resp = clients[client].delete(reverse('alt-name-detail', args=(org_id, alt_id)))
+        resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, alt_id)))
         if passes:
             assert resp.status_code == 404
         else:

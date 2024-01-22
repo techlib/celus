@@ -6,20 +6,20 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0005_auto_20190801_1615'),
-        ('organizations', '0008_sushicredentials_enabled'),
+        ("publications", "0005_auto_20190801_1615"),
+        ("organizations", "0008_sushicredentials_enabled"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='sushicredentials', options={'verbose_name_plural': 'Sushi credentials'}
+            name="sushicredentials", options={"verbose_name_plural": "Sushi credentials"}
         ),
         migrations.AlterField(
-            model_name='sushicredentials',
-            name='extra_params',
+            model_name="sushicredentials",
+            name="extra_params",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict),
         ),
         migrations.AlterUniqueTogether(
-            name='sushicredentials', unique_together={('organization', 'platform', 'version')}
+            name="sushicredentials", unique_together={("organization", "platform", "version")}
         ),
     ]

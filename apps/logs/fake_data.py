@@ -40,17 +40,17 @@ class MetricFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Metric
 
-    short_name = factory.Faker('name')
-    name = factory.Faker('name')
+    short_name = factory.Faker("name")
+    name = factory.Faker("name")
 
 
 class ReportTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ReportType
-        django_get_or_create = ('short_name',)
+        django_get_or_create = ("short_name",)
 
-    name = 'Counter 5 - Title report'
-    short_name = 'TR'
+    name = "Counter 5 - Title report"
+    short_name = "TR"
 
     @factory.post_generation
     def dimensions(obj, create, extracted: [str], **kwargs):  # noqa - obj name is ok here
@@ -75,17 +75,17 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
-    date = factory.Faker('date_this_century')
+    date = factory.Faker("date_this_century")
 
 
 class AccessLogFactory(factory.django.DjangoModelFactory):
     import_batch = factory.SubFactory(ImportBatchFactory)
     value = factory.LazyFunction(lambda: randint(1, 5000))
 
-    date = factory.SelfAttribute('import_batch.date')
-    organization = factory.SelfAttribute('import_batch.organization')
-    report_type = factory.SelfAttribute('import_batch.report_type')
-    platform = factory.SelfAttribute('import_batch.platform')
+    date = factory.SelfAttribute("import_batch.date")
+    organization = factory.SelfAttribute("import_batch.organization")
+    report_type = factory.SelfAttribute("import_batch.report_type")
+    platform = factory.SelfAttribute("import_batch.platform")
 
     class Meta:
         model = AccessLog
@@ -102,18 +102,18 @@ class ImportBatchFullFactory(ImportBatchFactory):
         if not create:
             return
 
-        if not (metrics := kwargs.pop('metrics', None)):
+        if not (metrics := kwargs.pop("metrics", None)):
             metrics = MetricFactory.create_batch(2)
-        if not (titles := kwargs.pop('titles', None)):
+        if not (titles := kwargs.pop("titles", None)):
             titles = TitleFactory.create_batch(10)
-        value = kwargs.pop('value', None)  # all access logs will have the same value if provided
+        value = kwargs.pop("value", None)  # all access logs will have the same value if provided
 
         attrs = {
-            'import_batch': obj,
-            'organization': obj.organization,
-            'platform': obj.platform,
-            'report_type': obj.report_type,
-            'date': obj.date,
+            "import_batch": obj,
+            "organization": obj.organization,
+            "platform": obj.platform,
+            "report_type": obj.report_type,
+            "date": obj.date,
             **kwargs,
         }
         als = []
@@ -154,12 +154,12 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
     )
     data_file = factory.django.FileField(data=DATA_FILE)
     file_size = factory.LazyAttribute(
-        lambda x: x.data_file.size if hasattr(x.data_file, 'size') else len(x.data_file)
+        lambda x: x.data_file.size if hasattr(x.data_file, "size") else len(x.data_file)
     )
     checksum = factory.LazyAttribute(
         lambda x: ManualDataUpload.checksum_fileobj(x.data_file)[0]
-        if hasattr(x.data_file, 'seek')
-        else 'foobar'
+        if hasattr(x.data_file, "seek")
+        else "foobar"
     )
 
     @factory.post_generation
@@ -185,7 +185,7 @@ class ManualDataUploadFullFactory(ManualDataUploadFactory):
 
 
 class InterestGroupFactory(factory.django.DjangoModelFactory):
-    short_name = factory.Faker('slug')
+    short_name = factory.Faker("slug")
     position = 1
 
     class Meta:
@@ -194,7 +194,7 @@ class InterestGroupFactory(factory.django.DjangoModelFactory):
 
 # Fake counter records from nigiri
 def create_title_ids():
-    return {'Print_ISSN': '1234-5678', 'ISBN': '9780471397120'}
+    return {"Print_ISSN": "1234-5678", "ISBN": "9780471397120"}
 
 
 def create_dim_data(obj):
@@ -207,8 +207,8 @@ class CounterRecordFactory(factory.Factory):
 
     start = factory.LazyFunction(lambda: date(randint(2010, 2021), randint(1, 12), 1))
     end = factory.LazyAttribute(lambda x: x.start + relativedelta(months=1) - relativedelta(days=1))
-    metric = factory.LazyFunction(lambda: f'Metric {fake.pyint()}')
-    value = factory.Faker('random_int')
+    metric = factory.LazyFunction(lambda: f"Metric {fake.pyint()}")
+    value = factory.Faker("random_int")
     dimension_data = factory.LazyAttribute(create_dim_data)
-    title = factory.Faker('sentence')
+    title = factory.Faker("sentence")
     title_ids = factory.LazyFunction(create_title_ids)

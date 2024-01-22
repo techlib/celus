@@ -17,12 +17,12 @@ from django.db.models import F
 
 
 def fill_empty_platform_name(apps, schema_editor):
-    Platform = apps.get_model('publications', 'Platform')
+    Platform = apps.get_model("publications", "Platform")
     # fill in just the en version of the name, it should be sufficient
-    Platform.objects.filter(name_en='').update(name_en=F('short_name'))
+    Platform.objects.filter(name_en="").update(name_en=F("short_name"))
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0026_title_type_data_migration')]
+    dependencies = [("publications", "0026_title_type_data_migration")]
 
     operations = [migrations.RunPython(fill_empty_platform_name, migrations.RunPython.noop)]

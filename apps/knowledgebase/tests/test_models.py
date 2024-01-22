@@ -57,8 +57,8 @@ class TestPlatformImportAttempt:
         ),
         (
             (
-                'error occured',
-                'a' * 64,
+                "error occured",
+                "a" * 64,
                 now(),
                 now(),
                 now(),
@@ -69,7 +69,7 @@ class TestPlatformImportAttempt:
             ),
             (
                 None,
-                'a' * 64,
+                "a" * 64,
                 None,
                 now(),
                 now(),
@@ -91,7 +91,7 @@ class TestPlatformImportAttempt:
             ),
             (
                 None,
-                'a' * 64,
+                "a" * 64,
                 now(),
                 None,
                 now(),
@@ -102,7 +102,7 @@ class TestPlatformImportAttempt:
             ),
             (
                 None,
-                'a' * 64,
+                "a" * 64,
                 now(),
                 now(),
                 None,
@@ -113,7 +113,7 @@ class TestPlatformImportAttempt:
             ),
             (
                 None,
-                'a' * 64,
+                "a" * 64,
                 now(),
                 now(),
                 now(),
@@ -156,7 +156,7 @@ class TestPlatformImportAttempt:
 
         default_rt_pks = set(
             ReportType.objects.filter(default_platform_interest=True).values_list(
-                'short_name', flat=True
+                "short_name", flat=True
             )
         )
 
@@ -177,7 +177,7 @@ class TestPlatformImportAttempt:
         assert (
             set(
                 platform1.platforminterestreport_set.values_list(
-                    'report_type__short_name', flat=True
+                    "report_type__short_name", flat=True
                 )
             )
             == default_rt_pks
@@ -199,7 +199,7 @@ class TestPlatformImportAttempt:
         assert (
             set(
                 platform2.platforminterestreport_set.values_list(
-                    'report_type__short_name', flat=True
+                    "report_type__short_name", flat=True
                 )
             )
             == default_rt_pks
@@ -219,7 +219,7 @@ class TestPlatformImportAttempt:
         assert (
             set(
                 platform3.platforminterestreport_set.values_list(
-                    'report_type__short_name', flat=True
+                    "report_type__short_name", flat=True
                 )
             )
             == default_rt_pks
@@ -377,14 +377,14 @@ class TestPlatformImportAttempt:
         PlatformFactory(source=None, short_name="AAP")
         # platform without source, but whith same short name
         platform_with_source = PlatformFactory(
-            source=data_sources['brain'], short_name="AAP", ext_id=328, name="XXX"
+            source=data_sources["brain"], short_name="AAP", ext_id=328, name="XXX"
         )
 
-        with patch('knowledgebase.models.async_mail_admins') as email_task:
+        with patch("knowledgebase.models.async_mail_admins") as email_task:
             PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
                 PLATFORM_INPUT_DATA, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE
             )
-            assert email_task.delay.called, 'email about duplicated platforms sent'
+            assert email_task.delay.called, "email about duplicated platforms sent"
 
         platform_with_source.refresh_from_db()
         assert (
@@ -396,15 +396,15 @@ class TestPlatformImportAttempt:
 class TestRouterSyncAttempt:
     def test_present_absent(self, organizations):
         DataSourceFactory(
-            short_name='first-data-source',
+            short_name="first-data-source",
             type=DataSource.TYPE_KNOWLEDGEBASE,
-            url='https://first.data.source',
+            url="https://first.data.source",
             token="1" * 64,
         )
         DataSourceFactory(
-            short_name='second-data-source',
+            short_name="second-data-source",
             type=DataSource.TYPE_KNOWLEDGEBASE,
-            url='https://second.data.source',
+            url="https://second.data.source",
             token="2" * 64,
         )
         # Create two tokens
@@ -441,15 +441,15 @@ class TestRouterSyncAttempt:
 
     def test_propagete_prefix(self, organizations):
         DataSourceFactory(
-            short_name='first-data-source',
+            short_name="first-data-source",
             type=DataSource.TYPE_KNOWLEDGEBASE,
-            url='https://first.data.source',
+            url="https://first.data.source",
             token="1" * 64,
         )
         DataSourceFactory(
-            short_name='second-data-source',
+            short_name="second-data-source",
             type=DataSource.TYPE_KNOWLEDGEBASE,
-            url='https://second.data.source',
+            url="https://second.data.source",
             token="2" * 64,
         )
 
@@ -477,20 +477,20 @@ class TestReportTypeImportAttempt:
         assert report_type2.name == "second"
         assert report_type2.ext_id == 222
         assert report_type2.controlled_metrics.count() == 3
-        assert set(report_type2.controlled_metrics.values_list('short_name', flat=True)) == {
-            'metric1',
-            'metric2',
-            'metric3',
+        assert set(report_type2.controlled_metrics.values_list("short_name", flat=True)) == {
+            "metric1",
+            "metric2",
+            "metric3",
         }
         assert report_type2.dimensions.count() == 2
         assert list(
-            report_type2.reporttypetodimension_set.order_by('position').values_list(
-                'position', 'dimension__short_name'
+            report_type2.reporttypetodimension_set.order_by("position").values_list(
+                "position", "dimension__short_name"
             )
-        ) == [(0, 'dim1'), (1, 'dim2')]
+        ) == [(0, "dim1"), (1, "dim2")]
         assert list(
-            report_type2.reportinterestmetric_set.order_by('id').values_list(
-                'metric__short_name', 'interest_group__short_name'
+            report_type2.reportinterestmetric_set.order_by("id").values_list(
+                "metric__short_name", "interest_group__short_name"
             )
         ) == [
             ("metric1", "multimedia"),
@@ -503,15 +503,15 @@ class TestReportTypeImportAttempt:
 
         rim_count = ReportInterestMetric.objects.count()
         # Update report types agian
-        with patch('knowledgebase.models.async_mail_admins') as email_task:
+        with patch("knowledgebase.models.async_mail_admins") as email_task:
             attempt.process(REPORT_TYPE_INPUT_DATA2)
-            assert email_task.delay.called, 'email about inconsistent dimensions sent'
+            assert email_task.delay.called, "email about inconsistent dimensions sent"
 
         assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
         assert (
             ReportInterestMetric.objects.count() == rim_count
-        ), 'two report type metric were created and two were delete'
+        ), "two report type metric were created and two were delete"
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"
@@ -519,32 +519,32 @@ class TestReportTypeImportAttempt:
         assert report_type1.controlled_metrics.count() == 0
         assert report_type1.dimensions.count() == 1
         assert list(
-            report_type1.reporttypetodimension_set.order_by('position').values_list(
-                'position', 'dimension__short_name'
+            report_type1.reporttypetodimension_set.order_by("position").values_list(
+                "position", "dimension__short_name"
             )
-        ) == [(0, 'dim1')]
+        ) == [(0, "dim1")]
 
         report_type2 = ReportType.objects.get(short_name="Two")
         assert report_type2.name == "SECOND"
         assert report_type2.ext_id == 222
         assert report_type2.controlled_metrics.count() == 2
         assert list(
-            report_type2.controlled_metrics.order_by('short_name').values_list(
-                'short_name', flat=True
+            report_type2.controlled_metrics.order_by("short_name").values_list(
+                "short_name", flat=True
             )
         ) == [
-            'metric2',
-            'metric3',
+            "metric2",
+            "metric3",
         ]
         assert report_type2.dimensions.count() == 2
         assert list(
-            report_type2.reporttypetodimension_set.order_by('position').values_list(
-                'position', 'dimension__short_name'
+            report_type2.reporttypetodimension_set.order_by("position").values_list(
+                "position", "dimension__short_name"
             )
-        ) == [(0, 'dim1'), (1, 'dim2')]
+        ) == [(0, "dim1"), (1, "dim2")]
         assert list(
-            report_type2.reportinterestmetric_set.order_by('id').values_list(
-                'metric__short_name', 'interest_group__short_name'
+            report_type2.reportinterestmetric_set.order_by("id").values_list(
+                "metric__short_name", "interest_group__short_name"
             )
         ) == [
             ("metric3", "search"),
@@ -554,28 +554,28 @@ class TestReportTypeImportAttempt:
         assert report_type3.name == "third"
         assert report_type3.ext_id == 333
         assert report_type3.controlled_metrics.count() == 2
-        assert list(report_type3.controlled_metrics.values_list('short_name', flat=True)) == [
-            'metric2',
-            'metric3',
+        assert list(report_type3.controlled_metrics.values_list("short_name", flat=True)) == [
+            "metric2",
+            "metric3",
         ]
         assert report_type3.dimensions.count() == 2
         assert list(
-            report_type3.reporttypetodimension_set.order_by('position').values_list(
-                'position', 'dimension__short_name'
+            report_type3.reporttypetodimension_set.order_by("position").values_list(
+                "position", "dimension__short_name"
             )
-        ) == [(0, 'dim4'), (1, 'dim3')]
+        ) == [(0, "dim4"), (1, "dim3")]
         assert report_type3.interest_metrics.all().count() == 2
-        assert report_type3.interest_metrics.order_by('id').first().short_name == "metric2"
-        assert report_type3.interest_metrics.order_by('id').last().short_name == "metric3"
+        assert report_type3.interest_metrics.order_by("id").first().short_name == "metric2"
+        assert report_type3.interest_metrics.order_by("id").last().short_name == "metric3"
         assert report_type3.reportinterestmetric_set.all().count() == 2
-        assert report_type3.reportinterestmetric_set.order_by('id').first().target_metric is None
+        assert report_type3.reportinterestmetric_set.order_by("id").first().target_metric is None
         assert (
-            report_type3.reportinterestmetric_set.order_by('id').first().interest_group.short_name
+            report_type3.reportinterestmetric_set.order_by("id").first().interest_group.short_name
             == "search"
         )
-        assert report_type3.reportinterestmetric_set.order_by('id').last().target_metric is None
+        assert report_type3.reportinterestmetric_set.order_by("id").last().target_metric is None
         assert (
-            report_type3.reportinterestmetric_set.order_by('id').last().interest_group.short_name
+            report_type3.reportinterestmetric_set.order_by("id").last().interest_group.short_name
             == "other"
         )
 
@@ -587,7 +587,7 @@ class TestReportTypeImportAttempt:
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
-        assert Metric.objects.count() == 3, 'metric were not duplicated'
+        assert Metric.objects.count() == 3, "metric were not duplicated"
         assert Metric.objects.filter(short_name="metric1").first().source is None
 
     def test_metrics_do_not_use_brain_source(self, data_sources):
@@ -595,7 +595,7 @@ class TestReportTypeImportAttempt:
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process(REPORT_TYPE_INPUT_DATA)  # contains the `metric1` metric
-        assert Metric.objects.count() == 3, 'metrics were created'
+        assert Metric.objects.count() == 3, "metrics were created"
         assert Metric.objects.filter(short_name="metric1").first().source is None
 
     def test_dimensions_do_not_use_brain_source(self, data_sources):
@@ -603,7 +603,7 @@ class TestReportTypeImportAttempt:
         attempt = ReportTypeImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process(REPORT_TYPE_INPUT_DATA)  # contains 2 new dimensions
-        assert Dimension.objects.count() == 2 + orig_count, '2 dimensions were created'
+        assert Dimension.objects.count() == 2 + orig_count, "2 dimensions were created"
 
 
 @pytest.mark.django_db

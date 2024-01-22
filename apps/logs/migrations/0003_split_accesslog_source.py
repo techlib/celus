@@ -5,8 +5,8 @@ from django.db import migrations, models
 
 
 def split_access_log_source(apps, schema_editor):
-    AccessLog = apps.get_model('logs', 'AccessLog')
-    for al in AccessLog.objects.all().select_related('source'):
+    AccessLog = apps.get_model("logs", "AccessLog")
+    for al in AccessLog.objects.all().select_related("source"):
         al.organization = al.source.organization
         al.platform = al.source.platform
         al.save()
@@ -14,28 +14,28 @@ def split_access_log_source(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0004_pub_type_verbose_name'),
-        ('organizations', '0003_non_unique_ico'),
-        ('logs', '0002_add_dimension_sorting'),
+        ("publications", "0004_pub_type_verbose_name"),
+        ("organizations", "0003_non_unique_ico"),
+        ("logs", "0002_add_dimension_sorting"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accesslog',
-            name='organization',
+            model_name="accesslog",
+            name="organization",
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='organizations.Organization',
+                to="organizations.Organization",
             ),
         ),
         migrations.AddField(
-            model_name='accesslog',
-            name='platform',
+            model_name="accesslog",
+            name="platform",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.CASCADE, to='publications.Platform'
+                null=True, on_delete=django.db.models.deletion.CASCADE, to="publications.Platform"
             ),
         ),
         migrations.RunPython(split_access_log_source),
-        migrations.RemoveField(model_name='accesslog', name='source'),
+        migrations.RemoveField(model_name="accesslog", name="source"),
     ]

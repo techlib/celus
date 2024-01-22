@@ -32,7 +32,7 @@ class ReportingContext:
     """
 
     def __init__(
-        self, report: 'Report', organization: Organization, start_date: date, end_date: date
+        self, report: "Report", organization: Organization, start_date: date, end_date: date
     ):
         self.report = report
         self.organization = organization
@@ -51,11 +51,11 @@ class ReportingContext:
         ]
 
     def get_primary_model_qs(self):
-        if self.report.primary_dimension == 'platform':
+        if self.report.primary_dimension == "platform":
             return Platform.objects.filter(organizationplatform__organization=self.organization)
         raise ValueError(f"Unsupported primary dimension: {self.report.primary_dimension}")
 
-    def get_stage_for_current_part(self, stage_id: str) -> 'ReportPartStage':
+    def get_stage_for_current_part(self, stage_id: str) -> "ReportPartStage":
         if self._current_part_id is None:
             raise ValueError("Current part not set, call `set_current_part()` first")
         return self.report.stages_by_part_and_id[self._current_part_id].get(stage_id)
@@ -82,11 +82,11 @@ class ReportingContext:
                 return self.perform_computation(variable, source_name=source_name)
             if stage := self.get_stage_for_current_part(variable):
                 out = stage.report_data_.copy()
-                out['source_name'] = stage.name
+                out["source_name"] = stage.name
                 return out
             if source := self.report.get_source(variable):
                 out = source.report_data_.copy()
-                out['source_name'] = source.report_type
+                out["source_name"] = source.report_type
                 return out
             raise ValueError(f"Unknown variable: {variable}")
         if len(parsed_formula) == 3:
@@ -103,8 +103,8 @@ class ReportingContext:
                 # the following uses dataframe operations, so the references to the `source_name`
                 # column cannot be used in an f-string (it would be evaluated on the whole dataframe
                 # level instead of on each row, resulting in a Series instead of a string)
-                out['source_name'] = source_name or (
-                    left_data['source_name'] + ' - ' + right_data['source_name']
+                out["source_name"] = source_name or (
+                    left_data["source_name"] + " - " + right_data["source_name"]
                 )
                 out[self.covered_months] = (
                     left_data[self.covered_months] - right_data[self.covered_months]
@@ -122,20 +122,20 @@ class ReportingContext:
                 # the following uses dataframe operations, so the references to the `source_name`
                 # column cannot be used in an f-string (it would be evaluated on the whole dataframe
                 # level instead of on each row, resulting in a Series instead of a string)
-                out['source_name'] = source_name or (
-                    left_data['source_name'] + ' + ' + right_data['source_name']
+                out["source_name"] = source_name or (
+                    left_data["source_name"] + " + " + right_data["source_name"]
                 )
                 return out
             raise ValueError(f"Unsupported operator: {op}")
         raise ValueError(f"Unsupported formula: {parsed_formula}")
 
-    def df_as_result_rows(self, df: pd.DataFrame) -> List['ResultRow']:
+    def df_as_result_rows(self, df: pd.DataFrame) -> List["ResultRow"]:
         """
         Converts a dataframe to a format suitable for the frontend.
         """
         return [
             ResultRow(
-                source_name=row['source_name'],
+                source_name=row["source_name"],
                 primary_pk=idx,
                 primary_obj=self.primary_id_to_obj[idx],
                 monthly_data={month: row[month] for month in self.covered_months},
@@ -169,7 +169,7 @@ class Report:
             s.validated_data["description"],
             info_url=s.validated_data.get("infoUrl"),
         )
-        for value in s.validated_data['dataSources']:
+        for value in s.validated_data["dataSources"]:
             data_source = ReportDataSource.from_dict(value, out)
             out.register_source(data_source)
             if data_source.fallback_for:
@@ -179,7 +179,7 @@ class Report:
                     raise ValidationError(
                         f"Could not resolve fallbackFor: {data_source.fallback_for}"
                     ) from None
-        for part_def in s.validated_data['parts']:
+        for part_def in s.validated_data["parts"]:
             part = ReportPart.from_dict(part_def, out)
             out.parts.append(part)
             for stage in part.stages:
@@ -188,18 +188,18 @@ class Report:
                 stage.get_used_data_sources()
         return out
 
-    def register_source(self, source: 'ReportDataSource'):
+    def register_source(self, source: "ReportDataSource"):
         if source.id in self.sources_by_id:
             raise ValidationError(f"Duplicate source ID: {source.id}")
         self.sources_by_id[source.id] = source
 
-    def get_source(self, source_id: str) -> 'ReportDataSource':
+    def get_source(self, source_id: str) -> "ReportDataSource":
         try:
             return self.sources_by_id[source_id]
         except KeyError:
             raise ValueError(f"Unknown source ID: {source_id}") from None
 
-    def register_stage(self, part_id: str, stage: 'ReportPartStage'):
+    def register_stage(self, part_id: str, stage: "ReportPartStage"):
         if stage.id in self.stages_by_part_and_id.get(part_id, {}):
             raise ValidationError(f"Duplicate stage ID: '{stage.id}' for part '{part_id}'")
         if stage.id in self.sources_by_id:
@@ -235,7 +235,7 @@ class Report:
         return ReportingContext(self, organization, start_date, end_date)
 
     @property
-    def sorted_sources(self) -> ['ReportDataSource']:
+    def sorted_sources(self) -> ["ReportDataSource"]:
         # sort data sources by dependency
         source_ids = [id_ for id_, ds in self.sources_by_id.items() if ds.fallback_for is None]
         while len(source_ids) < len(self.sources_by_id):
@@ -299,7 +299,7 @@ class ReportPart:
         self.stages: List["ReportPartStage"] = []
 
     @classmethod
-    def from_dict(cls, definition: dict, report: 'Report') -> 'ReportPart':
+    def from_dict(cls, definition: dict, report: "Report") -> "ReportPart":
         s = ReportPartSerializer(data=definition)
         s.is_valid(raise_exception=True)
         out = cls(
@@ -336,7 +336,7 @@ class ReportPartStage:
         self.report_data_: Optional[pd.DataFrame] = None
 
     @classmethod
-    def from_dict(cls, definition: dict, report: Report, part: ReportPart) -> 'ReportPartStage':
+    def from_dict(cls, definition: dict, report: Report, part: ReportPart) -> "ReportPartStage":
         s = ReportPartStageSerializer(data=definition)
         s.is_valid(raise_exception=True)
         return cls(
@@ -393,12 +393,12 @@ class ReportDataSource:
         s.is_valid(raise_exception=True)
         return cls(
             report,
-            id_=s.validated_data['id'],
-            name=s.validated_data['name'],
-            report_type=s.validated_data['reportType'],
-            metric=s.validated_data.get('metric'),
-            filters=s.validated_data.get('filters'),
-            fallback_for=s.validated_data.get('fallbackFor'),
+            id_=s.validated_data["id"],
+            name=s.validated_data["name"],
+            report_type=s.validated_data["reportType"],
+            metric=s.validated_data.get("metric"),
+            filters=s.validated_data.get("filters"),
+            fallback_for=s.validated_data.get("fallbackFor"),
         )
 
     @property
@@ -420,19 +420,19 @@ class ReportDataSource:
             return None
 
     def slicer_result_to_df(self, result: [dict]) -> pd.DataFrame:
-        pk_to_row = {row['pk']: row for row in result}
+        pk_to_row = {row["pk"]: row for row in result}
         data = []
         for _i, pk in enumerate(self.report.context.sorted_primary_ids):
             row = pk_to_row.get(pk, {})
             data.append(
                 [
                     self.report_type,
-                    *[row.get(f'grp-{month}', 0) for month in self.report.context.covered_months],
+                    *[row.get(f"grp-{month}", 0) for month in self.report.context.covered_months],
                 ]
             )
         out = pd.DataFrame(
             data,
-            columns=['source_name', *self.report.context.covered_months],
+            columns=["source_name", *self.report.context.covered_months],
             index=self.report.context.sorted_primary_ids,
         )
         out[self.report.total_col] = out[self.report.context.covered_months].sum(axis=1)
@@ -462,12 +462,12 @@ class ReportDataSource:
             return
         slicer.add_filter(ExplicitDimensionFilter(self.report.primary_dimension, primary_ids))
         slicer.add_filter(
-            DateDimensionFilter('date', context.start_date, context.end_date), add_group=True
+            DateDimensionFilter("date", context.start_date, context.end_date), add_group=True
         )
-        slicer.add_filter(ForeignKeyDimensionFilter('organization', [context.organization]))
-        slicer.add_filter(ForeignKeyDimensionFilter('report_type', [rt_obj.pk]))
+        slicer.add_filter(ForeignKeyDimensionFilter("organization", [context.organization]))
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", [rt_obj.pk]))
         if self.metric:
-            slicer.add_filter(ForeignKeyDimensionFilter('metric', [metric_obj.pk]))
+            slicer.add_filter(ForeignKeyDimensionFilter("metric", [metric_obj.pk]))
         for dim_name, values in self.filters.items():
             if type(values) not in (list, tuple, set):
                 values = [values]
@@ -475,7 +475,7 @@ class ReportDataSource:
                 dim_obj = rt_obj.dimension_by_attr_name(dim_attr)
                 dim_values = DimensionText.objects.filter(
                     dimension=dim_obj, text__in=values
-                ).values_list('pk', flat=True)
+                ).values_list("pk", flat=True)
                 slicer.add_filter(ExplicitDimensionFilter(dim_attr, dim_values))
             else:
                 raise ValueError(f'Unknown dimension "{dim_name}" for rt "{self.report_type}"')
@@ -484,8 +484,8 @@ class ReportDataSource:
         out = []
         self.used_ids_ = set()
         for row in slicer.get_data():
-            if row['_total'] > 0:
-                self.used_ids_.add(row['pk'])
+            if row["_total"] > 0:
+                self.used_ids_.add(row["pk"])
             out.append(row)
         self.report_data_ = self.slicer_result_to_df(out)
 
@@ -500,11 +500,11 @@ class ResultRow:
 
     def as_dict(self) -> dict:
         return {
-            'primary_pk': self.primary_pk,
-            'primary_obj': self.primary_obj.short_name,
-            'monthly_data': {
-                key.strftime('%Y-%m'): value for key, value in self.monthly_data.items()
+            "primary_pk": self.primary_pk,
+            "primary_obj": self.primary_obj.short_name,
+            "monthly_data": {
+                key.strftime("%Y-%m"): value for key, value in self.monthly_data.items()
             },
-            'total': self.total,
-            'source_name': self.source_name,
+            "total": self.total,
+            "source_name": self.source_name,
         }

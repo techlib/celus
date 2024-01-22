@@ -4,32 +4,32 @@ from django.db import migrations, models
 
 
 def update_no_data(apps, schema_editor):
-    SushiFetchAttempt = apps.get_model('sushi', 'SushiFetchAttempt')
-    SushiFetchAttempt.objects.filter(error_code__in=['3030', '3031']).update(status="no_data")
+    SushiFetchAttempt = apps.get_model("sushi", "SushiFetchAttempt")
+    SushiFetchAttempt.objects.filter(error_code__in=["3030", "3031"]).update(status="no_data")
 
 
 class Migration(migrations.Migration):
-    dependencies = [('sushi', '0046_fetchintentions_for_fetch_attempts')]
+    dependencies = [("sushi", "0046_fetchintentions_for_fetch_attempts")]
 
     operations = [
         migrations.AlterField(
-            model_name='sushifetchattempt',
-            name='status',
+            model_name="sushifetchattempt",
+            name="status",
             field=models.CharField(
                 choices=[
-                    ('initial', 'Initial'),
-                    ('downloading', 'Downloading'),
-                    ('importing', 'Importing'),
-                    ('success', 'Success'),
-                    ('unprocessed', 'Unprocessed'),
-                    ('no_data', 'No data'),
-                    ('import_failed', 'Import failed'),
-                    ('parsing_failed', 'Parsing failed'),
-                    ('download_failed', 'Download failed'),
-                    ('credentails_broken', 'Broken credentials'),
-                    ('canceled', 'Canceled'),
+                    ("initial", "Initial"),
+                    ("downloading", "Downloading"),
+                    ("importing", "Importing"),
+                    ("success", "Success"),
+                    ("unprocessed", "Unprocessed"),
+                    ("no_data", "No data"),
+                    ("import_failed", "Import failed"),
+                    ("parsing_failed", "Parsing failed"),
+                    ("download_failed", "Download failed"),
+                    ("credentails_broken", "Broken credentials"),
+                    ("canceled", "Canceled"),
                 ],
-                default='initial',
+                default="initial",
                 max_length=20,
             ),
         ),

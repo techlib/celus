@@ -5,30 +5,30 @@ from django.db import migrations
 
 
 def create_multimedia_interest_group(apps, schema_editor):
-    InterestGroup = apps.get_model('logs', 'InterestGroup')
-    ReportType = apps.get_model('logs', 'ReportType')
-    ReportInterestMetric = apps.get_model('logs', 'ReportInterestMetric')
-    Metric = apps.get_model('logs', 'Metric')
-    Dimension = apps.get_model('logs', 'Dimension')
-    DimensionText = apps.get_model('logs', 'DimensionText')
-    defaults = {'name_en': 'Multimedia', 'position': 3, 'important': True}
-    if 'cs' in settings.LANGUAGES:
-        defaults['name_cs'] = 'Multimedia'
-    igm, _ = InterestGroup.objects.get_or_create(short_name='multimedia', defaults=defaults)
+    InterestGroup = apps.get_model("logs", "InterestGroup")
+    ReportType = apps.get_model("logs", "ReportType")
+    ReportInterestMetric = apps.get_model("logs", "ReportInterestMetric")
+    Metric = apps.get_model("logs", "Metric")
+    Dimension = apps.get_model("logs", "Dimension")
+    DimensionText = apps.get_model("logs", "DimensionText")
+    defaults = {"name_en": "Multimedia", "position": 3, "important": True}
+    if "cs" in settings.LANGUAGES:
+        defaults["name_cs"] = "Multimedia"
+    igm, _ = InterestGroup.objects.get_or_create(short_name="multimedia", defaults=defaults)
     # the DimensionText would normally be created when some interest is
     # computed, but if there is none, we need to create it here for the UI
     # to work correctly
-    dim1, _ = Dimension.objects.get_or_create(short_name='Interest_Type')
+    dim1, _ = Dimension.objects.get_or_create(short_name="Interest_Type")
     dim_text, _ = DimensionText.objects.get_or_create(
         dimension=dim1,
         text=igm.short_name,
-        defaults={'text_local_en': igm.name_en, 'text_local_cs': igm.name_cs},
+        defaults={"text_local_en": igm.name_en, "text_local_cs": igm.name_cs},
     )
     try:
-        ir_m1 = ReportType.objects.get(short_name='IR_M1')
+        ir_m1 = ReportType.objects.get(short_name="IR_M1")
         ir_m1.default_platform_interest = True
         ir_m1.save()
-        tir = Metric.objects.get(short_name='Total_Item_Requests', source__isnull=True)
+        tir = Metric.objects.get(short_name="Total_Item_Requests", source__isnull=True)
         ReportInterestMetric.objects.get_or_create(
             report_type=ir_m1, metric=tir, interest_group=igm
         )
@@ -37,9 +37,9 @@ def create_multimedia_interest_group(apps, schema_editor):
         # Also, it is not necessary to run it in a migration, because we may
         # want to adjust the timing of the recomputation
         print(
-            'Multimedia interest group created, now you should run:\n'
-            'python manage.py recompute_interest -r IR_M1\n'
-            'python manage.py recompute_materialized_reports -b interest'
+            "Multimedia interest group created, now you should run:\n"
+            "python manage.py recompute_interest -r IR_M1\n"
+            "python manage.py recompute_materialized_reports -b interest"
         )
     except ObjectDoesNotExist:
         pass
@@ -47,8 +47,8 @@ def create_multimedia_interest_group(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0074_mdu_method'),
-        ('publications', '0037_add_ir_m1_interest_to_all_platforms'),
+        ("logs", "0074_mdu_method"),
+        ("publications", "0037_add_ir_m1_interest_to_all_platforms"),
     ]
 
     operations = [

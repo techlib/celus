@@ -30,21 +30,21 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'pk',
-            'username',
-            'ext_id',
-            'first_name',
-            'last_name',
-            'email',
-            'language',
-            'is_user_of_master_organization',
-            'is_admin_of_master_organization',
-            'is_superuser',
-            'is_staff',
-            'email_verification_status',
-            'email_verification_sent',
-            'extra_data',
-            'impersonator',
+            "pk",
+            "username",
+            "ext_id",
+            "first_name",
+            "last_name",
+            "email",
+            "language",
+            "is_user_of_master_organization",
+            "is_admin_of_master_organization",
+            "is_superuser",
+            "is_staff",
+            "email_verification_status",
+            "email_verification_sent",
+            "extra_data",
+            "impersonator",
         )
 
     def get_email_verification_status(self, obj) -> str:
@@ -64,7 +64,7 @@ class UserSerializer(ModelSerializer):
 class UserSimpleSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ('pk', 'username', 'ext_id', 'first_name', 'last_name', 'email')
+        fields = ("pk", "username", "ext_id", "first_name", "last_name", "email")
 
 
 class UserExtraDataSerializer(Serializer):
@@ -77,14 +77,14 @@ class TaskProgressSerializer(ModelSerializer):
     class Meta:
         model = TaskProgress
         fields = (
-            'task_id',
-            'status',
-            'task_name',
-            'worker',
-            'date_created',
-            'date_done',
-            'progress_total',
-            'progress_current',
+            "task_id",
+            "status",
+            "task_name",
+            "worker",
+            "date_created",
+            "date_done",
+            "progress_total",
+            "progress_current",
         )
 
 
@@ -93,12 +93,12 @@ class UserOrganizationSerializer(ModelSerializer):
 
     class Meta:
         model = UserOrganization
-        fields = ('organization', 'is_admin')
+        fields = ("organization", "is_admin")
 
 
 class AccessibleUsersSerializer(ModelSerializer):
     organizations = UserOrganizationSerializer(
-        source='userorganization_set', many=True, read_only=True
+        source="userorganization_set", many=True, read_only=True
     )
 
     is_admin = BooleanField(write_only=True, required=False)  # neccessary for post
@@ -109,38 +109,38 @@ class AccessibleUsersSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'pk',
-            'first_name',
-            'last_name',
-            'username',
-            'email',
-            'is_superuser',
-            'organizations',
-            'is_admin',
-            'organization',
-            'is_admin_of_master_organization',
+            "pk",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "is_superuser",
+            "organizations",
+            "is_admin",
+            "organization",
+            "is_admin_of_master_organization",
         )
 
     def create(self, validated_data):
-        admin_rights = validated_data.pop('is_admin')
-        organization = validated_data.pop('organization')
+        admin_rights = validated_data.pop("is_admin")
+        organization = validated_data.pop("organization")
 
         user = User.objects.create(**validated_data)
         UserOrganization.objects.create(user=user, organization=organization, is_admin=admin_rights)
         return user
 
     def update(self, instance, validated_data):
-        instance.email = validated_data.get('email', instance.email)
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
-        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get("email", instance.email)
+        instance.first_name = validated_data.get("first_name", instance.first_name)
+        instance.last_name = validated_data.get("last_name", instance.last_name)
+        instance.username = validated_data.get("username", instance.username)
         instance.save()
 
-        if 'organization' in validated_data:
-            admin_rights = validated_data.pop('is_admin')
-            organization = validated_data.pop('organization')
+        if "organization" in validated_data:
+            admin_rights = validated_data.pop("is_admin")
+            organization = validated_data.pop("organization")
             UserOrganization.objects.update_or_create(
-                user=instance, organization=organization, defaults={'is_admin': admin_rights}
+                user=instance, organization=organization, defaults={"is_admin": admin_rights}
             )
 
         return instance

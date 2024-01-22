@@ -7,9 +7,9 @@ from publications.logic.validation import normalize_issn
 
 
 def renormalize_issns(apps, schema_editor):
-    Title = apps.get_model('publications', 'Title')
+    Title = apps.get_model("publications", "Title")
     for title in Title.objects.filter(
-        Q(issn__regex=r'^\d+[xX]?$') | Q(eissn__regex=r'^\d+[xX]?$')
+        Q(issn__regex=r"^\d+[xX]?$") | Q(eissn__regex=r"^\d+[xX]?$")
     ).iterator():
         title.issn = normalize_issn(title.issn)
         title.eissn = normalize_issn(title.eissn)
@@ -17,6 +17,6 @@ def renormalize_issns(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0033_platform_duplicates')]
+    dependencies = [("publications", "0033_platform_duplicates")]
 
     operations = [migrations.RunPython(renormalize_issns, migrations.RunPython.noop)]

@@ -24,20 +24,20 @@ class Exectime:
 
 
 class Command(BaseCommand):
-    help = 'Compares output pycounter and nibbler on all available tsv/csv/json files'
+    help = "Compares output pycounter and nibbler on all available tsv/csv/json files"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--directory', dest='directory', help='directory where to look', default=None, type=Path
+            "--directory", dest="directory", help="directory where to look", default=None, type=Path
         )
         parser.add_argument(
-            '--regex',
-            dest='regex',
-            help='regular expression to extract counter report type name from a file',
+            "--regex",
+            dest="regex",
+            help="regular expression to extract counter report type name from a file",
             default="^4_([^_]+)_",
         )
         parser.add_argument(
-            '--disable-debug-logs', help='disables debug logs', action="store_true", default=False
+            "--disable-debug-logs", help="disables debug logs", action="store_true", default=False
         )
 
     def handle(self, *args, **options):
@@ -104,7 +104,7 @@ class Command(BaseCommand):
         int,
         typing.Optional[typing.Tuple[typing.List[str], typing.List[str]]],
     ]:
-        with path.open('rb') as f:
+        with path.open("rb") as f:
             is_json = SushiFetchAttempt.file_is_json_s(f)
 
         pycounter_output, pycounter_time = self.parse_pycounter(path, counter_report_type, is_json)

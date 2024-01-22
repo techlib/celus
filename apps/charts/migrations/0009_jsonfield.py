@@ -4,17 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('charts', '0008_datasource_set_null')]
+    dependencies = [("charts", "0008_datasource_set_null")]
 
     operations = [
         migrations.AlterField(
-            model_name='dimensionfilter',
-            name='allowed_values',
+            model_name="dimensionfilter",
+            name="allowed_values",
             field=models.JSONField(blank=True, default=list),
         ),
         migrations.AlterField(
-            model_name='reportdataview',
-            name='metric_allowed_values',
+            model_name="reportdataview",
+            name="metric_allowed_values",
             field=models.JSONField(blank=True, default=list),
         ),
     ]

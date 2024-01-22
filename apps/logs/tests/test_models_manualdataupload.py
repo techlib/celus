@@ -89,24 +89,24 @@ C,Metric2,4,8,12,18
 
         assert mdu.related_months_data() == (
             {
-                "2020-01-01": {'count': 3, 'sum': 5},
-                "2020-02-01": {'count': 5, 'sum': 16},
-                "2020-03-01": {'count': 7, 'sum': 33},
-                "2020-04-01": {'count': 9, 'sum': 56},
-                "2020-05-01": {'count': 11, 'sum': 85},
-                "2020-06-01": {'count': 13, 'sum': 120},
-                "2020-07-01": {'count': 15, 'sum': 161},
-                "2020-08-01": {'count': 17, 'sum': 208},
-                "2020-09-01": {'count': 19, 'sum': 261},
-                "2020-10-01": {'count': 21, 'sum': 320},
-                "2020-11-01": {'count': 23, 'sum': 385},
-                "2020-12-01": {'count': 25, 'sum': 456},
-                "2021-01-01": {'count': 7, 'sum': 29},
-                "2021-02-01": {'count': 9, 'sum': 74},
-                "2021-03-01": {'count': 11, 'sum': 135},
-                "2021-04-01": {'count': 13, 'sum': 212},
-                "2021-05-01": {'count': 15, 'sum': 305},
-                "2021-06-01": {'count': 17, 'sum': 414},
+                "2020-01-01": {"count": 3, "sum": 5},
+                "2020-02-01": {"count": 5, "sum": 16},
+                "2020-03-01": {"count": 7, "sum": 33},
+                "2020-04-01": {"count": 9, "sum": 56},
+                "2020-05-01": {"count": 11, "sum": 85},
+                "2020-06-01": {"count": 13, "sum": 120},
+                "2020-07-01": {"count": 15, "sum": 161},
+                "2020-08-01": {"count": 17, "sum": 208},
+                "2020-09-01": {"count": 19, "sum": 261},
+                "2020-10-01": {"count": 21, "sum": 320},
+                "2020-11-01": {"count": 23, "sum": 385},
+                "2020-12-01": {"count": 25, "sum": 456},
+                "2021-01-01": {"count": 7, "sum": 29},
+                "2021-02-01": {"count": 9, "sum": 74},
+                "2021-03-01": {"count": 11, "sum": 135},
+                "2021-04-01": {"count": 13, "sum": 212},
+                "2021-05-01": {"count": 15, "sum": 305},
+                "2021-06-01": {"count": 17, "sum": 414},
             },
             ["metric1", "metric2"],
         )
@@ -116,29 +116,29 @@ C,Metric2,4,8,12,18
 
         # Compare month data
         assert preflight["months"] == {
-            '2021-06-01': {
-                'new': {'count': 6, 'sum': 10},
-                'this_month': {'count': 17, 'sum': 414},
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 13, 'sum': 120},
+            "2021-06-01": {
+                "new": {"count": 6, "sum": 10},
+                "this_month": {"count": 17, "sum": 414},
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 13, "sum": 120},
             },
-            '2021-07-01': {
-                'new': {'count': 6, 'sum': 26},
-                'this_month': None,
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 15, 'sum': 161},
+            "2021-07-01": {
+                "new": {"count": 6, "sum": 26},
+                "this_month": None,
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 15, "sum": 161},
             },
-            '2021-08-01': {
-                'new': {'count': 6, 'sum': 42},
-                'this_month': None,
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 17, 'sum': 208},
+            "2021-08-01": {
+                "new": {"count": 6, "sum": 42},
+                "this_month": None,
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 17, "sum": 208},
             },
-            '2022-01-01': {
-                'new': {'count': 6, 'sum': 93},
-                'this_month': None,
-                'prev_year_avg': None,
-                'prev_year_month': {'count': 7, 'sum': 29},
+            "2022-01-01": {
+                "new": {"count": 6, "sum": 93},
+                "this_month": None,
+                "prev_year_avg": None,
+                "prev_year_month": {"count": 7, "sum": 29},
             },
         }
 
@@ -163,9 +163,7 @@ C,Metric3,{org.short_name},3,7,11,17
 C,Metric2,{org.short_name},4,8,12,18
 A,Metric1,{org2.short_name},0,0,0,19
 A,Metric1,unresolved,0,0,0,20
-""".encode(
-            "utf-8"
-        )
+""".encode("utf-8")
 
         # prepare some import batches 2020
         for i in range(1, 13):
@@ -232,7 +230,7 @@ A,Metric1,unresolved,0,0,0,20
                     date=f"2021-{i:02d}-01", organization=org2, platform=platform
                 ).count()
                 == 10
-            ), '10 titles for org2'
+            ), "10 titles for org2"
 
         # prepare MDU
         mdu = ManualDataUploadFactory(
@@ -250,56 +248,56 @@ A,Metric1,unresolved,0,0,0,20
 
         months, metrics = mdu.related_months_data()
         assert months == {
-            "2020-01-01": {'count': 3, 'sum': 5},
-            "2020-02-01": {'count': 5, 'sum': 16},
-            "2020-03-01": {'count': 7, 'sum': 33},
-            "2020-04-01": {'count': 9, 'sum': 56},
-            "2020-05-01": {'count': 11, 'sum': 85},
-            "2020-06-01": {'count': 13, 'sum': 120},
-            "2020-07-01": {'count': 15, 'sum': 161},
-            "2020-08-01": {'count': 17, 'sum': 208},
-            "2020-09-01": {'count': 19, 'sum': 261},
-            "2020-10-01": {'count': 21, 'sum': 320},
-            "2020-11-01": {'count': 23, 'sum': 385},
-            "2020-12-01": {'count': 25, 'sum': 456},
-            "2021-01-01": {'count': 7 + 10, 'sum': 29 + 10},  # 10 titles for org2
-            "2021-02-01": {'count': 9 + 10, 'sum': 74 + 10 * 2},
-            "2021-03-01": {'count': 11 + 10, 'sum': 135 + 10 * 3},
-            "2021-04-01": {'count': 13 + 10, 'sum': 212 + 10 * 4},
-            "2021-05-01": {'count': 15 + 10, 'sum': 305 + 10 * 5},
-            "2021-06-01": {'count': 17 + 10, 'sum': 414 + 10 * 6},
+            "2020-01-01": {"count": 3, "sum": 5},
+            "2020-02-01": {"count": 5, "sum": 16},
+            "2020-03-01": {"count": 7, "sum": 33},
+            "2020-04-01": {"count": 9, "sum": 56},
+            "2020-05-01": {"count": 11, "sum": 85},
+            "2020-06-01": {"count": 13, "sum": 120},
+            "2020-07-01": {"count": 15, "sum": 161},
+            "2020-08-01": {"count": 17, "sum": 208},
+            "2020-09-01": {"count": 19, "sum": 261},
+            "2020-10-01": {"count": 21, "sum": 320},
+            "2020-11-01": {"count": 23, "sum": 385},
+            "2020-12-01": {"count": 25, "sum": 456},
+            "2021-01-01": {"count": 7 + 10, "sum": 29 + 10},  # 10 titles for org2
+            "2021-02-01": {"count": 9 + 10, "sum": 74 + 10 * 2},
+            "2021-03-01": {"count": 11 + 10, "sum": 135 + 10 * 3},
+            "2021-04-01": {"count": 13 + 10, "sum": 212 + 10 * 4},
+            "2021-05-01": {"count": 15 + 10, "sum": 305 + 10 * 5},
+            "2021-06-01": {"count": 17 + 10, "sum": 414 + 10 * 6},
         }
         assert metrics == ["metric1", "metric2"]
 
         # Generate preflight
         preflight = custom_import_preflight_check(mdu)
-        assert len(preflight['organizations']) == 3
+        assert len(preflight["organizations"]) == 3
 
         # Compare month data
         assert preflight["months"] == {
-            '2021-06-01': {
-                'new': {'count': 8, 'sum': 10},
-                'this_month': {'count': 17 + 10, 'sum': 414 + 10 * 6},
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 13, 'sum': 120},
+            "2021-06-01": {
+                "new": {"count": 8, "sum": 10},
+                "this_month": {"count": 17 + 10, "sum": 414 + 10 * 6},
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 13, "sum": 120},
             },
-            '2021-07-01': {
-                'new': {'count': 8, 'sum': 26},
-                'this_month': None,
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 15, 'sum': 161},
+            "2021-07-01": {
+                "new": {"count": 8, "sum": 26},
+                "this_month": None,
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 15, "sum": 161},
             },
-            '2021-08-01': {
-                'new': {'count': 8, 'sum': 42},
-                'this_month': None,
-                'prev_year_avg': {'sum': 176, 'count': 14},
-                'prev_year_month': {'count': 17, 'sum': 208},
+            "2021-08-01": {
+                "new": {"count": 8, "sum": 42},
+                "this_month": None,
+                "prev_year_avg": {"sum": 176, "count": 14},
+                "prev_year_month": {"count": 17, "sum": 208},
             },
-            '2022-01-01': {
-                'new': {'count': 8, 'sum': 93 + 19 + 20},
-                'this_month': None,
-                'prev_year_avg': None,
-                'prev_year_month': {'count': 7 + 10, 'sum': 29 + 10},
+            "2022-01-01": {
+                "new": {"count": 8, "sum": 93 + 19 + 20},
+                "this_month": None,
+                "prev_year_avg": None,
+                "prev_year_month": {"count": 7 + 10, "sum": 29 + 10},
             },
         }
 
@@ -345,9 +343,7 @@ B,Metric1,0,0,0,15
 B,Metric3,2,6,10,16
 C,Metric3,3,7,11,17
 C,Metric2,4,8,12,18
-""".encode(
-            "utf-8"
-        )
+""".encode("utf-8")
 
         mdu = ManualDataUploadFactory(
             user=users["admin1"],

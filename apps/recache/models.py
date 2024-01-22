@@ -50,7 +50,7 @@ class CachedQueryQuerySet(models.QuerySet):
         queryset,
         timeout: timedelta = DEFAULT_TIMEOUT,
         lifetime: timedelta = DEFAULT_LIFETIME,
-        origin='',
+        origin="",
         duration=None,
     ):
         qs_hash = CachedQuery.compute_queryset_hash(queryset)
@@ -82,7 +82,7 @@ class CachedQueryQuerySet(models.QuerySet):
         # therefore we use the `valid_until_db` attr
         return self.annotate(
             valid_until_db=ExpressionWrapper(
-                F('last_updated') + F('timeout'), output_field=DateTimeField()
+                F("last_updated") + F("timeout"), output_field=DateTimeField()
             )
         ).filter(valid_until_db__lt=now())
 
@@ -93,7 +93,7 @@ class CachedQueryQuerySet(models.QuerySet):
         """
         return self.annotate(
             live_until=ExpressionWrapper(
-                F('last_queried') + F('lifetime'), output_field=DateTimeField()
+                F("last_queried") + F("lifetime"), output_field=DateTimeField()
             )
         ).filter(live_until__lt=now())
 
@@ -107,48 +107,48 @@ class CachedQuery(models.Model):
     )
     model = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     query_hash = models.CharField(
-        max_length=BLAKE_HASH_SIZE * 2, help_text='Hash of the query string'
+        max_length=BLAKE_HASH_SIZE * 2, help_text="Hash of the query string"
     )
     query_string = models.TextField()
-    queryset_pickle = models.BinaryField(help_text='Pickle of the evaluated queryset with results')
+    queryset_pickle = models.BinaryField(help_text="Pickle of the evaluated queryset with results")
     django_version = models.CharField(
-        max_length=16, help_text='Version of Django that created the last pickle'
+        max_length=16, help_text="Version of Django that created the last pickle"
     )
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(
-        default=now, help_text='Last time queryset_pickle was updated'
+        default=now, help_text="Last time queryset_pickle was updated"
     )
     last_queried = models.DateTimeField(
-        default=now, help_text='Last time someone queried this data - read the queryset'
+        default=now, help_text="Last time someone queried this data - read the queryset"
     )
     timeout = models.DurationField(
-        default=DEFAULT_TIMEOUT, help_text='Number of seconds until the queryset it re-evaluated'
+        default=DEFAULT_TIMEOUT, help_text="Number of seconds until the queryset it re-evaluated"
     )
     lifetime = models.DurationField(
         default=DEFAULT_LIFETIME,
-        help_text='Number of seconds from last querying after which the cache will be removed',
+        help_text="Number of seconds from last querying after which the cache will be removed",
     )
     hit_count = models.PositiveIntegerField(
-        default=0, help_text='The number of times cache was successfully used'
+        default=0, help_text="The number of times cache was successfully used"
     )
     query_durations = ArrayField(
         models.FloatField(),
         default=list,
-        help_text='Each item is a duration of the query in seconds. It is updated for each renewal',
+        help_text="Each item is a duration of the query in seconds. It is updated for each renewal",
     )
 
     objects = CachedQueryQuerySet.as_manager()
 
     class Meta:
-        verbose_name_plural = 'Cached queries'
-        unique_together = [('query_hash', 'django_version')]
+        verbose_name_plural = "Cached queries"
+        unique_together = [("query_hash", "django_version")]
 
     def __str__(self):
         return self.query_hash
 
     @classmethod
     def compute_queryset_hash(cls, queryset):
-        return blake2b(str(queryset.query).encode('utf-8'), digest_size=BLAKE_HASH_SIZE).hexdigest()
+        return blake2b(str(queryset.query).encode("utf-8"), digest_size=BLAKE_HASH_SIZE).hexdigest()
 
     @property
     def valid_until(self):
@@ -184,7 +184,7 @@ class CachedQuery(models.Model):
             queryset = self.get_fresh_queryset()
         except Exception as exc:
             if catch_refresh_errors:
-                raise RenewalError(f'Could not renew queryset because of error: {exc}') from None
+                raise RenewalError(f"Could not renew queryset because of error: {exc}") from None
             raise
 
         start = monotonic()
@@ -202,7 +202,7 @@ class CachedQuery(models.Model):
 
             # we restore the original django version in order not to pollute the object at hand
             self.django_version = orig_django_version
-            raise RenewalError('CachedQuery with current django version already exists') from None
+            raise RenewalError("CachedQuery with current django version already exists") from None
 
     def get_fresh_queryset(self):
         """
@@ -220,8 +220,8 @@ class CachedQuery(models.Model):
         """
         if record_hit:
             self.last_queried = now()
-            self.hit_count = F('hit_count') + 1
-            self.save(update_fields=('last_queried', 'hit_count'))
+            self.hit_count = F("hit_count") + 1
+            self.save(update_fields=("last_queried", "hit_count"))
         return pickle.loads(self.queryset_pickle)
 
     @cached_property

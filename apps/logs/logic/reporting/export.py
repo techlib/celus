@@ -36,19 +36,19 @@ logger = logging.getLogger(__name__)
 
 
 class FlexibleDataExporter(ABC):
-    object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
+    object_remapped_dims = {"target": {"columns": ["name", "issn", "eissn", "isbn"]}}
     taggable_rows = {
-        'target': {'scope': TagScope.TITLE, 'related_attr': 'title'},
-        'platform': {'scope': TagScope.PLATFORM, 'related_attr': 'platform'},
-        'organization': {'scope': TagScope.ORGANIZATION, 'related_attr': 'organization'},
+        "target": {"scope": TagScope.TITLE, "related_attr": "title"},
+        "platform": {"scope": TagScope.PLATFORM, "related_attr": "platform"},
+        "organization": {"scope": TagScope.ORGANIZATION, "related_attr": "organization"},
     }
-    tag_delimiter = ' | '
+    tag_delimiter = " | "
 
     def __init__(
         self,
         slicer: FlexibleDataSlicer,
-        column_parts_separator: str = ' / ',
-        report_name: str = '',
+        column_parts_separator: str = " / ",
+        report_name: str = "",
         report_owner=None,
         include_tags: bool = False,  # tag column will be added to the report
         include_row_totals: bool = False,  # row totals will be added to the report
@@ -60,12 +60,12 @@ class FlexibleDataExporter(ABC):
         self._include_tags = include_tags
         self.include_row_totals = include_row_totals
         if self.include_row_totals and self.slicer.trend_mode:
-            logger.warning('Row totals are not supported in trend mode')
+            logger.warning("Row totals are not supported in trend mode")
             self.include_row_totals = False
         self.include_col_totals = include_col_totals
         if self.include_tags and not self.report_owner:
             raise ValueError(
-                'report_owner must be set if include_tags is True because tags are user-specific'
+                "report_owner must be set if include_tags is True because tags are user-specific"
             )
 
         self.involved_report_types = self.slicer.involved_report_types()
@@ -76,7 +76,7 @@ class FlexibleDataExporter(ABC):
         # how the primary dimension is called in the query output
         self.prim_dim_key = self.slicer.primary_dimension
         if self.remapped_prim_dim and not self.explicit_prim_dim:
-            self.prim_dim_key = 'pk'
+            self.prim_dim_key = "pk"
         self.prim_dim_remap = {}  # always prepared for one output batch
         self._fields = []
         # mapping between primary dim value and connected tags, used in batch processing
@@ -96,10 +96,10 @@ class FlexibleDataExporter(ABC):
     def effective_prim_dim(self) -> str:
         if not self.slicer.tag_roll_up:
             return self.slicer.primary_dimension
-        return 'tag'
+        return "tag"
 
     def remapped_keys(self):
-        return self.object_remapped_dims.get(self.effective_prim_dim, {}).get('columns', ['name'])
+        return self.object_remapped_dims.get(self.effective_prim_dim, {}).get("columns", ["name"])
 
     def prepare_primary_remap(self, batch: Set):
         """
@@ -107,27 +107,27 @@ class FlexibleDataExporter(ABC):
         """
         if self.remapped_prim_dim:
             if self.explicit_prim_dim:
-                log_memory('FlexibleDataExporter - before creating remap for explicit')
+                log_memory("FlexibleDataExporter - before creating remap for explicit")
                 self.prim_dim_remap = dict(
                     rec
                     for rec in DimensionText.objects.filter(
                         dimension=self.prim_dim, pk__in=batch
-                    ).values_list('pk', 'text')
+                    ).values_list("pk", "text")
                 )
-                log_memory('FlexibleDataExporter - after creating remap for explicit')
+                log_memory("FlexibleDataExporter - after creating remap for explicit")
             else:
-                log_memory('FlexibleDataExporter - before creating remap for implicit')
+                log_memory("FlexibleDataExporter - before creating remap for implicit")
                 self.prim_dim_remap = self._prepare_implicit_remap(
                     self.prim_dim.objects.filter(pk__in=batch)
                 )
-                log_memory('FlexibleDataExporter - after creating remap for implicit')
+                log_memory("FlexibleDataExporter - after creating remap for implicit")
 
     def _prepare_implicit_remap(self, qs: QuerySet) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
         with cachalot_disabled():
             remapped_keys = self.remapped_keys()
-            if 'name' in remapped_keys and hasattr(qs.model, 'short_name'):
-                remaps = list(qs.values('pk', 'short_name', *remapped_keys))
+            if "name" in remapped_keys and hasattr(qs.model, "short_name"):
+                remaps = list(qs.values("pk", "short_name", *remapped_keys))
                 for item in remaps:
                     if not item["name"].strip():
                         item["name"] = item["short_name"] or ""
@@ -136,7 +136,7 @@ class FlexibleDataExporter(ABC):
 
             return {
                 obj["pk"]: tuple(obj[k] for k in remapped_keys)
-                for obj in qs.values('pk', *remapped_keys)
+                for obj in qs.values("pk", *remapped_keys)
             }
 
     @abstractmethod
@@ -197,22 +197,22 @@ class FlexibleDataExporter(ABC):
             fields.append((key, key.upper()))
         # add tag column if needed
         if self.include_tags:
-            fields.append(('tags', _('Tags')))
+            fields.append(("tags", _("Tags")))
         # add total column if needed
         if self.include_row_totals:
-            fields.append(('_total', _('Row total')))
+            fields.append(("_total", _("Row total")))
         # trend mode has implicit columns
         if self.slicer.trend_mode:
             fields.append((self.slicer.COL_BASE, self.slicer.base_subset_filters[0].smart_str()))
             fields.append(
                 (self.slicer.COL_COMPARED, self.slicer.compared_subset_filters[0].smart_str())
             )
-            fields.append((self.slicer.COL_DIFF, pgettext('column name', 'Change')))
-            fields.append((self.slicer.COL_REL_DIFF, _('Change %')))
+            fields.append((self.slicer.COL_DIFF, pgettext("column name", "Change")))
+            fields.append((self.slicer.COL_REL_DIFF, _("Change %")))
         # fields from groups
         other_fields = []
         for key in row:
-            if key.startswith('grp-'):
+            if key.startswith("grp-"):
                 other_fields.append((key, self.remap_column_name(key)))
         # sort columns by their remapped name
         other_fields.sort(key=lambda x: (x[1], x[0]))
@@ -223,27 +223,27 @@ class FlexibleDataExporter(ABC):
 
         # we need to get the first row back into the data
         all_data = chain(
-            [row], data, [{'no_remap': True, **extra_row_fn()}] if extra_row_fn else []
+            [row], data, [{"no_remap": True, **extra_row_fn()}] if extra_row_fn else []
         )
         while batch := list(islice(all_data, batch_size)):
-            batch_pks = {obj[self.prim_dim_key] for obj in batch if not obj.get('no_remap')}
+            batch_pks = {obj[self.prim_dim_key] for obj in batch if not obj.get("no_remap")}
 
             # potentially prefetch tags
             if self.include_tags:
                 self._tag_cache = {}
                 tag_spec = self.taggable_rows[self.slicer.primary_dimension]
-                link_class = Tag.link_class_from_scope(tag_spec['scope'])
+                link_class = Tag.link_class_from_scope(tag_spec["scope"])
                 # the user does not want to see following tag classes in output
                 hidden_tag_classes = UserTagClass.objects.filter(
                     user=self.report_owner, hidden=True
-                ).values_list('tag_class_id', flat=True)
+                ).values_list("tag_class_id", flat=True)
                 for link in (
                     link_class.objects.filter(
                         tag__in=Tag.objects.user_accessible_tags(self.report_owner),
                         target_id__in=batch_pks,
                     )
                     .exclude(tag__tag_class__in=hidden_tag_classes)
-                    .select_related('tag', 'tag__tag_class')
+                    .select_related("tag", "tag__tag_class")
                 ):
                     self._tag_cache.setdefault(link.target_id, []).append(link.tag)
 
@@ -261,7 +261,7 @@ class FlexibleDataExporter(ABC):
     def writerow(self, writer, row):
         if self.include_tags:
             # add tag column
-            row['tags'] = self.tag_delimiter.join(
+            row["tags"] = self.tag_delimiter.join(
                 sorted(t.full_name for t in self._tag_cache.get(row[self.prim_dim_key], []))
             )
         if self.remapped_prim_dim:
@@ -308,11 +308,11 @@ class FlexibleDataExporter(ABC):
         # dim_model must be a Field, but let's make sure
         if isinstance(dim_model, Field):
             return str(dim_model.verbose_name)
-        raise ValueError(f'Could not resolve dimension: {dim_name}')
+        raise ValueError(f"Could not resolve dimension: {dim_name}")
 
     def dimension_remap(self, dimension, value):
         if value is None:
-            return '-'
+            return "-"
         explicit, remapped, dim_model = self.resolve_dimension(dimension)
         if remapped:
             if explicit:
@@ -334,11 +334,11 @@ class FlexibleDataExporter(ABC):
             if ref == self.slicer.primary_dimension and self.slicer.tag_roll_up:
                 return False, True, Tag
             return False, True, field.remote_field.model
-        elif ref.startswith('dim'):
+        elif ref.startswith("dim"):
             # we need the report types to deal with this
             if len(self.involved_report_types) != 1:
                 raise ValueError(
-                    'Exactly one report type should be active when resolving explicit dimensions'
+                    "Exactly one report type should be active when resolving explicit dimensions"
                 )
             rt: ReportType = self.involved_report_types[0]
             dim = rt.dimension_by_attr_name(ref)
@@ -347,35 +347,35 @@ class FlexibleDataExporter(ABC):
             return False, False, field
 
     def create_report_metadata(self, writer: ListWriter):
-        writer.writerow([_('Report name'), self.report_name])
-        writer.writerow([_('Created'), str(now())])
-        writer.writerow([_('Created for'), str(self.report_owner)])
-        writer.writerow([_('Celus version'), str(settings.CELUS_VERSION)])
-        writer.writerow(['', ''])
+        writer.writerow([_("Report name"), self.report_name])
+        writer.writerow([_("Created"), str(now())])
+        writer.writerow([_("Created for"), str(self.report_owner)])
+        writer.writerow([_("Celus version"), str(settings.CELUS_VERSION)])
+        writer.writerow(["", ""])
         writer.writerow(
             [
-                _('Split by'),
-                ', '.join(self.dimension_output_name(dim) for dim in self.slicer.split_by)
+                _("Split by"),
+                ", ".join(self.dimension_output_name(dim) for dim in self.slicer.split_by)
                 if self.slicer.split_by
-                else '-',
+                else "-",
             ]
         )
-        writer.writerow([_('Rows'), self.primary_column_name()])
+        writer.writerow([_("Rows"), self.primary_column_name()])
         # columns depend on the trend_mode
         if self.slicer.trend_mode:
             start = self.slicer.base_subset_filters[0].smart_str()
             end = self.slicer.compared_subset_filters[0].smart_str()
-            columns = _('Trend analysis: %(start)s vs %(end)s') % {'start': start, 'end': end}
+            columns = _("Trend analysis: %(start)s vs %(end)s") % {"start": start, "end": end}
         else:
-            columns = '; '.join(self.dimension_output_name(dim) for dim in self.slicer.group_by)
-        writer.writerow([_('Columns'), columns])
+            columns = "; ".join(self.dimension_output_name(dim) for dim in self.slicer.group_by)
+        writer.writerow([_("Columns"), columns])
         for i, fltr in enumerate(self.slicer.dimension_filters):
             writer.writerow(
-                [_('Applied filters') if i == 0 else '', self.slicer.filter_to_str(fltr)]
+                [_("Applied filters") if i == 0 else "", self.slicer.filter_to_str(fltr)]
             )
         # print out organizations for which the report was created in case they would be "hidden"
         # (not present in rows, cols, split_by or filter)
-        dim = 'organization'
+        dim = "organization"
         if (
             self.slicer.primary_dimension != dim
             and dim not in self.slicer.split_by
@@ -385,10 +385,10 @@ class FlexibleDataExporter(ABC):
             writer.writerow([])
             writer.writerow(
                 [
-                    _('Included organizations'),
+                    _("Included organizations"),
                     _(
-                        '(No organization filter was applied, the data represent the following '
-                        'organizations)'
+                        "(No organization filter was applied, the data represent the following "
+                        "organizations)"
                     ),
                 ]
             )
@@ -402,19 +402,19 @@ class FlexibleDataExporter(ABC):
                 # if nothing is available, ask the slicer itself
                 orgs = Organization.objects.filter(
                     pk__in=[
-                        rec['organization']
+                        rec["organization"]
                         for rec in self.slicer.get_possible_dimension_values_queryset(
-                            'organization'
+                            "organization"
                         )
                     ]
                 )
-            for org in orgs.order_by('name'):
-                writer.writerow(['', org.name])
+            for org in orgs.order_by("name"):
+                writer.writerow(["", org.name])
 
     def _remainder_fn(self, part=None):
         if self.slicer.show_untagged_remainder:
             return lambda: {
-                'pk': _('-- untagged remainder --'),
+                "pk": _("-- untagged remainder --"),
                 **self.slicer.get_remainder(part=part),
             }
         return None
@@ -428,14 +428,14 @@ class FlexibleDataExporter(ABC):
             formulas.append(
                 Formula(
                     key=self.slicer.COL_DIFF,
-                    operation='{1}-{0}',
+                    operation="{1}-{0}",
                     refs=[self.slicer.COL_BASE, self.slicer.COL_COMPARED],
                 )
             )
             formulas.append(
                 Formula(
                     key=self.slicer.COL_REL_DIFF,
-                    operation='({1}-{0})/{0}',
+                    operation="({1}-{0})/{0}",
                     fn=lambda a, b: ((b - a) / a) if a else None,
                     refs=[self.slicer.COL_BASE, self.slicer.COL_COMPARED],
                 )
@@ -445,9 +445,9 @@ class FlexibleDataExporter(ABC):
             # include row totals is incompatible with trend mode
             formulas.append(
                 Formula(
-                    key='_total',
-                    operation='sum',
-                    refs=[key for key, _field in fields if key.startswith('grp-')],
+                    key="_total",
+                    operation="sum",
+                    refs=[key for key, _field in fields if key.startswith("grp-")],
                 )
             )
         return formulas
@@ -490,10 +490,10 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
         self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
     ):
         parts = self.slicer.get_parts_queryset() if self.slicer.split_by else None
-        with ZipFile(sink, 'w', compression=ZIP_DEFLATED) as outzip:
+        with ZipFile(sink, "w", compression=ZIP_DEFLATED) as outzip:
             # add metadata sheet
-            with outzip.open('_metadata.csv', 'w', force_zip64=True) as outfile:
-                encoder = codecs.getwriter('utf-8')(outfile)
+            with outzip.open("_metadata.csv", "w", force_zip64=True) as outfile:
+                encoder = codecs.getwriter("utf-8")(outfile)
                 writer = CSVListWriter(encoder)
                 self.create_report_metadata(writer)
                 writer.finalize()
@@ -503,8 +503,8 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
                 qs = self.slicer.get_data()
                 extra_row_fn = self._remainder_fn()
                 fname = "report"
-                with outzip.open(fname + '.csv', 'w', force_zip64=True) as outfile:
-                    writer = codecs.getwriter('utf-8')
+                with outzip.open(fname + ".csv", "w", force_zip64=True) as outfile:
+                    writer = codecs.getwriter("utf-8")
                     encoder = writer(outfile)
                     self.write_qs_to_output(
                         encoder, qs, extra_row_fn=extra_row_fn, progress_monitor=progress_monitor
@@ -516,8 +516,8 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
                     qs = self.slicer.get_data(part=key)
                     extra_row_fn = self._remainder_fn(part=key)
                     fname = "-".join([slugify(p) for p in self.translate_part_key(part)])
-                    with outzip.open(fname + '.csv', 'w', force_zip64=True) as outfile:
-                        writer = codecs.getwriter('utf-8')
+                    with outzip.open(fname + ".csv", "w", force_zip64=True) as outfile:
+                        writer = codecs.getwriter("utf-8")
                         encoder = writer(outfile)
                         self.write_qs_to_output(encoder, qs, extra_row_fn=extra_row_fn)
                     if progress_monitor:
@@ -525,13 +525,13 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
 
 
 class FlexibleDataExcelExporter(FlexibleDataExporter):
-    object_remapped_dims = {'target': {'columns': ['name', 'issn', 'eissn', 'isbn']}}
+    object_remapped_dims = {"target": {"columns": ["name", "issn", "eissn", "isbn"]}}
 
     def __init__(self, slicer: FlexibleDataSlicer, include_charts: bool = True, **kwargs):
         super().__init__(slicer, **kwargs)
         self._seen_sheetnames = set()
         self.include_charts = include_charts
-        self.base_fmt_dict = {'font_name': 'Arial', 'font_size': 9}
+        self.base_fmt_dict = {"font_name": "Arial", "font_size": 9}
         self.base_fmt = None
         self.header_fmt = None
         self.workbook = None
@@ -543,12 +543,12 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         # if we have multipart output
         #  - we will monitor on part basis - not on row basis
         #  - we will generate data for the output part by part
-        with tempfile.NamedTemporaryFile('wb') as tmp_file:
-            workbook = xlsxwriter.Workbook(tmp_file.name, {'constant_memory': True})
+        with tempfile.NamedTemporaryFile("wb") as tmp_file:
+            workbook = xlsxwriter.Workbook(tmp_file.name, {"constant_memory": True})
             # store reference to workbook - we may need it in the methods called later
             self.workbook = workbook
             self.base_fmt = workbook.add_format(self.base_fmt_dict)
-            self.header_fmt = workbook.add_format({'bold': True, **self.base_fmt_dict})
+            self.header_fmt = workbook.add_format({"bold": True, **self.base_fmt_dict})
 
             # add metadata sheet
             sheet = workbook.add_worksheet("metadata")
@@ -561,12 +561,12 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             sheet.insert_image(
                 0,
                 0,
-                'design/ui/src/assets/celus-dark.png',
+                "design/ui/src/assets/celus-dark.png",
                 {
-                    'x_offset': 30,
-                    'y_offset': 20,
-                    'url': 'https://www.celus.net/',
-                    'decorative': True,
+                    "x_offset": 30,
+                    "y_offset": 20,
+                    "url": "https://www.celus.net/",
+                    "decorative": True,
                 },
             )
             # add the data itself
@@ -606,14 +606,14 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
 
             workbook.close()
             self.workbook = None
-            with open(tmp_file.name, 'rb') as outfile:
+            with open(tmp_file.name, "rb") as outfile:
                 sink.write(outfile.read())
 
     def create_writer(self, output, fields: List[Tuple[str, str]]) -> DictWriter:
         col_formats = {}
         if self.slicer.trend_mode:
             col_formats[self.slicer.COL_REL_DIFF] = self.workbook.add_format(
-                {'num_format': '0.00%', **self.base_fmt_dict}
+                {"num_format": "0.00%", **self.base_fmt_dict}
             )
 
         formulas = self.create_formulas(fields)
@@ -635,12 +635,12 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         row_count: int,
         max_rows_to_show: int = 30,
     ):
-        sheet = workbook.add_worksheet(self.unique_sheetname('Chart - ' + sheetname))
-        chart = workbook.add_chart({'type': 'bar'})
-        chart.set_size({'height': min(900, 150 + row_count * 25), 'width': 1024})
+        sheet = workbook.add_worksheet(self.unique_sheetname("Chart - " + sheetname))
+        chart = workbook.add_chart({"type": "bar"})
+        chart.set_size({"height": min(900, 150 + row_count * 25), "width": 1024})
         if row_count > max_rows_to_show:
-            style = workbook.add_format({'bold': 1, 'font_size': 12, 'font_name': 'Arial'})
-            sheet.write(0, 1, f'Chart was limited to first {max_rows_to_show} rows!', style)
+            style = workbook.add_format({"bold": 1, "font_size": 12, "font_name": "Arial"})
+            sheet.write(0, 1, f"Chart was limited to first {max_rows_to_show} rows!", style)
             row_count = max_rows_to_show
         skip_cols = len(self.remapped_keys())  # for titles skip ISSN and other cols
         omit_cols = 0  # cols to omit from the chart at the end of the row
@@ -653,15 +653,15 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         for i in range(skip_cols, len(self._fields) - omit_cols):
             chart.add_series(
                 {
-                    'categories': [sheetname, 1, 0, row_count, 0],
-                    'values': [sheetname, 1, i, row_count, i],
-                    'name': [sheetname, 0, i],
+                    "categories": [sheetname, 1, 0, row_count, 0],
+                    "values": [sheetname, 1, i, row_count, i],
+                    "name": [sheetname, 0, i],
                 }
             )
-        chart.set_x_axis({'num_font': {'name': 'Arial'}})
+        chart.set_x_axis({"num_font": {"name": "Arial"}})
         # `reverse` means from top to bottom - default is the other way around
-        chart.set_y_axis({'reverse': True, 'num_font': {'name': 'Arial'}})
-        chart.set_legend({'font': {'name': 'Arial'}})
+        chart.set_y_axis({"reverse": True, "num_font": {"name": "Arial"}})
+        chart.set_legend({"font": {"name": "Arial"}})
         # chart.set_title({'name': self.report_name})
         sheet.insert_chart(2, 1, chart)
 
@@ -673,18 +673,18 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         It is context-less, so it cannot check duplicated sheet names - use `unique_sheetname`
         for that.
         """
-        for char in r'[]:*?/\\':
-            sheetname = sheetname.replace(char, '')
-        sheetname = ' '.join(sheetname.split())  # normalize whitespace
+        for char in r"[]:*?/\\":
+            sheetname = sheetname.replace(char, "")
+        sheetname = " ".join(sheetname.split())  # normalize whitespace
         sheetname = sheetname.strip("'")
         if len(sheetname) > 31:
-            sheetname = sheetname[:30] + '…'
-        if sheetname.lower() == 'history':
+            sheetname = sheetname[:30] + "…"
+        if sheetname.lower() == "history":
             # history is not allowed as sheet name in Excel
             # (https://xlsxwriter.readthedocs.io/workbook.html)
-            sheetname = sheetname + '_'
+            sheetname = sheetname + "_"
         if not sheetname:
-            return 'Sheet'
+            return "Sheet"
         return sheetname
 
     def unique_sheetname(self, sheetname: str, max_len=31):
@@ -695,15 +695,15 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         :param max_len: the enforced maximum length of the sheet name
         :return:
         """
-        assert max_len <= 31, 'max in Excel is 31'
+        assert max_len <= 31, "max in Excel is 31"
         sheetname = self.cleanup_sheetname(sheetname)  # does the preliminary cleanup
         # we leave some space for number if needed; if ' is placed just right, it could end up last
         if len(sheetname) > (max_len - 5):
-            sheetname = sheetname[: max_len - 5].rstrip("'") + '…'
+            sheetname = sheetname[: max_len - 5].rstrip("'") + "…"
         i = 1
         new_sheetname = sheetname
         while new_sheetname.lower() in self._seen_sheetnames:
-            new_sheetname = f'{sheetname}-{i}'
+            new_sheetname = f"{sheetname}-{i}"
             i += 1
         self._seen_sheetnames.add(new_sheetname.lower())
         return new_sheetname

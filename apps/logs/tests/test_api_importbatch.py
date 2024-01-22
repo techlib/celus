@@ -33,8 +33,8 @@ from test_scenarios.basic import (  # noqa
 
 @pytest.mark.django_db
 class TestImportBatchesAPI:
-    lookup_url = reverse('import-batch-lookup')
-    purge_url = reverse('import-batch-purge')
+    lookup_url = reverse("import-batch-lookup")
+    purge_url = reverse("import-batch-purge")
 
     @pytest.fixture()
     def data(
@@ -203,7 +203,7 @@ class TestImportBatchesAPI:
                 ),
             ),
         )
-        return {'metric1': metric1, 't1': t1, 't2': t2, 't3': t3, 't4': t4}
+        return {"metric1": metric1, "t1": t1, "t2": t2, "t3": t3, "t4": t4}
 
     def test_lookup(self, data, clients, organizations, platforms, report_types):
         # empty lookup
@@ -273,15 +273,15 @@ class TestImportBatchesAPI:
 
     def test_purge(self, data, clients):
         # simple delete
-        batches = list(ImportBatch.objects.all().order_by('pk').values_list("pk", flat=True))
+        batches = list(ImportBatch.objects.all().order_by("pk").values_list("pk", flat=True))
         resp = clients["su"].post(self.purge_url, {"batches": [batches[0]]}, format="json")
 
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 1,
-            'sushi.SushiFetchAttempt': 2,
-            'scheduler.FetchIntention': 2,
-            'logs.ImportBatch': 1,
+            "logs.AccessLog": 1,
+            "sushi.SushiFetchAttempt": 2,
+            "scheduler.FetchIntention": 2,
+            "logs.ImportBatch": 1,
         }, "remove ib with fetch attempt (second is 3031)"
         assert ImportBatch.objects.count() == len(batches) - 1
 
@@ -292,31 +292,31 @@ class TestImportBatchesAPI:
         resp = clients["su"].post(self.purge_url, {"batches": [batches[-1]]}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 10,
-            'logs.ImportBatch': 1,
-            'logs.ManualDataUploadImportBatch': 1,
+            "logs.AccessLog": 10,
+            "logs.ImportBatch": 1,
+            "logs.ManualDataUploadImportBatch": 1,
         }, "remove ib from mdu"
         assert ImportBatch.objects.count() == len(batches) - 2
 
         resp = clients["su"].post(self.purge_url, {"batches": batches[-3:]}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 20,
-            'logs.ImportBatch': 2,
-            'logs.ManualDataUpload': 1,
-            'logs.ManualDataUploadImportBatch': 2,
+            "logs.AccessLog": 20,
+            "logs.ImportBatch": 2,
+            "logs.ManualDataUpload": 1,
+            "logs.ManualDataUploadImportBatch": 2,
         }, "remove last ibs from mdu"
         assert ImportBatch.objects.count() == len(batches) - 4
 
         resp = clients["su"].post(self.purge_url, {"batches": batches}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
-            'logs.AccessLog': 9,
-            'logs.ImportBatch': 5,
-            'logs.ManualDataUpload': 1,
-            'logs.ManualDataUploadImportBatch': 2,
-            'scheduler.FetchIntention': 3,
-            'sushi.SushiFetchAttempt': 3,
+            "logs.AccessLog": 9,
+            "logs.ImportBatch": 5,
+            "logs.ManualDataUpload": 1,
+            "logs.ManualDataUploadImportBatch": 2,
+            "scheduler.FetchIntention": 3,
+            "sushi.SushiFetchAttempt": 3,
         }, "remove rest"
         assert ImportBatch.objects.count() == 0
 
@@ -348,12 +348,12 @@ class TestImportBatchesAPI:
             self.purge_url, {"batches": [e["pk"] for e in data]}, format="json"
         )
         assert resp.status_code == 200
-        assert resp.data['logs.ImportBatch'] == len(data), "number of deleted ibs"
+        assert resp.data["logs.ImportBatch"] == len(data), "number of deleted ibs"
         assert ImportBatch.objects.count() == count - len(data), "all ibs were deleted"
 
     @pytest.mark.parametrize(
-        ['rt', 'ib_counts'],
-        [('TR', [1, 1, 1]), ('BR1', [0, 1, 0]), ('PR', [1, 1, 1]), ('DR', [0, 0, 0])],
+        ["rt", "ib_counts"],
+        [("TR", [1, 1, 1]), ("BR1", [0, 1, 0]), ("PR", [1, 1, 1]), ("DR", [0, 0, 0])],
     )
     def test_data_coverage(
         self, data, clients, organizations, platforms, report_types, rt, ib_counts
@@ -372,25 +372,25 @@ class TestImportBatchesAPI:
         2020-03 | PR  | branch     | branch       | mdu
         """
 
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/",
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types[rt.lower()].pk,
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types[rt.lower()].pk,
             },
         )
         assert resp.status_code == 200
-        assert 'date' in resp.json()[0]
-        assert 'organization_id' not in resp.json()[0]
-        assert ib_counts == [rec['ib_count'] for rec in resp.json()]
+        assert "date" in resp.json()[0]
+        assert "organization_id" not in resp.json()[0]
+        assert ib_counts == [rec["ib_count"] for rec in resp.json()]
 
     @pytest.mark.parametrize(
-        ['q_platforms', 'q_organizations', 'rt', 'ib_counts'],
+        ["q_platforms", "q_organizations", "rt", "ib_counts"],
         [
-            (['standalone', 'branch'], ['standalone', 'branch'], 'TR', [1, 1, 1]),
-            (['standalone', 'branch'], ['standalone'], 'TR', [1, 1, 1]),
-            (['standalone'], ['standalone'], 'TR', [1, 1, 1]),
+            (["standalone", "branch"], ["standalone", "branch"], "TR", [1, 1, 1]),
+            (["standalone", "branch"], ["standalone"], "TR", [1, 1, 1]),
+            (["standalone"], ["standalone"], "TR", [1, 1, 1]),
         ],
     )
     def test_data_coverage_with_filters(
@@ -409,23 +409,23 @@ class TestImportBatchesAPI:
         Test that the filters for organization and platform also work with comma-separated values
         """
 
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/",
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types[rt.lower()].pk,
-                'platform': ','.join(str(platforms[name].pk) for name in q_platforms),
-                'organization': ','.join(str(organizations[name].pk) for name in q_organizations),
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types[rt.lower()].pk,
+                "platform": ",".join(str(platforms[name].pk) for name in q_platforms),
+                "organization": ",".join(str(organizations[name].pk) for name in q_organizations),
             },
         )
         assert resp.status_code == 200
-        assert 'date' in resp.json()[0]
-        assert 'organization_id' not in resp.json()[0]
-        assert ib_counts == [rec['ib_count'] for rec in resp.json()]
+        assert "date" in resp.json()[0]
+        assert "organization_id" not in resp.json()[0]
+        assert ib_counts == [rec["ib_count"] for rec in resp.json()]
 
     @pytest.mark.parametrize(
-        ['split_by_org', 'split_by_platform', 'split_by_date', 'record_count', 'ib_counts'],
+        ["split_by_org", "split_by_platform", "split_by_date", "record_count", "ib_counts"],
         # sorting in ib_counts should be month, organization_id, platform_id
         [
             (False, False, True, 3, [1, 2, 1]),
@@ -462,32 +462,32 @@ class TestImportBatchesAPI:
         """
         # create extra IB with different platform
         ImportBatchFullFactory.create(
-            platform=platforms['branch'],
-            organization=organizations['standalone'],
-            date='2020-02-01',
-            report_type=report_types['tr'],
+            platform=platforms["branch"],
+            organization=organizations["standalone"],
+            date="2020-02-01",
+            report_type=report_types["tr"],
         )
         extra_cr = CredentialsFactory.create(
-            platform=platforms['branch'],
-            organization=organizations['standalone'],
+            platform=platforms["branch"],
+            organization=organizations["standalone"],
             counter_version=5,
         )
-        extra_cr.counter_reports.add(counter_report_types['tr'])
+        extra_cr.counter_reports.add(counter_report_types["tr"])
 
         extra_params = {}
         if split_by_org:
-            extra_params['split_by_org'] = 1
+            extra_params["split_by_org"] = 1
         if split_by_platform:
-            extra_params['split_by_platform'] = 1
+            extra_params["split_by_platform"] = 1
         if not split_by_date:
             # split by date is the default
-            extra_params['split_by_date'] = 0
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/",
+            extra_params["split_by_date"] = 0
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types['tr'].pk,
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types["tr"].pk,
                 **extra_params,
             },
         )
@@ -495,57 +495,57 @@ class TestImportBatchesAPI:
         data = resp.json()
         # check record counts
         assert len(data) == record_count
-        assert ib_counts == [rec['ib_count'] for rec in data]
+        assert ib_counts == [rec["ib_count"] for rec in data]
         rec1 = data[0]
         # check record structure
         if split_by_date:
-            assert 'date' in rec1
+            assert "date" in rec1
         else:
-            assert 'date' not in rec1
+            assert "date" not in rec1
         if split_by_org:
-            assert 'organization_id' in rec1
+            assert "organization_id" in rec1
         else:
-            assert 'organization_id' not in rec1
+            assert "organization_id" not in rec1
         if split_by_platform:
-            assert 'platform_id' in rec1
+            assert "platform_id" in rec1
         else:
-            assert 'platform_id' not in rec1
+            assert "platform_id" not in rec1
 
     def test_data_coverage_no_dates(self, data, clients, organizations, platforms, report_types):
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/", {'report_type': report_types['tr'].pk}
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/", {"report_type": report_types["tr"].pk}
         )
         assert resp.status_code == 200
-        assert {rec['date'] for rec in resp.json()} == {
-            '2020-01-01',
-            '2020-02-01',
-            '2020-03-01',
-            '2020-04-01',
+        assert {rec["date"] for rec in resp.json()} == {
+            "2020-01-01",
+            "2020-02-01",
+            "2020-03-01",
+            "2020-04-01",
         }
 
     def test_data_coverage_with_report_view(
         self, data, clients, organizations, platforms, report_types
     ):
-        rv = ReportDataView.objects.create(base_report_type=report_types['tr'], name='TR')
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/", {'report_view': rv.pk}
+        rv = ReportDataView.objects.create(base_report_type=report_types["tr"], name="TR")
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/", {"report_view": rv.pk}
         )
         assert resp.status_code == 200
-        assert {rec['date'] for rec in resp.json()} == {
-            '2020-01-01',
-            '2020-02-01',
-            '2020-03-01',
-            '2020-04-01',
+        assert {rec["date"] for rec in resp.json()} == {
+            "2020-01-01",
+            "2020-02-01",
+            "2020-03-01",
+            "2020-04-01",
         }
 
     @pytest.mark.parametrize(
-        ['rts_to_connect', 'superseding', 'ib_counts', 'ib_max_counts'],
+        ["rts_to_connect", "superseding", "ib_counts", "ib_max_counts"],
         [
-            (['tr'], False, [1, 1, 1], [1, 1, 1]),
-            (['br1'], False, [0, 1, 0], [1, 1, 1]),
-            (['tr', 'br1'], False, [1, 2, 1], [2, 2, 2]),
+            (["tr"], False, [1, 1, 1], [1, 1, 1]),
+            (["br1"], False, [0, 1, 0], [1, 1, 1]),
+            (["tr", "br1"], False, [1, 2, 1], [2, 2, 2]),
             # for month #2 only 1 because one supersedes the other
-            (['tr', 'br1'], True, [1, 1, 1], [1, 1, 1]),
+            (["tr", "br1"], True, [1, 1, 1], [1, 1, 1]),
         ],
     )
     def test_data_coverage_interest(
@@ -578,12 +578,12 @@ class TestImportBatchesAPI:
         # make sure interest is not among the excluded report types
         settings.REPORT_TYPES_WITHOUT_COVERAGE = []
         # set up some interest
-        ig = InterestGroup.objects.create(name='XXX', position=1)
+        ig = InterestGroup.objects.create(name="XXX", position=1)
         last_tr = None
-        metric1 = data['metric1']
+        metric1 = data["metric1"]
         for rt_name in rts_to_connect:
             PlatformInterestReport.objects.create(
-                platform=platforms['standalone'], report_type=report_types[rt_name]
+                platform=platforms["standalone"], report_type=report_types[rt_name]
             )
             ReportInterestMetric.objects.create(
                 report_type=report_types[rt_name], metric=metric1, interest_group=ig
@@ -595,31 +595,31 @@ class TestImportBatchesAPI:
             last_tr = report_types[rt_name]
         sync_interest_by_import_batches()
 
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/",
-            {'start_date': '2020-01', 'end_date': '2020-03', 'report_type': interest_rt.pk},
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/",
+            {"start_date": "2020-01", "end_date": "2020-03", "report_type": interest_rt.pk},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 3
-        assert [rec['ib_max'] for rec in data] == ib_max_counts, "ib_max should match"
-        assert [rec['ib_count'] for rec in data] == ib_counts, "ib_count should match"
+        assert [rec["ib_max"] for rec in data] == ib_max_counts, "ib_max should match"
+        assert [rec["ib_count"] for rec in data] == ib_counts, "ib_count should match"
 
     @pytest.mark.parametrize(
-        ['rt', 'title_id', 'ib_counts'],
+        ["rt", "title_id", "ib_counts"],
         [
-            ('TR', 't1', [1, 1, 1]),  # `standalone` has TR for all 3 months, t1 is on `standalone`
-            ('TR', 't2', [1, 1, 1]),  # `standalone` has TR for all 3 months, t2 is on `standalone`
-            ('TR', 't3', [1, 1, 1]),  # `standalone` has TR for all 3 months, t3 is on `standalone`
-            ('TR', 't4', [0, 0, 0]),  # t4 is on no platform
-            ('BR1', 't1', [0, 1, 0]),  # `standalone` has BR1 for month #2, t1 is on `standalone`
-            ('BR1', 't2', [0, 1, 0]),  # `standalone` has BR1 for month #2, t2 is on `standalone`
-            ('BR1', 't3', [0, 1, 0]),  # `standalone` has BR1 for month #2, t3 is on `standalone`
-            ('BR1', 't4', [0, 0, 0]),  # t4 is on no platform
-            ('PR', 't1', [0, 0, 0]),  # t1 is not on `branch`
-            ('PR', 't2', [1, 1, 1]),  # `branch` has PR for all 3 months, t2 is on `branch`
-            ('PR', 't3', [0, 0, 0]),  # t3 is not on `branch`
-            ('PR', 't4', [0, 0, 0]),  # t4 is on no platform
+            ("TR", "t1", [1, 1, 1]),  # `standalone` has TR for all 3 months, t1 is on `standalone`
+            ("TR", "t2", [1, 1, 1]),  # `standalone` has TR for all 3 months, t2 is on `standalone`
+            ("TR", "t3", [1, 1, 1]),  # `standalone` has TR for all 3 months, t3 is on `standalone`
+            ("TR", "t4", [0, 0, 0]),  # t4 is on no platform
+            ("BR1", "t1", [0, 1, 0]),  # `standalone` has BR1 for month #2, t1 is on `standalone`
+            ("BR1", "t2", [0, 1, 0]),  # `standalone` has BR1 for month #2, t2 is on `standalone`
+            ("BR1", "t3", [0, 1, 0]),  # `standalone` has BR1 for month #2, t3 is on `standalone`
+            ("BR1", "t4", [0, 0, 0]),  # t4 is on no platform
+            ("PR", "t1", [0, 0, 0]),  # t1 is not on `branch`
+            ("PR", "t2", [1, 1, 1]),  # `branch` has PR for all 3 months, t2 is on `branch`
+            ("PR", "t3", [0, 0, 0]),  # t3 is not on `branch`
+            ("PR", "t4", [0, 0, 0]),  # t4 is on no platform
         ],
     )
     def test_data_coverage_title(
@@ -649,33 +649,33 @@ class TestImportBatchesAPI:
         2020-04 | PR  | branch     | branch       | mdu    | -
         """
         title = data[title_id]
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage/",
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types[rt.lower()].pk,
-                'title': title.pk,
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types[rt.lower()].pk,
+                "title": title.pk,
             },
         )
         assert resp.status_code == 200
-        assert 'date' in resp.json()[0]
-        assert 'organization_id' not in resp.json()[0]
-        assert [rec['date'] for rec in resp.json()] == ['2020-01-01', '2020-02-01', '2020-03-01']
-        assert [rec['ib_count'] for rec in resp.json()] == ib_counts
+        assert "date" in resp.json()[0]
+        assert "organization_id" not in resp.json()[0]
+        assert [rec["date"] for rec in resp.json()] == ["2020-01-01", "2020-02-01", "2020-03-01"]
+        assert [rec["ib_count"] for rec in resp.json()] == ib_counts
 
     @pytest.mark.parametrize(
-        ['rt', 'credentials_count', 'months', 'last_harvestable_month'],
+        ["rt", "credentials_count", "months", "last_harvestable_month"],
         [
-            ('TR', 0, [], None),  # no data missing
+            ("TR", 0, [], None),  # no data missing
             (
-                'BR1',
+                "BR1",
                 1,
-                ['2020-03-01'],
-                '2020-02-01',
+                ["2020-03-01"],
+                "2020-02-01",
             ),  # one set of credentials missing data for 2 months
-            ('PR', 0, [], None),  # no data missing
-            ('DR', 0, [], None),  # no credentials present - cannot harvest
+            ("PR", 0, [], None),  # no data missing
+            ("DR", 0, [], None),  # no credentials present - cannot harvest
         ],
     )
     def test_data_coverage_harvestable(
@@ -711,30 +711,30 @@ class TestImportBatchesAPI:
         # we need to make them broken but verified in order to correctly test that broken
         # credentials are not returned
         broken_cr = CredentialsFactory.create(
-            organization=organizations['root'],
-            platform=platforms['root'],
-            report_types=['TR', 'PR', 'BR1'],
+            organization=organizations["root"],
+            platform=platforms["root"],
+            report_types=["TR", "PR", "BR1"],
         )
         # we connect the platform and the organization to make them appear in coverage at all
         OrganizationPlatform.objects.create(
-            organization=organizations['root'], platform=platforms['root']
+            organization=organizations["root"], platform=platforms["root"]
         )
         # the following verifies the credentials using an unrelated report type
         SushiFetchAttempt.objects.create(
             credentials=broken_cr,
             status=AttemptStatus.NO_DATA,
             credentials_version_hash=broken_cr.version_hash,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
-            counter_report=CounterReportType.objects.get(code='JR1'),
+            start_date="2020-01-01",
+            end_date="2020-01-31",
+            counter_report=CounterReportType.objects.get(code="JR1"),
             file_size=0,
         )
         # we need to make the credentials broken in order to test that they are not returned
         # but only after verifying them, otherwise the status will be overwritten
         broken_cr.refresh_from_db()
-        broken_cr.broken = 'sushi'
+        broken_cr.broken = "sushi"
         broken_cr.save()
-        assert broken_cr.broken == 'sushi'
+        assert broken_cr.broken == "sushi"
 
         # update last_harvestable_month
         CounterReportType.objects.get(code=rt).counterreportstocredentials_set.update(
@@ -742,20 +742,20 @@ class TestImportBatchesAPI:
         )
 
         # the test itself
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage-harvestable/",
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage-harvestable/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types[rt.lower()].pk,
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types[rt.lower()].pk,
             },
         )
         assert resp.status_code == 200
         assert type(resp.json()) is list  # noqa E721 - make sure it is a list, not subtype
         assert len(resp.json()) == credentials_count
-        assert set(months) == reduce(lambda acc, e: acc | set(e['months']), resp.json(), set())
+        assert set(months) == reduce(lambda acc, e: acc | set(e["months"]), resp.json(), set())
 
-    @pytest.mark.parametrize('broken', [True, False])
+    @pytest.mark.parametrize("broken", [True, False])
     def test_data_coverage_harvestable_with_broken_report(
         self, clients, organizations, platforms, report_types, broken
     ):
@@ -764,21 +764,21 @@ class TestImportBatchesAPI:
         harvestable if they are broken for that report.
         """
         cr = CredentialsFactory.create(
-            organization=organizations['root'],
-            platform=platforms['root'],
+            organization=organizations["root"],
+            platform=platforms["root"],
         )
         # we connect the platform and the organization to make them appear in coverage at all
         OrganizationPlatform.objects.create(
-            organization=organizations['root'], platform=platforms['root']
+            organization=organizations["root"], platform=platforms["root"]
         )
-        crt = CounterReportTypeFactory.create(code='TR')
+        crt = CounterReportTypeFactory.create(code="TR")
         # the following verifies the credentials
         SushiFetchAttempt.objects.create(
             credentials=cr,
             status=AttemptStatus.NO_DATA,
             credentials_version_hash=cr.version_hash,
-            start_date='2020-01-01',
-            end_date='2020-01-31',
+            start_date="2020-01-01",
+            end_date="2020-01-31",
             counter_report=crt,
             file_size=0,
         )
@@ -786,15 +786,15 @@ class TestImportBatchesAPI:
         CounterReportsToCredentials.objects.create(
             counter_report=crt,
             credentials=cr,
-            broken=broken and 'sushi' or None,
+            broken=broken and "sushi" or None,
         )
         # the test itself
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "data-coverage-harvestable/",
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "data-coverage-harvestable/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
-                'report_type': report_types[crt.report_type.short_name.lower()].pk,
+                "start_date": "2020-01",
+                "end_date": "2020-03",
+                "report_type": report_types[crt.report_type.short_name.lower()].pk,
             },
         )
         assert resp.status_code == 200
@@ -802,8 +802,8 @@ class TestImportBatchesAPI:
         assert len(resp.json()) == 0 if broken else 1
 
     @pytest.mark.parametrize(
-        ('organization', 'ib_count', 'ib_max'),
-        [('standalone', 4, 6), ('branch', 3, 3), (None, 7, 9), ('root', 0, 0)],
+        ("organization", "ib_count", "ib_max"),
+        [("standalone", 4, 6), ("branch", 3, 3), (None, 7, 9), ("root", 0, 0)],
     )
     def test_total_data_coverage(
         self, data, clients, organizations, platforms, report_types, organization, ib_max, ib_count
@@ -822,16 +822,16 @@ class TestImportBatchesAPI:
         2020-03 | PR  | branch     | branch       | mdu
         """
 
-        org_params = {'organization': organizations[organization].pk} if organization else {}
-        resp = clients['su'].get(
-            reverse('import-batch-list') + "total-data-coverage/",
+        org_params = {"organization": organizations[organization].pk} if organization else {}
+        resp = clients["su"].get(
+            reverse("import-batch-list") + "total-data-coverage/",
             {
-                'start_date': '2020-01',
-                'end_date': '2020-03',
+                "start_date": "2020-01",
+                "end_date": "2020-03",
                 **org_params,
             },
         )
         assert resp.status_code == 200
         assert type(resp.json()) is dict  # noqa E721 - make sure it is a dict, not subtype
-        assert resp.json()['ib_count'] == ib_count
-        assert resp.json()['ib_max'] == ib_max
+        assert resp.json()["ib_count"] == ib_count
+        assert resp.json()["ib_max"] == ib_max

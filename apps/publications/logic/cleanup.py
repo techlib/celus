@@ -37,23 +37,23 @@ def sync_platform_title_links(pretend=False):
                 for r in ch_backend.get_records(
                     AccessLogCube.query()
                     .filter(organization_id=org.pk, target_id__not_in=[0])
-                    .group_by('platform_id', 'target_id', 'date')
-                    .order_by('platform_id', 'target_id', 'date'),
+                    .group_by("platform_id", "target_id", "date")
+                    .order_by("platform_id", "target_id", "date"),
                     streaming=True,
                 )
             )
         else:
             rec_gen = (
                 AccessLog.objects.filter(organization_id=org.pk)
-                .values_list('platform_id', 'target_id', 'date')
-                .order_by('platform_id', 'target_id', 'date')
+                .values_list("platform_id", "target_id", "date")
+                .order_by("platform_id", "target_id", "date")
                 .iterator()
             )
         # prepare a second generator based on the PlatformTitle records
         pt_gen = (
             PlatformTitle.objects.filter(organization_id=org.pk)
-            .values_list('platform_id', 'title_id', 'date', 'pk')
-            .order_by('platform_id', 'title_id', 'date')
+            .values_list("platform_id", "title_id", "date", "pk")
+            .order_by("platform_id", "title_id", "date")
             .iterator()
         )
         # stats
@@ -87,11 +87,11 @@ def sync_platform_title_links(pretend=False):
             extra_pts.append(pt_extra[3])
             count += 1
         logger.info(
-            '%s, total %d, extra %d, missing %d', org, count, len(extra_pts), len(missing_pts)
+            "%s, total %d, extra %d, missing %d", org, count, len(extra_pts), len(missing_pts)
         )
         # missing platform-titles
         if missing_pts:
-            stats['missing'] += len(missing_pts)
+            stats["missing"] += len(missing_pts)
             if not pretend:
                 PlatformTitle.objects.bulk_create(
                     PlatformTitle(
@@ -101,13 +101,13 @@ def sync_platform_title_links(pretend=False):
                 )
         # extra platform-titles
         if extra_pts:
-            stats['removed'] += len(extra_pts)
+            stats["removed"] += len(extra_pts)
             if not pretend:
                 PlatformTitle.objects.filter(pk__in=extra_pts).delete()
-        memories.append(log_memory('sync_platform_title_links'))
+        memories.append(log_memory("sync_platform_title_links"))
 
     if memories:
-        logger.info('max memory used: %.2f', max(memories))
+        logger.info("max memory used: %.2f", max(memories))
     return stats
 
 

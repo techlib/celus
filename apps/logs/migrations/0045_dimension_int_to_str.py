@@ -4,16 +4,16 @@ from django.db import migrations
 
 
 def convert_dim_int_to_str(apps, schema_editor):
-    Dimension = apps.get_model('logs', 'Dimension')
-    DimensionText = apps.get_model('logs', 'DimensionText')
-    AccessLog = apps.get_model('logs', 'AccessLog')
-    ReportType = apps.get_model('logs', 'ReportType')
+    Dimension = apps.get_model("logs", "Dimension")
+    DimensionText = apps.get_model("logs", "DimensionText")
+    AccessLog = apps.get_model("logs", "AccessLog")
+    ReportType = apps.get_model("logs", "ReportType")
     for dim in Dimension.objects.filter(type=1):
         for rt in dim.report_types.all():
             rt2dim = dim.reporttypetodimension_set.filter(report_type=rt).get()
-            dim_ref = f'dim{rt2dim.position + 1}'
+            dim_ref = f"dim{rt2dim.position + 1}"
             values = (
-                AccessLog.objects.filter(report_type=rt, **{f'{dim_ref}__isnull': False})
+                AccessLog.objects.filter(report_type=rt, **{f"{dim_ref}__isnull": False})
                 .values_list(dim_ref, flat=True)
                 .distinct()
             )
@@ -37,6 +37,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0044_better_source_related_constraints')]
+    dependencies = [("logs", "0044_better_source_related_constraints")]
 
     operations = [migrations.RunPython(convert_dim_int_to_str, noop)]

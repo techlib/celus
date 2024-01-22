@@ -64,12 +64,12 @@ class TagClassViewSet(ModelViewSet):
             self.request.user
         )
 
-    @action(detail=False, methods=['get'], url_name='visible-tags', url_path='visible-tags')
+    @action(detail=False, methods=["get"], url_name="visible-tags", url_path="visible-tags")
     def with_visible_tags(self, request):
         """
         Return a list of tag classes with visible tags for the current user.
         """
-        include_managed = to_bool(request.query_params.get('include_managed', 'false'))
+        include_managed = to_bool(request.query_params.get("include_managed", "false"))
 
         fltr = TagClass.objects.with_user_visible_tags(request.user).annotate_hidden(request.user)
         if include_managed:
@@ -81,12 +81,12 @@ class TagClassViewSet(ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_name='hide', url_path='hide')
+    @action(detail=True, methods=["post"], url_name="hide", url_path="hide")
     def hide(self, request, pk=None):
         """
         Mark the tag class a hidden/visible for the current user based on the `hidden` param.
         """
-        hidden = to_bool(request.data.get('hidden', 'true'))
+        hidden = to_bool(request.data.get("hidden", "true"))
         tag_class = get_object_or_404(
             (
                 self.get_queryset() | TagClass.objects.with_user_visible_tags(request.user)
@@ -108,7 +108,7 @@ class TagViewSet(ModelViewSet):
     serializer_class = TagSerializer
 
     class ParamSerializer(Serializer):
-        item_type = ChoiceField(choices=['title', 'organization', 'platform'], required=False)
+        item_type = ChoiceField(choices=["title", "organization", "platform"], required=False)
         item_id = CompactListField(child=IntegerField(), required=False)
         assignable_only = BooleanField(required=False)
         scope = ChoiceField(choices=TagScope.choices, required=False)
@@ -117,19 +117,19 @@ class TagViewSet(ModelViewSet):
         param_serializer = self.ParamSerializer(data=self.request.query_params)
         param_serializer.is_valid(raise_exception=True)
         params = param_serializer.validated_data
-        if params.get('assignable_only', False):
+        if params.get("assignable_only", False):
             qs = Tag.objects.user_assignable_tags(self.request.user)
         else:
             qs = Tag.objects.user_accessible_tags(self.request.user)
-        if scope := params.get('scope'):
+        if scope := params.get("scope"):
             qs = qs.filter(tag_class__scope=scope)
-        qs = qs.select_related('tag_class')
+        qs = qs.select_related("tag_class")
 
-        item_type = params.get('item_type')
-        item_id = params.get('item_id')
+        item_type = params.get("item_type")
+        item_id = params.get("item_id")
         if item_id and item_type:
-            item_ref_attr = '{0}tag__target_id__in'.format(params['item_type'])
-            qs = qs.filter(**{item_ref_attr: params['item_id']}).distinct()
+            item_ref_attr = "{0}tag__target_id__in".format(params["item_type"])
+            qs = qs.filter(**{item_ref_attr: params["item_id"]}).distinct()
         elif bool(item_type) ^ bool(item_id):
             raise BadRequestException(
                 'Either both or none of "item_type" and "item_id" attrs should be present'
@@ -149,7 +149,7 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         tag = get_object_or_404(
-            Tag.objects.user_accessible_tags(self.request.user), pk=self.kwargs.get('tag_pk')
+            Tag.objects.user_accessible_tags(self.request.user), pk=self.kwargs.get("tag_pk")
         )
         qs = getattr(tag, self.item_list_attr).all()
         if extra_filter := self.user_accessible_items_filter():
@@ -162,35 +162,35 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
             qs = qs.filter(extra_filter)
         return qs
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def add(self, request, tag_pk):
         tag = get_object_or_404(Tag.objects.user_accessible_tags(self.request.user), pk=tag_pk)
-        if not (item_id := self.request.data.get('item_id')):
+        if not (item_id := self.request.data.get("item_id")):
             raise BadRequestException('"item_id" argument is required')
         obj = get_object_or_404(self.user_accessible_target_objects(), pk=item_id)
         try:
             tag_item = tag.tag(obj, self.request.user)
         except IntegrityError as exc:
-            if 'unique_tag_class_for_exclusive' in str(exc):
+            if "unique_tag_class_for_exclusive" in str(exc):
                 raise BadRequestException(
-                    {'error': 'Cannot assign more than one tag from an exclusive class to an item'}
+                    {"error": "Cannot assign more than one tag from an exclusive class to an item"}
                 ) from None
-            raise BadRequestException({'error': str(exc)}) from None
-        return Response({'pk': tag_item.pk}, status=HTTP_201_CREATED)
+            raise BadRequestException({"error": str(exc)}) from None
+        return Response({"pk": tag_item.pk}, status=HTTP_201_CREATED)
 
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=["delete"])
     def remove(self, request, tag_pk):
         tag = get_object_or_404(Tag.objects.user_accessible_tags(self.request.user), pk=tag_pk)
         if not tag.can_user_assign(request.user):
-            raise PermissionDenied('User cannot assing/unassign this tag')
-        if not (item_id := self.request.data.get('item_id')):
+            raise PermissionDenied("User cannot assing/unassign this tag")
+        if not (item_id := self.request.data.get("item_id")):
             raise BadRequestException('"item_id" argument is required')
         obj = get_object_or_404(self.user_accessible_target_objects(), pk=item_id)
         tag_item_class = tag.link_class_from_target(obj)
         try:
             tag_item = tag_item_class.objects.get(tag=tag, target=obj)
         except tag_item_class.DoesNotExist:
-            raise BadRequestException('Object is not tagged by this tag') from None
+            raise BadRequestException("Object is not tagged by this tag") from None
         else:
             tag_item.delete()
         return Response(status=HTTP_204_NO_CONTENT)
@@ -198,12 +198,12 @@ class TaggedItemViewSet(ReadOnlyModelViewSet):
 
 class TaggedTitleViewSet(TaggedItemViewSet):
     serializer_class = TitleSerializer
-    item_list_attr = 'titles'
+    item_list_attr = "titles"
 
 
 class TaggedPlatformsViewSet(TaggedItemViewSet):
     serializer_class = PlatformSerializer
-    item_list_attr = 'platforms'
+    item_list_attr = "platforms"
 
     def user_accessible_items_filter(self) -> Optional[Q]:
         return Q(pk__in=self.request.user.accessible_platforms())
@@ -211,7 +211,7 @@ class TaggedPlatformsViewSet(TaggedItemViewSet):
 
 class TaggedOrganizationsViewSet(TaggedItemViewSet):
     serializer_class = OrganizationSerializer
-    item_list_attr = 'organizations'
+    item_list_attr = "organizations"
 
     def user_accessible_items_filter(self) -> Optional[Q]:
         return Q(pk__in=self.request.user.accessible_organizations())
@@ -226,19 +226,19 @@ class TagItemLinksView(APIView):
         param_serializer = self.ParamSerializer(data=self.request.query_params)
         param_serializer.is_valid(raise_exception=True)
         params = param_serializer.validated_data
-        item_type = params['item_type']
+        item_type = params["item_type"]
         obj_cls = ItemTag.get_subclass_by_item_type(item_type)
         hidden_classes = UserTagClass.objects.filter(
             user=request.user, tag_class__scope=item_type, hidden=True
-        ).values_list('tag_class_id', flat=True)
+        ).values_list("tag_class_id", flat=True)
         data = (
             obj_cls.objects.filter(
                 tag__in=Tag.objects.user_accessible_tags(request.user),
                 tag__tag_class__scope=item_type,
-                target_id__in=params['item_id'],
+                target_id__in=params["item_id"],
             )
             .exclude(tag__tag_class__in=hidden_classes)  # hide tags from hidden classes
-            .values('tag_id', 'target_id')
+            .values("tag_id", "target_id")
         )
         if item_type == TagScope.ORGANIZATION:
             data = data.filter(target_id__in=request.user.accessible_organizations())
@@ -263,88 +263,88 @@ class TaggingBatchViewSet(ModelViewSet):
             )
             .prefetch_attempts()
             .annotate_import_count()
-            .select_related('tag', 'tag__tag_class', 'tag_class', 'last_updated_by')
+            .select_related("tag", "tag__tag_class", "tag_class", "last_updated_by")
         )
 
-    @action(methods=['post'], detail=True, url_name='preflight', url_path='preflight')
+    @action(methods=["post"], detail=True, url_name="preflight", url_path="preflight")
     def preflight(self, request, pk):
         try:
             tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
             if tb.state != TaggingBatchState.INITIAL:
                 raise BadRequestException(
-                    {'error': f'Cannot use batch with state "{tb.state}" to do preflight'}
+                    {"error": f'Cannot use batch with state "{tb.state}" to do preflight'}
                 )
         except DatabaseError:
-            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+            return Response({"error": "Batch is already being processed"}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'}) from None
-        url_base = build_absolute_uri(self.request, '/')
+            raise Http404({"error": "Tagging batch not found"}) from None
+        url_base = build_absolute_uri(self.request, "/")
         tb.state = TaggingBatchState.PREPROCESSING
         tb.save()
         task = tagging_batch_preflight_task.apply_async(args=(tb.pk, url_base), countdown=2)
         return Response(
             {
-                'task_id': task.id,
-                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+                "task_id": task.id,
+                "batch": TaggingBatchSerializer(tb, context={"request": request}).data,
             },
             status=HTTP_202_ACCEPTED,
         )
 
-    @action(methods=['post'], detail=True, url_name='assign-tags', url_path='assign-tags')
+    @action(methods=["post"], detail=True, url_name="assign-tags", url_path="assign-tags")
     def assign_tags(self, request, pk):
         try:
             tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
             if tb.state not in (TaggingBatchState.PREFLIGHT, TaggingBatchState.IMPORTED):
                 raise BadRequestException(
-                    {'error': f'Cannot use batch with state "{tb.state}" to assign tags'}
+                    {"error": f'Cannot use batch with state "{tb.state}" to assign tags'}
                 )
         except DatabaseError:
-            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+            return Response({"error": "Batch is already being processed"}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'}) from None
+            raise Http404({"error": "Tagging batch not found"}) from None
 
         tb.state = TaggingBatchState.IMPORTING
         tb.last_updated_by = request.user
         tb.save()
-        url_base = build_absolute_uri(self.request, '/')
+        url_base = build_absolute_uri(self.request, "/")
         task = tagging_batch_assign_tag_task.apply_async(args=(tb.pk, url_base), countdown=2)
         return Response(
             {
-                'task_id': task.id,
-                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+                "task_id": task.id,
+                "batch": TaggingBatchSerializer(tb, context={"request": request}).data,
             },
             status=HTTP_202_ACCEPTED,
         )
 
-    @action(methods=['post'], detail=True, url_name='unassign', url_path='unassign')
+    @action(methods=["post"], detail=True, url_name="unassign", url_path="unassign")
     def unassign(self, request, pk):
         try:
             tb = self.get_queryset().select_related().select_for_update(nowait=True).get(pk=pk)
             if tb.state != TaggingBatchState.IMPORTED:
                 raise BadRequestException(
-                    {'error': f'Cannot use batch with state "{tb.state}" to unassign tags'}
+                    {"error": f'Cannot use batch with state "{tb.state}" to unassign tags'}
                 )
         except DatabaseError:
-            return Response({'error': 'Batch is already being processed'}, status=HTTP_409_CONFLICT)
+            return Response({"error": "Batch is already being processed"}, status=HTTP_409_CONFLICT)
         except TaggingBatch.DoesNotExist:
-            raise Http404({'error': 'Tagging batch not found'}) from None
+            raise Http404({"error": "Tagging batch not found"}) from None
 
         tb.state = TaggingBatchState.UNDOING
         tb.save()
         task = tagging_batch_unassign_task.apply_async(args=(tb.pk,), countdown=2)
         return Response(
             {
-                'task_id': task.id,
-                'batch': TaggingBatchSerializer(tb, context={"request": request}).data,
+                "task_id": task.id,
+                "batch": TaggingBatchSerializer(tb, context={"request": request}).data,
             },
             status=HTTP_202_ACCEPTED,
         )
 
-    @action(methods=['get'], detail=True, url_name='imports', url_path='imports')
+    @action(methods=["get"], detail=True, url_name="imports", url_path="imports")
     def imports(self, request, pk):
         batch = get_object_or_404(self.get_queryset(), pk=pk)
         attempts = batch.taggingattempts.filter(operation=TaggingAttemptOperation.IMPORT).order_by(
-            'created'
+            "created"
         )
         return Response(
             TaggingAttemptSerializer(attempts, many=True, context={"request": request}).data

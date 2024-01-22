@@ -5,34 +5,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0005_metric_active')]
+    dependencies = [("logs", "0005_metric_active")]
 
     operations = [
         migrations.CreateModel(
-            name='InterestGroup',
+            name="InterestGroup",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('short_name', models.CharField(max_length=100)),
-                ('name', models.CharField(max_length=250)),
-                ('name_en', models.CharField(max_length=250, null=True)),
-                ('name_cs', models.CharField(max_length=250, null=True)),
+                ("short_name", models.CharField(max_length=100)),
+                ("name", models.CharField(max_length=250)),
+                ("name_en", models.CharField(max_length=250, null=True)),
+                ("name_cs", models.CharField(max_length=250, null=True)),
             ],
         ),
         migrations.AddField(
-            model_name='metric',
-            name='interest_group',
+            model_name="metric",
+            name="interest_group",
             field=models.ForeignKey(
                 blank=True,
-                help_text='If given, it marks the metric as representing interest of the '
-                'specified type',
+                help_text="If given, it marks the metric as representing interest of the "
+                "specified type",
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                to='logs.InterestGroup',
+                to="logs.InterestGroup",
             ),
         ),
     ]

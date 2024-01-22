@@ -20,23 +20,23 @@ class ERMS:
     """
 
     # endpoints
-    EP_OBJECT = 'object'
-    EP_IDENTITY = 'identity'
-    EP_CONSORTIUM = 'consortium'
-    EP_CONSORTIUM_MEMBER = 'consortium_member'
-    EP_ACQUISITION = 'acquisition'
-    EP_PROCUREMENT = 'procurement'
-    EP_OFFER = 'offer'
-    EP_OFFER_SPLIT = 'offer_split'
+    EP_OBJECT = "object"
+    EP_IDENTITY = "identity"
+    EP_CONSORTIUM = "consortium"
+    EP_CONSORTIUM_MEMBER = "consortium_member"
+    EP_ACQUISITION = "acquisition"
+    EP_PROCUREMENT = "procurement"
+    EP_OFFER = "offer"
+    EP_OFFER_SPLIT = "offer_split"
 
     # object classes
-    CLS_PERSON = 'Person'
-    CLS_ORGANIZATION = 'Organization'
-    CLS_PLATFORM = 'Platform'
+    CLS_PERSON = "Person"
+    CLS_ORGANIZATION = "Organization"
+    CLS_PLATFORM = "Platform"
 
     def __init__(self, base_url="https://erms.czechelib.cz/api/"):
         ERMS.check_url(base_url)
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
 
     @staticmethod
@@ -56,19 +56,19 @@ class ERMS:
     @classmethod
     def _construct_query_string(cls, value):
         if type(value) in (list, tuple, set):
-            return 'in.({})'.format(','.join(str(_id) for _id in value))
-        return f'eq.{value}'
+            return "in.({})".format(",".join(str(_id) for _id in value))
+        return f"eq.{value}"
 
     def construct_object_url(self, cls=None, object_id=None) -> str:
         params = {}
         if cls:
-            params['class'] = self._construct_query_string(cls)
+            params["class"] = self._construct_query_string(cls)
         if object_id:
-            params['id'] = self._construct_query_string(object_id)
+            params["id"] = self._construct_query_string(object_id)
         else:
-            params['order'] = 'id'
+            params["order"] = "id"
         query = urllib.parse.urlencode(params)
-        return f'{self.base_url}/{self.EP_OBJECT}?{query}'
+        return f"{self.base_url}/{self.EP_OBJECT}?{query}"
 
     def fetch_url(self, url):
         response = self.session.get(url)
@@ -84,15 +84,15 @@ class ERMS:
         return data
 
     def fetch_endpoint(self, endpoint, object_id=None, **kwargs) -> list:
-        url = f'{self.base_url}/{endpoint}'
+        url = f"{self.base_url}/{endpoint}"
 
         params = {}
         if object_id:
-            params['id'] = self._construct_query_string(object_id)
+            params["id"] = self._construct_query_string(object_id)
         for key, value in kwargs.items():
             params[key] = self._construct_query_string(value)
         if params:
-            url += '?{}'.format(urllib.parse.urlencode(params))
+            url += "?{}".format(urllib.parse.urlencode(params))
 
         ERMS.check_url(url)
         return self.fetch_url(url)

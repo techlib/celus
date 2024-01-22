@@ -12,9 +12,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: black
-        name: Black formatter
-        entry: black
+      - id: ruff-format
+        name: ruff formatter
+        entry: ruff format
         language: system
         types: [python]
 

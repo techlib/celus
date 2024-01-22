@@ -35,11 +35,11 @@ class BadRequestError(Exception):
 
 
 def interest_value_to_annot_name(dt: DimensionText) -> str:
-    return f'interest_{dt.pk}'
+    return f"interest_{dt.pk}"
 
 
 def interest_annotation_params(
-    accesslog_filter: dict, interest_rt: ReportType, prefix='accesslog__'
+    accesslog_filter: dict, interest_rt: ReportType, prefix="accesslog__"
 ) -> dict:
     """
     :param interest_rt: report type 'interest'
@@ -51,8 +51,8 @@ def interest_annotation_params(
     interest_annot_params = {
         interest_value_to_annot_name(interest_type): Coalesce(
             Sum(
-                prefix + 'value',
-                filter=Q(**{prefix + 'dim1': interest_type.pk, prefix + 'report_type': interest_rt})
+                prefix + "value",
+                filter=Q(**{prefix + "dim1": interest_type.pk, prefix + "report_type": interest_rt})
                 & Q(**accesslog_filter),
             ),
             0,
@@ -79,13 +79,13 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
         interests = {}
         for int_param_name, dt in int_param_name_to_interest_type.items():
             if hasattr(obj, int_param_name):
-                interests[dt.text] = {'value': getattr(obj, int_param_name), 'name': dt.text_local}
+                interests[dt.text] = {"value": getattr(obj, int_param_name), "name": dt.text_local}
         obj.interests = interests
 
 
 def extract_accesslog_attr_query_params(
     params,
-    dimensions=('date', 'platform', 'metric', 'organization', 'target'),
+    dimensions=("date", "platform", "metric", "organization", "target"),
     mdu_filter: bool = False,
     use_ids=False,
 ):
@@ -103,9 +103,9 @@ def extract_accesslog_attr_query_params(
         if value:
             field = AccessLog._meta.get_field(dim_name)
             if isinstance(field, models.ForeignKey):
-                if value not in (-1, '-1'):
+                if value not in (-1, "-1"):
                     if use_ids:
-                        query_params[f'{dim_name}_id'] = value
+                        query_params[f"{dim_name}_id"] = value
                     else:
                         query_params[dim_name] = get_object_or_404(field.related_model, pk=value)
                 else:
@@ -114,7 +114,7 @@ def extract_accesslog_attr_query_params(
             else:
                 query_params[dim_name] = value
     # MDUs are connected through import batches m2m, so we need to handle them differently
-    if mdu_filter and (mdu_id := params.get('mdu')):
+    if mdu_filter and (mdu_id := params.get("mdu")):
         # Postgres sometimes has trouble efficiently planning the query when the mdu filter is
         # applied, and it takes a long time to execute. Maybe it has to do with the extra
         # partitioning on K1, I am not sure.
@@ -126,10 +126,10 @@ def extract_accesslog_attr_query_params(
             pass
         else:
             if mdu.organization:
-                query_params['organization'] = mdu.organization
-            query_params['platform_id'] = mdu.platform_id
-            query_params['report_type'] = mdu.report_type
-        query_params['import_batch__mdu__pk'] = mdu_id
+                query_params["organization"] = mdu.organization
+            query_params["platform_id"] = mdu.platform_id
+            query_params["report_type"] = mdu.report_type
+        query_params["import_batch__mdu__pk"] = mdu_id
     return query_params
 
 
@@ -146,13 +146,13 @@ def test_possible_materialized_report_use(
     """
 
     def normalize_param(param):
-        if '__' in param:
-            return normalize_param(param.split('__')[0])
-        if param.endswith('_id'):
+        if "__" in param:
+            return normalize_param(param.split("__")[0])
+        if param.endswith("_id"):
             return normalize_param(param[:-3])
         return param
 
-    rt = query_params.get('report_type')
+    rt = query_params.get("report_type")
     if rt:
         normalized_query_params = {normalize_param(param) for param in query_params}
         if other_used_dimensions:
@@ -176,11 +176,11 @@ def replace_report_type_with_materialized(
     )
     if materialized_report:
         logger.info(
-            'Using materialized report: %s instead of %s',
+            "Using materialized report: %s instead of %s",
             materialized_report,
-            query_params['report_type'],
+            query_params["report_type"],
         )
-        query_params['report_type'] = materialized_report
+        query_params["report_type"] = materialized_report
         return True
     return False
 
@@ -210,7 +210,7 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
         if final_candidates:
             if len(final_candidates) > 1:
                 # we must decide upon the better one
-                logger.debug('More than one candidate materialized report: %s', final_candidates)
+                logger.debug("More than one candidate materialized report: %s", final_candidates)
                 # we put the views with least number of dimensions first
                 # (formerly we did query for accesslog count, but the extra queries were too costly
                 #  and we need the solution fast rather then super optimal)
@@ -230,12 +230,12 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
 
 
 class StatsComputer:
-    implicit_dims = ['date', 'platform', 'metric', 'organization', 'target', 'import_batch']
-    input_dim_to_query_dim = {'interest': 'metric'}
-    extra_query_params = {'interest': lambda rt: {'metric__reportinterestmetric__report_type': rt}}
+    implicit_dims = ["date", "platform", "metric", "organization", "target", "import_batch"]
+    input_dim_to_query_dim = {"interest": "metric"}
+    extra_query_params = {"interest": lambda rt: {"metric__reportinterestmetric__report_type": rt}}
     implicit_dim_to_text_fn = {
-        'interest': lambda x: str(x),
-        'metric': lambda x: x.name or x.short_name,
+        "interest": lambda x: str(x),
+        "metric": lambda x: x.name or x.short_name,
     }
     hard_result_count_limit = 20_000
 
@@ -271,9 +271,9 @@ class StatsComputer:
             self.io_prim_dim_name,
             self.prim_dim_name,
             self.prim_dim_obj,
-        ) = self._translate_dimension_spec(params.get('prim_dim', 'date'))
+        ) = self._translate_dimension_spec(params.get("prim_dim", "date"))
         self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = self._translate_dimension_spec(
-            params.get('sec_dim')
+            params.get("sec_dim")
         )
         # construct the accesslog query
         self.query = self.construct_accesslog_query()
@@ -288,9 +288,9 @@ class StatsComputer:
         """
         # we support Django style __ for date parts and related fields references
         # here we split the name before processing if __ is present
-        rest = ''
-        if dim_name and '__' in dim_name:
-            dim_name, rest = dim_name.split('__', 1)
+        rest = ""
+        if dim_name and "__" in dim_name:
+            dim_name, rest = dim_name.split("__", 1)
 
         if dim_name is None:
             return None, None, None
@@ -299,13 +299,13 @@ class StatsComputer:
         if dim_name in self.implicit_dims:
             # this is the only place where we use the split version of dim_name (for now)
             if rest:
-                return dim_name, f'{dim_name}__{rest}', None
+                return dim_name, f"{dim_name}__{rest}", None
             else:
                 return dim_name, dim_name, None
         dimensions = self.used_report_type.dimensions_sorted
         for dim_idx, dimension in enumerate(dimensions):
             if dimension.short_name == dim_name:
-                return dimension.short_name, f'dim{dim_idx + 1}', dimension
+                return dimension.short_name, f"dim{dim_idx + 1}", dimension
         raise BadRequestError(
             f'Unknown dimension: "{dim_name}" for report type: "{self.used_report_type}"'
         )
@@ -326,22 +326,22 @@ class StatsComputer:
         if self.sec_dim_name:
             data = (
                 self.query.values(self.prim_dim_name, self.sec_dim_name)
-                .annotate(count=Sum('value'))
-                .values(self.prim_dim_name, 'count', self.sec_dim_name)
+                .annotate(count=Sum("value"))
+                .values(self.prim_dim_name, "count", self.sec_dim_name)
                 .order_by(self.prim_dim_name, self.sec_dim_name)
             )
         else:
             data = (
                 self.query.values(self.prim_dim_name)
-                .annotate(count=Sum('value'))
-                .values(self.prim_dim_name, 'count')
+                .annotate(count=Sum("value"))
+                .values(self.prim_dim_name, "count")
                 .order_by(self.prim_dim_name)
             )
         if recache:
-            data = recache_queryset(data, origin='chart-data')
+            data = recache_queryset(data, origin="chart-data")
         if len(data) > self.hard_result_count_limit:
             logger.warning(
-                'Result size of %d exceeded the limit of %d records',
+                "Result size of %d exceeded the limit of %d records",
                 len(data),
                 self.hard_result_count_limit,
             )
@@ -381,9 +381,9 @@ class StatsComputer:
 
     def construct_accesslog_query(self) -> QuerySet[AccessLog]:
         if self.report_type:
-            query_params = {'report_type': self.used_report_type, 'metric__active': True}
+            query_params = {"report_type": self.used_report_type, "metric__active": True}
         else:
-            query_params = {'metric__active': True}
+            query_params = {"metric__active": True}
         # go over implicit dimensions and add them to the query if GET params are given for this
         query_params.update(
             extract_accesslog_attr_query_params(
@@ -394,7 +394,7 @@ class StatsComputer:
         self.dim_raw_name_to_name = {}
         if self.report_type:
             for i, dim in enumerate(self.report_type.dimensions_sorted):
-                dim_raw_name = 'dim{}'.format(i + 1)
+                dim_raw_name = "dim{}".format(i + 1)
                 dim_name = dim.short_name
                 self.dim_raw_name_to_name[dim_raw_name] = dim_name
                 value = self.params.get(dim_name)
@@ -429,7 +429,7 @@ class StatsComputer:
         )
         if rt_change:
             # the original value is still preserved in self.original_used_report_type
-            self.used_report_type = query_params.get('report_type')
+            self.used_report_type = query_params.get("report_type")
 
         # construct the query
         query = AccessLog.objects.filter(**query_params)
@@ -438,11 +438,11 @@ class StatsComputer:
         return query
 
     def get_available_metrics(self) -> QuerySet[Metric]:
-        used_metric_ids = set(self.query.values_list('metric_id', flat=True).distinct())
+        used_metric_ids = set(self.query.values_list("metric_id", flat=True).distinct())
         return Metric.objects.filter(pk__in=used_metric_ids).annotate(
             is_interest_metric=Exists(
                 ReportInterestMetric.objects.filter(
-                    metric_id=OuterRef('pk'), report_type_id=self.original_used_report_type.pk
+                    metric_id=OuterRef("pk"), report_type_id=self.original_used_report_type.pk
                 )
             )
         )
@@ -461,13 +461,13 @@ class StatsComputer:
         # filter to only interest metrics if metric neither primary nor secondary dim
         if (
             self.report_type
-            and self.prim_dim_name != 'metric'
-            and self.sec_dim_name != 'metric'
-            and 'metric' not in self.params
+            and self.prim_dim_name != "metric"
+            and self.sec_dim_name != "metric"
+            and "metric" not in self.params
         ):
             interest_metrics = set(
                 self.original_used_report_type.interest_metrics.order_by().values_list(
-                    'pk', flat=True
+                    "pk", flat=True
                 )
             )
             if interest_metrics:
@@ -475,7 +475,7 @@ class StatsComputer:
 
             # we want to list only the metrics which are actually used - regardless of
             # interest_metrics
-            used_metric_ids = set(self.query.values_list('metric_id', flat=True).distinct())
+            used_metric_ids = set(self.query.values_list("metric_id", flat=True).distinct())
             self.reported_metrics = {
                 im.pk: im for im in Metric.objects.filter(pk__in=used_metric_ids)
             }
@@ -497,7 +497,7 @@ class StatsComputer:
             }
             for rec in data:
                 if rec[dim_name] in mapping:
-                    rec[dim_name] = to_text_fn(mapping[rec[dim_name]]).replace('_', ' ')
+                    rec[dim_name] = to_text_fn(mapping[rec[dim_name]]).replace("_", " ")
 
     @classmethod
     def clean_organization_names(cls, user, data):
@@ -511,11 +511,11 @@ class StatsComputer:
         user_organizations = {org.pk for org in user.accessible_organizations()}
         org_nums = []
         for rec in data:
-            if 'organization' in rec and rec['organization'] not in user_organizations:
-                org = rec['organization']
+            if "organization" in rec and rec["organization"] not in user_organizations:
+                org = rec["organization"]
                 try:
                     num = org_nums.index(org) + 1
                 except ValueError:
                     org_nums.append(org)
                     num = len(org_nums)
-                rec['organization'] = 'Anonym-{:03d}'.format(num)
+                rec["organization"] = "Anonym-{:03d}".format(num)

@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class ScopusTitleListTagger:
-    LEVEL_TO_COLOR = {'Level 1': '#ef90a3', 'Level 2': '#f1b1be', 'Level 3': '#f5cdd5'}
-    DEFAULT_COLOR = '#ed6d86'
+    LEVEL_TO_COLOR = {"Level 1": "#ef90a3", "Level 2": "#f1b1be", "Level 3": "#f5cdd5"}
+    DEFAULT_COLOR = "#ed6d86"
 
     def __init__(self, title_list_file: Union[str, Path], class_code_file: Union[str, Path]):
         self.title_list_file = title_list_file
@@ -30,7 +30,7 @@ class ScopusTitleListTagger:
         with open(fname) as f:
             reader = get_dict_reader_from_csv(f)
             for row in reader:
-                code = row.pop('Code')
+                code = row.pop("Code")
                 class_code_map[code] = {k.strip(): v.strip() for k, v in row.items()}
         return class_code_map
 
@@ -40,9 +40,9 @@ class ScopusTitleListTagger:
         with open(fname) as f:
             reader = get_dict_reader_from_csv(f)
             for row in reader:
-                issn = normalize_issn(row['ISSN'].strip())
-                eissn = normalize_issn(row['eISSN'].strip())
-                if codes := [code.strip() for code in row['Codes'].split(';') if code.strip()]:
+                issn = normalize_issn(row["ISSN"].strip())
+                eissn = normalize_issn(row["eISSN"].strip())
+                if codes := [code.strip() for code in row["Codes"].split(";") if code.strip()]:
                     if issn:
                         issn_to_code_map[issn] = codes
                     if eissn:
@@ -56,8 +56,8 @@ class ScopusTitleListTagger:
         batch_size=10_000,
     ):
         to_insert = []
-        batch = TaggingBatch.objects.create(internal_name='scopus-topics')
-        titles = Title.objects.filter(~Q(issn='') | ~Q(eissn=''))
+        batch = TaggingBatch.objects.create(internal_name="scopus-topics")
+        titles = Title.objects.filter(~Q(issn="") | ~Q(eissn=""))
         total = titles.count()
         for i, title in enumerate(titles.iterator()):
             for issn in (title.issn, title.eissn):
@@ -76,12 +76,12 @@ class ScopusTitleListTagger:
                                 name=self.level_to_class_name(level),
                                 scope=TagScope.TITLE,
                                 defaults={
-                                    'desc': f'Topics from the Scopus title list - {level}',
-                                    'bg_color': self.LEVEL_TO_COLOR.get(level, self.DEFAULT_COLOR),
-                                    'can_modify': AccessibleBy.SYSTEM,
-                                    'can_create_tags': AccessibleBy.SYSTEM,
-                                    'default_tag_can_see': AccessibleBy.EVERYBODY,
-                                    'default_tag_can_assign': AccessibleBy.SYSTEM,
+                                    "desc": f"Topics from the Scopus title list - {level}",
+                                    "bg_color": self.LEVEL_TO_COLOR.get(level, self.DEFAULT_COLOR),
+                                    "can_modify": AccessibleBy.SYSTEM,
+                                    "can_create_tags": AccessibleBy.SYSTEM,
+                                    "default_tag_can_see": AccessibleBy.EVERYBODY,
+                                    "default_tag_can_assign": AccessibleBy.SYSTEM,
                                 },
                             )
                         if (level, topic) not in self._name_to_tag:
@@ -89,10 +89,10 @@ class ScopusTitleListTagger:
                                 name=topic,
                                 tag_class=self._level_to_tag_class[level],
                                 defaults={
-                                    'desc': f'{level} topic from the Scopus title list - {topic}',
-                                    'bg_color': self.LEVEL_TO_COLOR.get(level, self.DEFAULT_COLOR),
-                                    'can_see': AccessibleBy.EVERYBODY,
-                                    'can_assign': AccessibleBy.SYSTEM,
+                                    "desc": f"{level} topic from the Scopus title list - {topic}",
+                                    "bg_color": self.LEVEL_TO_COLOR.get(level, self.DEFAULT_COLOR),
+                                    "can_see": AccessibleBy.EVERYBODY,
+                                    "can_assign": AccessibleBy.SYSTEM,
                                 },
                             )
                         tag = self._name_to_tag[(level, topic)]
@@ -118,4 +118,4 @@ class ScopusTitleListTagger:
 
     @classmethod
     def level_to_class_name(cls, level: str) -> str:
-        return level.replace('Level ', 'Scopus #')
+        return level.replace("Level ", "Scopus #")

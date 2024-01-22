@@ -16,10 +16,10 @@ class AnnotationSerializer(ModelSerializer):
     platform = SimplePlatformSerializer(read_only=True)
     subject = ReadOnlyField()
     organization_id = PrimaryKeyRelatedField(
-        source='organization', write_only=True, allow_null=True, queryset=Organization.objects.all()
+        source="organization", write_only=True, allow_null=True, queryset=Organization.objects.all()
     )
     platform_id = PrimaryKeyRelatedField(
-        source='platform', write_only=True, allow_null=True, queryset=Platform.objects.all()
+        source="platform", write_only=True, allow_null=True, queryset=Platform.objects.all()
     )
     can_edit = BooleanField(read_only=True)
     submitter = HiddenField(default=CurrentUserDefault())
@@ -28,39 +28,39 @@ class AnnotationSerializer(ModelSerializer):
     class Meta:
         model = Annotation
         fields = (
-            'pk',
-            'organization_id',
-            'platform_id',
-            'subject',
-            'subject_en',
-            'subject_cs',
-            'short_message',
-            'short_message_en',
-            'short_message_cs',
-            'message',
-            'message_en',
-            'message_cs',
-            'start_date',
-            'end_date',
-            'organization',
-            'platform',
-            'level',
-            'can_edit',
-            'submitter',
-            'author',
+            "pk",
+            "organization_id",
+            "platform_id",
+            "subject",
+            "subject_en",
+            "subject_cs",
+            "short_message",
+            "short_message_en",
+            "short_message_cs",
+            "message",
+            "message_en",
+            "message_cs",
+            "start_date",
+            "end_date",
+            "organization",
+            "platform",
+            "level",
+            "can_edit",
+            "submitter",
+            "author",
         )
-        extra_kwargs = {'subject_en': {'allow_blank': False}}
+        extra_kwargs = {"subject_en": {"allow_blank": False}}
 
     def update(self, instance: Annotation, validated_data):
         # in patch updates, the submitter field might not be present
-        submitter = validated_data.pop('submitter', None) or self.context['request'].user
+        submitter = validated_data.pop("submitter", None) or self.context["request"].user
         if not instance.can_edit(submitter):
-            raise PermissionDenied('User is not allowed to edit this object - it is locked.')
+            raise PermissionDenied("User is not allowed to edit this object - it is locked.")
         result = super().update(instance, validated_data)  # type: Annotation
         return self._adjust_permissions(result, submitter)
 
     def create(self, validated_data):
-        submitter = validated_data.pop('submitter')  # type: User
+        submitter = validated_data.pop("submitter")  # type: User
         result = super().create(validated_data)
         return self._adjust_permissions(result, submitter)
 

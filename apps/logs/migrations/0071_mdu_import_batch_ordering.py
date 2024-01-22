@@ -4,14 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0070_reporttype_ext_id')]
+    dependencies = [("logs", "0070_reporttype_ext_id")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='importbatch',
-            options={'ordering': ('id',), 'verbose_name_plural': 'Import batches'},
+            name="importbatch",
+            options={"ordering": ("id",), "verbose_name_plural": "Import batches"},
         ),
         migrations.AlterModelOptions(
-            name='manualdatauploadimportbatch', options={'ordering': ('mdu_id', 'import_batch_id')}
+            name="manualdatauploadimportbatch", options={"ordering": ("mdu_id", "import_batch_id")}
         ),
     ]

@@ -5,24 +5,24 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('logs', '0076_deduplicate_metrics'),
+        ("logs", "0076_deduplicate_metrics"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='dimension',
-            name='short_name_source_not_null',
+            model_name="dimension",
+            name="short_name_source_not_null",
         ),
         migrations.RemoveConstraint(
-            model_name='dimension',
-            name='short_name_source_null',
+            model_name="dimension",
+            name="short_name_source_null",
         ),
         migrations.RemoveField(
-            model_name='dimension',
-            name='source',
+            model_name="dimension",
+            name="source",
         ),
         migrations.AddConstraint(
-            model_name='dimension',
-            constraint=models.UniqueConstraint(fields=('short_name',), name='short_name_unique'),
+            model_name="dimension",
+            constraint=models.UniqueConstraint(fields=("short_name",), name="short_name_unique"),
         ),
     ]

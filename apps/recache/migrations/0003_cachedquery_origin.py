@@ -4,12 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('recache', '0002_add_stats')]
+    dependencies = [("recache", "0002_add_stats")]
 
     operations = [
         migrations.AddField(
-            model_name='cachedquery',
-            name='origin',
+            model_name="cachedquery",
+            name="origin",
             field=models.CharField(
                 blank=True, help_text="Optional identifier of the query's origin", max_length=32
             ),

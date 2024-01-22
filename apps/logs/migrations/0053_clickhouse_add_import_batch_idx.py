@@ -16,17 +16,17 @@ def clickhouse_add_import_batch_id_idx(apps, schema_editor):
             for idx in AccessLogCube.Clickhouse.indexes:
                 table_name = ch_backend.cube_to_table_name(AccessLogCube)
                 if client.execute(f"EXISTS TABLE {table_name}")[0][0]:
-                    columns = client.execute(f'SHOW CREATE TABLE {table_name}')
+                    columns = client.execute(f"SHOW CREATE TABLE {table_name}")
                     desc = columns[0][0]
-                    if f'INDEX {idx.name}' not in desc:
+                    if f"INDEX {idx.name}" not in desc:
                         idx_def = idx.definition()
-                        client.execute(f'ALTER TABLE {table_name} ADD {idx_def}')
-                        client.execute(f'ALTER TABLE {table_name} MATERIALIZE INDEX {idx.name}')
-                        print(f'Created Clickhouse index: {idx.name}')
+                        client.execute(f"ALTER TABLE {table_name} ADD {idx_def}")
+                        client.execute(f"ALTER TABLE {table_name} MATERIALIZE INDEX {idx.name}")
+                        print(f"Created Clickhouse index: {idx.name}")
 
 
 class Migration(migrations.Migration):
-    dependencies = [('logs', '0052_remove_importbatch_system_created')]
+    dependencies = [("logs", "0052_remove_importbatch_system_created")]
 
     operations = [
         migrations.RunPython(clickhouse_add_import_batch_id_idx, migrations.RunPython.noop)

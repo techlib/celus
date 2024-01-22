@@ -12,15 +12,15 @@ class TestFormulaParsing:
     @pytest.mark.parametrize(
         "formula, expected",
         [
-            ("tr | (jr1 - jr1goa)", [['tr', '|', ['jr1', '-', 'jr1goa']]]),
+            ("tr | (jr1 - jr1goa)", [["tr", "|", ["jr1", "-", "jr1goa"]]]),
             # operator precedence is respected
-            ("tr | jr1 - jr1goa", [['tr', '|', ['jr1', '-', 'jr1goa']]]),
-            ("tr", ['tr']),
-            ("tr | jr1", [['tr', '|', 'jr1']]),
-            ("tr + jr1", [['tr', '+', 'jr1']]),
+            ("tr | jr1 - jr1goa", [["tr", "|", ["jr1", "-", "jr1goa"]]]),
+            ("tr", ["tr"]),
+            ("tr | jr1", [["tr", "|", "jr1"]]),
+            ("tr + jr1", [["tr", "+", "jr1"]]),
             (
-                'tr | jr1 - jr1goa | dr + pr',
-                [['tr', '|', ['jr1', '-', 'jr1goa'], '|', ['dr', '+', 'pr']]],
+                "tr | jr1 - jr1goa | dr + pr",
+                [["tr", "|", ["jr1", "-", "jr1goa"], "|", ["dr", "+", "pr"]]],
             ),
         ],
     )
@@ -31,7 +31,7 @@ class TestFormulaParsing:
 
 class TestReportDataSourceParsing:
     @pytest.mark.parametrize(
-        ['report_def', 'is_valid'],
+        ["report_def", "is_valid"],
         [
             (
                 {
@@ -81,21 +81,21 @@ class TestReportDataSourceParsing:
                 ReportDataSource.from_dict(report_def, None)
 
     @pytest.mark.parametrize(
-        ['report_def', 'name', 'id', 'report_type'],
+        ["report_def", "name", "id", "report_type"],
         [
-            ({"reportType": "TR", "metric": "Unique_Item_Requests"}, 'TR', 'TR', 'TR'),
-            ({"id": "tr", "reportType": "TR", "metric": "Unique_Item_Requests"}, 'TR', 'tr', 'TR'),
+            ({"reportType": "TR", "metric": "Unique_Item_Requests"}, "TR", "TR", "TR"),
+            ({"id": "tr", "reportType": "TR", "metric": "Unique_Item_Requests"}, "TR", "tr", "TR"),
             (
                 {"id": "tr", "name": "foo", "reportType": "TR", "metric": "Unique_Item_Requests"},
-                'foo',
-                'tr',
-                'TR',
+                "foo",
+                "tr",
+                "TR",
             ),
             (
                 {"name": "foo", "reportType": "TR", "metric": "Unique_Item_Requests"},
-                'foo',
-                'foo',
-                'TR',
+                "foo",
+                "foo",
+                "TR",
             ),
         ],
     )
@@ -114,38 +114,38 @@ class TestReportParsing:
 
     def test_report_from_dict(self, report_def_tr_jr1):
         report = Report.from_dict(report_def_tr_jr1)
-        assert report.name == 'Test report'
-        assert report.description == 'Test report description'
-        assert set(report.sources_by_id.keys()) == {'tr', 'jr1', 'jr1goa'}
-        assert report.sources_by_id['tr'].report_type == 'TR'
-        assert report.sources_by_id['tr'].metric == 'Unique_Item_Requests'
+        assert report.name == "Test report"
+        assert report.description == "Test report description"
+        assert set(report.sources_by_id.keys()) == {"tr", "jr1", "jr1goa"}
+        assert report.sources_by_id["tr"].report_type == "TR"
+        assert report.sources_by_id["tr"].metric == "Unique_Item_Requests"
         assert len(report.parts) == 4
 
     @pytest.mark.django_db
     @pytest.mark.parametrize(
-        ['report', 'is_valid'],
+        ["report", "is_valid"],
         [
             # 0: the report is missing name, description and other attrs
             ({}, False),
             # 1: the report is missing description and other attrs
-            ({'name': 'Test report'}, False),
+            ({"name": "Test report"}, False),
             # 2: this is OK
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [],
-                    'parts': [],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [],
+                    "parts": [],
                 },
                 True,
             ),
             # 3: data source is missing reportType
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{}],
-                    'parts': [],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{}],
+                    "parts": [],
                 },
                 False,
             ),
@@ -153,74 +153,74 @@ class TestReportParsing:
             # (even if all metrics should be accepted, it's still required and may be None)
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR'}],
-                    'parts': [],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR"}],
+                    "parts": [],
                 },
                 False,
             ),
             # 5: this is OK
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [],
                 },
                 True,
             ),
             # 6: data source reportType / id must be unique
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [
-                        {'reportType': 'TR', 'metric': 'Unique_Item_Requests'},
-                        {'id': 'TR', 'reportType': 'Foo', 'metric': 'Unique_Item_Requests'},
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [
+                        {"reportType": "TR", "metric": "Unique_Item_Requests"},
+                        {"id": "TR", "reportType": "Foo", "metric": "Unique_Item_Requests"},
                     ],
-                    'parts': [],
+                    "parts": [],
                 },
                 False,
             ),
             # 7: part is missing required attrs
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [{}],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [{}],
                 },
                 False,
             ),
             # 8: stages must not be empty
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [{'name': 'Test part', 'description': 'AAA', 'stages': []}],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [{"name": "Test part", "description": "AAA", "stages": []}],
                 },
                 False,
             ),
             # 9: stage must have a formula
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [{'name': 'Test part', 'description': 'AAA', 'stages': [{}]}],
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [{"name": "Test part", "description": "AAA", "stages": [{}]}],
                 },
                 False,
             ),
             # 10: stage must have a name
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [
-                        {'name': 'Test part', 'description': 'AAA', 'stages': [{'formula': 'tr'}]}
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [
+                        {"name": "Test part", "description": "AAA", "stages": [{"formula": "tr"}]}
                     ],
                 },
                 False,
@@ -228,14 +228,14 @@ class TestReportParsing:
             # 11: this would be OK, but formula has incorrect reference
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [
                         {
-                            'name': 'Test part',
-                            'description': 'AAA',
-                            'stages': [{'name': 'xx', 'formula': 'tr'}],
+                            "name": "Test part",
+                            "description": "AAA",
+                            "stages": [{"name": "xx", "formula": "tr"}],
                         }
                     ],
                 },
@@ -244,14 +244,14 @@ class TestReportParsing:
             # 12: stage must not have the same name as a data source
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [
                         {
-                            'name': 'Test part',
-                            'description': 'AAA',
-                            'stages': [{'name': 'TR', 'formula': 'TR'}],
+                            "name": "Test part",
+                            "description": "AAA",
+                            "stages": [{"name": "TR", "formula": "TR"}],
                         }
                     ],
                 },
@@ -260,18 +260,18 @@ class TestReportParsing:
             # 13: two stages must not have the same id (by default it's the name)
             (
                 {
-                    'name': 'Test report',
-                    'description': 'Test report description',
-                    'dataSources': [{'reportType': 'TR', 'metric': 'Unique_Item_Requests'}],
-                    'parts': [
+                    "name": "Test report",
+                    "description": "Test report description",
+                    "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
+                    "parts": [
                         {
-                            'name': 'Test part',
-                            'description': 'AAA',
-                            'stages': [
+                            "name": "Test part",
+                            "description": "AAA",
+                            "stages": [
                                 # id is inferred from name
-                                {'name': 'TR', 'formula': 'TR'},
+                                {"name": "TR", "formula": "TR"},
                                 # id is explicitly set
-                                {'id': 'TR', 'name': 'TR2', 'formula': 'TR'},
+                                {"id": "TR", "name": "TR2", "formula": "TR"},
                             ],
                         }
                     ],

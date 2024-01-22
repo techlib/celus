@@ -31,7 +31,7 @@ def update_intentions_from_cred_post_save(
                     harvest__automatic__isnull=False,
                     when_processed__isnull=True,
                     credentials=instance,
-                ).delete(),
+                ).delete()
 
 
 @receiver(post_save, sender=CounterReportsToCredentials)
@@ -61,7 +61,7 @@ def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
             when_processed__isnull=True,
             credentials=instance.credentials,
             counter_report=instance.counter_report,
-        ).delete(),
+        ).delete()
 
 
 @receiver(post_save, sender=FetchIntention)

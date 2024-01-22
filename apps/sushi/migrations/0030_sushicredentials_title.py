@@ -5,19 +5,19 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0019_more_pub_types'),
-        ('organizations', '0015_nullable_ext_id'),
-        ('sushi', '0029_sushicredentials_version_hash'),
+        ("publications", "0019_more_pub_types"),
+        ("organizations", "0015_nullable_ext_id"),
+        ("sushi", "0029_sushicredentials_version_hash"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='sushicredentials',
-            name='title',
+            model_name="sushicredentials",
+            name="title",
             field=models.CharField(blank=True, max_length=120),
         ),
         migrations.AlterUniqueTogether(
-            name='sushicredentials',
-            unique_together={('organization', 'platform', 'counter_version', 'title')},
+            name="sushicredentials",
+            unique_together={("organization", "platform", "counter_version", "title")},
         ),
     ]

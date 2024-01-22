@@ -22,20 +22,20 @@ class EDUIdHeaderMiddleware(RemoteUserMiddleware):
     header = settings.EDUID_IDENTITY_HEADER
 
     def process_request(self, request):
-        logger.debug('Identity: %s', request.META.get(self.header))
+        logger.debug("Identity: %s", request.META.get(self.header))
         headers = [
-            'HTTP_X_USER_ID',
-            'HTTP_X_FULL_NAME',
-            'HTTP_X_FIRST_NAME',
-            'HTTP_X_LAST_NAME',
-            'HTTP_X_USER_NAME',
-            'HTTP_X_MAIL',
-            'HTTP_X_CN',
-            'HTTP_X_ROLES',
-            'HTTP_X_IDENTITY',
+            "HTTP_X_USER_ID",
+            "HTTP_X_FULL_NAME",
+            "HTTP_X_FIRST_NAME",
+            "HTTP_X_LAST_NAME",
+            "HTTP_X_USER_NAME",
+            "HTTP_X_MAIL",
+            "HTTP_X_CN",
+            "HTTP_X_ROLES",
+            "HTTP_X_IDENTITY",
         ]
-        out = '; '.join(f'{header}: {request.META.get(header)}' for header in headers)
-        logger.debug('Headers: %s', out)
+        out = "; ".join(f"{header}: {request.META.get(header)}" for header in headers)
+        logger.debug("Headers: %s", out)
         super().process_request(request)
 
     def _remove_invalid_user(self, request):
@@ -46,7 +46,7 @@ class EDUIdHeaderMiddleware(RemoteUserMiddleware):
         This is a copy-paste based modification of the parent method
         """
         try:
-            stored_backend = load_backend(request.session.get(auth.BACKEND_SESSION_KEY, ''))
+            stored_backend = load_backend(request.session.get(auth.BACKEND_SESSION_KEY, ""))
         except ImportError:
             # backend failed to load
             auth.logout(request)
@@ -61,16 +61,16 @@ class CelusVersionHeaderMiddleware:
 
     def __call__(self, request):
         if (
-            'CELUS-VERSION' in request.headers
-            and request.headers.get('CELUS-VERSION') != settings.CELUS_VERSION
+            "CELUS-VERSION" in request.headers
+            and request.headers.get("CELUS-VERSION") != settings.CELUS_VERSION
         ):
             response = JsonResponse(
-                {'error': 'celus versions mismatched'}, status=status.HTTP_409_CONFLICT
+                {"error": "celus versions mismatched"}, status=status.HTTP_409_CONFLICT
             )
         else:
             response = self.get_response(request)
 
-        response['CELUS-VERSION'] = settings.CELUS_VERSION
+        response["CELUS-VERSION"] = settings.CELUS_VERSION
         return response
 
 
@@ -86,13 +86,13 @@ class ClickhouseIntegrationMiddleware:
 
     def __call__(self, request):
         request.USE_CLICKHOUSE = settings.CLICKHOUSE_QUERY_ACTIVE and request.headers.get(
-            'DISABLE-CLICKHOUSE'
-        ) not in ('1', 'true')
+            "DISABLE-CLICKHOUSE"
+        ) not in ("1", "true")
         tid = threading.get_ident()
-        start_query_count = ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
+        start_query_count = ch_backend._query_counts.get(tid, {}).get("AccessLogCube", 0)
         response = self.get_response(request)
-        end_query_count = ch_backend._query_counts.get(tid, {}).get('AccessLogCube', 0)
-        response['X-Clickhouse-Query-Count'] = end_query_count - start_query_count
+        end_query_count = ch_backend._query_counts.get(tid, {}).get("AccessLogCube", 0)
+        response["X-Clickhouse-Query-Count"] = end_query_count - start_query_count
         return response
 
 
@@ -101,7 +101,7 @@ class UserLanguageMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user and hasattr(request.user, 'language'):
+        if request.user and hasattr(request.user, "language"):
             activate(request.user.language)
         return self.get_response(request)
 
@@ -110,7 +110,7 @@ class QueryCounter:
     def __init__(self, log_all=None):
         self.counter = Counter()
         self.log_all = (
-            log_all if log_all is not None else getattr(settings, 'LOG_ALL_QUERIES', False)
+            log_all if log_all is not None else getattr(settings, "LOG_ALL_QUERIES", False)
         )
 
     def __call__(self, execute, sql, params, many, context):
@@ -119,8 +119,8 @@ class QueryCounter:
         out = execute(sql, params, many, context)
         duration = monotonic() - start
         if self.log_all:
-            logger.debug('Query: %s, params: %s', sql, params)
-            logger.debug('Query took: %.2f s', duration)
+            logger.debug("Query: %s, params: %s", sql, params)
+            logger.debug("Query took: %.2f s", duration)
         return out
 
 
@@ -138,5 +138,5 @@ class QueryLoggingMiddleware:
         start = self.qc.counter[tid]
         with connection.execute_wrapper(self.qc):
             response = self.get_response(request)
-            response['X-Django-Query-Count'] = self.qc.counter[tid] - start
+            response["X-Django-Query-Count"] = self.qc.counter[tid] - start
             return response

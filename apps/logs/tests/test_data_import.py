@@ -77,7 +77,7 @@ class TestDataImport:
         al = AccessLog.objects.get()
         assert al.value == crs[0].value
         # check that the remap of the value is the same as the original text value
-        assert DimensionText.objects.get(pk=al.dim1).text == crs[0].dimension_data['dim0']
+        assert DimensionText.objects.get(pk=al.dim1).text == crs[0].dimension_data["dim0"]
         assert al.dim2 is None
 
     def test_data_import_mutli_3d(
@@ -88,28 +88,28 @@ class TestDataImport:
         crs = list(counter_records_nd(3, record_number=10))
         report_type = report_type_nd(3)
         _ibs, stats = import_counter_records(report_type, organizations[0], platform, crs)
-        assert stats['skipped logs'] == 0
-        assert stats['new logs'] == 10
+        assert stats["skipped logs"] == 0
+        assert stats["new logs"] == 10
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
-        al = AccessLog.objects.order_by('pk')[0]
+        al = AccessLog.objects.order_by("pk")[0]
         assert al.value == crs[0].value
         # check that the remap of the value is the same as the original text value
-        assert DimensionText.objects.get(pk=al.dim1).text == crs[0].dimension_data['dim0']
-        assert DimensionText.objects.get(pk=al.dim2).text == crs[0].dimension_data['dim1']
-        assert DimensionText.objects.get(pk=al.dim3).text == crs[0].dimension_data['dim2']
+        assert DimensionText.objects.get(pk=al.dim1).text == crs[0].dimension_data["dim0"]
+        assert DimensionText.objects.get(pk=al.dim2).text == crs[0].dimension_data["dim1"]
+        assert DimensionText.objects.get(pk=al.dim3).text == crs[0].dimension_data["dim2"]
         assert al.dim4 is None
 
     @pytest.mark.parametrize(
-        ['months', 'log_count', 'log_sum'],
+        ["months", "log_count", "log_sum"],
         [
             (None, 6, 63),
-            (['2018-01-01'], 3, 7),
-            (['2018-01-01', '2018-03-01'], 4, 39),
-            (['2018-01-01', '2018-02-01'], 5, 31),
-            (['2018-01-01', '2018-02-01', '2018-03-01'], 6, 63),
-            (['2018-02-01', '2018-03-01'], 3, 56),
-            (['2018-02-01'], 2, 24),
+            (["2018-01-01"], 3, 7),
+            (["2018-01-01", "2018-03-01"], 4, 39),
+            (["2018-01-01", "2018-02-01"], 5, 31),
+            (["2018-01-01", "2018-02-01", "2018-03-01"], 6, 63),
+            (["2018-02-01", "2018-03-01"], 3, 56),
+            (["2018-02-01"], 2, 24),
         ],
     )
     def test_data_import_month_skipping(
@@ -118,19 +118,19 @@ class TestDataImport:
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         data = [
-            [None, '2018-01-01', '1v1', '2v1', '3v1', 1],
-            [None, '2018-01-01', '1v2', '2v1', '3v1', 2],
-            [None, '2018-01-01', '1v2', '2v2', '3v1', 4],
-            [None, '2018-02-01', '1v1', '2v1', '3v1', 8],
-            [None, '2018-02-01', '1v1', '2v2', '3v2', 16],
-            [None, '2018-03-01', '1v1', '2v3', '3v2', 32],
+            [None, "2018-01-01", "1v1", "2v1", "3v1", 1],
+            [None, "2018-01-01", "1v2", "2v1", "3v1", 2],
+            [None, "2018-01-01", "1v2", "2v2", "3v1", 4],
+            [None, "2018-02-01", "1v1", "2v1", "3v1", 8],
+            [None, "2018-02-01", "1v1", "2v2", "3v2", 16],
+            [None, "2018-03-01", "1v1", "2v3", "3v2", 32],
         ]
-        crs = counter_records(data, metric='Hits', platform=platform.name)
+        crs = counter_records(data, metric="Hits", platform=platform.name)
         organization = organizations[0]
         report_type = report_type_nd(3)
         import_counter_records(report_type, organization, platform, crs, months=months)
         assert AccessLog.objects.count() == log_count
-        assert AccessLog.objects.aggregate(sum=Sum('value'))['sum'] == log_sum
+        assert AccessLog.objects.aggregate(sum=Sum("value"))["sum"] == log_sum
 
     def test_data_import_mutli_3d_repeating_data(
         self, counter_records_nd, organizations, report_type_nd, platform
@@ -142,21 +142,21 @@ class TestDataImport:
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         crs = list(
-            counter_records_nd(3, record_number=10, title='Title ABC', dim_value='one value')
+            counter_records_nd(3, record_number=10, title="Title ABC", dim_value="one value")
         )
         rt = report_type_nd(3)  # type: ReportType
         import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
-        al1, al2 = AccessLog.objects.order_by('pk')[:2]
+        al1, al2 = AccessLog.objects.order_by("pk")[:2]
         assert al1.value == crs[0].value
         # check that only one remap is created for each dimension
-        assert DimensionText.objects.filter(text='one value').count() == 3
-        dt1 = DimensionText.objects.get(text='one value', dimension=rt.dimensions_sorted[0])
+        assert DimensionText.objects.filter(text="one value").count() == 3
+        dt1 = DimensionText.objects.get(text="one value", dimension=rt.dimensions_sorted[0])
         # check that values with the same dimension use the same remap
         assert al1.dim1 == dt1.pk
         assert al2.dim1 == dt1.pk
-        dt2 = DimensionText.objects.get(text='one value', dimension=rt.dimensions_sorted[1])
+        dt2 = DimensionText.objects.get(text="one value", dimension=rt.dimensions_sorted[1])
         assert al1.dim2 == dt2.pk
         assert al2.dim2 == dt2.pk
         assert al1.dim3 is not None
@@ -166,17 +166,17 @@ class TestDataImport:
         """
         Test that reimporting the same data will lead to an exception
         """
-        crs = list(counter_records_nd(3, record_number=1, title='Title ABC', dim_value='one value'))
+        crs = list(counter_records_nd(3, record_number=1, title="Title ABC", dim_value="one value"))
         rt = report_type_nd(3)  # type: ReportType
         _ibs, stats = import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
-        assert stats['new logs'] == 1
-        assert stats['new platformtitles'] == 1
+        assert stats["new logs"] == 1
+        assert stats["new platformtitles"] == 1
         with pytest.raises(DataStructureError):
             import_counter_records(rt, organizations[0], platform, crs)
 
-    @pytest.mark.parametrize(['buffer_size'], [(10,), (3,), (2,), (1,)])
+    @pytest.mark.parametrize(["buffer_size"], [(10,), (3,), (2,), (1,)])
     def test_duplicated_data_in_one_import(
         self, counter_records_nd, organizations, report_type_nd, platform, buffer_size
     ):
@@ -186,7 +186,7 @@ class TestDataImport:
         It should work regardless of buffer_size - which means even if the clashing records
         are in different batches
         """
-        cr = list(counter_records_nd(3, record_number=1, title='Title ABC', dim_value='one'))[0]
+        cr = list(counter_records_nd(3, record_number=1, title="Title ABC", dim_value="one"))[0]
         crs = [cr, cr, cr]
         rt = report_type_nd(3)  # type: ReportType
         _ibs, stats = import_counter_records(
@@ -195,8 +195,8 @@ class TestDataImport:
         assert AccessLog.objects.count() == 1
         assert AccessLog.objects.get().value == 3 * cr.value
         assert Title.objects.count() == 1
-        assert stats['new logs'] == 1
-        assert stats['new platformtitles'] == 1
+        assert stats["new logs"] == 1
+        assert stats["new platformtitles"] == 1
 
     @pytest.mark.clickhouse
     @pytest.mark.django_db(transaction=True)
@@ -211,73 +211,73 @@ class TestDataImport:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # now define the interest
-        interest_rt = report_type_nd(1, short_name='interest')
+        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
-            metric=MetricFactory.create(short_name='Hits'),
-            interest_group=InterestGroup.objects.create(short_name='ig1', position=1),
+            metric=MetricFactory.create(short_name="Hits"),
+            interest_group=InterestGroup.objects.create(short_name="ig1", position=1),
         )
         # and materialized view
         rt_no_title_spec = ReportMaterializationSpec.objects.create(
             base_report_type=report_type, keep_target=False
         )
         rt_no_title = ReportType.objects.create(
-            materialization_spec=rt_no_title_spec, short_name='no_title', name='no_title'
+            materialization_spec=rt_no_title_spec, short_name="no_title", name="no_title"
         )
         # and materialized interest to cover all possible cases
         int_no_title_spec = ReportMaterializationSpec.objects.create(
             base_report_type=interest_rt, keep_target=False
         )
         int_no_title = ReportType.objects.create(
-            materialization_spec=int_no_title_spec, short_name='int_no_title', name='int_no_title'
+            materialization_spec=int_no_title_spec, short_name="int_no_title", name="int_no_title"
         )
         assert rt_no_title.approx_record_count == 0
         # import the data
         data1 = [
-            ['Title1', '2018-01-01', '1v1', 1],
-            ['Title2', '2018-01-01', '1v2', 2],
-            ['Title3', '2018-01-01', '1v2', 4],
+            ["Title1", "2018-01-01", "1v1", 1],
+            ["Title2", "2018-01-01", "1v2", 2],
+            ["Title3", "2018-01-01", "1v2", 4],
         ]
-        crs1 = counter_records(data1, metric='Hits', platform='Platform1')
+        crs1 = counter_records(data1, metric="Hits", platform="Platform1")
         ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
-        assert len(ibs) == 1, 'only one import batch created'
+        assert len(ibs) == 1, "only one import batch created"
         assert (
             AccessLog.objects.count() == 3 + 3 + 2 + 1
-        ), '3 normal, 3 interest, 2 materialized, 1 materialized interest'
-        assert report_type.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
-        assert interest_rt.accesslog_set.count() == 3, '3 interest logs created'
-        assert interest_rt.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
-        assert rt_no_title.accesslog_set.count() == 2, '2 materialized logs created (1 per dim1)'
-        assert rt_no_title.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
-        assert int_no_title.accesslog_set.count() == 1, '1 materialized interest log created'
-        assert int_no_title.accesslog_set.aggregate(sum=Sum('value'))['sum'] == 7
+        ), "3 normal, 3 interest, 2 materialized, 1 materialized interest"
+        assert report_type.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
+        assert interest_rt.accesslog_set.count() == 3, "3 interest logs created"
+        assert interest_rt.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
+        assert rt_no_title.accesslog_set.count() == 2, "2 materialized logs created (1 per dim1)"
+        assert rt_no_title.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
+        assert int_no_title.accesslog_set.count() == 1, "1 materialized interest log created"
+        assert int_no_title.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
         rt_no_title.refresh_from_db()
-        assert rt_no_title.approx_record_count == 2, 'approx count was updated'
+        assert rt_no_title.approx_record_count == 2, "approx count was updated"
         if clickhouse_on_off:
             # clickhouse it turned on, so we should have the same results in clickhouse
             for i, rt in enumerate([report_type, interest_rt]):
                 assert (
                     ch_backend.get_one_record(
-                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum('value'))
+                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum("value"))
                     ).sum
                     == 7
-                ), f'rt {i} should have sum of hits == 7'
+                ), f"rt {i} should have sum of hits == 7"
             for i, rt in enumerate([rt_no_title, int_no_title]):
                 assert (
                     ch_backend.get_one_record(
-                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum('value'))
+                        AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum("value"))
                     ).sum
                     is None
-                ), f'mrt {i} should have sum of hits == None as it is materialized'
+                ), f"mrt {i} should have sum of hits == None as it is materialized"
 
 
 @pytest.mark.django_db
 class TestCounter4Import:
     def test_import_br2_tsv(self, organizations, report_type_nd, platform):
-        rt = report_type_nd(1, dimension_names=['Publisher'])
+        rt = report_type_nd(1, dimension_names=["Publisher"])
 
-        data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
+        data = report.parse(str(Path(__file__).parent / "data/counter4/counter4_br2.tsv"))
         reader = Counter4BR2Report()
         records = list(reader.read_report(data))
         assert len(records) == 60  # 12 months, 5 titles
@@ -285,13 +285,13 @@ class TestCounter4Import:
         assert AccessLog.objects.count() == 0
         _ibs, stats = import_counter_records(rt, organization, platform, (e for e in records))
         assert AccessLog.objects.count() == 60
-        assert stats['new logs'] == 60
+        assert stats["new logs"] == 60
         values = [
-            al['value']
+            al["value"]
             for al in AccessLog.objects.filter(
-                target__name='Columbia Electronic Encyclopedia, 6th Edition'
+                target__name="Columbia Electronic Encyclopedia, 6th Edition"
             )
-            .order_by('date')
+            .order_by("date")
             .values()
         ]
         assert len(values) == 12
@@ -302,19 +302,19 @@ class TestCounter4Import:
             (
                 "Auditing Your Human Resources Department: A Step-by-Step Guide to Assessing the "
                 "Key Areas of Your Program",
-                ['453619'],
-                '9780814416617',
+                ["453619"],
+                "9780814416617",
             ),
-            ("Columbia Electronic Encyclopedia, 6th Edition", ['576175'], '9780787650155'),
-            ("International Business Times", [], ''),
-            ("World Congress on Engineering 2007 (Volume 1)", ['422959'], '9789889867157'),
-            ("World Congress on Engineering 2009 (Volume 1)", ['657512'], '9789881701251'),
+            ("Columbia Electronic Encyclopedia, 6th Edition", ["576175"], "9780787650155"),
+            ("International Business Times", [], ""),
+            ("World Congress on Engineering 2007 (Volume 1)", ["422959"], "9789889867157"),
+            ("World Congress on Engineering 2009 (Volume 1)", ["657512"], "9789881701251"),
         ]
 
         reader = Counter4BR2Report()
         rt = report_type_nd(len(reader.dimensions), dimension_names=reader.dimensions)
 
-        data = report.parse(str(Path(__file__).parent / 'data/counter4/counter4_br2.tsv'))
+        data = report.parse(str(Path(__file__).parent / "data/counter4/counter4_br2.tsv"))
 
         records = list(reader.read_report(data))
         assert len(records) == 60  # 12 months, 5 titles
@@ -324,10 +324,10 @@ class TestCounter4Import:
         assert Title.objects.count() == 5
         # test title publication type
         assert list(
-            Title.objects.order_by('pub_type').values('pub_type').annotate(count=Count('id'))
+            Title.objects.order_by("pub_type").values("pub_type").annotate(count=Count("id"))
         ) == [
-            {'pub_type': Title.PUB_TYPE_BOOK, 'count': 4},
-            {'pub_type': Title.PUB_TYPE_UNKNOWN, 'count': 1},
+            {"pub_type": Title.PUB_TYPE_BOOK, "count": 4},
+            {"pub_type": Title.PUB_TYPE_UNKNOWN, "count": 1},
         ]
         # test other title properties
         for title in Title.objects.all():
@@ -337,12 +337,12 @@ class TestCounter4Import:
                     assert title.isbn == exp_isbn
                     break
             else:
-                assert False, 'expected title was not found'
+                assert False, "expected title was not found"
         # test that the Platform dimension was properly handled
-        pl_attr = rt.dim_name_to_dim_attr('Platform')
+        pl_attr = rt.dim_name_to_dim_attr("Platform")
         pl_dim = rt.dimension_by_attr_name(pl_attr)
-        ebsco_text = DimensionText.objects.filter(dimension=pl_dim, text='EBSCOhost')
-        assert ebsco_text.exists(), 'corresponding DimensionText should have been created'
+        ebsco_text = DimensionText.objects.filter(dimension=pl_dim, text="EBSCOhost")
+        assert ebsco_text.exists(), "corresponding DimensionText should have been created"
         ebsco_text = ebsco_text.get()
         for al in AccessLog.objects.all():
             assert getattr(al, pl_attr) == ebsco_text.pk
@@ -351,12 +351,12 @@ class TestCounter4Import:
 @pytest.mark.django_db
 class TestCounter5Import:
     @pytest.mark.parametrize(
-        ['filename', 'expected'],
+        ["filename", "expected"],
         [
-            ('counter5_table_dr.csv', [("ARTICLES", ['Test123'], []), ("BOOKS", ['Test456'], [])]),
+            ("counter5_table_dr.csv", [("ARTICLES", ["Test123"], []), ("BOOKS", ["Test456"], [])]),
             (
-                'COUNTER_R5_Report_Examples_TR.csv',
-                [("Journal Six", ['xyz123'], ['https://foo.bar.baz/'])],
+                "COUNTER_R5_Report_Examples_TR.csv",
+                [("Journal Six", ["xyz123"], ["https://foo.bar.baz/"])],
             ),
         ],
     )
@@ -367,7 +367,7 @@ class TestCounter5Import:
         rt = report_type_nd(0)
 
         reader = Counter5TableReport()
-        records = reader.file_to_records(str(Path(__file__).parent / 'data/counter5' / filename))
+        records = reader.file_to_records(str(Path(__file__).parent / "data/counter5" / filename))
         assert Title.objects.count() == 0
         import_counter_records(rt, organization_random, platform, records)
         assert Title.objects.count() == len(expected)
@@ -378,20 +378,20 @@ class TestCounter5Import:
                     assert title.uris == exp_uris
                     break
             else:
-                assert False, 'expected title was not found'
+                assert False, "expected title was not found"
 
     @pytest.mark.parametrize(
-        ['filename', 'count'],
+        ["filename", "count"],
         [
-            ('counter5_table_dr.csv', 121),
-            ('counter5_table_dr.tsv', 121),
-            ('counter5_table_ir_m1.csv', 22788),
-            ('counter5_table_pr.csv', 252),
+            ("counter5_table_dr.csv", 121),
+            ("counter5_table_dr.tsv", 121),
+            ("counter5_table_ir_m1.csv", 22788),
+            ("counter5_table_pr.csv", 252),
         ],
     )
     def test_c5_table_record_count(self, filename, count):
         reader = Counter5TableReport()
-        records = reader.file_to_records(str(Path(__file__).parent / 'data/counter5' / filename))
+        records = reader.file_to_records(str(Path(__file__).parent / "data/counter5" / filename))
         assert count == len(list(records))
 
     def test_c5_tr_nature_merging(self, organization_random, report_type_nd, platform):
@@ -400,10 +400,10 @@ class TestCounter5Import:
 
         reader = Counter5TRReport()
         records = reader.file_to_records(
-            str(Path(__file__).parent / 'data/counter5/counter5_tr_nature.json')
+            str(Path(__file__).parent / "data/counter5/counter5_tr_nature.json")
         )
         import_counter_records(rt, organization_random, platform, records)
-        assert Title.objects.filter(name='Nature').count() == 1, 'only one Nature'
+        assert Title.objects.filter(name="Nature").count() == 1, "only one Nature"
 
 
 @pytest.mark.django_db
@@ -411,9 +411,9 @@ class TestReprocessMDU:
     def test_reimport_admin_action(self, admin_client):
         mdu = ManualDataUploadFullFactory.create()
         # reprocess and check
-        with patch('logs.admin.import_manual_upload_data') as task_patch:
+        with patch("logs.admin.import_manual_upload_data") as task_patch:
             admin_client.post(
-                reverse('admin:logs_manualdataupload_changelist'),
-                {'action': 'reimport', '_selected_action': [str(mdu.pk)]},
+                reverse("admin:logs_manualdataupload_changelist"),
+                {"action": "reimport", "_selected_action": [str(mdu.pk)]},
             )
             task_patch.apply_async.assert_called_once()

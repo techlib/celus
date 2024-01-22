@@ -15,7 +15,7 @@ class OwnerLevelBasedPermissions(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
-        if hasattr(obj, 'owner_level'):
+        if hasattr(obj, "owner_level"):
             rel = request.user.organization_relationship(obj.organization_id)
             return rel >= obj.owner_level
         return True
@@ -27,7 +27,7 @@ class OrganizationRelatedPermissionMixin:
     Base class for permissions that have to check if user is related to an organization and how
     """
 
-    NO_DATA_METHODS = ('DELETE',)
+    NO_DATA_METHODS = ("DELETE",)
 
     @classmethod
     def has_org_admin(cls, user, org_id):
@@ -93,10 +93,10 @@ class CanAccessOrganizationFromGETAttrs(BasePermission):
     """
 
     def has_permission(self, request, view):
-        organization = request.GET.get('organization')
+        organization = request.GET.get("organization")
         if organization is None:
             return False
-        if organization == '-1':
+        if organization == "-1":
             return request.user.is_superuser or request.user.is_user_of_master_organization
         else:
             return request.user.accessible_organizations().filter(pk=organization).exists()
@@ -106,7 +106,7 @@ class AdminAccessForOrganization(BasePermission):
     """Checks whether the user has admin access for organization obtained via GET or POST"""
 
     def has_permission(self, request, view):
-        organization = int(extract_field_from_request(request, 'organization') or 0)
+        organization = int(extract_field_from_request(request, "organization") or 0)
 
         if not request.user.is_authenticated:
             return False
@@ -119,7 +119,7 @@ class AdminAccessForOrganization(BasePermission):
 
 
 class OrganizationRequiredInDataForNonSuperusers(BasePermission):
-    FULL_DATA_METHODS = ('POST', 'PUT')
+    FULL_DATA_METHODS = ("POST", "PUT")
 
     def has_permission(self, request, view):
         ord_id, key_present = extract_organization_id_from_request_data(request)
@@ -136,7 +136,7 @@ class OrganizationRequiredInDataForNonSuperusers(BasePermission):
 class SuperuserOrAdminPermission(BasePermission):
     def has_permission(self, request, view):
         if request.user.is_superuser or (
-            hasattr(request.user, 'is_admin_of_master_organization')
+            hasattr(request.user, "is_admin_of_master_organization")
             and request.user.is_admin_of_master_organization
         ):
             return True
@@ -165,7 +165,7 @@ class SuperuserOrMasterUserPermission(BasePermission):
 
 
 class EnabledInSettingsPermission(BasePermission):
-    name_in_settings: str = ''
+    name_in_settings: str = ""
     default: bool = False
 
     def has_permission(self, request, view):
@@ -173,4 +173,4 @@ class EnabledInSettingsPermission(BasePermission):
 
 
 class ManualDataUploadEnabledPermission(EnabledInSettingsPermission):
-    name_in_settings = 'ALLOW_MANUAL_UPLOAD'
+    name_in_settings = "ALLOW_MANUAL_UPLOAD"

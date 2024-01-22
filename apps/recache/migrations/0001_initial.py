@@ -8,71 +8,71 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [('contenttypes', '0002_remove_content_type_name')]
+    dependencies = [("contenttypes", "0002_remove_content_type_name")]
 
     operations = [
         migrations.CreateModel(
-            name='CachedQuery',
+            name="CachedQuery",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'query_hash',
-                    models.CharField(help_text='Hash of the query string', max_length=32),
+                    "query_hash",
+                    models.CharField(help_text="Hash of the query string", max_length=32),
                 ),
-                ('query_string', models.TextField()),
+                ("query_string", models.TextField()),
                 (
-                    'query_pickle',
-                    models.BinaryField(help_text='Pickle of the query to allow reruns'),
-                ),
-                (
-                    'queryset_pickle',
-                    models.BinaryField(help_text='Pickle of the evaluated queryset with results'),
+                    "query_pickle",
+                    models.BinaryField(help_text="Pickle of the query to allow reruns"),
                 ),
                 (
-                    'django_version',
+                    "queryset_pickle",
+                    models.BinaryField(help_text="Pickle of the evaluated queryset with results"),
+                ),
+                (
+                    "django_version",
                     models.CharField(
-                        help_text='Version of Django that created the last pickle', max_length=16
+                        help_text="Version of Django that created the last pickle", max_length=16
                     ),
                 ),
-                ('created', models.DateTimeField(auto_now_add=True)),
+                ("created", models.DateTimeField(auto_now_add=True)),
                 (
-                    'last_updated',
+                    "last_updated",
                     models.DateTimeField(
                         default=django.utils.timezone.now,
-                        help_text='Last time queryset_pickle was updated',
+                        help_text="Last time queryset_pickle was updated",
                     ),
                 ),
                 (
-                    'last_queried',
+                    "last_queried",
                     models.DateTimeField(
                         default=django.utils.timezone.now,
-                        help_text='Last time someone queried this data - read the queryset',
+                        help_text="Last time someone queried this data - read the queryset",
                     ),
                 ),
                 (
-                    'timeout',
+                    "timeout",
                     models.DurationField(
                         default=3600,
-                        help_text='Number of seconds until the queryset it re-evaluated',
+                        help_text="Number of seconds until the queryset it re-evaluated",
                     ),
                 ),
                 (
-                    'lifetime',
+                    "lifetime",
                     models.DurationField(
                         default=2592000,
-                        help_text='Number of seconds from last querying after which the cache '
-                        'will be removed',
+                        help_text="Number of seconds from last querying after which the cache "
+                        "will be removed",
                     ),
                 ),
                 (
-                    'model',
+                    "model",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType'
+                        on_delete=django.db.models.deletion.CASCADE, to="contenttypes.ContentType"
                     ),
                 ),
             ],

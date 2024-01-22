@@ -6,68 +6,68 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0007_timestamps'), ('logs', '0016_report_interest_metrics')]
+    dependencies = [("core", "0007_timestamps"), ("logs", "0016_report_interest_metrics")]
 
     operations = [
-        migrations.AlterModelOptions(name='metric', options={'ordering': ('short_name', 'name')}),
+        migrations.AlterModelOptions(name="metric", options={"ordering": ("short_name", "name")}),
         migrations.CreateModel(
-            name='VirtualReportType',
+            name="VirtualReportType",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('short_name', models.CharField(max_length=100)),
-                ('name', models.CharField(max_length=250)),
-                ('desc', models.TextField(blank=True)),
+                ("short_name", models.CharField(max_length=100)),
+                ("name", models.CharField(max_length=250)),
+                ("desc", models.TextField(blank=True)),
                 (
-                    'metric_allowed_values',
+                    "metric_allowed_values",
                     django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=list),
                 ),
                 (
-                    'base_report_type',
+                    "base_report_type",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.ReportType"
                     ),
                 ),
                 (
-                    'source',
+                    "source",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='core.DataSource',
+                        to="core.DataSource",
                     ),
                 ),
             ],
         ),
         migrations.CreateModel(
-            name='DimensionFilter',
+            name="DimensionFilter",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
                 (
-                    'allowed_values',
+                    "allowed_values",
                     django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=list),
                 ),
                 (
-                    'dimension',
+                    "dimension",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.Dimension'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.Dimension"
                     ),
                 ),
                 (
-                    'virtual_report_type',
+                    "virtual_report_type",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='dimension_filters',
-                        to='logs.VirtualReportType',
+                        related_name="dimension_filters",
+                        to="logs.VirtualReportType",
                     ),
                 ),
             ],

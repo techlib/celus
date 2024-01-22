@@ -30,9 +30,9 @@ from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 
 @pytest.fixture
 def charts():
-    ch1 = ChartDefinition.objects.create(name='chart 1', primary_implicit_dimension='metric')
+    ch1 = ChartDefinition.objects.create(name="chart 1", primary_implicit_dimension="metric")
     ch2 = ChartDefinition.objects.create(
-        name='chart 1', primary_implicit_dimension='date', secondary_implicit_dimension='metric'
+        name="chart 1", primary_implicit_dimension="date", secondary_implicit_dimension="metric"
     )
     return [ch1, ch2]
 
@@ -45,7 +45,7 @@ def simple_report_view(report_type_nd):
 @pytest.mark.django_db
 class TestReportViewToChartAPI:
     def test_api_list_simple(self, master_admin_client):
-        resp = master_admin_client.get(reverse('report-view-to-chart-list'))
+        resp = master_admin_client.get(reverse("report-view-to-chart-list"))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -56,23 +56,23 @@ class TestReportViewToChartAPI:
         rvch2 = ReportViewToChartType.objects.create(
             report_data_view=simple_report_view, chart_definition=charts[1], position=20
         )
-        resp = master_admin_client.get(reverse('report-view-to-chart-list'))
+        resp = master_admin_client.get(reverse("report-view-to-chart-list"))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
-        data.sort(key=lambda x: x['position'])
+        data.sort(key=lambda x: x["position"])
         assert data == [
             {
-                'report_data_view': simple_report_view.pk,
-                'chart_definition': charts[0].pk,
-                'position': 10,
-                'pk': rvch1.pk,
+                "report_data_view": simple_report_view.pk,
+                "chart_definition": charts[0].pk,
+                "position": 10,
+                "pk": rvch1.pk,
             },
             {
-                'report_data_view': simple_report_view.pk,
-                'chart_definition': charts[1].pk,
-                'position': 20,
-                'pk': rvch2.pk,
+                "report_data_view": simple_report_view.pk,
+                "chart_definition": charts[1].pk,
+                "position": 20,
+                "pk": rvch2.pk,
             },
         ]
 
@@ -81,9 +81,9 @@ class TestReportViewToChartAPI:
             report_data_view=simple_report_view, chart_definition=charts[0], position=10
         )
         resp = master_admin_client.patch(
-            reverse('report-view-to-chart-detail', args=(rvch.pk,)),
-            {'position': 100},
-            content_type='application/json',
+            reverse("report-view-to-chart-detail", args=(rvch.pk,)),
+            {"position": 100},
+            content_type="application/json",
         )
         assert resp.status_code == 200
         rvch.refresh_from_db()
@@ -92,11 +92,11 @@ class TestReportViewToChartAPI:
     def test_post(self, simple_report_view, master_admin_client, charts):
         assert ReportViewToChartType.objects.count() == 0
         resp = master_admin_client.post(
-            reverse('report-view-to-chart-list'),
+            reverse("report-view-to-chart-list"),
             {
-                'report_data_view': simple_report_view.pk,
-                'chart_definition': charts[0].pk,
-                'position': 10,
+                "report_data_view": simple_report_view.pk,
+                "chart_definition": charts[0].pk,
+                "position": 10,
             },
         )
         assert resp.status_code == 201
@@ -106,29 +106,29 @@ class TestReportViewToChartAPI:
 @pytest.mark.django_db
 class TestReportViewAPI:
     def test_api_list_simple(self, master_admin_client):
-        resp = master_admin_client.get(reverse('report-view-list'))
+        resp = master_admin_client.get(reverse("report-view-list"))
         assert resp.status_code == 200
         assert resp.json() == []
 
     def test_api_list_full(self, simple_report_view, master_admin_client):
-        resp = master_admin_client.get(reverse('report-view-list'))
+        resp = master_admin_client.get(reverse("report-view-list"))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
-        assert data[0]['pk'] == simple_report_view.pk
+        assert data[0]["pk"] == simple_report_view.pk
 
     def test_api_list_ordering(self, report_type_nd, master_admin_client):
         """
         Check that report data views are ordered by position in reply, not by name or short_name
         """
         rt = report_type_nd(0)
-        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
-        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
-        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
-        resp = master_admin_client.get(reverse('report-view-list'))
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name="A", name="A")
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name="X", name="X")
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name="M", name="M")
+        resp = master_admin_client.get(reverse("report-view-list"))
         assert resp.status_code == 200
         data = resp.json()
-        assert [rec['position'] for rec in data] == [1, 2, 3]
+        assert [rec["position"] for rec in data] == [1, 2, 3]
 
     def test_api_list_for_report_type_ordering(self, report_type_nd, master_admin_client):
         """
@@ -136,13 +136,13 @@ class TestReportViewAPI:
         - for report-type-to-report-data-view
         """
         rt = report_type_nd(0)
-        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
-        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
-        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
-        resp = master_admin_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name="A", name="A")
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name="X", name="X")
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name="M", name="M")
+        resp = master_admin_client.get(reverse("report-type-to-report-data-view", args=(rt.pk,)))
         assert resp.status_code == 200
         data = resp.json()
-        assert [rec['position'] for rec in data] == [1, 2, 3]
+        assert [rec["position"] for rec in data] == [1, 2, 3]
 
     def test_api_list_for_report_type_without_report_view(
         self, report_type_nd, master_admin_client
@@ -151,20 +151,20 @@ class TestReportViewAPI:
         Tests that an on-the-fly created view will be returned if no explicit view is created
         """
         rt = report_type_nd(0)
-        resp = master_admin_client.get(reverse('report-type-to-report-data-view', args=(rt.pk,)))
+        resp = master_admin_client.get(reverse("report-type-to-report-data-view", args=(rt.pk,)))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         view = data[0]
-        assert view['pk'] == rt.pk
-        assert view['short_name'] == rt.short_name
-        assert view['name'] == rt.name
-        assert view['position'] == 1
-        assert view['is_proxy'] is True
-        assert view['is_standard_view'] is True
+        assert view["pk"] == rt.pk
+        assert view["short_name"] == rt.short_name
+        assert view["name"] == rt.name
+        assert view["position"] == 1
+        assert view["is_proxy"] is True
+        assert view["is_standard_view"] is True
 
     @pytest.mark.clickhouse
-    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_with_proxy_views(
         self, report_type_nd, master_admin_client, platform, organizations
@@ -177,7 +177,7 @@ class TestReportViewAPI:
         """
         rt = report_type_nd(0)
         mat_spec = ReportMaterializationSpec.objects.create(base_report_type=rt)
-        ReportType.objects.create(materialization_spec=mat_spec, name='mat_rt', short_name='mat_rt')
+        ReportType.objects.create(materialization_spec=mat_spec, name="mat_rt", short_name="mat_rt")
         organization = organizations[0]
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(
@@ -188,8 +188,8 @@ class TestReportViewAPI:
             organization=organization,
             platform=platform,
             value=1,
-            date='2020-01-01',
-            metric=Metric.objects.create(short_name='metric'),
+            date="2020-01-01",
+            metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )
         # make sure materialized report types are populated as well
@@ -199,20 +199,20 @@ class TestReportViewAPI:
 
         resp = master_admin_client.get(
             reverse(
-                'platform-report-data-views-list',
-                kwargs={'organization_pk': organization.pk, 'platform_pk': platform.pk},
+                "platform-report-data-views-list",
+                kwargs={"organization_pk": organization.pk, "platform_pk": platform.pk},
             )
         )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
         view = data[0]
-        assert view['pk'] == rt.pk
-        assert view['is_proxy'] is True
-        assert view['is_standard_view'] is True
+        assert view["pk"] == rt.pk
+        assert view["is_proxy"] is True
+        assert view["is_standard_view"] is True
 
     @pytest.mark.clickhouse
-    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_ordering(
         self, report_type_nd, master_admin_client, platform, organizations
@@ -222,9 +222,9 @@ class TestReportViewAPI:
         - for platform-report-data-views
         """
         rt = report_type_nd(0)
-        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
-        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
-        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name="A", name="A")
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name="X", name="X")
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name="M", name="M")
         organization = organizations[0]
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(
@@ -235,8 +235,8 @@ class TestReportViewAPI:
             organization=organization,
             platform=platform,
             value=1,
-            date='2020-01-01',
-            metric=Metric.objects.create(short_name='metric'),
+            date="2020-01-01",
+            metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )
         # sync with clickhouse as we have circumvented the normal creation of accesslogs
@@ -244,16 +244,16 @@ class TestReportViewAPI:
 
         resp = master_admin_client.get(
             reverse(
-                'platform-report-data-views-list',
-                kwargs={'organization_pk': organization.pk, 'platform_pk': platform.pk},
+                "platform-report-data-views-list",
+                kwargs={"organization_pk": organization.pk, "platform_pk": platform.pk},
             )
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert [rec['position'] for rec in data] == [1, 2, 3]
+        assert [rec["position"] for rec in data] == [1, 2, 3]
 
     @pytest.mark.clickhouse
-    @pytest.mark.usefixtures('clickhouse_on_off')
+    @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.django_db(transaction=True)
     def test_api_list_for_platform_and_title_ordering(
         self, report_type_nd, master_admin_client, platform, organizations
@@ -263,11 +263,11 @@ class TestReportViewAPI:
         - for platform-report-data-views
         """
         rt = report_type_nd(0)
-        ReportDataView.objects.create(base_report_type=rt, position=3, short_name='A', name='A')
-        ReportDataView.objects.create(base_report_type=rt, position=1, short_name='X', name='X')
-        ReportDataView.objects.create(base_report_type=rt, position=2, short_name='M', name='M')
+        ReportDataView.objects.create(base_report_type=rt, position=3, short_name="A", name="A")
+        ReportDataView.objects.create(base_report_type=rt, position=1, short_name="X", name="X")
+        ReportDataView.objects.create(base_report_type=rt, position=2, short_name="M", name="M")
         organization = organizations[0]
-        title = Title.objects.create(name='Journal of Foo Bar')
+        title = Title.objects.create(name="Journal of Foo Bar")
         # we need to add accesslog in order to connect platform and report-type
         ib = ImportBatch.objects.create(
             report_type=rt, organization=organization, platform=platform
@@ -278,25 +278,25 @@ class TestReportViewAPI:
             platform=platform,
             target=title,
             value=1,
-            date='2020-01-01',
-            metric=Metric.objects.create(short_name='metric'),
+            date="2020-01-01",
+            metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )
         # sync with clickhouse as we have circumvented the normal creation of accesslogs
         sync_import_batch_with_clickhouse(ib)
         resp = master_admin_client.get(
             reverse(
-                'platform-title-report-data-views-list',
+                "platform-title-report-data-views-list",
                 kwargs={
-                    'organization_pk': organization.pk,
-                    'platform_pk': platform.pk,
-                    'title_pk': title.pk,
+                    "organization_pk": organization.pk,
+                    "platform_pk": platform.pk,
+                    "title_pk": title.pk,
                 },
             )
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert [rec['position'] for rec in data] == [1, 2, 3]
+        assert [rec["position"] for rec in data] == [1, 2, 3]
 
 
 @pytest.mark.django_db
@@ -305,7 +305,7 @@ class TestChartsAPI:
         """
         Simply test that the endpoint exists and returns some response
         """
-        resp = master_admin_client.get(reverse('chart-definition-list'))
+        resp = master_admin_client.get(reverse("chart-definition-list"))
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -313,13 +313,13 @@ class TestChartsAPI:
         """
         Test that the endpoint reports the currently defined charts
         """
-        resp = master_admin_client.get(reverse('chart-definition-list'))
+        resp = master_admin_client.get(reverse("chart-definition-list"))
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 2
-        assert {rec['pk'] for rec in data} == {ch.pk for ch in charts}
+        assert {rec["pk"] for rec in data} == {ch.pk for ch in charts}
 
-    @pytest.mark.parametrize('empty_view_id', [True, False])
+    @pytest.mark.parametrize("empty_view_id", [True, False])
     def test_api_report_data_view_list(self, master_admin_client, empty_view_id):
         """
         Test that the endpoint listing charts for a report_view works as expected
@@ -335,16 +335,16 @@ class TestChartsAPI:
         )
 
         resp = master_admin_client.get(
-            reverse('report-data-view-chart-definitions', args=(-1 if empty_view_id else rv.pk,))
+            reverse("report-data-view-chart-definitions", args=(-1 if empty_view_id else rv.pk,))
         )
         assert resp.status_code == 200
         data = resp.json()
         if empty_view_id:
             assert len(data) == 1
-            assert {rec['pk'] for rec in data} == {chart3.pk}
+            assert {rec["pk"] for rec in data} == {chart3.pk}
         else:
             assert len(data) == 2
-            assert {rec['pk'] for rec in data} == {chart1.pk, chart3.pk}
+            assert {rec["pk"] for rec in data} == {chart1.pk, chart3.pk}
 
 
 @pytest.mark.django_db
@@ -353,9 +353,9 @@ class TestChartDataAPIView:
         """
         Simply test that the endpoint exists and returns some response
         """
-        response = authenticated_client.get(reverse('chart_data', args=(simple_report_view.pk,)))
+        response = authenticated_client.get(reverse("chart_data", args=(simple_report_view.pk,)))
         assert response.status_code == 200
-        assert response.json()['data'] == []
+        assert response.json()["data"] == []
 
     def test_bad_request(self, authenticated_client, simple_report_view):
         """
@@ -365,8 +365,8 @@ class TestChartDataAPIView:
         url = f"{reverse('chart_data', args=(simple_report_view.pk,))}?prim_dim=foobar"
         response = authenticated_client.get(url)
         assert response.status_code == 400
-        error = response.json()['error']
-        assert 'foobar' in error
+        error = response.json()["error"]
+        assert "foobar" in error
 
     def test_with_data_no_dashboard(
         self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
@@ -381,16 +381,16 @@ class TestChartDataAPIView:
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
-            reverse('chart_data', args=(report_view.pk,)),
+            reverse("chart_data", args=(report_view.pk,)),
             {
-                'organization': organization.pk,
-                'metric': metric.pk,
-                'platform': platform.pk,
-                'prim_dim': 'date',
+                "organization": organization.pk,
+                "metric": metric.pk,
+                "platform": platform.pk,
+                "prim_dim": "date",
             },
         )
         assert resp.status_code == 200
-        assert 'data' in resp.json()
+        assert "data" in resp.json()
 
     def test_with_data_dashboard(
         self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
@@ -405,17 +405,17 @@ class TestChartDataAPIView:
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
-            reverse('chart_data', args=(report_view.pk,)),
+            reverse("chart_data", args=(report_view.pk,)),
             {
-                'organization': organization.pk,
-                'metric': metric.pk,
-                'platform': platform.pk,
-                'prim_dim': 'date',
-                'dashboard': True,
+                "organization": organization.pk,
+                "metric": metric.pk,
+                "platform": platform.pk,
+                "prim_dim": "date",
+                "dashboard": True,
             },
         )
         assert resp.status_code == 200
-        assert 'data' in resp.json()
+        assert "data" in resp.json()
 
     def test_available_metrics(
         self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
@@ -430,15 +430,15 @@ class TestChartDataAPIView:
         metric = Metric.objects.get()
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
-            reverse('chart_data_metrics', args=(report_view.pk,)),
-            {'organization': organization.pk, 'platform': platform.pk, 'prim_dim': 'date'},
+            reverse("chart_data_metrics", args=(report_view.pk,)),
+            {"organization": organization.pk, "platform": platform.pk, "prim_dim": "date"},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
-        assert data[0]['pk'] == metric.pk
+        assert data[0]["pk"] == metric.pk
 
-    @pytest.mark.parametrize('use_materialized', [True, False])
+    @pytest.mark.parametrize("use_materialized", [True, False])
     def test_with_mdu_filter(self, admin_client, use_materialized):
         """
         Test that MDU filter works properly when other data is present. Because of an issue
@@ -449,28 +449,28 @@ class TestChartDataAPIView:
         ManualDataUploadFullFactory.create(state=MduState.IMPORTED, report_type=mdu1.report_type)
         if use_materialized:
             ms = ReportMaterializationSpec.objects.create(
-                base_report_type=mdu1.report_type, name='mr', keep_target=False
+                base_report_type=mdu1.report_type, name="mr", keep_target=False
             )
-            mr = ReportType.objects.create(materialization_spec=ms, name='mr', short_name='mr')
+            mr = ReportType.objects.create(materialization_spec=ms, name="mr", short_name="mr")
             sync_materialized_reports()
             assert (
-                AccessLog.objects.filter(report_type=mr).aggregate(Sum('value'))['value__sum']
-                == AccessLog.objects.filter(report_type=mdu1.report_type).aggregate(Sum('value'))[
-                    'value__sum'
+                AccessLog.objects.filter(report_type=mr).aggregate(Sum("value"))["value__sum"]
+                == AccessLog.objects.filter(report_type=mdu1.report_type).aggregate(Sum("value"))[
+                    "value__sum"
                 ]
             ), "the materialized report should have the same data as the original report"
 
         report_view = ReportDataView.objects.create(base_report_type=mdu1.report_type)
         resp = admin_client.get(
-            reverse('chart_data', args=(report_view.pk,)),
-            {'prim_dim': 'date', 'mdu': mdu1.pk},
+            reverse("chart_data", args=(report_view.pk,)),
+            {"prim_dim": "date", "mdu": mdu1.pk},
         )
         assert resp.status_code == 200
-        assert 'data' in resp.json()
-        assert len(resp.json()['data']) > 0
+        assert "data" in resp.json()
+        assert len(resp.json()["data"]) > 0
         assert (
-            sum(rec['count'] for rec in resp.json()['data'])
+            sum(rec["count"] for rec in resp.json()["data"])
             == AccessLog.objects.filter(
                 import_batch__mdu=mdu1, report_type=mdu1.report_type
-            ).aggregate(Sum('value'))['value__sum']
+            ).aggregate(Sum("value"))["value__sum"]
         )

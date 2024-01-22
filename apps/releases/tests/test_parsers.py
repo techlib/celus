@@ -81,7 +81,7 @@ class TestChangelogParsing:
             parse_changelog(changelog)
 
     @pytest.mark.parametrize(
-        'text',
+        "text",
         [
             "## [Foo]\n\n### Added",
             "## [6.3.3] - Jan 20, 2022\n\n### Added",

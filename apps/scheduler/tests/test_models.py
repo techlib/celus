@@ -145,8 +145,8 @@ class TestFetchIntention:
                 status=AttemptStatus.IMPORTING,
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
-        monkeypatch.setattr(import_one_sushi_attempt_task, 'delay', lambda x: None)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
+        monkeypatch.setattr(import_one_sushi_attempt_task, "delay", lambda x: None)
 
         fi1 = FetchIntentionFactory(
             not_before=timezone.now() - timedelta(minutes=1),
@@ -214,7 +214,7 @@ class TestFetchIntention:
                 counter_report=counter_report_types["tr"],
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
         fi = FetchIntentionFactory(
             harvest=AutomaticFactory(harvest__last_updated_by=users["admin1"]).harvest,
@@ -232,7 +232,7 @@ class TestFetchIntention:
         assert fi.when_processed == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz)
 
         # test not_before for newly created FetchIntentions
-        last = FetchIntention.objects.order_by('pk').last()
+        last = FetchIntention.objects.order_by("pk").last()
         if seconds_not_before:
             assert last.pk != fi.pk
             assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
@@ -282,7 +282,7 @@ class TestFetchIntention:
         to_trigger = FetchIntention.objects.schedulers_to_trigger()
 
         # Created scheduler
-        new_sch = Scheduler.objects.order_by('pk').last()
+        new_sch = Scheduler.objects.order_by("pk").last()
 
         assert len(to_trigger) == 1
         assert to_trigger[0] == new_sch
@@ -573,7 +573,7 @@ class TestFetchIntention:
                 b'{"Report_ID": "TR", "Customer_ID":"C1"}}',
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
         def check_retry(
             fi: FetchIntention,
@@ -613,7 +613,7 @@ class TestFetchIntention:
 
                 else:
                     assert fi.attempt.import_batch is None
-            new_fi = FetchIntention.objects.order_by('pk').last()
+            new_fi = FetchIntention.objects.order_by("pk").last()
             assert new_fi is not None
 
             if expected:
@@ -658,12 +658,12 @@ class TestFetchIntention:
                 start += delay
 
     @pytest.mark.parametrize(
-        ['automatic', 'retry_exception', 'data_replaced'],
+        ["automatic", "retry_exception", "data_replaced"],
         [
             (True, None, True),  # data without 3040 replaces the old one
-            (True, '3040', False),  # data with 3040 does not replace the old one
+            (True, "3040", False),  # data with 3040 does not replace the old one
             (False, None, True),  # data without 3040 replaces the old one
-            (False, '3040', False),  # data with 3040 does not replace the old one
+            (False, "3040", False),  # data with 3040 does not replace the old one
         ],
     )
     def test_3040_retry_chain(
@@ -685,9 +685,9 @@ class TestFetchIntention:
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
         settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
         # prepare the content of the responses
-        with open('test-data/counter5/C5_PR_with_3040.json', 'r') as f:
+        with open("test-data/counter5/C5_PR_with_3040.json", "r") as f:
             data_with_3040 = f.read()
-        with open('test-data/counter5/C5_PR_test.json', 'r') as f:
+        with open("test-data/counter5/C5_PR_test.json", "r") as f:
             data_wo_3040 = f.read()
 
         scheduler = SchedulerFactory(url=credentials["branch_pr"].url)
@@ -701,8 +701,8 @@ class TestFetchIntention:
                     harvest = HarvestFactory(automatic=None)
                 return FetchIntentionFactory(
                     attempt=None,
-                    start_date='2019-04-01',
-                    end_date='2019-04-30',
+                    start_date="2019-04-01",
+                    end_date="2019-04-30",
                     harvest=harvest,
                     not_before=timezone.now(),
                     scheduler=scheduler,
@@ -715,7 +715,7 @@ class TestFetchIntention:
         # first attempt
         fi = create_fetch_intention(start)
         with freeze_time(start + timedelta(minutes=5)), requests_mock.Mocker() as m:
-            m.get(re.compile(f'^{fi.credentials.url}.*'), text=data_with_3040)
+            m.get(re.compile(f"^{fi.credentials.url}.*"), text=data_with_3040)
             assert fi.process() == ProcessResponse.SUCCESS
             assert fi.attempt.status == AttemptStatus.IMPORTING
             import_one_sushi_attempt(fi.attempt)
@@ -724,8 +724,8 @@ class TestFetchIntention:
             assert fi.attempt.status == AttemptStatus.SUCCESS
             assert fi.attempt.partial_data is True
             if automatic:
-                assert fi.queue.end != fi, 'new intention is planned'
-                assert fi.queue.end.duplicate_of is None, 'new intention is not a duplicate'
+                assert fi.queue.end != fi, "new intention is planned"
+                assert fi.queue.end.duplicate_of is None, "new intention is not a duplicate"
 
         # second attempt
         start2 = start + timedelta(days=1)
@@ -734,8 +734,8 @@ class TestFetchIntention:
         fi2.scheduler = scheduler
         with freeze_time(start2 + timedelta(minutes=5)), requests_mock.Mocker() as m:
             m.get(
-                re.compile(f'^{fi2.credentials.url}.*'),
-                text=data_with_3040 if retry_exception == '3040' else data_wo_3040,
+                re.compile(f"^{fi2.credentials.url}.*"),
+                text=data_with_3040 if retry_exception == "3040" else data_wo_3040,
             )
             if data_replaced:
                 # a new import batch with the complete data should be created replacing the old one
@@ -749,7 +749,7 @@ class TestFetchIntention:
                 assert fi2.attempt.import_batch_id != fi.attempt.import_batch_id
                 assert ImportBatch.objects.filter(pk=fi.attempt.import_batch_id).exists() is False
                 if automatic:
-                    assert fi2.queue.end == fi2, 'new intention is not planned'
+                    assert fi2.queue.end == fi2, "new intention is not planned"
             else:
                 # data should not be replaced because there is still the same exception
                 # but we reschedule the intention when automatic
@@ -758,68 +758,68 @@ class TestFetchIntention:
                 assert fi2.attempt.import_batch is None
                 assert ImportBatch.objects.filter(pk=fi.attempt.import_batch_id).exists() is True
                 if automatic:
-                    assert fi2.queue.end != fi2, 'new intention is planned'
+                    assert fi2.queue.end != fi2, "new intention is planned"
 
     @pytest.mark.parametrize(
         [
-            'first_exception',
-            'first_status',
-            'first_partial',
-            'second_exception',
-            'second_has_data',
-            'second_status',
-            'second_partial',
+            "first_exception",
+            "first_status",
+            "first_partial",
+            "second_exception",
+            "second_has_data",
+            "second_status",
+            "second_partial",
         ],
         [
             pytest.param(
-                '3040',
+                "3040",
                 AttemptStatus.IMPORTING,
                 True,
-                '3040',
+                "3040",
                 False,
                 AttemptStatus.NOT_USED,
                 True,
-                id='3040 not replaced by 3040',
+                id="3040 not replaced by 3040",
             ),
             pytest.param(
-                '3030',
+                "3030",
                 AttemptStatus.NO_DATA,
                 False,
-                '3040',
+                "3040",
                 True,
                 AttemptStatus.IMPORTING,
                 True,
-                id='3030 replaced with 3040',
+                id="3030 replaced with 3040",
             ),
             pytest.param(
-                '3040',
+                "3040",
                 AttemptStatus.IMPORTING,
                 True,
-                '3030',
+                "3030",
                 False,
                 AttemptStatus.NO_DATA,
                 False,
-                id='3040 replaced with 3030',
+                id="3040 replaced with 3030",
             ),
             pytest.param(
-                '3030',
+                "3030",
                 AttemptStatus.NO_DATA,
                 False,
                 None,
                 True,
                 AttemptStatus.IMPORTING,
                 False,
-                id='3030 replaced with no exception',
+                id="3030 replaced with no exception",
             ),
             pytest.param(
-                '3040',
+                "3040",
                 AttemptStatus.IMPORTING,
                 True,
                 None,
                 True,
                 AttemptStatus.IMPORTING,
                 False,
-                id='3040 replaced with no exception',
+                id="3040 replaced with no exception",
             ),
         ],
     )
@@ -854,8 +854,8 @@ class TestFetchIntention:
                 harvest = HarvestFactory(automatic=None)
                 return FetchIntentionFactory(
                     attempt=None,
-                    start_date='2019-04-01',
-                    end_date='2019-04-30',
+                    start_date="2019-04-01",
+                    end_date="2019-04-30",
                     harvest=harvest,
                     not_before=timezone.now(),
                     scheduler=scheduler,
@@ -866,32 +866,32 @@ class TestFetchIntention:
                 )
 
         def exception_to_fname(exc):
-            return 'C5_PR_' + (f'with_{exc}' if exc else 'test') + '.json'
+            return "C5_PR_" + (f"with_{exc}" if exc else "test") + ".json"
 
         # first attempt
         fi = create_fetch_intention(start)
         fname = exception_to_fname(first_exception)
         with freeze_time(start + timedelta(minutes=5)), requests_mock.Mocker() as m:
-            with open(f'test-data/counter5/{fname}', 'r') as f:
-                m.get(re.compile(f'^{fi.credentials.url}.*'), text=f.read())
+            with open(f"test-data/counter5/{fname}", "r") as f:
+                m.get(re.compile(f"^{fi.credentials.url}.*"), text=f.read())
             assert fi.process() == ProcessResponse.SUCCESS
             assert fi.attempt.status == first_status
             if fi.attempt.status == AttemptStatus.IMPORTING:
                 import_one_sushi_attempt(fi.attempt)
-            assert fi.attempt.import_batch is not None, 'import batch created'
+            assert fi.attempt.import_batch is not None, "import batch created"
             assert (
                 fi.attempt.status == AttemptStatus.SUCCESS
                 if first_status == AttemptStatus.IMPORTING
                 else first_status
-            ), 'importing status should be replaced with success'
+            ), "importing status should be replaced with success"
             assert fi.attempt.partial_data is first_partial
 
         # second attempt
         fi2 = create_fetch_intention(start + timedelta(minutes=10))
         fname = exception_to_fname(second_exception)
         with freeze_time(start + timedelta(minutes=15)), requests_mock.Mocker() as m:
-            with open(f'test-data/counter5/{fname}', 'r') as f:
-                m.get(re.compile(f'^{fi2.credentials.url}.*'), text=f.read())
+            with open(f"test-data/counter5/{fname}", "r") as f:
+                m.get(re.compile(f"^{fi2.credentials.url}.*"), text=f.read())
             assert fi2.process() == ProcessResponse.SUCCESS
             assert fi2.attempt.status == second_status
             if fi2.attempt.status == AttemptStatus.IMPORTING:
@@ -906,7 +906,7 @@ class TestFetchIntention:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_cancel(self, harvests):
-        processed = harvests["anonymous"].intentions.order_by('pk')[0]
+        processed = harvests["anonymous"].intentions.order_by("pk")[0]
         assert processed.is_processed
         assert processed.cancel() is False
         assert processed.canceled is False
@@ -1007,7 +1007,7 @@ class TestScheduler:
                 counter_report=counter_report_types["tr"],
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
         scheduler = SchedulerFactory(
             url=credentials["standalone_tr"].url,
@@ -1184,7 +1184,7 @@ class TestScheduler:
                 status=AttemptStatus.DOWNLOAD_FAILED,
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
         common_fi_attrs = {
             "not_before": timezone.now() - timedelta(minutes=1),
@@ -1243,7 +1243,7 @@ class TestScheduler:
                 counter_report=counter_report_types["tr"],
             )
 
-        monkeypatch.setattr(SushiCredentials, 'fetch_report', mocked_fetch_report)
+        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
         scheduler = SchedulerFactory(
             url=credentials["standalone_tr"].url,
@@ -1317,7 +1317,7 @@ class TestHarvest:
         def mocked_trigger_scheduler(url, finish):
             urls.add(url)
 
-        monkeypatch.setattr(tasks.trigger_scheduler, 'delay', mocked_trigger_scheduler)
+        monkeypatch.setattr(tasks.trigger_scheduler, "delay", mocked_trigger_scheduler)
 
         intentions = [
             FetchIntention(
@@ -1397,7 +1397,7 @@ class TestHarvest:
             attempt=FetchAttemptFactory(
                 counter_report=counter_report_types["tr"],
                 credentials=credentials["standalone_tr"],
-                status='importing',
+                status="importing",
             ),
         )
         FetchIntentionFactory(
@@ -1444,7 +1444,7 @@ class TestHarvest:
             attempt=FetchAttemptFactory(
                 counter_report=counter_report_types["tr"],
                 credentials=credentials["standalone_tr"],
-                status='success',
+                status="success",
             ),
         )
         FetchIntentionFactory(
@@ -1519,7 +1519,7 @@ class TestHarvest:
         }
 
         assert list(
-            Harvest.objects.annotate_stats().order_by('pk').values_list('pk', 'planned', 'total')
+            Harvest.objects.annotate_stats().order_by("pk").values_list("pk", "planned", "total")
         ) == [
             (harvest1.pk, 1, 2),
             (harvest2.pk, 2, 3),
@@ -1538,7 +1538,7 @@ class TestHarvest:
         assert Harvest.objects.filter(pk=harvests["admin1"].pk).wipe() == {
             "fetch_attemtps_deleted": (1, {"sushi.SushiFetchAttempt": 1}),
             "harvests_deleted": (3, {"scheduler.FetchIntention": 2, "scheduler.Harvest": 1}),
-            "import_batches_deleted": (1, {'logs.ImportBatch': 1}),
+            "import_batches_deleted": (1, {"logs.ImportBatch": 1}),
         }
 
 
@@ -1671,7 +1671,7 @@ class TestAutomatic:
         for fi in FetchIntention.objects.all():
             fi.when_processed = datetime(2020, 2, 1, 10, 0, 0)
             fi.save()
-        assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}, 'no new intentions'
+        assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}, "no new intentions"
         # now break some credentials and check that processed were not deleted
         for fi in FetchIntention.objects.all():
             fi.credentials.broken = True
@@ -1679,7 +1679,7 @@ class TestAutomatic:
         assert Automatic.update_for_last_month() == {
             "added": 0,
             "deleted": 0,
-        }, 'no intentions deleted'
+        }, "no intentions deleted"
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
@@ -1720,7 +1720,7 @@ class TestAutomatic:
                 "partial_data": False,
             }
 
-        monkeypatch.setattr(SushiCredentials, '_fetch_report_v5', mocked_fetch_report_v5)
+        monkeypatch.setattr(SushiCredentials, "_fetch_report_v5", mocked_fetch_report_v5)
         credentials["branch_pr"].fetch_report(
             counter_report_types["pr"], date(2019, 1, 1), date(2019, 1, 31)
         )
@@ -1746,7 +1746,7 @@ class TestAutomatic:
 
         credentials["standalone_br1_jr1"].save()
         assert Automatic.objects.all().count() == 2
-        automatic_standalone = Automatic.objects.order_by('pk').last()
+        automatic_standalone = Automatic.objects.order_by("pk").last()
         assert automatic_standalone.harvest.intentions.count() == 2
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
@@ -1844,7 +1844,7 @@ class TestAutomatic:
         assert FetchIntention.objects.all().count() == 1
         assert Automatic.objects.all().count() == 1
 
-        fi = FetchIntention.objects.order_by('pk').last()
+        fi = FetchIntention.objects.order_by("pk").last()
         mock_3031(fi)
         fi.refresh_from_db()
 
@@ -1876,7 +1876,7 @@ class TestAutomatic:
         assert fi.queue.end != fi, "new fi at the end of the line"
         assert fi.queue.end.when_processed is None, "last is not finished"
 
-    @pytest.mark.parametrize(['retry_count', 'has_ib'], [(0, False), (2, False), (10, True)])
+    @pytest.mark.parametrize(["retry_count", "has_ib"], [(0, False), (2, False), (10, True)])
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals_with_no_error_code(
         self,
@@ -1904,7 +1904,7 @@ class TestAutomatic:
         assert Automatic.objects.all().count() == 1
 
         # Prepare attempt
-        fi = FetchIntention.objects.order_by('pk').last()
+        fi = FetchIntention.objects.order_by("pk").last()
         fi.data_not_ready_retry = retry_count
         fi.save()
         fi.attempt = FetchAttemptFactory(
@@ -1922,10 +1922,10 @@ class TestAutomatic:
         fi.refresh_from_db()
 
         if has_ib:
-            assert FetchIntention.objects.all().count() == 1, 'FI is updated'
+            assert FetchIntention.objects.all().count() == 1, "FI is updated"
             assert fi.attempt.import_batch is not None
         else:
-            assert FetchIntention.objects.all().count() == 2, 'new FI is created'
+            assert FetchIntention.objects.all().count() == 2, "new FI is created"
             assert fi.attempt.import_batch is None
 
         fi.attempt.refresh_from_db()
@@ -1952,7 +1952,7 @@ class TestAutomatic:
         assert Automatic.objects.all().count() == 1
 
         # Create 3030 fetch attempt and replan next
-        fi = FetchIntention.objects.order_by('pk').last()
+        fi = FetchIntention.objects.order_by("pk").last()
         assert fi.queue is not None
         queue = fi.queue
         fi.attempt = FetchAttemptFactory(
@@ -1969,16 +1969,16 @@ class TestAutomatic:
         # Call hanlder to replan
         fi.get_handler()()
 
-        assert FetchIntention.objects.all().count() == 2, 'new FI is created'
-        assert FetchIntention.objects.order_by('pk').last().queue == queue
+        assert FetchIntention.objects.all().count() == 2, "new FI is created"
+        assert FetchIntention.objects.order_by("pk").last().queue == queue
 
         # Disable credentials
         credentials["standalone_tr"].enabled = False
         credentials["standalone_tr"].save()
 
-        assert FetchIntention.objects.all().count() == 1, 'new FI is deleted'
+        assert FetchIntention.objects.all().count() == 1, "new FI is deleted"
         Automatic.update_for_last_month()
-        assert FetchIntention.objects.all().count() == 1, 'nothing updated'
+        assert FetchIntention.objects.all().count() == 1, "nothing updated"
 
         # Reenable credentials
         credentials["standalone_tr"].enabled = True
@@ -1987,7 +1987,7 @@ class TestAutomatic:
         # Replan
         Automatic.update_for_last_month()
 
-        assert FetchIntention.objects.all().count() == 2, 'new FI is recreated'
+        assert FetchIntention.objects.all().count() == 2, "new FI is recreated"
         assert (
-            FetchIntention.objects.order_by('pk').last().queue == queue
-        ), 'queue matches the one which was interrupted'
+            FetchIntention.objects.order_by("pk").last().queue == queue
+        ), "queue matches the one which was interrupted"

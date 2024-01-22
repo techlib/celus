@@ -5,24 +5,24 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0037_add_ir_m1_interest_to_all_platforms'),
+        ("publications", "0037_add_ir_m1_interest_to_all_platforms"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='title',
-            name='eissn',
+            model_name="title",
+            name="eissn",
             field=models.CharField(
                 blank=True,
                 db_index=True,
-                default='',
-                help_text='ISSN of electronic version',
+                default="",
+                help_text="ISSN of electronic version",
                 max_length=9,
             ),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='issn',
-            field=models.CharField(blank=True, db_index=True, default='', max_length=9),
+            model_name="title",
+            name="issn",
+            field=models.CharField(blank=True, db_index=True, default="", max_length=9),
         ),
     ]

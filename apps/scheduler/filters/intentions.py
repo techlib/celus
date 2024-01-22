@@ -64,27 +64,27 @@ class CounterVersionFilter(filters.BaseFilterBackend):
 class ModeFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # Use all mode in detail as default otherwise current mode will be used
-        mode = request.query_params.get('mode', "all" if view.detail else "")
+        mode = request.query_params.get("mode", "all" if view.detail else "")
 
-        if mode == 'success_and_current':
+        if mode == "success_and_current":
             return queryset.filter(
-                Q(attempt__credentials_version_hash=F('credentials__version_hash'))
+                Q(attempt__credentials_version_hash=F("credentials__version_hash"))
                 | Q(attempt__status__in=AttemptStatus.successes())
             ).latest_intentions()
-        elif mode == 'all':
+        elif mode == "all":
             # No filtering in all mode
             return queryset
         else:
             # a.k.a default 'current' mode
             return queryset.filter(
-                attempt__credentials_version_hash=F('credentials__version_hash')
+                attempt__credentials_version_hash=F("credentials__version_hash")
             ).latest_intentions()
 
 
 class AttemptFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         try:
-            attempt = bool(strtobool(request.query_params.get('attempt', '')))
+            attempt = bool(strtobool(request.query_params.get("attempt", "")))
             queryset = queryset.filter(attempt__isnull=not attempt)
         except ValueError:
             pass
@@ -94,13 +94,13 @@ class AttemptFilter(filters.BaseFilterBackend):
 
 class OrderingFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        order_by = request.query_params.get('order_by', "")
-        if order_by in ['timestamp', 'error_code']:
+        order_by = request.query_params.get("order_by", "")
+        if order_by in ["timestamp", "error_code"]:
             order_by = f"attempt__{order_by}"
-        desc = request.query_params.get('desc', 'false')
+        desc = request.query_params.get("desc", "false")
         if order_by:
-            prefix = '-' if desc == 'true' else ''
-            queryset = queryset.order_by(prefix + order_by, prefix + 'pk')
+            prefix = "-" if desc == "true" else ""
+            queryset = queryset.order_by(prefix + order_by, prefix + "pk")
         return queryset
 
 

@@ -40,39 +40,39 @@ class UpdateAssignedCounterReportsSerializer(Serializer):
 
 class UnsetBrokenSerializer(Serializer):
     counter_reports = SlugRelatedField(
-        queryset=CounterReportType.objects, many=True, slug_field='code', required=False
+        queryset=CounterReportType.objects, many=True, slug_field="code", required=False
     )
 
     class Meta:
         model = SushiCredentials
-        fields = ('counter_reports',)
+        fields = ("counter_reports",)
 
 
 class CounterReportTypeSerializer(ModelSerializer):
     class Meta:
         model = CounterReportType
-        fields = ('id', 'code', 'name', 'counter_version')
+        fields = ("id", "code", "name", "counter_version")
 
 
 class CounterReportsToCredentialsSerializer(ModelSerializer):
-    id = ReadOnlyField(source='counter_report_id')
-    code = ReadOnlyField(source='counter_report.code')
-    name = ReadOnlyField(source='counter_report.name')
-    counter_version = ReadOnlyField(source='counter_report.counter_version')
-    report_type = ReadOnlyField(source='counter_report.report_type_id')
+    id = ReadOnlyField(source="counter_report_id")
+    code = ReadOnlyField(source="counter_report.code")
+    name = ReadOnlyField(source="counter_report.name")
+    counter_version = ReadOnlyField(source="counter_report.counter_version")
+    report_type = ReadOnlyField(source="counter_report.report_type_id")
 
     class Meta:
         model = CounterReportsToCredentials
         fields = (
-            'id',
-            'code',
-            'name',
-            'counter_version',
-            'report_type',
-            'broken',
-            'last_harvestable_month',
-            'last_harvestable_month_user_id',
-            'last_harvestable_month_attempt_id',
+            "id",
+            "code",
+            "name",
+            "counter_version",
+            "report_type",
+            "broken",
+            "last_harvestable_month",
+            "last_harvestable_month_user_id",
+            "last_harvestable_month_attempt_id",
         )
 
 
@@ -84,13 +84,13 @@ class SushiCredentialsSerializer(ModelSerializer):
     )
 
     counter_reports_long = CounterReportsToCredentialsSerializer(
-        many=True, source='counterreportstocredentials_set', read_only=True
+        many=True, source="counterreportstocredentials_set", read_only=True
     )
     organization_id = PrimaryKeyRelatedField(
-        source='organization', write_only=True, queryset=Organization.objects.all()
+        source="organization", write_only=True, queryset=Organization.objects.all()
     )
     platform_id = PrimaryKeyRelatedField(
-        source='platform', write_only=True, queryset=Platform.objects.all()
+        source="platform", write_only=True, queryset=Platform.objects.all()
     )
     locked_for_me = BooleanField(read_only=True)
     can_lock = BooleanField(read_only=True)
@@ -101,31 +101,31 @@ class SushiCredentialsSerializer(ModelSerializer):
     class Meta:
         model = SushiCredentials
         fields = (
-            'pk',
-            'title',
-            'organization',
-            'platform',
-            'enabled',
-            'url',
-            'counter_version',
-            'requestor_id',
-            'customer_id',
-            'http_username',
-            'http_password',
-            'api_key',
-            'extra_params',
-            'counter_reports',
-            'counter_reports_long',
-            'organization_id',
-            'platform_id',
-            'submitter',
-            'locked_for_me',
-            'lock_level',
-            'can_lock',
-            'locked',
-            'outside_consortium',
-            'broken',
-            'verified',
+            "pk",
+            "title",
+            "organization",
+            "platform",
+            "enabled",
+            "url",
+            "counter_version",
+            "requestor_id",
+            "customer_id",
+            "http_username",
+            "http_password",
+            "api_key",
+            "extra_params",
+            "counter_reports",
+            "counter_reports_long",
+            "organization_id",
+            "platform_id",
+            "submitter",
+            "locked_for_me",
+            "lock_level",
+            "can_lock",
+            "locked",
+            "outside_consortium",
+            "broken",
+            "verified",
         )
 
     def get_locked(self, obj: SushiCredentials):
@@ -135,20 +135,20 @@ class SushiCredentialsSerializer(ModelSerializer):
         # check existing credentials for this organization, platform and counter version
         if (
             SushiCredentials.objects.filter(
-                organization=validated_data.get('organization') or instance.organization,
-                platform=validated_data.get('platform') or instance.platform,
-                counter_version=validated_data.get('counter_version') or instance.counter_version,
+                organization=validated_data.get("organization") or instance.organization,
+                platform=validated_data.get("platform") or instance.platform,
+                counter_version=validated_data.get("counter_version") or instance.counter_version,
             )
             .exclude(pk=instance.pk)
             .exists()
         ):
             raise ValidationError(
-                'Only one set of SUSHI credentials for an organization, platform and counter '
-                'version is allowed.'
+                "Only one set of SUSHI credentials for an organization, platform and counter "
+                "version is allowed."
             )
-        submitter = validated_data.pop('submitter', None) or self.context['request'].user
+        submitter = validated_data.pop("submitter", None) or self.context["request"].user
         if not instance.can_edit(submitter):
-            raise PermissionDenied('User is not allowed to edit this object - it is locked.')
+            raise PermissionDenied("User is not allowed to edit this object - it is locked.")
         result = super().update(instance, validated_data)  # type: SushiCredentials
         result.last_updated_by = submitter
         result.save()
@@ -160,15 +160,15 @@ class SushiCredentialsSerializer(ModelSerializer):
     def create(self, validated_data):
         # check existing credentials for this organization, platform and counter version
         if SushiCredentials.objects.filter(
-            organization=validated_data['organization'],
-            platform=validated_data['platform'],
-            counter_version=validated_data['counter_version'],
+            organization=validated_data["organization"],
+            platform=validated_data["platform"],
+            counter_version=validated_data["counter_version"],
         ).exists():
             raise ValidationError(
-                'Only one set of SUSHI credentials for an organization, platform and counter '
-                'version is allowed.'
+                "Only one set of SUSHI credentials for an organization, platform and counter "
+                "version is allowed."
             )
-        submitter = validated_data.pop('submitter')
+        submitter = validated_data.pop("submitter")
         result = super().create(validated_data)
         result.last_updated_by = submitter
         result.save()
@@ -187,7 +187,7 @@ class SushiCredentialsDataCounterReportSerializer(Serializer):
 
 class SushiCredentialsDataReportSerializer(Serializer):
     status = ChoiceField(
-        choices=('success', 'no_data', 'failed', 'untried', 'partial_data'), required=True
+        choices=("success", "no_data", "failed", "untried", "partial_data"), required=True
     )
     planned = BooleanField(required=True)
     broken = BooleanField()
@@ -202,25 +202,25 @@ class SushiCredentialsDataSerializer(Serializer):
 
 
 class SushiFetchAttemptSimpleSerializer(ModelSerializer):
-    counter_version = IntegerField(read_only=True, source='counter_report.counter_version')
+    counter_version = IntegerField(read_only=True, source="counter_report.counter_version")
 
     class Meta:
         model = SushiFetchAttempt
         fields = (
-            'counter_report_id',
-            'counter_version',
-            'credentials_id',
-            'data_file',
-            'file_size',
-            'end_date',
-            'error_code',
-            'import_batch',
-            'pk',
-            'start_date',
-            'timestamp',
-            'when_processed',
-            'status',
-            'last_updated',
+            "counter_report_id",
+            "counter_version",
+            "credentials_id",
+            "data_file",
+            "file_size",
+            "end_date",
+            "error_code",
+            "import_batch",
+            "pk",
+            "start_date",
+            "timestamp",
+            "when_processed",
+            "status",
+            "last_updated",
         )
 
 
@@ -228,22 +228,22 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
     class Meta:
         model = SushiFetchAttempt
         fields = (
-            'counter_report',
-            'credentials',
-            'data_file',
-            'file_size',
-            'end_date',
-            'error_code',
-            'import_batch',
-            'log',
-            'pk',
-            'start_date',
-            'timestamp',
-            'when_processed',
-            'partial_data',
-            'status',
-            'extracted_data',
-            'last_updated',
+            "counter_report",
+            "credentials",
+            "data_file",
+            "file_size",
+            "end_date",
+            "error_code",
+            "import_batch",
+            "log",
+            "pk",
+            "start_date",
+            "timestamp",
+            "when_processed",
+            "partial_data",
+            "status",
+            "extracted_data",
+            "last_updated",
         )
 
 

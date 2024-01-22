@@ -7,9 +7,9 @@ from test_scenarios.basic import *  # noqa
 
 @pytest.fixture
 def root_platform(platforms):
-    return platforms['root']
+    return platforms["root"]
 
 
 @pytest.fixture
 def tr_report(report_types):
-    return report_types['tr']
+    return report_types["tr"]

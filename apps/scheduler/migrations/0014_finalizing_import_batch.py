@@ -16,40 +16,40 @@ def mark_duplicates_for_3030(apps, schema_editor):
     To fix this before we add empty import batches to such intentions, we detect the duplicates
     here and link them together using `duplicate_of`.
     """
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
     qs = (
         FetchIntention.objects.filter(
             duplicate_of__isnull=True,
-            pk=F('queue__end__pk'),  # last in queue
+            pk=F("queue__end__pk"),  # last in queue
             attempt__error_code="3030",
             attempt__import_batch__isnull=True,
         )
         .values(
-            'counter_report', 'credentials__platform', 'credentials__organization', 'start_date'
+            "counter_report", "credentials__platform", "credentials__organization", "start_date"
         )
-        .annotate(pks=ArrayAgg('id'), num=Count('id'))
+        .annotate(pks=ArrayAgg("id"), num=Count("id"))
         .filter(num__gt=1)
     )
     stats = Counter()
     for group in qs:
-        pks = group['pks']
+        pks = group["pks"]
         FetchIntention.objects.filter(id__in=pks[1:]).update(duplicate_of_id=pks[0])
-        stats['joined'] += len(pks)
-        stats['to'] += 1
-    print('\nDuplicate detection results:', stats)
+        stats["joined"] += len(pks)
+        stats["to"] += 1
+    print("\nDuplicate detection results:", stats)
 
 
 def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
-    ImportBatch = apps.get_model('logs', 'ImportBatch')
-    FetchIntention = apps.get_model('scheduler', 'FetchIntention')
+    ImportBatch = apps.get_model("logs", "ImportBatch")
+    FetchIntention = apps.get_model("scheduler", "FetchIntention")
     counter = Counter()
     qs = FetchIntention.objects.filter(
         duplicate_of__isnull=True,
-        pk=F('queue__end__pk'),  # last in queue
+        pk=F("queue__end__pk"),  # last in queue
         attempt__error_code="3030",
         attempt__import_batch__isnull=True,
     )
-    print(f'\nGoing to create {qs.count()} import batches')
+    print(f"\nGoing to create {qs.count()} import batches")
     for fi in qs.iterator():
         fi.attempt.import_batch = ImportBatch.objects.create(
             report_type=fi.counter_report.report_type,
@@ -59,16 +59,16 @@ def add_empty_import_batch_to_last_3030_attempt(apps, schema_editor):
         )
         fi.attempt.save()
         counter["finalized_count"] += 1
-        if counter['finalized_count'] % 1000 == 0:
-            print(counter['finalized_count'])
+        if counter["finalized_count"] % 1000 == 0:
+            print(counter["finalized_count"])
     print(counter)
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('scheduler', '0013_fetch_intention_queue'),
-        ('logs', '0052_remove_importbatch_system_created'),
-        ('sushi', '0047_no_data_for_3031_and_3030'),
+        ("scheduler", "0013_fetch_intention_queue"),
+        ("logs", "0052_remove_importbatch_system_created"),
+        ("sushi", "0047_no_data_for_3031_and_3030"),
     ]
 
     operations = [

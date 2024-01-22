@@ -39,7 +39,7 @@ from .tasks import erms_sync_users_and_identities_task
 
 class UserView(GenericAPIView):
     serializer_class = UserSerializer
-    action = 'current'
+    action = "current"
 
     def get(self, request):
         """
@@ -47,20 +47,20 @@ class UserView(GenericAPIView):
         """
         if request.user:
             return Response(UserSerializer(request.user, context={"request": request}).data)
-        return HttpResponseForbidden('user is not logged in')
+        return HttpResponseForbidden("user is not logged in")
 
 
 class UserExistsView(GenericAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        if check := request.GET.get('hmac'):
+        if check := request.GET.get("hmac"):
             if User.objects.raw(
                 "SELECT * FROM core_user WHERE encode(hmac(email, %s, %s), 'hex') = %s LIMIT 1",
                 [settings.OCTOPUS_HMAC_KEY, settings.OCTOPUS_HMAC_ALGO, check],
             ):
-                return Response({'exists': True})
-        return Response({'exists': False})
+                return Response({"exists": True})
+        return Response({"exists": False})
 
 
 class SystemInfoView(GenericAPIView):
@@ -74,8 +74,8 @@ class SystemInfoView(GenericAPIView):
 class UserLanguageView(APIView):
     def get(self, request):
         if request.user:
-            return Response({'language': request.user.language})
-        return HttpResponseForbidden('user is not logged in')
+            return Response({"language": request.user.language})
+        return HttpResponseForbidden("user is not logged in")
 
     def post(self, request):
         return self._set_language(request)
@@ -86,13 +86,13 @@ class UserLanguageView(APIView):
     def _set_language(self, request):
         if request.user:
             try:
-                request.user.language = request.data.get('language')
+                request.user.language = request.data.get("language")
                 request.user.save()
             except ValidationError as e:
                 return HttpResponseBadRequest(str(e))
             else:
-                return Response({'ok': True})
-        return HttpResponseForbidden('user is not logged in')
+                return Response({"ok": True})
+        return HttpResponseForbidden("user is not logged in")
 
 
 class UserVerifyEmailView(APIView):
@@ -116,22 +116,22 @@ class StartERMSSyncUsersAndIdentitiesTask(APIView):
 
     def post(self, request):
         task = erms_sync_users_and_identities_task.delay()
-        return Response({'id': task.id})
+        return Response({"id": task.id})
 
 
 class TestEmailView(APIView):
     permission_classes = [SuperuserPermission]
 
     def post(self, request):
-        mail_admins('Email test', 'This is a test message.')
-        return Response({'ok': True})
+        mail_admins("Email test", "This is a test message.")
+        return Response({"ok": True})
 
 
 class TestErrorView(APIView):
     permission_classes = [SuperuserPermission]
 
     def get(self, request):
-        raise Exception('test error')
+        raise Exception("test error")
 
 
 class UserExtraDataView(APIView):
@@ -147,7 +147,7 @@ class UserExtraDataView(APIView):
     def get(self, request):
         if request.user:
             return Response(request.user.extra_data)
-        return HttpResponseForbidden('user is not logged in')
+        return HttpResponseForbidden("user is not logged in")
 
     def post(self, request):
         return self._set_extra_data(request)
@@ -157,7 +157,7 @@ class UserExtraDataView(APIView):
 
     def _set_extra_data(self, request):
         if not request.user:
-            return HttpResponseForbidden('user is not logged in')
+            return HttpResponseForbidden("user is not logged in")
 
         serializer = UserExtraDataSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)  # raises 400 exception
@@ -168,7 +168,7 @@ class UserExtraDataView(APIView):
             key: value for key, value in serializer.validated_data.items() if value is not None
         }
         if not clean_data:
-            return Response({'error': 'no valid data supplied'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "no valid data supplied"}, status=status.HTTP_400_BAD_REQUEST)
 
         request.user.extra_data.update(clean_data)
         request.user.save()
@@ -202,12 +202,12 @@ class CeleryTaskStatusViewSet(mixins.RetrieveModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = TaskProgressSerializer
     queryset = TaskProgress.objects.all()
-    lookup_field = 'task_id'
+    lookup_field = "task_id"
 
 
 class ManagementCommandViewSet(ViewSet):
     permission_classes = (IsAuthenticated, SuperuserPermission)
-    lookup_field = 'name'
+    lookup_field = "name"
 
     def list(self, request):
         out = []
@@ -215,11 +215,11 @@ class ManagementCommandViewSet(ViewSet):
         for ci in cm.commands:
             args = [ci.serialize_arg(arg) for arg in ci.args]
             out.append(
-                {'name': ci.name, 'help': ci.instance.help, 'uses_doit': ci.uses_doit, 'args': args}
+                {"name": ci.name, "help": ci.instance.help, "uses_doit": ci.uses_doit, "args": args}
             )
         return Response(out)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def run(self, request, name=None):
         """
         This is where one command is executed. The command name is passed in the `name` field
@@ -227,7 +227,7 @@ class ManagementCommandViewSet(ViewSet):
         """
         cm = CommandManager()
         if not (ci := cm.get_command_by_name(name)):
-            return Response({'error': 'command not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "command not found"}, status=status.HTTP_404_NOT_FOUND)
 
         args = []
         options = {}
@@ -237,11 +237,11 @@ class ManagementCommandViewSet(ViewSet):
             if arg.dest in request.data:
                 value = request.data[arg.dest]
                 typ = ci.arg_type_str(arg)
-                if typ == 'bool':
+                if typ == "bool":
                     value = to_bool(value)
-                elif typ == 'int':
+                elif typ == "int":
                     value = int(value)
-                elif typ == 'file':
+                elif typ == "file":
                     # value is a file-like object in binary mode
                     # we need to convert it to a text stream if the argument expects it
                     if arg.type._encoding:
@@ -252,14 +252,14 @@ class ManagementCommandViewSet(ViewSet):
                 else:
                     options[arg.dest] = value
         if ci.uses_doit:
-            options['doit'] = to_bool(request.data.get('doit', False))
+            options["doit"] = to_bool(request.data.get("doit", False))
 
         # capture the output of the command
         out = StringIO()
         err = StringIO()
         log = StringIO()
         root_logger = logging.getLogger()
-        formatter = logging.Formatter('%(levelname)s:: %(message)s')
+        formatter = logging.Formatter("%(levelname)s:: %(message)s")
         handler = logging.StreamHandler(log)
         handler.setLevel(logging.INFO)  # do not let DEBUG messages through
         handler.setFormatter(formatter)
@@ -282,10 +282,10 @@ class ManagementCommandViewSet(ViewSet):
             root_logger.removeHandler(handler)
         return Response(
             {
-                'stdout': out.getvalue(),
-                'stderr': err.getvalue(),
-                'exception': exception,
-                'log': log.getvalue(),
+                "stdout": out.getvalue(),
+                "stderr": err.getvalue(),
+                "exception": exception,
+                "log": log.getvalue(),
             },
         )
 
@@ -296,43 +296,43 @@ class AccessibleUsersViewSet(ModelViewSet):
     def get_queryset(self):
         current_user = self.request.user
         queryset = current_user.accessible_users().prefetch_related(
-            'userorganization_set__organization',
+            "userorganization_set__organization",
             Prefetch(
-                'userorganization_set',
-                queryset=UserOrganization.objects.select_related('organization'),
-                to_attr='userorganization_set_prefetched',
+                "userorganization_set",
+                queryset=UserOrganization.objects.select_related("organization"),
+                to_attr="userorganization_set_prefetched",
             ),
         )
         return queryset
 
-    @action(detail=True, methods=['post'], url_path='delete-org-relation')
+    @action(detail=True, methods=["post"], url_path="delete-org-relation")
     def delete_relation(self, request, pk):
-        org_pk = request.data.get('organization')
+        org_pk = request.data.get("organization")
 
-        if request.user.organization_relationship(org_id=request.data.get('organization')) < 300:
+        if request.user.organization_relationship(org_id=request.data.get("organization")) < 300:
             return Response(
-                {'detail': 'You are not admin of this organization.'},
+                {"detail": "You are not admin of this organization."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         elif int(pk) == int(request.user.pk):  # pk is the same as request user pk
             return Response(
-                {'detail': 'You cannot delete your own account.'}, status=status.HTTP_403_FORBIDDEN
+                {"detail": "You cannot delete your own account."}, status=status.HTTP_403_FORBIDDEN
             )
 
         else:
             user_org_instance = UserOrganization.objects.get(user=pk, organization=org_pk)
             user_org_instance.delete()
             return Response(
-                {'detail': 'User has been removed from the organization.'},
+                {"detail": "User has been removed from the organization."},
                 status=status.HTTP_200_OK,
             )
 
     def create(self, request):
         # check whether the request.user is allowed to add to this org
-        if request.user.organization_relationship(org_id=request.data.get('organization')) < 300:
+        if request.user.organization_relationship(org_id=request.data.get("organization")) < 300:
             return Response(
-                {'detail': 'You are not admin of this organization.'},
+                {"detail": "You are not admin of this organization."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -344,7 +344,7 @@ class DifferentUserInviteView(APIView):
     serializer_class = EmailVerificationSerializer
 
     def post(self, request):
-        user = User.objects.get(pk=request.data.get('pk'))
+        user = User.objects.get(pk=request.data.get("pk"))
         adapter = get_adapter()
         adapter.send_invitation_email(request, user)
         return Response(self.serializer_class(user.email_verification).data)
@@ -355,21 +355,21 @@ class DifferentUserVerifyEmailView(APIView):
     serializer_class = EmailVerificationSerializer
 
     def post(self, request):
-        user = User.objects.get(pk=request.data.get('pk'))
+        user = User.objects.get(pk=request.data.get("pk"))
         sync_user_email_addresses(user)
 
         # Don't send email if already verified
         if not user.email_verified:
             send_email_confirmation(request, user, signup=False)
-            verification_status = 'verification email sent'
+            verification_status = "verification email sent"
         else:
-            verification_status = 'already verified'
+            verification_status = "already verified"
 
         del user.email_verification  # reload cached property
 
         response_data = {
-            'verification_status': verification_status,
-            'email_verification_data': self.serializer_class(user.email_verification).data,
+            "verification_status": verification_status,
+            "email_verification_data": self.serializer_class(user.email_verification).data,
         }
 
         return Response(response_data)

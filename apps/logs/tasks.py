@@ -65,7 +65,7 @@ def sync_interest_task():
     """
     Synchronizes computed interest for import batches that were not processed yet
     """
-    with cache_based_lock('sync_interest_task', blocking_timeout=10):
+    with cache_based_lock("sync_interest_task", blocking_timeout=10):
         sync_interest_by_import_batches()
 
 
@@ -83,16 +83,16 @@ def import_new_sushi_attempts_task():
             status=AttemptStatus.IMPORTING
         )
         count = attempts.count()
-        logger.info('Found %d unprocessed successful download attempts matching criteria', count)
+        logger.info("Found %d unprocessed successful download attempts matching criteria", count)
 
         for i, attempt in enumerate(attempts):
-            logger.info('----- Importing attempt #%d -----', i)
+            logger.info("----- Importing attempt #%d -----", i)
             try:
                 attempt.check_importable()
                 import_one_sushi_attempt(attempt)
             except Exception as e:
                 # we catch any kind of error to make sure that the loop does not die
-                logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+                logger.error("Importing sushi attempt #%d crashed: %s", attempt.pk, e)
                 attempt.mark_crashed(e)
 
             finally:
@@ -140,7 +140,7 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         import_one_sushi_attempt(attempt)
     except Exception as e:
         # we catch any kind of error to make sure that there is no crash
-        logger.error('Importing sushi attempt #%d crashed: %s', attempt.pk, e)
+        logger.error("Importing sushi attempt #%d crashed: %s", attempt.pk, e)
         attempt.mark_crashed(e)
     finally:
         if attempt.data_file:
@@ -191,7 +191,7 @@ def sync_materialized_reports_task():
     """
     Synchronizes materialized reports for import batches that were not processed yet
     """
-    with cache_based_lock('sync_materialized_reports_task', blocking_timeout=10):
+    with cache_based_lock("sync_materialized_reports_task", blocking_timeout=10):
         sync_materialized_reports()
 
 
@@ -202,7 +202,7 @@ def update_report_approx_record_count_task():
     """
     Synchronizes the `approx_record_count` values for all report types
     """
-    with cache_based_lock('update_report_approx_record_count_task', blocking_timeout=10):
+    with cache_based_lock("update_report_approx_record_count_task", blocking_timeout=10):
         update_report_approx_record_count()
 
 
@@ -215,7 +215,7 @@ def process_outstanding_import_batch_sync_logs_task(age_threshold: int = 600):
     qs = (
         ImportBatchSyncLog.objects.exclude(state=ImportBatchSyncLog.STATE_NO_CHANGE)
         .filter(created__lt=now() - timedelta(seconds=age_threshold))
-        .order_by('created')
+        .order_by("created")
         .select_for_update(skip_locked=True)
     )
     count = qs.count()
@@ -246,15 +246,15 @@ def compare_db_with_clickhouse_task():
         if not result.is_ok():
             # there are some differences - we need to report it to admins
             # (in the future we might want to fix it automatically, but not now)
-            log = '\n'.join(result.log)
+            log = "\n".join(result.log)
             body = (
-                f'**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n'
-                f'Duration: {monotonic() - start:.2f} s'
+                f"**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n"
+                f"Duration: {monotonic() - start:.2f} s"
             )
             async_mail_admins.delay(
-                f'Found differences between database and Clickhouse ({fn.__name__})', body
+                f"Found differences between database and Clickhouse ({fn.__name__})", body
             )
-            logger.warning('Send email about differences between database and Clickhouse: %s', body)
+            logger.warning("Send email about differences between database and Clickhouse: %s", body)
 
 
 @celery.shared_task
@@ -266,7 +266,7 @@ def compare_db_with_clickhouse_delayed_task():
     This is used to avoid running the task at the same time on all containers.
     """
     delay = randint(0, 30 * 60)
-    logger.info('Scheduling `compare_db_with_clickhouse_task` in %d seconds', delay)
+    logger.info("Scheduling `compare_db_with_clickhouse_task` in %d seconds", delay)
     compare_db_with_clickhouse_task.apply_async(countdown=delay)
 
 
@@ -385,7 +385,7 @@ Traceback: {traceback.format_exc()}
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
-        async_mail_admins.delay('MDU preflight check error', body)
+        async_mail_admins.delay("MDU preflight check error", body)
 
     # Try to close the file (celery might keep the file opened)
     try:
@@ -503,7 +503,7 @@ def reprocess_mdu_task(mdu_id):
     try:
         mdu = ManualDataUpload.objects.get(pk=mdu_id)
     except ManualDataUpload.DoesNotExist:
-        logger.error(f'MDU #{mdu_id} for reprocessing does not exist')
+        logger.error(f"MDU #{mdu_id} for reprocessing does not exist")
     else:
         mdu.unprocess()
         import_manual_upload_data.delay(mdu.pk, mdu.user.pk)
@@ -517,11 +517,11 @@ def sync_organizationplatform_records_task(reason: Optional[str] = None):
     missing, extra = find_organizationplatform_differences()
     if missing or extra:
         fix_organizationplatform_differences(missing, extra)
-        reason_str = f'Reason: {reason}\n' if reason else ''
+        reason_str = f"Reason: {reason}\n" if reason else ""
         async_mail_admins.delay(
-            'OrganizationPlatform records were out of sync',
+            "OrganizationPlatform records were out of sync",
             reason_str
-            + f'Missing: {len(missing)}\nExtra: {len(extra)}\n\nProblems have already been fixed.',
+            + f"Missing: {len(missing)}\nExtra: {len(extra)}\n\nProblems have already been fixed.",
         )
 
 

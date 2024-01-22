@@ -3,26 +3,26 @@ from django.db import migrations, models
 
 
 def ensure_unique_organizationplatform(apps, schema_editor):
-    OrganizationPlatform = apps.get_model('logs', 'OrganizationPlatform')
+    OrganizationPlatform = apps.get_model("logs", "OrganizationPlatform")
     min_pks = (
-        OrganizationPlatform.objects.values('organization_id', 'platform_id')
-        .annotate(min=models.Min('pk'))
-        .values_list('min', flat=True)
+        OrganizationPlatform.objects.values("organization_id", "platform_id")
+        .annotate(min=models.Min("pk"))
+        .values_list("min", flat=True)
     )
     OrganizationPlatform.objects.exclude(pk__in=min_pks).delete()
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('organizations', '0024_alter_userorganization_unique_together'),
-        ('publications', '0038_issn_eissn_index'),
-        ('logs', '0079_alter_importbatch_unique_together'),
+        ("organizations", "0024_alter_userorganization_unique_together"),
+        ("publications", "0038_issn_eissn_index"),
+        ("logs", "0079_alter_importbatch_unique_together"),
     ]
 
     operations = [
         migrations.RunPython(ensure_unique_organizationplatform, migrations.RunPython.noop),
         migrations.AlterUniqueTogether(
-            name='organizationplatform',
-            unique_together={('organization', 'platform')},
+            name="organizationplatform",
+            unique_together={("organization", "platform")},
         ),
     ]

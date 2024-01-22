@@ -5,18 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0001_initial')]
+    dependencies = [("scheduler", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='fetchintention',
-            name='duplicate_of',
+            model_name="fetchintention",
+            name="duplicate_of",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='duplicates',
-                to='scheduler.FetchIntention',
+                related_name="duplicates",
+                to="scheduler.FetchIntention",
             ),
         )
     ]

@@ -94,7 +94,7 @@ from .tasks import export_raw_data_task, sync_organizationplatform_records_task
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 100
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 5000
 
 
@@ -109,14 +109,14 @@ class Counter5DataView(APIView):
         start = monotonic()
         # special attribute signaling that this view is used on dashboard and thus we
         # want to cache the data for extra speed using recache
-        dashboard_view = 'dashboard' in request.GET
+        dashboard_view = "dashboard" in request.GET
         data = computer.get_data(request.user, recache=dashboard_view)
-        label_attrs = {'view_type': 'chart_data_raw', 'report_type': computer.used_report_type.pk}
+        label_attrs = {"view_type": "chart_data_raw", "report_type": computer.used_report_type.pk}
         report_access_total_counter.labels(**label_attrs).inc()
         report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
 
-        data_format = request.GET.get('format')
-        if data_format in ('csv', 'xlsx'):
+        data_format = request.GET.get("format")
+        if data_format in ("csv", "xlsx"):
             # for the bare result, we do not add any extra information, just output the list
             data = DataFrame(data)
             new_keys = [computer.io_prim_dim_name]
@@ -127,15 +127,15 @@ class Counter5DataView(APIView):
             data.set_index(new_keys, drop=True, inplace=True)
             return Response(
                 data,
-                headers={'Content-Disposition': f'attachment; filename="export.{data_format}"'},
+                headers={"Content-Disposition": f'attachment; filename="export.{data_format}"'},
             )
         # prepare the data to return
-        reply = {'data': data}
+        reply = {"data": data}
         if computer.prim_dim_obj:
             reply[computer.prim_dim_name] = DimensionSerializer(computer.prim_dim_obj).data
         if computer.sec_dim_obj:
             reply[computer.sec_dim_name] = DimensionSerializer(computer.sec_dim_obj).data
-        reply['reported_metrics'] = MetricSerializer(
+        reply["reported_metrics"] = MetricSerializer(
             computer.reported_metrics.values(), many=True
         ).data
         return Response(reply)
@@ -144,22 +144,22 @@ class Counter5DataView(APIView):
 class ReportTypeViewSet(ReadOnlyModelViewSet):
     serializer_class = ReportTypeSerializer
     queryset = ReportType.objects.exclude_materialized().select_related(
-        'source', 'counterreporttype'
+        "source", "counterreporttype"
     )
     filter_backends = [PkMultiValueFilterBackend]
 
     def get_queryset(self):
-        if 'nonzero-only' in self.request.query_params:
+        if "nonzero-only" in self.request.query_params:
             extra_attrs = {}
-            if self.request.GET.get('start_date'):
-                extra_attrs['date__gte'] = self.request.GET['start_date']
-            if self.request.GET.get('end_date'):
-                extra_attrs['date__lte'] = self.request.GET['end_date']
+            if self.request.GET.get("start_date"):
+                extra_attrs["date__gte"] = self.request.GET["start_date"]
+            if self.request.GET.get("end_date"):
+                extra_attrs["date__lte"] = self.request.GET["end_date"]
             return self.queryset.filter(
-                Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'), **extra_attrs)))
-                | Q(short_name='interest')
-            ).prefetch_related('controlled_metrics')
-        return self.queryset.prefetch_related('controlled_metrics')
+                Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef("pk"), **extra_attrs)))
+                | Q(short_name="interest")
+            ).prefetch_related("controlled_metrics")
+        return self.queryset.prefetch_related("controlled_metrics")
 
 
 class MetricViewSet(ReadOnlyModelViewSet):
@@ -172,8 +172,8 @@ class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
     serializer_class = ReportTypeInterestSerializer
     queryset = (
         ReportType.objects.exclude_materialized()
-        .exclude(short_name='interest', source__isnull=True)
-        .annotate(used_by_platforms=Count('platforminterestreport__platform', distinct=True))
+        .exclude(short_name="interest", source__isnull=True)
+        .annotate(used_by_platforms=Count("platforminterestreport__platform", distinct=True))
         .prefetch_related(
             "interest_metrics",
             Prefetch(
@@ -195,7 +195,7 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
 
     @property
     def paginator(self):
-        if 'pks' in self.request.query_params:
+        if "pks" in self.request.query_params:
             # if 'pks' are explicitly given, do not paginate and return all
             return None
         return super().paginator
@@ -206,7 +206,7 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
         for getting data for a list of IDs.
         It only works if 'pks' attribute is given and does not use pagination
         """
-        pks = request.data.get('pks', [])
+        pks = request.data.get("pks", [])
         dts = DimensionText.objects.filter(pk__in=pks)
         # we do not paginate when using post
         return Response(self.get_serializer(dts, many=True).data)
@@ -214,7 +214,7 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
 
 class AccessLogListViewBase(ListAPIView):
     serializer_class = AccessLogSerializer
-    implicit_dims = ['platform', 'metric', 'organization', 'target', 'report_type', 'import_batch']
+    implicit_dims = ["platform", "metric", "organization", "target", "report_type", "import_batch"]
     pagination_class = StandardResultsSetPagination
 
     def get_base_queryset(self):
@@ -247,23 +247,23 @@ class AccessLogListViewBase(ListAPIView):
                 dimensions = rt.dimensions_sorted
                 tr_to_dimensions[rt.pk] = dimensions
             for i, dim in enumerate(dimensions):
-                value = getattr(al, f'dim{i+1}')
+                value = getattr(al, f"dim{i+1}")
                 if dim.pk not in seen_dims:
                     # we need to fetch the mappings for this dimension
                     text_id_to_text.update(
                         {
-                            dt['id']: dt['text']
+                            dt["id"]: dt["text"]
                             for dt in DimensionText.objects.filter(dimension=dim).values(
-                                'id', 'text'
+                                "id", "text"
                             )
                         }
                     )
                     seen_dims.add(dim.pk)
                 al.mapped_dim_values_[dim.short_name] = text_id_to_text.get(value, value)
             if al.target:
-                al.mapped_dim_values_['isbn'] = al.target.isbn
-                al.mapped_dim_values_['issn'] = al.target.issn
-                al.mapped_dim_values_['eissn'] = al.target.eissn
+                al.mapped_dim_values_["isbn"] = al.target.isbn
+                al.mapped_dim_values_["issn"] = al.target.issn
+                al.mapped_dim_values_["eissn"] = al.target.eissn
         return data
 
     @classmethod
@@ -274,28 +274,28 @@ class AccessLogListViewBase(ListAPIView):
                 request.GET, dimensions=cls.implicit_dims, mdu_filter=True
             )
         )
-        if 'import_batch' in query_params:
+        if "import_batch" in query_params:
             # add also a filter for report type so that only records with
             # rt matching the import batches rt are shown - no interest, no materialized
-            query_params['report_type_id'] = F('import_batch__report_type_id')
+            query_params["report_type_id"] = F("import_batch__report_type_id")
         return query_params
 
     @classmethod
     def extract_order_args(cls, request) -> dict:
-        order_by = request.query_params.get('order_by', 'pk')
-        desc = to_bool(request.query_params.get('desc', 'false').lower())
-        spec = ('-' if desc else '') + order_by
+        order_by = request.query_params.get("order_by", "pk")
+        desc = to_bool(request.query_params.get("desc", "false").lower())
+        spec = ("-" if desc else "") + order_by
         out = [spec]
         # we need to mix in the pk to make sure the order is deterministic
         # otherwise pagination might not work as expected
-        if order_by != 'pk':
-            out.append('pk')
+        if order_by != "pk":
+            out.append("pk")
         return out
 
 
 class MduAccessLogListView(AccessLogListViewBase):
     def get_base_queryset(self):
-        mdu_id = self.kwargs['mdu_id']
+        mdu_id = self.kwargs["mdu_id"]
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=mdu_id)
         user = self.request.user
         # if the MDU has organization, the user must have access to that organization,
@@ -316,25 +316,25 @@ class MduAccessLogListView(AccessLogListViewBase):
         # Using the `import_batch_id__in` instead of 'import_batch__mdu = mdu' is a little faster
         # because it skips some table joins
         query_params = {
-            'import_batch_id__in': ImportBatch.objects.filter(mdu=mdu)
-            .values_list('pk', flat=True)
+            "import_batch_id__in": ImportBatch.objects.filter(mdu=mdu)
+            .values_list("pk", flat=True)
             .distinct(),
-            'platform_id': mdu.platform_id,
-            'report_type_id': mdu.report_type_id,
+            "platform_id": mdu.platform_id,
+            "report_type_id": mdu.report_type_id,
         }
         # if organization is present, we add it to the filter as well
         if mdu.organization_id:
-            query_params['organization_id'] = mdu.organization_id
+            query_params["organization_id"] = mdu.organization_id
         else:
-            query_params['organization_id__in'] = set(
-                mdu.import_batches.values_list('organization_id', flat=True)
+            query_params["organization_id__in"] = set(
+                mdu.import_batches.values_list("organization_id", flat=True)
             )
         return AccessLog.objects.filter(**query_params)
 
 
 class ImportBatchAccessLogListView(AccessLogListViewBase):
     def get_base_queryset(self):
-        ib_id = self.kwargs['ib_id']
+        ib_id = self.kwargs["ib_id"]
         ib = get_object_or_404(
             ImportBatch.objects.filter(
                 organization__in=self.request.user.accessible_organizations()
@@ -345,10 +345,10 @@ class ImportBatchAccessLogListView(AccessLogListViewBase):
         # together with the ib filter - it makes the query much faster
         # also, by filtering the report type, we remove logs for interest and materialized reports
         query_params = {
-            'import_batch_id': ib_id,
-            'platform_id': ib.platform_id,
-            'report_type_id': ib.report_type_id,
-            'organization': ib.organization,
+            "import_batch_id": ib_id,
+            "platform_id": ib.platform_id,
+            "report_type_id": ib.report_type_id,
+            "organization": ib.organization,
         }
         return AccessLog.objects.filter(**query_params)
 
@@ -383,7 +383,7 @@ class RawDataDelayedExportView(APIView):
     def get(self, request):
         query_params = self.extract_query_filter_params(request)
         exporter = CSVExport(query_params)
-        return JsonResponse({'total_count': exporter.record_count})
+        return JsonResponse({"total_count": exporter.record_count})
 
     def post(self, request):
         query_params = self.extract_query_filter_params(request)
@@ -393,8 +393,8 @@ class RawDataDelayedExportView(APIView):
         )
         return JsonResponse(
             {
-                'progress_url': reverse('raw_data_export_progress', args=(exporter.filename_base,)),
-                'result_url': exporter.file_url,
+                "progress_url": reverse("raw_data_export_progress", args=(exporter.filename_base,)),
+                "result_url": exporter.file_url,
             }
         )
 
@@ -414,9 +414,9 @@ class RawDataDelayedExportView(APIView):
 class RawDataDelayedExportProgressView(View):
     def get(self, request, handle):
         count = None
-        if handle and handle.startswith('raw-data-'):
+        if handle and handle.startswith("raw-data-"):
             count = cache.get(handle)
-        return JsonResponse({'count': count})
+        return JsonResponse({"count": count})
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):
@@ -427,14 +427,14 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset
-        if 'pk' in self.kwargs:
+        if "pk" in self.kwargs:
             # we only add accesslog_count if only one object was requested
-            qs = qs.annotate(accesslog_count=Count('accesslog'))
-        qs = qs.select_related('organization', 'platform', 'report_type')
+            qs = qs.annotate(accesslog_count=Count("accesslog"))
+        qs = qs.select_related("organization", "platform", "report_type")
         return qs
 
     def get_serializer_class(self):
-        if 'pk' in self.kwargs:
+        if "pk" in self.kwargs:
             # for one result, we can use the verbose serializer
             return ImportBatchVerboseSerializer
         return super().get_serializer_class()
@@ -445,7 +445,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         report_type = IntegerField(required=True)
         months = ListField(child=DateField(), allow_empty=False)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     def lookup(self, request):
         """Based on provided list of records
         [("organization", "platform", "report_type", "months")]
@@ -471,15 +471,15 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         # Optimizations
         qs = (
             qs.select_related(
-                'user',
-                'platform',
-                'platform__source',
-                'organization',
-                'report_type',
-                'sushifetchattempt',
+                "user",
+                "platform",
+                "platform__source",
+                "organization",
+                "report_type",
+                "sushifetchattempt",
             )
-            .prefetch_related('mdu')
-            .annotate(accesslog_count=Count('accesslog'))
+            .prefetch_related("mdu")
+            .annotate(accesslog_count=Count("accesslog"))
         )
         return Response(ImportBatchVerboseSerializer(qs, many=True).data)
 
@@ -487,7 +487,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         batches = ListField(child=IntegerField(), allow_empty=False)
 
     @atomic
-    @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
+    @action(detail=False, methods=["post"], serializer_class=PurgeSerializer)
     def purge(self, request):
         """Remove all data and related structures of given list of import batches
 
@@ -504,13 +504,13 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         )
 
         mdus = list(
-            ManualDataUpload.objects.filter(import_batches__in=batches).values_list('pk', flat=True)
+            ManualDataUpload.objects.filter(import_batches__in=batches).values_list("pk", flat=True)
         )
 
         # remove fetch intentions and fetch attempts
         to_delete = (
             FetchIntention.objects.filter(attempt__import_batch__in=batches)
-            .values('credentials__pk', 'counter_report__pk', 'start_date')
+            .values("credentials__pk", "counter_report__pk", "start_date")
             .distinct()
         )
         to_delete = [Q(**e) for e in to_delete]
@@ -541,7 +541,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         end_date = CharField(validators=[month_validator], required=True)
         credentials = CharField(validators=[pk_list_validator], required=True)
 
-    @action(detail=False, methods=['get'], url_name='data-presence', url_path='data-presence')
+    @action(detail=False, methods=["get"], url_name="data-presence", url_path="data-presence")
     def data_presence(self, request):
         """
         Return a list of combinations of report_type, platform, organization and month for which
@@ -564,14 +564,14 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         params = param_serializer.validated_data
 
         # prepare data from SUSHI - we use fetch attempts for that
-        credentials_ids = [int(cid) for cid in params['credentials'].split(',')]
+        credentials_ids = [int(cid) for cid in params["credentials"].split(",")]
         credentials = SushiCredentials.objects.filter(
             pk__in=credentials_ids, organization__in=request.user.accessible_organizations()
         )
 
         # decompose credentials to (platform, organization, report_type) tripplets
         pors = []
-        for creds in credentials.prefetch_related('counter_reports'):
+        for creds in credentials.prefetch_related("counter_reports"):
             for cr in creds.counter_reports.all():
                 pors.append((creds.platform_id, creds.organization_id, cr.report_type_id))
 
@@ -585,25 +585,25 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
         batches = (
             ImportBatch.objects.filter(
-                date__gte=parse_month(params['start_date']),
-                date__lte=parse_month(params['end_date']),
+                date__gte=parse_month(params["start_date"]),
+                date__lte=parse_month(params["end_date"]),
             )
             .filter(qs_args)
             .annotate(
-                has_fa=Exists(SushiFetchAttempt.objects.filter(import_batch_id=OuterRef('pk'))),
+                has_fa=Exists(SushiFetchAttempt.objects.filter(import_batch_id=OuterRef("pk"))),
                 has_mdu=Exists(
-                    ManualDataUploadImportBatch.objects.filter(import_batch_id=OuterRef('pk'))
+                    ManualDataUploadImportBatch.objects.filter(import_batch_id=OuterRef("pk"))
                 ),
             )
         )
 
         return Response(
             {
-                'report_type_id': e.report_type_id,
-                'platform_id': e.platform_id,
-                'organization_id': e.organization_id,
-                'date': e.date,
-                'source': 'sushi' if e.has_fa else ('manual' if e.has_mdu else 'unknown'),
+                "report_type_id": e.report_type_id,
+                "platform_id": e.platform_id,
+                "organization_id": e.organization_id,
+                "date": e.date,
+                "source": "sushi" if e.has_fa else ("manual" if e.has_mdu else "unknown"),
             }
             for e in batches
         )
@@ -624,9 +624,9 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
         def validate(self, data):
             data = super().validate(data)
-            if not data.get('report_type') and not data.get('report_view'):
+            if not data.get("report_type") and not data.get("report_view"):
                 raise ValidationError('One of "report_type", "report_view" must be present')
-            if data.get('report_type') and data.get('report_view'):
+            if data.get("report_type") and data.get("report_view"):
                 raise ValidationError('"report_type" and "report_view" must not be present at once')
             return data
 
@@ -641,12 +641,12 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         param_serializer = serializer_cls(data=request.GET)
         param_serializer.is_valid(raise_exception=True)
         params = param_serializer.validated_data
-        if not (rt := params.get('report_type')):
-            rv = params.get('report_view')
+        if not (rt := params.get("report_type")):
+            rv = params.get("report_view")
             rt = rv.base_report_type
         return params, rt
 
-    @action(detail=False, methods=['get'], url_name='data-coverage', url_path='data-coverage')
+    @action(detail=False, methods=["get"], url_name="data-coverage", url_path="data-coverage")
     def data_coverage(self, request):
         """
         For each month in the date range specified by `start_date` and `end_date` params,
@@ -658,17 +658,17 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         if rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE:
             return Response([])
 
-        start_month = parse_month(params.get('start_date'))
-        end_month = parse_month(params.get('end_date'))
+        start_month = parse_month(params.get("start_date"))
+        end_month = parse_month(params.get("end_date"))
 
         extractor = DataCoverageExtractor(
             rt,
-            platform=params.get('platform'),
-            organization=params.get('organization'),
-            title=params.get('title'),
-            split_by_org=bool(params.get('split_by_org')),
-            split_by_platform=bool(params.get('split_by_platform')),
-            split_by_date=bool(params.get('split_by_date')),
+            platform=params.get("platform"),
+            organization=params.get("organization"),
+            title=params.get("title"),
+            split_by_org=bool(params.get("split_by_org")),
+            split_by_platform=bool(params.get("split_by_platform")),
+            split_by_date=bool(params.get("split_by_date")),
             start_month=start_month,
             end_month=end_month,
         )
@@ -677,9 +677,9 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
-        url_name='data-coverage-harvestable',
-        url_path='data-coverage-harvestable',
+        methods=["get"],
+        url_name="data-coverage-harvestable",
+        url_path="data-coverage-harvestable",
     )
     def data_coverage_harvestable(self, request):
         """
@@ -692,15 +692,15 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         if rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE:
             return Response([])
 
-        start_month = parse_month(params.get('start_date'))
-        end_month = parse_month(params.get('end_date'))
+        start_month = parse_month(params.get("start_date"))
+        end_month = parse_month(params.get("end_date"))
 
         # we use the maximum splitting because this would enable us to analyze the data
         # and assign it to individual credentials
         extractor = DataCoverageExtractor(
             rt,
-            platform=params.get('platform'),
-            organization=params.get('organization'),
+            platform=params.get("platform"),
+            organization=params.get("organization"),
             start_month=start_month,
             end_month=end_month,
             split_by_org=True,
@@ -710,19 +710,19 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         data = extractor.get_coverage_data()
         org_platform_to_month = {}
         for rec in data.values():
-            if 'ib_max' not in rec:
+            if "ib_max" not in rec:
                 # this can only happen if there is a discrepancy between OrganizationPlatform
                 # records and actual import batches. This should not happen, but it does sometimes.
                 # The only thing we can do is to schedule the cleanup job and skip this record for
                 # now. An email will be sent to the admins from the task if anything is fixed.
                 sync_organizationplatform_records_task.delay(
-                    reason='detected in `data_coverage_harvestable`'
+                    reason="detected in `data_coverage_harvestable`"
                 )
                 continue
-            if rec['ib_count'] < rec['ib_max'] and rec['verified_credentials'] > 0:
+            if rec["ib_count"] < rec["ib_max"] and rec["verified_credentials"] > 0:
                 # data are not complete, but there are some verified credentials
-                key = (rec['organization_id'], rec['platform_id'])
-                org_platform_to_month.setdefault(key, []).append(rec['date'])
+                key = (rec["organization_id"], rec["platform_id"])
+                org_platform_to_month.setdefault(key, []).append(rec["date"])
         # we need to get all found combinations of organization and platform into the query
         # for SushiCredentials. In order to make the query slightly simpler then listing all the
         # combinations one by one, we group keys by organization and use __in lookup for each org.
@@ -744,18 +744,18 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                     broken__isnull=True,
                     counterreportstocredentials__broken__isnull=True,
                 )
-                .order_by('organization_id', 'platform_id', '-enabled')
-                .select_related('organization', 'platform')
+                .order_by("organization_id", "platform_id", "-enabled")
+                .select_related("organization", "platform")
                 .prefetch_related(
                     Prefetch(
-                        'counterreportstocredentials_set',
+                        "counterreportstocredentials_set",
                         queryset=CounterReportsToCredentials.objects.filter(
                             counter_report__report_type=rt
                         ),
-                        to_attr='filtered_cr2c',
+                        to_attr="filtered_cr2c",
                     )
                 )
-                .distinct('organization_id', 'platform_id')
+                .distinct("organization_id", "platform_id")
             ):
                 # the combination of .order_by() and .distinct() above makes sure that
                 # for duplicated credentials, the one with enabled=True is first
@@ -769,10 +769,10 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
                 out.append(
                     {
-                        'credentials_id': cr.pk,
-                        'org': cr.organization.name,
-                        'platform': cr.platform.name,
-                        'months': months,
+                        "credentials_id": cr.pk,
+                        "org": cr.organization.name,
+                        "platform": cr.platform.name,
+                        "months": months,
                     }
                 )
 
@@ -780,9 +780,9 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
-        url_name='total-data-coverage',
-        url_path='total-data-coverage',
+        methods=["get"],
+        url_name="total-data-coverage",
+        url_path="total-data-coverage",
     )
     def total_data_coverage(self, request):
         """
@@ -790,17 +790,17 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         """
         param_serializer = self.DataCoverageCoreParamSerializer(data=request.GET)
         param_serializer.is_valid(raise_exception=True)
-        start_month = parse_month(param_serializer.validated_data.get('start_date'))
-        end_month = parse_month(param_serializer.validated_data.get('end_date'))
-        organization = param_serializer.validated_data.get('organization')
+        start_month = parse_month(param_serializer.validated_data.get("start_date"))
+        end_month = parse_month(param_serializer.validated_data.get("end_date"))
+        organization = param_serializer.validated_data.get("organization")
 
         extra_attrs = {}
         if start_month:
-            extra_attrs['date__gte'] = start_month
+            extra_attrs["date__gte"] = start_month
         if end_month:
-            extra_attrs['date__lte'] = end_month
+            extra_attrs["date__lte"] = end_month
         rt_qs = ReportType.objects.exclude_materialized().filter(
-            Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef('pk'), **extra_attrs)))
+            Q(Exists(ImportBatch.objects.filter(report_type_id=OuterRef("pk"), **extra_attrs)))
         )
 
         totals = Counter()
@@ -817,10 +817,10 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
             cov_data = extractor.get_coverage_data()
             if cov_data:
                 data = cov_data[()]  # empty tuple key because we don't split
-                totals['ib_count'] += data['ib_count']
-                totals['ib_max'] += data['ib_max']
+                totals["ib_count"] += data["ib_count"]
+                totals["ib_max"] += data["ib_max"]
 
-        totals['ratio'] = (totals['ib_count'] / totals['ib_max']) if totals['ib_max'] else None
+        totals["ratio"] = (totals["ib_count"] / totals["ib_max"]) if totals["ib_max"] else None
         return Response(totals)
 
 
@@ -869,12 +869,12 @@ class ManualDataUploadViewSet(
         # check permission for object MDU
         permissions = self.get_permissions()
         if not all(p.has_object_permission(request, self, mdu) for p in permissions):
-            raise PermissionDenied(f'Not allowed change mdu {pk}')
+            raise PermissionDenied(f"Not allowed change mdu {pk}")
 
         return mdu
 
     @atomic
-    @action(methods=['POST'], detail=True, url_path='confirm')
+    @action(methods=["POST"], detail=True, url_path="confirm")
     def confirm(self, request, pk):
         """confirms selected report type"""
         mdu = self._action_permission_check(pk, request)
@@ -890,7 +890,7 @@ class ManualDataUploadViewSet(
         else:
             return Response({"error": "already-confirmed"}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST'], detail=True, url_path='preflight')
+    @action(methods=["POST"], detail=True, url_path="preflight")
     def preflight(self, request, pk):
         """triggers preflight computation"""
         mdu = self._action_permission_check(pk, request)
@@ -900,7 +900,7 @@ class ManualDataUploadViewSet(
             if organization := request.user.admin_organizations().filter(pk=org_id).last():
                 mdu.organization = organization
             else:
-                raise PermissionDenied(f'Not allowed to set organization to {org_id}')
+                raise PermissionDenied(f"Not allowed to set organization to {org_id}")
         else:
             mdu.organization = None
         mdu.save()
@@ -924,25 +924,25 @@ class ManualDataUploadViewSet(
         )
 
     @atomic
-    @action(methods=['POST'], detail=True, url_path='import-data')
+    @action(methods=["POST"], detail=True, url_path="import-data")
     def import_data(self, request, pk):
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=pk)
 
         # check permission for object MDU
         permissions = self.get_permissions()
         if not all(p.has_object_permission(request, self, mdu) for p in permissions):
-            raise PermissionDenied(f'Not allowed change mdu {pk}')
+            raise PermissionDenied(f"Not allowed change mdu {pk}")
 
         if mdu.state == MduState.IMPORTED:
             stats = {
-                'existing logs': AccessLog.objects.filter(
+                "existing logs": AccessLog.objects.filter(
                     import_batch_id__in=mdu.import_batches.all()
                 ).count()
             }
             return Response(
                 {
-                    'stats': stats,
-                    'import_batches': ImportBatchSerializer(
+                    "stats": stats,
+                    "import_batches": ImportBatchSerializer(
                         mdu.import_batches.all(), many=True
                     ).data,
                 }
@@ -1020,12 +1020,12 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         org_filter = organization_filter_from_org_id(
-            self.kwargs.get('organization_pk'), self.request.user
+            self.kwargs.get("organization_pk"), self.request.user
         )
         qs = (
             ManualDataUpload.objects.filter(**org_filter)
-            .select_related('organization', 'platform', 'report_type', 'user')
-            .prefetch_related('import_batches', 'import_batches__user')
+            .select_related("organization", "platform", "report_type", "user")
+            .prefetch_related("import_batches", "import_batches__user")
         )
         # add access level stuff
         org_to_level = {}  # this is used to cache user access level for the same organization
@@ -1045,26 +1045,26 @@ class OrganizationReportTypesViewSet(ModelViewSet):
 
     def get_queryset(self):
         organization = get_object_or_404(
-            self.request.user.accessible_organizations(), pk=self.kwargs.get('organization_pk')
+            self.request.user.accessible_organizations(), pk=self.kwargs.get("organization_pk")
         )
         allowed_sources = DataSource.objects.filter(
             Q(organization__isnull=True) | Q(organization=organization)
         )
         return ReportType.objects.filter(
             Q(source__in=allowed_sources) | Q(source__isnull=True)
-        ).select_related('source', 'counterreporttype')
+        ).select_related("source", "counterreporttype")
 
-    @action(methods=['GET'], detail=False, url_path='used')
+    @action(methods=["GET"], detail=False, url_path="used")
     def used(self, request, organization_pk):
         extra_attrs = {}
-        if request.GET.get('start_date'):
-            extra_attrs['date__gte'] = request.GET['start_date']
-        if request.GET.get('end_date'):
-            extra_attrs['date__lte'] = request.GET['end_date']
+        if request.GET.get("start_date"):
+            extra_attrs["date__gte"] = request.GET["start_date"]
+        if request.GET.get("end_date"):
+            extra_attrs["date__lte"] = request.GET["end_date"]
         qs = self.get_queryset().filter(
             Exists(
                 ImportBatch.objects.filter(
-                    report_type=OuterRef('pk'), organization_id=organization_pk, **extra_attrs
+                    report_type=OuterRef("pk"), organization_id=organization_pk, **extra_attrs
                 )
             )
         )
@@ -1090,7 +1090,7 @@ class FlexibleSlicerBaseView(APIView):
             return slicer
         except SlicerConfigError as e:
             raise BadRequestException(
-                {'error': {'message': str(e), 'code': e.code, 'details': e.details}}
+                {"error": {"message": str(e), "code": e.code, "details": e.details}}
             ) from None
 
 
@@ -1098,13 +1098,13 @@ class FlexibleSlicerView(FlexibleSlicerBaseView):
     def get(self, request):
         slicer = self.create_slicer(request)
         try:
-            part = request.query_params.get('part') if slicer.split_by else None
+            part = request.query_params.get("part") if slicer.split_by else None
             if part:
                 part = parse_b64json(part)
             data = slicer.get_data(part=part, lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
-                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                {"error": {"message": str(e), "code": e.code, "details": e.details}},
                 status=HTTP_400_BAD_REQUEST,
             )
         pagination = StandardResultsSetPagination()
@@ -1116,40 +1116,40 @@ class FlexibleSlicerRemainderView(FlexibleSlicerBaseView):
     def get(self, request):
         slicer = self.create_slicer(request)
         try:
-            part = request.query_params.get('part') if slicer.split_by else None
+            part = request.query_params.get("part") if slicer.split_by else None
             if part:
                 part = parse_b64json(part)
             data = slicer.get_remainder(part=part)
             return Response(data)
         except SlicerConfigError as e:
             return Response(
-                {'error': {'message': str(e), 'code': e.code, 'details': e.details}},
+                {"error": {"message": str(e), "code": e.code, "details": e.details}},
                 status=HTTP_400_BAD_REQUEST,
             )
 
 
 class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):
     def get(self, request):
-        dimension = request.query_params.get('dimension')
+        dimension = request.query_params.get("dimension")
         if not dimension:
             return Response(
                 {
-                    'error': {
-                        'message': 'the "dimension" param is required',
-                        'code': SlicerConfigErrorCode.E105,
+                    "error": {
+                        "message": 'the "dimension" param is required',
+                        "code": SlicerConfigErrorCode.E105,
                     }
                 },
                 status=HTTP_400_BAD_REQUEST,
             )
         slicer = self.create_slicer(request)
-        q = request.query_params.get('q')
+        q = request.query_params.get("q")
         pks = None
-        pks_value = request.query_params.get('pks')
+        pks_value = request.query_params.get("pks")
         if pks_value:
             try:
-                pks = list(map(int, pks_value.split(',')))
+                pks = list(map(int, pks_value.split(",")))
             except ValueError as e:
-                return Response({'error': {'message': str(e)}})
+                return Response({"error": {"message": str(e)}})
         return Response(
             slicer.get_possible_dimension_values(
                 dimension, ignore_self=True, text_filter=q, pks=pks
@@ -1170,7 +1170,7 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
             if count > self.MAX_COUNT:
                 qs = qs[: self.MAX_COUNT]
                 cropped = True
-        return Response({'count': count, "values": qs or [], "cropped": cropped})
+        return Response({"count": count, "values": qs or [], "cropped": cropped})
 
 
 class FlexibleSlicerCoverageView(FlexibleSlicerBaseView):
@@ -1194,43 +1194,43 @@ class FlexibleReportViewSet(ModelViewSet):
         )
 
     def _preprocess_config(self, request):
-        if 'config' not in request.data:
+        if "config" not in request.data:
             return None
-        slicer = FlexibleDataSlicer.create_from_params(request.data.get('config'))
+        slicer = FlexibleDataSlicer.create_from_params(request.data.get("config"))
         return FlexibleReport.serialize_slicer_config(slicer.config())
 
     def _get_basic_data(self, request):
-        owner = request.user.pk if 'owner' not in request.data else request.data.get('owner')
+        owner = request.user.pk if "owner" not in request.data else request.data.get("owner")
         return {
-            'owner': owner,
-            'owner_organization': (request.data.get('owner_organization')),
-            'name': request.data.get('name'),
+            "owner": owner,
+            "owner_organization": (request.data.get("owner_organization")),
+            "name": request.data.get("name"),
         }
 
     def _check_write_permissions(self, request, owner, owner_organization):
         # only superuser can set other user as owner
         if not (request.user.is_superuser or request.user.is_admin_of_master_organization):
             if owner not in (None, request.user.pk):
-                raise PermissionDenied(f'Not allowed to set owner {owner}')
+                raise PermissionDenied(f"Not allowed to set owner {owner}")
         if owner_organization:
             rel = request.user.organization_relationship(owner_organization)
             if rel < REL_ORG_ADMIN:
                 raise PermissionDenied(
-                    f'Not allowed to set owner_organization {owner_organization}'
+                    f"Not allowed to set owner_organization {owner_organization}"
                 )
         if not owner and not owner_organization:
             # this should be consortial access level
             if not (request.user.is_superuser or request.user.is_admin_of_master_organization):
-                raise PermissionDenied('Not allowed to create consortial level report')
+                raise PermissionDenied("Not allowed to create consortial level report")
 
     def create(self, request, *args, **kwargs):
         config = self._preprocess_config(request)
         if config is None:
             return Response(
-                {'error': 'Missing "config" parameter for the report'}, status=HTTP_400_BAD_REQUEST
+                {"error": 'Missing "config" parameter for the report'}, status=HTTP_400_BAD_REQUEST
             )
-        data = {**self._get_basic_data(request), 'report_config': config}
-        self._check_write_permissions(request, data['owner'], data['owner_organization'])
+        data = {**self._get_basic_data(request), "report_config": config}
+        self._check_write_permissions(request, data["owner"], data["owner_organization"])
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -1244,26 +1244,26 @@ class FlexibleReportViewSet(ModelViewSet):
         if obj.access_level == FlexibleReport.Level.PRIVATE:
             # only owner or superuser may edit
             if not (user == obj.owner or user.is_superuser or user.is_admin_of_master_organization):
-                raise PermissionDenied('Not allowed to change private report')
+                raise PermissionDenied("Not allowed to change private report")
         elif obj.access_level == FlexibleReport.Level.ORGANIZATION:
             # only admin of owner_organization or superuser may edit
             if not (user.is_superuser or user.is_admin_of_master_organization):
                 rel = request.user.organization_relationship(obj.owner_organization_id)
                 if rel < REL_ORG_ADMIN:
-                    raise PermissionDenied('Not allowed to change organization report')
+                    raise PermissionDenied("Not allowed to change organization report")
         else:
             # only superuser may edit consortium level reports
             if not (user.is_superuser or user.is_admin_of_master_organization):
-                raise PermissionDenied('Not allowed to change consortial report')
+                raise PermissionDenied("Not allowed to change consortial report")
 
         if not delete:
             # now more specific permissions about who can change access level
             # we deduce what the owner and owner_organization would be after the update takes place
             # and check if the current user is allowed to create such a report
-            owner = request.data.get('owner') if 'owner' in request.data else obj.owner_id
+            owner = request.data.get("owner") if "owner" in request.data else obj.owner_id
             owner_organization = (
-                request.data.get('owner_organization')
-                if 'owner_organization' in request.data
+                request.data.get("owner_organization")
+                if "owner_organization" in request.data
                 else obj.owner_organization_id
             )
             self._check_write_permissions(request, owner, owner_organization)
@@ -1290,8 +1290,8 @@ class FlexibleReportViewSet(ModelViewSet):
         self._check_update_permissions(request, report)
         data = {**request.data}
         if config:
-            data['report_config'] = config
-        serializer = self.get_serializer(report, data=data, partial=kwargs.get('partial'))
+            data["report_config"] = config
+        serializer = self.get_serializer(report, data=data, partial=kwargs.get("partial"))
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         headers = self.get_success_headers(serializer.data)

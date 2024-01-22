@@ -27,14 +27,14 @@ task_postrun.connect(celery_task_log)
 @logged_task
 @email_if_fails
 def erms_sync_users_and_identities_task():
-    with cache_based_lock('erms_sync_users_and_identities_task'):
+    with cache_based_lock("erms_sync_users_and_identities_task"):
         data_source, _created = DataSource.objects.get_or_create(
-            short_name='ERMS', type=DataSource.TYPE_API
+            short_name="ERMS", type=DataSource.TYPE_API
         )
         stats = sync_users_with_erms(data_source)
-        logger.info('User import stats: %s', stats)
+        logger.info("User import stats: %s", stats)
         stats = sync_identities_with_erms(data_source)
-        logger.info('Identity import stats: %s', stats)
+        logger.info("Identity import stats: %s", stats)
 
 
 @celery.shared_task
@@ -51,7 +51,7 @@ def async_mail_customer_care_admins(subject, body):
 @logged_task
 @email_if_fails
 def fail_intentionally_task():
-    raise Exception('test error')
+    raise Exception("test error")
 
 
 @celery.shared_task
@@ -89,14 +89,14 @@ def flush_request_logs_to_clickhouse():
 
     for name, key, record_cls, cube, condition in (
         (
-            'request',
+            "request",
             settings.REQUEST_LOGGING_REDIS_KEY,
             RequestLogRecord,
             RequestLogCube,
             settings.CLICKHOUSE_REQUEST_LOGGING,
         ),
         (
-            'celery',
+            "celery",
             settings.CELERY_LOGGING_REDIS_KEY,
             CeleryTaskLogRecord,
             CeleryTaskLogCube,
@@ -129,8 +129,8 @@ def flush_request_logs_to_clickhouse():
                 backend.store_records(cube, to_store)
         if errors:
             async_mail_admins(
-                f'Errors syncing {name} logs to Clickhouse',
-                'Errors:\n\n' + '\n'.join(str(e) for e in errors),
+                f"Errors syncing {name} logs to Clickhouse",
+                "Errors:\n\n" + "\n".join(str(e) for e in errors),
             )
 
 
@@ -141,7 +141,7 @@ def update_prometheus_db_stats():
     from .prometheus import CACHE_STORED_GAUAGES
 
     for name, params in CACHE_STORED_GAUAGES.items():
-        if fn := params.get('func'):
+        if fn := params.get("func"):
             cache.set(name, fn())
 
 

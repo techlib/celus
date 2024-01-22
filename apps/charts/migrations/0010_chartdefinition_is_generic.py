@@ -8,23 +8,23 @@ def set_some_charts_as_generic(apps, schema_editor):
     This is a best effort to set some charts we often use as generic. If they are not found, no
     problem.
     """
-    ChartDefinition = apps.get_model('charts', 'ChartDefinition')
-    ChartDefinition.objects.filter(name_en__in=['Metric in time', 'Metric comparison']).update(
+    ChartDefinition = apps.get_model("charts", "ChartDefinition")
+    ChartDefinition.objects.filter(name_en__in=["Metric in time", "Metric comparison"]).update(
         is_generic=True
     )
 
 
 class Migration(migrations.Migration):
-    dependencies = [('charts', '0009_jsonfield')]
+    dependencies = [("charts", "0009_jsonfield")]
 
     operations = [
         migrations.AddField(
-            model_name='chartdefinition',
-            name='is_generic',
+            model_name="chartdefinition",
+            name="is_generic",
             field=models.BooleanField(
                 default=False,
-                help_text='A generic chart will be used implicitly for reports which do not have '
-                'a chart explicitly assigned',
+                help_text="A generic chart will be used implicitly for reports which do not have "
+                "a chart explicitly assigned",
             ),
         ),
         migrations.RunPython(set_some_charts_as_generic, migrations.RunPython.noop),

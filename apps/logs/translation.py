@@ -11,15 +11,15 @@ from .models import (
 
 
 class ReportTypeTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ("name", "desc")
 
 
 class InterestGroupTranslationOptions(TranslationOptions):
-    fields = ('name',)
+    fields = ("name",)
 
 
 class MetricTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ("name", "desc")
 
 
 class ReportInterestMetricTranslationOptions(TranslationOptions):
@@ -27,11 +27,11 @@ class ReportInterestMetricTranslationOptions(TranslationOptions):
 
 
 class DimensionTextTranslationOptions(TranslationOptions):
-    fields = ('text_local',)
+    fields = ("text_local",)
 
 
 class DimensionTranslationOptions(TranslationOptions):
-    fields = ('name', 'desc')
+    fields = ("name", "desc")
 
 
 translator.register(ReportType, ReportTypeTranslationOptions)

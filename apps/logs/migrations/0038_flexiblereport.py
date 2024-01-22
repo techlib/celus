@@ -9,31 +9,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('organizations', '0019_jsonfield'),
-        ('logs', '0037_jsonfield'),
+        ("organizations", "0019_jsonfield"),
+        ("logs", "0037_jsonfield"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FlexibleReport',
+            name="FlexibleReport",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('name', models.CharField(max_length=120)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('last_updated', models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=120)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
+                ("last_updated", models.DateTimeField(auto_now=True)),
                 (
-                    'report_config',
+                    "report_config",
                     models.JSONField(
-                        blank=True, default=dict, help_text='Serialized configuration of the report'
+                        blank=True, default=dict, help_text="Serialized configuration of the report"
                     ),
                 ),
                 (
-                    'owner',
+                    "owner",
                     models.ForeignKey(
                         blank=True,
                         null=True,
@@ -42,12 +42,12 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'owner_organization',
+                    "owner_organization",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='organizations.organization',
+                        to="organizations.organization",
                     ),
                 ),
             ],

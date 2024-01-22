@@ -5,25 +5,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('core', '0006_blank_ext_id')]
+    dependencies = [("core", "0006_blank_ext_id")]
 
     operations = [
         migrations.AddField(
-            model_name='identity',
-            name='created',
+            model_name="identity",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='identity', name='last_modified', field=models.DateTimeField(auto_now=True)
+            model_name="identity", name="last_modified", field=models.DateTimeField(auto_now=True)
         ),
         migrations.AddField(
-            model_name='user',
-            name='created',
+            model_name="user",
+            name="created",
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='user', name='last_modified', field=models.DateTimeField(auto_now=True)
+            model_name="user", name="last_modified", field=models.DateTimeField(auto_now=True)
         ),
     ]

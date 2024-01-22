@@ -62,7 +62,7 @@ class HarvestViewSet(
 
         # we need to add platform filter before we start annotating, because Django would then
         # create extra joins which make the query more than 10x slower
-        if platforms := self.request.query_params.get('platforms', None):
+        if platforms := self.request.query_params.get("platforms", None):
             platforms = platforms.strip()
             if platforms:
                 qs = qs.filter(intentions__credentials__platform_id__in=platforms.split(","))
@@ -70,32 +70,32 @@ class HarvestViewSet(
         qs = (
             qs.annotate_stats()
             .prefetch_related(
-                Prefetch('automatic', queryset=Automatic.objects.select_related('organization')),
+                Prefetch("automatic", queryset=Automatic.objects.select_related("organization")),
                 Prefetch(
-                    'intentions',
+                    "intentions",
                     queryset=FetchIntention.objects.latest_intentions().annotate_credentials_state(),
-                    to_attr='prefetched_latest_intentions',
+                    to_attr="prefetched_latest_intentions",
                 ),
                 Prefetch(
-                    'intentions',
+                    "intentions",
                     queryset=FetchIntention.objects.all().select_related(
-                        'credentials__platform',
-                        'credentials__platform__source',
-                        'credentials__organization',
+                        "credentials__platform",
+                        "credentials__platform__source",
+                        "credentials__organization",
                     ),
-                    to_attr='intentions_credentials',
+                    to_attr="intentions_credentials",
                 ),
             )
             .annotate(
                 last_attempt_date=Max(
-                    'intentions__not_before', filter=Q(intentions__duplicate_of__isnull=True)
+                    "intentions__not_before", filter=Q(intentions__duplicate_of__isnull=True)
                 ),
-                last_processed=Max('intentions__when_processed'),
-                start_date=Min('intentions__start_date'),
-                end_date=Max('intentions__end_date'),
+                last_processed=Max("intentions__when_processed"),
+                start_date=Min("intentions__start_date"),
+                end_date=Max("intentions__end_date"),
                 broken=Coalesce(
                     Count(
-                        'intentions',
+                        "intentions",
                         filter=(
                             Q(intentions__credentials__broken__isnull=False)
                             | (
@@ -104,7 +104,7 @@ class HarvestViewSet(
                                 )
                                 & Q(
                                     intentions__credentials__counterreportstocredentials__counter_report_id=F(  # noqa E501
-                                        'intentions__counter_report'
+                                        "intentions__counter_report"
                                     )
                                 )
                             )
@@ -119,19 +119,19 @@ class HarvestViewSet(
             )
         )
 
-        order_by = self.request.query_params.get('order_by', 'pk')
-        order_desc = "desc" if self.request.query_params.get('desc', 'false') == 'true' else "asc"
+        order_by = self.request.query_params.get("order_by", "pk")
+        order_desc = "desc" if self.request.query_params.get("desc", "false") == "true" else "asc"
         if order_by not in (
-            'created',
-            'pk',
-            'automatic',
-            'finished',
-            'last_attempt_date',
-            'attempt_count',
-            'start_date',
-            'last_processed',
+            "created",
+            "pk",
+            "automatic",
+            "finished",
+            "last_attempt_date",
+            "attempt_count",
+            "start_date",
+            "last_processed",
         ):
-            order_by = 'pk'
+            order_by = "pk"
         qs = qs.order_by(getattr(F(order_by), order_desc)(nulls_last=True))
 
         # skip empty harvests
@@ -140,11 +140,11 @@ class HarvestViewSet(
         return qs
 
     def get_serializer_class(self):
-        if self.action == 'retrieve':
+        if self.action == "retrieve":
             return DetailHarvestSerializer
-        if self.action == 'list':
+        if self.action == "list":
             return ListHarvestSerializer
-        elif self.action == 'create':
+        elif self.action == "create":
             return CreateHarvestSerializer
         else:
             raise NotImplementedError
@@ -178,11 +178,11 @@ class HarvestViewSet(
         seen_combinations = set()
         for intention in serializer.validated_data["intentions"]:
             credentials = intention["credentials"]
-            key = (intention['credentials'].pk, intention['counter_report'].pk)
+            key = (intention["credentials"].pk, intention["counter_report"].pk)
             if key in seen_combinations:
                 continue
             if credentials.broken:
-                raise ValidationError({credentials.pk: 'Credentials are broken.'})
+                raise ValidationError({credentials.pk: "Credentials are broken."})
             try:
                 cr2c = credentials.counterreportstocredentials_set.get(
                     counter_report=intention["counter_report"]
@@ -191,7 +191,7 @@ class HarvestViewSet(
                 raise ValidationError(
                     {
                         credentials.pk: f'Counter report {intention["counter_report"].code} '
-                        f'is not active for credentials'
+                        f"is not active for credentials"
                     }
                 ) from None
 
@@ -199,7 +199,7 @@ class HarvestViewSet(
                 raise ValidationError(
                     {
                         credentials.pk: f'Counter report {intention["counter_report"].code} '
-                        f'is broken for credentials'
+                        f"is broken for credentials"
                     }
                 )
             seen_combinations.add(key)
@@ -224,7 +224,7 @@ class LastUpdatedIntentionFilterBackend(filters.BaseFilterBackend):
     the attempt's last_updated field.
     """
 
-    query_param = 'last_updated_after'
+    query_param = "last_updated_after"
 
     def filter_queryset(self, request, queryset, view):
         if last_updated := request.query_params.get(self.query_param):
@@ -249,27 +249,27 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
         harvest = get_object_or_404(Harvest, *args, **kwargs)
 
-        if self.action == 'list' and not bool(self.request.query_params.get('list_all', False)):
+        if self.action == "list" and not bool(self.request.query_params.get("list_all", False)):
             qs = harvest.latest_intentions
         else:
             qs = harvest.intentions
 
         return qs.select_related(
-            'counter_report',
-            'credentials',
-            'credentials__platform',
-            'credentials__organization',
-            'duplicate_of',
-            'current_scheduler',
-            'previous_intention',
-            'previous_intention__counter_report',
-            'previous_intention__credentials__organization',
-            'previous_intention__credentials__platform',
-            'attempt',
-            'previous_intention__attempt',
-        ).order_by('pk')
+            "counter_report",
+            "credentials",
+            "credentials__platform",
+            "credentials__organization",
+            "duplicate_of",
+            "current_scheduler",
+            "previous_intention",
+            "previous_intention__counter_report",
+            "previous_intention__credentials__organization",
+            "previous_intention__credentials__platform",
+            "attempt",
+            "previous_intention__attempt",
+        ).order_by("pk")
 
-    @action(methods=["POST"], detail=True, url_path='trigger')
+    @action(methods=["POST"], detail=True, url_path="trigger")
     def trigger(self, request, pk, harvest_pk):
         intention = self.get_queryset().get(pk=pk)
         if intention.is_processed:
@@ -287,7 +287,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
-    @action(methods=["POST"], detail=True, url_path='cancel')
+    @action(methods=["POST"], detail=True, url_path="cancel")
     def cancel(self, request, pk, harvest_pk):
         intention = self.get_queryset().get(pk=pk)
         if not intention.cancel():
@@ -301,7 +301,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
 class IntentionViewSet(ModelViewSet):
     serializer_class = FetchIntentionSerializer
-    http_method_names = ['get', 'options', 'head', 'post']
+    http_method_names = ["get", "options", "head", "post"]
     filter_backends = [
         intentions_filters.OrganizationFilter,
         intentions_filters.PlatformFilter,
@@ -324,11 +324,11 @@ class IntentionViewSet(ModelViewSet):
                 credentials__organization__in=self.request.user.admin_organizations()
             )
         return qs.select_related(
-            'attempt',
-            'counter_report',
-            'credentials__organization',
-            'credentials__platform',
-            'current_scheduler',
+            "attempt",
+            "counter_report",
+            "credentials__organization",
+            "credentials__platform",
+            "current_scheduler",
         ).annotate_credentials_state()
 
     class PurgeSerializer(Serializer):
@@ -339,20 +339,20 @@ class IntentionViewSet(ModelViewSet):
         )
 
     @atomic
-    @action(detail=False, methods=['post'], serializer_class=PurgeSerializer)
+    @action(detail=False, methods=["post"], serializer_class=PurgeSerializer)
     def purge(self, request):
         """Removes all intentions and related data"""
         stats = Counter()
         serializer = self.PurgeSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         for item in serializer.validated_data:
-            credentials = item['credentials']
-            start_date = item['start_date']
-            counter_report = item['counter_report']
+            credentials = item["credentials"]
+            start_date = item["start_date"]
+            counter_report = item["counter_report"]
             if not request.user.has_organization_admin_permission(credentials.organization_id):
                 raise PermissionDenied(
-                    f'User not allowed to manage data for organization: '
-                    f'{credentials.organization_id}'
+                    f"User not allowed to manage data for organization: "
+                    f"{credentials.organization_id}"
                 )
             to_delete = FetchIntention.objects.filter(
                 credentials=credentials,

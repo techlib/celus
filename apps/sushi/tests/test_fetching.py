@@ -19,34 +19,34 @@ class TestURLComposition:
         assert SushiCredentials.objects.count() == 0
         data = [
             {
-                'organization': organizations[1].internal_id,
-                'publisher/vendor/platform': 'XXXX',
-                'requestor id': 'RRRX',
-                'customer id': 'BBB',
-                'api key': 'kekekeyyy',
+                "organization": organizations[1].internal_id,
+                "publisher/vendor/platform": "XXXX",
+                "requestor id": "RRRX",
+                "customer id": "BBB",
+                "api key": "kekekeyyy",
             }
         ]
         knowledgebase = {
-            'providers': [{'counter_version': 5, 'provider': {'url': 'http://this.is/test/2'}}]
+            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
         Platform.objects.create(
-            short_name='XXX', name_en='XXXX', ext_id=10, knowledgebase=knowledgebase
+            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
         )
         stats = import_sushi_credentials_new(data)
-        assert stats['added'] == 1
+        assert stats["added"] == 1
         assert SushiCredentials.objects.count() == 1
         credentials = SushiCredentials.objects.all()
         # let's create
         cr1 = credentials[0]
         cr1.create_sushi_client()
         report = CounterReportType.objects.create(
-            code='tr', name='tr', counter_version=5, report_type=report_type_nd(0)
+            code="tr", name="tr", counter_version=5, report_type=report_type_nd(0)
         )
         orig_params = deepcopy(Sushi5Client.EXTRA_PARAMS)
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
-        monkeypatch.setattr(Sushi5Client, 'get_report_data', mock_get_report_data)
-        cr1.fetch_report(report, start_date='2020-01-01', end_date='2020-01-31')
+        monkeypatch.setattr(Sushi5Client, "get_report_data", mock_get_report_data)
+        cr1.fetch_report(report, start_date="2020-01-01", end_date="2020-01-31")
         assert orig_params == Sushi5Client.EXTRA_PARAMS

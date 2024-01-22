@@ -4,20 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0023_jsonfield')]
+    dependencies = [("publications", "0023_jsonfield")]
 
     operations = [
-        migrations.AlterUniqueTogether(name='platform', unique_together=set()),
+        migrations.AlterUniqueTogether(name="platform", unique_together=set()),
         migrations.AddConstraint(
-            model_name='platform',
+            model_name="platform",
             constraint=models.UniqueConstraint(
-                fields=('ext_id', 'source'), name='ext_id_source_not_null'
+                fields=("ext_id", "source"), name="ext_id_source_not_null"
             ),
         ),
         migrations.AddConstraint(
-            model_name='platform',
+            model_name="platform",
             constraint=models.UniqueConstraint(
-                condition=models.Q(source=None), fields=('ext_id',), name='ext_id_source_null'
+                condition=models.Q(source=None), fields=("ext_id",), name="ext_id_source_null"
             ),
         ),
     ]

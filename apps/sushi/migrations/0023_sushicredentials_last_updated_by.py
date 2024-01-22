@@ -8,13 +8,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sushi', '0022_sushi_credentials_locking'),
+        ("sushi", "0022_sushi_credentials_locking"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='sushicredentials',
-            name='last_updated_by',
+            model_name="sushicredentials",
+            name="last_updated_by",
             field=models.ForeignKey(
                 null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL
             ),

@@ -10,72 +10,72 @@ import logs.models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('publications', '0009_even_more_pub_types'),
-        ('organizations', '0012_timestamps'),
+        ("publications", "0009_even_more_pub_types"),
+        ("organizations", "0012_timestamps"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logs', '0011_richer_importbatch'),
+        ("logs", "0011_richer_importbatch"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ManualDataUpload',
+            name="ManualDataUpload",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name='ID'
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('data_file', models.FileField(upload_to=logs.models.where_to_store)),
-                ('log', models.TextField(blank=True)),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("data_file", models.FileField(upload_to=logs.models.where_to_store)),
+                ("log", models.TextField(blank=True)),
                 (
-                    'is_processed',
+                    "is_processed",
                     models.BooleanField(
-                        default=False, help_text='Was the data converted into logs?'
+                        default=False, help_text="Was the data converted into logs?"
                     ),
                 ),
-                ('when_processed', models.DateTimeField(blank=True, null=True)),
+                ("when_processed", models.DateTimeField(blank=True, null=True)),
                 (
-                    'extra',
+                    "extra",
                     django.contrib.postgres.fields.jsonb.JSONField(
                         blank=True,
                         default=dict,
-                        help_text='Internal data related to processing of the upload',
+                        help_text="Internal data related to processing of the upload",
                     ),
                 ),
                 (
-                    'import_batch',
+                    "import_batch",
                     models.OneToOneField(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        to='logs.ImportBatch',
+                        to="logs.ImportBatch",
                     ),
                 ),
                 (
-                    'organization',
+                    "organization",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='organizations.Organization',
+                        to="organizations.Organization",
                     ),
                 ),
                 (
-                    'platform',
+                    "platform",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='publications.Platform',
+                        to="publications.Platform",
                     ),
                 ),
                 (
-                    'report_type',
+                    "report_type",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to='logs.ReportType'
+                        on_delete=django.db.models.deletion.CASCADE, to="logs.ReportType"
                     ),
                 ),
                 (
-                    'user',
+                    "user",
                     models.ForeignKey(
                         blank=True,
                         null=True,

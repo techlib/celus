@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('scheduler', '0004_automatic')]
+    dependencies = [("scheduler", "0004_automatic")]
 
     operations = [
         migrations.AddConstraint(
-            model_name='fetchintention',
+            model_name="fetchintention",
             constraint=models.CheckConstraint(
-                check=models.Q(start_date__lt=django.db.models.expressions.F('end_date')),
-                name='timeline',
+                check=models.Q(start_date__lt=django.db.models.expressions.F("end_date")),
+                name="timeline",
             ),
         )
     ]

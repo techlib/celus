@@ -118,8 +118,8 @@ def import_sushi_credentials_new(
     stats = Counter()
     sushi_credentials = SushiCredentials.objects.all()
     db_identical_credentials = set(
-        sushi_credentials.values_list('organization_id', 'platform_id', 'counter_version')
-        .alias(count=Count('id'))
+        sushi_credentials.values_list("organization_id", "platform_id", "counter_version")
+        .alias(count=Count("id"))
         .filter(count__gt=1)
     )
 
@@ -141,7 +141,7 @@ def import_sushi_credentials_new(
             value = str(value)
         return " ".join(value.split())
 
-    def log(message: str, *args, stat_name='error', trivial=False, level=logging.ERROR):
+    def log(message: str, *args, stat_name="error", trivial=False, level=logging.ERROR):
         if log_trivial or not trivial:
             logger.log(level, f"row #%03d: {message}", i + 2, *args)
         stats[stat_name] += 1
@@ -150,8 +150,8 @@ def import_sushi_credentials_new(
         customer_id = to_clean_str(record.get(Col.CUSTOMER_ID.value))
         if not customer_id:
             log(
-                'Customer ID empty - interpreting as empty row',
-                stat_name='empty_customer_id',
+                "Customer ID empty - interpreting as empty row",
+                stat_name="empty_customer_id",
                 trivial=True,
                 level=logging.INFO,
             )
@@ -163,7 +163,7 @@ def import_sushi_credentials_new(
             single_org.name_en if single_org else to_clean_str(record.get(Col.ORGANIZATION.value))
         )
         if not organization_name:
-            log('Organization name empty')
+            log("Organization name empty")
             continue
         organization = db_organizations.get(organization_name.lower())
         if not organization:
@@ -172,14 +172,12 @@ def import_sushi_credentials_new(
 
         # platform
         platform_name = to_clean_str(record.get(Col.PUBLISHER_VENDOR_PLATFORM.value))
-        plat_source_org = db_platforms.get(
-            (platform_name.lower(), organization.id)
-        )  # type: Platform
+        plat_source_org: Platform = db_platforms.get((platform_name.lower(), organization.id))
         plat_source_other = db_platforms.get((platform_name.lower(), None))
         if plat_source_org and plat_source_other:
             log(
                 'name_en of platform "%s" created by organization "%s" '
-                'conflicts with name_en of one of global platforms',
+                "conflicts with name_en of one of global platforms",
                 plat_source_org.name_en,
                 organization.name_en,
             )
@@ -196,25 +194,25 @@ def import_sushi_credentials_new(
         # optional fields
         optional = {}
         if title := to_clean_str(record.get(Col.TITLE.value)):
-            optional['title'] = title
+            optional["title"] = title
 
         if platform_filter := to_clean_str(record.get(Col.PLATFORM_FILTER.value)):
-            optional['extra_params'] = {'platform': platform_filter}
+            optional["extra_params"] = {"platform": platform_filter}
 
         if api_key := to_clean_str(record.get(Col.API_KEY.value)):
-            optional['api_key'] = api_key
+            optional["api_key"] = api_key
 
         if requestor_id := to_clean_str(record.get(Col.REQUESTOR_ID.value)):
-            optional['requestor_id'] = requestor_id
+            optional["requestor_id"] = requestor_id
         providers = []
         if platform.knowledgebase:
             providers = [
                 p
-                for p in platform.knowledgebase.get('providers', [])
-                if p['counter_version'] == 5 and 'provider' in p and 'url' in p['provider']
+                for p in platform.knowledgebase.get("providers", [])
+                if p["counter_version"] == 5 and "provider" in p and "url" in p["provider"]
             ]
         if providers:
-            url = providers[0]['provider']['url']
+            url = providers[0]["provider"]["url"]
         else:
             log(
                 "can't assign url due to missing provider for the platform: '%s'",
@@ -228,10 +226,10 @@ def import_sushi_credentials_new(
             if key in db_identical_credentials:
                 log(
                     'Credentials for organization "%s" platform "%s" counter 5: '
-                    'have more than one corresponding instance in the database.',
+                    "have more than one corresponding instance in the database.",
                     organization.name_en,
                     platform.name_en,
-                    stat_name='duplicates_skipped',
+                    stat_name="duplicates_skipped",
                 )
                 continue
 
@@ -254,7 +252,7 @@ def import_sushi_credentials_new(
                     if log_diff:
                         log(
                             _create_diff_info("diff_skipped", cr, organization, platform, diff),
-                            stat_name='diff_skipped',
+                            stat_name="diff_skipped",
                             level=logging.WARNING,
                         )
                     continue
@@ -262,18 +260,18 @@ def import_sushi_credentials_new(
                     cr.save()
                     reversion.set_comment(
                         reversion_comment
-                        or 'Updated from logic.data_import.import_sushi_credentials'
+                        or "Updated from logic.data_import.import_sushi_credentials"
                     )
                 if log_diff:
                     log(
                         _create_diff_info("diff_updated", cr, organization, platform, diff),
-                        stat_name='diff_updated',
+                        stat_name="diff_updated",
                         level=logging.WARNING,
                     )
             else:
                 log(
                     "Credentials already exist in the same version",
-                    stat_name='skipped',
+                    stat_name="skipped",
                     trivial=True,
                     level=logging.INFO,
                 )
@@ -288,10 +286,10 @@ def import_sushi_credentials_new(
                     **optional,
                 )
                 reversion.set_comment(
-                    reversion_comment or 'Created by logic.data_import.import_sushi_credentials'
+                    reversion_comment or "Created by logic.data_import.import_sushi_credentials"
                 )
                 db_credentials[key] = cr
-            log("Credentials created", stat_name='added', level=logging.WARNING)
+            log("Credentials created", stat_name="added", level=logging.WARNING)
 
         # report type assignment
         linked_rts = {rt.code for rt in cr.counter_reports.all()}
@@ -299,35 +297,35 @@ def import_sushi_credentials_new(
             if provider := next(
                 (
                     p
-                    for p in platform.knowledgebase.get('providers', [])
-                    if p['counter_version'] == 5 and p.get('assigned_report_types')
+                    for p in platform.knowledgebase.get("providers", [])
+                    if p["counter_version"] == 5 and p.get("assigned_report_types")
                 ),
                 None,
             ):
-                for report_type in provider['assigned_report_types']:
+                for report_type in provider["assigned_report_types"]:
                     if rt := CounterReportType.objects.filter(
-                        code=report_type['report_type']
+                        code=report_type["report_type"]
                     ).first():
-                        if report_type['report_type'] not in linked_rts:
+                        if report_type["report_type"] not in linked_rts:
                             CounterReportsToCredentials.objects.create(
                                 credentials=cr, counter_report=rt
                             )
                             log(
                                 f"Report type {report_type['report_type']} assigned",
-                                stat_name='report_type_assigned',
+                                stat_name="report_type_assigned",
                                 level=logging.INFO,
                             )
                     else:
                         log(
                             f"Report type {report_type['report_type']} not found",
-                            stat_name='report_type_not_found',
+                            stat_name="report_type_not_found",
                             level=logging.WARNING,
                         )
             else:
                 log(
                     "No report types assigned to the platform '%s' - no knowledgebase provider",
                     platform.name_en,
-                    stat_name='report_type_not_assigned',
+                    stat_name="report_type_not_assigned",
                     level=logging.WARNING,
                 )
     return stats
@@ -400,102 +398,102 @@ def import_sushi_credentials_old(
         if override_organization:
             organization = override_organization
         else:
-            organization_name = record.get('organization')
+            organization_name = record.get("organization")
             if not organization_name:
-                logger.error('#%03d: Organization name is missing', i + 2)
-                stats['error'] += 1
+                logger.error("#%03d: Organization name is missing", i + 2)
+                stats["error"] += 1
                 continue
             organization = organizations.get(organization_name.strip().lower())
             if not organization:
                 logger.error(
                     '#%03d: Unknown organization: "%s"',
                     i + 2,
-                    record.get('organization'),
+                    record.get("organization"),
                 )
-                stats['error'] += 1
+                stats["error"] += 1
                 continue
         # at first try global platforms
-        platform = platforms.get((record.get('platform').strip().lower(), None)) or platforms.get(
-            (record.get('platform').strip().lower(), organization.id)
+        platform = platforms.get((record.get("platform").strip().lower(), None)) or platforms.get(
+            (record.get("platform").strip().lower(), organization.id)
         )
         if not platform:
             logger.error(
                 '#%03d: Unknown platform: "%s" for organization "%s"',
                 i + 2,
-                record.get('platform', '').strip(),
+                record.get("platform", "").strip(),
                 organization.short_name,
             )
-            stats['error'] += 1
+            stats["error"] += 1
             continue
         # counter version
-        if not (version := get_int_value(record, 'version')):
-            version = get_int_value(record, 'counter_version')
+        if not (version := get_int_value(record, "version")):
+            version = get_int_value(record, "counter_version")
         if not version:
             version = default_version
-            logger.warning('#%03d: Version not specified, assuming %d', i + 2, version)
+            logger.warning("#%03d: Version not specified, assuming %d", i + 2, version)
         # other stuff
         key = (organization.pk, platform.pk, version)
         if key in seen_keys:
             logger.error(
                 '#%03d: Credentials for organization "%s", platform "%s", counter %d: '
-                'have more than one corresponding instance in the file. Skipping.',
+                "have more than one corresponding instance in the file. Skipping.",
                 i + 2,
                 organization.name_en,
                 platform.name_en,
                 version,
             )
-            stats['error'] += 1
+            stats["error"] += 1
             continue
         seen_keys.add(key)
         # extra attrs are in the format: name=value;name=value;...
-        extra_attrs = record.get('extra_attrs', {})
+        extra_attrs = record.get("extra_attrs", {})
         if extra_attrs:
             extra_attrs = parse_params(extra_attrs, version=version)
         # extra params are in json format
-        extra_params = record.get('extra_params', {})
+        extra_params = record.get("extra_params", {})
         if extra_params:
             extra_attrs.update(json.loads(extra_params))
 
         optional = {}
-        if 'auth' in extra_attrs:
-            optional['http_username'], optional['http_password'] = extra_attrs['auth']
-            del extra_attrs['auth']
+        if "auth" in extra_attrs:
+            optional["http_username"], optional["http_password"] = extra_attrs["auth"]
+            del extra_attrs["auth"]
         else:
-            optional['http_username'] = ''
-            optional['http_password'] = ''
-        if 'api_key' in extra_attrs:
-            optional['api_key'] = extra_attrs['api_key']
-            del extra_attrs['api_key']
-        elif 'api_key' in record:
-            optional['api_key'] = record['api_key']
+            optional["http_username"] = ""
+            optional["http_password"] = ""
+        if "api_key" in extra_attrs:
+            optional["api_key"] = extra_attrs["api_key"]
+            del extra_attrs["api_key"]
+        elif "api_key" in record:
+            optional["api_key"] = record["api_key"]
         else:
-            optional['api_key'] = ''
-        if 'title' in record:
-            optional['title'] = record['title'].strip()
-        url = record.get('URL') or record.get('url')
+            optional["api_key"] = ""
+        if "title" in record:
+            optional["title"] = record["title"].strip()
+        url = record.get("URL") or record.get("url")
         if prefer_knowledgebase_urls:
             if platform.knowledgebase:
                 providers = [
                     p
-                    for p in platform.knowledgebase.get('providers', [])
-                    if p['counter_version'] == version
-                    and 'provider' in p
-                    and 'url' in p['provider']
+                    for p in platform.knowledgebase.get("providers", [])
+                    if p["counter_version"] == version
+                    and "provider" in p
+                    and "url" in p["provider"]
                 ]
                 if providers:
-                    url = providers[0]['provider']['url']
-                    stats['url_knowledgebase'] += 1
+                    url = providers[0]["provider"]["url"]
+                    stats["url_knowledgebase"] += 1
                 else:
-                    stats['url_no_provider'] += 1
+                    stats["url_no_provider"] += 1
             else:
-                stats['url_no_knowlegdebase'] += 1
+                stats["url_no_knowlegdebase"] += 1
 
         if key in db_credentials:
             # we update it
             cr = db_credentials[key]
             to_sync = dict(
-                customer_id=record.get('customer_id'),
-                requestor_id=record.get('requestor_id'),
+                customer_id=record.get("customer_id"),
+                requestor_id=record.get("requestor_id"),
                 url=url,
                 extra_params=extra_attrs,
                 **optional,
@@ -514,59 +512,59 @@ def import_sushi_credentials_old(
                     cr.save()
                     reversion.set_comment(
                         reversion_comment
-                        or 'Updated from logic.data_import.import_sushi_credentials'
+                        or "Updated from logic.data_import.import_sushi_credentials"
                     )
-                stats['synced'] += 1
+                stats["synced"] += 1
             else:
-                stats['skipped'] += 1
+                stats["skipped"] += 1
         else:
             with reversion.create_revision():
                 cr = SushiCredentials.objects.create(
                     organization=organization,
                     platform=platform,
                     counter_version=version,
-                    customer_id=record.get('customer_id'),
-                    requestor_id=record.get('requestor_id'),
+                    customer_id=record.get("customer_id"),
+                    requestor_id=record.get("requestor_id"),
                     url=url,
                     extra_params=extra_attrs,
                     **optional,
                 )
                 reversion.set_comment(
-                    reversion_comment or 'Created by logic.data_import.import_sushi_credentials'
+                    reversion_comment or "Created by logic.data_import.import_sushi_credentials"
                 )
                 db_credentials[key] = cr
                 logger.info('#%03d: Credentials created for platform "%s"', i + 2, platform.name_en)
-            stats['added'] += 1
+            stats["added"] += 1
         # link report types
         linked_rts = {rt.code for rt in cr.counter_reports.all()}
-        report_types = record.get('counter_reports', '').split(',')
+        report_types = record.get("counter_reports", "").split(",")
         for report_type in report_types:
             report_type = report_type.strip()
             if report_type and report_type not in linked_rts:
                 if rt := CounterReportType.objects.filter(code=report_type).first():
                     CounterReportsToCredentials.objects.create(credentials=cr, counter_report=rt)
-                    stats['report_type_assigned'] += 1
+                    stats["report_type_assigned"] += 1
                 else:
                     logger.error('#%03d: Report type "%s" not found', i + 2, report_type)
-                    stats['report_type_not_found'] += 1
+                    stats["report_type_not_found"] += 1
     return stats
 
 
 def parse_params(text, version: Optional[int] = None) -> dict:
     out = {}
     text = text.strip()
-    for part in text.split(';'):
-        if '=' in part:
-            name, value = part.split('=')
+    for part in text.split(";"):
+        if "=" in part:
+            name, value = part.split("=")
             name = name.strip()
             value = value.strip()
-            if name == 'auth':
-                value = tuple(value.split(','))
+            if name == "auth":
+                value = tuple(value.split(","))
             out[name] = value
     if text and not out and version == 5:
         # there is some text, but we could not extract anything from it
         # if this is C5, we assume the value is the API key
-        out['api_key'] = text
+        out["api_key"] = text
     return out
 
 

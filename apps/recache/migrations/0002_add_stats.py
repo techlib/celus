@@ -7,45 +7,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [('recache', '0001_initial')]
+    dependencies = [("recache", "0001_initial")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='cachedquery', options={'verbose_name_plural': 'Cached queries'}
+            name="cachedquery", options={"verbose_name_plural": "Cached queries"}
         ),
         migrations.AddField(
-            model_name='cachedquery',
-            name='hit_count',
+            model_name="cachedquery",
+            name="hit_count",
             field=models.PositiveIntegerField(
-                default=0, help_text='The number of times cache was successfully used'
+                default=0, help_text="The number of times cache was successfully used"
             ),
         ),
         migrations.AddField(
-            model_name='cachedquery',
-            name='query_durations',
+            model_name="cachedquery",
+            name="query_durations",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.FloatField(),
                 default=list,
-                help_text='Each item is a duration of the query in seconds. It is updated for '
-                'each renewal',
+                help_text="Each item is a duration of the query in seconds. It is updated for "
+                "each renewal",
                 size=None,
             ),
         ),
         migrations.AlterField(
-            model_name='cachedquery',
-            name='lifetime',
+            model_name="cachedquery",
+            name="lifetime",
             field=models.DurationField(
                 default=datetime.timedelta(30),
-                help_text='Number of seconds from last querying after which the cache will be '
-                'removed',
+                help_text="Number of seconds from last querying after which the cache will be "
+                "removed",
             ),
         ),
         migrations.AlterField(
-            model_name='cachedquery',
-            name='timeout',
+            model_name="cachedquery",
+            name="timeout",
             field=models.DurationField(
                 default=datetime.timedelta(0, 3600),
-                help_text='Number of seconds until the queryset it re-evaluated',
+                help_text="Number of seconds until the queryset it re-evaluated",
             ),
         ),
     ]

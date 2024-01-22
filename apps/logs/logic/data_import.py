@@ -55,7 +55,7 @@ def get_or_create_metric(mapping, value, controlled_metrics: List[str] = None) -
     if settings.AUTOMATICALLY_CREATE_METRICS and not controlled_metrics:
         # When metric auto create of metrics is allowed and metrics doesn't
         # need to be check just create it without further checking
-        return get_or_create_with_map(Metric, mapping, 'short_name', value)
+        return get_or_create_with_map(Metric, mapping, "short_name", value)
     else:
         try:
             # Metric is supposed to exist
@@ -115,8 +115,8 @@ def import_counter_records(
     # small anyway
     ib_id_to_key_to_value = {}
     # the key in the above dict of dicts will be as follows:
-    ib_id_to_key_structure = ['metric_id', 'target_id'] + [
-        f'dim{i+1}' for i, dim in enumerate(report_type.dimensions_sorted)
+    ib_id_to_key_structure = ["metric_id", "target_id"] + [
+        f"dim{i+1}" for i, dim in enumerate(report_type.dimensions_sorted)
     ]
 
     def process_buffer(record_batch: Iterable[CounterRecord]):
@@ -182,14 +182,14 @@ def import_counter_records(
         target_ids = set()
         for i, (key, value) in enumerate(ib_id_to_key_to_value[ib.pk].items()):
             rec = dict(zip(ib_id_to_key_structure, key))
-            rec['value'] = value
-            if rec['target_id']:
-                target_ids.add(rec['target_id'])
+            rec["value"] = value
+            if rec["target_id"]:
+                target_ids.add(rec["target_id"])
             if i == 0:
                 # write the CSV header
                 writer.writerow(sorted(rec.keys()))
             writer.writerow([v for k, v in sorted(rec.items())])
-            stats['new logs'] += 1
+            stats["new logs"] += 1
         ingest_import_batch_data(ib, csv_data)
         # and insert the PlatformTitle links
         stats += create_platformtitle_links_from_import_batch(ib, target_ids)
@@ -198,12 +198,12 @@ def import_counter_records(
         # if interest of this ib supersedes interest of other ibs, then we need to recompute
         # but we only do it in `on_commit` to leave it after the current transaction
         ibs_for_interest_recompute.update(
-            set(find_superseeded_import_batches(ib).values_list('pk', flat=True))
+            set(find_superseeded_import_batches(ib).values_list("pk", flat=True))
         )
         # compute materialized report types
         sync_materialized_reports_for_import_batch(ib)
 
-    log_memory('XX3')
+    log_memory("XX3")
 
     def sync_interest():
         recompute_interest_by_batch(ImportBatch.objects.filter(pk__in=ibs_for_interest_recompute))
@@ -218,15 +218,15 @@ def import_counter_records(
             # note: sync_import_batch_with_clickhouse is atomic
             for import_batch in import_batches:
                 logger.debug(
-                    'Synced %d records into ClickHouse',
+                    "Synced %d records into ClickHouse",
                     sync_import_batch_with_clickhouse(import_batch),
                 )
 
         on_commit(sync_with_clickhouse)
     for i, cache in enumerate([tm._counter_rec_to_title_rec_cache, tm._title_rec_to_title_cache]):
         logger.info(
-            f'Title manager: step #{i+1} cache hits: {cache._hits}, misses: {cache._misses}, '
-            f'size: {len(cache)}'
+            f"Title manager: step #{i+1} cache hits: {cache._hits}, misses: {cache._misses}, "
+            f"size: {len(cache)}"
         )
 
     return import_batches, stats
@@ -246,7 +246,7 @@ def create_import_batch_or_crash(
     """
     # we need the lock to prevent race conditions in creating the import batch
     with cache_based_lock(
-        f'create_import_batch_{report_type.pk}_{organization.pk}_{platform.pk}_{month}',
+        f"create_import_batch_{report_type.pk}_{organization.pk}_{platform.pk}_{month}",
         blocking_timeout=10,
     ):
         if ImportBatch.objects.filter(
@@ -307,7 +307,7 @@ def _preprocess_counter_records(
     ib_id_to_key_structure: list,
 ):
     # prepare controlled metrics filtering
-    controlled_metrics = list(report_type.controlled_metrics.values_list('short_name', flat=True))
+    controlled_metrics = list(report_type.controlled_metrics.values_list("short_name", flat=True))
 
     # prepare all remaps
     metrics = {
@@ -317,23 +317,23 @@ def _preprocess_counter_records(
     }
 
     text_to_int_remaps = {}
-    log_memory('X-2')
+    log_memory("X-2")
     for dim_text in DimensionText.objects.values("dimension_id", "text", "pk"):
         if dim_text["dimension_id"] not in text_to_int_remaps:
             text_to_int_remaps[dim_text["dimension_id"]] = {}
         text_to_int_remaps[dim_text["dimension_id"]][dim_text["text"]] = dim_text
-    log_memory('X-1.5')
+    log_memory("X-1.5")
     title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
     tm.prefetch_titles(title_recs)
     # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
-    log_memory('X-1')
+    log_memory("X-1")
     for title_rec, record in zip(title_recs, records):  # type: TitleRec, CounterRecord
         # attributes that define the identity of the log
         title_id = tm.get_or_create(title_rec)
         if title_id is None:
             # the title could not be found or created (probably missing required field like title)
-            stats['warn missing title'] += 1
+            stats["warn missing title"] += 1
         if isinstance(record.metric, int):
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
@@ -341,7 +341,7 @@ def _preprocess_counter_records(
             metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
         start = record.start.isoformat() if isinstance(record.start, date) else record.start
         import_batch = month_to_import_batch[start]
-        id_attrs = {'metric_id': metric_id, 'target_id': title_id}
+        id_attrs = {"metric_id": metric_id, "target_id": title_id}
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
             if dim_value is not None:
@@ -350,9 +350,9 @@ def _preprocess_counter_records(
                     remap = {}
                     text_to_int_remaps[dim.pk] = remap
                 dim_value = get_or_create_with_map(
-                    DimensionText, remap, 'text', dim_value, other_attrs={'dimension_id': dim.pk}
+                    DimensionText, remap, "text", dim_value, other_attrs={"dimension_id": dim.pk}
                 )
-            id_attrs[f'dim{i+1}'] = dim_value
+            id_attrs[f"dim{i+1}"] = dim_value
         # here we detect possible duplicated keys and merge matching records
         key = tuple(id_attrs[k] for k in ib_id_to_key_structure)
         # we prepare the data to insert already split by individual import batch
@@ -361,7 +361,7 @@ def _preprocess_counter_records(
             to_insert[key] += record.value
         else:
             to_insert[key] = record.value
-    logger.info('Title statistics: %s', tm.stats)
+    logger.info("Title statistics: %s", tm.stats)
 
 
 def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, target_ids: Set[int]):
@@ -375,7 +375,7 @@ def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, targ
         platform_id=import_batch.platform_id,
         date=import_batch.date,
     )
-    existing = set(pt_qs.values_list('title_id', flat=True))
+    existing = set(pt_qs.values_list("title_id", flat=True))
     pts = []
     before_count = len(existing)
     for title_id in target_ids - existing:
@@ -389,7 +389,7 @@ def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, targ
         )
     PlatformTitle.objects.bulk_create(pts, ignore_conflicts=True)
     after_count = pt_qs.count()
-    return {'new platformtitles': after_count - before_count}
+    return {"new platformtitles": after_count - before_count}
 
 
 def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [PlatformTitle]:
@@ -434,21 +434,21 @@ def ingest_import_batch_data(import_batch: ImportBatch, file_content: StringIO):
     """
     Look for a CSV file with the preprocessed data to be ingested into the AccessLog table.
     """
-    log_memory('XX6')
+    log_memory("XX6")
     file_content.seek(0)
     c = IBCopyMapping(
         AccessLog,
         file_content,
         import_batch.pk,
         static_mapping={
-            'created': now(),
-            'owner_level': UL_ROBOT,
-            'import_batch_id': import_batch.pk,
-            'date': import_batch.date,
-            'platform_id': import_batch.platform_id,
-            'report_type_id': import_batch.report_type_id,
-            'organization_id': import_batch.organization_id,
+            "created": now(),
+            "owner_level": UL_ROBOT,
+            "import_batch_id": import_batch.pk,
+            "date": import_batch.date,
+            "platform_id": import_batch.platform_id,
+            "report_type_id": import_batch.report_type_id,
+            "organization_id": import_batch.organization_id,
         },
     )
     c.save()
-    log_memory('XX7')
+    log_memory("XX7")

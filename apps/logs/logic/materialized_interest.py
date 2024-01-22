@@ -28,18 +28,18 @@ def sync_interest_by_import_batches(queryset=None) -> Counter:
     # be that we caught it just after creation before any AccessLogs are added to it
     queryset = (
         queryset.filter(interest_timestamp__isnull=True)
-        .annotate(accesslog_count=Count('accesslog'))
+        .annotate(accesslog_count=Count("accesslog"))
         .filter(accesslog_count__gt=0)
     )
     total_count = queryset.count()
-    logger.info('Found %d unprocessed import batches', total_count)
+    logger.info("Found %d unprocessed import batches", total_count)
     start = time()
     for i, import_batch in enumerate(queryset):
         cur_stats = sync_interest_for_import_batch(import_batch, interest_rt)
         stats += cur_stats
         if time() - start > 10:
             logger.debug(
-                'Progress: %d/%d (%.1f %%)', i + 1, total_count, 100.0 * (i + 1) / total_count
+                "Progress: %d/%d (%.1f %%)", i + 1, total_count, 100.0 * (i + 1) / total_count
             )
             start = time()
     return stats
@@ -54,9 +54,9 @@ def sync_interest_for_import_batch(
     # prepare the data
     new_log_dicts = extract_interest_from_import_batch(import_batch, interest_rt)
     # compare it with existing data
-    accesslog_keys = ('organization_id', 'metric_id', 'platform_id', 'target_id', 'date')
+    accesslog_keys = ("organization_id", "metric_id", "platform_id", "target_id", "date")
     old_log_dicts = import_batch.accesslog_set.filter(report_type=interest_rt).values(
-        'pk', *accesslog_keys
+        "pk", *accesslog_keys
     )
     really_new, to_delete_pks, same = fast_compare_existing_and_new_records(
         old_log_dicts, new_log_dicts, accesslog_keys
@@ -72,10 +72,10 @@ def sync_interest_for_import_batch(
     # update the import batch
     import_batch.interest_timestamp = now()
     import_batch.save()
-    stats['new_logs'] = len(really_new)
-    stats['existing'] = same
-    stats['removed'] = len(to_delete_pks)
-    logger.debug('Import took: %.2f s; Stats: %s', time() - start, stats)
+    stats["new_logs"] = len(really_new)
+    stats["existing"] = same
+    stats["removed"] = len(to_delete_pks)
+    logger.debug("Import took: %.2f s; Stats: %s", time() - start, stats)
     # sync with clickhouse
     if (
         settings.CLICKHOUSE_SYNC_ACTIVE
@@ -100,7 +100,7 @@ def sync_interest_for_import_batch(
 
 
 def fast_compare_existing_and_new_records(
-    old_records: List[Dict], new_records: List[Dict], compared_keys: Iterable, id_key='pk'
+    old_records: List[Dict], new_records: List[Dict], compared_keys: Iterable, id_key="pk"
 ) -> (List[Dict], Set, int):
     """
     This code assumes that old_records have extra key `id_key` which is used to report back
@@ -144,13 +144,13 @@ def extract_interest_from_import_batch(
     if import_batch.report_type not in import_batch.platform.interest_reports.all():
         # the report_type does not represent interest for this platform, we can skip it
         logger.debug(
-            'Import batch report type not in platform interest: %s - %s',
+            "Import batch report type not in platform interest: %s - %s",
             import_batch.report_type.short_name,
             import_batch.platform,
         )
         return []
     for rim in import_batch.report_type.reportinterestmetric_set.all().select_related(
-        'interest_group'
+        "interest_group"
     ):
         if rim.target_metric_id:
             metric_remap[rim.metric_id] = rim.target_metric_id
@@ -165,7 +165,7 @@ def extract_interest_from_import_batch(
         dim_text, _created = DimensionText.objects.get_or_create(
             dimension=dim1,
             text=ig.short_name,
-            defaults={'text_local_en': ig.name_en, 'text_local_cs': ig.name_cs},
+            defaults={"text_local_en": ig.name_en, "text_local_cs": ig.name_cs},
         )
         if dim_text.text_local_en != ig.name_en or dim_text.text_local_cs != ig.name_cs:
             dim_text.text_local_en = ig.name_en
@@ -178,42 +178,42 @@ def extract_interest_from_import_batch(
     # want to created interest records for them
     clashing_dates = {}
     if import_batch.report_type.superseeded_by:
-        if hasattr(import_batch, 'min_date') and hasattr(import_batch, 'max_date'):
+        if hasattr(import_batch, "min_date") and hasattr(import_batch, "max_date"):
             # check if we have an annotated queryset and do not need to compute the min-max dates
             min_date = import_batch.min_date
             max_date = import_batch.max_date
         else:
             date_range = import_batch.accesslog_set.aggregate(
-                min_date=Min('date'), max_date=Max('date')
+                min_date=Min("date"), max_date=Max("date")
             )
-            min_date = date_range['min_date']
-            max_date = date_range['max_date']
+            min_date = date_range["min_date"]
+            max_date = date_range["max_date"]
         if min_date and max_date:
             # the accesslog_set might be empty and then there is nothing that could be clashing
             clashing_dates = {
-                x['date']
+                x["date"]
                 for x in import_batch.report_type.superseeded_by.accesslog_set.filter(
                     platform_id=import_batch.platform_id,
                     organization_id=import_batch.organization_id,
                     date__lte=max_date,
                     date__gte=min_date,
-                ).values('date')
+                ).values("date")
             }
     for new_log_dict in (
         import_batch.accesslog_set.filter(
             report_type=import_batch.report_type, metric_id__in=interest_metrics
         )
         .exclude(date__in=clashing_dates)
-        .values('organization_id', 'metric_id', 'platform_id', 'target_id', 'date')
-        .annotate(value=Sum('value'))
+        .values("organization_id", "metric_id", "platform_id", "target_id", "date")
+        .annotate(value=Sum("value"))
         .iterator()
     ):
         # deal with stuff related to the metric
-        metric_id = new_log_dict['metric_id']
+        metric_id = new_log_dict["metric_id"]
         # fill in dim1 based on the interest group of the metric
-        new_log_dict['dim1'] = metric_to_dim1[metric_id]
+        new_log_dict["dim1"] = metric_to_dim1[metric_id]
         # remap metric to target metric if desired
-        new_log_dict['metric_id'] = metric_remap.get(metric_id, metric_id)
+        new_log_dict["metric_id"] = metric_remap.get(metric_id, metric_id)
         new_logs.append(new_log_dict)
     return new_logs
 
@@ -239,7 +239,7 @@ def remove_interest(queryset=None) -> Counter:
     for import_batch in queryset.filter(interest_timestamp__isnull=False):
         cur_stats = remove_interest_from_import_batch(import_batch, interest_rt)
         stats += cur_stats
-        stats['import_batches'] += 1
+        stats["import_batches"] += 1
     return stats
 
 
@@ -250,7 +250,7 @@ def remove_interest_from_import_batch(
     deleted = import_batch.accesslog_set.filter(report_type=interest_rt).delete()
     import_batch.interest_timestamp = None
     import_batch.save()
-    return Counter({'deleted_accesslogs': deleted[0]})
+    return Counter({"deleted_accesslogs": deleted[0]})
 
 
 def recompute_interest_by_batch(queryset=None, verbose=False):
@@ -258,7 +258,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
     Using `verbose` reports potential discrepancies between old and recomputed interest values.
     It requires 2 extra queries for each import batch, so it should be used with caution.
     """
-    with cache_based_lock('sync_interest_task', blocking_timeout=10):
+    with cache_based_lock("sync_interest_task", blocking_timeout=10):
         # we share the lock with sync_interest_task because the two could compete for the
         # same data
         if queryset is None:
@@ -269,7 +269,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
         #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
         stats = Counter()
         total_count = queryset.count()
-        logger.info('Going to recompute interest for %d batches', total_count)
+        logger.info("Going to recompute interest for %d batches", total_count)
         if total_count == 0:
             # short-circuit to save query for interest report type
             return stats
@@ -277,31 +277,31 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
         for i, import_batch in enumerate(queryset.iterator()):
             old_sum = (
                 import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
-                    sum=Sum('value')
-                )['sum']
+                    sum=Sum("value")
+                )["sum"]
                 if verbose
                 else 0
             )
             stats += sync_interest_for_import_batch(import_batch, interest_rt)
             if i % 100 == 0:
                 logger.info(
-                    'Recomputed interest for %d out of %d batches, stats: %s', i, total_count, stats
+                    "Recomputed interest for %d out of %d batches, stats: %s", i, total_count, stats
                 )
             if verbose:
                 new_sum = import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
-                    sum=Sum('value')
-                )['sum']
+                    sum=Sum("value")
+                )["sum"]
                 if new_sum != old_sum:
                     logger.warning(
-                        'Mismatched interest sum: %d vs %d (%.1f) [%s]',
+                        "Mismatched interest sum: %d vs %d (%.1f) [%s]",
                         old_sum,
                         new_sum,
                         old_sum / new_sum if old_sum and new_sum else 0,
                         import_batch,
                     )
-                    stats['mismatch'] += 1
+                    stats["mismatch"] += 1
                 else:
-                    stats['match'] += 1
+                    stats["match"] += 1
         return stats
 
 
@@ -310,7 +310,7 @@ def smart_interest_sync():
     Computes or recomputes interest for all import batches that need it - either are not
     processed yet or are out of sync
     """
-    logger.debug('Smart syncing interest')
+    logger.debug("Smart syncing interest")
     for qs in find_batches_that_need_interest_sync():
         recompute_interest_by_batch(queryset=qs)
 
@@ -350,8 +350,8 @@ def _find_platform_interest_changes():
     # report_type are not relevant as they would not touch the relevant batches
     return (
         ImportBatch.objects.all()
-        .annotate(last_interest_change=Max('platform__platforminterestreport__last_modified'))
-        .filter(Q(last_interest_change__gte=F('interest_timestamp')))
+        .annotate(last_interest_change=Max("platform__platforminterestreport__last_modified"))
+        .filter(Q(last_interest_change__gte=F("interest_timestamp")))
     )
 
 
@@ -361,8 +361,8 @@ def _find_metric_interest_changes():
     """
     return (
         ImportBatch.objects.all()
-        .annotate(last_interest_change=Max('report_type__reportinterestmetric__last_modified'))
-        .filter(last_interest_change__gte=F('interest_timestamp'))
+        .annotate(last_interest_change=Max("report_type__reportinterestmetric__last_modified"))
+        .filter(last_interest_change__gte=F("interest_timestamp"))
     )
 
 
@@ -374,12 +374,12 @@ def _find_platform_report_type_disconnect():
     interest_rt = ReportType.objects.get_interest_rt()
     # platforms connected to a report_type referenced by its ID
     pir_platforms = Platform.objects.filter(
-        platforminterestreport__report_type_id=OuterRef('report_type_id')
-    ).values('pk')
+        platforminterestreport__report_type_id=OuterRef("report_type_id")
+    ).values("pk")
     # access logs from one import batch and the interest report type
     access_log_query = AccessLog.objects.filter(
-        report_type=interest_rt, import_batch=OuterRef('pk')
-    ).values('pk')
+        report_type=interest_rt, import_batch=OuterRef("pk")
+    ).values("pk")
     # only batches where platform is not amongst platforms that are referenced through
     # the report_type's PlatformInterestReport
     # limit to only those that do have interest stored
@@ -398,8 +398,8 @@ def _find_report_type_metric_disconnect():
     """
     interest_rt = ReportType.objects.get_interest_rt()
     access_log_metric_query = (
-        AccessLog.objects.filter(report_type=interest_rt, import_batch=OuterRef('pk'))
-        .values('metric_id')
+        AccessLog.objects.filter(report_type=interest_rt, import_batch=OuterRef("pk"))
+        .values("metric_id")
         .distinct()
     )
     # I could not find a way how to put this into one query as combining queries (such as union,
@@ -409,7 +409,7 @@ def _find_report_type_metric_disconnect():
         interest_metrics = (
             Metric.objects.filter(reportinterestmetric__report_type=report_type)
             .union(Metric.objects.filter(source_report_interest_metrics__report_type=report_type))
-            .values('id')
+            .values("id")
         )
         query = (
             ImportBatch.objects.filter(report_type=report_type)
@@ -431,22 +431,22 @@ def _find_superseeded_import_batches():
     WARNING: This works, but is incredibly slow as it does full scan of the AccessLog table;
              DO NOT USE IT!
     """
-    logger.warning('This code is slooooow - do not use it')
+    logger.warning("This code is slooooow - do not use it")
     superseeding_al = AccessLog.objects.filter(
-        platform=OuterRef('platform'),
-        organization=OuterRef('organization'),
-        report_type=OuterRef('report_type__superseeded_by'),
-        date=OuterRef('date'),
+        platform=OuterRef("platform"),
+        organization=OuterRef("organization"),
+        report_type=OuterRef("report_type__superseeded_by"),
+        date=OuterRef("date"),
     )
     al_query = (
         AccessLog.objects.filter(report_type__superseeded_by__isnull=False)
         .annotate(has_clash=Exists(superseeding_al))
         .filter(has_clash=True)
-        .values('import_batch')
+        .values("import_batch")
         .distinct()
     )
     interest_al = AccessLog.objects.filter(
-        import_batch=OuterRef('pk'), report_type=ReportType.objects.get_interest_rt()
+        import_batch=OuterRef("pk"), report_type=ReportType.objects.get_interest_rt()
     )
     query = (
         ImportBatch.objects.filter(report_type__superseeded_by__isnull=False)
@@ -468,10 +468,10 @@ def _find_potentially_superseded_import_batches():
           we could then come up with a list of potentially obsoleted import batches.
     """
     superseding_ib = ImportBatch.objects.filter(
-        platform=OuterRef('platform'),
-        organization=OuterRef('organization'),
-        report_type=OuterRef('report_type__superseeded_by'),
-        interest_timestamp__gt=OuterRef('interest_timestamp'),
+        platform=OuterRef("platform"),
+        organization=OuterRef("organization"),
+        report_type=OuterRef("report_type__superseeded_by"),
+        interest_timestamp__gt=OuterRef("interest_timestamp"),
     )
     query = (
         ImportBatch.objects.filter(report_type__superseeded_by__isnull=False)

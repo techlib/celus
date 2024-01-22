@@ -7,16 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('organizations', '0004_organization_source'),
+        ("organizations", "0004_organization_source"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='organization',
-            name='users',
+            model_name="organization",
+            name="users",
             field=models.ManyToManyField(
-                related_name='organizations',
-                through='organizations.UserOrganization',
+                related_name="organizations",
+                through="organizations.UserOrganization",
                 to=settings.AUTH_USER_MODEL,
             ),
         )

@@ -4,9 +4,9 @@ from django.db import migrations
 
 
 def fix_unknown_pub_types(apps, schema_editor):
-    Title = apps.get_model('publications', 'Title')
-    Title.objects.filter(pub_type='U', issn='', eissn='').exclude(isbn='').update(pub_type='B')
-    Title.objects.filter(pub_type='U', isbn='').exclude(issn='', eissn='').update(pub_type='J')
+    Title = apps.get_model("publications", "Title")
+    Title.objects.filter(pub_type="U", issn="", eissn="").exclude(isbn="").update(pub_type="B")
+    Title.objects.filter(pub_type="U", isbn="").exclude(issn="", eissn="").update(pub_type="J")
 
 
 def noop(apps, schema_editor):
@@ -14,6 +14,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('publications', '0025_platform_unique_shortname')]
+    dependencies = [("publications", "0025_platform_unique_shortname")]
 
     operations = [migrations.RunPython(fix_unknown_pub_types, noop)]
