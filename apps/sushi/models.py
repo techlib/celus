@@ -219,8 +219,6 @@ class SushiCredentialsQuerySet(models.QuerySet):
 
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
-    objects = SushiCredentialsQuerySet.as_manager()
-
     UNLOCKED = 0
 
     LOCK_LEVEL_CHOICES = (
@@ -263,6 +261,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     version_hash = models.CharField(
         max_length=BLAKE_HASH_SIZE * 2, help_text='Current hash of model attributes'
     )
+
+    objects = SushiCredentialsQuerySet.as_manager()
 
     class Meta:
         unique_together = (('organization', 'platform', 'counter_version', 'title'),)
@@ -1087,6 +1087,22 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
         User, on_delete=models.SET_NULL, null=True, blank=True
     )
 
+    class Meta:
+        constraints = (
+            CheckConstraint(
+                check=~(
+                    models.Q(last_harvestable_month_attempt__isnull=False)
+                    & models.Q(last_harvestable_month_user__isnull=False)
+                ),
+                name='last_harvestable_month_by_attempt_vs_user',
+            ),
+            UniqueConstraint(
+                fields=['credentials', 'counter_report'],
+                name='unique_creds_to_cr',
+            ),
+        )
+        verbose_name_plural = 'Counter reports to credentials'
+
     def update_last_harvestable_month_by_attempt(self, attempt: SushiFetchAttempt) -> bool:
         """Update last_harvestable_month by attempt which reports that it no longer contains data
         (3032)"""
@@ -1107,19 +1123,3 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
             self.save()
             return True
         return False
-
-    class Meta:
-        constraints = (
-            CheckConstraint(
-                check=~(
-                    models.Q(last_harvestable_month_attempt__isnull=False)
-                    & models.Q(last_harvestable_month_user__isnull=False)
-                ),
-                name='last_harvestable_month_by_attempt_vs_user',
-            ),
-            UniqueConstraint(
-                fields=['credentials', 'counter_report'],
-                name='unique_creds_to_cr',
-            ),
-        )
-        verbose_name_plural = 'Counter reports to credentials'

@@ -86,7 +86,6 @@ class ExportBase(models.Model):
 
 
 class FlexibleDataExport(ExportBase):
-    objects = AnnotateObsoleteQueryset.as_manager()
     format_to_exporter = {
         FileFormat.XLSX: FlexibleDataExcelExporter,
         FileFormat.XLSX_NO_CHARTS: FlexibleDataExcelExporterNoCharts,
@@ -100,6 +99,8 @@ class FlexibleDataExport(ExportBase):
         max_length=16, choices=FileFormat.choices, default=FileFormat.XLSX
     )
     name = models.CharField(max_length=120, default='', blank=True)
+
+    objects = AnnotateObsoleteQueryset.as_manager()
 
     def __str__(self):
         return f'Export: {self.created}'
