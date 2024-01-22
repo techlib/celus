@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import IntegrityError
 from django.db.models.signals import post_delete, post_save
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -38,9 +39,15 @@ def import_batch_create_sync_log(sender, instance: ImportBatch, using, **kwargs)
 @receiver(post_save, sender=ImportBatch)
 def import_batch_create_organization_platform_link(sender, instance: ImportBatch, using, **kwargs):
     if instance.organization_id and instance.platform_id:
-        OrganizationPlatform.objects.get_or_create(
-            organization_id=instance.organization_id, platform_id=instance.platform_id
-        )
+        try:
+            OrganizationPlatform.objects.get_or_create(
+                organization_id=instance.organization_id, platform_id=instance.platform_id
+            )
+        except IntegrityError:
+            # this can happen inside `get_or_create` if the organization platform link gets
+            # created in another process between the `get` and the `create` parts
+            # we can safely ignore this
+            pass
 
 
 @receiver([post_delete, post_save], sender=PlatformInterestReport)
