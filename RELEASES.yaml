@@ -1,3 +1,19 @@
+- version: 5.9.1
+  title:
+    en: Bugfix and performance optimization release 5.9.1
+    cs: Opravná a výkonnostní verze 5.9.1
+  text:
+    en: |
+      - performance of several pages, most notably platform overlap, was improved
+      - several bugs and minor inconsistencies were fixed
+    cs: |
+      - byla zvýšena výkonnost několika stránek, především překryvu platforem
+      - bylo opraveno několik chyb a drobných nesrovnalostí
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 5.9.0
   title:
     en: Easier reharvesting, reporting improvements, and many more non-COUNTER reports arrive with Celus 5.9.0

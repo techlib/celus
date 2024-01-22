@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [5.9.1]  - 2024-01-23
+
+### Changes
+
+#### Frontend
+
+* the frontend code was updated to compile using node 18; support for version 16 was dropped
+
+#### Backend
+
+* the overlap computation was optimized to use less memory and be faster
+* a more effective method is used to list all tags visible to a user resulting in slight performance
+  improvement
+* the API for external access was extended to allow COUNTER registry IDs for platform identification
+* a more compact method of passing list of object IDs is used to request list of tags associated
+  with them. This fixes a problem with some URL strings being too long for the server on large Celus
+  installations
+
+
+### Fixed
+
+#### Frontend
+
+* error when too large a file is uploaded to the title list page is now handled more gracefully
+* error when uploading table data in a file with an unrecongnized encoding is now handled
+  more gracefully
+* the coverage widget was fixed not to offer harvesting of missing data to read-only users
+* when manually uploading data for a platform which is private to one organization, the
+  organization is now automatically selected and cannot be changed
+* alignment of icons in the application top bar was fixed
+
+#### Backend
+
+* problem with the platform overlap computation overreporting the number of titles under specific
+  conditions when viewed for the whole consortium was fixed
+* the language preference API endpoint was fixed after Django upgrade
+* access of read-only users to havesting data and harvest processing was reviewed and fixed where
+  necessary
+* several minor inconsistencies in the platform-title support table were fixed
+* inconsistencies between the main database and clickhouse caused by title merging were fixed
+* potential race condition in creating organization-platform links was fixed
+
+
 ## [5.9.0]  - 2023-12-05
 
 ### Added
