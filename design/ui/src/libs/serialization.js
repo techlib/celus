@@ -1,3 +1,5 @@
+import { Buffer } from "buffer";
+
 function toBase64JSON(obj) {
   return Buffer.from(JSON.stringify(obj), "utf-8").toString("base64");
 }
