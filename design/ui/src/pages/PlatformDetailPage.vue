@@ -22,6 +22,8 @@ en:
     The platform "{platform}" is not associated with the selected organization. To be able to
     display usage data for you, you need to create SUSHI credentials for this platform or manually
     upload some data for it.
+  counter_data_export_text: Here you can download generated COUNTER reports directly from Celus. The data are filtered based on selected organization and date range in the page header.
+  counter_data_export_no_org: No organization is selected, please select an organization from the top bar in order to download data in COUNTER format.
 
 cs:
   no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
@@ -43,6 +45,8 @@ cs:
   unconnected_platform: |
     Platforma "{platform}" není přiřazená k právě vybrané instituci. Abychom vám pro ni mohli zobrazit data,
     je třeba pro ni nejprve přidat přihlašovací údaje SUSHI a nebo manuálně nahrát data.
+  counter_data_export_text: Zde si stáhnout vygenerované COUNTER reporty přímo z Celusu.  Data jsou filtrováná podle zvolené organizace a rozmezí dat v hlavičce stránky.
+  counter_data_export_no_org: Není vybraná oranizace, prosím vyberte organizaci v horním panelu, aby bylo možné stáhnout data v COUNTER formátu.
 </i18n>
 
 <template>
@@ -295,6 +299,41 @@ cs:
                     </v-col>
                   </v-row>
 
+                  <v-row v-if="clickhouseQueryActive">
+                    <v-col>
+                      <h3 class="text-h4 mt-3">
+                        {{ $t("labels.counter_data_export") }}
+                      </h3>
+                      <v-alert
+                        v-if="(selectedOrganizationId || 0) <= 0"
+                        class="mt-2 mb-1"
+                        outlined
+                        type="warning"
+                      >
+                        <p class="mb-0">
+                          {{ $t("counter_data_export_no_org") }}
+                        </p>
+                      </v-alert>
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="clickhouseQueryActive">
+                    <v-col>
+                      <p>{{ $t("counter_data_export_text") }}</p>
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters v-if="clickhouseQueryActive">
+                    <span
+                      v-for="item in exportableCounterReportTypes"
+                      :key="item.pk"
+                      class="ml-1"
+                    >
+                      <CounterDataExportWidget
+                        :platform="platformObj"
+                        :counter-report-type="item"
+                      />
+                    </span>
+                  </v-row>
+
                   <v-row class="pt-4">
                     <v-col>
                       <h3 class="text-h4">{{ $t("labels.delete_data") }}</h3>
@@ -332,6 +371,7 @@ import CounterChartSet from "@/components/charts/CounterChartSet";
 import { formatInteger } from "@/libs/numbers";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
+import CounterDataExportWidget from "@/components/CounterDataExportWidget";
 import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 import RawDataExportWidget from "@/components/RawDataExportWidget";
 import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
@@ -344,6 +384,7 @@ import CoverageOverviewWidget from "@/components/charts/CoverageOverviewWidget";
 export default {
   name: "PlatformDetailPage",
   components: {
+    CounterDataExportWidget,
     CoverageOverviewWidget,
     TagCard,
     LoaderWidget,
@@ -369,6 +410,8 @@ export default {
       platformDoesNotExist: false,
       errorLoadingDetails: null,
       loading: false,
+      counterReportTypes: [],
+      loadingCounterReportTypes: false,
     };
   },
   computed: {
@@ -377,6 +420,7 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
+      clickhouseQueryActive: "clickhouseQueryActive",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
@@ -415,6 +459,18 @@ export default {
       }
       return null;
     },
+    counterReportTypeUsedUrl() {
+      let url = `/api/counter-data-export/used/`;
+      url += `?platform=${this.platformId}`;
+      url += `&organization=${this.selectedOrganizationId || 0}`;
+      if (this.dateRangeStart) {
+        url += `&start_date=${this.dateRangeStart}`;
+      }
+      if (this.dateRangeEnd) {
+        url += `&end_date=${this.dateRangeEnd}`;
+      }
+      return url;
+    },
     unconnectedPlatformDetailUrl() {
       if (this.selectedOrganizationId) {
         return `/api/organization/${this.selectedOrganizationId}/all-platform/${this.platformId}/`;
@@ -446,6 +502,10 @@ export default {
     },
     platformObj() {
       return this.platform || this.unconnectedPlatform;
+    },
+    exportableCounterReportTypes() {
+      // Only C5 reports are exportable to tabular format
+      return this.counterReportTypes.filter((e) => e.counter_version == 5);
     },
   },
 
@@ -541,9 +601,21 @@ export default {
         }
       }
     },
+    async loadCounterReportTypes() {
+      this.loadingCounterReportTypes = true;
+      try {
+        let result = await axios.get(this.counterReportTypeUsedUrl);
+        this.counterReportTypes = result.data;
+      } catch (error) {
+        this.showSnackbar({ content: "Error loading report types: " + error });
+      } finally {
+        this.loadingCounterReportTypes = false;
+      }
+    },
   },
   created() {
     this.loadPlatform();
+    this.loadCounterReportTypes();
   },
   watch: {
     platformDetailUrl() {
@@ -554,6 +626,9 @@ export default {
     },
     platformTitleCountUrl() {
       this.loadPlatformTitleCount();
+    },
+    counterReportTypeUsedUrl() {
+      this.loadCounterReportTypes();
     },
     activeTab() {
       if (this.activeTab === "chart" && this.$refs.chartSet) {

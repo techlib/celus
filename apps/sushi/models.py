@@ -182,6 +182,23 @@ class CounterReportType(models.Model):
         name = "Json" if json_format else "Tabular"
         return f"static\\.counter[^\\.]+\\.[^\\.]+.{name}"
 
+    def get_counter_exporter_class(self):
+        from logs.logic import export_counter
+
+        if self.counter_version != 5:
+            return None
+
+        if self.code == "TR":
+            return export_counter.TRCounter5Export
+        elif self.code == "DR":
+            return export_counter.DRCounter5Export
+        elif self.code == "PR":
+            return export_counter.PRCounter5Export
+        elif self.code == "IR_M1":
+            return export_counter.IR_M1Counter5Export
+
+        return None
+
 
 class SushiCredentialsQuerySet(models.QuerySet):
     def annotate_verified(self):

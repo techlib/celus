@@ -1,9 +1,10 @@
 import operator
 from collections import Counter
+from datetime import date
 from functools import reduce
 from pprint import pprint
 from time import monotonic
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from celus_nibbler.errors import WrongFileFormatError
 from charts.models import ReportDataView
@@ -28,7 +29,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, prefetch_related_objects
 from django.db.transaction import atomic, on_commit
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.views import View
 from organizations.logic.queries import organization_filter_from_org_id
@@ -49,7 +50,13 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
-from sushi.models import CounterReportsToCredentials, SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    CounterReportsToCredentials,
+    CounterReportType,
+    SushiCredentials,
+    SushiFetchAttempt,
+)
+from sushi.serializers import CounterReportTypeSerializer
 from tags.models import Tag
 
 from logs.logic.export import CSVExport
@@ -417,6 +424,98 @@ class RawDataDelayedExportProgressView(View):
         if handle and handle.startswith("raw-data-"):
             count = cache.get(handle)
         return JsonResponse({"count": count})
+
+
+class CounterExportView(GenericViewSet):
+    class CounterReportTypeWithUsedSerializer(CounterReportTypeSerializer):
+        used = IntegerField(required=True)
+
+        class Meta(CounterReportTypeSerializer.Meta):
+            fields = CounterReportTypeSerializer.Meta.fields + ("used",)
+
+    queryset = CounterReportType.objects.annotate().all()
+
+    serializer_class = CounterReportTypeWithUsedSerializer
+
+    def _extract_dates(self, params) -> (Optional[date], Optional[date]):
+        start_date = params.get("start_date")
+        start_date = start_date and parse_month(start_date)
+        end_date = params.get("end_date")
+        end_date = end_date and parse_month(end_date)
+        return start_date, end_date
+
+    class CounterDownloadSerializer(Serializer):
+        organization = IntegerField(required=True)
+        platform = IntegerField(required=True)
+        start_date = CharField(validators=[month_validator], required=False)
+        end_date = CharField(validators=[month_validator], required=False)
+
+    @action(detail=False, methods=["get"], url_name="used", url_path="used")
+    def used(self, request):
+        param_serializer = self.CounterDownloadSerializer(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        params = param_serializer.validated_data
+        start_date, end_date = self._extract_dates(params)
+
+        extra_filter = {}
+        if start_date:
+            extra_filter["report_type__importbatch__date__gte"] = start_date
+        if end_date:
+            extra_filter["report_type__importbatch__date__lte"] = end_date
+
+        qs = (
+            self.get_queryset()
+            .filter(counter_version=5)
+            .annotate(
+                used=Count(
+                    "report_type__importbatch__pk",
+                    distinct=True,
+                    filter=Q(
+                        report_type__importbatch__organization_id=params["organization"],
+                        report_type__importbatch__platform_id=params["platform"],
+                        **extra_filter,
+                    ),
+                )
+            )
+        )
+        return Response(self.get_serializer(qs, many=True).data)
+
+    @action(detail=True, methods=["get"], url_name="download", url_path="download")
+    def download(self, request, pk):
+        param_serializer = self.CounterDownloadSerializer(data=request.GET)
+        param_serializer.is_valid(raise_exception=True)
+        params = param_serializer.validated_data
+        start_date, end_date = self._extract_dates(params)
+
+        organization = get_object_or_404(
+            request.user.accessible_organizations(), pk=params["organization"]
+        )
+        counter_report_type = get_object_or_404(
+            CounterReportType.objects.all(), pk=self.kwargs["pk"]
+        )
+        platform = get_object_or_404(Platform.objects.all(), pk=params["platform"])
+
+        exporter_class = counter_report_type.get_counter_exporter_class()
+        if not exporter_class:
+            return Response(
+                f"Counter exports for '{counter_report_type.code}' are not supported",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        exporter = exporter_class(
+            organization,
+            platform,
+            counter_report_type.report_type,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        filename = f"{platform.short_name}-{counter_report_type.code}.csv"
+        response = StreamingHttpResponse(exporter.csv())
+        response["Content-Type"] = "text/csv"
+        response["Cache-Control"] = "no-cache"
+        response["Content-Disposition"] = f"attachment; filename={filename}"
+
+        return response
 
 
 class ImportBatchViewSet(ReadOnlyModelViewSet):

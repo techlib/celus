@@ -220,6 +220,7 @@ en:
     variable_value: Parameter value
     year: Year
     year_and_month: Year and month
+    counter_data_export: Data export in COUNTER format
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -557,6 +558,7 @@ cs:
     variable_value: Hodnota parametru
     year: Rok
     year_and_month: Rok a měsíc
+    counter_data_export: Export dat v COUNTER formátu
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

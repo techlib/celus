@@ -15,6 +15,7 @@ from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.models import (
     AccessLog,
     Dimension,
+    DimensionText,
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
@@ -212,3 +213,18 @@ class CounterRecordFactory(factory.Factory):
     dimension_data = factory.LazyAttribute(create_dim_data)
     title = factory.Faker("sentence")
     title_ids = factory.LazyFunction(create_title_ids)
+
+
+class DimensionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Dimension
+
+    short_name = factory.Faker("slug")
+    name = factory.Faker("sentence")
+
+
+class DimensionTextFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DimensionText
+
+    dimension = factory.SubFactory(DimensionFactory)

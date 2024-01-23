@@ -254,6 +254,12 @@ export default new Vuex.Store({
       }
       return "COUNTER credentials import";
     },
+    clickhouseQueryActive(state) {
+      if ("CLICKHOUSE_QUERY_ACTIVE" in state.basicInfo) {
+        return state.basicInfo["CLICKHOUSE_QUERY_ACTIVE"];
+      }
+      return false;
+    },
     enableRawDataImport(state) {
       return state.basicInfo.ENABLE_RAW_DATA_IMPORT || "None";
     },
