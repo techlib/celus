@@ -530,8 +530,9 @@ def sync_organizationplatform_records_task(reason: Optional[str] = None):
 @email_if_fails
 def sync_platformtitle_projection_task():
     no_projection, with_projection, synced = sync_platformtitle_projection()
-    async_mail_admins.delay(
-        "PlatformTitleOrganizationProjection projection was rebuilt",
-        f"Inconsistency found in projection data ({no_projection} vs "
-        f"{with_projection}) - projection was rebuilt",
-    )
+    if synced:
+        async_mail_admins.delay(
+            "PlatformTitleOrganizationProjection projection was rebuilt",
+            f"Inconsistency found in projection data ({no_projection} vs "
+            f"{with_projection}) - projection was rebuilt",
+        )
