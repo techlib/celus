@@ -126,7 +126,9 @@ class CSVExport:
         with cachalot_disabled(True):
             # disable cachalot for this query because it returns a potentially huge number
             # of records and would clog the cache
-            for rec_num, log in enumerate(queryset.values(*values).iterator()):  # type: int, dict
+            rec_num: int
+            log: dict
+            for rec_num, log in enumerate(queryset.values(*values).iterator()):
                 record = {
                     attr_out: log.get(attr_in) for attr_in, attr_out in field_name_map.items()
                 }

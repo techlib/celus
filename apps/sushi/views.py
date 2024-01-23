@@ -44,7 +44,8 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     def _post_process_queryset(self, qs):
         org_to_level = {}
-        for sc in qs:  # type: SushiCredentials
+        sc: SushiCredentials
+        for sc in qs:
             if sc.organization_id not in org_to_level:
                 org_to_level[sc.organization_id] = self.request.user.organization_relationship(
                     sc.organization_id
@@ -110,7 +111,7 @@ class SushiCredentialsViewSet(ModelViewSet):
     @method_decorator(create_revision())
     def destroy(self, request, *args, **kwargs):
         delete_data = self.request.query_params.get("delete_data", "false").lower() == "true"
-        credentials = self.get_object()  # type: SushiCredentials
+        credentials: SushiCredentials = self.get_object()
         if credentials.can_edit(request.user):
             reversion.set_comment("Deleted through API")
             if delete_data:

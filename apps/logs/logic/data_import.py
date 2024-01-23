@@ -15,7 +15,7 @@ from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from organizations.models import Organization
 from postgres_copy import CopyMapping
-from publications.logic.title_management import TitleManager
+from publications.logic.title_management import TitleManager, TitleRec
 from publications.models import Platform, PlatformTitle
 from sushi.models import SushiFetchAttempt
 
@@ -328,7 +328,10 @@ def _preprocess_counter_records(
     # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
     log_memory("X-1")
-    for title_rec, record in zip(title_recs, records):  # type: TitleRec, CounterRecord
+
+    title_rec: TitleRec
+    record: CounterRecord
+    for title_rec, record in zip(title_recs, records):
         # attributes that define the identity of the log
         title_id = tm.get_or_create(title_rec)
         if title_id is None:

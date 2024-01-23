@@ -375,7 +375,7 @@ class TestChartDataAPIView:
         Test that recache is not used for normal queries
         """
         organization = organizations[0]
-        report_type = report_type_nd(0)  # type: ReportType
+        report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
@@ -399,7 +399,7 @@ class TestChartDataAPIView:
         Test that recache is used for queries marked with the `dashboard` attribute
         """
         organization = organizations[0]
-        report_type = report_type_nd(0)  # type: ReportType
+        report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
@@ -424,7 +424,7 @@ class TestChartDataAPIView:
         Test the api for getting list of metrics used in a chart
         """
         organization = organizations[0]
-        report_type = report_type_nd(0)  # type: ReportType
+        report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()

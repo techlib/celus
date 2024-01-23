@@ -56,11 +56,11 @@ class AnnotationSerializer(ModelSerializer):
         submitter = validated_data.pop("submitter", None) or self.context["request"].user
         if not instance.can_edit(submitter):
             raise PermissionDenied("User is not allowed to edit this object - it is locked.")
-        result = super().update(instance, validated_data)  # type: Annotation
+        result: Annotation = super().update(instance, validated_data)
         return self._adjust_permissions(result, submitter)
 
     def create(self, validated_data):
-        submitter = validated_data.pop("submitter")  # type: User
+        submitter: User = validated_data.pop("submitter")
         result = super().create(validated_data)
         return self._adjust_permissions(result, submitter)
 

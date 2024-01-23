@@ -396,7 +396,7 @@ class ManualDataUploadSerializer(ModelSerializer):
         return attrs
 
     def update(self, instance: ManualDataUpload, validated_data):
-        result = super().update(instance, validated_data)  # type: Annotation
+        result: ManualDataUpload = super().update(instance, validated_data)
         return self._adjust_permissions(result)
 
     def create(self, validated_data):

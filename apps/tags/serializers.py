@@ -263,12 +263,15 @@ class TaggingBatchSerializer(ModelSerializer):
             if not attrs.get("tag") and not attrs.get("tag_class"):
                 raise ValidationError("Either tag or tag_class must be set")
         user = self.context["request"].user
+
+        tc: TagClass
+        tag: Tag
         if tag := attrs.get("tag"):
             if not tag.can_user_assign(user):
                 raise PermissionDenied(f'User cannot assign tag "{tag}"')
             if tag.tag_class.scope != TagScope.TITLE:
                 raise ValidationError('Tag must have scope "title"')
-        elif tc := attrs.get("tag_class"):  # type: TagClass
+        elif tc := attrs.get("tag_class"):
             if not TagClass.objects.user_assignable_tag_classes(user).filter(pk=tc.pk).exists():
                 raise PermissionDenied(f'User cannot assign tags from tag class "{tc}"')
             if tc.scope != TagScope.TITLE:

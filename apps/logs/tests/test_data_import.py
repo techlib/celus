@@ -144,7 +144,7 @@ class TestDataImport:
         crs = list(
             counter_records_nd(3, record_number=10, title="Title ABC", dim_value="one value")
         )
-        rt = report_type_nd(3)  # type: ReportType
+        rt: ReportType = report_type_nd(3)
         import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 10
         assert Title.objects.count() > 0
@@ -167,7 +167,7 @@ class TestDataImport:
         Test that reimporting the same data will lead to an exception
         """
         crs = list(counter_records_nd(3, record_number=1, title="Title ABC", dim_value="one value"))
-        rt = report_type_nd(3)  # type: ReportType
+        rt: ReportType = report_type_nd(3)
         _ibs, stats = import_counter_records(rt, organizations[0], platform, crs)
         assert AccessLog.objects.count() == 1
         assert Title.objects.count() == 1
@@ -188,7 +188,7 @@ class TestDataImport:
         """
         cr = list(counter_records_nd(3, record_number=1, title="Title ABC", dim_value="one"))[0]
         crs = [cr, cr, cr]
-        rt = report_type_nd(3)  # type: ReportType
+        rt: ReportType = report_type_nd(3)
         _ibs, stats = import_counter_records(
             rt, organizations[0], platform, crs, buffer_size=buffer_size
         )

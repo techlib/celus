@@ -149,7 +149,7 @@ class SushiCredentialsSerializer(ModelSerializer):
         submitter = validated_data.pop("submitter", None) or self.context["request"].user
         if not instance.can_edit(submitter):
             raise PermissionDenied("User is not allowed to edit this object - it is locked.")
-        result = super().update(instance, validated_data)  # type: SushiCredentials
+        result: SushiCredentials = super().update(instance, validated_data)
         result.last_updated_by = submitter
         result.save()
         submitter_level = submitter.organization_relationship(result.organization_id)

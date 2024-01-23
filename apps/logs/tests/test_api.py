@@ -64,7 +64,7 @@ class TestChartDataAPI:
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         organization = organizations["branch"]
-        report_type = report_type_nd(0)  # type: ReportType
+        report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()
@@ -87,7 +87,7 @@ class TestChartDataAPI:
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         organization = organizations["branch"]
-        report_type = report_type_nd(0)  # type: ReportType
+        report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
         metric = Metric.objects.get()

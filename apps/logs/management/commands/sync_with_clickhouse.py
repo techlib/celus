@@ -40,7 +40,8 @@ class Command(BaseCommand):
                     Q(last_clickhoused__isnull=True) | Q(last_clickhoused__lt=F("last_updated"))
                 )
             logger.info("Found %d unprocessed import batches", qs.count())
-            for ib in qs.iterator():  # type: ImportBatch
+            ib: ImportBatch
+            for ib in qs.iterator():
                 sync_import_batch_with_clickhouse(ib)
                 count += 1
                 if count and count % 100 == 0:

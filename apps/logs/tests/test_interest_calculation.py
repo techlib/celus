@@ -80,8 +80,8 @@ class TestInterestCalculation:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type_old = report_type_nd(1, short_name="old")  # type: ReportType
-        report_type_new = report_type_nd(1, short_name="new")
+        report_type_old: ReportType = report_type_nd(1, short_name="old")
+        report_type_new: ReportType = report_type_nd(1, short_name="new")
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
         # now define the interest
@@ -140,8 +140,8 @@ class TestInterestCalculation:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type_1 = report_type_nd(1, short_name="old")  # type: ReportType
-        report_type_2 = report_type_nd(1, short_name="new")
+        report_type_1: ReportType = report_type_nd(1, short_name="old")
+        report_type_2: ReportType = report_type_nd(1, short_name="new")
         # now define the interest
         interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_1)
@@ -242,7 +242,7 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1)  # type: ReportType
+        report_type: ReportType = report_type_nd(1)
         ib1 = ImportBatch.objects.create(
             organization=organization, platform=platform, report_type=report_type
         )
@@ -268,7 +268,7 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1)  # type: ReportType
+        report_type: ReportType = report_type_nd(1)
         ib1 = ImportBatch.objects.create(
             organization=organization,
             platform=platform,
@@ -302,8 +302,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1, short_name="rt1")  # type: ReportType
-        report_type2 = report_type_nd(1, short_name="rt2")  # type: ReportType
+        report_type: ReportType = report_type_nd(1, short_name="rt1")
+        report_type2: ReportType = report_type_nd(1, short_name="rt2")
         assert report_type.pk != report_type2.pk
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
@@ -343,7 +343,7 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1, short_name="rt1")  # type: ReportType
+        report_type: ReportType = report_type_nd(1, short_name="rt1")
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
@@ -366,8 +366,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1, short_name="rt1")  # type: ReportType
-        report_type2 = report_type_nd(1, short_name="rt2")  # type: ReportType
+        report_type: ReportType = report_type_nd(1, short_name="rt1")
+        report_type2: ReportType = report_type_nd(1, short_name="rt2")
         assert report_type.pk != report_type2.pk
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
@@ -397,8 +397,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1)  # type: ReportType
-        interest_rt = report_type_nd(1, short_name="interest")
+        report_type: ReportType = report_type_nd(1)
+        interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
@@ -434,8 +434,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type = report_type_nd(1)  # type: ReportType
-        interest_rt = report_type_nd(1, short_name="interest")
+        report_type: ReportType = report_type_nd(1)
+        interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
@@ -473,8 +473,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        rt_old = report_type_nd(1, short_name="old")  # type: ReportType
-        interest_rt = report_type_nd(1, short_name="interest")
+        rt_old: ReportType = report_type_nd(1, short_name="old")
+        interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=rt_old)
         ib_old = ImportBatch.objects.create(
@@ -520,7 +520,7 @@ class TestInterestRecomputationDetection:
         qs = _find_superseeded_import_batches()
         assert {obj.pk for obj in qs} == set()
         # let's add a newer data and check that we detect it
-        rt_new = report_type_nd(1, short_name="new")  # type: ReportType
+        rt_new: ReportType = report_type_nd(1, short_name="new")
         rt_old.superseeded_by = rt_new
         rt_old.save()
         PlatformInterestReport.objects.create(platform=platform, report_type=rt_new)
@@ -559,8 +559,8 @@ class TestInterestRecomputationDetection:
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
-        report_type_old = report_type_nd(1, short_name="old")  # type: ReportType
-        report_type_new = report_type_nd(1, short_name="new")
+        report_type_old: ReportType = report_type_nd(1, short_name="old")
+        report_type_new: ReportType = report_type_nd(1, short_name="new")
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
         # define interest

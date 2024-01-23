@@ -101,7 +101,7 @@ class Command(BaseCommand):
                 if not platform_code:
                     self.stderr.write(self.style.WARNING("No platform code, skipping"))
                     continue
-                platform = platform_short_name_to_obj.get(platform_code)  # type: Platform
+                platform: Platform = platform_short_name_to_obj.get(platform_code)
                 if not platform:
                     self.stderr.write(
                         self.style.ERROR(f'Unknown platform "{platform_code}", skipping')

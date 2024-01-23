@@ -94,7 +94,8 @@ class AnnotationsViewSet(ModelViewSet):
         # add access level stuff
         org_to_level = {}
         user = self.request.user
-        for annot in qs:  # type: Annotation
+        annot: Annotation
+        for annot in qs:
             if not annot.organization_id:
                 user_org_level = (
                     UL_CONS_STAFF

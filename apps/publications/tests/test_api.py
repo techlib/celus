@@ -800,7 +800,7 @@ class TestPlatformTitleAPI:
         Tests the view that returns interest summed up by platform for each title
         """
         org = OrganizationFactory()
-        tr = ReportTypeFactory(short_name="TR", dimensions=["YOP"])  # type: ReportType
+        tr: ReportType = ReportTypeFactory(short_name="TR", dimensions=["YOP"])
         yop_attr = tr.dim_name_to_dim_attr("YOP")
         yop_dim = tr.dimension_by_attr_name(yop_attr)
         t1, t2, t3, t4 = TitleFactory.create_batch(4)

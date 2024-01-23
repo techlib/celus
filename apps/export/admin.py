@@ -11,7 +11,8 @@ class FlexibleDataExportAdmin(admin.ModelAdmin):
 
     def create_output_file(self, request, queryset):
         counter = 0
-        for fe in queryset:  # type: FlexibleDataExport
+        fe: FlexibleDataExport
+        for fe in queryset:
             fe.create_output_file()
             counter += 1
         messages.add_message(request, messages.SUCCESS, f"{counter} exports processed")

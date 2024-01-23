@@ -7,7 +7,7 @@ from sushi.fake_data import CredentialsFactory
 from tags.fake_data import TagFactory
 from tags.models import TagScope, TitleTag
 
-from logs.models import ImportBatch, OrganizationPlatform
+from logs.models import ImportBatch, OrganizationPlatform, ReportType
 from test_scenarios.basic import (  # noqa
     clients,
     data_sources,
@@ -149,7 +149,7 @@ class TestSlicerAPI:
         """
         Test that ordering by both explicit and implicit dimensions works
         """
-        rt = flexible_slicer_test_data["report_types"][0]  # type: ReportType
+        rt: ReportType = flexible_slicer_test_data["report_types"][0]
         slicer_def = {
             "primary_dimension": "organization" if sorted_dim != "organization" else "platform",
             "groups": b64json([sorted_dim]),

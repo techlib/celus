@@ -1,7 +1,7 @@
 import json
 import logging
 from copy import deepcopy
-from datetime import timedelta
+from datetime import date, timedelta
 
 from celus_nigiri.client import Sushi5Client
 from django.core.management.base import BaseCommand
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         )
         report_type = options["report_type"]
         # check and possibly setup basic params of the query
-        today = now().date()  # type: date
+        today: date = now().date()
         begin_date = options["begin_date"] if options["begin_date"] else f"{today.year}-01"
         end_date = (
             options["end_date"]

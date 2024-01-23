@@ -1029,7 +1029,8 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
         )
         # add access level stuff
         org_to_level = {}  # this is used to cache user access level for the same organization
-        for mdu in qs:  # type: SushiCredentials
+        mdu: ManualDataUpload
+        for mdu in qs:
             if mdu.organization_id not in org_to_level:
                 org_to_level[mdu.organization_id] = self.request.user.organization_relationship(
                     mdu.organization_id
