@@ -13,7 +13,11 @@ from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.models import ImportBatch, OrganizationPlatform
 from logs.tasks import import_one_sushi_attempt_task
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
+from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    SushiCredentials,
+)
 
 from scheduler import tasks
 from scheduler.fake_data import (
@@ -133,9 +137,7 @@ class TestFetchIntention:
     def test_process_with_planned_duplicates(self, counter_report_types, credentials, monkeypatch):
         scheduler = SchedulerFactory()
 
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
-        ):
+        def mocked_fetch_report(self, counter_report, start_date, end_date):
             return FetchAttemptFactory(
                 error_code="",
                 credentials=self,
@@ -205,9 +207,7 @@ class TestFetchIntention:
             service_busy_delay=30,
         )
 
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
-        ):
+        def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 error_code=error_code,
                 credentials=credentials["standalone_tr"],
@@ -998,9 +998,7 @@ class TestScheduler:
         assert scheduler.last_time == datetime(2020, 2, 1, 0, 0, 0, tzinfo=current_tz)
 
     def test_run_next(self, monkeypatch, credentials, counter_report_types):
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
-        ):
+        def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 error_code="",
                 credentials=credentials["standalone_tr"],
@@ -1173,9 +1171,7 @@ class TestScheduler:
         """Test workflow when 3032 error occurs"""
         scheduler = SchedulerFactory()
 
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
-        ):
+        def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 start_date=date(2020, 2, 1),
                 error_code="3032",
@@ -1234,9 +1230,7 @@ class TestScheduler:
         assert cr2c.last_harvestable_month_user is None
 
     def test_run_next_ordering(self, monkeypatch, credentials, counter_report_types):
-        def mocked_fetch_report(
-            self, counter_report, start_date, end_date, fetch_attemp=None, use_url_lock=True
-        ):
+        def mocked_fetch_report(*args, **kwargs):
             return FetchAttemptFactory(
                 error_code="",
                 credentials=credentials["standalone_tr"],
@@ -1704,21 +1698,17 @@ class TestAutomatic:
 
         # Mock successful report fetching
         def mocked_fetch_report_v5(self, client, counter_report, start_date, end_date, file_data):
-            return {
-                "credentials": credentials["branch_pr"],
-                "counter_report": counter_report,
-                "start_date": start_date,
-                "end_date": end_date,
-                "status": AttemptStatus.IMPORTING,
-                "data_file": None,
-                "checksum": "",
-                "file_size": 0,
-                "log": "",
-                "error_code": "",
-                "when_processed": timezone.now(),
-                "http_status_code": 200,
-                "partial_data": False,
-            }
+            return FetchAttemptFactory.build(
+                credentials=credentials["branch_pr"],
+                counter_report=counter_report,
+                start_date=start_date,
+                end_date=end_date,
+                status=AttemptStatus.IMPORTING,
+                data_file=None,
+                checksum="",
+                when_processed=timezone.now(),
+                http_status_code=200,
+            )
 
         monkeypatch.setattr(SushiCredentials, "_fetch_report_v5", mocked_fetch_report_v5)
         credentials["branch_pr"].fetch_report(

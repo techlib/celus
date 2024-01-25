@@ -30,8 +30,10 @@ from celus_nigiri.counter5 import (
     Counter5DRReport,
     Counter5IRM1Report,
     Counter5PRReport,
+    Counter5ReportBase,
     Counter5TableReport,
     Counter5TRReport,
+    CounterError,
     TransportError,
 )
 from celus_nigiri.error_codes import ErrorCode
@@ -45,7 +47,6 @@ from core.models import (
     SourceFileMixin,
     User,
 )
-from core.task_support import cache_based_lock
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.files.base import ContentFile, File
@@ -392,17 +393,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         counter_report: CounterReportType,
         start_date: Union[str, date],
         end_date: Union[str, date],
-        fetch_attempt: "SushiFetchAttempt" = None,
-        use_url_lock=True,
     ) -> "SushiFetchAttempt":
         """
         :param counter_report:
         :param start_date:
         :param end_date:
-        :param fetch_attempt: when provides, new SushiFetchAttempt will not be created but rather
-                              the given one updated
-        :param use_url_lock: if True, a cache based lock will be used to ensure exclusive access
-                             to one URL
         :return:
         """
 
@@ -417,25 +412,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         fetch_m = (
             self._fetch_report_v4 if isinstance(client, Sushi4Client) else self._fetch_report_v5
         )
-        if use_url_lock:
-            with cache_based_lock(self.url_lock_name):
-                attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
-        else:
-            attempt_params = fetch_m(client, counter_report, start_date, end_date, output_file)
-        # add version info to the attempt
-        attempt_params["credentials_version_hash"] = self.version_hash
-        # now store it - into an existing object or a new one
-        if fetch_attempt:
-            for key, value in attempt_params.items():
-                setattr(fetch_attempt, key, value)
-            fetch_attempt.processing_info["credentials_version"] = self.version_dict()
-            fetch_attempt.save()
-        else:
-            if "processing_info" in attempt_params:
-                attempt_params["processing_info"]["credentials_version"] = self.version_dict()
-            else:
-                attempt_params["processing_info"] = {"credentials_version": self.version_dict()}
-            fetch_attempt = SushiFetchAttempt.objects.create(**attempt_params)
+        fetch_attempt: SushiFetchAttempt = fetch_m(
+            client, counter_report, start_date, end_date, output_file
+        )
+        # add version info to the attempt and store it
+        fetch_attempt.credentials_version_hash = self.version_hash
+        fetch_attempt.processing_info["credentials_version"] = self.version_dict()
+        fetch_attempt.save()
 
         fetch_attempt.update_broken()
 
@@ -448,12 +431,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     def _fetch_report_v4(
         self, client: Sushi4Client, counter_report, start_date, end_date, file_data: IO[bytes]
-    ) -> dict:
-        status = AttemptStatus.INITIAL
-        partial_data = False
-        when_processed = None
-        log = ""
-        error_code = ""
+    ) -> "SushiFetchAttempt":
+        attempt = SushiFetchAttempt(
+            credentials=self,
+            counter_report=counter_report,
+            start_date=start_date,
+            end_date=end_date,
+        )
         params = self.extra_params or {}
         params["sushi_dump"] = True
         filename = "foo.tsv"  # we just need the extension
@@ -466,7 +450,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         except SushiException as e:
             logger.warning("pycounter Error: %s", e)
             try:
-                errors = client.extract_errors_from_data(file_data)
+                errors: [SushiError] = client.extract_errors_from_data(file_data)
                 if errors:
                     error_code = errors[0].code
                     if error_code == "non-sushi":
@@ -474,7 +458,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                         # from SUSHI response
                         # lets add the exception to the errors as it cannot be collected by
                         # `client.extract_errors_from_data`
-                        status = AttemptStatus.PARSING_FAILED
+                        attempt.status = AttemptStatus.PARSING_FAILED
                         errors.insert(
                             0,
                             SushiError(
@@ -482,7 +466,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                             ),
                         )
                     else:
-                        error_code = int(error_code)
+                        attempt.error_code = int(error_code)
                         # Check whether it contains partial data
                         if any(
                             str(e.code)
@@ -492,9 +476,9 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                             )
                             for e in errors
                         ):
-                            partial_data = True
+                            attempt.partial_data = True
 
-                if status == AttemptStatus.INITIAL:
+                if attempt.status == AttemptStatus.INITIAL:
                     # the status has not been set yet
                     # Mark that status is no data when there is no data error
                     # Otherwise mark as failed download
@@ -507,187 +491,200 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                         )
                         for e in errors
                     ):
-                        status = AttemptStatus.NO_DATA
+                        attempt.status = AttemptStatus.NO_DATA
                     else:
-                        status = AttemptStatus.DOWNLOAD_FAILED
+                        attempt.status = AttemptStatus.DOWNLOAD_FAILED
 
-                log = "\n".join(error.full_log for error in errors)
+                attempt.log = "\n".join(error.full_log for error in errors)
                 filename = "foo.xml"  # we just need the extension
             except Exception as e:
                 # if this happens, it means we were not able to handle the data correctly
                 # and something failed in our own code - we want a traceback and error report
                 # in the logger
-                status = AttemptStatus.PARSING_FAILED
+                attempt.status = AttemptStatus.PARSING_FAILED
                 logger.error("Incorrect sushi format: %s", e)
-                error_code = "wrong-sushi"
-                log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+                attempt.error_code = "wrong-sushi"
+                attempt.log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
                 filename = "foo.xml"  # we just need the extension
 
         except Exception as e:
-            status = AttemptStatus.PARSING_FAILED
+            attempt.status = AttemptStatus.PARSING_FAILED
             logger.error("Error: %s", e)
-            error_code = "non-sushi"
-            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+            attempt.error_code = "non-sushi"
+            attempt.log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
             filename = "foo.xml"  # we just need the extension
         else:
             if len(report.pubs) > 0:
-                status = AttemptStatus.IMPORTING
+                attempt.status = AttemptStatus.IMPORTING
             else:
-                status = AttemptStatus.NO_DATA
+                attempt.status = AttemptStatus.NO_DATA
         finally:
-            when_processed = now()
+            attempt.when_processed = now()
 
         if report:
             # Write tsv report
-            data_file = ContentFile(client.report_to_string(report))
+            attempt.data_file = ContentFile(client.report_to_string(report))
         else:
             # Write error file
             file_data.seek(0)
-            data_file = File(file_data)
+            attempt.data_file = File(file_data)
 
-        checksum, file_size = SourceFileMixin.checksum_fileobj(data_file)
-        data_file.name = filename
+        attempt.checksum, attempt.file_size = SourceFileMixin.checksum_fileobj(attempt.data_file)
+        attempt.data_file.name = filename
 
         # Make sure that file is written to disk
-        data_file.flush()
+        attempt.data_file.flush()
         try:
-            os.fsync(data_file.fileno())
+            os.fsync(attempt.data_file.fileno())
         except io.UnsupportedOperation:
             # we don't care if it fails here
             pass
 
-        return {
-            "status": status,
-            "credentials": self,
-            "counter_report": counter_report,
-            "start_date": start_date,
-            "end_date": end_date,
-            "data_file": data_file,
-            "checksum": checksum,
-            "file_size": file_size,
-            "log": log,
-            "error_code": error_code,
-            "when_processed": when_processed,
-            "partial_data": partial_data,
-        }
+        return attempt
 
-    def _fetch_report_v5(
-        self, client: Sushi5Client, counter_report, start_date, end_date, file_data: IO[bytes]
-    ) -> dict:
-        status = AttemptStatus.INITIAL
-        when_processed = None
-        partial_data = False
-        filename = "foo.json"
-        error_code = ""
-        # we want extra split data from the report
-        # params must be a copy, otherwise we will pollute EXTRA_PARAMS
+    def _v5_get_report_data(
+        self, client, counter_report, start_date, end_date, file_data
+    ) -> Counter5ReportBase:
+        # params must be a copy, otherwise we will pollute it with EXTRA_PARAMS
         params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(counter_report.code.lower(), {}))
         extra = self.extra_params or {}
         params.update(extra)
-        http_status_code = None
+        report = client.get_report_data(
+            counter_report.code, start_date, end_date, output_content=file_data, params=params
+        )
+        return report
+
+    def _fetch_report_v5(
+        self, client: Sushi5Client, counter_report, start_date, end_date, file_data: IO[bytes]
+    ) -> "SushiFetchAttempt":
+        """
+        Returns an usaved SushiFetchAttempt object
+        """
+        attempt = SushiFetchAttempt(
+            credentials=self,
+            counter_report=counter_report,
+            start_date=start_date,
+            end_date=end_date,
+        )
         try:
-            report = client.get_report_data(
-                counter_report.code, start_date, end_date, output_content=file_data, params=params
+            report = self._v5_get_report_data(
+                client, counter_report, start_date, end_date, file_data
             )
-            http_status_code = report.http_status_code
+            attempt.http_status_code = report.http_status_code
         except requests.exceptions.ConnectionError as e:
             logger.warning("Connection error: %s", e)
-            error_code = "connection"
-            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
-            status = AttemptStatus.DOWNLOAD_FAILED
+            attempt.error_code = "connection"
+            attempt.log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+            attempt.status = AttemptStatus.DOWNLOAD_FAILED
         except (SushiExceptionNigiri, Exception) as e:
             logger.log(
                 logging.WARNING if isinstance(e, SushiExceptionNigiri) else logging.ERROR,
                 "Error: %s",
                 e,
             )
-            error_code = "non-sushi"
-            log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
-            status = AttemptStatus.PARSING_FAILED
+            attempt.error_code = "non-sushi"
+            attempt.log = f"Exception: {e}\nTraceback: {traceback.format_exc()}"
+            attempt.status = AttemptStatus.PARSING_FAILED
         else:
-            warning_codes = [str(w.code) for w in report.warnings]
-            # override error and check for partial data
-            if str(ErrorCode.PARTIAL_DATA_RETURNED.value) in warning_codes:
-                error_code = str(ErrorCode.PARTIAL_DATA_RETURNED.value)
-                partial_data = True
-            elif str(ErrorCode.NO_LONGER_AVAILABLE.value) in warning_codes:
-                error_code = str(ErrorCode.NO_LONGER_AVAILABLE.value)
-                partial_data = True
-            else:
-                error_code = ""
-                partial_data = False
+            # no exception, but we need to deal with SUSHI errors, etc.
+            self._v5_extract_status_and_errors(report, attempt)
 
-            # append to log
-            log = ""
-            if report.errors:
-                log += "Errors: " + "; ".join(str(e) for e in report.errors) + "\n" * 2
-            if report.warnings:
-                log += "Warnings: " + "; ".join(str(e) for e in report.warnings) + "\n" * 2
-            if report.infos:
-                log += "Infos: " + "; ".join(str(e) for e in report.infos) + "\n" * 2
-
-            # This indicates fatal error
-            error = report.errors or (report.warnings and not report.record_found)
-            if error:
-                if report.errors:
-                    logger.warning("Found errors: %s", report.errors)
-                    error_obj = report.errors[0]
-                elif report.warnings:
-                    error_obj = report.warnings[0]
-
-                if isinstance(error_obj, TransportError):
-                    # transport error means something bad and no valid json in response
-                    status = AttemptStatus.DOWNLOAD_FAILED
-                    error_code = "non-sushi"
-                else:
-                    error_code = str(error_obj.code) if hasattr(error_obj, "code") else ""
-
-                    # Mark that status is no data when there is no data error
-                    # Otherwise mark as failed download
-                    if str(error_code) in (
-                        str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
-                        str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
-                    ):
-                        status = AttemptStatus.NO_DATA
-                    else:
-                        status = AttemptStatus.DOWNLOAD_FAILED
-
-                    when_processed = now()
-            else:
-                if report.record_found:
-                    status = AttemptStatus.IMPORTING
-                else:
-                    status = AttemptStatus.NO_DATA
-
-        # now create the attempt instance
+        # now generic stuff independent of success or failure
         file_data.seek(0)  # make sure that file is rewound to the start
-        checksum, file_size = SourceFileMixin.checksum_fileobj(file_data)
-        django_file = File(file_data)
-        django_file.name = filename
+        attempt.checksum, attempt.file_size = SourceFileMixin.checksum_fileobj(file_data)
+        attempt.data_file = File(file_data)
+        attempt.data_file.name = "foo.json"  # we just need the extension
 
         # Make sure that file is written to disk
-        django_file.flush()
+        attempt.data_file.flush()
         try:
-            os.fsync(django_file.fileno())
+            os.fsync(attempt.data_file.fileno())
         except io.UnsupportedOperation:
             # we don't care if it fails here
             pass
 
-        return {
-            "credentials": self,
-            "counter_report": counter_report,
-            "start_date": start_date,
-            "end_date": end_date,
-            "status": status,
-            "data_file": django_file,
-            "checksum": checksum,
-            "file_size": file_size,
-            "log": log,
-            "error_code": error_code,
-            "when_processed": when_processed,
-            "http_status_code": http_status_code,
-            "partial_data": partial_data,
-        }
+        return attempt
+
+    @classmethod
+    def _stringify_error(cls, error: Union[CounterError, TransportError]) -> str:
+        base = str(error)
+        if data := getattr(error, "data", None):
+            base += f" ({data})"
+        return base
+
+    @classmethod
+    def _v5_extract_status_and_errors(
+        cls, report: Counter5ReportBase, attempt: "SushiFetchAttempt"
+    ) -> "SushiFetchAttempt":
+        """
+        Modifies `attempt` in place to fill in status, error_code, log and partial_data.
+        Returns the attempt back for convenience.
+        """
+        # check for explicitly declared partial data
+        partial_data_code = str(ErrorCode.PARTIAL_DATA_RETURNED.value)
+        if w := next((w for w in report.warnings if str(w.code) == partial_data_code), None):
+            attempt.error_code = str(w.code)
+            attempt.partial_data = True
+        # if data is present, some more error codes would mean `partial_data`
+        # note: this only makes sense if more than one month is requested, which should not
+        # happen in Celus. But we have tests for it and nobody knows what data we will get
+        # so it is better to be prepared
+        if report.record_found:
+            possible_partial_codes = (
+                str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
+                str(ErrorCode.NO_LONGER_AVAILABLE.value),
+            )
+            if w := next(
+                (w for w in report.warnings if str(w.code) in possible_partial_codes), None
+            ):
+                attempt.error_code = str(w.code)
+                attempt.partial_data = True
+
+        # append to log
+        for code, errors in (
+            ("Errors", report.errors),
+            ("Warnings", report.warnings),
+            ("Infos", report.infos),
+        ):
+            if errors:
+                attempt.log += (
+                    f"{code}: " + "; ".join(cls._stringify_error(e) for e in errors) + "\n" * 2
+                )
+
+        if report.errors or (report.warnings and not report.record_found):
+            # we have either an error or a warning without any data
+            if report.errors:
+                logger.warning("Found errors: %s", report.errors)
+                error_obj = report.errors[0]
+            elif report.warnings:
+                error_obj = report.warnings[0]
+            else:
+                raise ValueError("This should not happen")  # just a sanity check
+
+            if isinstance(error_obj, TransportError):
+                # transport error means something bad and no valid json in response
+                attempt.status = AttemptStatus.DOWNLOAD_FAILED
+                attempt.error_code = "non-sushi"
+            else:
+                attempt.error_code = str(error_obj.code) if hasattr(error_obj, "code") else ""
+                # Mark that status is no data when there is no data error
+                # Otherwise mark as failed download
+                if str(attempt.error_code) in (
+                    str(ErrorCode.NO_DATA_FOR_DATE_ARGS.value),
+                    str(ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value),
+                ):
+                    attempt.status = AttemptStatus.NO_DATA
+                else:
+                    attempt.status = AttemptStatus.DOWNLOAD_FAILED
+
+                attempt.when_processed = now()
+        else:
+            # no errors, if warnings then with data
+            if report.record_found:
+                attempt.status = AttemptStatus.IMPORTING
+            else:
+                attempt.status = AttemptStatus.NO_DATA
+        return attempt
 
     def broken_report_types(self):
         return CounterReportsToCredentials.objects.filter(

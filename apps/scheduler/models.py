@@ -449,7 +449,7 @@ class FetchIntention(models.Model):
             ).exists()  # skip broken or non existing counter report to credentials mapping
         )
 
-    def get_handler(self) -> typing.Optional[typing.Callable[["FetchIntention"], None]]:
+    def get_handler(self) -> typing.Optional[typing.Callable[[], None]]:
         attempt = self.attempt
 
         if not attempt:
@@ -488,7 +488,9 @@ class FetchIntention(models.Model):
             return self.handle_no_data
         elif error_code == ErrorCode.TOO_MANY_REQUESTS:
             return self.handle_too_many_requests
-        elif error_code == ErrorCode.PARTIAL_DATA_RETURNED:
+        elif error_code == ErrorCode.PARTIAL_DATA_RETURNED or attempt.partial_data:
+            # if there is `NO_LONGER_AVAILABLE` exception, but also data, the attempt will
+            # be marked as partial_data. We want to handle this case here as well.
             return self.handle_partial_data
         elif error_code == ErrorCode.NO_LONGER_AVAILABLE:
             return self.handle_no_longer_available
@@ -517,7 +519,7 @@ class FetchIntention(models.Model):
 
         # fetch attempt
         attempt: SushiFetchAttempt = self.credentials.fetch_report(
-            self.counter_report, self.start_date, self.end_date, use_url_lock=False
+            self.counter_report, self.start_date, self.end_date
         )
         attempt.triggered_by = self.harvest.last_updated_by
         attempt.save()

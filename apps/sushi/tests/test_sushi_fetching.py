@@ -37,7 +37,10 @@ class TestSushiFetching:
                 "pr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                ("Warnings: Warning #3040: Partial Data Returned.\n\n"),
+                (
+                    "Warnings: Warning #3040: Partial Data Returned. "
+                    "(Usage data has not been processed for all requested months.)\n\n"
+                ),
                 False,
                 "634630dea45bde1bd341ffb49ae1baf9ea07088e5ab3d37ebf711712db1171ea",
             ),
@@ -46,8 +49,10 @@ class TestSushiFetching:
                 "pr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                "Warnings: Warning #1011: Report Queued for Processing; "
-                "Warning #3060: Invalid Report Filter Value\n\n",
+                "Warnings: Warning #1011: Report Queued for Processing (Report is currently queued "
+                "for processing. Please retry the request after some reasonable time.); "
+                "Warning #3060: Invalid Report Filter Value (platform not able to be changed "
+                "from its value of jstor)\n\n",
                 False,
                 "74214e7abef5686360a1533d63e271663a502709d7790bf2bc966d781bf403d6",
             ),
@@ -56,7 +61,8 @@ class TestSushiFetching:
                 "pr",
                 AttemptStatus.DOWNLOAD_FAILED,
                 AttemptStatus.DOWNLOAD_FAILED,
-                "Warnings: Warning #1011: Report Queued for Processing\n\n",
+                "Warnings: Warning #1011: Report Queued for Processing (Report is currently queued"
+                " for processing. Please retry the request after some reasonable time.)\n\n",
                 False,
                 "f2bf80be20ec7f320482bb1e59c58f4aa203e47c5761325935955233a4a51f19",
             ),
@@ -65,7 +71,8 @@ class TestSushiFetching:
                 "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                "Errors: Error #3030: No Usage Available for Requested Dates.\n\n",
+                "Errors: Error #3030: No Usage Available for Requested Dates. (Usage data is not "
+                "available for all requested months between the begin_date and end_date.)\n\n",
                 False,
                 "2cff6104b7d2104724425361eeeb5868e99e46b4d663194edcd1813fa4829070",
             ),
@@ -111,7 +118,8 @@ class TestSushiFetching:
                 "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                "Infos: Info #3062: Invalid ReportAttribute Value\n\n",
+                "Infos: Info #3062: Invalid ReportAttribute Value (Access_Method is not a "
+                "recognized attribute for this report)\n\n",
                 False,
                 "46c1b2d43465cd53df256b96ae87b770a1a8d2d3aa7837c6de024cf2ebe1502c",
             ),
@@ -120,7 +128,8 @@ class TestSushiFetching:
                 "tr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                "Infos: Info #3062: Invalid ReportAttribute Value\n\n",
+                "Infos: Info #3062: Invalid ReportAttribute Value (Access_Method is not a "
+                "recognized attribute for this report)\n\n",
                 False,
                 "21300b16301c0d696e6c8ea986efc14362c54ba21fd633bbdfac9bb1461470e7",
             ),
@@ -129,7 +138,8 @@ class TestSushiFetching:
                 "tr",
                 AttemptStatus.NO_DATA,
                 AttemptStatus.NO_DATA,
-                "Infos: Info #3050: Parameter Not Recognized in this Context\n\n",
+                "Infos: Info #3050: Parameter Not Recognized in this Context "
+                "(Parameter email is not recognized)\n\n",
                 False,
                 "38ac8db30e72f965b221004ddd9500acad6b1db0b2fda23c8c718ed45042df3c",
             ),
@@ -138,7 +148,7 @@ class TestSushiFetching:
                 "pr",
                 AttemptStatus.IMPORTING,
                 AttemptStatus.SUCCESS,
-                "Infos: Info #3050: Parameter Not Recognized in this Context; "
+                "Infos: Info #3050: Parameter Not Recognized in this Context ([requestor_id]); "
                 "Info #0: In order to be consistent with chapter-only COUNTER "
                 "metrics available for other publishers, the non-standard "
                 "tandfeBooks:Total_Chapter_Requests metric has been included\n\n",
