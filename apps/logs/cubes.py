@@ -1,10 +1,17 @@
 from django.conf import settings
+from django.db import connection
 from hcube.api.backend import CubeBackend
 from hcube.api.models.cube import Cube
 from hcube.api.models.dimensions import DateDimension, IntDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
+from hcube.backends.clickhouse.dictionaries import (
+    DictionaryAttr,
+    DictionaryDefinition,
+    PostgresqlSource,
+)
+from hcube.settings import GlobalSettings
 
 from logs.models import AccessLog, ImportBatch, ReportType
 
@@ -20,8 +27,16 @@ def create_ch_backend():
     )
 
 
+GlobalSettings.aggregates_zero_for_empty_data = True
+
 ch_backend = create_ch_backend()
-django_db = settings.DATABASES["default"]
+django_db = connection.settings_dict
+postgresql_attrs = dict(
+    user=django_db["USER"],
+    password=django_db["PASSWORD"],
+    host=django_db["HOST"],
+    port=django_db["PORT"],
+)
 
 
 class AccessLogCube(Cube):
@@ -74,6 +89,29 @@ class AccessLogCube(Cube):
                 type="set(0)",
                 granularity=1,
             )
+        ]
+        engine = "MergeTree"
+        use_lightweight_deletes = True
+
+        # dictionaries
+        _dicts = [
+            ("title", "publications_title", ("name", "issn", "eissn", "doi", "isbn")),
+            ("organization", "organizations_organization", ("short_name", "name")),
+            ("platform", "publications_platform", ("short_name", "name")),
+            ("report_type", "logs_reporttype", ("short_name", "name")),
+            ("metric", "logs_metric", ("short_name", "name")),
+            ("dim", "logs_dimensiontext", ("text",)),
+        ]
+
+        dictionaries = [
+            DictionaryDefinition(
+                name=name,
+                source=PostgresqlSource(django_db["NAME"], table=table_name, **postgresql_attrs),
+                key="id",
+                layout="hashed",
+                attrs=[DictionaryAttr(name=attr_name, type="String") for attr_name in attrs],
+            )
+            for name, table_name, attrs in _dicts
         ]
 
     @classmethod
@@ -187,4 +225,4 @@ class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
     cube = AccessLogCube
     preserved_dimensions = ["target_id", "platform_id", "organization_id", "date"]
     aggregated_metrics = ["value"]
-    projection = True
+    projection = False

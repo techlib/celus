@@ -5,14 +5,16 @@ import pytest
 from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
 from celus_pycounter import report
+from django.core.management import call_command
 from django.db.models import Count, Sum
 from django.urls import reverse
 from hcube.api.models.aggregation import Sum as HSum
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.fake_data import PlatformFactory
+from publications.logic.title_management import find_mergeable_titles, merge_titles
 from publications.models import PlatformInterestReport, PlatformTitle, Title
 
-from logs.fake_data import ManualDataUploadFullFactory, MetricFactory
+from logs.fake_data import ManualDataUploadFullFactory, MetricFactory, ReportTypeFactory
 from logs.models import (
     AccessLog,
     DimensionText,
@@ -268,8 +270,8 @@ class TestDataImport:
                     ch_backend.get_one_record(
                         AccessLogCube.query().filter(report_type_id=rt.pk).aggregate(HSum("value"))
                     ).sum
-                    is None
-                ), f"mrt {i} should have sum of hits == None as it is materialized"
+                    == 0
+                ), f"mrt {i} should have sum of hits == 0 as it is materialized"
 
 
 @pytest.mark.django_db
@@ -394,9 +396,13 @@ class TestCounter5Import:
         records = reader.file_to_records(str(Path(__file__).parent / "data/counter5" / filename))
         assert count == len(list(records))
 
-    def test_c5_tr_nature_merging(self, organization_random, report_type_nd, platform):
-        # we do not care much about the dimensions - just about titles
-        rt = report_type_nd(0)
+    def test_c5_tr_nature_merging(self, organization_random, platform):
+        rt = ReportTypeFactory(
+            name="Counter 5 - Title report",
+            short_name="TR",
+            default_platform_interest=True,
+            dimensions=Counter5TRReport.dimensions,
+        )
 
         reader = Counter5TRReport()
         records = reader.file_to_records(
@@ -404,6 +410,91 @@ class TestCounter5Import:
         )
         import_counter_records(rt, organization_random, platform, records)
         assert Title.objects.filter(name="Nature").count() == 1, "only one Nature"
+        assert (
+            AccessLog.objects.count()
+            == AccessLog.objects.values(
+                "organization_id",
+                "platform_id",
+                "report_type_id",
+                "metric_id",
+                "target_id",
+                "date",
+                "dim1",
+                "dim2",
+                "dim3",
+                "dim4",
+                "dim5",
+                "dim6",
+                "dim7",
+            )
+            .distinct()
+            .count()
+        ), "no duplicates"
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_c5_tr_merging_duplicates(self, organization_random, platform, clickhouse_db):
+        """
+        This tests a real-life example of a report where the same title is reported with different
+        proprietary ids. Once it had and ISSN, once it did not.
+        Thus, it was taken as two different titles. But then another record came, where the ISSN
+        was reported for the title that did not have it before. This should trigger a merge.
+        And this then results in the same import batch containing duplicated records for the same
+        title and other dimensions.
+        """
+        rt = ReportTypeFactory(
+            name="Counter 5 - Title report",
+            short_name="TR",
+            default_platform_interest=True,
+            dimensions=Counter5TRReport.dimensions,
+        )
+
+        reader = Counter5TRReport()
+        records = reader.file_to_records(
+            str(Path(__file__).parent / "data/counter5/TR-one-title-more-ids.json")
+        )
+        import_counter_records(rt, organization_random, platform, records)
+        assert Title.objects.filter(name="GQ Gentlemens Quarterly").count() == 2
+        t1, t2 = Title.objects.filter(name="GQ Gentlemens Quarterly")
+        t_no_issn = t2 if t1.issn else t1
+        t_with_issn = t1 if t2 is t_no_issn else t2
+        # update t_no_issn with the issn from t_with_issn
+        t_no_issn.issn = t_with_issn.issn
+        t_no_issn.save()
+        for titles in find_mergeable_titles():
+            merge_titles(titles)
+        assert Title.objects.filter(name="GQ Gentlemens Quarterly").count() == 1
+        key_attrs = (
+            "organization_id",
+            "platform_id",
+            "report_type_id",
+            "metric_id",
+            "target_id",
+            "date",
+            "dim1",
+            "dim2",
+            "dim3",
+            "dim4",
+            "dim5",
+            "dim6",
+            "dim7",
+        )
+        assert (
+            AccessLog.objects.count() > AccessLog.objects.values(*key_attrs).distinct().count()
+        ), "there are duplicates"
+        assert ch_backend.get_count(AccessLogCube.query()) > ch_backend.get_count(
+            AccessLogCube.query().group_by(*key_attrs)
+        )
+        old_sum = AccessLog.objects.aggregate(sum=Sum("value"))["sum"]
+        # now we want to fix them
+        call_command("find_split_records", "--fix-it")
+        assert (
+            AccessLog.objects.count() == AccessLog.objects.values(*key_attrs).distinct().count()
+        ), "there are no duplicates"
+        assert AccessLog.objects.aggregate(sum=Sum("value"))["sum"] == old_sum
+        assert (
+            ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum == old_sum
+        )
 
 
 @pytest.mark.django_db

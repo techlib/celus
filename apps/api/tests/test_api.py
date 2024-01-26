@@ -80,7 +80,10 @@ class TestAPI:
         )
         assert resp.status_code == 400
 
+    @pytest.mark.clickhouse
     @pytest.mark.parametrize("use_registry_id", [True, False])
+    @pytest.mark.usefixtures("clickhouse_on_off")
+    @pytest.mark.django_db(transaction=True)
     def test_platform_report_view_response(
         self, client, flexible_slicer_test_data, use_registry_id
     ):

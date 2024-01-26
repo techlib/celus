@@ -1,0 +1,1349 @@
+{
+  "Report_Header": {
+    "Created": "2022-04-26T21:15:02Z",
+    "Created_By": "ProQuest",
+    "Customer_ID": "12261",
+    "Report_ID": "TR",
+    "Release": "5",
+    "Report_Name": "Title Master Report",
+    "Institution_Name": "Foo bar baz",
+    "Institution_ID": [
+      {
+        "Type": "Proprietary",
+        "Value": "ProQuest:XXYYZZ"
+      }
+    ],
+    "Report_Filters": [
+      {
+        "Name": "Platform",
+        "Value": "ProQuest"
+      },
+      {
+        "Name": "Begin_Date",
+        "Value": "2022-02-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2022-02-28"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "YOP|Access_Method|Access_Type|Data_Type|Section_Type"
+      }
+    ]
+  },
+  "Report_Items": [
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Print_ISSN",
+          "Value": "0016-6979"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:24822"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2018",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Print_ISSN",
+          "Value": "0016-6979"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:24822"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2020",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1978",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1980",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1981",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 5
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 5
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1983",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 17
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 17
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 13
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 13
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1984",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 7
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 7
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 6
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1985",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1986",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 6
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 6
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1987",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 8
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 8
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 7
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1988",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1989",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 61
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 61
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 57
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 57
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1990",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 92
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 92
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 85
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 85
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1991",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 379
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 379
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 364
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 364
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1992",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 94
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 94
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 91
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 91
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1993",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 155
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 155
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 153
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 153
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1994",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 135
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 135
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 129
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 129
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1995",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 162
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 162
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 161
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 161
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1996",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 350
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 350
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 348
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 348
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1997",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 454
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 454
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 419
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 419
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1998",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 605
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 605
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 595
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 595
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "1999",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 407
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 407
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 394
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 394
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2000",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 200
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 200
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 194
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 194
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2001",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2002",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2003",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2005",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 22
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 22
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 17
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 17
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2007",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 10
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 7
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2009",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2018",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Title": "GQ  Gentlemens Quarterly",
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "ProQuest:4576060"
+        }
+      ],
+      "Platform": "ProQuest",
+      "Publisher": "Conde Nast",
+      "Data_Type": "Journal",
+      "Section_Type": "Article",
+      "YOP": "2019",
+      "Access_Type": "Controlled",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2022-02-01",
+            "End_Date": "2022-02-28"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

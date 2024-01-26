@@ -23,6 +23,7 @@ tests:run_tests:
     - name: clickhouse/clickhouse-server:24.1.3
       alias: clickhouse
   variables:
+    FF_NETWORK_PER_BUILD: 1  # to make services see each other
     DJANGO_SETTINGS_MODULE: config.settings.test
     POSTGRES_DB: celus
     POSTGRES_USER: celus

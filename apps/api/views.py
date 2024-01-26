@@ -7,9 +7,10 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 from hcube.api.models.aggregation import Sum as HSum
+from hcube.api.models.transforms import StoredMap
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.queries import find_best_materialized_view
-from logs.models import AccessLog, DimensionText, Metric, ReportType
+from logs.models import AccessLog, DimensionText, ReportType
 from publications.models import Platform, Title
 from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.response import Response
@@ -75,10 +76,6 @@ class PlatformReportView(APIView):
             ).pk
 
         if request.USE_CLICKHOUSE:
-            # clickhouse does not contain metric names, so we must remap them later on
-            metrics = {
-                m["pk"]: m["short_name"] for m in Metric.objects.all().values("pk", "short_name")
-            }
             query = AccessLogCube.query().filter(
                 report_type_id=rt.pk,
                 platform_id=platform_id,
@@ -88,13 +85,15 @@ class PlatformReportView(APIView):
             data = (
                 {
                     # make the data look the same as the non-clickhouse version
-                    "metric__short_name": metrics[rec.metric_id],
+                    "metric__short_name": rec.metric_short_name,
                     "target": rec.target_id,
                     **rec._asdict(),
                 }
                 for rec in ch_backend.get_records(
-                    query.group_by("target_id", "metric_id", *reported_dims).aggregate(
-                        hits=HSum("value")
+                    query.group_by("target_id", "metric_id", *reported_dims)
+                    .aggregate(hits=HSum("value"))
+                    .transform(
+                        metric_short_name=StoredMap("metric_id", "metric", "short_name"),
                     )
                 )
             )

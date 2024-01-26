@@ -5,16 +5,30 @@ from itertools import chain
 from typing import Dict, List, Optional, Set
 
 from core.context_managers import needs_clickhouse_sync
+from django.db import connection
 from django.db.models import F, Q, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
+from hcube.backends.clickhouse.dictionaries import PostgresqlSource
 from publications.models import Title
 
 from ..cubes import AccessLogCube, ch_backend
 from ..models import AccessLog, ImportBatch, ImportBatchSyncLog
 
 logger = logging.getLogger(__name__)
+
+
+@needs_clickhouse_sync
+def initialize_clickhouse():
+    # because the database name that is actually used is not known on module initialization
+    # we have to modify the source definition here so that it works inside tests, where the
+    # name of the database is modified by prefixing it with 'test_'
+    django_db = connection.settings_dict["NAME"]
+    for dict_def in AccessLogCube.Clickhouse.dictionaries:
+        if isinstance(dict_def.source, PostgresqlSource):
+            dict_def.source.database = django_db
+    ch_backend.initialize_storage(AccessLogCube)
 
 
 @needs_clickhouse_sync
@@ -373,36 +387,3 @@ def deal_with_comparison_results(results: ComparisonResult):
     for ib_id in results.import_batches_to_delete:
         logger.debug("Deleting #%s", ib_id)
         AccessLogCube.delete_import_batch(ch_backend, ib_id)
-
-
-@needs_clickhouse_sync
-def sync_platformtitle_projection() -> (int, int, bool):
-    """
-    Checks if the data from the raw table and from the projection are the same. If not, rebuilds
-    the projection data
-    :return: (no_projection:int, with_projection:int, was_rebuilt:bool)
-    """
-    query = """
-    SELECT COUNT()
-    FROM (
-         SELECT organization_id, platform_id, target_id
-         FROM AccessLogCube
-         WHERE target_id != 0
-         GROUP BY organization_id, platform_id, target_id
-         ORDER BY organization_id, platform_id, target_id
-    ) AS X
-    SETTINGS optimize_use_projections = {0:d};
-    """
-    with ch_backend.pool.get_client() as client:
-        no_projection = client.execute(query.format(0))[0][0]
-        with_projection = client.execute(query.format(1))[0][0]
-        logger.debug("No projection: %d, with projection: %d", no_projection, with_projection)
-        if rebuild := (no_projection != with_projection):
-            client.execute(
-                "ALTER TABLE AccessLogCube CLEAR PROJECTION PlatformTitleOrganizationProjection;"
-            )
-            client.execute(
-                "ALTER TABLE AccessLogCube "
-                "MATERIALIZE PROJECTION PlatformTitleOrganizationProjection;"
-            )
-        return no_projection, with_projection, rebuild

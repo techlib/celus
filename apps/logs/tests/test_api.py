@@ -1,8 +1,9 @@
+import csv
 import json
 import locale
 from datetime import timedelta
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from core.logic.dates import month_end, month_start
@@ -19,7 +20,7 @@ from django.db.models import Max, Min
 from django.urls import reverse
 from organizations.models import UserOrganization
 from publications.fake_data import TitleFactory
-from publications.models import Platform
+from publications.models import Platform, PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials
@@ -27,10 +28,21 @@ from sushi.models import AttemptStatus, CounterReportsToCredentials
 from logs.fake_data import (
     ImportBatchFactory,
     ImportBatchFullFactory,
+    InterestGroupFactory,
     ManualDataUploadFactory,
     ManualDataUploadFullFactory,
+    ReportTypeFactory,
 )
-from logs.models import AccessLog, Dimension, DimensionText, MduMethod, Metric, ReportType
+from logs.models import (
+    AccessLog,
+    Dimension,
+    DimensionText,
+    MduMethod,
+    Metric,
+    ReportInterestMetric,
+    ReportMaterializationSpec,
+    ReportType,
+)
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     client_by_user_type,
@@ -46,8 +58,14 @@ from test_scenarios.basic import (  # noqa - fixtures
     users,
 )
 
+from ..logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from ..logic.data_import import import_counter_records
-from ..logic.materialized_interest import sync_interest_for_import_batch
+from ..logic.export import CSVExport
+from ..logic.materialized_interest import (
+    sync_interest_by_import_batches,
+    sync_interest_for_import_batch,
+)
+from ..logic.materialized_reports import sync_materialized_reports
 
 
 @pytest.mark.django_db
@@ -585,6 +603,101 @@ class TestRawDataExport:
                 export_task.delay.assert_called()
             else:
                 export_task.delay.assert_not_called()
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_raw_export_get_count(
+        self, master_admin_client, clickhouse_on_off, flexible_slicer_test_data, interest_rt
+    ):
+        """
+        Test that the raw data export endpoint returns the expected record count. We use the
+        test data from the flexible slicer tests.
+        """
+        if clickhouse_on_off:
+            # the data from the flexible_slicer_test_data fixture are not influenced by the
+            # clickhouse_on_off fixture, so we need to sync the data manually
+            sync_accesslogs_with_clickhouse_superfast()
+        url = reverse("raw_data_export")
+        resp = master_admin_client.get(url)
+        assert resp.status_code == 200
+        assert resp["Content-Type"] == "application/json"
+        data = resp.json()
+        assert data["total_count"] == 4860, "total count of records without any interest"
+        rt1 = flexible_slicer_test_data["report_types"][0]
+        m1 = flexible_slicer_test_data["metrics"][0]
+        ig = InterestGroupFactory.create()
+        pl = flexible_slicer_test_data["platforms"][0]
+        PlatformInterestReport.objects.create(platform_id=pl.pk, report_type=rt1)
+        ReportInterestMetric.objects.create(report_type=rt1, metric=m1, interest_group=ig)
+        sync_interest_by_import_batches()
+        assert interest_rt.accesslog_set.count() > 0
+        # retry the export
+        resp = master_admin_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        # rt1 has 972 records (1/5), from that interest is for
+        # (1/3 platforms, 1/3 report types, 1/3 metrics) = 972/27 = 36
+        assert data["total_count"] == 4860 + 36, "total count of records with interest"
+        # add materialized interest
+        mat_spec = ReportMaterializationSpec.objects.create(
+            name="x", base_report_type=interest_rt, keep_target=False
+        )
+        mat_rt = ReportTypeFactory.create(materialization_spec=mat_spec, dimensions=[])
+        sync_materialized_reports()
+        assert mat_rt.accesslog_set.count() > 0
+        # try the export again - the materialized report should not be included
+        resp = master_admin_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_count"] == 4860 + 36, "total count of records with interest, no mat rt"
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_raw_export_itself(
+        self, master_admin_client, clickhouse_on_off, flexible_slicer_test_data, interest_rt
+    ):
+        """
+        Test that the raw data export produces the expected data - both with and without clickhouse
+        """
+        if clickhouse_on_off:
+            # the data from the flexible_slicer_test_data fixture are not influenced by the
+            # clickhouse_on_off fixture, so we need to sync the data manually
+            sync_accesslogs_with_clickhouse_superfast()
+        # prepare the data similarly to `test_raw_export_get_count` - see that test for details
+        rt1 = flexible_slicer_test_data["report_types"][0]
+        m1 = flexible_slicer_test_data["metrics"][0]
+        ig = InterestGroupFactory.create()
+        pl = flexible_slicer_test_data["platforms"][0]
+        PlatformInterestReport.objects.create(platform_id=pl.pk, report_type=rt1)
+        ReportInterestMetric.objects.create(report_type=rt1, metric=m1, interest_group=ig)
+        sync_interest_by_import_batches()
+        mat_spec = ReportMaterializationSpec.objects.create(
+            name="x", base_report_type=interest_rt, keep_target=False
+        )
+        ReportTypeFactory.create(materialization_spec=mat_spec, dimensions=[])
+        sync_materialized_reports()
+        # call the export using API, but mock the important parts to be able to test the internals
+        url = reverse("raw_data_export")
+        with patch("logs.views.export_raw_data_task") as export_task, patch(
+            "logs.views.CSVExport"
+        ) as exporter:
+            exporter.return_value = Mock(filename_base="foo", file_url="http://foo.bar")
+            resp = master_admin_client.post(url)
+            assert resp.status_code == 200
+            assert export_task.delay.called
+            assert exporter.called
+            # now we take the exporter and call it directly to get the data
+            exp = CSVExport(*exporter.call_args[0], **exporter.call_args[1])
+            assert exp.record_count == 4860 + 36
+            # the data
+            out = StringIO()
+            # the code below fails wheh clickhouse is used because it uses dictionaries which are
+            # not yet
+            # also, we use more internal api in order to be able to use in-memory data storage
+            exp.export_raw_accesslogs_to_stream_lowlevel(out)
+            out.seek(0)
+            reader = csv.reader(out)
+            assert len(list(reader)) == 4860 + 36 + 1, "header row + all records"
 
 
 @pytest.fixture

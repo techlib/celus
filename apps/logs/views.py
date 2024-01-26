@@ -382,12 +382,12 @@ class RawDataDelayedExportView(APIView):
 
     def get(self, request):
         query_params = self.extract_query_filter_params(request)
-        exporter = CSVExport(query_params)
+        exporter = CSVExport(query_params, use_clickhouse=request.USE_CLICKHOUSE)
         return JsonResponse({"total_count": exporter.record_count})
 
     def post(self, request):
         query_params = self.extract_query_filter_params(request)
-        exporter = CSVExport(query_params, zip_compress=True)
+        exporter = CSVExport(query_params, zip_compress=True, use_clickhouse=request.USE_CLICKHOUSE)
         export_raw_data_task.delay(
             query_params, exporter.filename_base, zip_compress=exporter.zip_compress
         )

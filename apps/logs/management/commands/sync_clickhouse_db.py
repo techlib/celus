@@ -7,6 +7,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from logs.cubes import AccessLogCube, create_ch_backend
+from logs.logic.clickhouse import initialize_clickhouse
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ class Command(BaseCommand):
         if settings.CLICKHOUSE_SYNC_ACTIVE:
             # we want a fresh connection to clickhouse
             backend = create_ch_backend()
-            backend.initialize_storage(AccessLogCube)
+            initialize_clickhouse()
+            # backend.initialize_storage(AccessLogCube)
             changed, added, to_remove = backend.sync_storage(
                 AccessLogCube, drop=options["drop_columns"]
             )

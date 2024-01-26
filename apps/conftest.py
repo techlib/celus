@@ -2,6 +2,7 @@ import pytest
 from clickhouse_driver import Client
 from filelock import FileLock
 from logs.cubes import AccessLogCube, ch_backend
+from logs.logic.clickhouse import initialize_clickhouse
 
 
 def get_client(settings):
@@ -46,7 +47,7 @@ def clickhouse_connection(request, settings):
         with FileLock("clickhouse.lock").acquire():
             client = get_client(settings)
             ch_backend.drop_storage(AccessLogCube)
-            ch_backend.initialize_storage(AccessLogCube)
+            initialize_clickhouse()
             yield client
             ch_backend.drop_storage(AccessLogCube)
     else:

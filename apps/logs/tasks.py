@@ -15,6 +15,7 @@ from core.logic.error_reporting import email_if_fails
 from core.models import User
 from core.task_support import cache_based_lock
 from core.tasks import async_mail_admins
+from django.conf import settings
 from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
@@ -34,13 +35,13 @@ from logs.exceptions import (
 from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.logic.cleanup import (
     find_organizationplatform_differences,
+    find_split_accesslogs_with_the_same_title,
     fix_organizationplatform_differences,
 )
 from logs.logic.clickhouse import (
     compare_db_with_clickhouse,
     compare_titles_with_clickhouse,
     process_one_import_batch_sync_log,
-    sync_platformtitle_projection,
 )
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
@@ -176,7 +177,12 @@ def export_raw_data_task(query_params, filename_base, zip_compress=False):
     """
     Exports raw data into a file in the MEDIA directory
     """
-    exporter = CSVExport(query_params, zip_compress=zip_compress, filename_base=filename_base)
+    exporter = CSVExport(
+        query_params,
+        zip_compress=zip_compress,
+        filename_base=filename_base,
+        use_clickhouse=settings.CLICKHOUSE_QUERY_ACTIVE,
+    )
     try:
         exporter.export_raw_accesslogs_to_file()
     except Exception as e:
@@ -528,11 +534,11 @@ def sync_organizationplatform_records_task(reason: Optional[str] = None):
 @celery.shared_task
 @logged_task
 @email_if_fails
-def sync_platformtitle_projection_task():
-    no_projection, with_projection, synced = sync_platformtitle_projection()
-    if synced:
+@atomic
+def find_split_accesslogs_with_the_same_title_task():
+    stats = find_split_accesslogs_with_the_same_title()
+    if stats:
         async_mail_admins.delay(
-            "PlatformTitleOrganizationProjection projection was rebuilt",
-            f"Inconsistency found in projection data ({no_projection} vs "
-            f"{with_projection}) - projection was rebuilt",
+            "Found split accesslogs with the same title",
+            f"Stats: {stats}\n\nTo fix the issue, manual invervention is needed.",
         )

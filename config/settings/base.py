@@ -354,6 +354,7 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.compare_db_with_clickhouse_delayed_task": {"queue": "celery"},
     "logs.tasks.compare_db_with_clickhouse_task": {"queue": "import"},
     "logs.tasks.export_raw_data_task": {"queue": "export"},
+    "logs.tasks.find_split_accesslogs_with_the_same_title_task": {"queue": "import"},
     "logs.tasks.import_manual_upload_data": {"queue": "import"},
     "logs.tasks.import_new_sushi_attempts_task": {"queue": "import"},
     "logs.tasks.import_one_sushi_attempt_task": {"queue": "import"},
@@ -366,7 +367,6 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.sync_interest_task": {"queue": "interest"},
     "logs.tasks.sync_materialized_reports_task": {"queue": "interest"},
     "logs.tasks.sync_organizationplatform_records_task": {"queue": "celery"},
-    "logs.tasks.sync_platformtitle_projection_task": {"queue": "import"},
     "logs.tasks.update_report_approx_record_count_task": {"queue": "interest"},
     "publications.tasks.sync_platform_title_links_task": {"queue": "interest"},
     "publications.tasks.delete_platform_data_task": {"queue": "import"},
@@ -530,13 +530,15 @@ if USES_ERMS:
 CLICKHOUSE_CELERY_SCHEDULE = {
     "compare_db_with_clickhouse_delayed_task": {
         "task": "logs.tasks.compare_db_with_clickhouse_delayed_task",
-        "schedule": crontab(hour="22", minute="0"),  # every day at 22:00
+        "schedule": crontab(hour="22", minute=randmin()),  # every day between 22:00 and 22:59
         "options": {"expires": 22 * 60 * 60},  # expires in 22 hours to leave room for random delays
     },
-    "sync_platformtitle_projection_task": {
-        "task": "logs.tasks.sync_platformtitle_projection_task",
-        "schedule": crontab(hour="23", minute=randmin()),  # between 23:00-59
-        "options": {"expires": 24 * 60 * 60},
+    # the following task is not strictly speaking clickhouse targeted task, but it needs clickhouse,
+    # so it is bundled with the other clickhouse tasks
+    "find_split_accesslogs_with_the_same_title_task": {
+        "task": "logs.tasks.find_split_accesslogs_with_the_same_title_task",
+        "schedule": crontab(hour="23", minute=randmin()),  # every day between 23:00 and 23:59
+        "options": {"expires": 22 * 60 * 60},
     },
 }
 if CLICKHOUSE_SYNC_ACTIVE:
@@ -576,7 +578,11 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "colored"},
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "colored",
+        },
         "errorlog": {
             "class": "logging.handlers.WatchedFileHandler",
             "filename": BASE_DIR / "error.log",
