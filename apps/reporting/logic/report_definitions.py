@@ -215,9 +215,9 @@ ARL_REPORT = {
     ],
 }
 
-IPEDS_REPORT = {
-    "name": "ACRL IPEDS",
-    "description": "ACRL IPEDS report - used in the US",
+IPEDS_REPORT_2022 = {
+    "name": "ACRL IPEDS 2022",
+    "description": "ACRL IPEDS report - used in the US - 2022 version",
     "dataSources": [
         {
             "id": "tr_b1",
@@ -257,7 +257,7 @@ IPEDS_REPORT = {
             "name": "60B",
             "description": "Total Digital/Electronic Circulation or Usage",
             "explanation": "Information about book usage from COUNTER 5 TR report is summed up "
-            "together with information about multimedia usage from COUNTER 4 IR_M1 report.",
+            "together with information about multimedia usage from COUNTER 5 IR_M1 report.",
             "stages": [
                 {"id": "TR_B1", "name": "TR", "formula": "tr_b1"},
                 {"name": "IR_M1", "formula": "ir_m1"},
@@ -303,8 +303,54 @@ IPEDS_REPORT = {
     ],
 }
 
+IPEDS_REPORT_2023 = {
+    "name": "ACRL IPEDS 2023",
+    "description": "ACRL IPEDS report - used in the US - 2023 version",
+    "dataSources": [
+        {
+            "id": "tr_b1",
+            "reportType": "TR",
+            "metric": "Unique_Item_Requests",
+            "filters": {"Access_Method": "Regular", "Data_Type": "Book"},
+        },
+        {"id": "ir_m1", "reportType": "IR_M1", "metric": "Total_Item_Requests"},
+        {
+            "id": "tr_j",
+            "reportType": "TR",
+            "metric": "Unique_Item_Requests",
+            "filters": {
+                "Access_Method": "Regular",
+                "Access_Type": ["Controlled", "OA_Gold"],
+                "Data_Type": "Journal",
+            },
+        },
+    ],
+    "parts": [
+        {
+            "name": "61A",
+            "description": "Total E-book & E-media Usage",
+            "explanation": "Information about book usage from COUNTER 5 TR_B1 report is summed up "
+            "together with information about multimedia usage from COUNTER 5 IR_M1 report.",
+            "stages": [
+                {"id": "TR_B1", "name": "TR", "formula": "tr_b1"},
+                {"name": "IR_M1", "formula": "ir_m1"},
+                {"name": "TR + IR_M1", "formula": "TR_B1 + IR_M1"},
+            ],
+        },
+        {
+            "name": "61B",
+            "description": "E-serials Usage",
+            "explanation": "COUNTER 5 TR report is used to get information about journal usage. "
+            "Both Controlled and Open Access usage is reported.",
+            "stages": [
+                {"name": "TR", "formula": "tr_j"},
+            ],
+        },
+    ],
+}
 
-REPORTS = [IPEDS_REPORT, ARL_REPORT, REBIUN_REPORT]
+
+REPORTS = [IPEDS_REPORT_2023, IPEDS_REPORT_2022, ARL_REPORT, REBIUN_REPORT]
 
 
 def get_report_def_by_name(name):

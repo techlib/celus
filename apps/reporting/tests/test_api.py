@@ -10,10 +10,11 @@ class TestReportsAPI:
     def test_report_list(self, admin_client):
         response = admin_client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == 3
-        assert response.data[0]["name"] == "ACRL IPEDS"
-        assert response.data[1]["name"] == "ARL Statistics survey"
-        assert response.data[2]["name"] == "Rebiun report"
+        assert len(response.data) == 4
+        assert response.data[0]["name"] == "ACRL IPEDS 2023"
+        assert response.data[1]["name"] == "ACRL IPEDS 2022"
+        assert response.data[2]["name"] == "ARL Statistics survey"
+        assert response.data[3]["name"] == "Rebiun report"
         # check structure of the first report
         r1 = response.data[0]
         for key in ["name", "description", "dataSources", "parts", "infoUrl"]:
