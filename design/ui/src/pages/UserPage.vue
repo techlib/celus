@@ -105,7 +105,11 @@ cs:
         </h3>
         <h4 v-if="user.email" class="font-weight-light mb-1">
           {{ user.email }}
-          <v-icon @click="showUserEditDialog = true" x-small class="mb-1 ml-1"
+          <v-icon
+            v-if="allowUserManagement"
+            @click="showUserEditDialog = true"
+            x-small
+            class="mb-1 ml-1"
             >fas fa-edit</v-icon
           >
         </h4>
@@ -333,6 +337,7 @@ export default {
       impersonator: "impersonator",
       emailVerified: "emailVerified",
       usesPasswordLogin: "usesPasswordLogin",
+      allowUserManagement: "allowUserManagement",
     }),
     headers() {
       return [
