@@ -12,6 +12,7 @@ from logs.logic.reporting.export import (
     FlexibleDataZipCSVExporter,
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+from tags.models import Tag
 
 from export.enums import FileFormat
 
@@ -134,6 +135,7 @@ class FlexibleDataExport(ExportBase):
 
     def write_data(self, stream, progress_monitor=None) -> int:
         slicer = FlexibleDataSlicer.create_from_config(self.export_params)
+        slicer.tag_filter = Q(pk__in=Tag.objects.user_accessible_tags(self.owner))
         slicer.add_extra_organization_filter(self.owner.accessible_organizations())
         export_cls = self.format_to_exporter[self.file_format]
         exporter = export_cls(

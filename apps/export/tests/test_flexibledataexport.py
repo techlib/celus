@@ -20,7 +20,7 @@ from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import DimensionText
 from publications.fake_data import TitleFactory
 from tags.fake_data import TagClassFactory, TagForTitleFactory
-from tags.models import TagScope
+from tags.models import AccessibleBy, TagScope
 
 from export.enums import FileFormat
 from export.models import FlexibleDataExport
@@ -56,7 +56,7 @@ def slicer2(flexible_slicer_test_data):
 
 
 @pytest.fixture
-def tagged_titles(flexible_slicer_test_data, admin_user):
+def tagged_titles(flexible_slicer_test_data, admin_user, users):
     titles = flexible_slicer_test_data["targets"]
     tc = TagClassFactory.create(name="TC", scope=TagScope.TITLE)
     tag1 = TagForTitleFactory(tag_class=tc, name="Tag 1")
@@ -64,6 +64,14 @@ def tagged_titles(flexible_slicer_test_data, admin_user):
     tag1.tag(titles[1], admin_user)
     tag2 = TagForTitleFactory(tag_class=tc, name="Tag 2")
     tag2.tag(titles[2], admin_user)
+    # this is a tag which should not be visible to admin_user and thus not appear in any export
+    private_tag = TagForTitleFactory(
+        name="Private Tag",
+        owner=users["user1"],
+        can_assign=AccessibleBy.OWNER,
+        can_see=AccessibleBy.OWNER,
+    )
+    private_tag.tag(titles[0], users["user1"])
     return locals()
 
 
