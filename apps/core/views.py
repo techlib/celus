@@ -56,7 +56,8 @@ class UserExistsView(GenericAPIView):
     def get(self, request):
         if check := request.GET.get("hmac"):
             if User.objects.raw(
-                "SELECT * FROM core_user WHERE encode(hmac(email, %s, %s), 'hex') = %s LIMIT 1",
+                "SELECT * FROM core_user WHERE encode(hmac(lower(trim(email)), %s, %s), 'hex') = "
+                "%s LIMIT 1",
                 [settings.OCTOPUS_HMAC_KEY, settings.OCTOPUS_HMAC_ALGO, check],
             ):
                 return Response({"exists": True})

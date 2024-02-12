@@ -491,6 +491,27 @@ class TestUserExistsView:
         resp = client.get(reverse("user_exists_api_view"), {"hmac": check})
         assert resp.status_code == 200
 
+    @pytest.mark.parametrize(
+        ["in_db", "in_hmac", "exists"],
+        [
+            ("foo@bar.baz", "foo@bar.baz", True),
+            ("bar@baz.foo", "foo@bar.baz", False),
+            ("Foo@bar.baz", "foo@bar.baz", True),
+            ("FOO@BAR.BaZ ", "foo@bar.baz", True),
+        ],
+    )
+    def test_user_exists_with_normalization(self, client, exists, settings, in_db, in_hmac):
+        settings.OCTOPUS_HMAC_KEY = "testtesttesttest"
+        check = hmac.digest(
+            settings.OCTOPUS_HMAC_KEY.encode("utf-8"),
+            in_hmac.encode("utf-8"),
+            settings.OCTOPUS_HMAC_ALGO,
+        ).hex()
+        UserFactory.create(email=in_db)
+        resp = client.get(reverse("user_exists_api_view"), {"hmac": check})
+        assert resp.status_code == 200
+        assert resp.json() == {"exists": exists}
+
 
 @pytest.mark.django_db
 class TestManagementCommandAPI:
