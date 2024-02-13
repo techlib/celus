@@ -134,7 +134,12 @@ function lastCoveredMonthDate() {
 
 function lastCoveredYearDate() {
   // the last whole year for which we can expect to have SUSHI data
-  return startOfYear(addYears(lastCoveredMonthDate(), -1));
+  let lcm = lastCoveredMonthDate();
+  if (lcm.getMonth() < 11)
+    // if the last covered month is not December, we need to go back to the
+    // previous year
+    lcm = addYears(lcm, -1);
+  return startOfYear(lcm);
 }
 
 function counterGuaranteedPeriodStartDate() {
