@@ -34,7 +34,7 @@ cs:
           </v-card-text>
 
           <v-card-text class="text-caption">
-            <v-span>{{ $t("ask_for_help") }}</v-span
+            <span>{{ $t("ask_for_help") }}</span
             >&nbsp;<a :href="emailLink">{{ contactEmail }}</a>
             <span>.</span>
           </v-card-text>
@@ -50,7 +50,7 @@ cs:
             <v-spacer></v-spacer>
             <v-btn
               class="primary"
-              @click="resendVerificationEmail"
+              @click="sendVerificationEmail"
               :disabled="sending"
             >
               {{ $t("send_again") }}
@@ -114,14 +114,17 @@ export default {
       });
     },
 
-    async resendVerificationEmail() {
+    async sendVerificationEmail(initial = false) {
       try {
+        console.log("sending", initial);
         this.sending = true;
         await axios.post("/api/user/verify-email");
-        this.showSnackbar({
-          content: this.$t("resent"),
-          color: "success",
-        });
+        if (!initial) {
+          this.showSnackbar({
+            content: this.$t("resent"),
+            color: "success",
+          });
+        }
       } catch (error) {
         this.handleError(error, "Error sending verification email");
       } finally {
@@ -144,6 +147,7 @@ export default {
     },
   },
   mounted() {
+    this.sendVerificationEmail(true);
     this.loadUserDataInterval = setInterval(() => {
       if (this.emailVerified) {
         clearInterval(loadUserDataInterval);

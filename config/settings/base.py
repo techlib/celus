@@ -35,6 +35,7 @@ sys.path.append(str(BASE_DIR / "apps"))
 USES_ERMS = config("USES_ERMS", cast=bool, default=False)
 
 CELUS_VERSION = get_version(BASE_DIR)
+DEBUG = config("DEBUG", cast=bool, default=False)
 
 # Application definition
 
@@ -559,7 +560,10 @@ ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # send verification email, but not required for login
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = False  # Confirmation will be stored in db
 ACCOUNT_ADAPTER = "core.account.CelusAccountAdapter"
-
+# EMAIL_CONFIRMATION_COOLDOWN means how long the user has to wait before they can request another
+# confirmation email. The default is 3 minutes, but we set it to 1 second in DEBUG mode
+# to make testing easier
+EMAIL_CONFIRMATION_COOLDOWN = config("EMAIL_CONFIRMATION_COOLDOWN", default=1 if DEBUG else 3 * 60)
 
 # impersonate
 IMPERSONATE = {
@@ -652,7 +656,6 @@ SILENCED_SYSTEM_CHECKS = []
 # instance configuration
 # django stuff
 SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", cast=bool, default=False)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv(), default=[])
 
 # other django stuff

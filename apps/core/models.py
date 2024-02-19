@@ -118,14 +118,26 @@ class DataSource(models.Model):
 
 class UserQuerySet(models.QuerySet):
     def annotate_email_verified(self):
+        verified_email_addresses = EmailAddress.objects.filter(
+            user=OuterRef("pk"), email=OuterRef("email"), verified=True
+        )
         if settings.ALLOW_EDUID_LOGIN:
-            # we consider EduID users as validated if EduID login is turned on,
-            # we consider all users as using EduID.
-            return self.annotate(_email_verified=Value(True, output_field=BooleanField()))
+            if settings.ALLOW_EMAIL_LOGIN:
+                # when both EduID and email login are allowed, we consider a user validated
+                # if he has an associated identity, which would allow him to log in using EduID,
+                # of if he has a verified email address
+                return self.annotate(
+                    _email_verified=Exists(
+                        Identity.objects.filter(
+                            user=OuterRef("pk"), source__type=DataSource.TYPE_API
+                        )
+                    )
+                    | Exists(verified_email_addresses)
+                )
+            else:
+                # when only EduID login is allowed, we consider all users as validated
+                return self.annotate(_email_verified=Value(True, output_field=BooleanField()))
         else:
-            verified_email_addresses = EmailAddress.objects.filter(
-                user=OuterRef("pk"), verified=True
-            )
             return self.annotate(_email_verified=Exists(verified_email_addresses))
 
 

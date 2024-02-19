@@ -68,6 +68,12 @@ cs:
   <v-container v-if="loggedIn && user" class="text-center">
     <v-row>
       <v-col>
+        <!--
+          please note that normal user will not see this, as he will be
+          prevented from seeing anything in Celus until he verifies his email.
+          It may still be useful for superadmins impersonating ordinary users,
+          so I am keeping it in.
+         -->
         <v-alert
           v-if="!emailVerified"
           type="warning"
