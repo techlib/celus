@@ -232,6 +232,36 @@ class TestAccountCreationAPI:
         assert resp.status_code == 204
         assert User.objects.count() == 2
 
+    @pytest.mark.parametrize("first_verified", [True, False])
+    def test_create_account_same_email(self, client, first_verified):
+        """
+        Tests that it is not possible to create two accounts with the same email, if the email
+        is verified. If it is not verified, it is possible to create a new account with the same
+        email.
+        """
+        assert User.objects.count() == 0
+        with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
+            resp = client.post(
+                "/api/rest-auth/registration/",
+                {
+                    "email": "foo@bar.baz",
+                    "password1": "verysecret666",
+                    "password2": "verysecret666",
+                },
+            )
+            assert resp.status_code == 204
+            if first_verified:
+                EmailAddress.objects.filter(email="foo@bar.baz").update(verified=True)
+            resp = client.post(
+                "/api/rest-auth/registration/",
+                {
+                    "email": "foo@bar.baz",
+                    "password1": "verysecret555",
+                    "password2": "verysecret555",
+                },
+            )
+            assert resp.status_code == (400 if first_verified else 204)
+
     def test_create_account_bad_data(self, mailoutbox, client):
         """
         Tests that the API endpoint for account creation works as expected by the frontend code
