@@ -40,7 +40,8 @@ class AuthTokenMixin:
 
     @property
     def request_headers(self) -> dict:
-        res = {"Authorization": f"Token {self.source.token}", "Content-Type": "application/json"}
+        token = self.source.token if self.source.token != "$" else settings.KNOWLEDGEBASE_TOKEN
+        res = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
         res.update(self.request_headers_extra)
         return res
 

@@ -35,6 +35,7 @@ from sushi.models import SushiFetchAttempt
 from tags.models import Tag, TagClass, TaggingBatch
 
 from core.logic.util import this_celus_domain
+from core.models import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,14 @@ class Command(BaseCommand):
         for org_id in settings.MASTER_ORGANIZATIONS:
             Organization.objects.create(internal_id=org_id, short_name=org_id, name=org_id)
             self.stderr.write(self.style.SUCCESS(f'Created organization "{org_id}"'))
+
+        # set knowledgebase source so that it uses token from the settings
+        res = DataSource.objects.filter(
+            type=DataSource.TYPE_KNOWLEDGEBASE, url__startswith="https://brain.celus.net"
+        ).update(token="$")
+        self.stderr.write(
+            self.style.SUCCESS(f"Updated {res} knowledgebase sources to use token from settings")
+        )
 
         if not options["doit"]:
             raise ValueError("preventing db commit, use --do-it to really do it ;)")

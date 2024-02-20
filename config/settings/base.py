@@ -320,6 +320,10 @@ print(
 MAXIMUS_URL = config("MAXIMUS_URL", default="")
 MAXIMUS_TOKEN = config("MAXIMUS_TOKEN", default="")
 
+# Knowedgebase integration
+KNOWLEDGEBASE_URL = config("KNOWLEDGEBASE_URL", default="")
+KNOWLEDGEBASE_TOKEN = config("KNOWLEDGEBASE_TOKEN", default="")
+
 # Celery
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = "redis://localhost"

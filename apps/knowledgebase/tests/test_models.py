@@ -439,7 +439,7 @@ class TestRouterSyncAttempt:
             == 2
         ), "Deletion of a token should add ABSENT attempt"
 
-    def test_propagete_prefix(self, organizations):
+    def test_propagate_prefix(self, organizations):
         DataSourceFactory(
             short_name="first-data-source",
             type=DataSource.TYPE_KNOWLEDGEBASE,
@@ -452,6 +452,25 @@ class TestRouterSyncAttempt:
             url="https://second.data.source",
             token="2" * 64,
         )
+
+    def test_get_token_from_settings(self, settings):
+        settings.KNOWLEDGEBASE_TOKEN = "1" * 64
+        src = DataSourceFactory(
+            short_name="kb",
+            type=DataSource.TYPE_KNOWLEDGEBASE,
+            url="https://second.data.source",
+            token="$",
+        )
+        with requests_mock.Mocker() as m:
+            m.get(re.compile(f"^{src.url}.*"), text="{}")
+            attempt1 = PlatformImportAttempt(source=src)
+            attempt1.save()
+            attempt1.perform()
+
+            assert m.called
+            assert (
+                m.last_request.headers["Authorization"] == f"Token {settings.KNOWLEDGEBASE_TOKEN}"
+            )
 
 
 @pytest.mark.django_db
