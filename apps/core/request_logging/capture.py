@@ -47,6 +47,11 @@ def entry_to_dict(entry):
         entry.django_request.real_user if hasattr(entry.django_request, "real_user") else None
     )
     impersonified = bool(real_user and user and not user.is_anonymous and real_user.pk != user.pk)
+    api_key_prefix = ""
+    api_key_org_id = 0
+    if api_key := getattr(request_info.request, "_api_key", None):
+        api_key_prefix = api_key.prefix
+        api_key_org_id = api_key.organization_id
     request_path = request_info.path
     referer_url = entry.django_request.META.get("HTTP_REFERER", "")
     if referer_url:
@@ -71,6 +76,9 @@ def entry_to_dict(entry):
     response_size = (
         len(response_info.response.content) if hasattr(response_info.response, "content") else 0
     )
+    response_data = ""
+    if response_info.status_code not in (200, 201, 204):
+        response_data = response_info.response.content.decode("utf-8", errors="ignore")[:255]
     # request size is taken from the Content-Length header, not by actually measuring it
     request_size = entry.django_request.headers.get("Content-Length", 0) or 0
     try:
@@ -103,12 +111,15 @@ def entry_to_dict(entry):
         "ref_path": ref_path,
         "ref_query_params": ref_query_params,
         "response_status_code": response_info.status_code,
+        "response_data": response_data,
         "user_id": user.pk if user and not user.is_anonymous else 0,
         "user_email": user.email if user and not user.is_anonymous else "",
         "user_username": user.username if user and not user.is_anonymous else "",
         "user_is_staff": user.is_staff if user else False,
         "user_is_superuser": user.is_superuser if user else False,
         "user_is_active": user.is_active if user else False,
+        "api_key_prefix": api_key_prefix,
+        "api_key_org_id": api_key_org_id,
         "real_user_id": real_user.pk if real_user and not real_user.is_anonymous else 0,
         "real_user_email": real_user.email if real_user and not real_user.is_anonymous else "",
         "real_user_username": real_user.username

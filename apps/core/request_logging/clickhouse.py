@@ -60,12 +60,17 @@ class RequestLogCube(Cube):
         help_text="Referrer query params",
     )
     response_status_code = IntDimension()
+    response_data = StringDimension(
+        help_text="only populated for error responses with first 255 chars"
+    )
     user_id = IntDimension()
     user_email = StringDimension(clickhouse={"low_cardinality": True})
     user_username = StringDimension(clickhouse={"low_cardinality": True})
     user_is_staff = BooleanDimension()
     user_is_superuser = BooleanDimension()
     user_is_active = BooleanDimension()
+    api_key_prefix = StringDimension(clickhouse={"low_cardinality": True})
+    api_key_org_id = IntDimension(help_text="id of the organization the token belongs to")
     debug = BooleanDimension()
     # celus specific dimensions
     celus_version = StringDimension(clickhouse={"low_cardinality": True})
