@@ -33,6 +33,7 @@ cs:
 <script>
 import axios from "axios";
 import { isEqual } from "lodash";
+import { mapActions } from "vuex";
 
 export default {
   name: "ReportViewSelector",
@@ -79,6 +80,9 @@ export default {
   },
 
   methods: {
+    ...mapActions({
+      showSnackbar: "showSnackbar",
+    }),
     async loadReportViews() {
       this.reportViews = [];
       let url = this.reportViewsUrl;
