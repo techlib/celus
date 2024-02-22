@@ -1484,14 +1484,14 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "hcube"
-version = "0.15.2"
+version = "0.15.3"
 description = "HCube is a simple ORM for working with hyper-cube OLAP data stored in various backends."
 category = "main"
 optional = false
 python-versions = ">=3.8.8,<4.0.0"
 files = [
-    {file = "hcube-0.15.2-py3-none-any.whl", hash = "sha256:90bebcb2d44688925daf8309417ee30bb0ecd18399d81b0e3e2998b1b69dd029"},
-    {file = "hcube-0.15.2.tar.gz", hash = "sha256:cdf831fec531a3d405d13cbd6720e8057ee19ee659de7d517ba46a8e9470f5cd"},
+    {file = "hcube-0.15.3-py3-none-any.whl", hash = "sha256:1adeeb3d6e0c35a794b71f472b99ca0bda3c6986efc7736828ffc552f39643ef"},
+    {file = "hcube-0.15.3.tar.gz", hash = "sha256:76b961c4efde7a87ad32a63b8e325b90073b1a5ee3cd3305d8453e3b102b22da"},
 ]
 
 [package.dependencies]
@@ -3939,4 +3939,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.9"
-content-hash = "1285fd63fa412d92e6671624bb62f16ecdeed9253fc0d3e769f4f7b5ad14ca1a"
+content-hash = "b633a2ab1fd569af8826af4336a60c8e57af8e6e287e8ca68d9163256a5f2ac4"
