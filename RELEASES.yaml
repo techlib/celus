@@ -1,3 +1,22 @@
+- version: 5.10.0
+  title:
+    en: ACRL IPEDS updated for 2023
+    cs: ACRL IPEDS aktualizován pro 2023
+  text:
+    en: |
+      This is an intermediate release which brings a **new version of the ACRL IPEDS** report, implementing the 2023 version of the report. It also brings two new **OA (Open Access) tags** for titles from the **DOAJ and DOAB lists**.
+
+      More new features are coming soon in the next release.
+    cs: |
+      Toto je meziverze, která přináší **novou verzi ACRL IPEDS** reportu pro rok 2023. Přídává také dva nové **OA (Open Access) štítky** pro tituly z **DOAJ a DOAB seznamů**.
+
+      Další nové funkce přijdou brzy v následujícím vydání.
+  is_new_feature: TRUE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
+
 - version: 5.9.1
   title:
     en: Bugfix and performance optimization release 5.9.1

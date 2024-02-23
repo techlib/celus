@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0]  - 2024-02-28
+
+### Added
+
+#### Frontend
+
+* support for the 2023 version of the ACRL IPEDS report was added to the list of specialized reports
+* a built-in OA (Open Access) tag class was added with two tags (DOAJ and DOAB) marking titles as
+  listed in the respective directories
+
+### Fixed
+
+#### Frontend
+
+* algorithm for detection of the last covered year was fixed to match previous year in February
+  (not March)
+* when uploading a source file in an unsupported format, a more helpful error message is now shown
+* error display in the ReportViewSelector was fixed
+
+#### Backend
+
+* reporting module export was fixed to only include tags visible to the user
+* Clickhouse version used in Gitlab CI was fixed to get around a bug in the latest version
+
 
 ## [5.9.1]  - 2024-01-23
 
@@ -30,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Frontend
 
 * error when too large a file is uploaded to the title list page is now handled more gracefully
-* error when uploading table data in a file with an unrecongnized encoding is now handled
+* error when uploading table data in a file with an unrecognized encoding is now handled
   more gracefully
 * the coverage widget was fixed not to offer harvesting of missing data to read-only users
 * when manually uploading data for a platform which is private to one organization, the
@@ -39,10 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-* problem with the platform overlap computation overreporting the number of titles under specific
+* problem with the platform overlap computation over-reporting the number of titles under specific
   conditions when viewed for the whole consortium was fixed
 * the language preference API endpoint was fixed after Django upgrade
-* access of read-only users to havesting data and harvest processing was reviewed and fixed where
+* access of read-only users to harvesting data and harvest processing was reviewed and fixed where
   necessary
 * several minor inconsistencies in the platform-title support table were fixed
 * inconsistencies between the main database and clickhouse caused by title merging were fixed
