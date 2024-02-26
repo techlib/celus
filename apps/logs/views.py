@@ -5,6 +5,7 @@ from pprint import pprint
 from time import monotonic
 from typing import Any, Dict, Tuple
 
+from celus_nibbler.errors import WrongFileFormatError
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
@@ -998,6 +999,8 @@ class ManualDataUploadViewSet(
             ) from e
         except UnicodeDecodeError as e:
             raise BadRequestException({"encoding_error": str(e)}) from e
+        except WrongFileFormatError as e:
+            raise BadRequestException({"wrong_file_format": str(e)}) from e
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):

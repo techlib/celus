@@ -38,6 +38,7 @@ en:
   preflight_data_outdated: Preflight data are outdated, please regenerate preflight.
   errors:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
+    unsupported_file_format: File format .{format} is not supported, please convert it to .csv or .xlsx.
     no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please let us know at ask@celus.net to fix the problem.
     no_organization_selected: No organization found in data. You need to select organization manually.
@@ -104,6 +105,7 @@ cs:
   preflight_data_outdated: Data přehledu již nejsou platná. Prosím přegenerujte přehled.
   errors:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
+    unsupported_file_format: Typ souboru .{format} není podporovaný, prosím konvertujte jej do .csv nebo .xlsx.
     no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask@celus.net a my problém vyřešíme.
     no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
@@ -1052,6 +1054,12 @@ export default {
     privatePlaformForOrganizationPk() {
       return this.platform?.source?.organization?.pk;
     },
+    dataFileExt() {
+      if (this.dataFile) {
+        return this.dataFile.name.split(".").pop();
+      }
+      return null;
+    },
   },
   methods: {
     ...mapActions({
@@ -1130,6 +1138,14 @@ export default {
           if ("encoding_error" in info) {
             this.showErrorDialog = true;
             this.errors = [this.$t("errors.requires_utf8")];
+          }
+          if ("wrong_file_format" in info) {
+            this.showErrorDialog = true;
+            this.errors = [
+              this.$t("errors.unsupported_file_format", {
+                format: this.dataFileExt,
+              }),
+            ];
           }
           if ("multiple_report_types" in info) {
             this.handleMultipleReportTypeError();

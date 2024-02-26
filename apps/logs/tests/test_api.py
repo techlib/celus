@@ -19,8 +19,8 @@ from core.tests.conftest import (  # noqa - fixtures
 from django.db.models import Max, Min
 from django.urls import reverse
 from organizations.models import UserOrganization
-from publications.fake_data import TitleFactory
-from publications.models import Platform, PlatformInterestReport
+from publications.fake_data import PlatformFactory, TitleFactory
+from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials
@@ -78,9 +78,7 @@ class TestChartDataAPI:
     def test_api_simple_data_0d(
         self, counter_records_0d, organizations, report_type_nd, authenticated_client
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         organization = organizations["branch"]
         report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
@@ -101,9 +99,7 @@ class TestChartDataAPI:
     def test_api_simple_data_0d_with_recache(
         self, counter_records_0d, organizations, report_type_nd, authenticated_client
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         organization = organizations["branch"]
         report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
@@ -143,9 +139,7 @@ class TestChartDataAPI:
         count,
         authenticated_client,
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         data = [
             ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],
             ["Title1", "2018-01-01", "1v2", "2v1", "3v1", 2],
@@ -207,9 +201,7 @@ class TestChartDataAPI:
         result,
         master_admin_client,
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         data = [
             ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],
             ["Title1", "2018-01-01", "1v2", "2v1", "3v1", 2],
@@ -240,12 +232,8 @@ class TestChartDataAPI:
     def test_api_filtering(
         self, counter_records, organizations, report_type_nd, authenticated_client
     ):
-        platform1 = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        platform2 = Platform.objects.create(
-            ext_id=1235, short_name="Platform2", name="Platform 2", provider="Provider 2"
-        )
+        platform1 = PlatformFactory(short_name="Platform1")
+        platform2 = PlatformFactory(short_name="Platform2")
         data1 = [
             ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],
             ["Title2", "2018-01-01", "1v2", "2v1", "3v1", 2],
@@ -336,9 +324,7 @@ class TestChartDataAPI:
         """
         Copy of the same test as test_api_secondary_dim but with title set to None
         """
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         data = [
             [None, "2018-01-01", "1v1", "2v1", "3v1", 1],
             [None, "2018-01-01", "1v2", "2v1", "3v1", 2],
@@ -372,9 +358,7 @@ class TestChartDataAPI:
     def test_api_date_year_query(
         self, counter_records, organizations, report_type_nd, authenticated_client
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         data = [
             ["Title1", "2018-01-01", "1v1", 1],
             ["Title1", "2018-02-01", "1v1", 2],
@@ -409,15 +393,16 @@ class TestChartDataAPI:
 
 @pytest.mark.django_db
 class TestManualDataUpload:
-    def test_can_create_manual_data_upload(
-        self, organizations, master_admin_client, report_type_nd, tmp_path, settings
+    @pytest.mark.parametrize("nibbler", (True, False))
+    def test_create_manual_data_upload(
+        self, organizations, master_admin_client, report_type_nd, tmp_path, settings, nibbler
     ):
-        platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
+        platform = PlatformFactory(short_name="Platform1")
         report_type = report_type_nd(0)
         file = StringIO("Source,2019-01\naaaa,9\n")
         settings.MEDIA_ROOT = tmp_path
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = nibbler
+        file.name = "input.csv"
         response = master_admin_client.post(
             reverse("manual-data-upload-list"),
             data={
@@ -434,6 +419,28 @@ class TestManualDataUpload:
         settings.ALLOW_MANUAL_UPLOAD = False
         response = master_admin_client.get(reverse("manual-data-upload-list"))
         assert response.status_code == 403
+
+    def test_create_manual_data_upload_wrong_filename(
+        self, organizations, master_admin_client, report_type_nd, tmp_path, settings
+    ):
+        platform = PlatformFactory(short_name="Platform1")
+        report_type = report_type_nd(0)
+        file = StringIO("Source,2019-01\naaaa,9\n")
+        settings.MEDIA_ROOT = tmp_path
+        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = True
+        file.name = "input.txt"
+        response = master_admin_client.post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["branch"].pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
+            },
+        )
+        assert response.status_code == 400
+        assert "wrong_file_format" in response.data
 
 
 @pytest.mark.django_db
