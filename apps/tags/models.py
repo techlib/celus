@@ -910,16 +910,20 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         self,
         title_id_formatter: Callable[[int], str] = str,
         progress_monitor: Optional[Callable[[int, int], None]] = None,
+        system_process: bool = False,
     ) -> "TaggingAttempt":
         """
         :param title_id_formatter: converts title ids to string in the annotated file
         :param progress_monitor: callback to report progress, should send (current, total) ints
+        :param system_process: if True, the tag is assigned by the system and the user is not
+        checked
         """
         try:
             self._check_prerequisites()
-            self._preassign_checks()
+            self._preassign_checks(system_process=system_process)
             postflight = self._do_assign_tag(title_id_formatter, progress_monitor)
         except Exception as e:
+            logger.error("Error during tagging", exc_info=True)
             postflight = TaggingAttempt.objects.create(
                 batch=self, operation=TaggingAttemptOperation.IMPORT, success=False, error=str(e)
             )
@@ -933,14 +937,17 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             self._last_imports.insert(0, postflight)
         return postflight
 
-    def _preassign_checks(self):
+    def _preassign_checks(self, system_process: bool = False):
         """
-        Checks that the batch is in the correct state and that the user can assign the tag
+        Checks that the batch is in the correct state and that the user can assign the tag.
+        If `system_process` is True, the user is not checked.
         """
         if self.state != TaggingBatchState.IMPORTING:
             raise ValueError(f'Cannot assign tag for batch in state "{self.state}"')
+        if system_process:
+            return
         if self.tag and not self.tag.can_user_assign(self.last_updated_by):
-            raise PermissionDenied(f"User cannot assing tag #{self.tag_id}")
+            raise PermissionDenied(f"User cannot assign tag #{self.tag_id}")
         if self.tag_class and self.tag_class not in TagClass.objects.user_accessible_tag_classes(
             self.last_updated_by
         ):

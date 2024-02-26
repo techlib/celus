@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.files.base import ContentFile
+from django.core.management import call_command
 from freezegun import freeze_time
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.fake_data import TitleFactory
@@ -1209,3 +1210,61 @@ class TestTasks:
                 assert task_delay_mock.call_count == 0, "task is not requeued"
                 assert assign_tag_mock.call_count == 1, "one batch is reprocessed"
                 assert TaggingBatch.objects.to_reprocess().count() == 0
+
+
+@pytest.mark.django_db()
+class TestTaggingManagemenCommand:
+    def test_command_tagging(self, inmemory_media):
+        TitleFactory.create(isbn="9780787960186")
+        TitleFactory.create(issn="1234-5678")
+        call_command("tag_title_list", "foo", "cls", "mytag", plain_test_file.resolve())
+        assert TaggingBatch.objects.filter(internal_name="foo").exists()
+        tb = TaggingBatch.objects.get(internal_name="foo")
+        assert tb.tag.name == "mytag", "proper tag was created"
+        assert tb.tag.tag_class.name == "cls", "created tag has the correct class"
+        assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
+        attempt = tb.last_import
+        assert attempt.unique_matched_titles == 2, "all titles were matched"
+        assert attempt.tagged_titles == 2, "all titles were tagged"
+        assert attempt.titletag_set.count() == 2, "two titles were tagged"
+
+    def test_command_retagging_new_title(self, inmemory_media):
+        """
+        Test that when a new title is added to the database, it is tagged when retagging from cli
+        """
+        TitleFactory.create(isbn="9780787960186")
+        TitleFactory.create(issn="1234-5678")
+        call_command("tag_title_list", "foo", "cls", "mytag", plain_test_file.resolve())
+        tb = TaggingBatch.objects.get(internal_name="foo")
+        assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
+        assert tb.imports.count() == 1
+        assert tb.last_import.titletag_set.count() == 2
+        # now do the retagging
+        TitleFactory.create(issn="2546-5794")
+        call_command("tag_title_list", "foo", "cls", "mytag", plain_test_file.resolve())
+        tb.refresh_from_db()
+        assert tb.imports.count() == 2
+        assert tb.titletag_set.count() == 3
+        assert tb.last_import.titletag_set.count() == 1
+
+    def test_command_retagging_with_file_change(self, inmemory_media):
+        """
+        Test that when a new file is given to the command, the old file is not used and the new is
+        """
+        TitleFactory.create(isbn="9780787960186")
+        TitleFactory.create(issn="1234-5678")
+        call_command("tag_title_list", "foo", "cls", "mytag", plain_test_file.resolve())
+        tb = TaggingBatch.objects.get(internal_name="foo")
+        assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
+        assert tb.imports.count() == 1
+        assert tb.last_import.titletag_set.count() == 2
+        # now do the retagging
+        t_not = TitleFactory.create(issn="2546-5794")  # not in the bom file
+        t_yes = TitleFactory.create(issn="0001-9909")  # in the bom file
+        call_command("tag_title_list", "foo", "cls", "mytag", bom_test_file.resolve())
+        tb.refresh_from_db()
+        assert tb.imports.count() == 2
+        assert tb.titletag_set.count() == 3
+        assert tb.last_import.titletag_set.count() == 1
+        assert t_yes.tags.count() == 1
+        assert t_not.tags.count() == 0
