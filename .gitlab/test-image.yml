@@ -1,3 +1,6 @@
+variables:
+  POETRY_VERSION: "1.8.1"
+
 image:test_image:
   stage: image
   needs: []
@@ -7,13 +10,14 @@ image:test_image:
 
   script:
     - docker pull $CI_REGISTRY_IMAGE/celus-test:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE/celus-test:latest --tag $CI_REGISTRY_IMAGE/celus-test:latest --target celus-test -f ci/Dockerfile .
+    - docker build --build-arg POETRY_VERSION=$POETRY_VERSION --cache-from $CI_REGISTRY_IMAGE/celus-test:latest --tag $CI_REGISTRY_IMAGE/celus-test:latest --target celus-test -f ci/Dockerfile .
     - docker push $CI_REGISTRY_IMAGE/celus-test:latest
 
   rules:
     - if: '$CI_COMMIT_BRANCH != "plus"'
       when: never
     - changes:
+        - .gitlab/test-image.yml
         - poetry.lock
         - ci/Dockerfile
       when: on_success

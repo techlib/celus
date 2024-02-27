@@ -1,6 +1,7 @@
 FROM ubuntu:20.04 as celus-test
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG POETRY_VERSION
 
 # install basic packages
 RUN \
@@ -27,8 +28,9 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
 # install poetry
-RUN curl -sSL https://install.python-poetry.org | python
+RUN curl -sSL https://install.python-poetry.org | python - --version "${POETRY_VERSION}"
 ENV PATH="${PATH}:/root/.local/bin"
+RUN poetry --version
 
 # create virtualenv and make sure it is used
 RUN virtualenv env
@@ -41,4 +43,4 @@ RUN pip install --upgrade pip
 # install dependencies
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
-RUN poetry install --no-root
+RUN poetry install
