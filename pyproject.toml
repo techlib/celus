@@ -32,6 +32,7 @@ version = "5.9.1"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
 license = "MIT"
+package-mode=false
 
 [tool.poetry.dependencies]
 python = "^3.8.9"
