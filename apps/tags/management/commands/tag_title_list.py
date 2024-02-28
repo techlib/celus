@@ -22,7 +22,9 @@ class Command(BaseCommand):
             "list_name", help="Internal name for the title list to allow re-tagging, deleting, etc."
         )
         parser.add_argument("tag_class")
+        parser.add_argument("--class-desc", help="Description for the tag class", default="")
         parser.add_argument("tag_name")
+        parser.add_argument("--tag-desc", help="Description for the tag", default="")
         parser.add_argument("title_list_file")
         parser.add_argument(
             "-d",
@@ -55,11 +57,14 @@ class Command(BaseCommand):
                     name=options["tag_class"],
                     internal=True,
                     scope=TagScope.TITLE,
-                    exclusive=False,
-                    can_modify=AccessibleBy.SYSTEM,
-                    can_create_tags=AccessibleBy.SYSTEM,
-                    default_tag_can_see=AccessibleBy.EVERYBODY,
-                    default_tag_can_assign=AccessibleBy.SYSTEM,
+                    defaults=dict(
+                        exclusive=False,
+                        desc=options["class_desc"],
+                        can_modify=AccessibleBy.SYSTEM,
+                        can_create_tags=AccessibleBy.SYSTEM,
+                        default_tag_can_see=AccessibleBy.EVERYBODY,
+                        default_tag_can_assign=AccessibleBy.SYSTEM,
+                    ),
                 )
                 if created:
                     logger.info("Created new internal tag class: %s", tag_class.name)
@@ -69,8 +74,11 @@ class Command(BaseCommand):
                 tag, created = Tag.objects.get_or_create(
                     name=options["tag_name"],
                     tag_class=tag_class,
-                    can_see=AccessibleBy.EVERYBODY,
-                    can_assign=AccessibleBy.SYSTEM,
+                    defaults=dict(
+                        desc=options["tag_desc"],
+                        can_see=AccessibleBy.EVERYBODY,
+                        can_assign=AccessibleBy.SYSTEM,
+                    ),
                 )
                 if created:
                     logger.info("Created new internal tag: %s", tag.name)

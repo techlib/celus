@@ -1217,11 +1217,23 @@ class TestTaggingManagemenCommand:
     def test_command_tagging(self, inmemory_media):
         TitleFactory.create(isbn="9780787960186")
         TitleFactory.create(issn="1234-5678")
-        call_command("tag_title_list", "foo", "cls", "mytag", plain_test_file.resolve())
+        call_command(
+            "tag_title_list",
+            "--class-desc",
+            "Foobarbaz",
+            "--tag-desc",
+            "Barbazfoo",
+            "foo",
+            "cls",
+            "mytag",
+            plain_test_file.resolve(),
+        )
         assert TaggingBatch.objects.filter(internal_name="foo").exists()
         tb = TaggingBatch.objects.get(internal_name="foo")
         assert tb.tag.name == "mytag", "proper tag was created"
+        assert tb.tag.desc == "Barbazfoo", "tag has the correct description"
         assert tb.tag.tag_class.name == "cls", "created tag has the correct class"
+        assert tb.tag.tag_class.desc == "Foobarbaz", "tag class has the correct description"
         assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
         attempt = tb.last_import
         assert attempt.unique_matched_titles == 2, "all titles were matched"
