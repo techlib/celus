@@ -81,7 +81,6 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
-      allowManualDataUpload: "allowManualDataUpload",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
     }),
     ...mapGetters("interest", {

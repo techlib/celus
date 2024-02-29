@@ -413,11 +413,6 @@ class TestManualDataUpload:
         )
         assert response.status_code == 201
 
-    def test_manual_upload_data_disabled(self, master_admin_client, settings):
-        settings.ALLOW_MANUAL_UPLOAD = False
-        response = master_admin_client.get(reverse("manual-data-upload-list"))
-        assert response.status_code == 403
-
     def test_create_manual_data_upload_wrong_filename(
         self, organizations, master_admin_client, report_type_nd, tmp_path, settings
     ):

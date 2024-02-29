@@ -460,7 +460,7 @@ cs:
                       md="6"
                       xl="4"
                       class="d-flex"
-                      v-if="filters.includes('target') && enableTags"
+                      v-if="filters.includes('target')"
                     >
                       <FilterCard
                         :title="$t('labels.title')"
@@ -931,7 +931,6 @@ export default {
       globallySelectedOrganization: "selectedOrganization",
       dateRangeStart: "dateRangeStartText",
       dateRangeCoverageEnd: "dateRangeCoverageEndText",
-      enableTags: "enableTags",
       reportsWithoutCoverage: "reportTypesWithoutCoverage",
     }),
     watchedRow: {
@@ -1125,10 +1124,7 @@ export default {
       return this.owner ? "user" : this.ownerOrganization ? "org" : "sys";
     },
     tagRollUpPossible() {
-      return (
-        this.enableTags &&
-        ["target", "platform", "organization"].includes(this.row)
-      );
+      return ["target", "platform", "organization"].includes(this.row);
     },
     tagScope() {
       if (this.row === "target") {

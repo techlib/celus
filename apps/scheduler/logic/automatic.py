@@ -1,5 +1,4 @@
 from core.logic.dates import last_month
-from django.conf import settings
 from django.db import transaction
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 
@@ -53,10 +52,6 @@ def update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
 
 @transaction.atomic
 def update_verified_for_automatic_scheduling(attempt: SushiFetchAttempt):
-    if not settings.AUTOMATIC_HARVESTING_ENABLED:
-        # skip when automatic scheduling disabled
-        return
-
     # Only when the attempt is successful
     if attempt.status not in [AttemptStatus.IMPORTING, AttemptStatus.NO_DATA]:
         return

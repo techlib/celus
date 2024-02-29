@@ -17,7 +17,6 @@ from core.permissions import (
     CanAccessOrganizationFromGETAttrs,
     CanAccessOrganizationRelatedObjectPermission,
     CanPostOrganizationDataPermission,
-    ManualDataUploadEnabledPermission,
     OrganizationRequiredInDataForNonSuperusers,
     OwnerLevelBasedPermissions,
     SuperuserOrAdminPermission,
@@ -834,7 +833,6 @@ class ManualDataUploadViewSet(
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
-        & ManualDataUploadEnabledPermission
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (
@@ -848,7 +846,6 @@ class ManualDataUploadViewSet(
 
     extra_actions_permission_classes = [
         IsAuthenticated
-        & ManualDataUploadEnabledPermission
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (
@@ -1014,7 +1011,6 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
         IsAuthenticated
-        & ManualDataUploadEnabledPermission
         & (
             (SuperuserOrAdminPermission & OwnerLevelBasedPermissions)
             | (OwnerLevelBasedPermissions & CanAccessOrganizationRelatedObjectPermission)

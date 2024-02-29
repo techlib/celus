@@ -541,7 +541,6 @@ class TestFetchIntention:
         settings,
     ):
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
-        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
         scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
 
         start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
@@ -683,7 +682,6 @@ class TestFetchIntention:
         """
 
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
-        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
         # prepare the content of the responses
         with open("test-data/counter5/C5_PR_with_3040.json", "r") as f:
             data_with_3040 = f.read()
@@ -843,7 +841,6 @@ class TestFetchIntention:
         """
 
         settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
-        settings.AUTOMATIC_HARVESTING_ENABLED = False  # to disable auto creation of FI
 
         scheduler = SchedulerFactory(url=credentials["branch_pr"].url)
         # start should ensure that the first attempt is final and empty ib is created for 3030
@@ -1371,14 +1368,11 @@ class TestHarvest:
         assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
 
     def test_stats(self, counter_report_types, credentials, settings):
-        # Extra harvests would be created if AUTOMATIC_HARVESTING_ENABLED were enabled
-        settings.AUTOMATIC_HARVESTING_ENABLED = False
-
-        harvest1 = HarvestFactory()
-        harvest2 = HarvestFactory()
-        harvest3 = HarvestFactory()
-        harvest4 = HarvestFactory()
-        harvest5 = HarvestFactory()
+        harvest1 = HarvestFactory(automatic=None)
+        harvest2 = HarvestFactory(automatic=None)
+        harvest3 = HarvestFactory(automatic=None)
+        harvest4 = HarvestFactory(automatic=None)
+        harvest5 = HarvestFactory(automatic=None)
 
         FetchIntentionFactory(
             credentials=credentials["standalone_tr"],
@@ -1544,7 +1538,6 @@ class TestAutomatic:
         credentials,
         organizations,
         counter_report_types,
-        disable_automatic_scheduling,
         verified_credentials,
     ):
         start_date = date(2020, 2, 1)
@@ -1582,7 +1575,10 @@ class TestAutomatic:
             counter_report=counter_report_types["tr"]
         ).delete()
 
-        assert Automatic.update_for_last_month() == {"deleted": 3, "added": 0}
+        assert Automatic.update_for_last_month() == {
+            "deleted": 0,
+            "added": 0,
+        }, "updated using signals"
         assert FetchIntention.objects.count() == 1
         remained = FetchIntention.objects.last()
         assert remained.counter_report == counter_report_types["br1"]
@@ -1632,7 +1628,10 @@ class TestAutomatic:
             broken_type=SushiCredentials.BROKEN_SUSHI,
         )
 
-        assert Automatic.update_for_last_month() == {"deleted": 0, "added": 1}
+        assert Automatic.update_for_last_month() == {
+            "deleted": 0,
+            "added": 0,
+        }, "updated using signals"
         assert FetchIntention.objects.count() == 2
 
         # make cred1 verified
@@ -1653,7 +1652,6 @@ class TestAutomatic:
         credentials,
         organizations,
         counter_report_types,
-        disable_automatic_scheduling,
         verified_credentials,
     ):
         # all empty
@@ -1680,7 +1678,6 @@ class TestAutomatic:
         self,
         counter_report_types,
         credentials,
-        enable_automatic_scheduling,
         verified_credentials,
         monkeypatch,
     ):
@@ -1804,7 +1801,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals_with_retry_chains(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials
+        self, counter_report_types, credentials, verified_credentials
     ):
         # Clear all harvests
         Harvest.objects.all().delete()
@@ -1872,7 +1869,6 @@ class TestAutomatic:
         self,
         counter_report_types,
         credentials,
-        enable_automatic_scheduling,
         verified_credentials,
         retry_count,
         has_ib,
@@ -1923,7 +1919,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_same_queue_reenabled_intentions(
-        self, counter_report_types, credentials, enable_automatic_scheduling, verified_credentials
+        self, counter_report_types, credentials, verified_credentials
     ):
         # Clear all harvests
         Harvest.objects.all().delete()

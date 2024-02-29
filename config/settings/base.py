@@ -719,15 +719,12 @@ MASTER_ORGANIZATIONS = config("MASTER_ORGANIZATIONS", cast=Csv(), default="NTK-6
 LIVE_ERMS_AUTHENTICATION = config("LIVE_ERMS_AUTHENTICATION", cast=bool, default=USES_ERMS)
 # how many times max should we retry queued attempts
 QUEUED_SUSHI_MAX_RETRY_COUNT = config("QUEUED_SUSHI_MAX_RETRY_COUNT", cast=int, default=5)
-# default date where to end fetching sushi data
-SUSHI_ATTEMPT_LAST_DATE = config("SUSHI_ATTEMPT_LAST_DATE", default="2017-01")
 # this is the currency used for price calculation
 REFERENCE_CURRENCY = config("REFERENCE_CURRENCY", default="CZK")
 
 # Celus features configuration
 # is this installation intended for one consortium
 CONSORTIAL_INSTALLATION = config("CONSORTIAL_INSTALLATION", cast=bool, default=True)
-ALLOW_MANUAL_UPLOAD = config("ALLOW_MANUAL_UPLOAD", cast=bool, default=True)
 ALLOW_NONCOUNTER_DATA = config("ALLOW_NONCOUNTER_DATA", cast=bool, default=True)
 
 # user authentication and registration
@@ -748,12 +745,6 @@ AUTOMATICALLY_CREATE_METRICS = config("AUTOMATICALLY_CREATE_METRICS", cast=bool,
 # Credentials which should be skipped during celery import
 FAKE_SUSHI_URLS = ["https://sashimi.celus.net/"]
 
-# Should tags be visible in the UI - the following is passed to the frontend and used there
-ENABLE_TAGS = config("ENABLE_TAGS", cast=bool, default=False)
-
-# Should data coverage be visible in the UI
-# the following is passed to the frontend and used there
-ENABLE_DATA_COVERAGE = config("ENABLE_DATA_COVERAGE", cast=bool, default=False)
 # the following influences the backend - empty data will be returned for the RTs listed below
 # as of now, the computation of coverage for interest is not perfect, so we disable it by default
 REPORT_TYPES_WITHOUT_COVERAGE = config(
@@ -761,7 +752,6 @@ REPORT_TYPES_WITHOUT_COVERAGE = config(
 )
 
 # social authentication providers
-SOCIAL_ACCOUNTS_SUPPORTED = config("SOCIAL_ACCOUNTS_SUPPORTED", cast=Csv(), default="")
 SITE_ID = config("SITE_ID", cast=int, default=1)
 
 # Celus servers from which the data will be harvested.
@@ -808,9 +798,6 @@ CELUS_ADMIN_SITE_PATH = config("CELUS_ADMIN_SITE_PATH", default="wsEc67YNV2sq/")
 # contacts with customers
 CONTACT_EMAIL = "ask@celus.net"
 SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL = "Credentials - COUNTER 5 import"
-
-# Enables Automatic harvesting
-AUTOMATIC_HARVESTING_ENABLED = config("AUTOMATIC_HARVESTING_ENABLED", cast=bool, default=True)
 
 # Need to disable prometheus migrations when collecting static without DB
 # see https://github.com/korfuri/django-prometheus/issues/34
@@ -902,20 +889,16 @@ EXPOSED_MANAGEMENT_COMMANDS = config(
 EXPORTED_SETTINGS = [
     "ALLOW_EDUID_LOGIN",
     "ALLOW_EMAIL_LOGIN",
-    "ALLOW_MANUAL_UPLOAD",
     "ALLOW_USER_CREATED_PLATFORMS",
     "ALLOW_USER_MANAGEMENT",
     "ALLOW_USER_REGISTRATION",
     "AUTOMATICALLY_CREATE_METRICS",
     "CELUS_ADMIN_SITE_PATH",
     "CONSORTIAL_INSTALLATION",
-    "ENABLE_TAGS",
-    "ENABLE_DATA_COVERAGE",
     "HARVESTER_IPV4_ADDRESSES",
     "HARVESTER_IPV6_ADDRESSES",
     "LANGUAGES",
     "REFERENCE_CURRENCY",
-    "SOCIAL_ACCOUNTS_SUPPORTED",
     "USES_ERMS",
     "EXPORT_DELETING_PERIOD",
     "ENABLE_RAW_DATA_IMPORT",

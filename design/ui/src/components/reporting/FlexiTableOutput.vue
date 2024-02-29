@@ -291,7 +291,6 @@ export default {
 
   computed: {
     ...mapGetters({
-      enableTags: "enableTags",
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
     }),
@@ -360,16 +359,15 @@ export default {
           text: this.$t("title_fields." + key),
           value: "target__" + key,
         }));
-        let tagHeaders =
-          this.taggableRow && this.enableTags
-            ? [
-                {
-                  text: this.$t("labels.tags"),
-                  value: "assignedTags",
-                  sortable: false,
-                },
-              ]
-            : [];
+        let tagHeaders = this.taggableRow
+          ? [
+              {
+                text: this.$t("labels.tags"),
+                value: "assignedTags",
+                sortable: false,
+              },
+            ]
+          : [];
         let ret = [
           {
             text: this.report.effectivePrimaryDimension.getName(this.$i18n),

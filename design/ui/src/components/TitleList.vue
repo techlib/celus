@@ -41,7 +41,7 @@ cs:
             </template>
           </v-select>
         </v-col>
-        <v-col cols="auto" v-if="enableTags">
+        <v-col cols="auto">
           <TagSelector
             v-model="selectedTags"
             scope="title"
@@ -269,9 +269,6 @@ export default {
   },
 
   computed: {
-    ...mapGetters({
-      enableTags: "enableTags",
-    }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
     }),
@@ -358,13 +355,11 @@ export default {
             align: "right",
           });
         }
-        if (this.enableTags) {
-          base.push({
-            text: this.$t("labels.tags"),
-            value: "tags",
-            sortable: false,
-          });
-        }
+        base.push({
+          text: this.$t("labels.tags"),
+          value: "tags",
+          sortable: false,
+        });
       }
       return base;
     },

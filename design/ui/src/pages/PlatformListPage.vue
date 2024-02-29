@@ -43,7 +43,7 @@ cs:
             <v-col v-if="allowUserCreatePlatforms" cols="auto">
               <AddPlatformButton @update-platforms="loadPlatforms()" />
             </v-col>
-            <v-col cols="auto" v-if="allowManualDataUpload">
+            <v-col cols="auto">
               <ManualUploadButton />
             </v-col>
             <v-col cols="auto">
@@ -118,7 +118,6 @@ export default {
     }),
     ...mapGetters({
       showAdminStuff: "showAdminStuff",
-      allowManualDataUpload: "allowManualDataUpload",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
     }),
     ...mapGetters("interest", {

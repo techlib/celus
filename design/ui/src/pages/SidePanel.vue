@@ -85,11 +85,9 @@ export default {
       showAdminStuff: "showAdminStuff",
       showManagementStuff: "showManagementStuff",
       notifications: "getNotifications",
-      allowManualDataUpload: "allowManualDataUpload",
       consortialInstall: "consortialInstall",
       tourByName: "tourByName",
       celusVersion: "celusVersion",
-      enableTags: "enableTags",
       isRawImportEnabled: "isRawImportEnabled",
       allowUserManagement: "allowUserManagement",
     }),
@@ -128,7 +126,6 @@ export default {
             {
               title: this.$i18n.t("pages.tags"),
               icon: "fa fa-tags",
-              show: this.enableTags,
               items: [
                 {
                   title: this.$i18n.t("pages.tag_management"),
@@ -254,7 +251,7 @@ export default {
               title: this.$t("pages.manual_data_uploads"),
               icon: "fa-upload",
               linkTo: "manual-data-upload-list",
-              show: this.showAdminStuff && this.allowManualDataUpload,
+              show: this.showAdminStuff,
             },
             {
               title: this.$t("pages.supported_non_counter_platforms"),
@@ -264,10 +261,7 @@ export default {
                 text: this.$t("labels.new_menu_item"),
                 color: "error",
               },
-              show:
-                this.showAdminStuff &&
-                this.allowManualDataUpload &&
-                this.isRawImportEnabled,
+              show: this.showAdminStuff && this.isRawImportEnabled,
             },
             {
               title: this.$t("pages.data_coverage_overview"),

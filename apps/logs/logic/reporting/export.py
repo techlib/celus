@@ -87,7 +87,6 @@ class FlexibleDataExporter(ABC):
     def include_tags(self):
         return (
             self._include_tags
-            and settings.ENABLE_TAGS
             and self.slicer.primary_dimension in self.taggable_rows
             and not self.slicer.tag_roll_up
         )

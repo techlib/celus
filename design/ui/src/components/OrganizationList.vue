@@ -27,14 +27,14 @@ cs:
     :sort-by.sync="orderBy"
     :sort-desc.sync="orderDesc"
     :expanded="expanded"
-    :show-expand="enableTags"
+    show-expand
     expand-icon="fa fa-caret-down"
     :search="search"
     class="auto-table"
   >
     <template #top>
       <v-row>
-        <v-col v-if="enableTags">
+        <v-col>
           <TagSelector
             v-model="selectedTags"
             scope="organization"
@@ -54,7 +54,7 @@ cs:
     </template>
     <template #expanded-item="{ item, headers }">
       <td></td>
-      <td :colspan="headers.length" v-if="enableTags">
+      <td :colspan="headers.length">
         <v-row class="py-2">
           <v-col>
             <div class="d-inline-block">
@@ -214,7 +214,6 @@ export default {
       organizationMap: "organizations",
     }),
     ...mapGetters({
-      enableTags: "enableTags",
       showManagementStuff: "showManagementStuff",
     }),
     organizations() {
@@ -244,12 +243,10 @@ export default {
           value: "name",
         },
       ];
-      if (this.enableTags) {
-        base.push({
-          text: this.$i18n.t("labels.tags"),
-          value: "tags",
-        });
-      }
+      base.push({
+        text: this.$i18n.t("labels.tags"),
+        value: "tags",
+      });
       return base;
     },
     nameMap() {

@@ -9,7 +9,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container fluid v-if="allowManualDataUpload">
+  <v-container fluid>
     <v-row>
       <v-col>
         <h2 v-text="$t('manual_uploads')"></h2>
@@ -35,7 +35,6 @@ cs:
 
 <script>
 import ManualUploadListTable from "@/components/ManualUploadListTable";
-import { mapGetters } from "vuex";
 import ManualUploadButton from "@/components/ManualUploadButton";
 
 export default {
@@ -44,12 +43,6 @@ export default {
   components: {
     ManualUploadListTable,
     ManualUploadButton,
-  },
-
-  computed: {
-    ...mapGetters({
-      allowManualDataUpload: "allowManualDataUpload",
-    }),
   },
 };
 </script>

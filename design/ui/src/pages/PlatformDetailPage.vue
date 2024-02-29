@@ -134,13 +134,13 @@ cs:
           </table>
         </v-col>
         <v-spacer></v-spacer>
-        <v-col cols="auto" v-if="enableTags">
+        <v-col cols="auto">
           <TagCard scope="platform" :item-id="platformId" />
         </v-col>
         <v-col cols="auto" v-if="showAdminStuff">
           <v-card>
             <v-card-text>
-              <div v-if="allowManualDataUpload">
+              <div>
                 <v-btn
                   text
                   small
@@ -199,7 +199,7 @@ cs:
         <v-icon class="mr-2">fa-bars</v-icon>
         <span v-text="$t('titles')"></span>
       </v-tab>
-      <v-tab href="#coverage" v-if="platform && enableDataCoverage">
+      <v-tab href="#coverage" v-if="platform">
         <v-icon class="mr-2">fa-layer-group</v-icon>
         <span v-text="$t('series.data_coverage')"></span>
       </v-tab>
@@ -249,7 +249,7 @@ cs:
         </v-tab-item>
 
         <v-tab-item value="coverage">
-          <section v-if="platform && enableDataCoverage">
+          <section v-if="platform">
             <CoverageOverviewWidget :platform-id="platformId" />
           </section>
         </v-tab-item>
@@ -377,9 +377,6 @@ export default {
       dateRangeEnd: "dateRangeEndText",
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
-      allowManualDataUpload: "allowManualDataUpload",
-      enableTags: "enableTags",
-      enableDataCoverage: "enableDataCoverage",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import celery
 from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
-from django.conf import settings
 from django.utils import timezone
 
 from .models import Automatic, FetchIntention, RunResponse, Scheduler
@@ -63,7 +62,6 @@ def trigger_scheduler(self, url: str, finish: bool = False):
 @logged_task
 @email_if_fails
 def update_automatic_harvesting():
-    if settings.AUTOMATIC_HARVESTING_ENABLED:
-        logger.info("Updating planning of automatic harvesting for last month")
-        Automatic.update_for_last_month()
-        logger.info("Automatic planning for the last month updated")
+    logger.info("Updating planning of automatic harvesting for last month")
+    Automatic.update_for_last_month()
+    logger.info("Automatic planning for the last month updated")

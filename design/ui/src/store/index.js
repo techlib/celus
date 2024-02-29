@@ -254,12 +254,6 @@ export default new Vuex.Store({
       }
       return "COUNTER credentials import";
     },
-    allowManualDataUpload(state) {
-      if ("ALLOW_MANUAL_UPLOAD" in state.basicInfo) {
-        return state.basicInfo["ALLOW_MANUAL_UPLOAD"];
-      }
-      return true;
-    },
     enableRawDataImport(state) {
       return state.basicInfo.ENABLE_RAW_DATA_IMPORT || "None";
     },
@@ -268,12 +262,6 @@ export default new Vuex.Store({
         return state.basicInfo["AUTOMATICALLY_CREATE_METRICS"];
       }
       return true;
-    },
-    enableTags(state) {
-      return state.basicInfo.ENABLE_TAGS ?? false;
-    },
-    enableDataCoverage(state) {
-      return state.basicInfo.ENABLE_DATA_COVERAGE ?? false;
     },
     celusAdminSitePath(state) {
       if ("CELUS_ADMIN_SITE_PATH" in state.basicInfo) {

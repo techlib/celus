@@ -170,7 +170,3 @@ class EnabledInSettingsPermission(BasePermission):
 
     def has_permission(self, request, view):
         return getattr(settings, self.name_in_settings, self.default)
-
-
-class ManualDataUploadEnabledPermission(EnabledInSettingsPermission):
-    name_in_settings = "ALLOW_MANUAL_UPLOAD"

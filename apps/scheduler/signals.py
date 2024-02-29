@@ -1,5 +1,4 @@
 from core.logic.dates import last_month
-from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -13,10 +12,6 @@ from .models import Automatic, FetchIntention, FetchIntentionQueue
 def update_intentions_from_cred_post_save(
     sender, instance, created, raw, using, update_fields, **kwargs
 ):
-    if not settings.AUTOMATIC_HARVESTING_ENABLED:
-        # skip when automatic scheduling disabled
-        return
-
     with transaction.atomic():
         if not created:
             automatic = Automatic.get_or_create(last_month(), instance.organization)
@@ -38,10 +33,6 @@ def update_intentions_from_cred_post_save(
 def update_intentions_from_cr2c_post_save(
     sender, instance, created, raw, using, update_fields, **kwargs
 ):
-    # skip when automatic scheduling disabled
-    if not settings.AUTOMATIC_HARVESTING_ENABLED:
-        return
-
     with transaction.atomic():
         automatic = Automatic.get_or_create(
             month=last_month(), organization=instance.credentials.organization
@@ -51,10 +42,6 @@ def update_intentions_from_cr2c_post_save(
 
 @receiver(post_delete, sender=CounterReportsToCredentials)
 def update_intentions_from_cr2c_post_delete(sender, instance, using, **kwargs):
-    # skip when automatic scheduling disabled
-    if not settings.AUTOMATIC_HARVESTING_ENABLED:
-        return
-
     with transaction.atomic():
         FetchIntention.objects.select_for_update(skip_locked=True).filter(
             harvest__automatic__isnull=False,

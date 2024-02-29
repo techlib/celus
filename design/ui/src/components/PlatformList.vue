@@ -38,7 +38,7 @@ cs:
 <template>
   <v-container fluid class="pt-0 px-0 px-sm-2">
     <v-row>
-      <v-col v-if="enableTags" class="pt-0">
+      <v-col class="pt-0">
         <TagSelector
           v-model="selectedTags"
           scope="platform"
@@ -255,7 +255,6 @@ export default {
     ...mapGetters({
       formatNumber: "formatNumber",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
-      enableTags: "enableTags",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
@@ -274,6 +273,10 @@ export default {
         {
           text: this.$i18n.t("columns.provider"),
           value: "provider",
+        },
+        {
+          text: this.$i18n.t("labels.tags"),
+          value: "tags",
         },
         {
           text: this.$i18n.t("columns.title_count"),
@@ -300,12 +303,6 @@ export default {
           text: this.$i18n.t("columns.actions"),
           value: "actions",
           sortable: false,
-        });
-      }
-      if (this.enableTags) {
-        base.splice(3, 0, {
-          text: this.$i18n.t("labels.tags"),
-          value: "tags",
         });
       }
       return base;

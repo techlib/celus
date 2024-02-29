@@ -367,7 +367,6 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeExplicitEndText",
       selectedOrganization: "selectedOrganization",
-      enableDataCoverage: "enableDataCoverage",
       organizationSelected: "organizationSelected",
     }),
     monthNames() {
@@ -948,7 +947,7 @@ export default {
       setTimeout(async () => await this.ingestData(response.data.data), 10);
     },
     async loadCoverageData() {
-      if (this.enableDataCoverage && this.shownPrimaryDimension === "date") {
+      if (this.shownPrimaryDimension === "date") {
         let params = {
           start_date: this.dateRangeStart,
           end_date: this.dateRangeEnd,
