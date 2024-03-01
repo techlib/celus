@@ -11,7 +11,6 @@ from pathlib import Path
 import magic
 from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
-from celus_nigiri.celus import custom_data_to_records
 from core.exceptions import ModelUsageError
 from core.models import (
     UL_ROBOT,
@@ -761,21 +760,6 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         except ObjectDoesNotExist:
             return None
 
-    @classmethod
-    def using_nibbler_cls(cls, method: MduMethod) -> bool:
-        if method == MduMethod.RAW:
-            return True
-        elif method == MduMethod.COUNTER:
-            return True
-        elif method == MduMethod.CELUS:
-            return settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT
-        else:
-            raise NotImplementedError()
-
-    @property
-    def using_nibbler(self) -> bool:
-        return self.using_nibbler_cls(self.method)
-
     def histograms_with_stats(
         self,
     ) -> typing.Tuple[typing.Dict[str, Counter], Counter, typing.List[str]]:
@@ -786,7 +770,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         stats_dict = stats.dict()
 
         # Fill in empty months from nibbler output when no data are present
-        if stats_dict["total"]["count"] == 0 and self.using_nibbler:
+        if stats_dict["total"]["count"] == 0:
             nibbler_output, _ = self.get_nibbler_output()
             stats_dict["months"] = {
                 m.strftime("%Y-%m"): {"sum": 0, "count": 0}
@@ -845,18 +829,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
         self.check_self_checksum()  # check the checksum before using the file
 
-        if self.using_nibbler:
-            nibbler_output, _ = self.get_nibbler_output()
-            yield from get_records_from_nibbler_output(nibbler_output)
-
-        else:
-            # Parsing data in "celus format" without nibbler (user can pick report type)
-            default_metric = self.prepare_default_metric()
-            yield from custom_data_to_records(
-                self.to_record_dicts(),
-                extra_dims=self.report_type.dimension_short_names,
-                initial_data={"metric": default_metric.pk},
-            )
+        nibbler_output, _ = self.get_nibbler_output()
+        yield from get_records_from_nibbler_output(nibbler_output)
 
     def file_is_json(self) -> bool:
         """

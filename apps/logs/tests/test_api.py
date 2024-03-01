@@ -393,15 +393,13 @@ class TestChartDataAPI:
 
 @pytest.mark.django_db
 class TestManualDataUpload:
-    @pytest.mark.parametrize("nibbler", (True, False))
     def test_create_manual_data_upload(
-        self, organizations, master_admin_client, report_type_nd, tmp_path, settings, nibbler
+        self, organizations, master_admin_client, report_type_nd, tmp_path, settings
     ):
         platform = PlatformFactory(short_name="Platform1")
         report_type = report_type_nd(0)
         file = StringIO("Source,2019-01\naaaa,9\n")
         settings.MEDIA_ROOT = tmp_path
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = nibbler
         file.name = "input.csv"
         response = master_admin_client.post(
             reverse("manual-data-upload-list"),
@@ -427,7 +425,6 @@ class TestManualDataUpload:
         report_type = report_type_nd(0)
         file = StringIO("Source,2019-01\naaaa,9\n")
         settings.MEDIA_ROOT = tmp_path
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = True
         file.name = "input.txt"
         response = master_admin_client.post(
             reverse("manual-data-upload-list"),

@@ -410,41 +410,40 @@ class ManualDataUploadSerializer(ModelSerializer):
 
             result = super().create(validated_data)
             try:
-                if ManualDataUpload.using_nibbler_cls(validated_data["method"]):
-                    # Try to parse
-                    nibbler_output, method = result.get_nibbler_output()
+                # Try to parse
+                nibbler_output, method = result.get_nibbler_output()
 
-                    # test whether parsing passes
-                    # (should raise exception when nothing is found)
-                    poops = output_to_poops(nibbler_output)
+                # test whether parsing passes
+                # (should raise exception when nothing is found)
+                poops = output_to_poops(nibbler_output)
 
-                    # update report type in it wasn't set before
-                    if not result.report_type:
-                        # update method for raw => counter transition
-                        result.method = method
+                # update report type in it wasn't set before
+                if not result.report_type:
+                    # update method for raw => counter transition
+                    result.method = method
 
-                        # get report type
-                        report_types, rt_names = get_report_types_from_nibbler_output(poops)
+                    # get report type
+                    report_types, rt_names = get_report_types_from_nibbler_output(poops)
 
-                        if not rt_names:
-                            # No suitable parser found
-                            raise NibblerErrors(get_errors(nibbler_output))
+                    if not rt_names:
+                        # No suitable parser found
+                        raise NibblerErrors(get_errors(nibbler_output))
 
-                        if not report_types:
-                            # can't resolve report type name to report type
-                            # this should not happen and admin should be notified
-                            # to fix the situation
-                            raise RuntimeError(f"Can't resolve {rt_names} to ReportType")
+                    if not report_types:
+                        # can't resolve report type name to report type
+                        # this should not happen and admin should be notified
+                        # to fix the situation
+                        raise RuntimeError(f"Can't resolve {rt_names} to ReportType")
 
-                        if len({e.pk for e in report_types}) > 1:
-                            # Multiple report types should not be present here
-                            # that would indicate that the user uploaded e.g. xlsx file
-                            # with different report type on each sheet
-                            # => raise original exception
-                            raise MultipleReportTypes(report_types)
-                        result.extra = {p.sheet_idx: p.extras for p in poops}
-                        result.report_type = report_types[0]
-                        result.save()
+                    if len({e.pk for e in report_types}) > 1:
+                        # Multiple report types should not be present here
+                        # that would indicate that the user uploaded e.g. xlsx file
+                        # with different report type on each sheet
+                        # => raise original exception
+                        raise MultipleReportTypes(report_types)
+                    result.extra = {p.sheet_idx: p.extras for p in poops}
+                    result.report_type = report_types[0]
+                    result.save()
             except Exception:
                 # remove file which won't be linked with a db model due to exception
                 filepath = Path(settings.MEDIA_ROOT) / result.data_file.name

@@ -25,11 +25,6 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 
-@pytest.fixture(params=[True, False])
-def enable_nibbler_for_celus_format(request):
-    yield request.param
-
-
 @pytest.mark.django_db
 class TestCustomImport:
 
@@ -47,7 +42,6 @@ class TestCustomImport:
         users,
         basic1,
         platforms,
-        enable_nibbler_for_celus_format,
     ):
         """
         Complex test
@@ -60,7 +54,6 @@ class TestCustomImport:
         """
         access_log_orig_count = AccessLog.objects.count()
 
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         report_type = report_types["custom1"]
         organization = organizations["standalone"]
         platform = platforms["standalone"]
@@ -251,10 +244,7 @@ class TestCustomImport:
         client,
         basic1,
         organizations,
-        enable_nibbler_for_celus_format,
     ):
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
-
         organization = organizations["standalone"]
         platform = platforms["standalone"]
         report_type = report_types["custom1"]
@@ -408,12 +398,10 @@ class TestCustomImport:
         tmp_path,
         settings,
         content_prefix,
-        enable_nibbler_for_celus_format,
     ):
         """
         Check that CSV data are correctly ingested - regardless of BOM presence
         """
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = enable_nibbler_for_celus_format
         report_type = report_types["custom1"]
         organization = organizations["standalone"]
         platform = platforms["standalone"]

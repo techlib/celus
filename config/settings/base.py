@@ -872,9 +872,6 @@ RELEASES_SOURCEFILE = config("RELEASES_SOURCEFILE", default="RELEASES.yaml")
 ENABLE_RAW_DATA_IMPORT = config(
     "ENABLE_RAW_DATA_IMPORT", cast=Choices(["All", "PerOrg", "None"]), default="None"
 )
-ENABLE_NIBBLER_FOR_CELUS_FORMAT = config(
-    "ENABLE_NIBBLER_FOR_CELUS_FORMAT", cast=bool, default=False
-)
 DISABLE_NIBBLER_PARSER_VERSION_CHECK = config(
     "DISABLE_NIBBLER_PARSER_VERSION_CHECK", cast=bool, default=False
 )

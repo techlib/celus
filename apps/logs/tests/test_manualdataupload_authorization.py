@@ -17,6 +17,7 @@ def mdu_api_post(platforms, report_type_nd, tmp_path, settings, client, authenti
     def do_it(organization, identity):
         report_type = report_type_nd(0)
         file = StringIO("Source,2019-01\naaaa,9\n")
+        file.name = "data.csv"
         settings.MEDIA_ROOT = tmp_path
         response = client.post(
             reverse("manual-data-upload-list"),
