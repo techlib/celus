@@ -10,8 +10,12 @@ password_reset_signal = Signal()
 @receiver(user_signed_up)
 def mail_about_user_signing_up(request, user, **kwargs):
     async_mail_customer_care_admins.delay(
-        "New account created",
-        "New user account was created.\n\nUsername: {0.username}\nEmail: {0.email}".format(user),
+        f"New account created - {user.username}",
+        f"""\
+New user account was created.
+
+Username: {user.username}
+Email: {user.email}""",
     )
 
 

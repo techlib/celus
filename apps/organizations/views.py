@@ -238,7 +238,7 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
             user=request.user, organization=org, is_admin=True, source=data_source
         )
         async_mail_customer_care_admins.delay(
-            "New organization created",
+            f"New organization created - {org.name}",
             f"""\
 A new organization was created by the user.
 
