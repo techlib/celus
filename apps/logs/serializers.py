@@ -16,15 +16,20 @@ from publications.serializers import (
     SimplePlatformSerializer,
 )
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import BooleanField, DateField, IntegerField, SerializerMethodField
+from rest_framework.fields import (
+    BooleanField,
+    DateField,
+    IntegerField,
+    SerializerMethodField,
+)
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import (
     BaseSerializer,
     CurrentUserDefault,
     HiddenField,
-    ListField,
     ModelSerializer,
     PrimaryKeyRelatedField,
+    Serializer,
 )
 from sushi.serializers import SushiFetchAttemptFlatSerializer
 
@@ -327,6 +332,11 @@ class ImportBatchVerboseSerializer(ModelSerializer):
         )
 
 
+class ClashingMonthsSerializer(Serializer):
+    month = DateField(read_only=True)
+    org_id = IntegerField(read_only=True)
+
+
 class ManualDataUploadSerializer(ModelSerializer):
     user = HiddenField(default=CurrentUserDefault())
     import_batches = ImportBatchSerializer(read_only=True, many=True)
@@ -334,7 +344,7 @@ class ManualDataUploadSerializer(ModelSerializer):
     report_type_id = IntegerField(write_only=True, required=False)
     can_edit = BooleanField(read_only=True)
     can_import = BooleanField(read_only=True)
-    clashing_months = ListField(child=DateField(), read_only=True)
+    clashing_months = ClashingMonthsSerializer(many=True, read_only=True)
 
     class Meta:
         model = ManualDataUpload

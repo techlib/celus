@@ -12,6 +12,7 @@ en:
   hits: hits
   is_interest_metric: This metric defines interest for this report type
   data_exists: Data for this month already exists.
+  data_exists_for_organization: Data for this organization are already present.
   metric_create: Metric will be created.
   metric_ready: Metric is valid and is used.
   metric_unknown: Metric was not found.
@@ -21,6 +22,7 @@ en:
     platform and report type.
   import_not_allowed: Data import is not possible
   data_exists_for_months: Data are already present for following months
+  data_exists_for_organizations: Data are already present for following organizations
   delete_existing_data_first: If you want to proceed you need to delete existing data first.
   cant_use_metrics: Following metrics can't be used
   month_table:
@@ -56,6 +58,7 @@ cs:
   hits: zásahů
   is_interest_metric: Tato metrika definuje zájem pro tento typ reportu
   data_exists: Data za tento měsíc již existují.
+  data_exists_for_organization: Data pro tuto organizaci již existují.
   metric_create: Metrika bude vytvořena.
   metric_ready: Metrika je platná a používaná.
   metric_unknown: Metrika nebyla nalezena.
@@ -65,6 +68,7 @@ cs:
     organizace platformy a typu reportu.
   import_not_allowed: Import dat není možný
   data_exists_for_months: Data za následující měsíce již existují
+  data_exists_for_organizations: Data pro následující organizace již existují
   delete_existing_data_first: Pokud chcete pokračovat je nutné nejprve smazat existující data.
   cant_use_metrics: Následující metriky nemohou být použity
   month_table:
@@ -168,10 +172,7 @@ cs:
                   <td class="text-left pr-4">
                     {{ rec.name.substring(0, 7) }}
 
-                    <v-tooltip
-                      bottom
-                      v-if="preflightData.clashing_months.includes(rec.name)"
-                    >
+                    <v-tooltip bottom v-if="clashingMonths.includes(rec.name)">
                       <template v-slot:activator="{ on }">
                         <v-icon class="ml-1" x-small color="error" v-on="on">
                           fa fa-exclamation-triangle
@@ -305,6 +306,18 @@ cs:
                       {{ $t("organization_not_found") }}
                     </v-tooltip>
                     <v-tooltip
+                      bottom
+                      v-else-if="clashingOrgs.includes(rec.value.pk)"
+                    >
+                      <template v-slot:activator="{ on }">
+                        {{ rec.name }}
+                        <v-icon class="ml-1" x-small color="error" v-on="on">
+                          fa fa-exclamation-triangle
+                        </v-icon>
+                      </template>
+                      <span>{{ $t("data_exists_for_organization") }}</span>
+                    </v-tooltip>
+                    <v-tooltip
                       v-else-if="
                         method == 'raw' && rawDisabledPk.includes(rec.value.pk)
                       "
@@ -312,10 +325,10 @@ cs:
                     >
                       <template #activator="{ on }">
                         <span v-on="on">
-                          {{ rec.name }}
                           <v-icon class="ml-1" x-small color="error" v-on="on">
                             fa fa-exclamation-triangle
                           </v-icon>
+                          {{ rec.name }}
                         </span>
                       </template>
                       {{ $t("organization_raw_data_disabled") }}
@@ -366,29 +379,52 @@ cs:
       <v-col>
         <v-alert type="error" outlined>
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
-          <div v-if="clashingMonths.length > 0" class="mb-2">
-            {{ $t("data_exists_for_months") }}:
-            <ul class="pt-1">
-              <li v-for="month in clashingMonths" :key="month">
-                {{ month.substring(0, 7) }}
-              </li>
-            </ul>
-            <p v-if="failedMetrics.length === 0" class="mt-2">
-              <strong>{{ $t("delete_existing_data_first") }}</strong>
-            </p>
-          </div>
-          <div v-if="failedMetrics.length > 0" class="mb-2">
-            {{ $t("cant_use_metrics") }}:
-            <ul class="pt-1">
-              <li v-for="metric in failedMetrics" :key="metric.name">
-                <span class="font-weight-medium">{{ metric.name }}</span>
-                -
-                <span class="font-weight-light">{{
-                  $t(metricState(metric.name).tooltip)
-                }}</span>
-              </li>
-            </ul>
-          </div>
+          <v-container>
+            <v-row>
+              <v-col v-if="clashingMonths.length > 0" class="mb-2" cols="auto">
+                {{ $t("data_exists_for_months") }}:
+                <ul class="pt-1">
+                  <li v-for="month in clashingMonths" :key="month">
+                    {{ month.substring(0, 7) }}
+                  </li>
+                </ul>
+              </v-col>
+              <v-col
+                v-if="clashingOrganizationsSorted.length > 0"
+                class="mb-2"
+                cols="auto"
+              >
+                {{ $t("data_exists_for_organizations") }}:
+                <ul class="pt-1">
+                  <li
+                    v-for="org in clashingOrganizationsSorted"
+                    :key="org.value.pk"
+                  >
+                    {{ org.name }}
+                  </li>
+                </ul>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col v-if="failedMetrics.length > 0" class="mb-2" cols="auto">
+                {{ $t("cant_use_metrics") }}:
+                <ul class="pt-1">
+                  <li v-for="metric in failedMetrics" :key="metric.name">
+                    <span class="font-weight-medium">{{ metric.name }}</span>
+                    -
+                    <span class="font-weight-light">{{
+                      $t(metricState(metric.name).tooltip)
+                    }}</span>
+                  </li>
+                </ul>
+              </v-col>
+              <v-col v-else-if="clashingMonths.length > 0">
+                <p class="mt-2">
+                  <strong>{{ $t("delete_existing_data_first") }}</strong>
+                </p>
+              </v-col>
+            </v-row>
+          </v-container>
         </v-alert>
       </v-col>
     </v-row>
@@ -456,6 +492,14 @@ export default {
         })
         .sort((a, b) => a.name.localeCompare(b.name));
     },
+    clashingOrganizationsSorted() {
+      if (!this.organizationsSorted) {
+        return [];
+      }
+      return this.organizationsSorted.filter((e) =>
+        this.clashingOrgs.includes(e.value.pk)
+      );
+    },
     titleCount() {
       return this.preflightData.title_count;
     },
@@ -471,7 +515,25 @@ export default {
       );
     },
     clashingMonths() {
-      return this.preflightData.clashing_months;
+      let result = [
+        ...new Set(
+          Object.values(this.preflightData.clashing_months)
+            .flat()
+            .map((e) => e.month)
+        ),
+      ];
+      result.sort();
+      return result;
+    },
+    clashingOrgs() {
+      let result = [
+        ...new Set(
+          Object.values(this.preflightData.clashing_months)
+            .flat()
+            .map((e) => e.org_id)
+        ),
+      ];
+      return result;
     },
     emptyPreflight() {
       return this.preflightData.log_count === 0;

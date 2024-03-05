@@ -862,26 +862,15 @@ export default {
           // can't delete when data can't be reimported
           return null;
         }
-        if (!this.multipleOrganizations) {
-          return [
-            {
-              platform: this.platformId,
-              organization: this.organizationId,
-              report_type: this.uploadObject.report_type.pk,
-              months: this.preflightData.clashing_months,
-            },
-          ];
-        } else {
-          // There are several organizations in the data file
-          return Object.values(this.preflightData.organizations).map(
-            (org_data) => ({
-              platform: this.platformId,
-              organization: org_data.pk,
-              report_type: this.uploadObject.report_type.pk,
-              months: this.preflightData.clashing_months,
-            })
-          );
-        }
+        // There are several organizations in the data file
+        return Object.entries(this.clashingMonthsPerOrg).map(
+          ([org_id, months]) => ({
+            platform: this.platformId,
+            organization: org_id,
+            report_type: this.uploadObject.report_type.pk,
+            months: months,
+          })
+        );
       }
       return [];
     },
@@ -984,7 +973,7 @@ export default {
     },
     preflightDataFormatValid() {
       if (this.uploadObject) {
-        return this.uploadObject.preflight.format_version === "4";
+        return this.uploadObject.preflight.format_version === "5";
       } else {
         return false;
       }
@@ -1059,6 +1048,13 @@ export default {
         return this.dataFile.name.split(".").pop();
       }
       return null;
+    },
+    clashingMonthsPerOrg() {
+      let mapping = {};
+      for (const rec of this.preflightData?.clashing_months || []) {
+        mapping[rec.org_id] = (mapping[rec.org_id] || []).concat([rec.month]);
+      }
+      return mapping;
     },
   },
   methods: {

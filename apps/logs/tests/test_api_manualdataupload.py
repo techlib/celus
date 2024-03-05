@@ -675,7 +675,7 @@ class TestManualUploadConflicts:
         response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is False
-        assert batches_months == sorted(e for e in response.data["clashing_months"])
+        assert batches_months == sorted(e["month"] for e in response.data["clashing_months"])
 
         # fail processing
         response = clients["master_admin"].post(
@@ -875,7 +875,16 @@ class TestManualUploadForRaw:
         response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
         assert response.status_code == 200
         assert response.data["can_import"] is False
-        assert response.data["clashing_months"] == ["2019-01-01", "2019-02-01", "2019-03-01"]
+        assert {e["month"] for e in response.data["clashing_months"]} == {
+            "2019-01-01",
+            "2019-02-01",
+            "2019-03-01",
+        }
+
+        assert {e["org_id"] for e in response.data["clashing_months"]} == {
+            org1.pk,
+            org2.pk,
+        }
 
         # Try to import it
         response = clients["master_admin"].post(

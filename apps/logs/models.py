@@ -4,7 +4,6 @@ import re
 import typing
 from collections import Counter
 from copy import deepcopy
-from datetime import date
 from enum import Enum
 from pathlib import Path
 
@@ -652,7 +651,7 @@ class MduMethod(models.TextChoices):
 
 
 class ManualDataUpload(SourceFileMixin, models.Model):
-    PREFLIGHT_FORMAT_VERSION = "4"
+    PREFLIGHT_FORMAT_VERSION = "5"
 
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -869,10 +868,10 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         )
 
     @cached_property
-    def clashing_months(self) -> typing.Optional[typing.List[date]]:
+    def clashing_months(self) -> typing.Optional[typing.List[dict]]:
         """Display which months are in conflict with data to be imported
 
-        return: list of months
+        return: list of dict
         """
         if (
             not self.preflight
@@ -892,15 +891,16 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         # preflight was performed
         return sorted(
-            {
-                e.date
+            [
+                {"month": e.date, "org_id": e.organization.pk}
                 for e in ImportBatch.objects.filter(
                     report_type=self.report_type,
                     platform=self.platform,
                     organization__in=organizations,
                     date__in=list(self.preflight["months"]),
                 )
-            }
+            ],
+            key=lambda x: (x["month"], x["org_id"]),
         )
 
     def preflight_organizations_names(self) -> typing.Optional[typing.List[str]]:
