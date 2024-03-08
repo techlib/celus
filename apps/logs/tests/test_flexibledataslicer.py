@@ -1571,10 +1571,11 @@ class TestFlexibleDataSimpleCSVExporter:
                 decoder = codecs.getreader("utf-8")(metafile)
                 reader = csv.reader(decoder)
                 data = list(reader)
-                assert data[5] == ["Split by", "Organization"]
-                assert data[6] == ["Rows", "Platform"]
-                assert data[7] == ["Columns", "Metric"]
-                assert data[8] == ["Applied filters", f"Report type: {report_type.name}"]
+                assert data[5] == ["Data coverage", "100.0%"]
+                assert data[6] == ["Split by", "Organization"]
+                assert data[7] == ["Rows", "Platform"]
+                assert data[8] == ["Columns", "Metric"]
+                assert data[9] == ["Applied filters", f"Report type: {report_type.name}"]
 
     def test_metadata_unfiltered_orgs(self, flexible_slicer_test_data):
         """
@@ -1600,16 +1601,17 @@ class TestFlexibleDataSimpleCSVExporter:
                 decoder = codecs.getreader("utf-8")(metafile)
                 reader = csv.reader(decoder)
                 data = list(reader)
-                assert data[5] == ["Split by", "-"]
-                assert data[6] == ["Rows", "Platform"]
-                assert data[7] == ["Columns", "Metric"]
-                assert data[8] == ["Applied filters", f"Report type: {report_type.name}"]
-                assert data[10] == [
+                assert data[5] == ["Data coverage", "100.0%"]
+                assert data[6] == ["Split by", "-"]
+                assert data[7] == ["Rows", "Platform"]
+                assert data[8] == ["Columns", "Metric"]
+                assert data[9] == ["Applied filters", f"Report type: {report_type.name}"]
+                assert data[11] == [
                     "Included organizations",
                     "(No organization filter was applied, the data represent the following "
                     "organizations)",
                 ]
-                org_names = {row[1] for row in data[11 : len(data)]}  # noqa: E203
+                org_names = {row[1] for row in data[12 : len(data)]}  # noqa: E203
                 assert org_names == {org.name for org in Organization.objects.all()}
 
     def test_metadata_trend_mode(self, flexible_slicer_test_data):
@@ -1637,10 +1639,15 @@ class TestFlexibleDataSimpleCSVExporter:
                 decoder = codecs.getreader("utf-8")(metafile)
                 reader = csv.reader(decoder)
                 data = list(reader)
-                assert data[5] == ["Split by", "-"]
-                assert data[6] == ["Rows", "Platform"]
-                assert data[7] == ["Columns", "Trend analysis: 2020-01 vs 2020-02"]
-                assert data[8] == ["Applied filters", f"Report type: {report_type.name}"]
+                assert data[5] == [
+                    "Data coverage",
+                    "Base period: 100.0%",
+                    "Compared period: 100.0%",
+                ]
+                assert data[6] == ["Split by", "-"]
+                assert data[7] == ["Rows", "Platform"]
+                assert data[8] == ["Columns", "Trend analysis: 2020-01 vs 2020-02"]
+                assert data[9] == ["Applied filters", f"Report type: {report_type.name}"]
 
 
 @pytest.mark.django_db
