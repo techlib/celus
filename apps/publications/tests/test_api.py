@@ -624,6 +624,7 @@ class TestPlatformTitleAPI:
         assert len(resp.json()) == 1
         assert resp.json()[0]["isbn"] == titles[0].isbn
         assert resp.json()[0]["name"] == titles[0].name
+        assert resp.json()[0]["proprietary_ids"] == titles[0].proprietary_ids
 
     def test_authorized_user_accessible_platforms_titles_count_and_interest(
         self,

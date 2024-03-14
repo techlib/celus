@@ -26,7 +26,13 @@ def platform():
 
 @pytest.fixture
 def titles():
-    t1 = Title.objects.create(name="Title 1", pub_type="B", isbn="123-464-2356", doi="10.1223/x")
+    t1 = Title.objects.create(
+        name="Title 1",
+        pub_type="B",
+        isbn="123-464-2356",
+        doi="10.1223/x",
+        proprietary_ids=["foo:123", "bar:456"],
+    )
     t2 = Title.objects.create(
         name="Title 2", pub_type="J", issn="1234-5678", eissn="2345-6789", doi="10.1234/y"
     )

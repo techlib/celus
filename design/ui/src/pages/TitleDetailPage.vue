@@ -64,6 +64,29 @@ cs:
               <td>{{ title[prop] }}</td>
             </tr>
           </template>
+          <tr>
+            <th>
+              <v-tooltip bottom max-width="600px">
+                <template #activator="{ on }">
+                  <span v-on="on">
+                    {{ $t("title_fields.proprietary_ids") }}
+                    <v-icon color="info" small>fa-info-circle</v-icon>
+                  </span>
+                </template>
+                <span v-text="$t('title_fields.proprietary_ids_tt')"></span>
+              </v-tooltip>
+            </th>
+            <td>
+              <ul
+                class="no-bullets fixed-height"
+                :class="title.proprietary_ids.length > 4 ? 'text-caption' : ''"
+              >
+                <li v-for="(pid, index) in title.proprietary_ids" :key="index">
+                  {{ pid }}
+                </li>
+              </ul>
+            </td>
+          </tr>
         </table>
       </v-col>
       <v-col cols="auto" v-if="title">
@@ -447,4 +470,9 @@ export default {
 };
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+ul.fixed-height {
+  max-height: 6rem;
+  overflow-y: auto;
+}
+</style>

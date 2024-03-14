@@ -105,23 +105,6 @@ class TitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ("pk", "name", "pub_type", "isbn", "issn", "eissn", "doi", "pub_type_name")
-
-    def get_pub_type_name(self, obj: Title):
-        return obj.get_pub_type_display()
-
-
-class TitleCountSerializer(ModelSerializer):
-    interests = JSONField(read_only=True)
-    platform_count = IntegerField(read_only=True)
-    nonzero_platform_count = IntegerField(read_only=True)
-    platform_ids = JSONField(read_only=True)
-    pub_type_name = SerializerMethodField()
-    total_interest = IntegerField(read_only=True)
-    yops = JSONField(read_only=True)
-
-    class Meta:
-        model = Title
         fields = (
             "pk",
             "name",
@@ -130,17 +113,32 @@ class TitleCountSerializer(ModelSerializer):
             "issn",
             "eissn",
             "doi",
-            "interests",
             "pub_type_name",
+            "proprietary_ids",
+        )
+
+    def get_pub_type_name(self, obj: Title):
+        return obj.get_pub_type_display()
+
+
+class TitleCountSerializer(TitleSerializer):
+    interests = JSONField(read_only=True)
+    platform_count = IntegerField(read_only=True)
+    nonzero_platform_count = IntegerField(read_only=True)
+    platform_ids = JSONField(read_only=True)
+    total_interest = IntegerField(read_only=True)
+    yops = JSONField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = TitleSerializer.Meta.fields + (
+            "interests",
             "platform_count",
             "nonzero_platform_count",
             "platform_ids",
             "total_interest",
             "yops",
         )
-
-    def get_pub_type_name(self, obj: Title):
-        return obj.get_pub_type_display()
 
 
 class UseCaseSerializer(Serializer):

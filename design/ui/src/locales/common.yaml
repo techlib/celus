@@ -60,6 +60,8 @@ en:
     issn: ISSN
     eissn: eISSN
     doi: DOI
+    proprietary_ids: Proprietary IDs
+    proprietary_ids_tt: Internal title identifiers used by individual platforms/publishers
     actions: Actions
     reports: Reports
     active_reports: Active reports
@@ -395,6 +397,8 @@ cs:
     issn: ISSN
     eissn: eISSN
     doi: DOI
+    proprietary_ids: Interní ID
+    proprietary_ids_tt: Interní identifikátory titulu u jednotlivých platformem/vydavatelů
     actions: Akce
     reports: Reporty
     active_reports: Aktivní reporty
