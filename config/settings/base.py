@@ -320,8 +320,7 @@ print(
 MAXIMUS_URL = config("MAXIMUS_URL", default="")
 MAXIMUS_TOKEN = config("MAXIMUS_TOKEN", default="")
 
-# Knowedgebase integration
-KNOWLEDGEBASE_URL = config("KNOWLEDGEBASE_URL", default="")
+# Knowledgebase integration
 KNOWLEDGEBASE_TOKEN = config("KNOWLEDGEBASE_TOKEN", default="")
 
 # Celery
