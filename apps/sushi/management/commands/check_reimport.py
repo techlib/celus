@@ -3,7 +3,7 @@ from collections import Counter
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from logs.logic.attempt_import import reprocess_attempt
-from logs.models import AccessLog, ImportBatch
+from logs.models import DIMENSION_COUNT, ImportBatch
 
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
                     "target",
                     "metric",
                     "date",
-                ] + [f"dim{i}" for i in range(1, AccessLog.DIMENSION_COUNT + 1)]
+                ] + [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
 
                 # Compare ibs (assuming that accesslogs are created in the same order)
                 old_iter = old_ib.accesslog_set.order_by(*order_bys).iterator(DB_ITER_SIZE)

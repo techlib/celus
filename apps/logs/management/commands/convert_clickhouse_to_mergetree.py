@@ -46,10 +46,12 @@ class Command(BaseCommand):
                 logger.info("Copying the data from the old table to the new one")
                 client.execute(
                     f"""INSERT INTO {table_name}
-                    (report_type_id, organization_id, platform_id, date, metric_id, target_id, dim1,
-                     dim2, dim3, dim4, dim5, dim6, dim7, import_batch_id, id, value) SELECT
-                    report_type_id, organization_id, platform_id, date, metric_id, target_id,
-                    dim1, dim2, dim3, dim4, dim5, dim6, dim7, import_batch_id, id, value
+                    (report_type_id, organization_id, platform_id, date, metric_id, target_id,
+                     item_id, dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8, import_batch_id, id,
+                     value)
+                    SELECT report_type_id, organization_id, platform_id, date, metric_id, target_id,
+                    item_id, dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8, import_batch_id, id,
+                    value
                     FROM {table_name}_old"""
                 )
                 # then drop the old table

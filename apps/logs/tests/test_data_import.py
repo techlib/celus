@@ -1,18 +1,20 @@
+import typing
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from celus_nigiri import CounterRecord
 from celus_nigiri.counter4 import Counter4BR2Report
-from celus_nigiri.counter5 import Counter5TableReport, Counter5TRReport
-from celus_pycounter import report
+from celus_nigiri.counter5 import Counter5TRReport
 from django.core.management import call_command
 from django.db.models import Count, Sum
 from django.urls import reverse
 from hcube.api.models.aggregation import Sum as HSum
+from nibbler.logic.processing import counter_format_poops, get_records_from_nibbler_output
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.fake_data import PlatformFactory
 from publications.logic.title_management import find_mergeable_titles, merge_titles
-from publications.models import PlatformInterestReport, PlatformTitle, Title
+from publications.models import Item, PlatformInterestReport, PlatformTitle, Title
 
 from logs.fake_data import ManualDataUploadFullFactory, MetricFactory, ReportTypeFactory
 from logs.models import (
@@ -28,6 +30,10 @@ from logs.models import (
 from ..cubes import AccessLogCube, ch_backend
 from ..exceptions import DataAlreadyPresent
 from ..logic.data_import import import_counter_records
+
+
+def get_records(path: Path, platform: str) -> typing.Generator[CounterRecord, None, None]:
+    return list(get_records_from_nibbler_output(counter_format_poops(path, platform)))
 
 
 @pytest.mark.django_db
@@ -278,9 +284,9 @@ class TestCounter4Import:
     def test_import_br2_tsv(self, organizations, report_type_nd, platform):
         rt = report_type_nd(1, dimension_names=["Publisher"])
 
-        data = report.parse(str(Path(__file__).parent / "data/counter4/counter4_br2.tsv"))
-        reader = Counter4BR2Report()
-        records = list(reader.read_report(data))
+        path = Path(__file__).parent / "data/counter4/counter4_br2.tsv"
+        records = get_records(path, platform)
+
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         assert AccessLog.objects.count() == 0
@@ -312,12 +318,12 @@ class TestCounter4Import:
             ("World Congress on Engineering 2009 (Volume 1)", ["657512"], "9789881701251"),
         ]
 
-        reader = Counter4BR2Report()
-        rt = report_type_nd(len(reader.dimensions), dimension_names=reader.dimensions)
+        rt = report_type_nd(
+            len(Counter4BR2Report.dimensions), dimension_names=Counter4BR2Report.dimensions
+        )
+        path = Path(__file__).parent / "data/counter4/counter4_br2.tsv"
+        records = get_records(path, platform)
 
-        data = report.parse(str(Path(__file__).parent / "data/counter4/counter4_br2.tsv"))
-
-        records = list(reader.read_report(data))
         assert len(records) == 60  # 12 months, 5 titles
         organization = organizations[0]
         assert Title.objects.count() == 0
@@ -352,34 +358,163 @@ class TestCounter4Import:
 @pytest.mark.django_db
 class TestCounter5Import:
     @pytest.mark.parametrize(
-        ["filename", "expected"],
+        ["filename", "expected_titles", "expected_items"],
         [
-            ("counter5_table_dr.csv", [("ARTICLES", ["Test123"], []), ("BOOKS", ["Test456"], [])]),
+            (
+                "counter5_table_dr.csv",
+                [
+                    (
+                        "ARTICLES",
+                        {
+                            "proprietary_ids": ["Test123"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "",
+                        },
+                    ),
+                    (
+                        "BOOKS",
+                        {
+                            "proprietary_ids": ["Test456"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "",
+                        },
+                    ),
+                ],
+                [],
+            ),
             (
                 "COUNTER_R5_Report_Examples_TR.csv",
-                [("Journal Six", ["xyz123"], ["https://foo.bar.baz/"])],
+                [
+                    (
+                        "Journal Six",
+                        {
+                            "proprietary_ids": ["xyz123"],
+                            "uris": ["https://foo.bar.baz/"],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "9876-5432",
+                            "doi": "10.1000/ xyz123",
+                        },
+                    )
+                ],
+                [],
+            ),
+            (
+                "counter5_ir_sample.tsv",
+                [
+                    (
+                        "Journal 45",
+                        {
+                            "proprietary_ids": ["SampleIR:45"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "2859-4118",
+                            "eissn": "2859-4231",
+                            "doi": "10.1729/jhik",
+                        },
+                    ),
+                    (
+                        "Book 1092",
+                        {
+                            "proprietary_ids": ["SampleIR:b1092"],
+                            "uris": [],
+                            "isbn": "9783164584012",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "10.1729/zbcd.1243",
+                        },
+                    ),
+                ],
+                [
+                    (
+                        "Item 100026",
+                        {
+                            "proprietary_ids": ["SampleIR:100026"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "10.1729/jhik.345",
+                        },
+                    ),
+                    (
+                        "Item 100027",
+                        {
+                            "proprietary_ids": ["SampleIR:100027"],
+                            "uris": [],
+                            "isbn": "9783164484107",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "10.1729/zbcd.457",
+                        },
+                    ),
+                    (
+                        "Item 100029",
+                        {
+                            "proprietary_ids": ["SampleIR:100029"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "",
+                        },
+                    ),
+                    (
+                        "Item 100030",
+                        {
+                            "proprietary_ids": ["SampleIR:100030"],
+                            "uris": [],
+                            "isbn": "",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "10.1729/abcd.434",
+                        },
+                    ),
+                ],
             ),
         ],
     )
     def test_c5_import_title_types_and_ids(
-        self, organization_random, report_type_nd, platform, filename, expected
+        self,
+        organization_random,
+        report_type_nd,
+        platform,
+        filename,
+        expected_titles,
+        expected_items,
     ):
         # we do not care much about the dimensions - just about titles
         rt = report_type_nd(0)
 
-        reader = Counter5TableReport()
-        records = reader.file_to_records(str(Path(__file__).parent / "data/counter5" / filename))
+        path = Path(__file__).parent / "data/counter5" / filename
+        records = get_records(path, platform)
         assert Title.objects.count() == 0
         import_counter_records(rt, organization_random, platform, records)
-        assert Title.objects.count() == len(expected)
+        assert Title.objects.count() == len(expected_titles)
+        assert Item.objects.count() == len(expected_items)
         for title in Title.objects.all():
-            for exp_title, exp_ids, exp_uris in expected:
+            for exp_title, ids in expected_titles:
                 if exp_title == title.name:
-                    assert title.proprietary_ids == exp_ids
-                    assert title.uris == exp_uris
+                    for id in ["proprietary_ids", "uris", "isbn", "issn", "eissn", "doi"]:
+                        assert getattr(title, id) == ids[id], f"title {id} mismatch"
                     break
             else:
                 assert False, "expected title was not found"
+
+        for item in Item.objects.all():
+            for exp_title, ids in expected_items:
+                if exp_title == item.name:
+                    for id in ["proprietary_ids", "uris", "isbn", "issn", "eissn", "doi"]:
+                        assert getattr(item, id) == ids[id], f"item {id} mismatch"
+                    break
+            else:
+                assert False, "expected item was not found"
 
     @pytest.mark.parametrize(
         ["filename", "count"],
@@ -388,12 +523,13 @@ class TestCounter5Import:
             ("counter5_table_dr.tsv", 121),
             ("counter5_table_ir_m1.csv", 22788),
             ("counter5_table_pr.csv", 252),
+            ("counter5_ir_sample.tsv", 48),
         ],
     )
-    def test_c5_table_record_count(self, filename, count):
-        reader = Counter5TableReport()
-        records = reader.file_to_records(str(Path(__file__).parent / "data/counter5" / filename))
-        assert count == len(list(records))
+    def test_c5_table_record_count(self, filename, count, platform):
+        path = Path(__file__).parent / "data/counter5" / filename
+        records = get_records(path, platform)
+        assert count == len(records)
 
     def test_c5_tr_nature_merging(self, organization_random, platform):
         rt = ReportTypeFactory(
@@ -403,10 +539,8 @@ class TestCounter5Import:
             dimensions=Counter5TRReport.dimensions,
         )
 
-        reader = Counter5TRReport()
-        records = reader.file_to_records(
-            str(Path(__file__).parent / "data/counter5/counter5_tr_nature.json")
-        )
+        path = Path(__file__).parent / "data/counter5/counter5_tr_nature.json"
+        records = get_records(path, platform)
         import_counter_records(rt, organization_random, platform, records)
         assert Title.objects.filter(name="Nature").count() == 1, "only one Nature"
         assert (
@@ -425,6 +559,7 @@ class TestCounter5Import:
                 "dim5",
                 "dim6",
                 "dim7",
+                "dim8",
             )
             .distinct()
             .count()
@@ -448,10 +583,8 @@ class TestCounter5Import:
             dimensions=Counter5TRReport.dimensions,
         )
 
-        reader = Counter5TRReport()
-        records = reader.file_to_records(
-            str(Path(__file__).parent / "data/counter5/TR-one-title-more-ids.json")
-        )
+        path = Path(__file__).parent / "data/counter5/TR-one-title-more-ids.json"
+        records = get_records(path, platform)
         import_counter_records(rt, organization_random, platform, records)
         assert Title.objects.filter(name="GQ Gentlemens Quarterly").count() == 2
         t1, t2 = Title.objects.filter(name="GQ Gentlemens Quarterly")
@@ -477,6 +610,7 @@ class TestCounter5Import:
             "dim5",
             "dim6",
             "dim7",
+            "dim8",
         )
         assert (
             AccessLog.objects.count() > AccessLog.objects.values(*key_attrs).distinct().count()

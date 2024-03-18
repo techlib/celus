@@ -523,6 +523,16 @@ class TestSushiFetching:
                 },
                 True,
             ),
+            (
+                "counter5_ir_sample.json",
+                "ir",
+                {
+                    "Created_By": "Sample Institutional Repository",
+                    "Institution_Name": "Client Demo Site",
+                    "Institution_ID": [{"Type": "ISNI", "Value": "1234123412341234"}],
+                },
+                True,
+            ),
         ),
     )
     def test_c5_all_cases(

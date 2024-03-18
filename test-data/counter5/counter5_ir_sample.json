@@ -1,0 +1,396 @@
+{
+  "Report_Header": {
+    "Report_Name": "Item Master Report",
+    "Report_ID": "IR",
+    "Release": "5",
+    "Institution_Name": "Client Demo Site",
+    "Institution_ID": [
+      {
+        "Type": "ISNI",
+        "Value": "1234123412341234"
+      }
+    ],
+    "Customer_ID": "demo-1234",
+    "Report_Filters": [
+      {
+        "Name": "Begin_Date",
+        "Value": "2016-01-01"
+      },
+      {
+        "Name": "End_Date",
+        "Value": "2016-03-31"
+      }
+    ],
+    "Report_Attributes": [
+      {
+        "Name": "Attributes_To_Show",
+        "Value": "Authors|Publication_Date|Article_Version|Data_Type|YOP|Access_Type|Access_Method"
+      },
+      {
+        "Name": "Include_Parent_Details",
+        "Value": "True"
+      }
+    ],
+    "Created": "2019-04-25T11:38:17Z",
+    "Created_By": "Sample Institutional Repository"
+  },
+  "Report_Items": [
+    {
+      "Item": "Item 100026",
+      "Publisher": "Publisher 36",
+      "Platform": "Sample IR",
+      "Item_Contributors": [
+        {
+          "Type": "Author",
+          "Name": "F Estelle",
+          "Identifier": "ORCID:0000-0001-2345-6789"
+        }
+      ],
+      "Item_Dates": [
+        {
+          "Type": "Publication_Date",
+          "Value": "2015-03-20"
+        }
+      ],
+      "Item_Attributes": [
+        {
+          "Type": "Article_Version",
+          "Value": "VoR"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "DOI",
+          "Value": "10.1729/jhik.345"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "SampleIR:100026"
+        }
+      ],
+      "Item_Parent": {
+        "Item_Name": "Journal 45",
+        "Data_Type": "Journal",
+        "Item_ID": [
+          {
+            "Type": "DOI",
+            "Value": "10.1729/jhik"
+          },
+          {
+            "Type": "Proprietary",
+            "Value": "SampleIR:45"
+          },
+          {
+            "Type": "Print_ISSN",
+            "Value": "2859-4118"
+          },
+          {
+            "Type": "Online_ISSN",
+            "Value": "2859-4231"
+          }
+        ]
+      },
+      "Data_Type": "Article",
+      "YOP": "2015",
+      "Access_Type": "OA_Gold",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2016-02-01",
+            "End_Date": "2016-02-29"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 1
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Item": "Item 100027",
+      "Publisher": "Publisher 36",
+      "Platform": "Sample IR",
+      "Item_Contributors": [
+        {
+          "Type": "Author",
+          "Name": "D Fred",
+          "Identifier": "ORCID:0000-0001-2345-6788"
+        }
+      ],
+      "Item_Dates": [
+        {
+          "Type": "Publication_Date",
+          "Value": "2015-06-12"
+        }
+      ],
+      "Item_Attributes": [
+        {
+          "Type": "Article_Version",
+          "Value": "VoR"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "DOI",
+          "Value": "10.1729/zbcd.457"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "SampleIR:100027"
+        },
+        {
+          "Type": "ISBN",
+          "Value": "978-3-16-448410-7"
+        }
+      ],
+      "Data_Type": "Book",
+      "YOP": "2015",
+      "Access_Type": "Other_Free_To_Read",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2016-01-01",
+            "End_Date": "2016-01-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Item": "Item 100029",
+      "Publisher": "Publisher 36",
+      "Platform": "Sample IR",
+      "Item_Contributors": [
+        {
+          "Type": "Author",
+          "Name": "F Byrne",
+          "Identifier": "ORCID:0000-0001-2345-6787"
+        }
+      ],
+      "Item_Dates": [
+        {
+          "Type": "Publication_Date",
+          "Value": "2013-05-09"
+        }
+      ],
+      "Item_Attributes": [
+        {
+          "Type": "Article_Version",
+          "Value": "VoR"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "Proprietary",
+          "Value": "SampleIR:100029"
+        }
+      ],
+      "Item_Parent": {
+        "Item_Name": "Book 1092",
+        "Item_Contributors": [
+          {
+            "Type": "Author",
+            "Name": "E Yellow",
+            "Identifier": "ISNI:2345234523452345"
+          }
+        ],
+        "Item_Dates": [
+          {
+            "Type": "Publication_Date",
+            "Value": "2014-03-03"
+          }
+        ],
+        "Item_Attributes": [
+          {
+            "Type": "Article_Version",
+            "Value": "VoR"
+          }
+        ],
+        "Data_Type": "Book",
+        "Item_ID": [
+          {
+            "Type": "DOI",
+            "Value": "10.1729/zbcd.1243"
+          },
+          {
+            "Type": "Proprietary",
+            "Value": "SampleIR:b1092"
+          },
+          {
+            "Type": "ISBN",
+            "Value": "978-3-16-458401-2"
+          }
+        ]
+      },
+      "Data_Type": "Book_Segment",
+      "YOP": "2014",
+      "Access_Type": "Other_Free_To_Read",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2016-03-01",
+            "End_Date": "2016-03-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Item": "Item 100030",
+      "Publisher": "Publisher 36",
+      "Platform": "Sample IR",
+      "Item_Contributors": [
+        {
+          "Type": "Author",
+          "Name": "A Green",
+          "Identifier": "ORCID:0000-0001-2345-2787"
+        }
+      ],
+      "Item_Dates": [
+        {
+          "Type": "Publication_Date",
+          "Value": "2015-06-06"
+        }
+      ],
+      "Item_ID": [
+        {
+          "Type": "DOI",
+          "Value": "10.1729/abcd.434"
+        },
+        {
+          "Type": "Proprietary",
+          "Value": "SampleIR:100030"
+        }
+      ],
+      "Data_Type": "Multimedia",
+      "YOP": "2014",
+      "Access_Type": "Other_Free_To_Read",
+      "Access_Method": "Regular",
+      "Performance": [
+        {
+          "Period": {
+            "Begin_Date": "2016-01-01",
+            "End_Date": "2016-01-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 5
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 4
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 4
+            }
+          ]
+        },
+        {
+          "Period": {
+            "Begin_Date": "2016-02-01",
+            "End_Date": "2016-02-29"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 3
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        },
+        {
+          "Period": {
+            "Begin_Date": "2016-03-01",
+            "End_Date": "2016-03-31"
+          },
+          "Instance": [
+            {
+              "Metric_Type": "Total_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Total_Item_Requests",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Investigations",
+              "Count": 2
+            },
+            {
+              "Metric_Type": "Unique_Item_Requests",
+              "Count": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

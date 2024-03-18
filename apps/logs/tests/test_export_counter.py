@@ -9,6 +9,7 @@ from publications.fake_data import PlatformFactory
 from logs.logic.export_counter import (
     DRCounter5Export,
     IR_M1Counter5Export,
+    IRCounter5Export,
     PRCounter5Export,
     TRCounter5Export,
 )
@@ -18,9 +19,13 @@ from test_scenarios.counter_data import (
     dr,  # noqa
     dr_dim,  # noqa
     dr_ibs,  # noqa
+    ir,  # noqa
+    ir_dim,  # noqa
+    ir_ibs,  # noqa
     ir_m1,  # noqa
     ir_m1_dim,  # noqa
     ir_m1_ibs,  # noqa
+    items,  # noqa
     metrics,  # noqa
     pr,  # noqa
     pr_dim,  # noqa
@@ -481,6 +486,117 @@ target3,Pub1,,Plat1,,,,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
         sync_import_batches_with_clickhouse(*ir_m1_ibs)
 
         export = IR_M1Counter5Export(organization, platform, ir_m1, None, None)
+
+        "".join(export.csv())
+        assert caplog.records[-1].msg == "There are structural errors in the data"
+
+
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
+class TestIRCounterExport:
+    @pytest.mark.parametrize(
+        "title_preload_size,csv_line_batch",
+        [
+            [10, 10],
+            [2, 10],  # title_preload_size >= 2 (peeking at next record)
+            [10, 1],
+            [2, 1],
+        ],
+    )
+    def test_single_month(
+        self,
+        organization,
+        platform,
+        ir,
+        ir_ibs,
+        settings,
+        title_preload_size,
+        csv_line_batch,
+        clickhouse_db,
+    ):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        settings.CELUS_VERSION = "X.Y.Z"
+        sync_import_batches_with_clickhouse(*ir_ibs)
+
+        export = IRCounter5Export(organization, platform, ir, date(2020, 2, 1), date(2020, 2, 1))
+        export.TITLE_PRELOAD_SIZE = title_preload_size
+        export.CSV_LINE_BATCH = csv_line_batch
+
+        assert (
+            fixed_created("".join(export.csv()))
+            == """\
+Report_Name,Item Master Report\r
+Report_ID,IR\r
+Release,5\r
+Institution_Name,Celus\r
+Institution_ID,ISNI:0000000000000000\r
+Metric_Types,\r
+Report_Filters,\r
+Report_Attributes,Attributes_To_Show=Authors|Publication_Date|Article_Version|Data_Type|YOP|Access_Type|Access_Method;Include_Parent_Details=True\r
+Exceptions,\r
+Reporting_Period,Begin_Date=2020-02-01; End_Date=2020-02-29\r
+Created,2024-01-01T00:00:00Z\r
+Created_By,Celus X.Y.Z\r
+\r
+Item,Publisher,Publisher_ID,Platform,Authors,Publication_Date,Article_Version,DOI,Proprietary_ID,ISBN,Print_ISSN,Online_ISSN,URI,Parent_Title,Parent_Authors,Parent_Publication_Date,Parent_Article_Version,Parent_Data_Type,Parent_DOI,Parent_Proprietary_ID,Parent_ISBN,Parent_Print_ISSN,Parent_Online_ISSN,Parent_URI,Data_Type,YOP,Access_Type,Access_Method,Metric_Type,Reporting_Period_Total,Feb-2020\r
+J11,Pub1,,Plat1,,,,10.1111/1111.1111.1111,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,Total_Item_Requests,1,1\r
+J12,Pub1,,Plat1,,,,10.1111/1111.1111.2222,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,No_License,3,3\r
+J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,,,,9781492084884,,,,,,,,Total_Item_Requests,23,23\r
+J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,,,,9781492084884,,,,,,,,No_License,29,29\r
+"""
+        )
+
+    def test_no_months(self, organization, platform, ir, ir_ibs, settings, clickhouse_db):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        settings.CELUS_VERSION = "X.Y.Z"
+        sync_import_batches_with_clickhouse(*ir_ibs)
+
+        export = IRCounter5Export(organization, platform, ir, None, None)
+
+        assert (
+            fixed_created("".join(export.csv()))
+            == """\
+Report_Name,Item Master Report\r
+Report_ID,IR\r
+Release,5\r
+Institution_Name,Celus\r
+Institution_ID,ISNI:0000000000000000\r
+Metric_Types,\r
+Report_Filters,\r
+Report_Attributes,Attributes_To_Show=Authors|Publication_Date|Article_Version|Data_Type|YOP|Access_Type|Access_Method;Include_Parent_Details=True\r
+Exceptions,\r
+Reporting_Period,Begin_Date=2019-12-01; End_Date=2021-01-31\r
+Created,2024-01-01T00:00:00Z\r
+Created_By,Celus X.Y.Z\r
+\r
+Item,Publisher,Publisher_ID,Platform,Authors,Publication_Date,Article_Version,DOI,Proprietary_ID,ISBN,Print_ISSN,Online_ISSN,URI,Parent_Title,Parent_Authors,Parent_Publication_Date,Parent_Article_Version,Parent_Data_Type,Parent_DOI,Parent_Proprietary_ID,Parent_ISBN,Parent_Print_ISSN,Parent_Online_ISSN,Parent_URI,Data_Type,YOP,Access_Type,Access_Method,Metric_Type,Reporting_Period_Total,Dec-2019,Jan-2020,Feb-2020,Mar-2020,Apr-2020,May-2020,Jun-2020,Jul-2020,Aug-2020,Sep-2020,Oct-2020,Nov-2020,Dec-2020,Jan-2021\r
+M31,Pub1,,Plat1,"MM (ORCID:1234123412341234); MM, M",2021-12-24,,,,,,,,,,,,,,,,,,,,,,,Total_Item_Requests,31,0,0,0,0,31,0,0,0,0,0,0,0,0,0\r
+M31,Pub1,,Plat1,"MM (ORCID:1234123412341234); MM, M",2021-12-24,,,,,,,,,,,,,,,,,,,,,,,Unique_Item_Requests,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
+J11,Pub1,,Plat1,,,,10.1111/1111.1111.1111,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,Total_Item_Requests,12,11,0,1,0,0,0,0,0,0,0,0,0,0,0\r
+J11,Pub1,,Plat1,,,,10.1111/1111.1111.1111,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,No_License,17,0,0,0,0,0,0,0,0,0,0,0,0,0,17\r
+J12,Pub1,,Plat1,,,,10.1111/1111.1111.2222,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,Total_Item_Requests,24,0,0,0,0,5,0,0,0,0,0,0,0,0,19\r
+J12,Pub1,,Plat1,,,,10.1111/1111.1111.2222,,,1111-1111,9111-1111,,target1,,,,,10.4324/9781003185581,,9781003185581,1111-1111,9111-1111,,,,,,No_License,23,13,0,3,0,7,0,0,0,0,0,0,0,0,0\r
+J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,,,,9781492084884,,,,,,,,Total_Item_Requests,23,0,0,23,0,0,0,0,0,0,0,0,0,0,0\r
+J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,,,,9781492084884,,,,,,,,No_License,29,0,0,29,0,0,0,0,0,0,0,0,0,0,0\r
+"""  # noqa
+        )
+
+    def test_empty(self, organization, platform, ir, settings, clickhouse_db):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        export = IRCounter5Export(organization, platform, ir, None, None)
+        content = "".join(export.csv()).splitlines()
+        end_date = month_end(date.today()).strftime("%Y-%m-%d")
+        assert content[1] == "Report_ID,IR"
+        assert content[9] == f"Reporting_Period,Begin_Date=1970-01-01; End_Date={end_date}"
+        assert content[-1].startswith("Item")
+
+    def test_errors(self, organization, platform, ir, ir_ibs, settings, clickhouse_db, caplog):
+        ir_ibs[0].accesslog_set.update(item_id=None)
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+
+        sync_import_batches_with_clickhouse(*ir_ibs)
+
+        export = IRCounter5Export(organization, platform, ir, None, None)
 
         "".join(export.csv())
         assert caplog.records[-1].msg == "There are structural errors in the data"

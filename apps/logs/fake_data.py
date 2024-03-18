@@ -198,6 +198,10 @@ def create_title_ids():
     return {"Print_ISSN": "1234-5678", "ISBN": "9780471397120"}
 
 
+def create_item_ids():
+    return {"Print_ISSN": "1234-1234", "DOI": "10.1111/aaa.1234"}
+
+
 def create_dim_data(obj):
     return []
 
@@ -213,6 +217,8 @@ class CounterRecordFactory(factory.Factory):
     dimension_data = factory.LazyAttribute(create_dim_data)
     title = factory.Faker("sentence")
     title_ids = factory.LazyFunction(create_title_ids)
+    item = factory.Faker("sentence")
+    item_ids = factory.LazyFunction(create_item_ids)
 
 
 class DimensionFactory(factory.django.DjangoModelFactory):

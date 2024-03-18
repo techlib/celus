@@ -34,6 +34,9 @@ class Cache(dict):
             self._misses += 1
         return result
 
+    def stats(self) -> str:
+        return f"cache hits: {self._hits}, misses: {self._misses}, size: {len(self)}"
+
 
 @dataclass
 class TitleRec:

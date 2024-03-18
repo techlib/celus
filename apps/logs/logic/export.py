@@ -15,7 +15,7 @@ from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.transforms import StoredMap
 
 from ..cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
-from ..models import AccessLog, DimensionText, ReportType
+from ..models import DIMENSION_COUNT, AccessLog, DimensionText, ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ class CSVExport:
         # values that will be retrieved from the accesslogs
         values = ["value", "report_type_id"]
         values += list(field_name_map.keys())
-        values += [f"dim{i+1}" for i in range(7)]
+        values += [f"dim{i+1}" for i in range(DIMENSION_COUNT)]
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
@@ -183,6 +183,10 @@ class CSVExport:
         self.store_progress(rec_num + 1)
 
     def export_raw_accesslogs_to_stream_lowlevel_clickhouse(self, stream: IO):
+        dim_texts = {
+            f"dim{i + 1}_text": StoredMap(f"dim{i + 1}", "dim", "text")
+            for i in range(DIMENSION_COUNT)
+        }
         query = (
             AccessLogCube.query()
             .filter(**self.query_params)
@@ -196,13 +200,7 @@ class CSVExport:
                 target__doi=StoredMap("target_id", "title", "doi"),
                 organization=StoredMap("organization_id", "organization", "name"),
                 metric=StoredMap("metric_id", "metric", "short_name"),
-                dim1_text=StoredMap("dim1", "dim", "text"),
-                dim2_text=StoredMap("dim2", "dim", "text"),
-                dim3_text=StoredMap("dim3", "dim", "text"),
-                dim4_text=StoredMap("dim4", "dim", "text"),
-                dim5_text=StoredMap("dim5", "dim", "text"),
-                dim6_text=StoredMap("dim6", "dim", "text"),
-                dim7_text=StoredMap("dim7", "dim", "text"),
+                **dim_texts,
             )
         )
         start = monotonic()
@@ -222,7 +220,7 @@ class CSVExport:
         # values that will be retrieved from the accesslogs
         values = ["value", "report_type_id"]
         values += list(field_name_map.keys())
-        values += [f"dim{i+1}" for i in range(7)]
+        values += [f"dim{i+1}" for i in range(DIMENSION_COUNT)]
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()

@@ -67,7 +67,9 @@ def celus_format_poops(
     )
 
 
-def counter_format_poops(path: Path, parser_name: str, platform: Platform) -> typing.List[Poop]:
+def counter_format_poops(
+    path: Path, platform: Platform, parser_name: str = r"static.counter.*"
+) -> typing.List[Poop]:
     return output_to_poops(
         eat(
             path,

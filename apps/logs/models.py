@@ -54,13 +54,16 @@ from nibbler.logic.processing import (
 from nibbler.logic.utils import all_nibbler_counter_parsers
 from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
-from publications.models import Platform, Title
+from publications.models import Item, Platform, Title
 
 import logs
 
 from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
 logger = logging.getLogger(__name__)
+
+
+DIMENSION_COUNT = 8
 
 
 class OrganizationPlatform(models.Model):
@@ -218,13 +221,8 @@ class ReportMaterializationSpec(models.Model):
     keep_organization = models.BooleanField(default=True)
     keep_platform = models.BooleanField(default=True)
     keep_target = models.BooleanField(default=True)
-    keep_dim1 = models.BooleanField(default=True)
-    keep_dim2 = models.BooleanField(default=True)
-    keep_dim3 = models.BooleanField(default=True)
-    keep_dim4 = models.BooleanField(default=True)
-    keep_dim5 = models.BooleanField(default=True)
-    keep_dim6 = models.BooleanField(default=True)
-    keep_dim7 = models.BooleanField(default=True)
+    for i in range(DIMENSION_COUNT):
+        locals()[f"keep_dim{i + 1}"] = models.BooleanField(default=True)
     keep_date = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -264,11 +262,11 @@ class ReportMaterializationSpec(models.Model):
             keep.append("date")
         else:
             remove.append("date")
-        for i in range(1, 8):
-            if getattr(self, f"keep_dim{i}"):
-                keep.append(f"dim{i}")
+        for i in range(DIMENSION_COUNT):
+            if getattr(self, f"keep_dim{i + 1}"):
+                keep.append(f"dim{i + 1}")
             else:
-                remove.append(f"dim{i}")
+                remove.append(f"dim{i + 1}")
         return keep, remove
 
 
@@ -502,8 +500,6 @@ class AccessLogQuerySet(QuerySet):
 
 
 class AccessLog(models.Model):
-    DIMENSION_COUNT = 7
-
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, db_index=False)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -511,9 +507,12 @@ class AccessLog(models.Model):
     target = models.ForeignKey(
         Title, on_delete=models.CASCADE, null=True, help_text="Title for which this log was created"
     )
-    for i in range(1, DIMENSION_COUNT + 1):
-        locals()[f"dim{i}"] = models.IntegerField(
-            null=True, blank=True, help_text=f"Value in dimension #{i}"
+    item = models.ForeignKey(
+        Item, on_delete=models.CASCADE, null=True, help_text="Item for which this log was created"
+    )
+    for i in range(DIMENSION_COUNT):
+        locals()[f"dim{i + 1}"] = models.IntegerField(
+            null=True, blank=True, help_text=f"Value in dimension #{i + 1}"
         )
     value = models.PositiveIntegerField(help_text="The value representing number of accesses")
     date = models.DateField(verbose_name=_("Date"))
@@ -578,7 +577,7 @@ class AccessLog(models.Model):
             "metric_id",
             "value",
             "date",
-        ] + [f"dim{i}" for i in range(1, self.DIMENSION_COUNT + 1)]
+        ] + [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
         return [attr for attr in attrs if getattr(self, attr) != getattr(other, attr)]
 
 
@@ -796,9 +795,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             if not is_success(nibbler_output):
                 # Try to parse the input using standard counter parsers
                 nibbler_counter_output = counter_format_poops(
-                    os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                    r"^static.counter.*$",
-                    self.platform,
+                    os.path.join(settings.MEDIA_ROOT, self.data_file.name), self.platform
                 )
                 if is_success(nibbler_counter_output):
                     # Method changed RAW -> COUNTER
@@ -812,8 +809,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             nibbler_parser = all_nibbler_counter_parsers(is_json)
             poops = counter_format_poops(
                 os.path.join(settings.MEDIA_ROOT, self.data_file.name),
-                nibbler_parser,
                 self.platform,
+                nibbler_parser,
             )
 
             return poops, self.method
@@ -1153,7 +1150,7 @@ class FlexibleReport(models.Model):
     serialization_models = {
         "report_type": {"model": ReportType, "key": "short_name"},
         "metric": {"model": Metric, "key": "short_name"},
-        **{f"dim{i}": {"model": DimensionText, "key": "text"} for i in range(1, 8)},
+        **{f"dim{i + 1}": {"model": DimensionText, "key": "text"} for i in range(DIMENSION_COUNT)},
     }
 
     class Meta:

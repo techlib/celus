@@ -42,10 +42,12 @@ class TestTitleReimport:
     @pytest.mark.usefixtures("clickhouse_on_off")
     @pytest.mark.django_db(transaction=True)
     def test_resolve_remaining_phase(self):
-        title_rem = TitleFactory.create(name="_foo42_Nature", issn="1234-5676", eissn="", isbn="")
-        title_new = TitleFactory.create(name="Nature", issn="1234-5676", eissn="", isbn="")
+        title_rem = TitleFactory.create(
+            name="_foo42_Nature", issn="1234-5676", eissn="", isbn="", doi=""
+        )
+        title_new = TitleFactory.create(name="Nature", issn="1234-5676", eissn="", isbn="", doi="")
         title_rem_no_match = TitleFactory.create(
-            name="_foo42_Future", issn="1234-5687", eissn="", isbn=""
+            name="_foo42_Future", issn="1234-5687", eissn="", isbn="", doi=""
         )
         ImportBatchFullFactory.create(create_accesslogs__titles=[title_rem])
         ImportBatchFullFactory.create(create_accesslogs__titles=[title_rem_no_match])

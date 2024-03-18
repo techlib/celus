@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import BinaryIO, Callable, Optional
 
 import magic
+from celus_nigiri.record import Author as NigiriAuthor
 from core.models import CreatedUpdatedMixin, DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -17,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
 from .logic import knowledgebase as kb
+from .logic.validation import AUTHOR_ID_LEN, normalize_author_id
 
 
 class PlatformInterestReport(models.Model):
@@ -206,6 +208,79 @@ class Title(models.Model):
         if (self.issn or self.eissn) and not self.isbn:
             return self.PUB_TYPE_JOURNAL
         return self.PUB_TYPE_UNKNOWN
+
+
+class Author(models.Model):
+    name = models.TextField()
+    # ISNI contains 16 characters
+    isni = models.CharField(max_length=AUTHOR_ID_LEN, blank=True, default="")
+    # ORCID contains 16 charactes
+    orcid = models.CharField(max_length=AUTHOR_ID_LEN, blank=True, default="")
+
+    items = models.ManyToManyField(
+        "publications.Item", through="publications.AuthorToItem", related_name="authors"
+    )
+
+    class Meta:
+        unique_together = (("name", "isni", "orcid"),)
+
+    def __str__(self):
+        if self.isni and self.orcid:
+            return f"{self.name} (ISNI:{self.isni}|ORCID:{self.orcid})"
+        elif self.isni:
+            return f"{self.name} (ISNI:{self.isni})"
+        elif self.orcid:
+            return f"{self.name} (ORCID:{self.orcid})"
+        else:
+            return self.name
+
+    def save(self, *args, **kwargs):
+        self.isni = normalize_author_id(self.isni)
+        self.orcid = normalize_author_id(self.orcid)
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def from_nigiri_author(cls, author: NigiriAuthor) -> "Author":
+        # Need to normalize identifiers
+        # (this function may be used with batch_create which doesn't perform save
+        return cls(
+            name=author.name,
+            isni=normalize_author_id(author.ISNI),
+            orcid=normalize_author_id(author.ORCID),
+        )
+
+
+class Item(models.Model):
+    name = models.TextField()
+    publication_date = models.DateField(null=True, blank=True)
+    doi = models.CharField(max_length=250, blank=True, default="")
+    isbn = models.CharField(max_length=20, blank=True, default="")
+    issn = models.CharField(max_length=9, blank=True, default="", db_index=True)
+    eissn = models.CharField(
+        max_length=9, blank=True, default="", db_index=True, help_text="ISSN of electronic version"
+    )
+    uris = models.JSONField(default=list, blank=True)
+    proprietary_ids = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ("name", "publication_date")
+        verbose_name = _("Item")
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def data_type_to_pub_type(cls, data_type: str) -> str:
+        return Title.data_type_to_pub_type(data_type)
+
+
+class AuthorToItem(models.Model):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    position = models.PositiveSmallIntegerField(help_text="Used for per title author ordering")
+
+    class Meta:
+        unique_together = (("author", "item"),)
 
 
 class PlatformTitle(models.Model):

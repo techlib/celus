@@ -72,6 +72,46 @@ class TitleAdmin(admin.ModelAdmin):
     search_fields = ["name", "isbn", "issn", "eissn", "doi"]
 
 
+@admin.register(models.Author)
+class AuthorAdmin(admin.ModelAdmin):
+    list_display = ["name", "isni", "orcid"]
+    search_fields = ["name", "isni", "orcid", "eissn", "doi"]
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class AuthorInline(admin.TabularInline):
+    model = models.Item.authors.through
+    fields = ["position", "item", "author"]
+    readonly_fields = ["position", "item", "author"]
+    can_delete = False
+    extra = 0
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(models.Item)
+class ItemAdmin(admin.ModelAdmin):
+    inlines = [AuthorInline]
+
+    list_display = ["name", "publication_date", "isbn", "issn", "eissn", "doi"]
+    search_fields = ["name", "isbn", "issn", "eissn", "doi"]
+
+
 @admin.register(models.PlatformTitle)
 class PlatformTitleAdmin(admin.ModelAdmin):
     list_display = ["platform", "organization", "title", "date"]

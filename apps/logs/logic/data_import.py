@@ -16,7 +16,8 @@ from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from organizations.models import Organization
 from postgres_copy import CopyMapping
-from publications.logic.title_management import TitleManager, TitleRec
+from publications.logic.item_management import ItemManager
+from publications.logic.title_management import TitleManager
 from publications.models import Platform, PlatformTitle
 from sushi.models import SushiFetchAttempt
 
@@ -108,6 +109,7 @@ def import_counter_records(
     """
     stats = Counter()
     tm = TitleManager()
+    im = ItemManager()
     # mapping of months to import batches - has to be shared between calls to
     # _import_counter_record so that the same import batches are used for all data
     month_to_ib = {}
@@ -116,7 +118,7 @@ def import_counter_records(
     # small anyway
     ib_id_to_key_to_value = {}
     # the key in the above dict of dicts will be as follows:
-    ib_id_to_key_structure = ["metric_id", "target_id"] + [
+    ib_id_to_key_structure = ["metric_id", "target_id", "item_id"] + [
         f"dim{i+1}" for i, dim in enumerate(report_type.dimensions_sorted)
     ]
 
@@ -148,6 +150,7 @@ def import_counter_records(
             record_batch,
             stats,
             tm,
+            im,
             month_to_ib,
             ib_id_to_key_to_value,
             ib_id_to_key_structure,
@@ -229,10 +232,9 @@ def import_counter_records(
 
         on_commit(sync_with_clickhouse)
     for i, cache in enumerate([tm._counter_rec_to_title_rec_cache, tm._title_rec_to_title_cache]):
-        logger.info(
-            f"Title manager: step #{i+1} cache hits: {cache._hits}, misses: {cache._misses}, "
-            f"size: {len(cache)}"
-        )
+        logger.info(f"Title manager: step #{i+1} {cache.stats()}")
+    for i, cache in enumerate([im._counter_rec_to_item_rec_cache, im._item_rec_to_item_cache]):
+        logger.info(f"Item manager: step #{i+1} {cache.stats()}")
 
     return import_batches, stats
 
@@ -297,11 +299,30 @@ def wipe_empty_or_partial_import_batches(
     return count
 
 
+def prepare_titles(
+    tm: TitleManager, records: Iterable[CounterRecord], stats: Counter
+) -> List[Optional[int]]:
+    title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
+    tm.prefetch_titles(e for e in title_recs if e)
+    res = [title_rec and tm.get_or_create(title_rec) for title_rec in title_recs]
+    stats["warn missing title"] += sum(not e for e in res)
+    return res
+
+
+def prepare_items(im, records: Iterable[CounterRecord], stats: Counter):
+    item_recs = [im.counter_record_to_item_rec(e) for e in records]
+    im.prefetch_items(e for e in item_recs if e)
+    res = [item_rec and im.get_or_create(item_rec) for item_rec in item_recs]
+    stats["warn missing item"] += sum(not e for e in res)
+    return res
+
+
 def _preprocess_counter_records(
     report_type: ReportType,
     records: Iterable[CounterRecord],
     stats: Counter,
     tm: TitleManager,
+    im: ItemManager,
     month_to_import_batch: Dict[str, ImportBatch],
     ib_id_to_key_to_value: Dict[int, Dict],
     ib_id_to_key_structure: list,
@@ -322,22 +343,17 @@ def _preprocess_counter_records(
         if dim_text["dimension_id"] not in text_to_int_remaps:
             text_to_int_remaps[dim_text["dimension_id"]] = {}
         text_to_int_remaps[dim_text["dimension_id"]][dim_text["text"]] = dim_text
-    log_memory("X-1.5")
-    title_recs = [tm.counter_record_to_title_rec(rec) for rec in records]
-    tm.prefetch_titles(title_recs)
+    log_memory("X-1.3")
+    title_ids = prepare_titles(tm, records, stats)
+    item_ids = prepare_items(im, records, stats)
     # prepare raw data to be inserted into the database
     dimensions = report_type.dimensions_sorted
     log_memory("X-1")
 
-    title_rec: TitleRec
     record: CounterRecord
     last_log = time()
-    for title_rec, record in zip(title_recs, records):
+    for title_id, item_id, record in zip(title_ids, item_ids, records):
         # attributes that define the identity of the log
-        title_id = tm.get_or_create(title_rec)
-        if title_id is None:
-            # the title could not be found or created (probably missing required field like title)
-            stats["warn missing title"] += 1
         if isinstance(record.metric, int):
             # we can pass a specific metric by numeric ID
             metric_id = record.metric
@@ -345,7 +361,7 @@ def _preprocess_counter_records(
             metric_id = get_or_create_metric(metrics, record.metric, controlled_metrics)
         start = record.start.isoformat() if isinstance(record.start, date) else record.start
         import_batch = month_to_import_batch[start]
-        id_attrs = {"metric_id": metric_id, "target_id": title_id}
+        id_attrs = {"metric_id": metric_id, "target_id": title_id, "item_id": item_id}
         for i, dim in enumerate(dimensions):
             dim_value = record.dimension_data.get(dim.short_name)
             if dim_value is not None:
@@ -371,6 +387,7 @@ def _preprocess_counter_records(
             logger.info("Title statistics sofar: %s", tm.stats)
             last_log = time()
     logger.info("Title statistics: %s", tm.stats)
+    logger.info("Item statistics: %s", im.stats)
 
 
 def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, target_ids: Set[int]):

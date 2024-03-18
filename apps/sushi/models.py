@@ -72,6 +72,7 @@ COUNTER_REPORTS = (
     ("TR", "Counter 5 - Title Report"),
     ("PR", "Counter 5 - Platform Report"),
     ("DR", "Counter 5 - Database Report"),
+    ("IR", "Counter 5 - Item Report"),
     ("IR_M1", "Counter 5 - Multimedia Item Report 1"),
 )
 
@@ -153,6 +154,8 @@ class CounterReportType(models.Model):
             return export_counter.PRCounter5Export
         elif self.code == "IR_M1":
             return export_counter.IR_M1Counter5Export
+        elif self.code == "IR":
+            return export_counter.IRCounter5Export
 
         return None
 
@@ -578,6 +581,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     ) -> Counter5ReportBase:
         # params must be a copy, otherwise we will pollute it with EXTRA_PARAMS
         params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(counter_report.code.lower(), {}))
+        params.update(deepcopy(client.EXTRA_PARAMS["filters"].get(counter_report.code.lower(), {})))
         extra = self.extra_params or {}
         params.update(extra)
         report = client.get_report_data(
@@ -1084,7 +1088,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
         path = Path(settings.MEDIA_ROOT) / self.data_file.name
         logger.debug("Processing file: %s; time: %.3f", self.data_file.name, time())
-        poops = counter_format_poops(path, nibbler_parser, self.credentials.platform)
+        poops = counter_format_poops(path, self.credentials.platform, nibbler_parser)
         # Check the output note that poops.extras should countain counter header
         poop = output_to_poops(poops)[0]
         logger.debug("Records parsed; time: %.3f", time())

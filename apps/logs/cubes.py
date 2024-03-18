@@ -13,7 +13,7 @@ from hcube.backends.clickhouse.dictionaries import (
 )
 from hcube.settings import GlobalSettings
 
-from logs.models import AccessLog, ImportBatch, ReportType
+from logs.models import DIMENSION_COUNT, AccessLog, ImportBatch, ReportType
 
 
 def create_ch_backend():
@@ -47,13 +47,9 @@ class AccessLogCube(Cube):
     organization_id = IntDimension(signed=False, bits=32)
     platform_id = IntDimension(signed=False, bits=32)
     target_id = IntDimension(signed=False, bits=32)
-    dim1 = IntDimension(signed=False, bits=32)
-    dim2 = IntDimension(signed=False, bits=32)
-    dim3 = IntDimension(signed=False, bits=32)
-    dim4 = IntDimension(signed=False, bits=32)
-    dim5 = IntDimension(signed=False, bits=32)
-    dim6 = IntDimension(signed=False, bits=32)
-    dim7 = IntDimension(signed=False, bits=32)
+    item_id = IntDimension(signed=False, bits=32)
+    for i in range(DIMENSION_COUNT):
+        locals()[f"dim{i + 1}"] = IntDimension(signed=False, bits=32)
     date = DateDimension()
     import_batch_id = IntDimension(signed=False, bits=32)
     # metrics
@@ -63,23 +59,19 @@ class AccessLogCube(Cube):
         # primary key must be prefix of the sorting key
         primary_key = ["report_type_id", "organization_id", "platform_id"]
         # sorting key must contain all dimensions to prevent collapsing in CH
-        sorting_key = [
-            "report_type_id",
-            "organization_id",
-            "platform_id",
-            "date",
-            "metric_id",
-            "target_id",
-            "dim1",
-            "dim2",
-            "dim3",
-            "dim4",
-            "dim5",
-            "dim6",
-            "dim7",
-            "import_batch_id",
-            "id",
-        ]
+        sorting_key = (
+            [
+                "report_type_id",
+                "organization_id",
+                "platform_id",
+                "date",
+                "metric_id",
+                "target_id",
+                "item_id",
+            ]
+            + [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
+            + ["import_batch_id", "id"]
+        )
         indexes = [
             # skipping index to make finding data by import batch faster
             # reduces time to delete import batch data by several factors of magnitude for big dbs
@@ -96,6 +88,11 @@ class AccessLogCube(Cube):
         # dictionaries
         _dicts = [
             ("title", "publications_title", ("name", "issn", "eissn", "doi", "isbn")),
+            (
+                "item",
+                "publications_item",
+                ("name", "issn", "eissn", "doi", "isbn", "publication_date"),
+            ),
             ("organization", "organizations_organization", ("short_name", "name")),
             ("platform", "publications_platform", ("short_name", "name")),
             ("report_type", "logs_reporttype", ("short_name", "name")),
@@ -123,16 +120,14 @@ class AccessLogCube(Cube):
             organization_id=accesslog.organization_id or 0,
             platform_id=accesslog.platform_id or 0,
             target_id=accesslog.target_id or 0,
-            dim1=accesslog.dim1 or 0,
-            dim2=accesslog.dim2 or 0,
-            dim3=accesslog.dim3 or 0,
-            dim4=accesslog.dim4 or 0,
-            dim5=accesslog.dim5 or 0,
-            dim6=accesslog.dim6 or 0,
-            dim7=accesslog.dim7 or 0,
+            item_id=accesslog.item_id or 0,
             date=accesslog.date or 0,
             import_batch_id=accesslog.import_batch_id,
             value=accesslog.value,
+            **{
+                f"dim{i + 1}": (getattr(accesslog, f"dim{i + 1}") or 0)
+                for i in range(DIMENSION_COUNT)
+            },
         )
 
     @classmethod
@@ -144,16 +139,11 @@ class AccessLogCube(Cube):
             organization_id=accesslog["organization_id"] or 0,
             platform_id=accesslog["platform_id"] or 0,
             target_id=accesslog["target_id"] or 0,
-            dim1=accesslog["dim1"] or 0,
-            dim2=accesslog["dim2"] or 0,
-            dim3=accesslog["dim3"] or 0,
-            dim4=accesslog["dim4"] or 0,
-            dim5=accesslog["dim5"] or 0,
-            dim6=accesslog["dim6"] or 0,
-            dim7=accesslog["dim7"] or 0,
+            item_id=accesslog["item_id"] or 0,
             date=accesslog["date"] or 0,
             import_batch_id=accesslog["import_batch_id"],
             value=accesslog["value"],
+            **{f"dim{i + 1}": (accesslog.get(f"dim{i + 1}") or 0) for i in range(DIMENSION_COUNT)},
         )
 
     @classmethod
@@ -223,6 +213,6 @@ AccessLogCubeRecord = AccessLogCube.record_type()
 
 class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
     cube = AccessLogCube
-    preserved_dimensions = ["target_id", "platform_id", "organization_id", "date"]
+    preserved_dimensions = ["target_id", "item_id", "platform_id", "organization_id", "date"]
     aggregated_metrics = ["value"]
     projection = False

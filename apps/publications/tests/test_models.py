@@ -4,6 +4,7 @@ from core.models import DataSource
 from organizations.fake_data import OrganizationFactory
 
 from publications.fake_data import PlatformFactory
+from publications.models import Author
 
 
 @pytest.mark.django_db
@@ -40,3 +41,20 @@ class TestPlatformModel:
             )
 
         assert platform.slugified_name == result
+
+
+@pytest.mark.django_db
+class TestAuthorModel:
+    @pytest.mark.parametrize(
+        "in_isni,in_orcid,out_isni,out_orcid",
+        (
+            ("1", "0", "0000000000000001", "0000000000000000"),
+            ("1-1-1-1", "-0-", "0000000000001111", "0000000000000000"),
+            ("00000000000000001", "10000000000000000", "0000000000000001", ""),
+        ),
+    )
+    def test_author_ids_normalization(self, in_isni, in_orcid, out_isni, out_orcid):
+        author = Author.objects.create(name="foo", isni=in_isni, orcid=in_orcid)
+
+        assert author.isni == out_isni
+        assert author.orcid == out_orcid

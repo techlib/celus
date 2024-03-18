@@ -10,7 +10,7 @@ from hcube.api.models.aggregation import Sum as HSum
 
 from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.clickhouse import resync_import_batch_with_clickhouse
-from logs.models import AccessLog, ImportBatch, OrganizationPlatform
+from logs.models import DIMENSION_COUNT, AccessLog, ImportBatch, OrganizationPlatform
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +57,7 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
         "target_id",
         "report_type_id",
         "date",
-        "dim1",
-        "dim2",
-        "dim3",
-        "dim4",
-        "dim5",
-        "dim6",
-        "dim7",
-    ]
+    ] + [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
     to_fix = []
 
     # we do it by batches of import_batches because the query would take too much memory

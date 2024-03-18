@@ -167,7 +167,7 @@ class AccessLogAdmin(admin.ModelAdmin):
         "value",
     ]
     list_select_related = ["organization", "platform", "target", "metric", "report_type"]
-    readonly_fields = ["target", "import_batch", "organization", "platform"]
+    readonly_fields = ["target", "item", "import_batch", "organization", "platform"]
     search_fields = ["platform__name", "target__name", "organization__name"]
     list_filter = ["report_type", "organization", "platform"]
 

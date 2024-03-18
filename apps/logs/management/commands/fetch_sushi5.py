@@ -47,6 +47,7 @@ class Command(BaseCommand):
         # add params to ensure maximum split (most granular) data, we copy the value to prevent
         # possible pollution by later updates
         params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(report_type.lower(), {}))
+        params.update(deepcopy(client.EXTRA_PARAMS["filters"].get(report_type.lower(), {})))
         # fetch it
         self.stderr.write(
             self.style.WARNING(f"Getting {report_type} report from {begin_date} to {end_date}")

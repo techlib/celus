@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 issn_matcher = re.compile(r"(\d{4})[-–—−\uFF0D]?(\d{3}[\dXx])")
 issn_number_matcher = re.compile(r"^\d{0,7}[\dXx]$")
 
+AUTHOR_ID_LEN = 16
+
 
 def normalize_issn(text: str) -> str:
     """
@@ -51,3 +53,19 @@ def normalize_isbn(isbn: str) -> str:
 def normalize_title(title: str) -> str:
     clean = " ".join(title.split())  # normalize whitespace
     return clean
+
+
+def normalize_author_id(value: str) -> str:
+    if not value:
+        return ""
+    value = value.replace("-", "")
+    # Zeroes are going to be filled
+    value = value.lstrip("0")
+
+    if len(value) > AUTHOR_ID_LEN:
+        # Invalid identifier => don't use it
+        logger.warning("Wrong author ID '%s'", value)
+        return ""
+
+    # fill in zeros
+    return value.zfill(AUTHOR_ID_LEN)

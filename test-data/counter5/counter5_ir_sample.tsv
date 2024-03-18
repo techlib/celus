@@ -1,0 +1,30 @@
+﻿Report_Name	Item Master Report
+Report_ID	IR
+Release	5
+Institution_Name	Client Demo Site
+Institution_ID	ISNI:1234123412341234
+Metric_Types
+Report_Filters
+Report_Attributes	Attributes_To_Show=Authors|Publication_Date|Article_Version|Data_Type|YOP|Access_Type|Access_Method; Include_Parent_Details=True
+Exceptions
+Reporting_Period	Begin_Date=2016-01-01; End_Date=2016-03-31
+Created	2019-04-25T11:38:17Z
+Created_By	Sample Institutional Repository
+
+Item	Publisher	Publisher_ID	Platform	Authors	Publication_Date	Article_Version	DOI	Proprietary_ID	ISBN	Print_ISSN	Online_ISSN	URI	Parent_Title	Parent_Authors	Parent_Publication_Date	Parent_Article_Version	Parent_Data_Type	Parent_DOI	Parent_Proprietary_ID	Parent_ISBN	Parent_Print_ISSN	Parent_Online_ISSN	Parent_URI	Data_Type	YOP	Access_Type	Access_Method	Metric_Type	Reporting_Period_Total	Jan-2016	Feb-2016	Mar-2016
+Item 100026	Publisher 36		Sample IR	F Estelle (ORCID:0000-0001-2345-6789)	2015-03-20	VoR	10.1729/jhik.345	SampleIR:100026					Journal 45				Journal	10.1729/jhik	SampleIR:45		2859-4118	2859-4231		Article	2015	OA_Gold	Regular	Total_Item_Investigations	1	0	1	0
+Item 100026	Publisher 36		Sample IR	F Estelle (ORCID:0000-0001-2345-6789)	2015-03-20	VoR	10.1729/jhik.345	SampleIR:100026					Journal 45				Journal	10.1729/jhik	SampleIR:45		2859-4118	2859-4231		Article	2015	OA_Gold	Regular	Total_Item_Requests	1	0	1	0
+Item 100026	Publisher 36		Sample IR	F Estelle (ORCID:0000-0001-2345-6789)	2015-03-20	VoR	10.1729/jhik.345	SampleIR:100026					Journal 45				Journal	10.1729/jhik	SampleIR:45		2859-4118	2859-4231		Article	2015	OA_Gold	Regular	Unique_Item_Investigations	1	0	1	0
+Item 100026	Publisher 36		Sample IR	F Estelle (ORCID:0000-0001-2345-6789)	2015-03-20	VoR	10.1729/jhik.345	SampleIR:100026					Journal 45				Journal	10.1729/jhik	SampleIR:45		2859-4118	2859-4231		Article	2015	OA_Gold	Regular	Unique_Item_Requests	1	0	1	0
+Item 100027	Publisher 36		Sample IR	D Fred (ORCID:0000-0001-2345-6788)	2015-06-12	VoR	10.1729/zbcd.457	SampleIR:100027	978-3-16-448410-7															Book	2015	Other_Free_To_Read	Regular	Total_Item_Investigations	2	2	0	0
+Item 100027	Publisher 36		Sample IR	D Fred (ORCID:0000-0001-2345-6788)	2015-06-12	VoR	10.1729/zbcd.457	SampleIR:100027	978-3-16-448410-7															Book	2015	Other_Free_To_Read	Regular	Total_Item_Requests	2	2	0	0
+Item 100027	Publisher 36		Sample IR	D Fred (ORCID:0000-0001-2345-6788)	2015-06-12	VoR	10.1729/zbcd.457	SampleIR:100027	978-3-16-448410-7															Book	2015	Other_Free_To_Read	Regular	Unique_Item_Investigations	2	2	0	0
+Item 100027	Publisher 36		Sample IR	D Fred (ORCID:0000-0001-2345-6788)	2015-06-12	VoR	10.1729/zbcd.457	SampleIR:100027	978-3-16-448410-7															Book	2015	Other_Free_To_Read	Regular	Unique_Item_Requests	2	2	0	0
+Item 100029	Publisher 36		Sample IR	F Byrne (ORCID:0000-0001-2345-6787)	2013-05-09	VoR		SampleIR:100029					Book 1092	E Yellow (ISNI:2345234523452345)	2014-03-03	VoR	Book	10.1729/zbcd.1243	SampleIR:b1092	978-3-16-458401-2				Book_Segment	2014	Other_Free_To_Read	Regular	Total_Item_Investigations	3	0	0	3
+Item 100029	Publisher 36		Sample IR	F Byrne (ORCID:0000-0001-2345-6787)	2013-05-09	VoR		SampleIR:100029					Book 1092	E Yellow (ISNI:2345234523452345)	2014-03-03	VoR	Book	10.1729/zbcd.1243	SampleIR:b1092	978-3-16-458401-2				Book_Segment	2014	Other_Free_To_Read	Regular	Total_Item_Requests	3	0	0	3
+Item 100029	Publisher 36		Sample IR	F Byrne (ORCID:0000-0001-2345-6787)	2013-05-09	VoR		SampleIR:100029					Book 1092	E Yellow (ISNI:2345234523452345)	2014-03-03	VoR	Book	10.1729/zbcd.1243	SampleIR:b1092	978-3-16-458401-2				Book_Segment	2014	Other_Free_To_Read	Regular	Unique_Item_Investigations	2	0	0	2
+Item 100029	Publisher 36		Sample IR	F Byrne (ORCID:0000-0001-2345-6787)	2013-05-09	VoR		SampleIR:100029					Book 1092	E Yellow (ISNI:2345234523452345)	2014-03-03	VoR	Book	10.1729/zbcd.1243	SampleIR:b1092	978-3-16-458401-2				Book_Segment	2014	Other_Free_To_Read	Regular	Unique_Item_Requests	2	0	0	2
+Item 100030	Publisher 36		Sample IR	A Green (ORCID:0000-0001-2345-2787)	2015-06-06		10.1729/abcd.434	SampleIR:100030																Multimedia	2014	Other_Free_To_Read	Regular	Total_Item_Investigations	10	5	3	2
+Item 100030	Publisher 36		Sample IR	A Green (ORCID:0000-0001-2345-2787)	2015-06-06		10.1729/abcd.434	SampleIR:100030																Multimedia	2014	Other_Free_To_Read	Regular	Total_Item_Requests	8	4	2	2
+Item 100030	Publisher 36		Sample IR	A Green (ORCID:0000-0001-2345-2787)	2015-06-06		10.1729/abcd.434	SampleIR:100030																Multimedia	2014	Other_Free_To_Read	Regular	Unique_Item_Investigations	8	4	2	2
+Item 100030	Publisher 36		Sample IR	A Green (ORCID:0000-0001-2345-2787)	2015-06-06		10.1729/abcd.434	SampleIR:100030																Multimedia	2014	Other_Free_To_Read	Regular	Unique_Item_Requests	8	4	2	2

@@ -19,6 +19,9 @@ from test_scenarios.counter_data import (
     dr,  # noqa
     dr_dim,  # noqa
     dr_ibs,  # noqa
+    ir,  # noqa
+    ir_dim,  # noqa
+    ir_ibs,  # noqa
     ir_m1,  # noqa
     ir_m1_dim,  # noqa
     ir_m1_ibs,  # noqa
@@ -75,7 +78,7 @@ class TestExportDownloadCounterEndpoint:
 
     def test_unsupported_report_type(self, basic1, organization, platform, clients):
         counter_report_type1 = CounterReportTypeFactory(code="JR1", counter_version=4)
-        counter_report_type2 = CounterReportTypeFactory(code="IR", counter_version=5)
+        counter_report_type2 = CounterReportTypeFactory(code="IR_A1", counter_version=5)
 
         response = clients["master_user"].get(
             reverse("counter-data-export-download", args=(counter_report_type1.pk,)),

@@ -1,11 +1,11 @@
 import csv
 from abc import ABCMeta, abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date
 from io import StringIO
 from itertools import islice
 from logging import getLogger
-from typing import Generator, Iterable, List, Optional
+from typing import Any, Dict, Generator, Iterable, List, Optional
 
 from core.logic.dates import month_end, month_start, months_in_range
 from django.conf import settings
@@ -13,11 +13,11 @@ from django.utils.timezone import now
 from hcube.api.models.aggregation import Max, Min
 from hcube.api.models.transforms import StoredMap
 from organizations.models import Organization
-from publications.models import Platform
+from publications.models import AuthorToItem, Platform
 
 from logs.cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
 from logs.exceptions import DataStructureError
-from logs.models import ReportType
+from logs.models import DIMENSION_COUNT, ReportType
 
 logger = getLogger(__name__)
 
@@ -69,7 +69,11 @@ class Counter5Export(metaclass=ABCMeta):
             e: report_type.dim_name_to_dim_attr(e) for e in report_type.dimension_short_names
         }
 
-        order_bys = ["target_id"] + list(self.dimensions_mapping.values()) + ["metric_id", "date"]
+        order_bys = (
+            ["target_id", "item_id"]
+            + list(self.dimensions_mapping.values())
+            + ["metric_id", "date"]
+        )
         query = (
             AccessLogCube.query()
             .filter(**filters)
@@ -79,14 +83,17 @@ class Counter5Export(metaclass=ABCMeta):
                 target__eissn=StoredMap("target_id", "title", "eissn"),
                 target__isbn=StoredMap("target_id", "title", "isbn"),
                 target__doi=StoredMap("target_id", "title", "doi"),
+                item=StoredMap("item_id", "item", "name"),
+                item__issn=StoredMap("item_id", "item", "issn"),
+                item__eissn=StoredMap("item_id", "item", "eissn"),
+                item__isbn=StoredMap("item_id", "item", "isbn"),
+                item__doi=StoredMap("item_id", "item", "doi"),
+                item__publication_date=StoredMap("item_id", "item", "publication_date"),
                 metric=StoredMap("metric_id", "metric", "short_name"),
-                dim1_text=StoredMap("dim1", "dim", "text"),
-                dim2_text=StoredMap("dim2", "dim", "text"),
-                dim3_text=StoredMap("dim3", "dim", "text"),
-                dim4_text=StoredMap("dim4", "dim", "text"),
-                dim5_text=StoredMap("dim5", "dim", "text"),
-                dim6_text=StoredMap("dim6", "dim", "text"),
-                dim7_text=StoredMap("dim7", "dim", "text"),
+                **{
+                    f"dim{i + 1}_text": StoredMap(f"dim{i + 1}", "dim", "text")
+                    for i in range(DIMENSION_COUNT)
+                },
             )
             .order_by(*order_bys)
         )
@@ -108,11 +115,21 @@ class Counter5Export(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def attributes_to_show(self) -> str:
+    def attributes_to_show(self) -> List[str]:
         pass
+
+    @property
+    def extras(self) -> Dict[str, Any]:
+        return {}
 
     def make_file_header(self) -> List[List[str]]:
         """Prepare file header"""
+        attrs = (
+            f"Attributes_To_Show={'|'.join(self.attributes_to_show)}"
+            if self.attributes_to_show
+            else ""
+        )
+        extras = [f"{k}={v}" for k, v in self.extras.items()]
         return [
             ["Report_Name", self.report_name],
             ["Report_ID", self.report_id],
@@ -121,12 +138,7 @@ class Counter5Export(metaclass=ABCMeta):
             ["Institution_ID", "ISNI:0000000000000000"],
             ["Metric_Types", ""],
             ["Report_Filters", ""],
-            [
-                "Report_Attributes",
-                f"Attributes_To_Show={'|'.join(self.attributes_to_show)}"
-                if self.attributes_to_show
-                else "",
-            ],
+            ["Report_Attributes", ";".join(e for e in [attrs] + extras if e)],
             ["Exceptions", ""],
             [
                 "Reporting_Period",
@@ -144,14 +156,12 @@ class Counter5Export(metaclass=ABCMeta):
         return (
             r1.organization_id == r2.organization_id
             and r1.target_id == r2.target_id
-            and r1.dim1 == r2.dim1
-            and r1.dim2 == r2.dim2
-            and r1.dim3 == r2.dim3
-            and r1.dim4 == r2.dim4
-            and r1.dim5 == r2.dim5
-            and r1.dim6 == r2.dim6
-            and r1.dim7 == r2.dim7
+            and r1.item_id == r2.item_id
             and r1.metric_id == r2.metric_id
+            and all(
+                getattr(r1, f"dim{i + 1}") == getattr(r2, f"dim{i + 1}")
+                for i in range(DIMENSION_COUNT)
+            )
         )
 
     def line_records(self) -> Generator[List[AccessLogCubeRecord], None, None]:
@@ -367,7 +377,31 @@ class PRCounter5Export(Counter5Export):
         )
 
 
-class IR_M1Counter5Export(Counter5Export):
+class BaseIRCounter5Export(Counter5Export):
+    ITEM_BATCH_LINES_LEN = 1000
+
+    def line_records(self) -> Generator[List[AccessLogCubeRecord], None, None]:
+        generator = super().line_records()
+        while batch := tuple(islice(generator, self.ITEM_BATCH_LINES_LEN)):
+            # Prefetch item_id => author str mapping
+            item_ids = {e[0].item_id for e in batch if e[0].item_id}
+            item_id_to_author = defaultdict(list)
+            for a2i in (
+                AuthorToItem.objects.filter(item__in=item_ids)
+                .select_related("author")
+                .order_by("item_id", "position")
+            ):
+                item_id_to_author[a2i.item_id].append(str(a2i.author))
+
+            self.item_id_to_author_str = {k: "; ".join(v) for k, v in item_id_to_author.items()}
+
+            yield from batch
+
+    def get_authors(self, pk: int) -> str:
+        return self.item_id_to_author_str.get(pk, "")
+
+
+class IR_M1Counter5Export(BaseIRCounter5Export):
     report_name = "Multimedia Item Requests"
     report_id = "IR_M1"
     attributes_to_show = []
@@ -406,6 +440,111 @@ class IR_M1Counter5Export(Counter5Export):
             "",  # Publisher_ID
             self.get_dimension_value(record, "Platform"),
             *item_ids,
+            record.metric,
+            sum(month_values),
+            *month_values,
+        )
+
+
+class IRCounter5Export(BaseIRCounter5Export):
+    report_name = "Item Master Report"
+    report_id = "IR"
+    attributes_to_show = [
+        "Authors",
+        "Publication_Date",
+        "Article_Version",
+        "Data_Type",
+        "YOP",
+        "Access_Type",
+        "Access_Method",
+    ]
+    extras = {"Include_Parent_Details": True}
+
+    def get_record_error(self, record: AccessLogCubeRecord) -> Optional[str]:
+        if not record.item_id:
+            return "Missing Item for IR"
+
+    def get_target_ids(self, record: AccessLogCubeRecord) -> Iterable[str]:
+        # proprietary_ID and uri are empty
+        return (
+            record.target or "",
+            record.target__doi or "",
+            "",  # Proprietary_ID
+            record.target__isbn or "",
+            record.target__issn or "",
+            record.target__eissn or "",
+            "",  # URI
+        )
+
+    def get_item_ids(self, record: AccessLogCubeRecord) -> Iterable[str]:
+        # proprietary_ID and uri are empty
+        return (
+            record.item or "",
+            record.item__publication_date or "",
+            record.item__doi or "",
+            "",  # Proprietary_ID
+            record.item__isbn or "",
+            record.item__issn or "",
+            record.item__eissn or "",
+            "",  # URI
+        )
+
+    def make_record_header(self) -> List[str]:
+        return [
+            "Item",
+            "Publisher",
+            "Publisher_ID",
+            "Platform",
+            "Authors",
+            "Publication_Date",
+            "Article_Version",
+            "DOI",
+            "Proprietary_ID",
+            "ISBN",
+            "Print_ISSN",
+            "Online_ISSN",
+            "URI",
+            "Parent_Title",
+            "Parent_Authors",
+            "Parent_Publication_Date",
+            "Parent_Article_Version",
+            "Parent_Data_Type",
+            "Parent_DOI",
+            "Parent_Proprietary_ID",
+            "Parent_ISBN",
+            "Parent_Print_ISSN",
+            "Parent_Online_ISSN",
+            "Parent_URI",
+            "Data_Type",
+            "YOP",
+            "Access_Type",
+            "Access_Method",
+            "Metric_Type",
+            "Reporting_Period_Total",
+        ] + [e.strftime("%b-%Y") for e in self.months]
+
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
+        parent, *parent_ids = self.get_target_ids(record)
+        item, publication_date, *item_ids = self.get_item_ids(record)
+        return (
+            item,
+            self.get_dimension_value(record, "Publisher"),
+            "",  # Publisher_ID
+            self.get_dimension_value(record, "Platform"),
+            self.get_authors(record.item_id),
+            publication_date,
+            self.get_dimension_value(record, "Article_Version"),
+            *item_ids,
+            parent,
+            "",  # Parent_Authors
+            "",  # Parent_Publication_Date
+            "",  # Parent_Article_Version
+            self.get_dimension_value(record, "Parent_Data_Type"),
+            *parent_ids,
+            self.get_dimension_value(record, "Data_Type"),
+            self.get_dimension_value(record, "YOP"),
+            self.get_dimension_value(record, "Access_Type"),
+            self.get_dimension_value(record, "Access_Method"),
             record.metric,
             sum(month_values),
             *month_values,
