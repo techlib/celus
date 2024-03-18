@@ -69,6 +69,7 @@ cs:
               single-tag
               assignable-only
               dont-check-exclusive
+              allow-create
             />
           </v-col>
         </v-row>
