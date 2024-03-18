@@ -242,6 +242,7 @@ en:
     delete: Delete
     download: Download
     edit: Edit
+    proceed: Proceed
     refresh: Refresh
     reharvest: Reharvest
     save: Save
@@ -581,6 +582,7 @@ cs:
     delete: Smazat
     download: Stáhnout
     edit: Editovat
+    proceed: Provést
     refresh: Aktualizovat
     reharvest: Znovu stáhnout
     save: Uložit

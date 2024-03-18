@@ -10,7 +10,7 @@ from celus_nibbler.errors import WrongFileFormatError
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
-from core.logic.dates import date_filter_from_params, parse_month
+from core.logic.dates import date_filter_from_params, last_month, parse_month
 from core.logic.serialization import parse_b64json
 from core.logic.type_conversion import to_bool
 from core.models import REL_ORG_ADMIN, DataSource
@@ -39,7 +39,13 @@ from publications.models import Platform, Title
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
-from rest_framework.fields import BooleanField, CharField, ListField
+from rest_framework.fields import (
+    BooleanField,
+    CharField,
+    CurrentUserDefault,
+    HiddenField,
+    ListField,
+)
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -50,6 +56,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelV
 from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
 from sushi.models import (
+    AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
     SushiCredentials,
@@ -921,6 +928,66 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
         totals["ratio"] = (totals["ib_count"] / totals["ib_max"]) if totals["ib_max"] else None
         return Response(totals)
+
+    class ImportBatchCreateEmptySerializer(Serializer):
+        organization = PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=True)
+        report_type = PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=True)
+        platform = PrimaryKeyRelatedField(queryset=Platform.objects.all(), required=True)
+        date = DateField(required=True)
+        user = HiddenField(default=CurrentUserDefault())
+
+        def validate_date(self, value):
+            """
+            Date must be in the past, before to the currently harvested month
+            """
+            currently_harvested_month = last_month()
+            if value >= currently_harvested_month:
+                raise ValidationError(
+                    "Date must be in the past, before the currently harvested month"
+                )
+            return value
+
+        def validate(self, data):
+            """
+            Check that there is no matching import batch, but there is a failed fetch attempt.
+            """
+            if ImportBatch.objects.filter(
+                organization=data["organization"],
+                report_type=data["report_type"],
+                platform=data["platform"],
+                date=data["date"],
+            ).exists():
+                raise ValidationError("Import batch already exists")
+            if not SushiFetchAttempt.objects.filter(
+                credentials__organization=data["organization"],
+                counter_report__report_type=data["report_type"],
+                credentials__platform=data["platform"],
+                status__in=AttemptStatus.errors(),
+                start_date=data["date"],
+            ).exists():
+                raise ValidationError("No previous failed fetch attempt exists")
+            return data
+
+        def save(self, **kwargs):
+            return ImportBatch.objects.create(manual_empty=True, **self.validated_data)
+
+    @action(detail=False, methods=["post"], url_name="create-empty", url_path="create-empty")
+    def create_empty(self, request):
+        """
+        Create an empty import batch for given report type, platform and date.
+        """
+        serializer = self.ImportBatchCreateEmptySerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        # check that user has access to the organization as admin
+        if (
+            request.user.organization_relationship(serializer.validated_data["organization"].pk)
+            < REL_ORG_ADMIN
+        ):
+            raise PermissionDenied("Not allowed to create import batch for this organization")
+        ib = serializer.save()
+        return Response(ImportBatchSerializer(ib).data, status=status.HTTP_201_CREATED)
 
 
 class ManualDataUploadViewSet(

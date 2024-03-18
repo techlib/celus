@@ -25,6 +25,9 @@ en:
   delete_mode: Delete mode
   delete_mode_info: activate to delete existing data
   delete_ok: Selected data were deleted.
+  mark_failed_as_empty: Mark failed as empty
+  mark_failed_as_empty_tt: Selected failed harvests older than one month will be marked as empty data and no further harvesting will be attempted. Useful for cases where the data is known to be empty.
+  markable_as_empty: can be marked as empty
 
 cs:
   title: Yearly overview
@@ -48,6 +51,9 @@ cs:
   delete_mode: Mazací mód
   delete_mode_info: aktivujte pro mazání dat
   delete_ok: Vybraná data byla smazána.
+  mark_failed_as_empty: Označit neúspěšné jako prázdné
+  mark_failed_as_empty_tt: Vybraná neúspěšná stahování starší než jeden měsíc budou označena jako prázdná a další stahování nebude pokračovat. Užitečné pro případy, kdy je známo, že data jsou prázdná.
+  markable_as_empty: lze označit jako prázdné
 </i18n>
 
 <template>
@@ -245,6 +251,20 @@ cs:
                 </v-card-actions>
               </v-card>
             </v-dialog>
+            <v-dialog
+              v-if="showMarkEmptyDialog"
+              v-model="showMarkEmptyDialog"
+              max-width="640px"
+            >
+              <div>
+                <SushiMarkAsEmptyWidget
+                  :records="selectedItemsMarkableAsEmpty"
+                  @finished="finishMarkAsEmpty()"
+                  @cancel="showMarkEmptyDialog = false"
+                  class="pa-3"
+                />
+              </div>
+            </v-dialog>
           </v-col>
         </v-row>
         <v-row>
@@ -260,6 +280,10 @@ cs:
                 deleteMode ? $t("select_help_delete") : $t("select_help")
               }})</span
             >
+            <span v-if="!deleteMode && selectedItemsMarkableAsEmpty.length">
+              ({{ selectedItemsMarkableAsEmpty.length }}
+              {{ $t("markable_as_empty") }})
+            </span>
           </v-col>
         </v-row>
       </v-container>
@@ -267,9 +291,8 @@ cs:
     <v-card-actions>
       <v-container fluid>
         <v-row no-gutters>
-          <v-col cols="auto">
+          <v-col cols="auto" v-if="deleteMode">
             <v-btn
-              v-if="deleteMode"
               color="error"
               :disabled="selectedItems.length == 0"
               @click="showConfirmDeleteDialog = true"
@@ -277,15 +300,32 @@ cs:
               <v-icon small class="pr-2">fas fa-trash</v-icon>
               {{ $t("delete_button") }}
             </v-btn>
+          </v-col>
+          <v-col cols="auto" v-else>
             <v-btn
-              v-else
               @click="triggerHarvest"
               :disabled="selectedItems.length == 0"
               color="primary"
+              class="mr-4"
             >
               <v-icon small class="pr-2">fa fa-download</v-icon>
               {{ $t("harvest_button") }}
             </v-btn>
+
+            <v-tooltip bottom max-width="600px">
+              <template #activator="{ on }">
+                <v-btn
+                  color="secondary"
+                  v-on="on"
+                  :disabled="selectedItemsMarkableAsEmpty.length === 0"
+                  @click="showMarkEmptyDialog = true"
+                >
+                  <v-icon small class="pr-2">fa-adjust</v-icon>
+                  {{ $t("mark_failed_as_empty") }}
+                </v-btn>
+              </template>
+              <span>{{ $t("mark_failed_as_empty_tt") }}</span>
+            </v-tooltip>
           </v-col>
         </v-row>
       </v-container>
@@ -300,16 +340,23 @@ cs:
 <script>
 import axios from "axios";
 import { mapActions } from "vuex";
-import { ymFirstDay, ymLastDay } from "@/libs/dates";
+import {
+  lastCoveredMonth,
+  lastCoveredMonthDate,
+  ymFirstDay,
+  ymLastDay,
+} from "@/libs/dates";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SushiMonthStatusIcon from "@/components/sushi/SushiMonthStatusIcon";
+import SushiMarkAsEmptyWidget from "@/components/sushi/SushiMarkAsEmptyWidget.vue";
 
 export default {
   name: "SushiCredentialsDataDialog",
   components: {
+    SushiMarkAsEmptyWidget,
     SushiMonthStatusIcon,
     SushiFetchIntentionsListWidget,
     SushiCredentialsOverviewHeaderWidget,
@@ -333,6 +380,7 @@ export default {
       currentHarvest: null,
       showHarvestDialog: false,
       showConfirmDeleteDialog: false,
+      showMarkEmptyDialog: false,
       deleteMode: false,
     };
   },
@@ -487,6 +535,22 @@ export default {
           .filter((e) => !!e.last_harvestable_month)
           .map((e) => [e.code, e.last_harvestable_month])
       );
+    },
+    selectedItemsMarkableAsEmpty() {
+      // selected items that are failed and older than one month
+      const lastMonth = lastCoveredMonth();
+      return this.selectedItems
+        .filter((e) => e.start_date <= lastMonth)
+        .filter((item) => {
+          // find the corresponding record and look at the status
+          let year = Number.parseInt(item.start_date.split("-")[0]);
+          let month = item.start_date.split("-")[1];
+          let cell = this.processedData.find(
+            (e) => e.year === year && e.counterReport.id === item.counter_report
+          );
+          if (cell) return cell[month].status === "failed";
+          return false;
+        });
     },
   },
 
@@ -643,6 +707,11 @@ export default {
     },
     unselectAll() {
       this.buttonsSelected = {};
+    },
+    finishMarkAsEmpty() {
+      this.showMarkEmptyDialog = false;
+      this.unselectAll();
+      this.loadCredentialsData();
     },
   },
 

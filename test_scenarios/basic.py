@@ -163,6 +163,7 @@ def make_client(identity: Identity, login: bool = True) -> APIClient:
     client.defaults[settings.EDUID_IDENTITY_HEADER] = identity
     if login:
         client.force_login(identity.user)
+        client.user_ = identity.user
     return client
 
 

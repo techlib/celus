@@ -1,7 +1,7 @@
 import csv
 import json
 import locale
-from datetime import timedelta
+from datetime import date, timedelta
 from io import StringIO
 from unittest.mock import Mock, patch
 
@@ -18,12 +18,13 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.db.models import Max, Min
 from django.urls import reverse
+from freezegun import freeze_time
 from organizations.models import UserOrganization
 from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, CounterReportsToCredentials
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 
 from logs.fake_data import (
     ImportBatchFactory,
@@ -37,6 +38,7 @@ from logs.models import (
     AccessLog,
     Dimension,
     DimensionText,
+    ImportBatch,
     MduMethod,
     Metric,
     ReportInterestMetric,
@@ -823,6 +825,139 @@ class TestImportBatchViewSet:
             assert len(data) == 1, "import_batch present"
         else:
             assert len(data) == 0, "no import_batch => no data"
+
+    @pytest.mark.parametrize(
+        ["user_type", "can_access"],
+        [
+            ["no_user", False],
+            ["invalid", False],
+            ["unrelated", False],
+            ["related_user", False],
+            ["related_admin", True],
+            ["master_admin", True],
+            ["master_user", False],
+            ["superuser", True],
+        ],
+    )
+    def test_create_empty_import_batch_access(
+        self, client_by_user_type, user_type, can_access, users
+    ):
+        """
+        Test that the API for creating empty import batches works as expected and access rules
+        are enforced.
+
+        The API should be accessible only to users with the right permissions - org admins,
+        consortial admins, or superusers.
+        """
+        client, org = client_by_user_type(user_type)
+        # create failed harvest
+        fa = FetchAttemptFactory.create(
+            status=AttemptStatus.DOWNLOAD_FAILED,
+            credentials__organization=org,
+            start_date=date(2023, 10, 1),
+        )
+        assert fa.import_batch is None
+        ib_check_qs = ImportBatch.objects.filter(
+            organization=fa.credentials.organization,
+            platform=fa.credentials.platform,
+            report_type=fa.counter_report.report_type,
+            date=fa.start_date,
+        )
+        assert ib_check_qs.count() == 0
+        # call the API
+        resp = client.post(
+            reverse("import-batch-create-empty"),
+            {
+                "organization": fa.credentials.organization.pk,
+                "platform": fa.credentials.platform.pk,
+                "report_type": fa.counter_report.report_type.pk,
+                "date": fa.start_date,
+            },
+        )
+        if can_access:
+            assert resp.status_code == 201
+            assert ib_check_qs.count() == 1
+            ib = ImportBatch.objects.get(pk=resp.json()["pk"])
+            assert ib.pk == ib_check_qs.first().pk
+            assert ib.manual_empty, "the import batch should be marked as manual empty"
+            assert ib.user is not None, "the user should be set"
+            assert ib.user == client.user_, "the user should be set"
+        else:
+            assert resp.status_code in (401, 403)
+            assert ib_check_qs.count() == 0
+
+    @pytest.mark.parametrize(
+        ["check_date", "allowed"],
+        [
+            ("2023-10-01", False),
+            ("2023-09-01", False),
+            ("2023-11-01", False),
+            ("2023-12-01", True),
+            ("2024-01-01", True),
+        ],
+    )
+    def test_create_empty_import_batch_month_range(self, admin_client, check_date, allowed):
+        """
+        It should only allow creating of empty import batches if the month is older than the
+        currently harvested month.
+        """
+        # create failed harvest
+        fa = FetchAttemptFactory.create(
+            status=AttemptStatus.DOWNLOAD_FAILED,
+            start_date=date(2023, 10, 1),
+        )
+        with freeze_time(check_date):
+            resp = admin_client.post(
+                reverse("import-batch-create-empty"),
+                {
+                    "organization": fa.credentials.organization.pk,
+                    "platform": fa.credentials.platform.pk,
+                    "report_type": fa.counter_report.report_type.pk,
+                    "date": fa.start_date,
+                },
+            )
+            if allowed:
+                assert resp.status_code == 201
+            else:
+                assert resp.status_code == 400
+
+    @pytest.mark.parametrize(
+        ["matching_attempt", "allowed"],
+        [
+            (None, False),
+            (AttemptStatus.SUCCESS, False),
+            (AttemptStatus.DOWNLOAD_FAILED, True),
+        ],
+    )
+    def test_create_empty_import_batch_matching_attempt(
+        self, admin_client, matching_attempt, allowed
+    ):
+        """
+        It should only allow creation of empty import batches when there is a failed
+        harvest for that organization,platform,report_type and data combination.
+        """
+        # create failed harvest
+        fa = FetchAttemptFactory.create(
+            status=matching_attempt or AttemptStatus.DOWNLOAD_FAILED,
+            start_date=date(2023, 10, 1),
+        )
+        if not matching_attempt:
+            # delete the SushiFetchAttempt, but keep the object
+            # we do this because it creates all the necessary objects like credentials, etc.
+            SushiFetchAttempt.objects.all().delete()
+        resp = admin_client.post(
+            reverse("import-batch-create-empty"),
+            {
+                "organization": fa.credentials.organization.pk,
+                "platform": fa.credentials.platform.pk,
+                "report_type": fa.counter_report.report_type.pk,
+                "date": fa.start_date,
+            },
+        )
+        if allowed:
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 400
 
 
 @pytest.mark.django_db

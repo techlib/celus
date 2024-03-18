@@ -467,6 +467,9 @@ class ImportBatch(models.Model):
         default=UL_ROBOT,
         help_text="Level of user who created this record - used to determine who can modify it",
     )
+    manual_empty = models.BooleanField(
+        default=False, help_text="If the batch was created manually by the user as empty"
+    )
     log = models.TextField(blank=True)
     interest_timestamp = models.DateTimeField(
         null=True, blank=True, help_text="When was interest processed for this batch"
@@ -491,10 +494,6 @@ class ImportBatch(models.Model):
     @cached_property
     def accesslog_count(self):
         return self.accesslog_set.count()
-
-    @property
-    def preprocessed_data_file(self) -> Path:
-        return self.PREPROCESSED_DATA_DIR / f"ib-{self.pk}.csv"
 
 
 class AccessLogQuerySet(QuerySet):
