@@ -1737,9 +1737,17 @@ class TestAutomatic:
         assert automatic_standalone.harvest.intentions.count() == 2
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
+        # Test that no intention is created when there are some clashing data
+        ImportBatchFactory(
+            report_type=counter_report_types["tr"].report_type,
+            organization=credentials["standalone_tr"].organization,
+            platform=credentials["standalone_tr"].platform,
+            date=date(2019, 12, 1),  # prev month
+        )
         credentials["standalone_tr"].save()
-        assert automatic_standalone.harvest.intentions.count() == 3
-        assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
+        assert (
+            automatic_standalone.harvest.intentions.count() == 2
+        ), "No intentions is created - clashing data"
 
         # Create new mapping
         new_mapping = CounterReportsToCredentials.objects.create(
@@ -1747,7 +1755,7 @@ class TestAutomatic:
             counter_report=counter_report_types["tr"],
             broken=None,
         )
-        assert FetchIntention.objects.all().count() == 5
+        assert FetchIntention.objects.all().count() == 4
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
         # Set credentials broken
@@ -1794,9 +1802,9 @@ class TestAutomatic:
         assert automatic_branch.harvest.intentions.count() == 1
 
         # Remove credentials
-        assert automatic_standalone.harvest.intentions.count() == 3
+        assert automatic_standalone.harvest.intentions.count() == 2
         credentials["standalone_br1_jr1"].delete()
-        assert automatic_standalone.harvest.intentions.count() == 1
+        assert automatic_standalone.harvest.intentions.count() == 0
         assert all(e.not_before.date() > start_date for e in FetchIntention.objects.all())
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))

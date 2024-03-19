@@ -1,5 +1,6 @@
 from core.logic.dates import last_month
 from django.db import transaction
+from logs.models import ImportBatch
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 
 from ..models import Automatic, FetchIntention
@@ -13,6 +14,16 @@ def update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         and cr2c.credentials.is_verified
     ):
         # We need to make sure that the intentions exists
+
+        # First check that there are no clashing data
+        if ImportBatch.objects.filter(
+            date=automatic.month,
+            organization=cr2c.credentials.organization,
+            platform=cr2c.credentials.platform,
+            report_type=cr2c.counter_report.report_type,
+        ).exists():
+            return
+
         attrs = {
             "harvest": automatic.harvest,
             "start_date": automatic.month,
