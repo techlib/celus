@@ -184,12 +184,17 @@ export default new Router({
       component: () => import("../pages/AnnotationListPage.vue"),
       meta: {
         title: "labels.annotations",
+        hideDateRangeSelector: true,
       },
     },
     {
-      path: "/org-management/",
-      name: "org-management",
+      path: "/account-management/",
+      name: "account-management",
       component: () => import("../pages/AccountManagementPage.vue"),
+      meta: {
+        hideDateRangeSelector: true,
+        title: "pages.account_management",
+      },
     },
     {
       path: "/analytics/overlap",

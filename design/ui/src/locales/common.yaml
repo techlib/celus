@@ -1,5 +1,6 @@
 en:
   pages:
+    account_management: Account management
     admin: Administration
     all_titles: All titles
     analytics: Analytics
@@ -22,6 +23,7 @@ en:
     management_commands: Management commands
     manual_data_uploads: Manual data uploads
     mdu_detail: Manual data upload detail
+    organization_administration: Organization administration
     organizations: Organizations
     overlap_analysis_platforms: Platform overlap
     overlap_analysis_titles: Titles on multiple platforms
@@ -43,7 +45,6 @@ en:
     title_list_overlap: Title list overlap
     title_lists: Title lists
     user_page: User page
-    user_management: User management
   menu: Menu
   organization: Organization
   platform: Platform
@@ -338,6 +339,7 @@ en:
 
 cs:
   pages:
+    account_management: Správa účtů
     admin: Administrace
     all_titles: Všechny tituly
     analytics: Analytické nástroje
@@ -360,6 +362,7 @@ cs:
     management_commands: Management příkazy
     manual_data_uploads: Ručně nahraná data
     mdu_detail: Detail ručně nahraných dat
+    organization_administration: Správa organizace
     organizations: Organizace
     overlap_analysis_platforms: Překryv platforem
     overlap_analysis_titles: Tituly na více platformách
@@ -381,7 +384,6 @@ cs:
     title_list_overlap: Překryv titulového seznamu
     title_lists: Titulové seznamy
     user_page: Uživatelská stránka
-    user_management: Správa uživatelů
   menu: Menu
   organization: Organizace
   platform: Platforma

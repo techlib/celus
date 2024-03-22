@@ -309,14 +309,14 @@ export default {
           ],
         },
         {
-          title: "Organization administration",
+          title: this.$i18n.t("pages.organization_administration"),
           icon: "fa fa-tools",
           show: this.allowUserManagement,
           items: [
             {
-              title: this.$i18n.t("pages.user_management"),
+              title: this.$i18n.t("pages.account_management"),
               icon: "fa fa-user",
-              linkTo: "org-management",
+              linkTo: "account-management",
               show: this.allowUserManagement,
             },
           ],
