@@ -342,7 +342,7 @@ export default {
     showDateRangeSelector() {
       return (
         this.$vuetify.breakpoint.mdAndUp &&
-        !this.$route.meta.hideOrganizationSelector
+        !this.$route.meta.hideDateRangeSelector
       );
     },
     canShowBasicTour() {
