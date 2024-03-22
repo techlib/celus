@@ -92,7 +92,7 @@ cs:
           :show-mark-line="showMarkLine"
           :raw-report-type="selectedReportView.is_proxy"
           :metric="selectedMetric"
-          :no-coverage="noCoverage"
+          :no-coverage="noCoverage || importBatchId || mduId"
           :fill-date-range="!noCoverage && !importBatchId && !mduId"
           ref="chart"
         >
