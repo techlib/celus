@@ -126,7 +126,7 @@ cs:
       <v-card-title class="headline"
         >{{ $t("title.edit_sushi_credentials") }}
         <v-spacer />
-        <v-tooltip bottom max-width="600px" v-if="showManagementStuff">
+        <v-tooltip bottom max-width="600px" v-if="canShowDebugLinks">
           <template #activator="{ on }">
             <v-icon
               small
@@ -143,7 +143,7 @@ cs:
       </v-card-title>
       <v-card-text>
         <!-- debug info -->
-        <v-sheet v-if="showDebug" class="text-right mx-2">
+        <v-sheet v-if="showDebug && canShowDebugLinks" class="text-right mx-2">
           <span>{{ $t("sushi_debug_links") }}:</span>
           <v-chip
             v-for="rt in selectedReportTypeObjs"
@@ -1063,6 +1063,10 @@ export default {
       return this.allReportTypes.filter((item) =>
         this.selectedReportTypes.includes(item.id)
       );
+    },
+    canShowDebugLinks() {
+      // Links for C4 sushi are not working properly
+      return this.showManagementStuff && this.counterVersion != 4;
     },
   },
 
