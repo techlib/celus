@@ -361,6 +361,12 @@ class PlatformImportAttempt(ImportAttempt):
                     setattr(platform, e, updatable[e])
                 platform.save()
                 logger.info("Platform '%s' updated", record["short_name"])
+                updated_credentials = platform.update_related_credentials()
+                logger.info(
+                    "%d credentials updated for platform '%s' updated",
+                    updated_credentials,
+                    record["short_name"],
+                )
                 counter["updated"] += 1
 
             else:

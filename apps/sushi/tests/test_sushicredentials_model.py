@@ -6,6 +6,7 @@ from core.tests.conftest import master_admin_identity, valid_identity  # noqa - 
 from django.utils import timezone
 from logs.models import AccessLog, ImportBatch, Metric
 from organizations.models import UserOrganization
+from publications.fake_data import PlatformFactory
 from publications.models import Platform
 from publications.tests.conftest import platforms  # noqa - fixture
 from rest_framework.exceptions import PermissionDenied
@@ -21,6 +22,65 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 from ..models import CounterReportType, SushiCredentials, SushiFetchAttempt
+
+
+@pytest.mark.django_db
+class TestUrl:
+    def test_knowledgebase_url(self):
+        platform_no_knowledgebase = PlatformFactory(knowledgebase=None)
+        platform_knowledgebase = PlatformFactory(
+            knowledgebase={
+                "providers": [
+                    {
+                        "counter_version": 5,
+                        "provider": {
+                            "url": "https://knowledgebase.example.com",
+                        },
+                    }
+                ]
+            }
+        )
+
+        assert (
+            CredentialsFactory(
+                platform=platform_knowledgebase,
+                counter_version=5,
+            ).knowledgebase_url
+            == "https://knowledgebase.example.com"
+        ), "Knowledgebase has appropriate url"
+        assert (
+            CredentialsFactory(
+                platform=platform_knowledgebase,
+                counter_version=4,
+            ).knowledgebase_url
+            is None
+        ), "No C4 url in knowledgebase"
+        assert (
+            CredentialsFactory(
+                platform=platform_no_knowledgebase,
+                counter_version=5,
+            ).knowledgebase_url
+            is None
+        ), "Platform doesn't have knowledgebase"
+
+    @pytest.mark.parametrize(
+        ["in_url", "out_url"],
+        (
+            ("https://example.com", "https://example.com"),
+            ("https://example.com/", "https://example.com/"),
+            ("https://example.com//", "https://example.com/"),
+            ("https://example.com///path/", "https://example.com/path/"),
+            ("https://example.com/path///sub//", "https://example.com/path/sub/"),
+        ),
+    )
+    def test_url_normalization(self, in_url, out_url):
+        cred = CredentialsFactory(
+            url=in_url,
+        )
+        cred.url = in_url
+        cred.save()
+        cred.refresh_from_db()
+        assert cred.url == out_url
 
 
 @pytest.mark.django_db
@@ -258,6 +318,43 @@ class TestCredentialsVersioning:
 
 @pytest.mark.django_db
 class TestCredentialsQuerySet:
+    def test_force_current_version_verified(self):
+        creds1 = CredentialsFactory()
+        creds2 = CredentialsFactory()
+        creds3 = CredentialsFactory()
+
+        assert creds1.is_verified is False
+        assert creds2.is_verified is False
+        assert creds3.is_verified is False
+
+        assert list(
+            SushiCredentials.objects.annotate_verified()
+            .order_by("pk")
+            .values_list("verified", flat=True)
+        ) == [False, False, False]
+
+        FetchAttemptFactory(
+            credentials=creds1,
+            status=AttemptStatus.SUCCESS,
+            credentials_version_hash=creds1.version_hash,
+        )
+        creds2.force_current_version_verified()
+
+        # is verified is cached property, we need to recreate models from db
+        creds1 = SushiCredentials.objects.get(pk=creds1.pk)
+        creds2 = SushiCredentials.objects.get(pk=creds2.pk)
+        creds3 = SushiCredentials.objects.get(pk=creds3.pk)
+
+        assert creds1.is_verified is True, "First is verified by successful attempt"
+        assert creds2.is_verified is True, "Second is forced verified"
+        assert creds3.is_verified is False, "Third remained unverified"
+
+        assert list(
+            SushiCredentials.objects.annotate_verified()
+            .order_by("pk")
+            .values_list("verified", flat=True)
+        ) == [True, True, False]
+
     def test_working(self, report_types, counter_report_types):
         # empty
         CredentialsFactory()
@@ -329,8 +426,12 @@ class TestCredentialsQuerySet:
 
     def test_not_fake(self, report_types, counter_report_types, settings):
         settings.FAKE_SUSHI_URLS = ["https://fake.it", "https://skip.it"]
+        # Real sushi url
         c1 = CredentialsFactory(url="https://real.sushi/")
+        # Fake url
         CredentialsFactory(url="https://skip.it")
+        # Fake url with path
         CredentialsFactory(url="https://fake.it/something")
+        # Real sushi - protocol mismatch
         c2 = CredentialsFactory(url="http://fake.it")
         assert set(SushiCredentials.objects.all().not_fake()) == {c1, c2}

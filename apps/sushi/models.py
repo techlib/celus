@@ -38,6 +38,7 @@ from celus_nigiri.counter5 import (
 )
 from celus_nigiri.error_codes import ErrorCode
 from celus_pycounter.exceptions import SushiException
+from core.logic import url
 from core.logic.dates import month_start, parse_date
 from core.models import (
     UL_CONS_ADMIN,
@@ -51,8 +52,9 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.files.base import ContentFile, File
 from django.db import models
-from django.db.models import Exists, F, OuterRef
+from django.db.models import Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
+from django.db.models.lookups import Exact
 from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -60,6 +62,7 @@ from django.utils.translation import gettext_lazy as _
 from events.models import Event, EventCategory, EventImportance
 from logs.models import AccessLog, ImportBatch
 from organizations.models import Organization
+from publications.logic import knowledgebase
 from publications.models import Platform
 from rest_framework.exceptions import PermissionDenied
 
@@ -207,14 +210,21 @@ class SushiCredentialsQuerySet(models.QuerySet):
         Annotates that credentials are verified
         this means that credentials needs to have
         download attempt (NO_DATA or SUCCESS) with current hash
+        or forced_verified_hash which matches current version_hash
         """
         return self.annotate(
-            verified=Exists(
+            verified_attempt=Exists(
                 SushiFetchAttempt.objects.filter(
                     credentials_id=OuterRef("pk"),
                     status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
                     credentials_version_hash=OuterRef("version_hash"),
                 )
+            ),
+            verified_forced=Exact(F("forced_verified_hash"), F("version_hash")),
+        ).annotate(
+            verified=ExpressionWrapper(
+                Q(verified_attempt=True) | Q(verified_forced=True),
+                output_field=models.BooleanField(),
             )
         )
 
@@ -232,7 +242,9 @@ class SushiCredentialsQuerySet(models.QuerySet):
         """List credentials which are not from fake URLs"""
         # Constructs condition - Q() | Q(url__icontains=url1) | Q(url__icontains=url2) ...
         cond = reduce(
-            lambda x, y: x | models.Q(url__icontains=y), settings.FAKE_SUSHI_URLS, models.Q()
+            lambda x, y: x | Q(url__icontains=y.rstrip("/")),
+            settings.FAKE_SUSHI_URLS,
+            Q(),
         )
         return self.exclude(cond)
 
@@ -251,6 +263,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
     url = models.URLField()
+    auto_update_url = models.BooleanField(default=True)
+    forced_verified_hash = models.CharField(
+        max_length=BLAKE_HASH_SIZE * 2,
+        help_text="Force verified=True for given hash - useful to preserve verification"
+        " when URL is automatically updated",
+        blank=True,
+    )
     counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
     requestor_id = models.CharField(max_length=128, blank=True)
     customer_id = models.CharField(max_length=128)
@@ -293,6 +312,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         """
         We override the parent save method to make sure `version_hash` is recomputed on each save
         """
+        self.url = url.normalize_url(self.url)
         computed_hash = self.compute_version_hash()
         with atomic():
             if self.version_hash != computed_hash:
@@ -308,6 +328,38 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
             super().save(*args, **kwargs)
 
+    def force_current_version_verified(self):
+        """
+        Forces current credentials to act as they were verified,
+        even though there is no successful attempt
+        """
+        self.url = url.normalize_url(self.url)
+        self.forced_verified_hash = self.compute_version_hash()
+        if self.pk:
+            # Don't use save method to preserve broken state
+            SushiCredentials.objects.filter(pk=self.pk).update(
+                forced_verified_hash=self.forced_verified_hash,
+                version_hash=self.forced_verified_hash,
+                url=self.url,
+            )
+
+    def perform_auto_update(self, new_url: str) -> bool:
+        new_url = url.normalize_url(new_url)
+        if new_url != self.url:
+            verified = self.is_verified
+            self.url = new_url
+
+            if verified:
+                # When credentials were verified we need to keep the verification
+                # `force_current_version_verified` also saves the object to the db
+                self.force_current_version_verified()
+            else:
+                # Resave unverified credentials to update the hash
+                self.save()
+
+            return True
+        return False
+
     def change_lock(self, user: User, level: int):
         """
         Set the lock_level on this object
@@ -315,7 +367,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         owner_level = user.organization_relationship(self.organization_id)
         if self.lock_level > self.UNLOCKED and owner_level < self.lock_level:
             raise PermissionDenied(
-                f"User {user} does not have high enough privileges " f"to lock {self}"
+                f"User {user} does not have high enough privileges to lock {self}"
             )
         if owner_level < level:
             raise PermissionDenied(
@@ -333,7 +385,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     @cached_property
     def is_verified(self):
-        return self.current_successful_attempts.exists()
+        return (
+            self.current_successful_attempts.exists()
+            or self.version_hash == self.forced_verified_hash
+        )
+
+    @property
+    def knowledgebase_url(self) -> Optional[str]:
+        return knowledgebase.get_url(self.platform.knowledgebase or {}, self.counter_version)
 
     @property
     def current_successful_attempts(self):

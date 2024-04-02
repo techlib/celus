@@ -15,6 +15,8 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
+from .logic import knowledgebase as kb
+
 
 class PlatformInterestReport(models.Model):
     report_type = models.ForeignKey("logs.ReportType", on_delete=models.CASCADE)
@@ -99,6 +101,15 @@ class Platform(models.Model):
                 return platform_slug
         else:
             return platform_slug
+
+    def update_related_credentials(self) -> int:
+        count = 0
+        for creds in self.sushicredentials_set.filter(auto_update_url=True):
+            if url := kb.get_url(self.knowledgebase, creds.counter_version):
+                if creds.perform_auto_update(url):
+                    count += 1
+
+        return count
 
 
 class Title(models.Model):

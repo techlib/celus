@@ -59,6 +59,9 @@ en:
     and not try to harvest data before this date.
   last_harvestable_month_updated: Information about last harvestable month was successfully updated
   last_harvestable_month_error: It was not possible to update information about last harvestable month
+  auto_update_url_text_off: Set URL manually
+  auto_update_url_text_on: URL will be set automatically based on platform metadata
+  auto_update_url_hint: URL is automatically managed by Celus based on the platform metadata
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -118,6 +121,9 @@ cs:
     nebude se snažit data stáhnout před tímto datem.
   last_harvestable_month_updated: Informace o posledním stáhnutelném měsíci byla úspěšně aktualizována
   last_harvestable_month_error: Informace o posledním stáhnutelném měsíci nebylo možné aktualizovat
+  auto_update_url_text_off: Nastavit URL ručně
+  auto_update_url_text_on: URL bude nastavena automaticky z metadat platformy
+  auto_update_url_hint: URL je automaticky spravována Celusem na základě metadat platformy
 </i18n>
 
 <template>
@@ -386,10 +392,45 @@ cs:
                 ]"
                 validate-on-blur
                 :error-messages="errors.url"
-                :disabled="!activePlatform"
+                :disabled="
+                  !activePlatform ||
+                  (autoUpdateUrl && !!currentKnowledgebaseUrl)
+                "
                 @change="urlManuallyEdited = true"
                 ref="urlField"
+                :hint="
+                  currentKnowledgebaseUrl && autoUpdateUrl
+                    ? $t('auto_update_url_hint')
+                    : ''
+                "
+                :persistent-hint="currentKnowledgebaseUrl && autoUpdateUrl"
               >
+                <template #append-outer v-if="currentKnowledgebaseUrl">
+                  <v-tooltip bottom max-width="400">
+                    <template v-slot:activator="{ on }">
+                      <v-btn
+                        v-on="on"
+                        color="primary"
+                        icon
+                        x-small
+                        class="mb-1"
+                        @click="toggleAutoUpdateUrl"
+                      >
+                        <v-icon small color="" v-on="on"
+                          >fa
+                          {{ autoUpdateUrl ? "fa-edit" : "fa-book" }}</v-icon
+                        >
+                      </v-btn>
+                    </template>
+                    <span
+                      >{{
+                        autoUpdateUrl
+                          ? $t("auto_update_url_text_off")
+                          : $t("auto_update_url_text_on")
+                      }}
+                    </span>
+                  </v-tooltip>
+                </template>
               </v-text-field>
             </v-col>
             <v-col cols="12" md="5">
@@ -405,6 +446,7 @@ cs:
                 :rules="[ruleAtLeastOne]"
                 :loading="loadingReportTypes"
                 :disabled="!activePlatform"
+                ref="selectedReportTypesField"
               >
                 <template #item="{ item }">
                   <v-list-item-content>
@@ -782,6 +824,7 @@ export default {
       customerId: credentials ? credentials.customer_id : "",
       counterVersion: credentials ? credentials.counter_version : 5,
       url: credentials ? credentials.url : "",
+      autoUpdateUrl: credentials ? credentials.auto_update_url : true,
       urlManuallyEdited: false,
       platformFilterManuallyEdited: false,
       httpUsername: credentials ? credentials.http_username : "",
@@ -836,7 +879,12 @@ export default {
       if (this.credentials) {
         return this.credentials.platform;
       } else if (this.fixedPlatform) {
-        return this.fixedPlatform;
+        const found = this.platforms.find(
+          (item) => item.pk === this.fixedPlatform
+        );
+        if (found) {
+          return found;
+        }
       }
       return this.platform;
     },
@@ -854,13 +902,15 @@ export default {
       if (this.counterVersion === 5 && this.platformFilter.trim()) {
         extraParams.platform = this.platformFilter.trim();
       }
+      const autoUpdateUrl =
+        this.autoUpdateUrl && !!this.currentKnowledgebaseUrl;
       let data = {
         title: this.title,
         customer_id: this.customerId,
         requestor_id: this.requestorId,
         api_key: this.apiKey,
-        url: this.url,
         counter_version: this.counterVersion,
+        auto_update_url: autoUpdateUrl,
         http_username: this.httpUsername,
         http_password: this.httpPassword,
         extra_params: extraParams,
@@ -868,6 +918,11 @@ export default {
         enabled: this.enabled,
         outside_consortium: this.outsideConsortium,
       };
+      if (autoUpdateUrl) {
+        data.url = this.currentKnowledgebaseUrl;
+      } else {
+        data.url = this.url;
+      }
       if (this.credentials) {
         data["id"] = this.credentials.pk;
       } else {
@@ -887,6 +942,14 @@ export default {
       } else {
         return null;
       }
+    },
+    currentKnowledgebaseUrl() {
+      const providers = (this.currentKnowledgebase?.providers || []).filter(
+        (provider) => provider.counter_version === this.counterVersion
+      );
+      // Note that knowledgebase should contain only a single provider
+      // per counter version
+      return providers.length > 0 ? providers[0].provider?.url : null;
     },
     currentUseCases() {
       if (this.activePlatform) {
@@ -1014,7 +1077,9 @@ export default {
       }
     },
     activePlatformName() {
-      return this.activePlatform.name || this.activePlatform.short_name;
+      if (this.activePlatform)
+        return this.activePlatform.name || this.activePlatform.short_name;
+      return "";
     },
     platformRegistryLink() {
       if (this.activePlatform && this.activePlatform.counter_registry_id) {
@@ -1385,14 +1450,7 @@ export default {
 
       this.url = "";
       if (this.currentKnowledgebase) {
-        let providers = this.currentKnowledgebase.providers.filter(
-          (provider) => provider.counter_version === this.counterVersion
-        );
-        if (providers.length > 0) {
-          // provider found lets perform update
-          this.url = providers[0].provider.url;
-          return;
-        }
+        this.url = this.currentKnowledgebaseUrl;
       } else if (this.pickedCaseUrl) {
         this.url = this.pickedCaseUrl;
       }
@@ -1553,6 +1611,20 @@ export default {
       });
       this.showLastHarvestableMonthDialog = false;
     },
+    toggleAutoUpdateUrl() {
+      this.autoUpdateUrl = !this.autoUpdateUrl;
+      if (!this.autoUpdateUrl) {
+        this.url = "";
+        this.guessUrl();
+        this.$nextTick(() => {
+          this.$refs.urlField.focus();
+        });
+      } else {
+        this.url = this.currentKnowledgebaseUrl;
+        // lose focus
+        this.$refs.selectedReportTypesField.focus();
+      }
+    },
   },
 
   async mounted() {
@@ -1605,7 +1677,9 @@ export default {
     },
     url() {
       this.$nextTick(() => {
-        this.$refs.urlField.validate();
+        if (this.autoUpdateUrl) {
+          this.$refs.urlField.validate();
+        }
       });
       delete this.errors.url;
     },

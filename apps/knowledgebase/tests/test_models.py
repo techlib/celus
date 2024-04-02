@@ -15,7 +15,10 @@ from django.utils.timezone import now
 from logs.fake_data import ImportBatchFactory, MetricFactory
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from publications.fake_data import PlatformFactory
+from publications.logic import knowledgebase
 from publications.models import Platform, PlatformInterestReport
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.models import AttemptStatus, SushiCredentials
 
 from knowledgebase.models import (
     ParserDefinitionImportAttempt,
@@ -390,6 +393,64 @@ class TestPlatformImportAttempt:
         assert (
             platform_with_source.name == "AAP - American Academy of Pediatrics"
         ), "linked platform updated"
+
+    @pytest.mark.parametrize(
+        "verification",
+        ("forced", "attempt"),
+    )
+    def test_process_credentials_update(self, data_sources, report_types, verification):
+        p1 = PlatformFactory(short_name="AAP", ext_id=328, source=data_sources["brain"])
+        p2 = PlatformFactory(short_name="AACR", ext_id=327, source=data_sources["brain"])
+        cred1 = CredentialsFactory(
+            platform=p1,
+            url="https://something.else1",
+            counter_version=5,
+            auto_update_url=True,
+        )
+        if verification == "forced":
+            cred1.force_current_version_verified()
+        elif verification == "attempt":
+            FetchAttemptFactory(
+                credentials=cred1,
+                status=AttemptStatus.SUCCESS,
+                credentials_version_hash=cred1.version_hash,
+            )
+
+        cred2 = CredentialsFactory(
+            platform=p2,
+            url="https://something.else2",
+            counter_version=4,
+            auto_update_url=True,
+        )
+
+        attempt = PlatformImportAttempt(source=data_sources["brain"])
+        attempt.save()
+
+        attempt.process(PLATFORM_INPUT_DATA)
+
+        p1.refresh_from_db()
+        p2.refresh_from_db()
+
+        # We need to discard cached_properties so we need to refetch the objects again
+        cred1 = SushiCredentials.objects.get(pk=cred1.pk)
+        cred2 = SushiCredentials.objects.get(pk=cred2.pk)
+
+        # Both knowledgebase url were updated
+        assert (
+            cred1.url
+            == cred1.knowledgebase_url
+            == knowledgebase.get_url(cred1.platform.knowledgebase, cred1.counter_version)
+            == PLATFORM_INPUT_DATA[0]["providers"][1]["provider"]["url"]
+        )
+        assert (
+            cred2.url
+            == cred2.knowledgebase_url
+            == knowledgebase.get_url(cred2.platform.knowledgebase, cred2.counter_version)
+            == PLATFORM_INPUT_DATA[1]["providers"][0]["provider"]["url"]
+        )
+
+        assert cred1.is_verified is True, "Credentials must remain verified"
+        assert cred2.is_verified is False, "Credentials remained unverified"
 
 
 @pytest.mark.django_db

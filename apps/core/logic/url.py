@@ -1,4 +1,6 @@
+import re
 import typing
+from urllib.parse import urlsplit, urlunsplit
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
@@ -48,3 +50,15 @@ def extract_field_from_request(request: Request, field_name: str) -> typing.Opti
             ) from None
 
     return None
+
+
+def normalize_url(in_url):
+    """Normalizes urls
+
+    converts "//" -> "/"
+    """
+
+    (scheme, location, path, query, fragment) = urlsplit(in_url)
+    path = re.sub(r"/+", "/", path)
+    res = urlunsplit((scheme, location, path, query, fragment))
+    return res

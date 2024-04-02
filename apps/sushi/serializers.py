@@ -126,6 +126,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             "outside_consortium",
             "broken",
             "verified",
+            "auto_update_url",
         )
 
     def get_locked(self, obj: SushiCredentials):
