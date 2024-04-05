@@ -93,10 +93,10 @@ class UserSerializer(ModelSerializer):
 
         if request := self.context.get("request"):
             # User needs to have device activated
-            if user_has_device(obj):
+            if user_has_device(request.real_user):
                 # Test whether device matches
                 device_id = request.session.get(DEVICE_ID_SESSION_KEY)
-                user_devices = devices_for_user(obj)
+                user_devices = devices_for_user(request.real_user)
                 # Only emails are currently supported
                 user_devices = [e for e in user_devices if isinstance(e, EmailDevice)]
                 if device_id in [e.persistent_id for e in user_devices]:
@@ -108,7 +108,7 @@ class UserSerializer(ModelSerializer):
                     data = serializer.data
                     # EmailDevice allows you to override email
                     # when override is not used fill in User.email here
-                    data["email"] = data.get("email") or obj.email
+                    data["email"] = data.get("email") or request.real_user.email
                     res.append(data)
 
                 return res

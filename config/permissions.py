@@ -22,7 +22,7 @@ class IsAuthenticatedWithOptional2FA(IsAuthenticated):
 
         res = super().has_permission(request, view)
         if res and settings.OTP_ENABLED:
-            has_device = user_has_device(request.user)
+            has_device = user_has_device(request.real_user)
             if not has_device:
                 # User without a device have be allowed to login, but
                 # a notification will be sent
