@@ -12,13 +12,20 @@ from rest_framework.fields import (
 )
 from rest_framework.serializers import ModelSerializer
 
-from tags.models import Tag, TagClass, TaggingAttempt, TaggingBatch, TagScope
+from tags.models import AccessibleBy, Tag, TagClass, TaggingAttempt, TaggingBatch, TagScope
 
 
 class TagClassSerializer(ModelSerializer):
     user_can_modify = SerializerMethodField()
     user_score = SerializerMethodField()
     hidden = BooleanField(default=False, read_only=True)
+
+    PERMISSION_ATTRS = (
+        "can_modify",
+        "can_create_tags",
+        "default_tag_can_see",
+        "default_tag_can_assign",
+    )
 
     class Meta:
         model = TagClass
@@ -56,12 +63,7 @@ class TagClassSerializer(ModelSerializer):
         )
 
     def create(self, validated_data):
-        for permission_attr in (
-            "can_modify",
-            "can_create_tags",
-            "default_tag_can_see",
-            "default_tag_can_assign",
-        ):
+        for permission_attr in self.PERMISSION_ATTRS:
             if (cat := validated_data.get(permission_attr)) is not None:
                 if not TagClass.can_set_access_level(
                     self.context["request"].user, cat, organization=validated_data.get("owner_org")
@@ -88,12 +90,7 @@ class TagClassSerializer(ModelSerializer):
         ):
             raise BadRequest("Class cannot be made exclusive after its creation")
         # check permissions
-        for permission_attr in (
-            "can_modify",
-            "can_create_tags",
-            "default_tag_can_see",
-            "default_tag_can_assign",
-        ):
+        for permission_attr in self.PERMISSION_ATTRS:
             if (cat := validated_data.get(permission_attr)) is not None:
                 if not TagClass.can_set_access_level(
                     self.context["request"].user,
@@ -101,6 +98,13 @@ class TagClassSerializer(ModelSerializer):
                     organization=validated_data.get("owner_org", instance.owner_org),
                 ):
                     raise PermissionDenied(f'User cannot change tag class access level to "{cat}"')
+        # When no ORG_ tag is assign remove owner_org
+        if not any(
+            validated_data.get(attr, getattr(instance, attr))
+            in [AccessibleBy.ORG_USERS, AccessibleBy.ORG_ADMINS]
+            for attr in self.PERMISSION_ATTRS
+        ):
+            validated_data["owner_org"] = None
         return super().update(instance, validated_data)
 
     def get_user_score(self, tc: TagClass):

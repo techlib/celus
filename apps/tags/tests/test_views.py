@@ -692,6 +692,74 @@ class TestTagClassViews:
             data = resp.json()
             assert data[attr] == new_value, f"{attr} was updated"
 
+    def test_tag_class_update_nullable_org(self, basic1, organizations, clients, users):
+        """
+        Check that that owner_org is properly nullified when no ORG_ flag is present
+        """
+        user = users["admin2"]
+        tc = TagClassFactory.create(
+            name="nullable",
+            scope=TagScope.TITLE,
+            can_modify=AccessibleBy.ORG_ADMINS,
+            can_create_tags=AccessibleBy.OWNER,
+            default_tag_can_assign=AccessibleBy.ORG_USERS,
+            default_tag_can_see=AccessibleBy.OWNER,
+            owner=user,
+            owner_org=organizations["standalone"],
+        )
+
+        def check(new_data: dict, org_present: bool):
+            resp = clients["admin2"].patch(reverse("tag-class-detail", args=[tc.pk]), new_data)
+            assert resp.status_code == 200
+            tc.refresh_from_db()
+            if org_present:
+                assert tc.owner_org == organizations["standalone"]
+            else:
+                assert tc.owner_org is None
+
+        check(
+            {
+                "can_modify": AccessibleBy.OWNER,
+                "owner_org": organizations["standalone"].pk,
+            },
+            True,
+        )
+        check(
+            {
+                "default_tag_can_assign": AccessibleBy.OWNER,
+                "owner_org": organizations["standalone"].pk,
+            },
+            False,
+        )
+        check(
+            {
+                "can_create_tags": AccessibleBy.ORG_USERS,
+                "owner_org": organizations["standalone"].pk,
+            },
+            True,
+        )
+        check(
+            {
+                "default_tag_can_see": AccessibleBy.ORG_ADMINS,
+                "owner_org": organizations["standalone"].pk,
+            },
+            True,
+        )
+        check(
+            {
+                "can_create_tags": AccessibleBy.OWNER,
+                "owner_org": organizations["standalone"].pk,
+            },
+            True,
+        )
+        check(
+            {
+                "default_tag_can_see": AccessibleBy.OWNER,
+                "owner_org": organizations["standalone"].pk,
+            },
+            False,
+        )
+
     @pytest.mark.parametrize(
         ["user_key", "access_permission", "can_update"],
         [
