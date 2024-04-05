@@ -100,12 +100,34 @@ class TagClassSerializer(ModelSerializer):
                     raise PermissionDenied(f'User cannot change tag class access level to "{cat}"')
         # When no ORG_ tag is assign remove owner_org
         if not any(
-            validated_data.get(attr, getattr(instance, attr))
-            in [AccessibleBy.ORG_USERS, AccessibleBy.ORG_ADMINS]
+            validated_data.get(attr, getattr(instance, attr)) in AccessibleBy.org_related()
             for attr in self.PERMISSION_ATTRS
         ):
             validated_data["owner_org"] = None
-        return super().update(instance, validated_data)
+
+        res = super().update(instance, validated_data)
+
+        # Update owner_org, can_assign and can_assign of related Tags
+        to_update = {
+            attr: validated_data[tcattr]
+            for attr, tcattr in (
+                ("owner", "owner"),
+                ("owner_org", "owner_org"),
+                ("can_assign", "default_tag_can_assign"),
+                ("can_see", "default_tag_can_see"),
+            )
+            if tcattr in validated_data
+        }
+
+        # Unassign organization if no ORG_ flags are present for Tag
+        if not {
+            to_update.get("can_see", instance.default_tag_can_see),
+            to_update.get("can_assign", instance.default_tag_can_assign),
+        } & set(AccessibleBy.org_related()):
+            to_update["owner_org"] = None
+        instance.tag_set.update(**to_update)
+
+        return res
 
     def get_user_score(self, tc: TagClass):
         return self._tag_class_user_scores.get(tc.pk, 0)

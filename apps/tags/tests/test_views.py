@@ -666,6 +666,8 @@ class TestTagClassViews:
             ("desc", "XXX", "YYY", True),
             ("can_modify", AccessibleBy.OWNER, AccessibleBy.CONS_ADMINS, True),
             ("can_create_tags", AccessibleBy.OWNER, AccessibleBy.CONS_ADMINS, True),
+            ("default_tag_can_see", AccessibleBy.EVERYBODY, AccessibleBy.OWNER, True),
+            ("default_tag_can_assign", AccessibleBy.EVERYBODY, AccessibleBy.OWNER, True),
             # cannot update access level to something the user cannot assign
             ("can_create_tags", AccessibleBy.OWNER, AccessibleBy.SYSTEM, False),
         ],
@@ -685,6 +687,20 @@ class TestTagClassViews:
         }
         # overwrite the currently tested attr
         tc = TagClassFactory.create(**params)
+
+        # Changes from tag class should propagate
+        # to all its tags therefor a tag is created here
+        tag_needs_org = bool(
+            {tc.default_tag_can_assign, tc.default_tag_can_see} & set(AccessibleBy.org_related())
+        )
+        tag = TagFactory(
+            tag_class=tc,
+            can_assign=tc.default_tag_can_assign,
+            can_see=tc.default_tag_can_see,
+            owner=tc.owner,
+            owner_org=tc.owner_org if tag_needs_org else None,
+        )
+
         new_data = {attr: new_value}
         resp = clients["master_admin"].patch(reverse("tag-class-detail", args=[tc.pk]), new_data)
         assert resp.status_code in ([200] if can_change else [400, 403])
@@ -692,9 +708,21 @@ class TestTagClassViews:
             data = resp.json()
             assert data[attr] == new_value, f"{attr} was updated"
 
+        tc.refresh_from_db()
+        tag.refresh_from_db()
+        assert (
+            tag.can_see == tc.default_tag_can_see
+        ), "Tag.can_see should match TagClass.default_tag_can_see"
+        assert (
+            tag.can_assign == tc.default_tag_can_assign
+        ), "Tag.can_assing should match TagClass.default_tag_can_assign"
+        assert tag.owner == tc.owner, "Tag.owner should match TagClass.owner"
+        assert tag.owner_org == tc.owner_org, "Tag.owner_org should match TagClass.owner_org"
+
     def test_tag_class_update_nullable_org(self, basic1, organizations, clients, users):
         """
         Check that that owner_org is properly nullified when no ORG_ flag is present
+        for both TagClass and Tag
         """
         user = users["admin2"]
         tc = TagClassFactory.create(
@@ -708,7 +736,17 @@ class TestTagClassViews:
             owner_org=organizations["standalone"],
         )
 
-        def check(new_data: dict, org_present: bool):
+        # Changes from tag class should propagate
+        # to all its tags therefor a tag is created here
+        tag = TagFactory(
+            tag_class=tc,
+            can_assign=tc.default_tag_can_assign,
+            can_see=tc.default_tag_can_see,
+            owner=tc.owner,
+            owner_org=tc.owner_org,
+        )
+
+        def check(new_data: dict, org_present: bool, tag_org_present: bool):
             resp = clients["admin2"].patch(reverse("tag-class-detail", args=[tc.pk]), new_data)
             assert resp.status_code == 200
             tc.refresh_from_db()
@@ -717,46 +755,66 @@ class TestTagClassViews:
             else:
                 assert tc.owner_org is None
 
-        check(
-            {
-                "can_modify": AccessibleBy.OWNER,
-                "owner_org": organizations["standalone"].pk,
-            },
-            True,
-        )
+            tag.refresh_from_db()
+            assert tag.owner == tc.owner, "Tag.owner should match TagClass.owner"
+            assert bool(tag.owner_org) == tag_org_present, "Tag.owner_org mismatch"
+
+        # nullify Tag.owner_org - no ORG_ flag remained for the Tag,
+        # but TagClass still have one ORG_ flag
         check(
             {
                 "default_tag_can_assign": AccessibleBy.OWNER,
                 "owner_org": organizations["standalone"].pk,
             },
+            True,
             False,
         )
+        # nullify TagClass.owner_org - no ORG_* flag remained for the TagClass
+        check(
+            {
+                "can_modify": AccessibleBy.OWNER,
+                "owner_org": organizations["standalone"].pk,
+            },
+            False,
+            False,
+        )
+        # set TagClass.owner_org - organization flag of TagClass occured
+        # but the flag was not related to Tag
         check(
             {
                 "can_create_tags": AccessibleBy.ORG_USERS,
                 "owner_org": organizations["standalone"].pk,
             },
             True,
+            False,
         )
+        # set Tag.owner_org - Tag.can_see was updated becuase TagClass.default_tag_can_see
+        # was updated and Tag gained an ORG_ADMINS flag
         check(
             {
                 "default_tag_can_see": AccessibleBy.ORG_ADMINS,
                 "owner_org": organizations["standalone"].pk,
             },
             True,
+            True,
         )
+        # Remove the first ORG_ flag of the TagClass (the other ORG_ flag remains)
+        # => Nothing changed both Tag and TagClass have at least one ORG_ flag
         check(
             {
                 "can_create_tags": AccessibleBy.OWNER,
                 "owner_org": organizations["standalone"].pk,
             },
             True,
+            True,
         )
+        # Both Tag and TagClass lost all their ORG_ flags => owner_org nullified for both
         check(
             {
                 "default_tag_can_see": AccessibleBy.OWNER,
                 "owner_org": organizations["standalone"].pk,
             },
+            False,
             False,
         )
 
