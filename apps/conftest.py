@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from clickhouse_driver import Client
 from filelock import FileLock
@@ -70,3 +72,29 @@ clickhouse_raw_on_off = pytest.fixture(params=["clickhouse_on", "clickhouse_off"
 @pytest.fixture()
 def inmemory_media(settings):
     settings.DEFAULT_FILE_STORAGE = "inmemorystorage.InMemoryStorage"
+
+
+@pytest.fixture(autouse=True)
+def isolated_cache_in_parallel_test_run(worker_id, settings):
+    # worker_id is a fixture from pytest-dist
+    # it contains "master" when no parallel run is performed
+    # "gw0", "gw1", ... when running in parallel
+
+    if worker_id == "master":
+        return  # tests are not running in parallel => no extra handling required
+
+    # cache versions should be numbers so the number is extracted from from "gwX"
+    worker_number = int(re.search(r"\d+$", worker_id).group(0))
+
+    # there are incr_version() and decr_version() methods in django which can be used
+    # to decrease / increase version of a key
+    # in order to avoid version overlaps the number is multiplied e.g. 1 -> 1000
+    cache_version = (worker_number + 1) * 1000
+
+    for name in settings.CACHES.keys():
+        settings.CACHES[name]["VERSION"] = cache_version
+
+    # force cache reinitialization
+    from django.test.signals import clear_cache_handlers
+
+    clear_cache_handlers(setting="CACHES")
