@@ -1545,7 +1545,7 @@ class TestAutomatic:
         # all empty
         assert FetchIntention.objects.count() == 0
         assert Automatic.update_for_last_month() == {"added": 4, "deleted": 0}
-        last = Automatic.objects.last()
+        last = Automatic.objects.order_by("pk").last()
         assert last.month == date(2020, 1, 1)
         assert last.harvest.intentions.count() == 1
         assert last.harvest.intentions.last().not_before.date() > start_date

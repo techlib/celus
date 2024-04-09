@@ -50,7 +50,14 @@ class TestHarvestAPI:
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 6
-        assert data[0]["pk"] < data[1]["pk"] < data[2]["pk"], "default sort by pk asc"
+        assert (
+            data[0]["pk"]
+            < data[1]["pk"]
+            < data[2]["pk"]
+            < data[3]["pk"]
+            < data[4]["pk"]
+            < data[5]["pk"]
+        ), "default sort by pk asc"
 
         # stats
         assert data[0]["stats"] == {"total": 3, "planned": 2, "attempt_count": 2, "working": 0}

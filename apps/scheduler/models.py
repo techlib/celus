@@ -1082,8 +1082,12 @@ class Automatic(models.Model):
         month_last = month_end(month)
 
         new_intentions: typing.List[FetchIntention] = []
-        for cr2c in CounterReportsToCredentials.objects.filter(
-            credentials__enabled=True, broken__isnull=True, credentials__broken__isnull=True
+        for cr2c in (
+            CounterReportsToCredentials.objects.filter(
+                credentials__enabled=True, broken__isnull=True, credentials__broken__isnull=True
+            )
+            .order_by("credentials_id")
+            .select_related("credentials")
         ):
             # only verified credentials can be automatically planned
             if not cr2c.credentials.is_verified:
