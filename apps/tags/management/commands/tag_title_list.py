@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from core.logic.util import this_celus_domain
 from django.core.files.base import File
@@ -33,6 +34,12 @@ class Command(BaseCommand):
             help="Delete previous tagging batch only - do not tag again.",
             dest="just_delete",
         )
+        parser.add_argument(
+            "--auto-retag",
+            type=int,
+            default=0,
+            help="Turn on automatic re-tagging. Expects number in days",
+        )
 
     @atomic
     def handle(self, *args, **options):
@@ -49,6 +56,7 @@ class Command(BaseCommand):
                 logger.warning("No previous related tagging batch found.")
             return
 
+        reprocess_after = timedelta(days=options["auto_retag"]) if options["auto_retag"] else None
         with open(options["title_list_file"], "rb") as infile:
             file_content = File(infile)
 
@@ -90,10 +98,14 @@ class Command(BaseCommand):
                     tag=tag,
                     source_file=file_content,
                     state=TaggingBatchState.IMPORTING,
+                    reprocess_after=reprocess_after,
                 )
             else:
                 tb.state = TaggingBatchState.IMPORTING
                 tb.source_file = file_content
+                if not tb.reprocess_after and reprocess_after:
+                    # update reprocess_after if given
+                    tb.reprocess_after = reprocess_after
                 tb.save()
 
         def progress_monitor(current, total):
