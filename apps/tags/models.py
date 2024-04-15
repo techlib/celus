@@ -49,11 +49,16 @@ class TaggingAttemptOperation(models.TextChoices):
     IMPORT = "import", _("Import")
 
 
-def access_filters(attr_name: str, user: User) -> Q:
+def access_filters(attr_name: str, user: Optional[User]) -> Q:
     """
     Returns a filter for queryset which applies relevant checks on the `attr_name` attribute
     which is a choice of type `AccessibleBy`
+
+    If `user` is None, this means the system is processing the data, so all access levels are
+    considered as valid.
     """
+    if user is None:
+        return Q()
     possibilities = [
         Q(**{attr_name: AccessibleBy.EVERYBODY}),
         Q(**{attr_name: AccessibleBy.OWNER, "owner": user}),
