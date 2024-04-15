@@ -1213,7 +1213,7 @@ class TestTasks:
 
 
 @pytest.mark.django_db()
-class TestTaggingManagemenCommand:
+class TestTaggingManagementCommand:
     def test_command_tagging(self, inmemory_media):
         TitleFactory.create(isbn="9780787960186")
         TitleFactory.create(issn="1234-5678")
@@ -1223,6 +1223,12 @@ class TestTaggingManagemenCommand:
             "Foobarbaz",
             "--tag-desc",
             "Barbazfoo",
+            "--auto-retag",
+            "30",
+            "--bg-color",
+            "#ff0000",
+            "--text-color",
+            "#ffffff",
             "foo",
             "cls",
             "mytag",
@@ -1234,11 +1240,51 @@ class TestTaggingManagemenCommand:
         assert tb.tag.desc == "Barbazfoo", "tag has the correct description"
         assert tb.tag.tag_class.name == "cls", "created tag has the correct class"
         assert tb.tag.tag_class.desc == "Foobarbaz", "tag class has the correct description"
+        assert tb.reprocess_after == timedelta(days=30), "reprocess_after was set"
         assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
+        assert tb.tag.bg_color == "#ff0000", "tag has the correct bg color"
+        assert tb.tag.text_color == "#ffffff", "tag has the correct text color"
         attempt = tb.last_import
         assert attempt.unique_matched_titles == 2, "all titles were matched"
         assert attempt.tagged_titles == 2, "all titles were tagged"
         assert attempt.titletag_set.count() == 2, "two titles were tagged"
+
+    def test_command_tagging_without_tag(self, inmemory_media):
+        TitleFactory.create(isbn="9780787960186")
+        TitleFactory.create(issn="1234-5678")
+        call_command(
+            "tag_title_list",
+            "--class-desc",
+            "Foobarbaz",
+            "--tag-desc",
+            "Barbazfoo",
+            "--auto-retag",
+            "30",
+            "--bg-color",
+            "#ff0000",
+            "--text-color",
+            "#ffffff",
+            "foo",
+            "cls",
+            "",  # empty tag
+            plain_test_file_with_tags.resolve(),
+        )
+        assert TaggingBatch.objects.filter(internal_name="foo").exists()
+        tb = TaggingBatch.objects.get(internal_name="foo")
+        assert tb.tag is None
+        assert tb.tag_class.name == "cls", "created tag has the correct class"
+        assert tb.tag_class.desc == "Foobarbaz", "tag class has the correct description"
+        assert tb.reprocess_after == timedelta(days=30), "reprocess_after was set"
+        assert tb.state == TaggingBatchState.IMPORTED, "batch was imported"
+        assert tb.tag_class.bg_color == "#ff0000", "tag_class has the correct bg color"
+        assert tb.tag_class.text_color == "#ffffff", "tag_class has the correct text color"
+        attempt = tb.last_import
+        assert attempt.unique_matched_titles == 2, "all titles were matched"
+        assert attempt.tagged_titles == 2, "all titles were tagged"
+        assert attempt.titletag_set.count() == 3, "one title tagged with two tags"
+        for tag in tb.tag_class.tag_set.all():
+            assert tag.bg_color == "#ff0000", "tag has the correct bg color"
+            assert tag.text_color == "#ffffff", "tag has the correct text color"
 
     def test_command_retagging_new_title(self, inmemory_media):
         """

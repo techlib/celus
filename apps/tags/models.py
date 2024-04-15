@@ -326,6 +326,8 @@ class TagClass(CreatedUpdatedMixin, models.Model):
                 owner=owner,
                 can_assign=self.default_tag_can_assign,
                 can_see=self.default_tag_can_see,
+                bg_color=self.bg_color,
+                text_color=self.text_color,
             )
             for name in missing_names
         ]

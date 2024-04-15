@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from time import time
 
 from core.logic.util import this_celus_domain
 from django.core.files.base import File
@@ -40,6 +41,8 @@ class Command(BaseCommand):
             default=0,
             help="Turn on automatic re-tagging. Expects number in days",
         )
+        parser.add_argument("--bg-color", help="Background color of the tag", default="#f0f0f0")
+        parser.add_argument("--text-color", help="Text color of the tag", default="#000000")
 
     @atomic
     def handle(self, *args, **options):
@@ -72,6 +75,8 @@ class Command(BaseCommand):
                         can_create_tags=AccessibleBy.SYSTEM,
                         default_tag_can_see=AccessibleBy.EVERYBODY,
                         default_tag_can_assign=AccessibleBy.SYSTEM,
+                        bg_color=options["bg_color"],
+                        text_color=options["text_color"],
                     ),
                 )
                 if created:
@@ -79,23 +84,32 @@ class Command(BaseCommand):
                 else:
                     logger.info("Using existing internal tag class: %s", tag_class.name)
 
-                tag, created = Tag.objects.get_or_create(
-                    name=options["tag_name"],
-                    tag_class=tag_class,
-                    defaults=dict(
-                        desc=options["tag_desc"],
-                        can_see=AccessibleBy.EVERYBODY,
-                        can_assign=AccessibleBy.SYSTEM,
-                    ),
-                )
-                if created:
-                    logger.info("Created new internal tag: %s", tag.name)
+                if options["tag_name"].strip():
+                    tag_class_to_use = None
+                    tag, created = Tag.objects.get_or_create(
+                        name=options["tag_name"],
+                        tag_class=tag_class,
+                        defaults=dict(
+                            desc=options["tag_desc"],
+                            can_see=AccessibleBy.EVERYBODY,
+                            can_assign=AccessibleBy.SYSTEM,
+                            bg_color=options["bg_color"],
+                            text_color=options["text_color"],
+                        ),
+                    )
+                    if created:
+                        logger.info("Created new internal tag: %s", tag.name)
+                    else:
+                        logger.info("Using existing internal tag: %s", tag.name)
                 else:
-                    logger.info("Using existing internal tag: %s", tag.name)
+                    logger.info("No tag name given, expecting tags from input file.")
+                    tag = None
+                    tag_class_to_use = tag_class
 
                 tb = TaggingBatch.objects.create(
                     internal_name=options["list_name"],
                     tag=tag,
+                    tag_class=tag_class_to_use,
                     source_file=file_content,
                     state=TaggingBatchState.IMPORTING,
                     reprocess_after=reprocess_after,
@@ -108,8 +122,14 @@ class Command(BaseCommand):
                     tb.reprocess_after = reprocess_after
                 tb.save()
 
+        last_log = time()
+
         def progress_monitor(current, total):
+            nonlocal last_log
+            if time() - last_log < 1:
+                return
             logger.info("Progress: %d / %d (%.1f %%)", current, total, current / total * 100)
+            last_log = time()
 
         # re-fetch the tagging batch with a lock
         tb = TaggingBatch.objects.select_for_update(nowait=True).get(pk=tb.pk)
