@@ -375,7 +375,7 @@ class Identity(models.Model):
 class CreatedUpdatedMixin(models.Model):
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
-    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    last_updated_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, blank=True)
 
     class Meta:
         abstract = True
