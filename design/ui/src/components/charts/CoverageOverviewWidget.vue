@@ -18,6 +18,7 @@
             :platform-id="platformId"
             :start-month="dateRangeStart"
             :end-month="dateRangeEnd"
+            :raw-report-type="selectedReportView.is_proxy"
           />
         </v-col>
       </v-row>
