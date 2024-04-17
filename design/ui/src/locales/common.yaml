@@ -105,12 +105,16 @@ en:
     count: Count
   date_range:
     all_available: All available
-    last_12_mo: Last 12 months
-    custom: Custom
-    previous_year: Previous year
-    current_plus_2y_back: This and two previous years
     current_plus_1y_back: This and previous year
+    current_plus_2y_back: This and two previous years
+    custom: Custom
+    last_2_closed_fy: Last two closed fiscal years
+    last_12_mo: Last 12 months
+    last_closed_fy: Last closed fiscal year
+    ongoing_and_previous_fy: Ongoing and previous fiscal year
+    ongoing_fy: Ongoing fiscal year
     previous_2_years: Last two finished years
+    previous_year: Previous year
   date_range_desc:
     current_plus_2y_back: Matches the COUNTER data retention period
     custom: Manually select the data range
@@ -149,6 +153,7 @@ en:
     filters: Filters
     finished: Finished
     first_name: First name
+    fiscal_year_start_month: First month of fiscal year
     group_by_class: Group by class
     http_authentication: HTTP authentication
     http_password: Password
@@ -445,12 +450,16 @@ cs:
     count: Počet
   date_range:
     all_available: Vše dostupné
-    last_12_mo: Posledních 12 měsíců
-    custom: Vlastní
-    previous_year: Předchozí kalendářní rok
-    current_plus_2y_back: Tento a dva předchozí roky
     current_plus_1y_back: Tento a předchozí rok
+    current_plus_2y_back: Tento a dva předchozí roky
+    custom: Vlastní
+    last_2_closed_fy: Poslední dva uzavřené fiskální roky
+    last_12_mo: Posledních 12 měsíců
+    last_closed_fy: Poslední uzavřený fiskální rok
+    ongoing_and_previous_fy: Probíhající a předchozí fiskální rok
+    ongoing_fy: Probíhající fiskální rok
     previous_2_years: Předchozí dva kalendářní roky
+    previous_year: Předchozí kalendářní rok
   date_range_desc:
     current_plus_2y_back: Odpovídá retenční periodě pro COUNTER data
     custom: Manuální volba zobrazeného období
@@ -489,6 +498,7 @@ cs:
     filters: Filtry
     finished: Dokončeno
     first_name: Jméno
+    fiscal_year_start_month: První měsíc fiskálního roku
     group_by_class: Seskupit podle typu
     http_authentication: HTTP autentizace
     http_password: Heslo

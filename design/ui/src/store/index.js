@@ -26,6 +26,7 @@ import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
 import startOfMonth from "date-fns/startOfMonth";
+import endOfMonth from "date-fns/endOfMonth";
 
 Vue.use(Vuex);
 
@@ -33,7 +34,7 @@ const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   reducer: (state) => ({
     selectedOrganizationId: state.selectedOrganizationId,
-    dateRangeIndex: state.dateRangeIndex,
+    dateRangeName: state.dateRangeName,
     dateRangeStart: state.dateRangeStart,
     dateRangeEnd: state.dateRangeEnd,
   }),
@@ -46,6 +47,19 @@ const vuexLocal = new VuexPersistence({
         }
         if (value.dateRangeStart) {
           value.dateRangeStart = parseDateTime(value.dateRangeStart);
+        }
+        if (value.dateRangeIndex && !value.dateRangeName) {
+          // old version of vuex-persist
+          const oldRanges = [
+            "date_range.current_plus_2y_back",
+            "date_range.current_plus_1y_back",
+            "date_range.previous_year",
+            "date_range.previous_2_years",
+            "date_range.last_12_mo",
+            "date_range.all_available",
+            "date_range.custom",
+          ];
+          value.dateRangeName = oldRanges[value.dateRangeIndex];
         }
       }
     }
@@ -76,41 +90,8 @@ export default new Vuex.Store({
     selectedOrganizationId: null,
     dateRangeStart: null,
     dateRangeEnd: null,
-    dateRangeIndex: 0,
-    dateRanges: [
-      {
-        name: "date_range.current_plus_2y_back",
-        start: startOfYear(addYears(new Date(), -2)),
-        end: null,
-        desc: "date_range_desc.current_plus_2y_back",
-      },
-      {
-        name: "date_range.current_plus_1y_back",
-        start: startOfYear(addYears(new Date(), -1)),
-        end: null,
-      },
-      {
-        name: "date_range.previous_year",
-        start: startOfYear(addYears(new Date(), -1)),
-        end: endOfYear(addYears(new Date(), -1)),
-      },
-      {
-        name: "date_range.previous_2_years",
-        start: startOfYear(addYears(new Date(), -2)),
-        end: endOfYear(addYears(new Date(), -1)),
-      },
-      {
-        name: "date_range.last_12_mo",
-        start: addMonths(new Date(), -12),
-        end: null,
-      },
-      { name: "date_range.all_available", start: null, end: null },
-      {
-        name: "date_range.custom",
-        custom: true,
-        desc: "date_range_desc.custom",
-      },
-    ],
+    dateRangeName: "date_range.current_plus_2y_back",
+    fiscalYearStart: 6,
     numberFormat: {
       notation: "fixed",
       precision: 1,
@@ -163,7 +144,73 @@ export default new Vuex.Store({
         return null;
       }
     },
-    selectedDateRange: (state) => state.dateRanges[state.dateRangeIndex],
+    selectedDateRange: (state, getters) =>
+      getters.dateRanges.find((item) => item.name === state.dateRangeName),
+    dateRanges(state, getters) {
+      let out = [
+        {
+          name: "date_range.current_plus_2y_back",
+          start: startOfYear(addYears(new Date(), -2)),
+          end: null,
+          desc: "date_range_desc.current_plus_2y_back",
+        },
+        {
+          name: "date_range.current_plus_1y_back",
+          start: startOfYear(addYears(new Date(), -1)),
+          end: null,
+        },
+        {
+          name: "date_range.previous_year",
+          start: startOfYear(addYears(new Date(), -1)),
+          end: endOfYear(addYears(new Date(), -1)),
+        },
+        {
+          name: "date_range.previous_2_years",
+          start: startOfYear(addYears(new Date(), -2)),
+          end: endOfYear(addYears(new Date(), -1)),
+        },
+        {
+          name: "date_range.last_12_mo",
+          start: addMonths(new Date(), -12),
+          end: null,
+        },
+      ];
+      if (state.fiscalYearStart !== 0) {
+        // add fiscal year based ranges - those are reactive to the fiscal year start
+        // we only add them if the fiscal year start is not January,
+        // because the default ranges are already based on January
+        out.push({
+          name: "date_range.ongoing_fy",
+          start: getters.lastFyStart,
+          end: null,
+        });
+        out.push({
+          name: "date_range.ongoing_and_previous_fy",
+          start: addMonths(getters.lastFyStart, -12),
+          end: null,
+        });
+        out.push({
+          name: "date_range.last_closed_fy",
+          start: addMonths(getters.lastFyStart, -12),
+          end: endOfMonth(addMonths(getters.lastFyStart, -1)),
+        });
+        out.push({
+          name: "date_range.last_2_closed_fy",
+          start: addMonths(getters.lastFyStart, -24),
+          end: endOfMonth(addMonths(getters.lastFyStart, -1)),
+        });
+      }
+      // add custom range and all available
+      return [
+        ...out,
+        { name: "date_range.all_available", start: null, end: null },
+        {
+          name: "date_range.custom",
+          custom: true,
+          desc: "date_range_desc.custom",
+        },
+      ];
+    },
     dateRangeStartText(state) {
       if (state.dateRangeStart) {
         return ymDateFormat(state.dateRangeStart);
@@ -184,6 +231,14 @@ export default new Vuex.Store({
       // if the end date is not set, it is the one before last finished month
       // during June its April because May data may still not be available
       return getters.dateRangeEndText || lastCoveredMonth();
+    },
+    lastFyStart(state) {
+      let today = new Date();
+      const year =
+        today.getMonth() < state.fiscalYearStart
+          ? today.getFullYear() - 1
+          : today.getFullYear();
+      return new Date(year, state.fiscalYearStart, 1);
     },
     formatNumber(state) {
       return (number) =>
@@ -374,7 +429,7 @@ export default new Vuex.Store({
         ) {
           dispatch("dismissLastRelease", true);
         }
-        dispatch("changeDateRangeObject", state.dateRangeIndex);
+        dispatch("changeDateRangeObject", state.dateRangeName);
         dispatch("interest/fetchInterestGroups");
         dispatch("loadSushiCredentialsCount");
         if (getters.showManagementStuff) {
@@ -416,6 +471,10 @@ export default new Vuex.Store({
         let response = await axios.get("/api/user/", { privileged: true });
         commit("setUserData", response.data);
         commit("setAppLanguage", { lang: response.data.language });
+        commit(
+          "setFiscalYearStart",
+          response.data?.extra_data?.fiscal_year_start_month || 0
+        );
         commit("setOtpRequired", { required: response.data.otp_required });
       } catch (error) {
         if (error.response?.status === 403) {
@@ -531,8 +590,12 @@ export default new Vuex.Store({
         }
       }
     },
-    changeDateRangeObject(context, dateRangeIndex) {
-      let drObj = context.state.dateRanges[dateRangeIndex];
+    changeDateRangeObject(context, rangeName) {
+      // it may happen that a range is not in the list, so we use the first
+      // range in the list as a fallback
+      let drObj =
+        context.getters.dateRanges.find((item) => item.name === rangeName) ||
+        context.getters.dateRanges[0];
       let start = null;
       let end = null;
       if (!drObj.custom) {
@@ -552,12 +615,12 @@ export default new Vuex.Store({
           }
         }
         context.commit("changeDateRange", {
-          index: dateRangeIndex,
+          name: drObj.name,
           start: start,
           end: end,
         });
       } else {
-        context.commit("changeDateRange", { index: dateRangeIndex });
+        context.commit("changeDateRange", { name: drObj.name });
         // if the end of the period is not specified, set it to current data,
         // because 'undefined' and null states are both used for special purposes
         // in the changeDateRange, we use the specific setters here
@@ -602,6 +665,10 @@ export default new Vuex.Store({
     async changeForceDisableOrganizationSelector(context, { hide, route }) {
       context.commit("setForceDisableOrganizationSelector", { hide, route });
     },
+    setFiscalYearStart(context, month) {
+      context.commit("setFiscalYearStart", month);
+      axios.post("/api/user/extra-data", { fiscal_year_start_month: month });
+    },
   },
 
   mutations: {
@@ -630,8 +697,8 @@ export default new Vuex.Store({
     setSelectedOrganizationId(state, { id }) {
       state.selectedOrganizationId = id;
     },
-    changeDateRange(state, { index, start, end }) {
-      state.dateRangeIndex = index;
+    changeDateRange(state, { name, start, end }) {
+      state.dateRangeName = name;
       if (typeof start !== "undefined") {
         state.dateRangeStart = start;
       }
@@ -682,6 +749,9 @@ export default new Vuex.Store({
     },
     setOtpRequired(state, { required }) {
       state.otpRequired = required;
+    },
+    setFiscalYearStart(state, month) {
+      state.fiscalYearStart = month;
     },
   },
 });

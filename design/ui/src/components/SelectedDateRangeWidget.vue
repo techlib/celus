@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -46,16 +47,31 @@ cs:
 
                 <v-dialog v-model="showDialog" max-width="640px">
                   <v-card>
-                    <v-card-title>{{ $t("select_date_range") }}</v-card-title>
+                    <v-card-title
+                      class="d-flex justify-space-between align-center"
+                    >
+                      <span>{{ $t("select_date_range") }}</span>
+                      <span style="max-width: 12rem">
+                        <v-select
+                          :items="months"
+                          v-model="fyStart"
+                          :label="$t('labels.fiscal_year_start_month')"
+                          dense
+                          outlined
+                          class="caption"
+                          hide-details
+                        />
+                      </span>
+                    </v-card-title>
                     <v-divider></v-divider>
-                    <v-card-text>
+                    <v-card-text class="pt-4">
                       <DateRangeSelector />
                     </v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
-                      <v-btn color="primary" text @click="showDialog = false"
-                        >Close</v-btn
-                      >
+                      <v-btn color="primary" text @click="showDialog = false">{{
+                        $t("close")
+                      }}</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -73,7 +89,7 @@ cs:
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import DateRangeSelector from "./DateRangeSelector";
 import DateRangeText from "@/components/util/DateRangeText";
 
@@ -93,12 +109,49 @@ export default {
       start: "dateRangeStart",
       end: "dateRangeEnd",
       highlight: "highlightDateRangeSelector",
+      fiscalYearStart: "fiscalYearStart",
+      dateRangeName: "dateRangeName",
     }),
     ...mapGetters({
       rangeObject: "selectedDateRange",
     }),
     rangeName() {
       return this.$i18n.t(this.rangeObject.name);
+    },
+    fyStart: {
+      get() {
+        return this.fiscalYearStart;
+      },
+      set(value) {
+        this.setFiscalYearStart(value);
+      },
+    },
+    months() {
+      let out = [];
+      for (let i = 0; i < 12; i++) {
+        let d = new Date(2020, i, 1);
+        const month = d.toLocaleString("en", { month: "long" });
+        out.push({ text: month, value: i });
+      }
+      return out;
+    },
+  },
+  methods: {
+    ...mapActions({
+      setFiscalYearStart: "setFiscalYearStart",
+      changeDateRangeObject: "changeDateRangeObject",
+    }),
+  },
+  watch: {
+    fiscalYearStart: {
+      // this ensures that when the fiscal year start changes, the date range is updated
+      // throughout the whole application
+      handler(newValue, oldValue) {
+        if (newValue !== oldValue) {
+          this.changeDateRangeObject(this.dateRangeName);
+        }
+      },
+      immediate: true,
     },
   },
 };

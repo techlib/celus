@@ -12,6 +12,7 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     DateTimeField,
+    IntegerField,
     ModelSerializer,
     PrimaryKeyRelatedField,
     Serializer,
@@ -132,8 +133,16 @@ class UserSimpleSerializer(ModelSerializer):
 
 class UserExtraDataSerializer(Serializer):
     basic_tour_finished = BooleanField(required=False, allow_null=True, default=None)
-    last_dismissed_release = CharField(required=False, allow_null=True, default=None)
-    last_seen_release = CharField(required=False, allow_null=True, default=None)
+    last_dismissed_release = CharField(required=False, allow_null=True, default=None, max_length=20)
+    last_seen_release = CharField(required=False, allow_null=True, default=None, max_length=20)
+    fiscal_year_start_month = IntegerField(
+        required=False,
+        allow_null=True,
+        default=None,
+        min_value=0,
+        max_value=11,
+        help_text="Month using javascript notation - 0-11, where 0 is January, 1 is February, etc.",
+    )
 
 
 class TaskProgressSerializer(ModelSerializer):

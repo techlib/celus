@@ -190,16 +190,24 @@ class TestUserAPI:
         assert resp_data["email_verification_status"] == User.EMAIL_VERIFICATION_STATUS_PENDING
         assert resp_data["email_verification_sent"] is not None
 
-    def test_set_extra_data(self, clients, users):
+    @pytest.mark.parametrize(
+        ["key", "value"],
+        [
+            ("basic_tour_finished", True),
+            ("fiscal_year_start_month", 4),
+            ("last_dismissed_release", "5.2.1"),
+            ("last_seen_release", "5.2.1"),
+        ],
+    )
+    def test_set_extra_data(self, clients, users, key, value):
         """
         Checks that it is possible to store extra_data in User models
         """
-        resp = clients["user1"].post(reverse("user_extra_data_view"), {"basic_tour_finished": True})
+        resp = clients["user1"].post(reverse("user_extra_data_view"), {key: value})
         assert resp.status_code == 200
         user = users["user1"]
         user.refresh_from_db()
-        assert "basic_tour_finished" in user.extra_data
-        assert user.extra_data["basic_tour_finished"] is True
+        assert user.extra_data[key] == value
 
     def test_set_extra_data_merging(self, clients, users):
         """

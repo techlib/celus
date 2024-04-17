@@ -7,8 +7,8 @@
         <v-select
           :items="dateRanges"
           :label="$t('labels.date_range')"
-          v-model="selectedRangeIndex"
-          item-value="index"
+          v-model="selectedRangeName"
+          item-value="name"
           item-text="nameLocal"
         >
           <template #item="{ item }">
@@ -104,25 +104,25 @@ export default {
   },
   computed: {
     ...mapState({
-      dateRangesRaw: "dateRanges",
-      dateRangeIndex: "dateRangeIndex",
+      dateRangeName: "dateRangeName",
       startRaw: "dateRangeStart",
       endRaw: "dateRangeEnd",
     }),
     ...mapGetters({
       dateRange: "selectedDateRange",
+      dateRangesRaw: "dateRanges",
     }),
     dateRanges() {
-      return this.dateRangesRaw.map((item, index) => {
-        return { ...item, index: index, nameLocal: this.$i18n.t(item.name) };
+      return this.dateRangesRaw.map((item) => {
+        return { ...item, nameLocal: this.$i18n.t(item.name) };
       });
     },
-    selectedRangeIndex: {
+    selectedRangeName: {
       get() {
-        return this.dateRangeIndex;
+        return this.dateRangeName;
       },
       set(value) {
-        this.setDateRangeIndex(value);
+        this.setDateRangeName(value);
       },
     },
     start: {
@@ -144,7 +144,7 @@ export default {
   },
   methods: {
     ...mapActions({
-      setDateRangeIndex: "changeDateRangeObject",
+      setDateRangeName: "changeDateRangeObject",
       setDateRangeStart: "changeDateRangeStart",
       setDateRangeEnd: "changeDateRangeEnd",
     }),
