@@ -1,11 +1,11 @@
 import logging
 
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 
+from config.permissions import IsAuthenticatedWithOptional2FA
 from releases.logic.releases import add_dates_to_releases_from_changelog, get_releases_entries
 
 from .logic.changelog import get_changelog_entries
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Releases(ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithOptional2FA]
 
     def list(self, request):
         parsed = get_releases_entries()
@@ -41,7 +41,7 @@ class Releases(ViewSet):
 
 
 class ChangelogAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedWithOptional2FA]
 
     def get(self, request):
         return Response(get_changelog_entries())

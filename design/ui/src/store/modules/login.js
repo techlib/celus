@@ -42,7 +42,7 @@ export default {
 
         commit("setAuthenticated", true);
         dispatch("setShowLoginDialog", { show: false });
-        dispatch("loadUserData");
+        dispatch("finishAuthentication");
       } catch (error) {
         commit("setLoginError", { error: error });
       }
@@ -80,7 +80,7 @@ export default {
       );
       commit("setAuthenticated", true);
       dispatch("setShowLoginDialog", false);
-      dispatch("loadUserData");
+      dispatch("finishAuthentication");
     },
     async resetPassword({ commit, dispatch }, { email }) {
       let csrftoken = Cookies.get("csrftoken");
@@ -99,8 +99,8 @@ export default {
       );
     },
     async finishAuthentication({ commit, dispatch }) {
-      dispatch("loadUserData");
-      dispatch("afterAuthentication");
+      await dispatch("loadUserData");
+      await dispatch("afterAuthentication");
     },
   },
 

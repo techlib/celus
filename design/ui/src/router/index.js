@@ -391,11 +391,6 @@ export default new Router({
       },
     },
     {
-      path: "/secure",
-      name: "after-login-page",
-      component: () => import("../pages/AfterLoginPage.vue"),
-    },
-    {
       path: "/goto/:name",
       redirect: (to) => {
         return {

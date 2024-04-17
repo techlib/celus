@@ -365,7 +365,6 @@ export default {
   methods: {
     ...mapActions({
       hideSnackbar: "hideSnackbar",
-      start: "start",
       backstageChangeTourStatus: "backstageChangeTourStatus",
       dismissLastRelease: "dismissLastRelease",
     }),
@@ -385,10 +384,6 @@ export default {
         }
       }
     },
-  },
-
-  created() {
-    this.start();
   },
 
   async mounted() {

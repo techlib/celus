@@ -348,36 +348,38 @@ export default new Vuex.Store({
         return !!getters.selectedOrganization?.is_raw_data_import_enabled;
       }
     },
-    otpRequired(state) {
-      return state.otpRequired;
-    },
     otpEnabled(state) {
       return state.basicInfo.OTP_ENABLED;
     },
   },
 
   actions: {
-    async start({ dispatch }) {
+    async start({ dispatch, state }) {
       await dispatch("loadBasicInfo"); // load basic info - this can be done without logging in
       await dispatch("loadSiteConfig"); // site config - name, images, etc.
-      await dispatch("fetchLatestPublishedRelease");
       await dispatch("loadUserData"); // we need user data first
+      await dispatch("afterAuthentication");
     },
-    afterAuthentication({ dispatch, state, getters }) {
-      dispatch("loadOrganizations");
-      // store current version as last seen if user value is undefined
-      // this should only happen for new users, for whom we do not want to show the release notes
-      if (
-        state.user.extra_data?.last_seen_release === undefined ||
-        state.user.extra_data?.last_dismissed_release === undefined
-      ) {
-        dispatch("dismissLastRelease", true);
-      }
-      dispatch("changeDateRangeObject", state.dateRangeIndex);
-      dispatch("interest/fetchInterestGroups");
-      dispatch("loadSushiCredentialsCount");
-      if (getters.showManagementStuff) {
-        dispatch("fetchNoInterestPlatforms");
+    async afterAuthentication({ dispatch, state, getters }) {
+      if (state.user && !state.otpRequired) {
+        // only attempt to load data if user is authenticated and fully functional
+        // (i.e. not in the process of checking 2FA)
+        await dispatch("loadOrganizations");
+        await dispatch("fetchLatestPublishedRelease");
+        // store current version as last seen if user value is undefined
+        // this should only happen for new users, for whom we do not want to show the release notes
+        if (
+          state.user.extra_data?.last_seen_release === undefined ||
+          state.user.extra_data?.last_dismissed_release === undefined
+        ) {
+          dispatch("dismissLastRelease", true);
+        }
+        dispatch("changeDateRangeObject", state.dateRangeIndex);
+        dispatch("interest/fetchInterestGroups");
+        dispatch("loadSushiCredentialsCount");
+        if (getters.showManagementStuff) {
+          dispatch("fetchNoInterestPlatforms");
+        }
       }
     },
     showSnackbar(context, { content, color }) {
@@ -415,9 +417,6 @@ export default new Vuex.Store({
         commit("setUserData", response.data);
         commit("setAppLanguage", { lang: response.data.language });
         commit("setOtpRequired", { required: response.data.otp_required });
-        if (!response.data.otp_required) {
-          dispatch("afterAuthentication");
-        }
       } catch (error) {
         if (error.response?.status === 403) {
           // we could not get user data because of 403 Forbidden error
