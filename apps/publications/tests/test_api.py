@@ -1415,11 +1415,7 @@ class TestAllPlatformsAPI:
         if available is not None:
             assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
 
-    @pytest.mark.parametrize(["allow_noncounter"], ((True,), (False,)))
-    def test_all_platforms_detail_report_types(
-        self, basic1, report_type_nd, settings, allow_noncounter
-    ):
-        settings.ALLOW_NONCOUNTER_DATA = allow_noncounter  # override settings
+    def test_all_platforms_detail_report_types(self, basic1, report_type_nd, settings):
         # prepare data
         client = basic1["clients"]["admin2"]
         organization = basic1["organizations"]["standalone"]  # admin2 is admin of standalone
@@ -1444,14 +1440,11 @@ class TestAllPlatformsAPI:
         )
         assert resp.status_code == 200
         data = resp.json()
-        if allow_noncounter:
-            assert {rec["pk"] for rec in data} == {
-                rt_counter.pk,
-                rt_counter_no_interest.pk,
-                rt_noncounter.pk,
-            }
-        else:
-            assert {rec["pk"] for rec in data} == {rt_counter.pk, rt_counter_no_interest.pk}
+        assert {rec["pk"] for rec in data} == {
+            rt_counter.pk,
+            rt_counter_no_interest.pk,
+            rt_noncounter.pk,
+        }
 
     @pytest.mark.parametrize(
         ["organization", "record_count"], [("branch", 1), ("standalone", 1), (None, 2)]

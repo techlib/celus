@@ -232,7 +232,11 @@ cs:
                 </span>
               </template>
             </v-radio>
-            <v-radio value="celus" :readonly="!canImportCelusFormat">
+            <v-radio
+              value="celus"
+              v-if="allowCelusFormatImport"
+              :readonly="!canImportCelusFormat"
+            >
               <!-- cannot use disabled because it disables the tooltip -->
               <template #label>
                 <span>
@@ -785,6 +789,7 @@ export default {
       organizationId: "selectedOrganizationId",
     }),
     ...mapGetters({
+      allowCelusFormatImport: "allowCelusFormatImport",
       automaticallyCreateMetrics: "automaticallyCreateMetrics",
       showManagementStuff: "showManagementStuff",
       enableRawDataImport: "enableRawDataImport",
@@ -1023,7 +1028,7 @@ export default {
     currentOrganization() {
       if ((this.organizationId || -1) > 0) {
         const organizations = this.organizations.filter(
-          (e) => e.pk == this.organizationId
+          (e) => e.pk === this.organizationId
         );
         return organizations.length > 0 ? organizations[0] : null;
       } else {
@@ -1358,7 +1363,7 @@ export default {
     async loadRequiredData() {
       // report type API call is quite time consuming
       // so waiting for it to finish would be inconvenient
-      // loading attribute is v-select use used instead
+      // loading attribute in v-select is used instead
       this.loadReportTypes();
       this.loadOrganizations();
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
@@ -1367,7 +1372,7 @@ export default {
     nibblerErrorText(sheet_idx, name, parsers_info) {
       let readable_sheet_idx = parseInt(sheet_idx) + 1;
       const prefix = `${this.$t("sheet")} ${readable_sheet_idx}: `;
-      if (this.method == "counter") {
+      if (this.method === "counter") {
         // Missing counter header
         if (
           Object.values(parsers_info).every((e) =>
@@ -1386,7 +1391,7 @@ export default {
         for (const [parser_name, data] of Object.entries(parsers_info)) {
           if (parser_name.startsWith("static.counter5")) {
             for (const record of data) {
-              if (record.code == "wrong-report-type") {
+              if (record.code === "wrong-report-type") {
                 return (
                   prefix +
                   this.$t("errors.unrecognized_report_id", {
@@ -1402,7 +1407,7 @@ export default {
         for (const [parser_name, data] of Object.entries(parsers_info)) {
           if (parser_name.startsWith("static.counter4")) {
             for (const record of data) {
-              if (record.code == "wrong-report-type") {
+              if (record.code === "wrong-report-type") {
                 return (
                   prefix +
                   this.$t("errors.unrecognized_report_name", {
@@ -1432,7 +1437,7 @@ export default {
     if (this.$router.currentRoute.query.method) {
       // Check whether this method can be set
       if (
-        this.$router.currentRoute.query.method == "raw" &&
+        this.$router.currentRoute.query.method === "raw" &&
         this.currentOrganization &&
         !this.currentOrganization.is_raw_data_import_enabled
       ) {
@@ -1472,8 +1477,8 @@ export default {
       this.regeneratePreflight();
       // Choose method again if selected organization can't import raw data
       if (
-        this.step == this.steps.upload &&
-        this.method == "raw" &&
+        this.step === this.steps.upload &&
+        this.method === "raw" &&
         this.currentOrganization &&
         !this.currentOrganization.is_raw_data_import_enabled
       ) {

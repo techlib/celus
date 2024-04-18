@@ -747,7 +747,6 @@ REFERENCE_CURRENCY = config("REFERENCE_CURRENCY", default="CZK")
 # Celus features configuration
 # is this installation intended for one consortium
 CONSORTIAL_INSTALLATION = config("CONSORTIAL_INSTALLATION", cast=bool, default=True)
-ALLOW_NONCOUNTER_DATA = config("ALLOW_NONCOUNTER_DATA", cast=bool, default=True)
 
 # user authentication and registration
 # should users be allowed to create accounts themselves
@@ -880,6 +879,8 @@ if SENTRY_URL:
 # Releases and Changelog
 RELEASES_SOURCEFILE = config("RELEASES_SOURCEFILE", default="RELEASES.yaml")
 
+# celus format import support
+ALLOW_CELUS_FORMAT_IMPORT = config("ALLOW_CELUS_FORMAT_IMPORT", cast=bool, default=False)
 # nibbler
 ENABLE_RAW_DATA_IMPORT = config(
     "ENABLE_RAW_DATA_IMPORT", cast=Choices(["All", "PerOrg", "None"]), default="None"
@@ -912,6 +913,7 @@ EXPOSED_MANAGEMENT_COMMANDS = config(
 
 # the following settings will be made available to the frontend via the API
 EXPORTED_SETTINGS = [
+    "ALLOW_CELUS_FORMAT_IMPORT",
     "ALLOW_EDUID_LOGIN",
     "ALLOW_EMAIL_LOGIN",
     "ALLOW_USER_CREATED_PLATFORMS",
@@ -919,17 +921,17 @@ EXPORTED_SETTINGS = [
     "ALLOW_USER_REGISTRATION",
     "AUTOMATICALLY_CREATE_METRICS",
     "CELUS_ADMIN_SITE_PATH",
+    "CLICKHOUSE_QUERY_ACTIVE",
     "CONSORTIAL_INSTALLATION",
+    "CONTACT_EMAIL",
+    "ENABLE_RAW_DATA_IMPORT",
+    "EXPORT_DELETING_PERIOD",
     "HARVESTER_IPV4_ADDRESSES",
     "HARVESTER_IPV6_ADDRESSES",
     "LANGUAGES",
-    "REFERENCE_CURRENCY",
-    "USES_ERMS",
-    "EXPORT_DELETING_PERIOD",
-    "ENABLE_RAW_DATA_IMPORT",
-    "CONTACT_EMAIL",
-    "SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL",
-    "REPORT_TYPES_WITHOUT_COVERAGE",
-    "CLICKHOUSE_QUERY_ACTIVE",
     "OTP_ENABLED",
+    "REFERENCE_CURRENCY",
+    "REPORT_TYPES_WITHOUT_COVERAGE",
+    "SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL",
+    "USES_ERMS",
 ]

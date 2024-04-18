@@ -1,4 +1,3 @@
-from django.conf import settings
 from organizations.models import UserOrganization
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
@@ -163,18 +162,6 @@ class SuperuserOrMasterUserPermission(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return request.user.is_user_of_master_organization
-
-
-class EnabledInSettingsPermission(BasePermission):
-    name_in_settings: str = ""
-    default: bool = False
-
-    def has_permission(self, request, view):
-        return getattr(settings, self.name_in_settings, self.default)
-
-
-class ManualDataUploadEnabledPermission(EnabledInSettingsPermission):
-    name_in_settings = "ALLOW_MANUAL_UPLOAD"
 
 
 class OwnerPermission(BasePermission):

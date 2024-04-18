@@ -155,8 +155,6 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
                 "controlled_metrics",
             )
         )
-        if not settings.ALLOW_NONCOUNTER_DATA:
-            report_types = report_types.filter(counterreporttype__isnull=False)
         return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
 
 

@@ -176,7 +176,10 @@ class TestFlexibleDataExport:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         tag_value = "" if hide_tag_class else tag1.full_name
-        assert data.splitlines() == [
+        # make sure the order is deterministic because there is no ordering in the query
+        exp = data.splitlines()
+        exp = [exp[0]] + list(sorted(exp[1:]))
+        assert exp == [
             "Title/Database,ISSN,EISSN,ISBN,Tags,Metric 1,Metric 2,Metric 3",
             f"Title 1,{t1.issn},{t1.eissn},{t1.isbn},{tag_value},51246,52218,53190",
             f"Title 2,{t2.issn},{t2.eissn},{t2.isbn},{tag_value},51570,52542,53514",

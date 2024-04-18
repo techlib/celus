@@ -279,6 +279,11 @@ export default new Vuex.Store({
       }
       return null;
     },
+    allowCelusFormatImport(state) {
+      if ("ALLOW_CELUS_FORMAT_IMPORT" in state.basicInfo) {
+        return state.basicInfo["ALLOW_CELUS_FORMAT_IMPORT"];
+      }
+    },
     allowSignUp(state) {
       if ("ALLOW_USER_REGISTRATION" in state.basicInfo) {
         return state.basicInfo["ALLOW_USER_REGISTRATION"];
