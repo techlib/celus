@@ -1,3 +1,31 @@
+- version: 6.0.0
+  title:
+    en: Celus version 6.0.0 with COUNTER format export, in-app notifications, fiscal year based dates and much more is here!
+    cs: Celus verze 6.0.0 s exportem ve formátu COUNTER, notifikacemi v aplikaci, daty podle fiskálního roku a mnohem víc je tady!
+
+  text:
+    en: |
+      - Finished harvests, broken SUSHI credentials and other events newly show as **in-app notifications** with optional desktop notifications
+      - You can now **export your data in the COUNTER format** from the platform detail page
+      - Set your fiscal year start in the date range selector and use **FY based dates** throughout Celus
+      - Unsuccessful harvests can now be **manually marked as "empty data"** to prevent further harvesting attempts and fix data coverage numbers
+      - Email based **two-factor authentication** was added to all accounts for extra security
+      - Unless manually overridden, SUSHI server URL will be automatically updated using platform metadata
+      - Many other small improvements and fixes were introduced
+
+    cs: |
+      - Dokončená sklízení, chybné SUSHI credentials a další události se nově zobrazují jako **notifikace v aplikaci** s možností desktopových notifikací
+      - Nyní můžete **exportovat data ve formátu COUNTER** z detailu platformy
+      - Nastavte začátek svého fiskálního roku v selektoru dat a používejte **data podle fiskálního roku** v celém Celusu
+      - Neúspěšná sklízení mohou být nyní **ručně označena jako "prázdná data"** pro zabránění dalších pokusů o sklizeň a opravu pokrytí daty
+      - K účtům byla přidána **dvoufaktorová autentizace pomocí emailu** pro extra bezpečnost
+      - Pokud není ručně přepsáno, URL SUSHI serveru bude automaticky aktualizováno pomocí metadat platformy
+      - Bylo provedeno mnoho dalších menších vylepšení a oprav
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 5.10.0
   title:
     en: ACRL IPEDS updated for 2023

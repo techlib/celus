@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0]  - 2024-04-24
+
+### Added
+
+#### Frontend
+
+* system of "events" for in-app notifications was introduced
+* possibility to export data in COUNTER format was added to the platform page (under Data management)
+* it is now possible to mark unsuccessful harvests as empty data under "SUSHI management"/"Overview"
+* fiscal year based data ranges were added to the data range selector with the possibility to
+  select the start month of a fiscal year
+* data coverage information was added to exports from the reporting module
+* email-based two-factor authentication was added to all accounts
+* more details about SUSHI exceptions is now shown for individual harvests
+* when uploading reports for multiple organizations, information about organizations with clashing
+  data is now shown
+* list of proprietary IDs was added to the title detail page
+* tags can be now created directly from the title list creation dialog
+
+
+#### Backend
+
+* CLI script was added for creating internal tagging batches from a CSV file
+* a welcome event is created when a user account is created
+* an introductory event for existing users was added
+
+
+### Changes
+
+#### Frontend
+
+* unless manually changed, the SUSHI server URL will be taken from the platform metadata and
+  automatically updated when the platform is updated
+* search was enabled in the platform filter selector on the SUSHI status page
+* import of "Celus format" was removed from the import format options (unless turned on in the settings)
+
+#### Backend
+
+* clickhouse integration has been modified in several ways
+  * plain MergeTree engine with lightweight deletes is used in favor of CollapsingMergeTree
+  * synchronization between the main database and Clickhouse was optimized and fixed for cases
+    where titles were merged together
+  * dictionaries were added to make mapping of integer IDs to strings possible
+* it is now possible to get the knowledgebase API key from settings instead of storing it in the
+  database
+* add extra info into the request logs about use of API key authentication and content of error
+  responses
+* more SUSHI exceptions are newly considered as partial data
+* username and organization name were added to the subjects of emails about new registrations
+* some obsolete settings were removed
+* specialized code to add Scopus title list tags was removed - standard tagging may be used instead
+
+
+### Fixed
+
+#### Frontend
+
+* a bug in reporting leading to incorrect number of possible values being shown after a text search
+  was used was fixed
+* do not show the user edit dialog unless ALLOW_USER_MANAGEMENT=True - edit attempts would cause
+  errors otherwise
+* the date selector widget is properly hidden on pages where it is not needed
+* translations for the account management page were fixed
+* display of data from one harvest/manual upload no longer displays the whole selected date range,
+  but rather the range of the data itself
+* debug links to the SUSHI server are now shown only for COUNTER 5 (and higher) credentials
+* bug preventing change of tag class visibility under certain conditions was fixed
+* coverage display on platform page with non-COUNTER data no longer causes errors
+
+#### Backend
+
+* extra check for existing data is done before a planned attempt to harvest data is made - fixes
+  creation of clashing import batches for newly verified credentials
+* normalize emails before checking them using the Octopus protocol
+* fix email verification for installations where both password and shibboleth authentication are
+  enabled
+* only consider user's main email address when checking email verification status
+
+
 ## [5.10.0]  - 2024-02-28
 
 ### Added
