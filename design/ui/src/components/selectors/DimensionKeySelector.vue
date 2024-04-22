@@ -204,6 +204,7 @@ export default {
     },
     blur() {
       this.$emit("input", this.selectedValues);
+      this.search = ""; // reset search so that it does not hang around
     },
     async updateTranslator() {
       if (this.translator) {
