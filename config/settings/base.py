@@ -899,6 +899,9 @@ TEMPLATE_FOR_SUSHI_CRED_IMPORT_SINGLE_ORG = (
     / "apps/sushi/templates/Template_for_SushiCredentials_import_singleorg.xlsx"
 )
 
+# Events
+CREATE_USER_WELCOME_EVENTS = config("CREATE_USER_WELCOME_EVENTS", cast=bool, default=True)
+
 # Octopus - our "sso" solution
 OCTOPUS_HMAC_KEY = config("OCTOPUS_HMAC_KEY", default="")
 OCTOPUS_HMAC_ALGO = config("OCTOPUS_HMAC_ALGO", default="sha256")

@@ -77,7 +77,10 @@ cs:
             {{ $t("events.expires_tt") }}
           </v-tooltip>
           <div class="caption pb-3">{{ $t("labels.description") }}</div>
-          <div class="event-text">{{ item.description }}</div>
+          <div
+            class="event-text"
+            v-html="markdownToHtml(item.description)"
+          ></div>
         </v-sheet>
       </td>
     </template>
@@ -167,6 +170,7 @@ import EventImportanceSelect from "@/components/events/EventImportanceSelect.vue
 import stateTracking from "@/mixins/stateTracking";
 import { mapActions, mapState } from "vuex";
 import { uniqueCounts } from "@/libs/unique";
+import { marked } from "marked";
 
 export default {
   name: "EventList",
@@ -393,6 +397,18 @@ export default {
       await this.loadEvents();
       this.selectedEvents = [];
     },
+    markdownToHtml(content) {
+      const renderer = new marked.Renderer();
+      renderer.link = (href, title, text) =>
+        `<a target="_blank" href="${href}" title="${title}">${text}</a>`;
+
+      let html = marked.parse(content, {
+        breaks: false,
+        gfm: true,
+        renderer: renderer,
+      });
+      return html;
+    },
   },
 
   created() {
@@ -417,6 +433,8 @@ export default {
 
 <style scoped lang="scss">
 div.event-text {
-  white-space: pre-line;
+  p {
+    margin-bottom: 0.25rem;
+  }
 }
 </style>
