@@ -6,7 +6,7 @@ en:
   title: Yearly overview
   status:
     no_data: Downloaded, empty data
-    failed: An error occured
+    failed: An error occurred
     untried: Hasn't been performed yet
     success: Successfully downloaded
   planned: It is already planned to be harvested
@@ -26,8 +26,9 @@ en:
   delete_mode_info: activate to delete existing data
   delete_ok: Selected data were deleted.
   mark_failed_as_empty: Mark failed as empty
-  mark_failed_as_empty_tt: Selected failed harvests older than one month will be marked as empty data and no further harvesting will be attempted. Useful for cases where the data is known to be empty.
-  markable_as_empty: can be marked as empty
+  mark_failed_as_empty_tt: Selected failed harvests older than two months will be marked as empty data and no further harvesting will be attempted. Useful for cases where the data is known to be empty.
+  markable_as_empty: "{count} can be marked as empty | {count} can be marked as empty"
+  mark_as_empty_hint: only failed harvests older than two months can be marked as empty
 
 cs:
   title: Yearly overview
@@ -52,8 +53,9 @@ cs:
   delete_mode_info: aktivujte pro mazání dat
   delete_ok: Vybraná data byla smazána.
   mark_failed_as_empty: Označit neúspěšné jako prázdné
-  mark_failed_as_empty_tt: Vybraná neúspěšná stahování starší než jeden měsíc budou označena jako prázdná a další stahování nebude pokračovat. Užitečné pro případy, kdy je známo, že data jsou prázdná.
-  markable_as_empty: lze označit jako prázdné
+  mark_failed_as_empty_tt: Vybraná neúspěšná stahování starší než dva měsíce budou označena jako prázdná a další stahování nebude pokračovat. Užitečné pro případy, kdy je známo, že data jsou prázdná.
+  markable_as_empty: "{count} lze označit jako prázdné | {count} lze označit jako prázdné | {count} lze označit jako prázdné"
+  mark_as_empty_hint: pouze neúspěšná stahování starší než dva měsíce lze označit jako prázdná
 </i18n>
 
 <template>
@@ -280,9 +282,15 @@ cs:
                 deleteMode ? $t("select_help_delete") : $t("select_help")
               }})</span
             >
-            <span v-if="!deleteMode && selectedItemsMarkableAsEmpty.length">
-              ({{ selectedItemsMarkableAsEmpty.length }}
-              {{ $t("markable_as_empty") }})
+            <span v-if="!deleteMode && selectedItems.length > 0">
+              ({{ $tc("markable_as_empty", selectedItemsMarkableAsEmpty.length)
+              }}<span
+                v-if="
+                  selectedItems.length > selectedItemsMarkableAsEmpty.length
+                "
+              >
+                - {{ $t("mark_as_empty_hint") }}</span
+              >)
             </span>
           </v-col>
         </v-row>

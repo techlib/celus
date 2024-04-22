@@ -2,12 +2,18 @@
 <i18n lang="yaml">
 en:
   mark_as_empty_confirmation_text: Are you sure you want to mark the selected record as empty data?|Are you sure you want to mark the selected {count} records as empty data?
+  mark_as_empty_description1: Such records will be considered successfully processed, but without any data.
+  mark_as_empty_description2: No further attempts to harvest the data will be made.
+  mark_as_empty_description3: In data coverage calculations, such months will be considered covered.
   mark_as_empty_title: "Mark as empty data"
   processing: "Processing"
   finished: All records have been processed.
   errors: "{count} error occurred.|{count} errors occurred."
 cs:
   mark_as_empty_confirmation_text: Opravdu chcete označit vybraný záznam jako prázdná data?|Opravdu chcete označit {count} vybrané záznamy jako prázdná data?|Opravdu chcete označit {count} vybraných záznamů jako prázdná data?
+  mark_as_empty_description1: Takové záznamy budou považovány za úspěšně zpracované, ale bez jakýchkoli dat.
+  mark_as_empty_description2: Nebudou podnikány žádné další pokusy o stahování dat.
+  mark_as_empty_description3: Při výpočtech pokrytí dat budou takové měsíce považovány za pokryté.
   mark_as_empty_title: Označit jako prázdná data
   processing: Zpracovávám
   finished: Všechny záznamy byly zpracovány.
@@ -20,7 +26,14 @@ cs:
     <v-card-text>
       <v-row>
         <v-col v-if="!processing">
-          {{ $tc("mark_as_empty_confirmation_text", totalCount) }}
+          <p>
+            {{ $tc("mark_as_empty_confirmation_text", totalCount) }}
+          </p>
+          <ul>
+            <li>{{ $t("mark_as_empty_description1") }}</li>
+            <li>{{ $t("mark_as_empty_description2") }}</li>
+            <li>{{ $t("mark_as_empty_description3") }}</li>
+          </ul>
         </v-col>
         <v-col v-else>
           <span>{{ $t("processing") }}:</span>
