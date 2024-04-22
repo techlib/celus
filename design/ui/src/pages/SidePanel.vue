@@ -43,10 +43,11 @@
         <v-btn
           v-if="tourName"
           outlined
-          v-text="$t(tourToShow.title)"
           color="grey"
           @click="activateTour({ name: tourName })"
-        ></v-btn>
+        >
+          {{ $t(tourToShow.title) }}
+        </v-btn>
       </div>
       <div class="small subdued text-center mb-2">
         <router-link :to="{ name: 'changelog' }">
