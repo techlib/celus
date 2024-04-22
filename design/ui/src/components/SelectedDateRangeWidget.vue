@@ -111,6 +111,8 @@ export default {
       highlight: "highlightDateRangeSelector",
       fiscalYearStart: "fiscalYearStart",
       dateRangeName: "dateRangeName",
+      defaultDateRangeName: "defaultDateRangeName",
+      defaultFYDateRangeName: "defaultFYDateRangeName",
     }),
     ...mapGetters({
       rangeObject: "selectedDateRange",
@@ -148,7 +150,19 @@ export default {
       // throughout the whole application
       handler(newValue, oldValue) {
         if (newValue !== oldValue) {
-          this.changeDateRangeObject(this.dateRangeName);
+          if (oldValue === 0) {
+            // this is the first time the fiscal year start is set
+            // we need to set the date range to the current + previous fiscal year
+            this.changeDateRangeObject(this.defaultFYDateRangeName);
+          } else if (newValue === 0 && this.dateRangeName.includes("fy")) {
+            // when the fiscal year start is set to 0, we will hide the
+            // FY related date ranges, so we need to select the default
+            this.changeDateRangeObject(this.defaultDateRangeName);
+          } else {
+            // in all other cases, we just make sure the date range is updated
+            // by refreshing the current date range
+            this.changeDateRangeObject(this.dateRangeName);
+          }
         }
       },
       immediate: true,

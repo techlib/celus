@@ -92,8 +92,10 @@ export default new Vuex.Store({
     selectedOrganizationId: null,
     dateRangeStart: null,
     dateRangeEnd: null,
+    defaultDateRangeName: "date_range.current_plus_2y_back",
+    defaultFYDateRangeName: "date_range.ongoing_and_previous_fy",
     dateRangeName: "date_range.current_plus_2y_back",
-    fiscalYearStart: 6,
+    fiscalYearStart: 0,
     numberFormat: {
       notation: "fixed",
       precision: 1,
