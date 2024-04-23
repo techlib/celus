@@ -62,6 +62,12 @@ cs:
       <span class="ml-2">{{ $t("event_importance." + item.importance) }}</span>
     </template>
 
+    <template #item.expiration_date="{ item }">
+      <span v-if="item.expiration_date">{{
+        isoDateFormat(parseDateTime(item.expiration_date))
+      }}</span>
+    </template>
+
     <template #expanded-item="{ item, headers }">
       <td :colspan="headers.length" class="px-2 py-2">
         <v-sheet class="pa-3">
@@ -161,7 +167,11 @@ cs:
 
 <script>
 import cancellation from "@/mixins/cancellation";
-import { isoDateTimeFormatSpans } from "@/libs/dates";
+import {
+  isoDateFormat,
+  isoDateTimeFormatSpans,
+  parseDateTime,
+} from "@/libs/dates";
 import EventImportanceIcon from "@/components/events/EventImportanceIcon.vue";
 import EventCategoryMark from "@/components/events/EventCategoryMark.vue";
 import debounce from "lodash/debounce";
@@ -260,6 +270,10 @@ export default {
           value: "importance",
           width: "8rem",
         },
+        {
+          text: this.$t("events.expires"),
+          value: "expiration_date",
+        },
       ];
     },
     url() {
@@ -323,6 +337,8 @@ export default {
   },
 
   methods: {
+    parseDateTime,
+    isoDateFormat,
     isoDateTimeFormatSpans,
     ...mapActions({ loadEvents: "loadEvents", showSnackbar: "showSnackbar" }),
     fetchEvents: debounce(async function () {
