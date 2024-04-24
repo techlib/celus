@@ -1,18 +1,20 @@
+import itertools
 import logging
-import os
 import typing
 from datetime import date
+from pathlib import Path
 from time import time
 
 from celus_nigiri.client import Sushi5Client, SushiError, SushiException
-from celus_nigiri.counter4 import Counter4ReportBase
-from celus_nigiri.counter5 import Counter5ReportBase, TransportError
+from celus_nigiri.counter5 import CounterError, TransportError
+from celus_nigiri.record import CounterRecord
 from core.exceptions import FileConsistencyError
 from django.conf import settings
 from django.db.transaction import atomic
+from nibbler.logic.processing import counter_format_poops, output_to_poops
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
-from logs.exceptions import DataStructureError
+from logs.exceptions import DataStructureError, NibblerErrors
 from logs.logic.data_import import (
     create_import_batch_or_crash,
     import_counter_records,
@@ -22,13 +24,29 @@ from logs.logic.data_import import (
 logger = logging.getLogger(__name__)
 
 
-def validate_data_v5(report: Counter5ReportBase):
-    Sushi5Client.validate_data(report.errors, report.warnings)
+def validate_data_v5(errors, warnings):
+    Sushi5Client.validate_data(errors, warnings)
 
 
-def validate_data_v4(report: Counter4ReportBase):
-    # Counter 4 validation is skipped
-    return None
+def get_empty_records(
+    records: typing.Generator[CounterRecord, None, None],
+) -> typing.Tuple[bool, typing.Generator[CounterRecord, None, None]]:
+    """
+    Checks whether the iterator is empty
+
+    returns: True / False, new iterator
+    """
+    test_empty, records = itertools.tee(records, 2)
+    try:
+        next(test_empty)
+    except StopIteration:
+        empty = True
+    else:
+        empty = False
+
+    # Note that original iterator can't be used after tee()
+    # so well return the new one
+    return empty, records
 
 
 @atomic
@@ -39,30 +57,47 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     except FileConsistencyError as exc:
         attempt.mark_crashed(exc)
         return
-
-    counter_version = attempt.credentials.counter_version
-    reader_cls = attempt.counter_report.get_reader_class(json_format=attempt.file_is_json())
-    if not reader_cls:
-        logger.warning("Unsupported report type %s", attempt.counter_report.code)
-        return
-
     attempt.check_importable()
 
-    logger.debug("Processing file: %s; time: %.3f", attempt.data_file.name, time())
-
-    reader = reader_cls()
+    nibbler_parser = attempt.counter_report.get_nibbler_parser(json_format=attempt.file_is_json())
+    path = Path(settings.MEDIA_ROOT) / attempt.data_file.name
     try:
-        records = reader.file_to_records(os.path.join(settings.MEDIA_ROOT, attempt.data_file.name))
+        logger.debug("Processing file: %s; time: %.3f", attempt.data_file.name, time())
+        poops = counter_format_poops(path, nibbler_parser, attempt.credentials.platform)
+
+        # Check the output note that poops.extras should countain counter header
+        poop = output_to_poops(poops)[0]
         logger.debug("Records parsed; time: %.3f", time())
+
+        records = (e[1] for e in poop.records_basic())
+
+    except NibblerErrors as e:
+        logger.warning("Failed to parse file using nibbler", exc_info=e)
+        attempt.mark_crashed(e)
+        return
     except FileNotFoundError as e:
         logger.error("Cannot find the referenced file - probably deleted?: %s", e)
         attempt.mark_crashed(e)
         return
+
+    # extract errors and warnings
+    warnings = []
+    errors = []
+    sushi_errors = Sushi5Client.extract_errors_from_data(poop.extras)
+    for sushi_error in sushi_errors:
+        counter_error = CounterError.from_sushi_error(sushi_error)
+        if sushi_error.is_warning:
+            warnings.append(counter_error)
+        elif sushi_error.is_info:
+            pass
+        else:
+            errors.append(counter_error)
+
+    counter_version = attempt.credentials.counter_version
     try:
-        if counter_version == 4:
-            validate_data_v4(reader)
-        elif counter_version == 5:
-            validate_data_v5(reader)
+        if counter_version == 5:
+            # Note that only C5 is validated here
+            Sushi5Client.validate_data(errors, warnings)
     except SushiException as e:
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error("Validation error: %s", e)
@@ -74,22 +109,23 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             attempt.log = str(e)
         # fill in extracted_data
-        if hasattr(reader, "header") and isinstance(reader.header, dict):
-            attempt.extract_header_data(reader.header)
+        if poop.extras:
+            attempt.extract_header_data(poop.extras)
         attempt.save()
         return
 
+    empty, records = get_empty_records(records)
     # check errors first - there are cases when partial data is returned together with
     # a SUSHI exception. We do not want to ingest such data
-    if counter_version == 5 and reader.errors:
-        error = reader.errors[0]
-        attempt.log = "; ".join(str(e) for e in reader.errors)
+    if counter_version == 5 and errors:
+        error = errors[0]
+        attempt.log = "; ".join(str(e) for e in errors)
         logger.warning("Found errors: %s", attempt.log)
         if not isinstance(error, TransportError):
             attempt.error_code = error.code
         attempt.status = AttemptStatus.DOWNLOAD_FAILED
         attempt.save()
-    elif reader.record_found:
+    elif not empty:
         month = (
             attempt.start_date.isoformat()
             if isinstance(attempt.start_date, date)
@@ -124,15 +160,15 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.status = AttemptStatus.NO_DATA
             # it may be overwritten bellow with sushi warnings, but that's not a problem
             attempt.log = "No data found during import"
-        if counter_version == 5 and (reader.errors or reader.warnings):
-            attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
-            attempt.error_code = reader.warnings[0].code
+        if counter_version == 5 and (errors or warnings):
+            attempt.log = f"Warnings: {'; '.join(str(w) for w in warnings)}"
+            attempt.error_code = warnings[0].code
         attempt.save()
         logger.info("Import stats: %s", stats)
     else:
         # Process errors for counter5
-        if counter_version == 5 and reader.warnings:
-            attempt.log = f"Warnings: {'; '.join(str(w) for w in reader.warnings)}"
+        if counter_version == 5 and warnings:
+            attempt.log = f"Warnings: {'; '.join(str(w) for w in warnings)}"
         else:
             attempt.log = "No data found during import"
         attempt.status = AttemptStatus.NO_DATA
@@ -146,11 +182,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.save()
         logger.warning("No records found!")
     # fill in extracted_data
-    if (
-        hasattr(reader, "header")
-        and isinstance(reader.header, dict)
-        and attempt.extract_header_data(reader.header)
-    ):
+    if poop.extras and attempt.extract_header_data(poop.extras):
         attempt.save()
     attempt.mark_processed()
 
