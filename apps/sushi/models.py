@@ -181,11 +181,6 @@ class CounterReportType(models.Model):
         name = "Json" if json_format else "Tabular"
         return f"static\\.counter{self.counter_version}\\.{self.code}\\.{name}"
 
-    @classmethod
-    def all_nibbler_counter_parsers(cls, json_format: bool = False) -> str:
-        name = "Json" if json_format else "Tabular"
-        return f"static\\.counter[^\\.]+\\.[^\\.]+.{name}"
-
     def get_counter_exporter_class(self):
         from logs.logic import export_counter
 

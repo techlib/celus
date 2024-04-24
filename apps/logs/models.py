@@ -51,6 +51,7 @@ from nibbler.logic.processing import (
     get_records_from_nibbler_output,
     is_success,
 )
+from nibbler.logic.utils import all_nibbler_counter_parsers
 from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Platform, Title
@@ -792,11 +793,9 @@ class ManualDataUpload(SourceFileMixin, models.Model):
             return nibbler_output, self.method
 
         elif self.method == MduMethod.COUNTER:
-            from sushi.models import CounterReportType
-
             is_json = self.file_is_json()
 
-            nibbler_parser = CounterReportType.all_nibbler_counter_parsers(is_json)
+            nibbler_parser = all_nibbler_counter_parsers(is_json)
             poops = counter_format_poops(
                 os.path.join(settings.MEDIA_ROOT, self.data_file.name),
                 nibbler_parser,
