@@ -150,7 +150,6 @@ class TestErrorView(APIView):
 
 
 class UserExtraDataView(APIView):
-
     """
     Allows storage of extra data into the user.extra_data field.
     It uses a predefined dictionary of keys and value types, so that it protects against attacks
@@ -217,8 +216,10 @@ class VerifyEmailAndOtpView(VerifyEmailView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200 and settings.OTP_ENABLED:
+            obj = self.get_object()  # this is EmailConfirmation for the current email address
+            user = obj.email_address.user
             device, _created = EmailDevice.objects.get_or_create(
-                user=request.user,
+                user=user,
                 name="default",
                 defaults={
                     "confirmed": True,
@@ -227,7 +228,7 @@ class VerifyEmailAndOtpView(VerifyEmailView):
             )
             device.confirmed = True
             device.save()
-            OtpDeviceView._set_cookie(response, request.user, device)
+            OtpDeviceView._set_cookie(response, user, device)
         return response
 
 

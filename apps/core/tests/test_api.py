@@ -395,14 +395,22 @@ class TestAccountCreationAPI:
         assert "Celus" in mail.body, "Celus must be mentioned in the email body"
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
+    @pytest.mark.parametrize("logged_for_verification", [True, False])
     def test_create_account_email_customization_resend(
-        self, mailoutbox, users, site, settings, clients, otp_devices, disallow_eduid_login
+        self,
+        mailoutbox,
+        users,
+        site,
+        clients,
+        otp_devices,
+        disallow_eduid_login,
+        logged_for_verification,
+        client,
     ):
         """
         Tests that the email verification email sent when re-sending verification email has custom
         text and not the one provided with allauth.
         """
-
         # make email address unverified
         email_address = EmailAddress.objects.get(user=users["user1"])
         email_address.verified = False
@@ -416,7 +424,9 @@ class TestAccountCreationAPI:
         assert "Celus" in mail.body, "Celus must be mentioned in the email body"
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
-        resp = clients["user1"].post(
+        # the user may or may not be logged in when he does the verification
+        c = clients["user1"] if logged_for_verification else client
+        resp = c.post(
             reverse("user_verify_email_code"),
             {"key": email_address.emailconfirmation_set.all().last().key},
         )
@@ -424,6 +434,8 @@ class TestAccountCreationAPI:
         assert (
             resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None
         ), "device cookie is set"
+        user1 = User.objects.get(pk=users["user1"].pk)
+        assert user1.email_verified
 
     def test_email_admins_about_create_account(self, clients, site):
         """
