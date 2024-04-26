@@ -50,7 +50,7 @@ from core.models import (
 )
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.files.base import ContentFile, File
+from django.core.files.base import File
 from django.db import models
 from django.db.models import Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
@@ -599,12 +599,14 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             attempt.when_processed = now()
 
         if report:
-            # Write tsv report
-            attempt.data_file = ContentFile(client.report_to_string(report))
-        else:
-            # Write error file
-            file_data.seek(0)
-            attempt.data_file = File(file_data)
+            # Write tsv report into output (otherwise original file will remain there)
+            data = client.report_to_string(report).encode()
+            file_data.truncate()
+            file_data.write(data)
+
+        # Set file of the new attempt
+        file_data.seek(0)
+        attempt.data_file = File(file_data)
 
         attempt.checksum, attempt.file_size = SourceFileMixin.checksum_fileobj(attempt.data_file)
         attempt.data_file.name = filename
