@@ -141,13 +141,24 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         ):
             logger.info("%d empty conflicting ImportBatch(es) were deleted", count)
 
-        import_batches, stats = import_counter_records(
-            attempt.counter_report.report_type,
-            attempt.credentials.organization,
-            attempt.credentials.platform,
-            records,
-            months=[month],
-        )
+        try:
+            import_batches, stats = import_counter_records(
+                attempt.counter_report.report_type,
+                attempt.credentials.organization,
+                attempt.credentials.platform,
+                records,
+                months=[month],
+            )
+        except SushiException as e:
+            logger.error("Failed to parse data due to sushi error", exc_info=e)
+            attempt.mark_crashed(e)
+            return
+        except NibblerErrors as e:
+            logger.warning(
+                "Failed to parse file using nibbler while processing records", exc_info=e
+            )
+            attempt.mark_crashed(e)
+            return
 
         if len(import_batches) > 1:
             raise DataStructureError("Cannot import data for more than one month from SUSHI")

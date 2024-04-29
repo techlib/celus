@@ -3,36 +3,22 @@ import json
 import logging
 import os
 import traceback
-from collections import namedtuple
 from copy import deepcopy
 from datetime import date, timedelta
 from functools import reduce
 from hashlib import blake2b
+from pathlib import Path
 from tempfile import TemporaryFile
+from time import time
 from typing import IO, Dict, Iterable, Optional, Union
 
 import requests
 import reversion
+from celus_nibbler import Poop
 from celus_nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
 from celus_nigiri.client import SushiException as SushiExceptionNigiri
-from celus_nigiri.counter4 import (
-    Counter4BR1Report,
-    Counter4BR2Report,
-    Counter4BR3Report,
-    Counter4DB1Report,
-    Counter4DB2Report,
-    Counter4JR1Report,
-    Counter4JR2Report,
-    Counter4MR1Report,
-    Counter4PR1Report,
-)
 from celus_nigiri.counter5 import (
-    Counter5DRReport,
-    Counter5IRM1Report,
-    Counter5PRReport,
     Counter5ReportBase,
-    Counter5TableReport,
-    Counter5TRReport,
     CounterError,
     TransportError,
 )
@@ -61,6 +47,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from events.models import Event, EventCategory, EventImportance
 from logs.models import AccessLog, ImportBatch
+from nibbler.logic.processing import counter_format_poops, output_to_poops
 from organizations.models import Organization
 from publications.logic import knowledgebase
 from publications.models import Platform
@@ -70,41 +57,25 @@ logger = logging.getLogger(__name__)
 
 COUNTER_VERSIONS = ((4, "COUNTER 4"), (5, "COUNTER 5"))
 
-CounterReport = namedtuple(
-    "CounterReport", ["code", "name", "version", "json_format", "reader", "sushi_compatible"]
-)
-
 COUNTER_REPORTS = (
-    # (code, name, version, json_format, reader, sushi_compatible)
     # version 4
-    CounterReport("JR1", "Counter 4 - Journal Report 1", 4, False, Counter4JR1Report, True),
-    CounterReport("JR1a", "Counter 4 - Journal Report 1a", 4, False, Counter4JR1Report, True),
-    CounterReport(
-        "JR1GOA", "Counter 4 - Journal Report 1 Gold Open Access", 4, False, Counter4JR1Report, True
-    ),
-    CounterReport("JR2", "Counter 4 - Journal Report 2", 4, False, Counter4JR2Report, True),
+    ("JR1", "Counter 4 - Journal Report 1"),
+    ("JR1a", "Counter 4 - Journal Report 1a"),
+    ("JR1GOA", "Counter 4 - Journal Report 1 Gold Open Access"),
+    ("JR2", "Counter 4 - Journal Report 2"),
     # CounterReport# ('JR5',  'Counter X - Report4,, False, , None, True),
-    CounterReport("BR1", "Counter 4 - Book Report 1", 4, False, Counter4BR1Report, True),
-    CounterReport("BR2", "Counter 4 - Book Report 2", 4, False, Counter4BR2Report, True),
-    CounterReport("BR3", "Counter 4 - Book Report 3", 4, False, Counter4BR3Report, True),
-    CounterReport("DB1", "Counter 4 - Database Report 1", 4, False, Counter4DB1Report, True),
-    CounterReport("DB2", "Counter 4 - Database Report 2", 4, False, Counter4DB2Report, True),
-    CounterReport("PR1", "Counter 4 - Platform Report 1", 4, False, Counter4PR1Report, True),
-    CounterReport("MR1", "Counter 4 - Multimedia Report 1", 4, False, Counter4MR1Report, True),
+    ("BR1", "Counter 4 - Book Report 1"),
+    ("BR2", "Counter 4 - Book Report 2"),
+    ("BR3", "Counter 4 - Book Report 3"),
+    ("DB1", "Counter 4 - Database Report 1"),
+    ("DB2", "Counter 4 - Database Report 2"),
+    ("PR1", "Counter 4 - Platform Report 1"),
+    ("MR1", "Counter 4 - Multimedia Report 1"),
     # version 5
-    CounterReport("TR", "Counter 5 - Title Report", 5, True, Counter5TRReport, True),
-    CounterReport("PR", "Counter 5 - Platform Report", 5, True, Counter5PRReport, True),
-    CounterReport("DR", "Counter 5 - Database Report", 5, True, Counter5DRReport, True),
-    CounterReport(
-        "IR_M1", "Counter 5 - Multimedia Item Report 1", 5, True, Counter5IRM1Report, True
-    ),
-    CounterReport("TR", "Counter 5 - Title Report", 5, False, Counter5TableReport, False),
-    CounterReport("PR", "Counter 5 - Platform Report", 5, False, Counter5TableReport, False),
-    CounterReport("DR", "Counter 5 - Database Report", 5, False, Counter5TableReport, False),
-    CounterReport("IR", "Counter 5 - Item Report", 5, False, Counter5TableReport, False),
-    CounterReport(
-        "IR_M1", "Counter 5 - Multimedia Item Report 1", 5, False, Counter5TableReport, False
-    ),
+    ("TR", "Counter 5 - Title Report"),
+    ("PR", "Counter 5 - Platform Report"),
+    ("DR", "Counter 5 - Database Report"),
+    ("IR_M1", "Counter 5 - Multimedia Item Report 1"),
 )
 
 
@@ -148,7 +119,7 @@ class BrokenCredentialsMixin(models.Model):
 
 
 class CounterReportType(models.Model):
-    CODE_CHOICES = [(cr.code, cr.code) for cr in COUNTER_REPORTS if cr.sushi_compatible]
+    CODE_CHOICES = [(e[0], e[0]) for e in COUNTER_REPORTS]
 
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
@@ -166,16 +137,6 @@ class CounterReportType(models.Model):
 
     def __str__(self):
         return f"{self.code} ({self.counter_version}) - {self.name}"
-
-    def get_reader_class(self, json_format: bool = False):
-        for cr in COUNTER_REPORTS:
-            if (
-                cr.code == self.code
-                and cr.version == self.counter_version
-                and cr.json_format is json_format
-            ):
-                return cr.reader
-        return None
 
     def get_nibbler_parser(self, json_format: bool = False):
         name = "Json" if json_format else "Tabular"
@@ -1109,6 +1070,17 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return True
         return False
 
+    def get_nibbler_poop(self, json_format: bool = False) -> Poop:
+        nibbler_parser = self.counter_report.get_nibbler_parser(json_format=self.file_is_json())
+
+        path = Path(settings.MEDIA_ROOT) / self.data_file.name
+        logger.debug("Processing file: %s; time: %.3f", self.data_file.name, time())
+        poops = counter_format_poops(path, nibbler_parser, self.credentials.platform)
+        # Check the output note that poops.extras should countain counter header
+        poop = output_to_poops(poops)[0]
+        logger.debug("Records parsed; time: %.3f", time())
+        return poop
+
     def reextract_header_data(self) -> bool:
         """
         Reparses the header of the stored file and runs `extract_header_data` on it to
@@ -1120,22 +1092,12 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             raise NotImplementedError("Header data is only extracted from COUNTER 5 reports")
         if not self.file_is_json():
             raise NotImplementedError("Header data is only extracted from JSON reports")
+        poop = self.get_nibbler_poop(json_format=True)
 
-        reader_cls = self.counter_report.get_reader_class(json_format=True)
-        reader = reader_cls()
-        # the following will parse the header and prepare a generator with the records
-        # we do not care about the actual data, so we just discard it
-        # reader.file_to_records(os.path.join(settings.MEDIA_ROOT, self.data_file.name))
-        if hasattr(reader, "fd_to_dicts") and callable(reader.fd_to_dicts):
-            header, _records = reader.fd_to_dicts(self.data_file)
-            if header:
-                if success := self.extract_header_data(header):
-                    self.save()
-                return success
-            logger.info("No header data found in %s", self.data_file.name)
-            return False
-        else:
-            raise NotImplementedError("Reader does not support header extraction")
+        if success := self.extract_header_data(poop.extras):
+            self.save()
+
+        return success
 
     def any_import_batch_lately(self, days: int = 3 * 30):
         return SushiFetchAttempt.objects.filter(

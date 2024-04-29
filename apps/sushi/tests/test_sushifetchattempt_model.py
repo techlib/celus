@@ -405,6 +405,333 @@ class TestSushiFetchAttemptModel:
 
 
 @pytest.mark.django_db
+class TestParsing:
+    @pytest.mark.parametrize(
+        ("filename", "counter_report_type", "header", "count", "sum"),
+        (
+            (
+                "4_JR2_denials.tsv",
+                "jr2",
+                {"Institution_Name": "Higher Title"},
+                2,
+                5,
+            ),
+            (
+                "counter4_br2.tsv",
+                "br2",
+                {"Institution_Name": "ANONYMOUS"},
+                60,
+                43,
+            ),
+            (
+                "counter4_br2_one_month.tsv",
+                "br2",
+                {"Institution_Name": "ANONYMOUS"},
+                5,
+                12,
+            ),
+            (
+                "counter4_jr1_empty.tsv",
+                "jr1",
+                {"Institution_Name": "Title"},
+                0,
+                0,
+            ),
+        ),
+    )
+    def test_counter4_parsing(
+        self,
+        counter_report_types,
+        filename,
+        counter_report_type,
+        header,
+        count,
+        sum,
+    ):
+        with (Path(__file__).parent / "data/counter4" / filename).open("rb") as f:
+            content = f.read()
+        fa = FetchAttemptFactory(
+            counter_report=counter_report_types[counter_report_type],
+            data_file__data=content,
+            data_file__filename="input.tsv",
+        )
+
+        poop = fa.get_nibbler_poop(fa.file_is_json())
+        fa.extract_header_data(poop.extras)
+        assert fa.extracted_data == header
+        logs = (e[1] for e in poop.records_basic())
+        parsed_count = 0
+        parsed_sum = 0
+        for log in logs:
+            parsed_count += 1
+            parsed_sum += log.value
+
+        assert parsed_count == count
+        assert parsed_sum == sum
+
+    @pytest.mark.parametrize(
+        ("filename", "counter_report_type", "header", "count", "sum"),
+        (
+            (
+                "5_TR_ProQuestEbookCentral.json",
+                "tr",
+                {
+                    "Created_By": "ProQuest Ebook Central",
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+                },
+                30,
+                52,
+            ),
+            (
+                "C5_PR_test.json",
+                "pr",
+                {
+                    "Created_By": "EBSCO Information Services",
+                    "Institution_Name": "FOO BAR UNIVERSITY",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBSCOhost:1234567"}],
+                },
+                25,
+                5051,
+            ),
+            (
+                "C5_PR_with_3030.json",
+                "pr",
+                {
+                    "Created_By": "EBSCO Information Services",
+                    "Institution_Name": "FOO BAR UNIVERSITY",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBSCOhost:1234567"}],
+                },
+                25,
+                5051,
+            ),
+            (
+                "C5_PR_with_3040.json",
+                "pr",
+                {
+                    "Created_By": "EBSCO Information Services",
+                    "Institution_Name": "FOO BAR UNIVERSITY",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBSCOhost:1234567"}],
+                },
+                25,
+                5051,
+            ),
+            (
+                "no_data.json",
+                "tr",
+                {
+                    "Created_By": "Celus LLC.",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "lyb:DDDDDDDDDDDDDD"}],
+                },
+                0,
+                0,
+            ),
+            (
+                "no_data_3050.json",
+                "tr",
+                {
+                    "Created_By": "My provider",
+                    "Institution_Name": "My Library",
+                },
+                0,
+                0,
+            ),
+            (
+                "no_data_3062.json",
+                "tr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My LIbrary",
+                },
+                0,
+                0,
+            ),
+            (
+                "some_data_3062.json",
+                "tr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My LIbrary",
+                },
+                20,
+                24,
+            ),
+            (
+                "TR-one-title-more-ids.json",
+                "tr",
+                {
+                    "Created_By": "ProQuest",
+                    "Institution_Name": "Foo bar baz",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "ProQuest:XXYYZZ"}],
+                },
+                124,
+                12528,
+            ),
+            (
+                "partial_data1.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                12,
+                50,
+            ),
+            (
+                "partial_data2.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                12,
+                50,
+            ),
+            (
+                "partial_data3.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                12,
+                50,
+            ),
+            (
+                "some_data_3050.json",
+                "pr",
+                {
+                    "Created_By": "My provider",
+                    "Institution_Name": "My Library",
+                },
+                8,
+                1422,
+            ),
+            (
+                "5_TR_with_warning.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                8,
+                46,
+            ),
+            (
+                "counter5_tr_test1.json",
+                "tr",
+                {
+                    "Created_By": "My Provider",
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:hidden"}],
+                },
+                16,
+                322,
+            ),
+            (
+                "code-zero.json",
+                "tr",
+                {
+                    "Created_By": "Publisher",
+                    "Institution_Name": "Celus College",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "SN:8888888888"}],
+                },
+                0,
+                0,
+            ),
+            (
+                "counter5_tr_nature.json",
+                "tr",
+                {
+                    "Created_By": "SpringerNature",
+                    "Institution_Name": "PRIVATE",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "SN:XXXXXX"}],
+                },
+                115,
+                231,
+            ),
+            (
+                "null-in-Item_ID.json",
+                "tr",
+                {
+                    "Created_By": "Some Entity",
+                    "Institution_Name": "My organization",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "my:1111"}],
+                },
+                2,
+                3,
+            ),
+            (
+                "severity-missing.json",
+                "dr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My university",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "Provider:1258"}],
+                },
+                0,
+                0,
+            ),
+            (
+                "severity-number.json",
+                "dr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My university",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "Provider:1258"}],
+                },
+                0,
+                0,
+            ),
+            (
+                "severity-wrong.json",
+                "pr",
+                {
+                    "Created_By": "My provider",
+                    "Institution_Name": "My university",
+                },
+                0,
+                0,
+            ),
+        ),
+    )
+    def test_counter5_parsing(
+        self,
+        counter_report_types,
+        filename,
+        counter_report_type,
+        header,
+        count,
+        sum,
+    ):
+        with (Path(__file__).parent / "data/counter5" / filename).open("rb") as f:
+            content = f.read()
+        fa = FetchAttemptFactory(
+            counter_report=counter_report_types[counter_report_type],
+            data_file__data=content,
+            data_file__filename="input.json",
+        )
+
+        poop = fa.get_nibbler_poop(fa.file_is_json())
+        fa.extract_header_data(poop.extras)
+        assert fa.extracted_data == header
+        logs = (e[1] for e in poop.records_basic())
+        parsed_count = 0
+        parsed_sum = 0
+        for log in logs:
+            parsed_count += 1
+            parsed_sum += log.value
+
+        assert parsed_count == count
+        assert parsed_sum == sum
+
+
+@pytest.mark.django_db
 class TestCounterReportsToCredentials:
     def test_last_harvestable_month(
         self,

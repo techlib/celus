@@ -334,9 +334,10 @@ class Command(BaseCommand):
         except FileNotFoundError:
             return {}
 
-        reader = crt.get_reader_class(json_format=is_json)()
+        poop = crt.get_nibbler_poop(json_format=is_json)
+        records = (e[1] for e in poop.records_basic())
         unique_values = {}
-        for rec in reader.file_to_records("media/" + filename):
+        for rec in records:
             for key, value in rec.dimension_data.items():
                 if key not in unique_values:
                     unique_values[key] = {value}

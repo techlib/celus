@@ -406,6 +406,7 @@ class TestSushiFetching:
             ("severity-number.json", "dr", False),
             ("stringified_error.json", "tr", False),
             ("null-in-Item_ID.json", "tr", True),
+            ("dr-extra-ids.json", "dr", True),
         ),
     )
     def test_c5_all_cases(
@@ -423,6 +424,7 @@ class TestSushiFetching:
             attempt: SushiFetchAttempt = credentials.fetch_report(
                 counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
             )
+
             if import_passes:
                 import_one_sushi_attempt(attempt)
             else:
