@@ -365,27 +365,6 @@ class TestSushiFetchAttemptModel:
         assert cr2c.broken is None
         assert cr2c.first_broken_attempt is None
 
-    @pytest.mark.parametrize("status", ("SUCCESS", "NO_DATA", "QUEUED", "FAILURE"))
-    def test_reextract_header_data(self, status, inmemory_media):
-        """
-        Tests that the FA object has a method for re-extracting header data from the stored
-        file and that it does what it should do.
-        """
-        with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open(
-            "rb"
-        ) as f:
-            data_file = ContentFile(f.read())
-            data_file.name = "something.json"
-
-        fa = FetchAttemptFactory.create(data_file=data_file, status=status)
-        assert fa.extracted_data == {}
-        fa.reextract_header_data()
-        assert fa.extracted_data == {
-            "Institution_Name": "Hidden",
-            "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
-            "Created_By": "ProQuest Ebook Central",
-        }
-
     def test_data_file_names(self, platforms, credentials):
         with (Path(__file__).parent / "data/counter5/5_TR_ProQuestEbookCentral.json").open(
             "rb"

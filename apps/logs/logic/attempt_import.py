@@ -2,16 +2,12 @@ import itertools
 import logging
 import typing
 from datetime import date
-from pathlib import Path
-from time import time
 
 from celus_nigiri.client import Sushi5Client, SushiError, SushiException
 from celus_nigiri.counter5 import CounterError, TransportError
 from celus_nigiri.record import CounterRecord
 from core.exceptions import FileConsistencyError
-from django.conf import settings
 from django.db.transaction import atomic
-from nibbler.logic.processing import counter_format_poops, output_to_poops
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
 from logs.exceptions import DataStructureError, NibblerErrors
@@ -59,16 +55,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         return
     attempt.check_importable()
 
-    nibbler_parser = attempt.counter_report.get_nibbler_parser(json_format=attempt.file_is_json())
-    path = Path(settings.MEDIA_ROOT) / attempt.data_file.name
     try:
-        logger.debug("Processing file: %s; time: %.3f", attempt.data_file.name, time())
-        poops = counter_format_poops(path, nibbler_parser, attempt.credentials.platform)
-
-        # Check the output note that poops.extras should countain counter header
-        poop = output_to_poops(poops)[0]
-        logger.debug("Records parsed; time: %.3f", time())
-
+        poop = attempt.get_nibbler_poop(json_format=attempt.file_is_json())
         records = (e[1] for e in poop.records_basic())
 
     except NibblerErrors as e:

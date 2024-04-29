@@ -1081,24 +1081,6 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         logger.debug("Records parsed; time: %.3f", time())
         return poop
 
-    def reextract_header_data(self) -> bool:
-        """
-        Reparses the header of the stored file and runs `extract_header_data` on it to
-        update the extracted data.
-        """
-        if not self.data_file:
-            return False
-        if self.counter_report.counter_version != 5:
-            raise NotImplementedError("Header data is only extracted from COUNTER 5 reports")
-        if not self.file_is_json():
-            raise NotImplementedError("Header data is only extracted from JSON reports")
-        poop = self.get_nibbler_poop(json_format=True)
-
-        if success := self.extract_header_data(poop.extras):
-            self.save()
-
-        return success
-
     def any_import_batch_lately(self, days: int = 3 * 30):
         return SushiFetchAttempt.objects.filter(
             credentials=self.credentials,
