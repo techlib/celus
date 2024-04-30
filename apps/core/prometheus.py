@@ -263,6 +263,15 @@ def db_last_two_years_coverage_expected_ib_count():
     return totals["ib_max"]
 
 
+def db_events_by_category_and_importance():
+    from events.models import Event
+
+    return {
+        (rec["category"], rec["importance"]): rec["count"]
+        for rec in Event.objects.values("category", "importance").annotate(count=Count("id"))
+    }
+
+
 # The following metrics will not be updated by any request, but by a celery based task.
 # This makes it possible to decide on any interval how often we want to update the metrics.
 # To get the data into Django, we store it in the cache and then pick it up in the
@@ -339,6 +348,11 @@ CACHE_STORED_GAUAGES = {
     "celus_db_last_two_years_coverage_expected_ib_count": {
         "desc": "Number of expected IBs in the last two years for the whole consortium",
         "func": db_last_two_years_coverage_expected_ib_count,
+    },
+    "celus_db_events_num": {
+        "desc": "Number of events in the database",
+        "dims": ["category", "importance"],
+        "func": db_events_by_category_and_importance,
     },
 }
 
