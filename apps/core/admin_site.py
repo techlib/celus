@@ -12,6 +12,7 @@ class CelusAdminSite(admin.AdminSite):
             and not settings.DEBUG
             and user_has_device(request.user)
             and not request.real_user.is_verified()
+            and not request.real_user.skip_2fa
         ):
             return False
 

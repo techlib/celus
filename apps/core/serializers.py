@@ -90,8 +90,8 @@ class UserSerializer(ModelSerializer):
     def get_email_verification_sent(self, obj: User) -> typing.Optional[datetime]:
         return obj.email_verification["email_sent"]
 
-    def get_otp_required(self, obj) -> typing.Optional[typing.List[dict]]:
-        if not settings.OTP_ENABLED:
+    def get_otp_required(self, obj: User) -> typing.Optional[typing.List[dict]]:
+        if not settings.OTP_ENABLED or obj.skip_2fa:
             # OTP disabled
             return None
 

@@ -109,10 +109,11 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
         "is_staff",
         "source",
         "email_verified",
+        "skip_2fa",
         "org_count",
     )
 
-    custom_fields = ("ext_id", "source", "language", "extra_data")
+    custom_fields = ("ext_id", "source", "language", "skip_2fa", "extra_data")
 
     fieldsets = (
         UserAdmin.fieldsets[:2] + (("Celus", {"fields": custom_fields}),) + UserAdmin.fieldsets[2:]
@@ -124,6 +125,7 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
         HasEmailVerified,
         IsAdminInAtLeastOneOrganization,
         IsAdminOfMasterOrganization,
+        "skip_2fa",
     ) + UserAdmin.list_filter
 
     actions = ["send_invitation_emails"]

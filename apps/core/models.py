@@ -175,6 +175,9 @@ class User(AbstractUser):
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    skip_2fa = models.BooleanField(
+        help_text="If set to True, 2FA auth will be bypassed", default=False
+    )
     objects = CelusUserManager()
 
     def __str__(self) -> str:

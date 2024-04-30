@@ -69,6 +69,19 @@ class TestUserAPI:
         resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
         assert resp.status_code == 403, "Missing device verification"
 
+        # Skip 2fa
+        users["user1"].skip_2fa = True
+        users["user1"].save()
+        resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+        assert resp.status_code == 200, "2FA skipped per user"
+
+        # Restore state and rerun
+        users["user1"].language = "cs"
+        users["user1"].skip_2fa = False
+        users["user1"].save()
+        resp = clients["user1"].put(reverse("user_lang_api_view"), {"language": "en"})
+        assert resp.status_code == 403, "Missing device verification (unskipped)"
+
         # Send verification email
         resp = clients["user1"].post(reverse("otp-generate", args=(otp_devices["user1"].pk,)))
         assert resp.status_code == 200
@@ -258,14 +271,23 @@ class TestUserAPI:
         assert old_extra_data == user.extra_data
 
     @pytest.mark.parametrize(
-        "otp_enabled",
-        (True, False),
+        "otp_enabled,skip_2fa,required",
+        (
+            (True, True, False),
+            (True, False, True),
+            (False, True, False),
+            (False, False, False),
+        ),
     )
-    def test_otp_required(self, otp_enabled, settings, clients, otp_devices):
+    def test_otp_required(
+        self, otp_enabled, skip_2fa, required, settings, clients, users, otp_devices
+    ):
         settings.OTP_ENABLED = otp_enabled
+        users["master_user"].skip_2fa = skip_2fa
+        users["master_user"].save()
         resp = clients["master_user"].get(reverse("user_api_view"))
         assert resp.status_code == 200
-        if otp_enabled:
+        if required:
             assert len(resp.data["otp_required"]) == 1
         else:
             assert not resp.data["otp_required"]

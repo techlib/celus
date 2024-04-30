@@ -22,6 +22,9 @@ class IsAuthenticatedWithOptional2FA(IsAuthenticated):
 
         res = super().has_permission(request, view)
         if res and settings.OTP_ENABLED:
+            # Check whether disabling 2fa is enforced
+            if getattr(request.real_user, "skip_2fa", False):
+                return res
             has_device = user_has_device(request.real_user)
             if not has_device:
                 # User without a device have be allowed to login, but
