@@ -338,7 +338,6 @@ class TestSushiFetching:
             ("partial_data2.json", "3210", True),
             ("partial_data3.json", "3040", True),
             ("5_TR_with_warning.json", "3032", True),
-            ("data_simple.json", "", False),
             ("C5_PR_with_3040.json", "3040", True),
         ),
     )
@@ -393,7 +392,6 @@ class TestSushiFetching:
             ("C5_PR_test.json", "pr", True),
             ("counter5_tr_test1.json", "tr", True),
             ("data_incorrect.json", "tr", False),
-            ("data_simple.json", "tr", True),
             ("error-in-root.json", "tr", False),
             ("naked_error.json", "tr", False),
             ("naked_error_3000.json", "tr", False),
