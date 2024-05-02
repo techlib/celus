@@ -20,13 +20,14 @@ class EventAdmin(admin.ModelAdmin):
         "platform",
         "user_count",
     )
+    list_filter = ("importance", "category", "platform")
     search_fields = (
         "title",
         "description",
         "expiration_date",
         "importance",
         "category",
-        "platform",
+        "platform__name",
     )
     readonly_fields = ("created", "last_updated")
 
@@ -49,6 +50,28 @@ class UserEventCategoryHandlingAdmin(admin.ModelAdmin):
 
 @admin.register(models.UserEvent)
 class UserEventAdmin(admin.ModelAdmin):
-    list_display = ("user", "event", "read", "handling", "email_sent_date")
-    search_fields = ("user", "event", "handling")
-    list_filter = ("handling", "read")
+    list_display = (
+        "user",
+        "event",
+        "event_category",
+        "event_importance",
+        "read",
+        "handling",
+        "email_sent_date",
+    )
+    search_fields = (
+        "user__username",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "event__title",
+        "event__description",
+        "handling",
+    )
+    list_filter = ("handling", "read", "event__category", "event__importance", "user")
+
+    def event_category(self, obj: models.UserEvent):
+        return obj.event.get_category_display()
+
+    def event_importance(self, obj: models.UserEvent):
+        return obj.event.get_importance_display()
