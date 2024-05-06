@@ -42,6 +42,7 @@ export default {
     value: { required: false, type: Object },
     reportViewsUrl: { required: true, type: String },
     viewFilter: { required: false, type: Function },
+    preferFullReport: { required: false, type: Boolean, default: false },
   },
 
   data() {

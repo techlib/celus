@@ -25,6 +25,7 @@ cs:
         <ReportViewSelector
           v-model="selectedReportView"
           :report-views-url="reportViewsUrl"
+          :prefer-full-report="preferFullReport"
           ref="reportViewSelector"
         />
       </v-col>
