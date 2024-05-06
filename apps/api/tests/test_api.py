@@ -1,5 +1,9 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
+from export.models import FlexibleDataAPIExport
+from logs.models import FlexibleReport
 
 from api.models import OrganizationAPIKey
 from api.throttling import APIKeyBasedThrottle
@@ -280,3 +284,142 @@ class TestAPI:
         assert resp2.status_code == (429 if throttling else 200)
         # remove the rate attr from APIKeyBasedThrottle so that it doesn't affect other tests
         del APIKeyBasedThrottle.rate
+
+
+@pytest.mark.django_db()
+class TestFlexibleExportAPI:
+    @pytest.mark.parametrize("correct_org", [True, False, None])
+    def test_platform_report_view_response_org_based(
+        self, client, flexible_slicer_test_data, inmemory_media, correct_org
+    ):
+        """
+        Test that the org can only access its own data
+        """
+        org = flexible_slicer_test_data["organizations"][0]
+        rt = flexible_slicer_test_data["report_types"][0]
+        incorrect_org = flexible_slicer_test_data["organizations"][1]
+        fr_org = None
+        if correct_org:
+            fr_org = org
+        elif correct_org is False:
+            fr_org = incorrect_org
+        fr = FlexibleReport.objects.create(
+            owner_organization=fr_org,
+            report_config={
+                "primary_dimension": "platform",
+                "group_by": ["metric"],
+                "filters": [
+                    {"dimension": "report_type", "values": [rt.short_name]},
+                    {"dimension": "date", "start": "2020-01-01", "end": "2020-01-31"},
+                ],
+            },
+        )
+        api_key, key_val = OrganizationAPIKey.objects.create_key(organization=org, name="test")
+        with patch("export.tasks.process_flexible_api_export_task.apply_async") as mock_task:
+            resp = client.post(
+                reverse("flexible-export-api-list"),
+                {
+                    "report": fr.pk,
+                    "file_format": "ZIP_CSV",
+                },
+                HTTP_AUTHORIZATION=f"Api-Key {key_val}",
+                content_type="application/json",
+            )
+            assert resp.status_code == (201 if correct_org else 403)
+            assert mock_task.call_count == (1 if correct_org else 0)
+
+    @pytest.mark.parametrize(
+        ["start_date", "end_date", "present_months"],
+        [
+            # there is rows only from 2019-12 to 2020-03, so anything outside should have no rows
+            # None = do not add the parameter to the request
+            # "" =  use empty value for the parameter
+            # present_months == None => exception because of invalid input
+            ("2020-01-01", "2020-01-31", ["2020-01-01"]),
+            (None, None, ["2020-01-01"]),
+            ("", "", ["2020-01-01"]),
+            ("2018-01-01", "2020-01-31", ["2019-12-01", "2020-01-01"]),
+            ("", "2019-01-31", None),  # invalid input - both dates must be present or absent
+            ("2020-01-01", "2022-01-01", ["2020-01-01", "2020-02-01", "2020-03-01"]),
+            ("2021-01-01", "2022-01-01", []),
+            ("2021-01-01", "2021-01-31", []),
+            ("2020-01-01", None, None),  # invalid input - both dates must be present or absent
+            (None, "2020-01-31", None),  # invalid input - both dates must be present or absent
+        ],
+    )
+    def test_platform_report_view_response_dates(
+        self,
+        client,
+        flexible_slicer_test_data,
+        inmemory_media,
+        start_date,
+        end_date,
+        present_months,
+    ):
+        """
+        Test that the date range is properly passed to the slicer
+        """
+        org = flexible_slicer_test_data["organizations"][0]
+        rt = flexible_slicer_test_data["report_types"][0]
+        fr = FlexibleReport.objects.create(
+            owner_organization=org,
+            report_config={
+                "primary_dimension": "platform",
+                "group_by": ["date"],
+                "filters": [
+                    {"dimension": "report_type", "values": [rt.short_name]},
+                    {"dimension": "date", "start": "2020-01-01", "end": "2020-01-31"},
+                ],
+            },
+        )
+        api_key, key_val = OrganizationAPIKey.objects.create_key(organization=org, name="test")
+        dates = {}
+        if start_date is not None:
+            dates["start_date"] = start_date or None
+        if end_date is not None:
+            dates["end_date"] = end_date or None
+        with patch("export.tasks.process_flexible_api_export_task.apply_async") as mock_task:
+            resp = client.post(
+                reverse("flexible-export-api-list"),
+                {
+                    "report": fr.pk,
+                    "file_format": "ZIP_CSV",
+                    **dates,
+                },
+                HTTP_AUTHORIZATION=f"Api-Key {key_val}",
+                content_type="application/json",
+            )
+
+        assert resp.status_code == (201 if present_months is not None else 400)
+        if present_months is None:
+            assert mock_task.call_count == 0
+            assert FlexibleDataAPIExport.objects.count() == 0
+            return  # nothing more to check
+
+        assert mock_task.call_count == 1
+        assert FlexibleDataAPIExport.objects.count() == 1
+        exp_obj = FlexibleDataAPIExport.objects.first()
+        assert exp_obj.pk == resp.json()["pk"]
+        # call the task manually to check if it works
+        from export.tasks import process_flexible_api_export_task
+
+        process_flexible_api_export_task(exp_obj.pk)
+        exp_obj.refresh_from_db()
+        assert exp_obj.status == exp_obj.FINISHED
+
+        resp = client.get(
+            reverse("flexible-export-api-detail", args=[exp_obj.pk]),
+            HTTP_AUTHORIZATION=f"Api-Key {key_val}",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["output_file"].endswith(".zip")
+        import zipfile
+
+        with zipfile.ZipFile(exp_obj.output_file) as z:
+            assert len(z.filelist) == 2, "one file metadata, one rows"
+            with z.open("report.csv") as f:
+                rows = f.read().decode("utf-8").splitlines()
+                assert len(rows) == (4 if present_months else 0)
+                if present_months:
+                    cols = rows[0].split(",")
+                    assert cols[2:] == present_months

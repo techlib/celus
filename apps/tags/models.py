@@ -347,6 +347,13 @@ class TagQuerySet(models.QuerySet):
     def user_modifiable_tags(self, user: User) -> QuerySet["Tag"]:
         return self.filter(tag_class__in=TagClass.objects.user_accessible_tag_classes(user))
 
+    def org_accessible_tags(self, org: Organization):
+        return self.filter(
+            Q(can_see=AccessibleBy.EVERYBODY)
+            | Q(can_see=AccessibleBy.ORG_USERS, owner_org=org)
+            | Q(can_see=AccessibleBy.ORG_ADMINS, owner_org=org)
+        )
+
 
 class Tag(CreatedUpdatedMixin, models.Model):
     tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)

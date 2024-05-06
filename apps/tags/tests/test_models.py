@@ -430,6 +430,58 @@ class TestTagVisibility:
                     user
                 ), f"{user_key} should not be able to modify {key}"
 
+    @pytest.mark.parametrize(
+        [
+            "org_key",
+            "can_see_u1",
+            "can_see_u2",
+            "can_see_org2",
+            "can_see_org2_admin",
+            "can_see_cons",
+            "can_see_evbd",
+            "can_see_system",
+        ],
+        [
+            ("standalone", False, False, True, True, False, True, False),
+            ("root", False, False, False, False, False, True, False),
+        ],
+    )
+    def test_organization_visible_tags(
+        self,
+        basic1,
+        users,
+        organizations,
+        org_key,
+        can_see_u1,
+        can_see_u2,
+        can_see_evbd,
+        can_see_cons,
+        can_see_system,
+        can_see_org2,
+        can_see_org2_admin,
+    ):
+        tags = {
+            "u1": TagFactory.create(owner=users["user1"], can_see=AccessibleBy.OWNER),
+            "u2": TagFactory.create(owner=users["user2"], can_see=AccessibleBy.OWNER),
+            "evbd": TagFactory.create(can_see=AccessibleBy.EVERYBODY),
+            "org2": TagFactory.create(
+                owner_org=organizations["standalone"], can_see=AccessibleBy.ORG_USERS
+            ),
+            "org2_admin": TagFactory.create(
+                owner_org=organizations["standalone"], can_see=AccessibleBy.ORG_ADMINS
+            ),
+            "cons": TagFactory.create(can_see=AccessibleBy.CONS_ADMINS),
+            "system": TagFactory.create(can_see=AccessibleBy.SYSTEM),
+        }
+        org = organizations[org_key]
+        for key, tag in tags.items():
+            if locals()[f"can_see_{key}"]:
+                assert tag in Tag.objects.org_accessible_tags(org), f"{org_key} should see {key}"
+            else:
+                assert tag not in Tag.objects.org_accessible_tags(
+                    org
+                ), f"{org_key} should not see {key}"
+
 
 @pytest.mark.django_db
 class TestTagClassConstraints:

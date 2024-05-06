@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import xlsxwriter
 from cachalot.api import cachalot_disabled
 from core.logic.debug import log_memory
+from core.models import User
 from django.conf import settings
 from django.db.models import Field, ForeignKey, Model, QuerySet
 from django.db.models.base import ModelBase
@@ -49,7 +50,8 @@ class FlexibleDataExporter(ABC):
         slicer: FlexibleDataSlicer,
         column_parts_separator: str = " / ",
         report_name: str = "",
-        report_owner=None,
+        report_owner: Optional[User] = None,
+        report_owner_org: Optional[Organization] = None,
         include_tags: bool = False,  # tag column will be added to the report
         include_row_totals: bool = False,  # row totals will be added to the report
         include_col_totals: bool = False,  # column totals will be added to the report
@@ -57,15 +59,19 @@ class FlexibleDataExporter(ABC):
         self.slicer = slicer
         self.report_name = report_name
         self.report_owner = report_owner
+        self.report_owner_org = report_owner_org
+        if self.report_owner_org and self.report_owner:
+            raise ValueError("Only one of `report_owner` and `report_owner_org` should be set")
         self._include_tags = include_tags
         self.include_row_totals = include_row_totals
         if self.include_row_totals and self.slicer.trend_mode:
             logger.warning("Row totals are not supported in trend mode")
             self.include_row_totals = False
         self.include_col_totals = include_col_totals
-        if self.include_tags and not self.report_owner:
+        if self.include_tags and not (self.report_owner or self.report_owner_org):
             raise ValueError(
-                "report_owner must be set if include_tags is True because tags are user-specific"
+                "`report_owner` or `report_owner_org` must be set if `include_tags` is True "
+                "because tags are user/org-specific"
             )
 
         self.involved_report_types = self.slicer.involved_report_types()
@@ -232,18 +238,29 @@ class FlexibleDataExporter(ABC):
                 self._tag_cache = {}
                 tag_spec = self.taggable_rows[self.slicer.primary_dimension]
                 link_class = Tag.link_class_from_scope(tag_spec["scope"])
-                # the user does not want to see following tag classes in output
-                hidden_tag_classes = UserTagClass.objects.filter(
-                    user=self.report_owner, hidden=True
-                ).values_list("tag_class_id", flat=True)
-                for link in (
-                    link_class.objects.filter(
+                if self.report_owner:
+                    # get the tags visible for the report_owner
+                    # the user does not want to see following tag classes in output
+                    hidden_tag_classes = UserTagClass.objects.filter(
+                        user=self.report_owner, hidden=True
+                    ).values_list("tag_class_id", flat=True)
+                    link_qs = link_class.objects.filter(
                         tag__in=Tag.objects.user_accessible_tags(self.report_owner),
                         target_id__in=batch_pks,
+                    ).exclude(tag__tag_class__in=hidden_tag_classes)
+                else:
+                    # if report_onwer is not set, we must have report_owner_org set - this is
+                    # checked in __init__. But I add the check here as well to make it explicit.
+                    if not self.report_owner_org:
+                        raise ValueError(
+                            "report_owner or report_owner_org must be set. This should not happen."
+                        )
+                    # get the tags visible for the report_owner_org
+                    link_qs = link_class.objects.filter(
+                        tag__in=Tag.objects.org_accessible_tags(self.report_owner_org),
+                        target_id__in=batch_pks,
                     )
-                    .exclude(tag__tag_class__in=hidden_tag_classes)
-                    .select_related("tag", "tag__tag_class")
-                ):
+                for link in link_qs.select_related("tag", "tag__tag_class"):
                     self._tag_cache.setdefault(link.target_id, []).append(link.tag)
 
             self.prepare_primary_remap(batch_pks)
@@ -348,7 +365,7 @@ class FlexibleDataExporter(ABC):
     def create_report_metadata(self, writer: ListWriter):
         writer.writerow([_("Report name"), self.report_name])
         writer.writerow([_("Created"), str(now())])
-        writer.writerow([_("Created for"), str(self.report_owner)])
+        writer.writerow([_("Created for"), str(self.report_owner or self.report_owner_org)])
         writer.writerow([_("Celus version"), str(settings.CELUS_VERSION)])
         writer.writerow(["", ""])
 
@@ -393,7 +410,8 @@ class FlexibleDataExporter(ABC):
         # (not present in rows, cols, split_by or filter)
         dim = "organization"
         if (
-            self.slicer.primary_dimension != dim
+            not self.report_owner_org  # if we have org, we know it's included
+            and self.slicer.primary_dimension != dim
             and dim not in self.slicer.split_by
             and dim not in self.slicer.group_by
             and not any(f.dimension == dim for f in self.slicer.dimension_filters)
@@ -473,7 +491,6 @@ class FlexibleDataExporter(ABC):
 
 
 class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
-
     """
     Simple CSV output exporter which does not support multipart output and/or metadata output
     """
@@ -497,7 +514,6 @@ class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
 
 
 class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
-
     """
     Exporter creating zipped CSV files with support for metadata and multipart output
     """

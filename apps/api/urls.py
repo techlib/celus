@@ -3,12 +3,18 @@ import logging
 from django.conf import settings
 from django.urls import include, path
 from rest_framework.renderers import JSONOpenAPIRenderer
+from rest_framework.routers import DefaultRouter
 from rest_framework.schemas import get_schema_view
 from rest_framework.schemas.openapi import SchemaGenerator
 
 from . import views
 
 logger = logging.getLogger(__name__)
+
+router = DefaultRouter()
+router.register(
+    r"reporting-export", views.FlexibleDataAPIExportViewSet, basename="flexible-export-api"
+)
 
 local_urls = [
     # add platform report data views for two different platform_id types - uuid and int
@@ -19,6 +25,8 @@ local_urls = [
     )
     for id_type in ["uuid", "int"]
 ]
+local_urls += router.urls
+
 
 urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),  # contains link to reset password

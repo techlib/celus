@@ -6,6 +6,9 @@ from django.db.models import Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
+from export.models import FlexibleDataAPIExport
+from export.serializers import FlexibleDataAPIExportSerializer
+from export.tasks import process_flexible_api_export_task
 from hcube.api.models.aggregation import Sum as HSum
 from hcube.api.models.transforms import StoredMap
 from logs.cubes import AccessLogCube, ch_backend
@@ -16,6 +19,7 @@ from rest_framework.fields import BooleanField, CharField, ListField
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from scheduler.models import FetchIntention
 from sushi.models import SushiCredentials, SushiFetchAttempt
 
@@ -203,3 +207,26 @@ class PlatformReportView(APIView):
         output_serializer = self.OutputSerializer(data=data)
         output_serializer.is_valid(raise_exception=True)
         return Response(output_serializer.data)
+
+
+class FlexibleDataAPIExportViewSet(ModelViewSet):
+    queryset = FlexibleDataAPIExport.objects.none()
+    serializer_class = FlexibleDataAPIExportSerializer
+
+    permission_classes = [HasOrganizationAPIKey]
+    throttle_classes = [APIKeyBasedThrottle]
+
+    def get_queryset(self):
+        organization = extract_org_from_request_api_key(self.request)
+        if not organization:
+            # we should not get here as the permission_classes should take care of it
+            # but this is a guard just in case
+            return HttpResponseBadRequest(
+                "API key authentication not successful - "
+                "you may be missing the api key in the Authorization header"
+            )
+        return FlexibleDataAPIExport.objects.filter(owner_org=organization).order_by("-created")
+
+    def perform_create(self, serializer):
+        export = serializer.save()
+        process_flexible_api_export_task.apply_async(args=(export.pk,), countdown=2)

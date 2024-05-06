@@ -366,6 +366,7 @@ CELERY_TASK_ROUTES = {
     "events.tasks.send_unsent_event_emails_task": {"queue": "celery"},
     "export.tasks.delete_expired_flexible_data_exports_task": {"queue": "celery"},
     "export.tasks.process_flexible_export_task": {"queue": "export"},
+    "export.tasks.process_flexible_api_export_task": {"queue": "export"},
     "knowledgebase.tasks.sync_all_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_platforms_with_knowledgebase_task": {"queue": "celery"},

@@ -215,3 +215,121 @@ Celus will return a reply similar to this:
       "status": "Data not yet harvested",
       "complete_data": false
     }
+
+Reporting export
+================
+
+This endpoint allows you to query a report from the reporting module, which was created manually
+by a user. The endpoint makes is easy to visually assemble and fine-tune a report in Celus and
+then query it programmatically.
+
+To make the stored reports more versatile, the API allows overriding the start and end dates of
+the stored report, thus making it possible to query the report for any time period.
+
+Prerequisites and limitations
+-----------------------------
+
+To use this endpoint, you need to:
+
+* have a report created in the reporting module - you will **reference it by its ID**, which is part
+  of the URL in the Celus web interface when you open the report
+  (e.g. ``/analytics/flexible-reports/265?edit=true`` means the report ID is ``265``).
+* the stored report must have the **visibility set to "Organization"** with the organization set to
+  the organization of the API key you are using. Trying to access a report with other visibility
+  will result in an authorization error.
+
+Please also note that the output of the report will be limited by the following factors:
+
+* when **using tags in the report** - either for filtering or grouping - the API will only be able
+  to work with tags visible to the users or admins of the organization of the API key. This could
+  cause differences in the output of the report compared to the web interface, if the report uses
+  tags private to the user who created the report.
+* similarly to the above, users have the possibility to hide some tags by default. Such tags
+  are not shown in reports generated for that user. However, as the API works with the organization,
+  hiding of tags on the user level does not affect the API output.
+
+
+Starting an export
+------------------
+
+
+Path: ``/api/reporting-export/``
+
+Method: ``POST``
+
+Request body:
+
+* ``report``: The ID of the report to be processed and exported. See the prerequisites above.
+  This parameter is required.
+
+* ``start_date``: The start date of the time period for which the report should be generated. The
+  value must be a string in the format ``YYYY-MM-DD``. This parameter is optional. If not set,
+  the stored value from the report will be used. When ``start_date`` is given, ``end_date`` must
+  also be given to prevent unexpected results when mixing stored and given values.
+
+* ``end_date``: The end date of the time period for which the report should be generated. The value
+  must be a string in the format ``YYYY-MM-DD``. This parameter is optional. If not set, the stored
+  value from the report will be used. When ``end_date`` is given, ``start_date`` must also be
+  given to prevent unexpected results when mixing stored and given values.
+
+* ``file_format``: The format in which the report should be exported. This parameter is optional.
+  If not given, the default value (``XLSX_NO_CHARTS``) will be used. When given, the value must be
+  one of:
+
+  - ``XLSX_NO_CHARTS`` (Excel file without charts, this is the default)
+  - ``XLSX`` (Excel file with charts)
+  - ``CSV_ZIP`` (CSV files in a ZIP archive)
+
+Response code: ``201 Created``
+
+Response body: The response body will contain the ID of the export job which was started and some
+additional information::
+
+    {
+      "pk": 47,  # ID of the export job - use this ID to check the status of the job
+      "report": 63,
+      "start_date": null,
+      "end_date": null,
+      "created": "2024-05-07T10:41:33.330075+02:00",
+      "last_updated": "2024-05-07T10:41:33.330086+02:00",
+      "status": 0,  # 0 = job not started, 1 = job running, 2 = job has finished
+      "output_file": null,  # URL to the output file, if the job has finished
+      "progress": [0, 0],  # [current step, total steps], may contain null values when finished
+      "file_size": 0,  # size of the output file in bytes, if the job has finished
+      "file_format": "ZIP_CSV",
+      "error_info": {  # only contains information when the job has finished with an error
+        "detail": null,
+        "code": null
+      }
+    }
+
+
+Because the export can potentially take a long time, it is not done synchronously. Instead, a
+background job is started and the response contains the ID (``pk``) of the job. You can use this ID
+to periodically check the status of the job. You can also use the ``progress`` field to see how far
+the job has progressed. It contains two values: the current step and the total number of steps. The
+number of steps reprents the number of rows in the output file. The ``progress`` field may contain
+``null`` values when the job has finished.
+
+
+Checking the status of an export
+--------------------------------
+
+Path: ``/api/reporting-export/{export_id}/``
+
+Where ``export_id`` is the ID (``pk``) of the export job.
+
+Method: ``GET``
+
+Response code: ``200 OK``
+
+Response body: The response body will contain the status of the export job. See the response body
+of the ``POST`` request for details.
+
+Requests to this endpoint can be made at any time to check the status of the export job. Unless
+there is large traffic on the server, the export job should be started within a few seconds after
+the ``POST`` request. The export job should finish within a few minutes, depending on the size of
+the report and the server load.
+
+Once the job has finished, the ``output_file`` field will contain the URL to the output file. You
+can download the file from this URL.
