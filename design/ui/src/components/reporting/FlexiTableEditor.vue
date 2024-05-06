@@ -42,6 +42,8 @@ en:
   coverage_base_tt: Data coverage in the base period.
   coverage_compared_tt: Data coverage in the compared period.
   coverage_title_tt: Data coverage shows how many months of data from a possible maximum are available for the selected report(s) and applied filters. Numbers below 100% indicate that some data is missing. Click on the number to go to a detailed breakdown.
+  metric_sum_warning_title: The configured report potentially sums several metrics together.
+  metric_sum_warning_detail: This can lead to misleading results as metrics may overlap each other. To prevent this, add metric into columns or split-by, or add a metric filter with a single value.
 
 cs:
   run_report: Spustit report
@@ -83,6 +85,8 @@ cs:
   coverage_base_tt: Pokrytí daty v základním období.
   coverage_compared_tt: Pokrytí daty v porovnávaném období.
   coverage_title_tt: Pokrytí daty ukazuje, kolik měsíců dat z možného maxima je k dispozici pro zvolené reporty a aplikované filtry. Číslo pod 100% značí, že některá data chybí. Kliknutí na číslo vás přenese na podrobný rozpis.
+  metric_sum_warning_title: Konfigurovaný report potenciálně sčítá několik metrik dohromady.
+  metric_sum_warning_detail: To může vést k zavádějícím výsledkům, protože metriky se mohou překrývat. Řešením je přidání metriku do sloupců nebo split-by, nebo přidání filtru metrik s jedinou hodnotou.
 </i18n>
 
 <template>
@@ -623,6 +627,17 @@ cs:
                 </v-row>
               </v-card-text>
             </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="warnAgainstMetricSummation">
+          <v-col>
+            <v-alert type="warning" elevation="2">
+              <div class="font-weight-bold">
+                {{ $t("metric_sum_warning_title") }}
+              </div>
+              <div>{{ $t("metric_sum_warning_detail") }}</div>
+            </v-alert>
           </v-col>
         </v-row>
 
@@ -1181,6 +1196,15 @@ export default {
         if (this.reportsWithoutCoverage.includes(rt.short_name)) return 0;
       }
       return this.trendMode ? 2 : 1;
+    },
+    warnAgainstMetricSummation() {
+      // if metric is not in splitBy, in columns, or has a filter to one value
+      // we want to warn the user that he may be summing up apples and oranges
+      if (this.splitBy === "metric") return false;
+      if (this.columns.includes("metric")) return false;
+      if (this.filters.includes("metric") && this.selectedMetrics.length === 1)
+        return false;
+      return true;
     },
   },
 
