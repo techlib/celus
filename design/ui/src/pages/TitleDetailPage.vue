@@ -64,7 +64,7 @@ cs:
               <td>{{ title[prop] }}</td>
             </tr>
           </template>
-          <tr>
+          <tr v-if="title">
             <th>
               <v-tooltip bottom max-width="600px">
                 <template #activator="{ on }">
