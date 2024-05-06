@@ -802,7 +802,7 @@ class BaseReportDataViewViewSet(ReadOnlyModelViewSet):
             # we use the fact that most attrs are the same in report type and report view
             rt.position = len(report_views) + i
             rt.is_proxy = True
-            rt.is_standard_view = True
+            rt.is_standard_view = False
             report_views.append(rt)
         return report_views
 

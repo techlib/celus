@@ -43,7 +43,7 @@ class ReportTypeToReportDataViewView(APIView):
             data = serializer_class(proxy_data_view).data
             data["position"] = 1
             data["is_proxy"] = True
-            data["is_standard_view"] = True
+            data["is_standard_view"] = False
             return Response([data])
 
 
@@ -126,7 +126,6 @@ class ChartDataAvailableMetricsView(APIView):
 
 
 class ReportViewToChartTypeViewSet(ModelViewSet):
-
     """
     Simple ViewSet for mapping of `ReportDataView`s to `ChartDefinition` - `ReportViewToChartType`.
     It is only accessible to superusers because it is only used to view and change how charts
@@ -139,7 +138,6 @@ class ReportViewToChartTypeViewSet(ModelViewSet):
 
 
 class ReportDataViewViewSet(ReadOnlyModelViewSet):
-
     """
     ViewSet with `ReportDataView`s. It is read-only as we do not want to support editing using
     the API at this stage.

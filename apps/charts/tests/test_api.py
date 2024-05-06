@@ -161,7 +161,7 @@ class TestReportViewAPI:
         assert view["name"] == rt.name
         assert view["position"] == 1
         assert view["is_proxy"] is True
-        assert view["is_standard_view"] is True
+        assert view["is_standard_view"] is False
 
     @pytest.mark.clickhouse
     @pytest.mark.usefixtures("clickhouse_on_off")
@@ -209,7 +209,7 @@ class TestReportViewAPI:
         view = data[0]
         assert view["pk"] == rt.pk
         assert view["is_proxy"] is True
-        assert view["is_standard_view"] is True
+        assert view["is_standard_view"] is False
 
     @pytest.mark.clickhouse
     @pytest.mark.usefixtures("clickhouse_on_off")

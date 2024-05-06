@@ -1,12 +1,11 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
+  full_reports: Full reports
   standard_views: Standard views
-  customizable_views: Customizable views
-
 cs:
+  full_reports: Plné reporty
   standard_views: Standardní pohledy
-  customizable_views: Nastavitelné pohledy
 </i18n>
 <template>
   <v-select
@@ -62,19 +61,13 @@ export default {
       }
       let standard = allViews.filter((item) => item.is_standard_view);
       let other = allViews.filter((item) => !item.is_standard_view);
-      if (standard.length) {
-        out.push({
-          header: this.$t("standard_views"),
-          backgroundColor: "blue",
-        });
-        out = out.concat(standard);
-      }
       if (other.length) {
-        if (out.length) {
-          out.push({ divider: true }); // add divider between standard and custom
-        }
-        out.push({ header: this.$t("customizable_views") });
+        out.push({ header: this.$t("full_reports") });
         out = out.concat(other);
+      }
+      if (standard.length) {
+        out.push({ header: this.$t("standard_views") });
+        out = out.concat(standard);
       }
       return out;
     },
