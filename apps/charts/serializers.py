@@ -1,8 +1,17 @@
 from logs.serializers import DimensionSerializer
-from rest_framework.fields import BooleanField
+from rest_framework.fields import BooleanField, IntegerField, ListField
 from rest_framework.serializers import ModelSerializer
 
-from .models import ChartDefinition, ReportDataView, ReportViewToChartType
+from .models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
+
+
+class DimensionFilterSerializer(ModelSerializer):
+    dimension = DimensionSerializer(read_only=True)
+    allowed_value_ids = ListField(child=IntegerField(), read_only=True)
+
+    class Meta:
+        model = DimensionFilter
+        fields = ("dimension", "allowed_values", "allowed_value_ids")
 
 
 class ReportDataViewSerializer(ModelSerializer):
@@ -22,6 +31,18 @@ class ReportDataViewSerializer(ModelSerializer):
             "is_standard_view",
             "position",
             "is_proxy",
+        )
+
+
+class ReportDataViewFullSerializer(ReportDataViewSerializer):
+    dimension_filters = DimensionFilterSerializer(many=True, read_only=True)
+    metric_allowed_value_ids = ListField(child=IntegerField(), read_only=True)
+
+    class Meta(ReportDataViewSerializer.Meta):
+        fields = ReportDataViewSerializer.Meta.fields + (
+            "metric_allowed_values",
+            "metric_allowed_value_ids",
+            "dimension_filters",
         )
 
 

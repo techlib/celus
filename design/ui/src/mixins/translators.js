@@ -1,8 +1,12 @@
 import IdTranslation from "@/libs/id-translation";
+import { explicitDimensions } from "@/libs/dimensions";
 
 export default {
   data() {
     let explicitDimensionTranslator = new IdTranslation("/api/dimension-text/");
+    // null translators for all explicit dimensions
+    let expTranslators = {};
+    explicitDimensions.forEach((dim) => (expTranslators[dim] = null));
     return {
       translators: {
         metric: new IdTranslation("/api/metric/"),
@@ -13,13 +17,7 @@ export default {
         explicitDimension: explicitDimensionTranslator,
         tag: new IdTranslation("/api/tags/tag/"),
         tagClass: new IdTranslation("/api/tags/tag-class/visible-tags/"),
-        dim1: null,
-        dim2: null,
-        dim3: null,
-        dim4: null,
-        dim5: null,
-        dim6: null,
-        dim7: null,
+        ...expTranslators,
       },
     };
   },

@@ -1,9 +1,10 @@
 from time import monotonic
 
+from core.logic.type_conversion import to_bool
 from core.permissions import SuperuserOrAdminPermission
 from core.prometheus import report_access_time_summary, report_access_total_counter
 from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
-from logs.models import ReportType
+from logs.models import DimensionText, Metric, ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
 from pandas import DataFrame
 from rest_framework import serializers, status
@@ -15,6 +16,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from charts.serializers import (
     ChartDefinitionSerializer,
+    ReportDataViewFullSerializer,
     ReportDataViewSerializer,
     ReportViewToChartTypeSerializer,
 )
@@ -27,14 +29,37 @@ class ChartDefinitionViewSet(ReadOnlyModelViewSet):
 
 class ReportTypeToReportDataViewView(APIView):
     def get_serializer_class(self):
+        if to_bool(self.request.query_params.get("full", False)):
+            return ReportDataViewFullSerializer
         return ReportDataViewSerializer
 
     def get(self, request, report_type_pk):
         rdvs = ReportDataView.objects.filter(base_report_type_id=report_type_pk).order_by(
             "position"
         )
+        if full := to_bool(request.query_params.get("full", False)):
+            rdvs = rdvs.prefetch_related("dimension_filters__dimension")
+
         serializer_class = self.get_serializer_class()
-        if rdvs.count():
+        if rdvs.exists():
+            if full:
+                metric_name_to_id = dict(Metric.objects.all().values_list("short_name", "pk"))
+                # we want to resolve "allowed_values" for metrics and dimensions
+                # the current method is not optimal for dimension filters, as it make too many
+                # queries, but some of them repeat, so cachalot should help a bit
+                # also, the number of views is usually small (less than 10)
+                for rdv in rdvs:
+                    rdv.metric_allowed_value_ids = set(
+                        metric_name_to_id.get(name) for name in rdv.metric_allowed_values
+                    )
+                    for dim_filter in rdv.dimension_filters.all():
+                        dim_filter.allowed_value_ids = set(
+                            DimensionText.objects.filter(
+                                dimension=dim_filter.dimension_id,
+                                text__in=dim_filter.allowed_values,
+                            ).values_list("pk", flat=True)
+                        )
+
             return Response(serializer_class(rdvs, many=True).data)
         else:
             # if no data view is defined for the current report type, return a proxy based

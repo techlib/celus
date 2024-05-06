@@ -42,8 +42,10 @@ en:
   coverage_base_tt: Data coverage in the base period.
   coverage_compared_tt: Data coverage in the compared period.
   coverage_title_tt: Data coverage shows how many months of data from a possible maximum are available for the selected report(s) and applied filters. Numbers below 100% indicate that some data is missing. Click on the number to go to a detailed breakdown.
+  view_applied: View filters for '{view}' were applied to {dims}.
   metric_sum_warning_title: The configured report potentially sums several metrics together.
   metric_sum_warning_detail: This can lead to misleading results as metrics may overlap each other. To prevent this, add metric into columns or split-by, or add a metric filter with a single value.
+  apply_standard_filters: Apply standard filters
 
 cs:
   run_report: Spustit report
@@ -85,8 +87,10 @@ cs:
   coverage_base_tt: Pokrytí daty v základním období.
   coverage_compared_tt: Pokrytí daty v porovnávaném období.
   coverage_title_tt: Pokrytí daty ukazuje, kolik měsíců dat z možného maxima je k dispozici pro zvolené reporty a aplikované filtry. Číslo pod 100% značí, že některá data chybí. Kliknutí na číslo vás přenese na podrobný rozpis.
+  view_applied: Filtry pro '{view}' byly aplikovány na {dims}.
   metric_sum_warning_title: Konfigurovaný report potenciálně sčítá několik metrik dohromady.
   metric_sum_warning_detail: To může vést k zavádějícím výsledkům, protože metriky se mohou překrývat. Řešením je přidání metriku do sloupců nebo split-by, nebo přidání filtru metrik s jedinou hodnotou.
+  apply_standard_filters: Aplikovat standardní filtry
 </i18n>
 
 <template>
@@ -179,6 +183,33 @@ cs:
           </v-col>
         </v-row>
 
+        <v-row v-if="reportViews.length">
+          <v-col>
+            {{ $t("apply_standard_filters") }}:
+            <v-tooltip
+              bottom
+              max-width="600px"
+              v-for="view in reportViews"
+              :key="view.pk"
+            >
+              <template #activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  @click="applyView(view)"
+                  class="ms-2"
+                  color="primary"
+                  small
+                >
+                  {{ view.short_name }}
+                </v-btn>
+              </template>
+              <div>
+                <div class="font-weight-bold">{{ view.name }}</div>
+                <div>{{ view.desc }}</div>
+              </div>
+            </v-tooltip>
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-card class="pa-2">
@@ -838,6 +869,7 @@ import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
 import goTo from "vuetify/lib/services/goto";
 import FilterCard from "@/components/reporting/FilterCard.vue";
+import { explicitDimensions } from "@/libs/dimensions";
 
 export default {
   name: "FlexiTableEditor",
@@ -931,6 +963,7 @@ export default {
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
       showNameEditDialog: false,
       coverageData: null,
+      reportViews: [], // list of standard views associated with selected rt
     };
   },
 
@@ -1506,6 +1539,65 @@ export default {
         },
       });
     },
+    async fetchReportViews() {
+      if (this.selectedReportTypes.length === 1) {
+        let reply = await this.http({
+          url: `/api/report-type/${this.selectedReportTypes[0]}/report-views/`,
+          params: { full: true },
+        });
+        if (!reply.error) {
+          this.reportViews = reply.response.data.filter(
+            (item) => item.is_standard_view
+          );
+        }
+      }
+    },
+    applyView(view) {
+      let filteredDims = []; // collect info about applied filters for display
+      // apply metric filter
+      if (
+        view.metric_allowed_value_ids &&
+        view.metric_allowed_value_ids.length
+      ) {
+        if (!this.filters.includes("metric")) {
+          this.filters.push("metric");
+        }
+        this.selectedMetrics = view.metric_allowed_value_ids;
+        filteredDims.push("Metric");
+        console.log("selectedMetrics", this.selectedMetrics);
+      }
+      // empty all explicit dimension filters
+      explicitDimensions.forEach((dim, index) => {
+        this.selectedDimValues[index] = [];
+        if (this.filters.includes(dim)) {
+          this.filters = this.filters.filter((item) => item !== dim);
+        }
+      });
+      // apply filters to explicit dimensions
+      for (let df of view.dimension_filters) {
+        let expDim = this.explicitDims.findIndex(
+          (dim) => dim.shortName === df.dimension.short_name
+        );
+        if (expDim >= 0) {
+          const ref = this.explicitDims[expDim].ref;
+          if (!this.filters.includes(ref)) {
+            this.filters.push(ref);
+          }
+          this.selectedDimValues[expDim] = df.allowed_value_ids;
+          filteredDims.push(this.explicitDims[expDim].shortName);
+        }
+      }
+      // show some info to the user
+      if (filteredDims.length > 0) {
+        this.showSnackbar({
+          content: this.$t("view_applied", {
+            view: view.short_name,
+            dims: filteredDims.join(", "),
+          }),
+          color: "success",
+        });
+      }
+    },
   },
 
   async mounted() {
@@ -1578,19 +1670,22 @@ export default {
         this.selectedDimValues = [];
         if (this.explicitDims) {
           // prepare the selectedDimValues array of the correct length
-          this.explicitDims.forEach(() => this.selectedDimValues.push([]));
-          // disable translation for dimensions that are of type integer
           this.explicitDims.forEach((dim, index) => {
+            this.selectedDimValues.push([]);
             let dimName = `dim${index + 1}`;
             this.translators[dimName] = this.translators.explicitDimension;
           });
         }
         // remove groups that are for explicit dimensions
-        for (let i of [1, 2, 3, 4, 5, 6, 7]) {
-          this.columns = this.columns.filter((item) => item !== `dim${i}`);
-        }
+        explicitDimensions.forEach((dim) => {
+          this.columns = this.columns.filter((item) => item !== dim);
+        });
       }
       this.fetchCoverageData();
+      this.reportViews = [];
+      if (this.selectedReportTypes.length === 1) {
+        this.fetchReportViews();
+      }
     },
     filters: {
       deep: true,

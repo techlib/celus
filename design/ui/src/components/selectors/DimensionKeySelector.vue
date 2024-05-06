@@ -278,6 +278,9 @@ export default {
         this.fetchPossibleValues();
       }
     },
+    value() {
+      this.selectedValues = this.value;
+    },
   },
 
   async mounted() {

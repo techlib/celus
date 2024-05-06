@@ -25,7 +25,7 @@ from publications.models import Title
 from publications.tests.conftest import platform  # noqa - fixture
 
 from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
-from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
+from charts.models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
 
 
 @pytest.fixture
@@ -143,6 +143,44 @@ class TestReportViewAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert [rec["position"] for rec in data] == [1, 2, 3]
+
+    @pytest.mark.parametrize("full", [True, False])
+    def test_api_list_for_report_type_full_detail(self, report_type_nd, master_admin_client, full):
+        """
+        Check that the full detail of the report data view is returned when a `full` query
+        parameter is passed. This should include the dimension and metric filters.
+
+        """
+        rt = report_type_nd(1)
+        ReportDataView.objects.create(
+            base_report_type=rt,
+            position=3,
+            short_name="A",
+            name="A",
+            metric_allowed_values=["m1", "m2"],
+        )
+        DimensionFilter.objects.create(
+            report_data_view=rt.reportdataview_set.first(),
+            dimension=rt.dimensions_sorted[0],
+            allowed_values=["d1", "d2"],
+        )
+        resp = master_admin_client.get(
+            reverse("report-type-to-report-data-view", args=(rt.pk,)), {"full": full}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        if full:
+            assert "metric_allowed_values" in data[0]
+            assert "dimension_filters" in data[0]
+            assert data[0]["metric_allowed_values"] == ["m1", "m2"]
+            df = data[0]["dimension_filters"]
+            assert len(df) == 1
+            assert df[0]["allowed_values"] == ["d1", "d2"]
+            assert df[0]["dimension"]["pk"] == rt.dimensions_sorted[0].pk
+        else:
+            assert "metric_allowed_values" not in data[0]
+            assert "dimension_filters" not in data[0]
 
     def test_api_list_for_report_type_without_report_view(
         self, report_type_nd, master_admin_client
