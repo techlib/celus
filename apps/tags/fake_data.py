@@ -105,6 +105,19 @@ class TaggingBatchFactory(factory.django.DjangoModelFactory):
         obj.source_file = data_file
         return data_file
 
+    @factory.post_generation
+    def source_file_content(obj, create, extracted, **kwargs):  # noqa - name obj is ok here
+        """
+        makes is possible to provide the content of `source_file` directly as string
+        """
+        if not extracted:
+            return ""
+
+        data_file = ContentFile(extracted.encode())
+        data_file.name = "test.csv"
+        obj.source_file = data_file
+        return data_file
+
 
 class TaggingAttemptFactory(factory.django.DjangoModelFactory):
     class Meta:

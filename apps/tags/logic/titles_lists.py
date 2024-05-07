@@ -99,12 +99,22 @@ class TitleListReader(abc.ABC):
             issn_set = eissn_set = set()
         else:
             issn_set, eissn_set = set(), set()
-        filters = {"isbn": set(), "issn": issn_set, "eissn": eissn_set, "doi": set()}
+        filters = {
+            "isbn": set(),
+            "issn": issn_set,
+            "eissn": eissn_set,
+            "doi": set(),
+            "proprietary_ids": set(),
+        }
+        # we collect all the IDs from individual title records
         for record in records:
             if not record.title_ids:
                 for attr, array in filters.items():
                     if value := getattr(record.title_rec, attr, ""):
-                        array.add(value)
+                        if attr == "proprietary_ids":
+                            array.update(value)  # proprietary_ids is a set
+                        else:
+                            array.add(value)
 
         # prepare a mapping between some title identifier (like issn, isbn) and title pks
         if merge_issns:
@@ -117,8 +127,19 @@ class TitleListReader(abc.ABC):
             "issn": issn_dict,
             "eissn": eissn_dict,
             "doi": defaultdict(set),
+            "proprietary_ids": defaultdict(set),
         }
-        q_filters = [Q(**{f"{attr}__in": array}) for attr, array in filters.items() if array]
+        # then we query titles for the whole set of collected ids
+        # at first attrs which are not proprietary_ids
+        q_filters = [
+            Q(**{f"{attr}__in": array})
+            for attr, array in filters.items()
+            if attr != "proprietary_ids" and array
+        ]
+        # then proprietary_ids which are a bit different as they are stored as lists
+        if filters["proprietary_ids"]:
+            q_filters.append(Q(proprietary_ids__has_any_keys=list(filters["proprietary_ids"])))
+
         if q_filters:
             for title_rec in (
                 self.title_qs()
@@ -127,13 +148,21 @@ class TitleListReader(abc.ABC):
             ):
                 for attr, storage in id_to_titles.items():
                     if value := title_rec.get(attr):
-                        storage[value].add(title_rec["pk"])
+                        if attr == "proprietary_ids":
+                            for v in value:
+                                storage[v].add(title_rec["pk"])
+                        else:
+                            storage[value].add(title_rec["pk"])
         # now process the records
         for record in records:
             title_ids = set()
             for attr, storage in id_to_titles.items():
                 if value := getattr(record.title_rec, attr):
-                    title_ids |= storage.get(value, set())
+                    if attr == "proprietary_ids":
+                        for v in value:
+                            title_ids |= storage.get(v, set())
+                    else:
+                        title_ids |= storage.get(value, set())
             record.title_ids = title_ids
         self.add_extra_data_to_rec_batch(records)
         for record in records:
@@ -146,6 +175,15 @@ class CsvReaderMixin:
         "issn": {"normalize": lambda x: normalize_issn(x)},
         "eissn": {"normalize": lambda x: normalize_issn(x)},
         "doi": {"normalize": None},
+        "proprietary_ids": {"normalize": lambda x: {x}},
+    }
+
+    col_to_attr = {
+        "isbn": "isbn",
+        "issn": "issn",
+        "eissn": "eissn",
+        "doi": "doi",
+        "proprietary id": "proprietary_ids",
     }
 
     def _remove_django_file_wrappers(self, source):
@@ -177,9 +215,9 @@ class CsvReaderMixin:
         reader = get_dict_reader_from_csv(file)
         # find which columns are present and find the actual form of the name (case and whitespace)
         for column_name in reader.fieldnames:
-            if (column_name_clean := column_name.strip().lower()) in self.attrs:
-                self.column_names[column_name_clean] = column_name
-            elif self.tag_name_column and column_name_clean == self.tag_name_column:
+            if attr_name := self.col_to_attr.get(column_name.strip().lower()):
+                self.column_names[attr_name] = column_name
+            elif self.tag_name_column and column_name.strip().lower() == self.tag_name_column:
                 self._used_tag_name_column = column_name
         if self.tag_name_column and not self._used_tag_name_column:
             raise ValueError(

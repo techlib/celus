@@ -129,6 +129,27 @@ class TestBatchTagging:
         assert tb.last_import.tagged_titles == 2, "2 are matched by 3 lines"
         assert tag.titles.count() == 2, "2 are matched by 3 lines"
 
+    def test_tagging_batch_tagging_with_proprietary_ids(self, inmemory_media, users):
+        input_data = "proprietary ID\nfoobar \n baz\n"
+        titles = [
+            TitleFactory.create(isbn="9780787960186", proprietary_ids=["foobar", "baz"]),
+            TitleFactory.create(proprietary_ids=["baz"]),
+            TitleFactory.create(proprietary_ids=["whatever"]),
+            TitleFactory.create(isbn="9780787960186"),
+        ]
+        tag = TagForTitleFactory.create()
+        tb = TaggingBatchFactory.create(
+            tag=tag, source_file_content=input_data, last_updated_by=users["admin1"]
+        )
+        tb.do_preflight()
+        assert tb.last_preflight.recognized_columns == ["proprietary ID"]
+        tb.state = TaggingBatchState.IMPORTING
+        tb.assign_tag()
+        assert tb.state == TaggingBatchState.IMPORTED
+        assert tb.last_import.tagged_titles == 2, "2 are matched by 2 lines"
+        assert tag.titles.count() == 2, "2 are matched by 2 lines"
+        assert set(tag.titles.all()) == set(titles[:2])
+
     def test_tagging_batch_assign_fail(self, inmemory_media, users):
         TitleFactory.create(isbn="9780787960186")
         TitleFactory.create(issn="1234-5678")

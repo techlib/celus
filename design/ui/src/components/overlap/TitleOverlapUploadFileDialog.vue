@@ -4,7 +4,7 @@ en:
   upload_csv_file: Upload CSV file with titles
   dialog_intro: |
     Upload a CSV file containing one title per line. The file should contain at least one
-    of the following columns - ISBN, ISSN and eISSN. If unsure how to prepare the file, please have a look at
+    of the following columns - ISBN, ISSN, eISSN and "Proprietary ID". If unsure how to prepare the file, please have a look at
     <a href="https://support.celus.net/support/solutions/articles/103000062844" target="_blank">
     knowledgebase entry</a>.
 
@@ -12,7 +12,7 @@ cs:
   upload_csv_file: Nahrajte soubor CSV s tituly
   dialog_intro: |
     Nahrajte CSV soubor s jedním titulem na řádek. Soubor by měl obsahovat alespoň jeden
-    z následujících sloupců - ISBN, ISSN a eISSN. Pokud nevíte, jak soubor připravit, podívejte se na
+    z následujících sloupců - ISBN, ISSN, eISSN a "Proprietary ID". Pokud nevíte, jak soubor připravit, podívejte se na
     <a href="https://support.celus.net/support/solutions/articles/103000062844" target="_blank">
     tento návod</a>.
 </i18n>

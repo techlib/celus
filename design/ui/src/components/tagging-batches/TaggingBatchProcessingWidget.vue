@@ -6,7 +6,7 @@ en:
   assign_tags_header: After reviewing the preprocessing results, you can assign matched tags to corresponding titles.
   select_tag: Select a tag to be assigned to all matched titles.
   annotated_file_hint: You can use the annotated file to inspect exactly which titles were matched by each row in the uploaded file.
-  intro_message: Upload a CSV file containing one title per line. The file should contain columns identifying the title. Currently ISBN, ISSN and eISSN are supported column names. In case you want to load the tag names from the file as well, it should also contain a column named "tag".
+  intro_message: Upload a CSV file containing one title per line. The file should contain columns identifying the title. Currently ISBN, ISSN, eISSN and "Proprietary ID" are supported column names. In case you want to load the tag names from the file as well, it should also contain a column named "tag".
   preprocessing_message: The file is being preprocessed. This may take a while.
   tag_with_one_tag: Tag all titles with one tag
   get_tag_from_file: Get tag names from the input file
@@ -16,7 +16,7 @@ en:
 cs:
   select_tag: Vyberte štítek, který bude přiřazen všem nalezeným titulům.
   annotated_file_hint: Pomocí anotovaného zdrojového souboru získáte detailní přehled, jaké tituly byly nalezeny pro jednotlivé řádky v nahraném souboru.
-  intro_message: Nahrajte CSV soubor s jedním titulem na řádek. Soubor by měl obsahovat sloupce, které identifikují titul. Jsou podporovány jména sloupců ISBN, ISSN a eISSN. Pokud chcete načíst i názvy štítků ze souboru, musí obsahovat i sloupec s názvem "tag".
+  intro_message: Nahrajte CSV soubor s jedním titulem na řádek. Soubor by měl obsahovat sloupce, které identifikují titul. Jsou podporovány jména sloupců ISBN, ISSN, eISSN a "Proprietary ID". Pokud chcete načíst i názvy štítků ze souboru, musí obsahovat i sloupec s názvem "tag".
   preprocessing_message: Soubor se právě předzpracovává. Může to chvíli trvat.
   tag_source: Zdroj štítků
   select_class: Vyberte typ nahraných štítků

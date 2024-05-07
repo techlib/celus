@@ -128,7 +128,7 @@ cs:
           "
           >{{
             item.processing_info.stats.row_count -
-            item.processing_info.stats.no_match
+            (item.processing_info.stats.no_match ?? 0)
           }}
           /
           {{ item.processing_info.stats.row_count }}
