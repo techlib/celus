@@ -96,9 +96,6 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.error_code = e.text.code
         else:
             attempt.log = str(e)
-        # fill in extracted_data
-        if poop.extras:
-            attempt.extract_header_data(poop.extras)
         attempt.save()
         return
 
@@ -180,9 +177,6 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         )
         attempt.save()
         logger.warning("No records found!")
-    # fill in extracted_data
-    if poop.extras and attempt.extract_header_data(poop.extras):
-        attempt.save()
     attempt.mark_processed()
 
 

@@ -208,48 +208,32 @@ class TestAttemptImport:
         )
 
     @pytest.mark.parametrize(
-        ["filename", "start_date", "expected", "status"],
+        ["filename", "start_date", "status"],
         [
             (
                 "5_TR_ProQuestEbookCentral.json",
                 "2019-11-01",
-                {
-                    "Institution_Name": "Hidden",
-                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
-                    "Created_By": "ProQuest Ebook Central",
-                },
                 AttemptStatus.SUCCESS,
             ),
             (
                 "5_TR_ProQuestEbookCentral_exception.json",
                 "2017-01-01",
-                {
-                    "Institution_Name": "Hidden",
-                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
-                    "Created_By": "ProQuest Ebook Central",
-                },
                 AttemptStatus.IMPORT_FAILED,
             ),
             (
                 "5_TR_with_warning.json",
                 "2018-11-01",
-                {
-                    "Created_By": "Someone",
-                    "Institution_Name": "My Institution",
-                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
-                },
                 AttemptStatus.SUCCESS,
             ),
         ],
     )
-    def test_counter5_extracted_data(
+    def test_counter5_imports(
         self,
         organizations,
         counter_report_type_named,
         platforms,
         filename,
         start_date,
-        expected,
         status,
     ):
         cr_type = counter_report_type_named("TR", version=5)
@@ -278,7 +262,6 @@ class TestAttemptImport:
         import_one_sushi_attempt(fetch_attempt)
 
         assert fetch_attempt.status == status, "check status"
-        assert fetch_attempt.extracted_data == expected, "check extracted_data matches"
 
     @pytest.mark.parametrize("autocreate", (True, False))
     def test_auto_create_metrics(

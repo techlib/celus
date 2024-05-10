@@ -383,32 +383,165 @@ class TestSushiFetching:
             assert attempt.status == AttemptStatus.SUCCESS
 
     @pytest.mark.parametrize(
-        ("path", "counter_report", "import_passes"),
+        ("path", "counter_report", "extracted_data", "import_passes"),
         (
-            ("5_DR_ProQuestEbookCentral_exception.json", "dr", False),
-            ("5_TR_ProQuestEbookCentral.json", "tr", True),
-            ("5_TR_ProQuestEbookCentral_exception.json", "tr", False),
-            ("5_TR_with_warning.json", "tr", True),
-            ("C5_PR_test.json", "pr", True),
-            ("counter5_tr_test1.json", "tr", True),
-            ("data_incorrect.json", "tr", False),
-            ("error-in-root.json", "tr", False),
-            ("naked_error.json", "tr", False),
-            ("naked_error_3000.json", "tr", False),
-            ("naked_error_lowercase.json", "tr", False),
-            ("naked_errors.json", "tr", False),
-            ("no_data.json", "tr", False),
-            ("partial_data1.json", "tr", False),
-            ("partial_data2.json", "tr", False),
-            ("severity-missing.json", "dr", False),
-            ("severity-number.json", "dr", False),
-            ("stringified_error.json", "tr", False),
-            ("null-in-Item_ID.json", "tr", True),
-            ("dr-extra-ids.json", "dr", True),
+            (
+                "5_DR_ProQuestEbookCentral_exception.json",
+                "dr",
+                {},
+                False,
+            ),
+            (
+                "5_TR_ProQuestEbookCentral.json",
+                "tr",
+                {
+                    "Created_By": "ProQuest Ebook Central",
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+                },
+                True,
+            ),
+            (
+                "5_TR_ProQuestEbookCentral_exception.json",
+                "tr",
+                {
+                    "Created_By": "ProQuest Ebook Central",
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBC:hidden"}],
+                },
+                False,
+            ),
+            (
+                "5_TR_with_warning.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                True,
+            ),
+            (
+                "C5_PR_test.json",
+                "pr",
+                {
+                    "Created_By": "EBSCO Information Services",
+                    "Institution_Name": "FOO BAR UNIVERSITY",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "EBSCOhost:1234567"}],
+                },
+                True,
+            ),
+            (
+                "counter5_tr_test1.json",
+                "tr",
+                {
+                    "Created_By": "My Provider",
+                    "Institution_Name": "Hidden",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:hidden"}],
+                },
+                True,
+            ),
+            ("data_incorrect.json", "tr", {}, False),
+            (
+                "error-in-root.json",
+                "tr",
+                {"Created_By": "Celus LLC.", "Institution_Name": "National Library"},
+                False,
+            ),
+            ("naked_error.json", "tr", {}, False),
+            ("naked_error_3000.json", "tr", {}, False),
+            ("naked_error_lowercase.json", "tr", {}, False),
+            ("naked_errors.json", "tr", {}, False),
+            (
+                "no_data.json",
+                "tr",
+                {
+                    "Created_By": "Celus LLC.",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "lyb:DDDDDDDDDDDDDD"}],
+                },
+                False,
+            ),
+            (
+                "partial_data1.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                False,
+            ),
+            (
+                "partial_data2.json",
+                "tr",
+                {
+                    "Created_By": "Someone",
+                    "Institution_Name": "My Institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "XXX:9999999"}],
+                },
+                False,
+            ),
+            (
+                "severity-missing.json",
+                "dr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My university",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "Provider:1258"}],
+                },
+                False,
+            ),
+            (
+                "severity-number.json",
+                "dr",
+                {
+                    "Created_By": "Provider",
+                    "Institution_Name": "My university",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "Provider:1258"}],
+                },
+                False,
+            ),
+            (
+                "stringified_error.json",
+                "tr",
+                {
+                    "Created_By": "Moogle LLC.",
+                    "Institution_Name": "Mekong Honkong",
+                },
+                False,
+            ),
+            (
+                "null-in-Item_ID.json",
+                "tr",
+                {
+                    "Created_By": "Some Entity",
+                    "Institution_Name": "My organization",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "my:1111"}],
+                },
+                True,
+            ),
+            (
+                "dr-extra-ids.json",
+                "dr",
+                {
+                    "Created_By": "My services",
+                    "Institution_Name": "My institution",
+                    "Institution_ID": [{"Type": "Proprietary", "Value": "IIIIIIIII:88888888"}],
+                },
+                True,
+            ),
         ),
     )
     def test_c5_all_cases(
-        self, path, counter_report, import_passes, counter_report_types, organizations, platforms
+        self,
+        path,
+        counter_report,
+        extracted_data,
+        import_passes,
+        counter_report_types,
+        organizations,
+        platforms,
     ):
         """Just test that processing of test data works as excpected"""
         credentials = CredentialsFactory(
@@ -422,6 +555,7 @@ class TestSushiFetching:
             attempt: SushiFetchAttempt = credentials.fetch_report(
                 counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
             )
+            assert attempt.extracted_data == extracted_data
 
             if import_passes:
                 import_one_sushi_attempt(attempt)

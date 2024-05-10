@@ -604,7 +604,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             report = self._v5_get_report_data(
                 client, counter_report, start_date, end_date, file_data
             )
-            attempt.http_status_code = report.http_status_code
         except requests.exceptions.ConnectionError as e:
             logger.warning("Connection error: %s", e)
             attempt.error_code = "connection"
@@ -621,6 +620,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             attempt.status = AttemptStatus.PARSING_FAILED
         else:
             # no exception, but we need to deal with SUSHI errors, etc.
+            attempt.http_status_code = report.http_status_code
+            attempt.extract_header_data(report.header)
             self._v5_extract_status_and_errors(report, attempt)
 
         # now generic stuff independent of success or failure
