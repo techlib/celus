@@ -293,7 +293,6 @@ class TestCustomImport:
         basic1,
         tmp_path,
     ):
-        settings.ENABLE_NIBBLER_FOR_CELUS_FORMAT = True
         organization = organizations["standalone"]
         platform = platforms["standalone"]
         report_type = report_types["custom1"]
