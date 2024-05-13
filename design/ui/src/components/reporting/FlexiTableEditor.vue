@@ -1234,7 +1234,8 @@ export default {
       // if metric is not in splitBy, in columns, or has a filter to one value
       // we want to warn the user that he may be summing up apples and oranges
       if (this.splitBy === "metric") return false;
-      if (this.columns.includes("metric")) return false;
+      if (this.columns.includes("metric") && !this.trendMode) return false;
+      if (this.row === "metric") return false;
       if (this.filters.includes("metric") && this.selectedMetrics.length === 1)
         return false;
       return true;
