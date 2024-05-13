@@ -19,7 +19,7 @@ from events.models import (
     UserEvent,
     UserEventCategoryHandling,
 )
-from events.serializers import EventSerializer
+from events.serializers import EventSerializer, UserEventFilterSerializer
 
 
 class UserEventsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -89,7 +89,19 @@ class UserEventsViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="stats")
     def stats(self, request):
-        out = Event.user_event_stats(request.user)
+        filters_serializer = UserEventFilterSerializer(data=request.query_params)
+        if filters_serializer.is_valid():
+            filters = filters_serializer.validated_data
+        else:
+            filters = {}
+
+        # Event query
+        qs = request.user.assigned_events.active()
+        qs = SearchFilter().filter_queryset(request, qs, self)
+
+        filters["events"] = qs
+        # UserEvent query
+        out = request.user.userevent_set.stats(**filters)
         if out["newest_pk"]:
             out["newest_event"] = self.get_serializer(
                 self.get_queryset().get(pk=out["newest_pk"])

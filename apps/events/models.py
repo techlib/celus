@@ -2,13 +2,13 @@ import json
 import logging
 import traceback
 from datetime import timedelta
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from core.models import CreatedUpdatedMixin, User
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import models
-from django.db.models import Count, Max, Q
+from django.db.models import Count, F, Max, Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
 from django_redis import get_redis_connection
@@ -175,17 +175,9 @@ class Event(CreatedUpdatedMixin, models.Model):
             send_unsent_event_emails_task.delay()
 
     @classmethod
-    def user_event_stats(cls, user: User) -> dict:
-        return user.userevent_set.active().aggregate(
-            total=Count("event_id", distinct=True),
-            unread=Count("event_id", filter=Q(read=False), distinct=True),
-            newest_pk=Max("event_id"),
-        )
-
-    @classmethod
     def signal_stats_change(cls, user: User):
         data = json.dumps(
-            {"type": "stats", "stats": cls.user_event_stats(user), "user_id": user.pk}
+            {"type": "stats", "stats": user.userevent_set.stats(), "user_id": user.pk}
         )
         try:
             cls.publish_data(data)
@@ -215,6 +207,59 @@ class UserEventQuerySet(models.QuerySet):
         return self.filter(
             Q(event__expiration_date__gt=now()) | Q(event__expiration_date__isnull=True)
         )
+
+    def stats(
+        self,
+        read: Optional[bool] = None,
+        category: Optional[EventCategory] = None,
+        importance: Optional[EventImportance] = None,
+        events: Optional[models.QuerySet[Event]] = None,
+    ) -> dict:
+        qs = self.active()
+        event_filter = Q(event__in=events) if events is not None else Q()
+        read_agg_filter = (Q(event__category=category) if category is not None else Q()) & (
+            Q(event__importance=importance) if importance is not None else Q()
+        )
+        category_agg_filter = (
+            Q(event__importance=importance) if importance is not None else Q()
+        ) & (Q(read=read) if read is not None else Q())
+        importance_agg_filter = (Q(event__category=category) if category is not None else Q()) & (
+            Q(read=read) if read is not None else Q()
+        )
+        counts = {
+            "read": list(
+                qs.filter(read_agg_filter & event_filter)
+                .values("read")
+                .annotate(count=Count("event_id", distinct=True))
+            ),
+            "importance": list(
+                qs.filter(importance_agg_filter & event_filter)
+                .values("event__importance")
+                .annotate(
+                    importance=F("event__importance"),
+                    count=Count("event_id", distinct=True),
+                )
+                .values("count", "importance")
+            ),
+            "category": list(
+                qs.filter(category_agg_filter & event_filter)
+                .values("event__category")
+                .annotate(
+                    category=F("event__category"),
+                    count=Count("event_id", distinct=True),
+                )
+                .values("category", "count")
+            ),
+        }
+        res = dict(
+            qs.aggregate(
+                total=Count("event_id", distinct=True),
+                unread=Count("event_id", filter=Q(read=False), distinct=True),
+                newest_pk=Max("event_id"),
+            )
+        )
+        res["counts"] = counts
+        return res
 
 
 class UserEvent(models.Model):

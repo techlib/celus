@@ -446,7 +446,7 @@ export default new Vuex.Store({
         if (getters.showManagementStuff) {
           dispatch("fetchNoInterestPlatforms");
         }
-        dispatch("loadEvents");
+        dispatch("loadEvents", {});
         dispatch("startEventWorker");
       }
     },

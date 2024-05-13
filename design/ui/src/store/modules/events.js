@@ -6,16 +6,39 @@ export default {
     unreadCount: 0,
     newestEventId: null,
     newestEvent: null,
+    counts: {
+      read: [],
+      category: [],
+      importance: [],
+    },
   },
 
   actions: {
-    async loadEvents({ dispatch }) {
+    async loadEvents({ dispatch }, { read, category, importance, search }) {
       try {
-        let response = await axios.get("/api/events/user-events/stats/");
+        let params = {};
+        if (read != null) {
+          params.read = read;
+        }
+        if (category != null) {
+          params.category = category;
+        }
+        if (importance != null) {
+          params.importance = importance;
+        }
+        if (search) {
+          params.search = search;
+        }
+
+        let response = await axios.get("/api/events/user-events/stats/", {
+          params: params,
+        });
         dispatch("updateStats", response.data);
         console.log("Loaded events", response.data.total);
+        return response.data;
       } catch (error) {
         console.log("Error loading events: " + error);
+        return null;
       }
     },
     updateStats({ commit, state, dispatch }, stats) {
@@ -34,13 +57,16 @@ export default {
   },
 
   mutations: {
-    updateStats(state, { total, unread, newest_pk, newest_event }) {
+    updateStats(state, { total, unread, newest_pk, newest_event, counts }) {
       if (total !== undefined) {
         state.totalCount = total; // sometimes this is not provided
       }
       state.unreadCount = unread;
       state.newestEventId = newest_pk;
       state.newestEvent = newest_event;
+      state.counts.read = counts.read;
+      state.counts.importance = counts.importance;
+      state.counts.category = counts.category;
     },
   },
 };

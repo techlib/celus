@@ -1,6 +1,6 @@
-from rest_framework import serializers
+from rest_framework import fields, serializers
 
-from events.models import Event, UserEvent
+from events.models import Event, EventCategory, EventImportance, UserEvent
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -42,3 +42,19 @@ class UserEventSerializer(serializers.ModelSerializer):
 
     def get_unread_count(self, obj: UserEvent):
         return UserEvent.objects.filter(user=obj.user, read=False).count()
+
+
+class DefaultEmptyBooleanField(fields.BooleanField):
+    default_empty_html = fields.empty
+
+
+class UserEventFilterSerializer(serializers.Serializer):
+    read = DefaultEmptyBooleanField(required=False)
+    importance = serializers.ChoiceField(
+        choices=EventImportance.choices,
+        required=False,
+    )
+    category = serializers.ChoiceField(
+        choices=EventCategory.choices,
+        required=False,
+    )

@@ -12,7 +12,7 @@ cs:
 <template>
   <v-data-table
     v-model="selectedEvents"
-    :items="shownEvents"
+    :items="events"
     item-key="pk"
     :headers="headers"
     :expanded.sync="expanded"
@@ -22,6 +22,7 @@ cs:
     :sort-by.sync="sortBy"
     :sort-desc.sync="sortDesc"
     :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+    :server-items-length="eventCount"
     :page.sync="page"
     :items-per-page.sync="pageSize"
     :search="searchDebounced"
@@ -29,10 +30,16 @@ cs:
     @item-expanded="markRead"
   >
     <template #item.read="{ item }">
-      <v-icon v-if="item.read" small @click="markRead({ item, read: false })"
+      <v-icon
+        v-if="item.read"
+        small
+        @click="markRead({ item, read: false, refresh: true })"
         >far fa-envelope-open</v-icon
       >
-      <v-icon v-else small @click="markRead({ item, read: true })"
+      <v-icon
+        v-else
+        small
+        @click="markRead({ item, read: true, refresh: true })"
         >far fa-envelope</v-icon
       >
     </template>
@@ -111,16 +118,16 @@ cs:
           <v-select
             v-model="filterRead"
             :items="[
-              { text: $t('options.all'), value: null, count: null },
+              { text: $t('options.all'), value: null },
               {
                 text: $t('event_read.read'),
                 value: true,
-                count: availableReadsAndCounts.get(true),
+                count: availableReadAndCounts.get(true),
               },
               {
                 text: $t('event_read.unread'),
                 value: false,
-                count: availableReadsAndCounts.get(false),
+                count: availableReadAndCounts.get(false),
               },
             ]"
             :label="$t('events.read')"
@@ -179,7 +186,6 @@ import EventCategorySelect from "@/components/events/EventCategorySelect.vue";
 import EventImportanceSelect from "@/components/events/EventImportanceSelect.vue";
 import stateTracking from "@/mixins/stateTracking";
 import { mapActions, mapState } from "vuex";
-import { uniqueCounts } from "@/libs/unique";
 import { marked } from "marked";
 
 export default {
@@ -224,6 +230,7 @@ export default {
         {
           name: "filterRead",
           type: Boolean,
+          alwaysTrack: true,
         },
         {
           name: "sortBy",
@@ -242,6 +249,7 @@ export default {
     ...mapState({
       storeNewestEventId: (state) => state.events.newestEventId,
       storeUnreadEventCount: (state) => state.events.unreadCount,
+      storeCounts: (state) => state.events.counts,
     }),
     headers() {
       return [
@@ -277,7 +285,32 @@ export default {
       ];
     },
     url() {
-      return "/api/events/user-events/";
+      let url = "/api/events/user-events/";
+      let params = [];
+      if (this.filterImportance != null) {
+        params.push(`importance=${this.filterImportance}`);
+      }
+      if (this.filterCategory != null) {
+        params.push(`category=${this.filterCategory}`);
+      }
+      if (this.filterRead != null) {
+        params.push(`read=${this.filterRead}`);
+      }
+      if (this.sortBy != null) {
+        params.push(`order_by=${this.sortBy}`);
+        params.push(`desc=${this.sortDesc ? "true" : "false"}`);
+      }
+      if (this.searchDebounced) {
+        params.push(`search=${this.searchDebounced}`);
+      }
+      if (this.pageSize) {
+        params.push(`page_size=${this.pageSize}`);
+      }
+      if (this.page) {
+        params.push(`page=${this.page}`);
+      }
+      url = params.length > 0 ? `${url}?` : url;
+      return url + params.join("&");
     },
     searchDebounced: {
       get() {
@@ -287,44 +320,6 @@ export default {
         this.search = value;
       }, 500),
     },
-    shownEvents() {
-      let expandedPks = this.expanded.map((item) => item.pk);
-      return this.events.filter((item) => {
-        if (this.filterCategory && item.category !== this.filterCategory) {
-          return false;
-        }
-        if (
-          this.filterImportance &&
-          item.importance !== this.filterImportance
-        ) {
-          return false;
-        }
-        if (
-          this.filterRead !== null &&
-          item.read !== this.filterRead &&
-          !expandedPks.includes(item.pk)
-        ) {
-          return false;
-        }
-        return true;
-      });
-    },
-    availableCategoriesAndCounts() {
-      return uniqueCounts(this.events, "category");
-    },
-    availableImportanciesAndCounts() {
-      return uniqueCounts(this.events, "importance");
-    },
-    availableReadsAndCounts() {
-      let reads = new Map([
-        [true, 0],
-        [false, 0],
-      ]);
-      this.events.forEach((item) => {
-        reads.set(item.read, reads.get(item.read) + 1);
-      });
-      return reads;
-    },
     selectedEventsLive() {
       // this.selectedEvents contains whole objects, but those may not be
       // in sync with this.events - most importantly, their read status
@@ -333,6 +328,19 @@ export default {
       return this.events.filter((item) =>
         this.selectedEvents.find((rec) => rec.pk === item.pk)
       );
+    },
+    availableCategoriesAndCounts() {
+      return new Map(
+        this.storeCounts.category.map((e) => [e.category, e.count])
+      );
+    },
+    availableImportanciesAndCounts() {
+      return new Map(
+        this.storeCounts.importance.map((e) => [e.importance, e.count])
+      );
+    },
+    availableReadAndCounts() {
+      return new Map(this.storeCounts.read.map((e) => [e.read, e.count]));
     },
   },
 
@@ -345,13 +353,13 @@ export default {
       // we debounce here because we want to wait for all the computed
       // to get recomputed before we fetch the events
       this.loading = true;
-      const reply = await this.http({
-        url: this.url,
-        method: "GET",
-      });
+      const reply = await this.http({ url: this.url, method: "GET" });
       if (!reply.error) {
-        this.eventCount = reply.response.data.count;
-        this.events = reply.response.data.results;
+        let replyLES = this.loadEventsStat();
+        if (replyLES != null) {
+          this.eventCount = reply.response.data.count;
+          this.events = reply.response.data.results;
+        }
       }
       this.loading = false;
     }, 100),
@@ -363,7 +371,7 @@ export default {
         // mark as read when expanding - we need to do this explicitly because
         // the expanded event is not triggered when doing it by manipulating
         // the expanded array
-        this.markRead({ item, read: true, value: true });
+        this.markRead({ item, read: true, value: true, refresh: false });
       }
     },
     async markReadLowLevel({ item, read }) {
@@ -373,17 +381,25 @@ export default {
         data: { read },
       });
     },
-    async markRead({ item, read, value }) {
+    async markRead({ item, read, value, refresh }) {
       if (value === false) {
         // value is false when markRead is called from the expanded event when
-        // collapsing - we do not want to do anything in this case
+        // collapsing - we try to refetch when filter read is set to false to update
+        // the list
+        if (this.filterRead === false) {
+          this.fetchEvents();
+        }
         return;
       }
       if (item.read !== read) {
         const reply = await this.markReadLowLevel({ item, read });
         if (!reply.error) {
           item.read = reply.response.data.read;
-          await this.loadEvents(); // update the badge, etc.
+          if (refresh) {
+            await this.fetchEvents();
+          } else {
+            await this.loadEventsStat(); // update the badge, etc.
+          }
         }
       }
     },
@@ -410,7 +426,7 @@ export default {
           color: "success",
         });
       }
-      await this.loadEvents();
+      this.fetchEvents();
       this.selectedEvents = [];
     },
     markdownToHtml(content) {
@@ -424,6 +440,14 @@ export default {
         renderer: renderer,
       });
       return html;
+    },
+    async loadEventsStat() {
+      return await this.loadEvents({
+        read: this.filterRead,
+        category: this.filterCategory,
+        importance: this.filterImportance,
+        search: this.searchDebounced,
+      });
     },
   },
 
@@ -441,7 +465,7 @@ export default {
     },
     storeUnreadEventCount() {
       console.debug("storeUnreadEventCount changed");
-      this.fetchEvents();
+      this.loadEventsStat();
     },
   },
 };

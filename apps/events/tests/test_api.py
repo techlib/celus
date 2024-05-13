@@ -20,6 +20,7 @@ class TestEventListAPI:
         """
         Tests that the user events list endpoint works as expected.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         event = EventFactory.create()
         event.assign_to_users([admin_user], read=read)
         response = admin_client.get("/api/events/user-events/")
@@ -41,6 +42,7 @@ class TestEventListAPI:
         """
         Tests data returned by the user events list endpoint.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events_connected = EventFactory.create_batch(10)
         EventFactory.create_batch(11)
         for e in events_connected:
@@ -68,6 +70,7 @@ class TestEventListAPI:
         """
         Tests filtering by event importance.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         info_events = EventFactory.create_batch(3, importance=EventImportance.NORMAL)
         error_events = EventFactory.create_batch(5, importance=EventImportance.HIGH)
         EventFactory.create_batch(7)  # these are unconnected events, just to make sure
@@ -98,6 +101,7 @@ class TestEventListAPI:
         """
         Tests filtering by event category.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         info_events = EventFactory.create_batch(3, category=EventCategory.SUSHI)
         error_events = EventFactory.create_batch(5, category=EventCategory.TAGS)
         EventFactory.create_batch(7)  # these are unconnected events, just to make sure
@@ -120,6 +124,7 @@ class TestEventListAPI:
         """
         Tests filtering by read status.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events = EventFactory.create_batch(10)
         for idx, e in enumerate(events):
             e.assign_to_users([admin_user], read=(idx % 2 == 0))
@@ -135,12 +140,14 @@ class TestEventListAPI:
         assert data["results"][0]["read"] is read
 
     @pytest.mark.parametrize(
-        ["text", "count"], [("bar", 8), ("foo", 3), ("moo", 5), ("baz", 3), ("quix", 0), ("", 8)]
+        ["text", "count"],
+        [("bar", 8), ("foo", 3), ("moo", 5), ("baz", 3), ("quix", 0), ("", 8)],
     )
     def test_user_events_list_search_filter(self, admin_client, admin_user, text, count):
         """
         Tests filtering by search query.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events1 = EventFactory.create_batch(3, title="Foo bar baz", description="Whatever")
         events2 = EventFactory.create_batch(5, title="Bar bar bar", description="moo")
         EventFactory.create_batch(7)
@@ -166,6 +173,7 @@ class TestEventListAPI:
         """
         Tests sorting by different fields.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events = EventFactory.create_batch(3)
         for idx, e in enumerate(events):
             e.assign_to_users([admin_user], read=(idx % 2 == 0))
@@ -205,6 +213,7 @@ class TestEventListAPI:
         """
         Tests pagination.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events = EventFactory.create_batch(13)
         for e in events:
             e.assign_to_users([admin_user])
@@ -221,29 +230,237 @@ class TestEventListAPI:
             assert response.status_code == 404, "page outside of range"
 
     @pytest.mark.parametrize(
-        ["date", "counts", "last_exists"],
-        [("2023-01-03", (8, 3), True), ("2023-02-03", (5, 0), True), ("2023-03-03", (0, 0), False)],
+        ["date", "filters", "counts", "last_exists"],
+        [
+            (
+                "2023-01-03",
+                {},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [
+                            {"read": False, "count": 3},
+                            {"read": True, "count": 5},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 4},
+                            {"category": "sushi", "count": 4},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 5},
+                            {"importance": 20, "count": 3},
+                        ],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-02-03",
+                {},
+                (
+                    5,
+                    0,
+                    {
+                        "read": [
+                            {"read": True, "count": 5},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 2},
+                            {"category": "sushi", "count": 3},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 3},
+                            {"importance": 20, "count": 2},
+                        ],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-03-03",
+                {},
+                (0, 0, {"category": [], "importance": [], "read": []}),
+                False,
+            ),
+            (
+                "2023-01-03",
+                {"read": True},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [
+                            {"read": False, "count": 3},
+                            {"read": True, "count": 5},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 2},
+                            {"category": "sushi", "count": 3},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 3},
+                            {"importance": 20, "count": 2},
+                        ],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-01-03",
+                {"category": "sushi"},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [
+                            {"read": False, "count": 1},
+                            {"read": True, "count": 3},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 4},
+                            {"category": "sushi", "count": 4},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 3},
+                            {"importance": 20, "count": 1},
+                        ],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-01-03",
+                {"importance": 20},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [
+                            {"read": False, "count": 1},
+                            {"read": True, "count": 2},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 2},
+                            {"category": "sushi", "count": 1},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 5},
+                            {"importance": 20, "count": 3},
+                        ],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-01-03",
+                {"importance": 10, "category": "sushi", "read": True},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [
+                            {"read": False, "count": 1},
+                            {"read": True, "count": 2},
+                        ],
+                        "category": [
+                            {"category": "overlap", "count": 1},
+                            {"category": "sushi", "count": 2},
+                        ],
+                        "importance": [
+                            {"importance": 10, "count": 2},
+                            {"importance": 20, "count": 1},
+                        ],
+                    },
+                ),
+                True,
+            ),
+        ],
     )
-    def test_stats_action(self, admin_client, admin_user, date, counts, last_exists):
+    def test_stats_action(self, admin_client, admin_user, date, filters, counts, last_exists):
         """
         Tests that the stats action works as expected. It should only show events that are
         active = not expired.
         """
         with freeze_time("2023-01-01"):
-            UserEventFactory.create_batch(3, user=admin_user, event__expiration_date="2023-02-01")
+            UserEvent.objects.all().delete()  # make sure that no user events exist
+
             UserEventFactory.create_batch(
-                5, read=True, user=admin_user, event__expiration_date="2023-03-01"
+                1,
+                user=admin_user,
+                event__expiration_date="2023-02-01",
+                event__category=EventCategory.SUSHI,
+                event__importance=EventImportance.NORMAL,
             )
+            UserEventFactory.create_batch(
+                1,
+                user=admin_user,
+                event__expiration_date="2023-02-01",
+                event__category=EventCategory.OVERLAP,
+                event__importance=EventImportance.NORMAL,
+            )
+            UserEventFactory.create_batch(
+                1,
+                user=admin_user,
+                event__expiration_date="2023-02-01",
+                event__category=EventCategory.OVERLAP,
+                event__importance=EventImportance.HIGH,
+            )
+
+            UserEventFactory.create_batch(
+                1,
+                read=True,
+                user=admin_user,
+                event__expiration_date="2023-03-01",
+                event__category=EventCategory.SUSHI,
+                event__importance=EventImportance.HIGH,
+            )
+            UserEventFactory.create_batch(
+                2,
+                read=True,
+                user=admin_user,
+                event__expiration_date="2023-03-01",
+                event__category=EventCategory.SUSHI,
+                event__importance=EventImportance.NORMAL,
+            )
+            UserEventFactory.create_batch(
+                1,
+                read=True,
+                user=admin_user,
+                event__expiration_date="2023-03-01",
+                event__category=EventCategory.OVERLAP,
+                event__importance=EventImportance.NORMAL,
+            )
+            UserEventFactory.create_batch(
+                1,
+                read=True,
+                user=admin_user,
+                event__expiration_date="2023-03-01",
+                event__category=EventCategory.OVERLAP,
+                event__importance=EventImportance.HIGH,
+            )
+
         with freeze_time(date):
-            response = admin_client.get(reverse("user-events-stats"))
+            response = admin_client.get(reverse("user-events-stats"), filters)
             assert response.status_code == 200
             data = response.json()
-            total, unread = counts
+            total, unread, filter_counts = counts
             assert data["total"] == total
             assert data["unread"] == unread
             assert data["newest_pk"] == (
                 UserEvent.objects.order_by("event_id").last().event_id if last_exists else None
             )
+
+            # Sort counts so the test can be fully deterministic
+            data["counts"]["read"] = sorted(data["counts"]["read"], key=lambda x: x["read"])
+            data["counts"]["importance"] = sorted(
+                data["counts"]["importance"], key=lambda x: x["importance"]
+            )
+            data["counts"]["category"] = sorted(
+                data["counts"]["category"], key=lambda x: x["category"]
+            )
+            assert data["counts"] == filter_counts
+
             if last_exists:
                 assert isinstance(data["newest_event"], dict)
 
@@ -255,6 +472,7 @@ class TestEventListAPI:
         Tests that the user events list endpoint works as expected when lifetime is set.
         """
         with freeze_time("2023-01-01"):
+            UserEvent.objects.all().delete()  # make sure that no user events exist
             UserEventFactory.create_batch(3, user=admin_user, event__expiration_date="2023-02-01")
             UserEventFactory.create_batch(5, user=admin_user, event__expiration_date="2023-03-01")
         with freeze_time(date):
@@ -299,6 +517,7 @@ class TestUserEventExtraActions:
         """
         Tests that the mark read endpoint works as expected for multiple events.
         """
+        UserEvent.objects.all().delete()  # make sure that no user events exist
         events = EventFactory.create_batch(10)
         for idx, e in enumerate(events):
             e.assign_to_users([admin_user], read=(idx % 2 == 0))
