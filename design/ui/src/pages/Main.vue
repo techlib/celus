@@ -9,7 +9,10 @@
 
   <EmailNotVerified
     v-else-if="
-      user && !user.impersonator && !emailVerified && !user.is_superuser
+      user &&
+      !user.impersonator &&
+      !emailVerified &&
+      (!user.is_superuser || otpRequired)
     "
   />
   <StandardLayout v-else-if="bootUpFinished" />
