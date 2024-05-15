@@ -1,5 +1,6 @@
 import pytest
 from allauth.account.models import EmailAddress
+from django_otp.plugins.otp_email.models import EmailDevice
 
 from core.models import User
 from test_scenarios.basic import *  # noqa
@@ -111,3 +112,22 @@ class TestUserModel:
         assert (
             user.email_verified == user_email_verified
         ), "the email should be verified even if case does not match"
+
+    @pytest.mark.parametrize(
+        ["otp_enabled", "created"],
+        [[True, True], [False, False]],
+    )
+    def test_email_device_created_on_signal(
+        self,
+        settings,
+        otp_enabled,
+        created,
+    ):
+        settings.OTP_ENABLED = otp_enabled
+        settings.OTP_CREATE_EMAIL_DEVICES = True
+        assert EmailDevice.objects.count() == 0
+        User.objects.create(username="foo", email="foo@bar.baz")
+        if created:
+            assert EmailDevice.objects.count() == 1
+        else:
+            assert EmailDevice.objects.count() == 0

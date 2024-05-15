@@ -37,6 +37,8 @@ USES_ERMS = config("USES_ERMS", cast=bool, default=False)
 CELUS_VERSION = get_version(BASE_DIR)
 DEBUG = config("DEBUG", cast=bool, default=False)
 OTP_ENABLED = config("OTP_ENABLED", cast=bool, default=False)
+# automatically create EmailDevices when OTP_ENABLED=True
+OTP_CREATE_EMAIL_DEVICES = True
 # time to verify token (in seconds)
 OTP_EMAIL_TOKEN_VALIDITY = config("OTP_EMAIL_TOKEN_VALIDITY", cast=int, default=60 * 30)
 # how long should be verification valid (in days)

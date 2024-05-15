@@ -31,3 +31,4 @@ LOGGING["handlers"]["mail_admins"][  # noqa F405
 
 # Make enable OTP otherwise otp endpoints are missing in the tests
 OTP_ENABLED = True
+OTP_CREATE_EMAIL_DEVICES = False
