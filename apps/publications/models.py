@@ -361,8 +361,25 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
             self.processing_info["error"] = str(e)
             self.state = TitleOverlapBatchState.FAILED
             self.save()
-            from events.models import Event, EventCategory, EventImportance
 
+        self.create_processing_events()
+
+    def create_annotated_file_name(self) -> str:
+        if not self.source_file:
+            raise ValueError("source_file must be filled in")
+        _folder, fname = os.path.split(self.source_file.name)
+        base, ext = os.path.splitext(fname)
+        return base + "-annotated" + ext
+
+    def create_processing_events(self):
+        """
+        Based on `self.state` creates events either about failure or success of the processing
+        """
+        if not self.last_updated_by:
+            return
+        from events.models import Event, EventCategory, EventImportance
+
+        if self.state == TitleOverlapBatchState.FAILED:
             Event.create_for_users(
                 [self.last_updated_by],
                 title="Title list overlap analysis failed",
@@ -372,9 +389,8 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
                 importance=EventImportance.HIGH,
                 category=EventCategory.OVERLAP,
             )
-        else:
-            from events.models import Event, EventCategory, EventImportance
 
+        else:
             Event.create_for_users(
                 [self.last_updated_by],
                 title="Title list overlap analysis finished successfully",
@@ -385,10 +401,3 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
                 importance=EventImportance.NORMAL,
                 category=EventCategory.OVERLAP,
             )
-
-    def create_annotated_file_name(self) -> str:
-        if not self.source_file:
-            raise ValueError("source_file must be filled in")
-        _folder, fname = os.path.split(self.source_file.name)
-        base, ext = os.path.splitext(fname)
-        return base + "-annotated" + ext

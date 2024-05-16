@@ -61,13 +61,14 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = "/"):
             f"\n\n{preflight.error}"
         )
 
-    Event.create_for_users(
-        [tb.last_updated_by],
-        title=title,
-        description=description,
-        importance=importance,
-        category=EventCategory.TAGS,
-    )
+    if tb.last_updated_by:
+        Event.create_for_users(
+            [tb.last_updated_by],
+            title=title,
+            description=description,
+            importance=importance,
+            category=EventCategory.TAGS,
+        )
 
 
 @celery.shared_task
@@ -103,13 +104,14 @@ def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = "/"):
             f"\n\n{postflight.error}"
         )
 
-    Event.create_for_users(
-        [tb.last_updated_by],
-        title=title,
-        description=description,
-        importance=importance,
-        category=EventCategory.TAGS,
-    )
+    if tb.last_updated_by:
+        Event.create_for_users(
+            [tb.last_updated_by],
+            title=title,
+            description=description,
+            importance=importance,
+            category=EventCategory.TAGS,
+        )
 
 
 @celery.shared_task
@@ -171,13 +173,14 @@ def reprocess_due_tagging_batches_task():
                 f"\n\n{postflight.error}"
             )
 
-        Event.create_for_users(
-            [tb.last_updated_by],
-            title=title,
-            description=description,
-            importance=importance,
-            category=EventCategory.TAGS,
-        )
+        if tb.last_updated_by:
+            Event.create_for_users(
+                [tb.last_updated_by],
+                title=title,
+                description=description,
+                importance=importance,
+                category=EventCategory.TAGS,
+            )
 
         # reschedule the task to run again to process the next batch
         if TaggingBatch.objects.to_reprocess().exists():
