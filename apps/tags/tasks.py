@@ -61,9 +61,9 @@ def tagging_batch_preflight_task(batch_id: int, domain_name: str = "/"):
             f"\n\n{preflight.error}"
         )
 
-    if tb.last_updated_by:
+    if users_to_notify := tb.users_to_notify():
         Event.create_for_users(
-            [tb.last_updated_by],
+            users_to_notify,
             title=title,
             description=description,
             importance=importance,
@@ -104,9 +104,9 @@ def tagging_batch_assign_tag_task(batch_id: int, domain_name: str = "/"):
             f"\n\n{postflight.error}"
         )
 
-    if tb.last_updated_by:
+    if users_to_notify := tb.users_to_notify():
         Event.create_for_users(
-            [tb.last_updated_by],
+            users_to_notify,
             title=title,
             description=description,
             importance=importance,
@@ -173,9 +173,9 @@ def reprocess_due_tagging_batches_task():
                 f"\n\n{postflight.error}"
             )
 
-        if tb.last_updated_by:
+        if users_to_notify := tb.users_to_notify():
             Event.create_for_users(
-                [tb.last_updated_by],
+                users_to_notify,
                 title=title,
                 description=description,
                 importance=importance,

@@ -800,6 +800,16 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
     def context_desc(self) -> str:
         return f"tag {self.tag}" if self.tag else f"tag class {self.tag_class}"
 
+    def users_to_notify(self) -> List[User]:
+        """
+        Returns a list of users who should be informed about the state change of this batch
+        """
+        out = [self.last_updated_by] if self.last_updated_by else []
+        if self.internal_name:
+            # this is an internal batch, inform superusers
+            out.extend(User.objects.filter(is_superuser=True))
+        return out
+
     def file_row_count(self):
         orig_pos = self.source_file.tell()
         self.source_file.seek(0)

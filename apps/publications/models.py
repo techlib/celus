@@ -1,6 +1,7 @@
 import os
 import tempfile
 from collections import Counter
+from pathlib import Path
 from typing import BinaryIO, Callable, Optional
 
 import magic
@@ -367,9 +368,8 @@ class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):
     def create_annotated_file_name(self) -> str:
         if not self.source_file:
             raise ValueError("source_file must be filled in")
-        _folder, fname = os.path.split(self.source_file.name)
-        base, ext = os.path.splitext(fname)
-        return base + "-annotated" + ext
+        path = Path(self.source_file.name)
+        return path.stem + "-annotated" + path.suffix
 
     def create_processing_events(self):
         """

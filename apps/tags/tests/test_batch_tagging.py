@@ -1309,7 +1309,8 @@ class TestTasks:
 
     @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize("has_user", [True, False])
-    def test_periodic_reprocessing_event_creation(self, users, has_user):
+    @pytest.mark.parametrize("internal", [True, False])
+    def test_periodic_reprocessing_event_creation(self, users, has_user, internal):
         """
         Test that the periodic reprocessing task creates corresponding events when
         a reprocessing takes place.
@@ -1321,6 +1322,7 @@ class TestTasks:
                 state=TaggingBatchState.IMPORTED,
                 source_file=plain_test_file,
                 last_updated_by=users["user2"] if has_user else None,
+                internal_name="foo" if internal else "",
             )
             TaggingAttemptFactory.create(batch=tb1)
         # testing
@@ -1328,7 +1330,13 @@ class TestTasks:
             assert TaggingBatch.objects.to_reprocess().count() == 1
             with patch("tags.tasks.Event") as mock_event:
                 reprocess_due_tagging_batches_task()  # we call the task as simple function
-                assert mock_event.create_for_users.call_count == (1 if has_user else 0)
+                assert mock_event.create_for_users.call_count == int(has_user or internal)
+                if has_user or internal:
+                    involved_users = mock_event.create_for_users.call_args_list[0][0][0]
+                    if has_user:
+                        assert users["user2"] in involved_users
+                    if internal:
+                        assert users["su"] in involved_users
             assert TaggingBatch.objects.to_reprocess().count() == 0
 
 
