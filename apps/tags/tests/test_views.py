@@ -771,10 +771,7 @@ class TestTagClassViews:
         )
         # nullify TagClass.owner_org - no ORG_* flag remained for the TagClass
         check(
-            {
-                "can_modify": AccessibleBy.OWNER,
-                "owner_org": organizations["standalone"].pk,
-            },
+            {"can_modify": AccessibleBy.OWNER, "owner_org": organizations["standalone"].pk},
             False,
             False,
         )
@@ -801,10 +798,7 @@ class TestTagClassViews:
         # Remove the first ORG_ flag of the TagClass (the other ORG_ flag remains)
         # => Nothing changed both Tag and TagClass have at least one ORG_ flag
         check(
-            {
-                "can_create_tags": AccessibleBy.OWNER,
-                "owner_org": organizations["standalone"].pk,
-            },
+            {"can_create_tags": AccessibleBy.OWNER, "owner_org": organizations["standalone"].pk},
             True,
             True,
         )

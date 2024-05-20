@@ -13,10 +13,8 @@ def redefine_standard_views(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("charts", "0012_tr_j1_unique_item_requests"),
-    ]
+    dependencies = [("charts", "0012_tr_j1_unique_item_requests")]
 
     operations = [
-        migrations.RunPython(redefine_standard_views, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(redefine_standard_views, reverse_code=migrations.RunPython.noop)
     ]

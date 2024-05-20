@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("publications", "0037_add_ir_m1_interest_to_all_platforms"),
-    ]
+    dependencies = [("publications", "0037_add_ir_m1_interest_to_all_platforms")]
 
     operations = [
         migrations.AlterField(

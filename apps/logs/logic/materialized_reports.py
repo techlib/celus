@@ -88,8 +88,7 @@ def guess_batch_size_for_materialization(rt: ReportType, desired_log_threshold=2
     ibs = set(import_batch_qs.values_list("id", flat=True))
     result_log_count = (
         AccessLog.objects.filter(
-            report_type=rt.materialization_spec.base_report_type,
-            import_batch_id__in=ibs,
+            report_type=rt.materialization_spec.base_report_type, import_batch_id__in=ibs
         )
         .values("import_batch_id", *keep)
         .annotate(foo=Count("id"))

@@ -243,11 +243,7 @@ class CsvReaderMixin:
 class CsvTitleListReader(CsvReaderMixin, TitleListReader):
     annotation_column = "_Celus info_"
 
-    def __init__(
-        self,
-        dump_id_formatter: Callable[[int], str] = str,
-        **kwargs,
-    ):
+    def __init__(self, dump_id_formatter: Callable[[int], str] = str, **kwargs):
         super().__init__(**kwargs)
         self.dump_id_formatter = dump_id_formatter
 

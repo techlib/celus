@@ -98,12 +98,7 @@ class TestUserAPI:
         assert resp.status_code == 200, "Allow to change language when 2FA is done"
 
     def test_user_language_with_unlinked_otp_device_notification_mail(
-        self,
-        settings,
-        clients,
-        users,
-        disallow_eduid_login,
-        mailoutbox,
+        self, settings, clients, users, disallow_eduid_login, mailoutbox
     ):
         settings.OTP_ENABLED = True
         with freeze_time("2024-01-01 00:00:00"):
@@ -272,12 +267,7 @@ class TestUserAPI:
 
     @pytest.mark.parametrize(
         "otp_enabled,skip_2fa,required",
-        (
-            (True, True, False),
-            (True, False, True),
-            (False, True, False),
-            (False, False, False),
-        ),
+        ((True, True, False), (True, False, True), (False, True, False), (False, False, False)),
     )
     def test_otp_required(
         self, otp_enabled, skip_2fa, required, settings, clients, users, otp_devices
@@ -497,8 +487,7 @@ class TestInvitationAndPasswordResetAPI:
         """
         assert len(mailoutbox) == 0
         resp = clients["unauthenticated"].post(
-            "/api/rest-auth/password/reset/",
-            {"email": users["user1"].email},
+            "/api/rest-auth/password/reset/", {"email": users["user1"].email}
         )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
@@ -512,8 +501,7 @@ class TestInvitationAndPasswordResetAPI:
         # the code is buried in a django form, so we simply simulate sending the email and
         # get the data from there
         resp = clients["unauthenticated"].post(
-            "/api/rest-auth/password/reset/",
-            {"email": users["user1"].email},
+            "/api/rest-auth/password/reset/", {"email": users["user1"].email}
         )
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
@@ -591,10 +579,7 @@ class TestInvitationAndPasswordResetAPI:
         settings.ALLOWED_HOSTS = ["testserver", *allowed_hosts]
         resp = admin_client.post(
             reverse("admin:core_user_changelist"),
-            {
-                "action": "send_invitation_emails",
-                ACTION_CHECKBOX_NAME: [admin_user.pk],
-            },
+            {"action": "send_invitation_emails", ACTION_CHECKBOX_NAME: [admin_user.pk]},
         )
         assert resp.status_code == 302
         if ok:
@@ -644,10 +629,7 @@ class TestUserExistsView:
         ).hex()
         if exists:
             UserFactory.create(email=email)
-        resp = clients["unauthenticated"].get(
-            reverse("user_exists_api_view"),
-            {"hmac": check},
-        )
+        resp = clients["unauthenticated"].get(reverse("user_exists_api_view"), {"hmac": check})
         assert resp.status_code == 200
         assert resp.json() == {"exists": exists}
 
@@ -664,10 +646,7 @@ class TestUserExistsView:
     )
     def test_user_exists_fuzzy(self, clients, settings, check):
         settings.OCTOPUS_HMAC_KEY = "testtesttesttest"
-        resp = clients["unauthenticated"].get(
-            reverse("user_exists_api_view"),
-            {"hmac": check},
-        )
+        resp = clients["unauthenticated"].get(reverse("user_exists_api_view"), {"hmac": check})
         assert resp.status_code == 200
 
     @pytest.mark.parametrize(
@@ -824,12 +803,7 @@ class TestManagementCommandAPI:
         cf = ContentFile(b"foobar")
         resp = admin_client.post(
             reverse("management-command-run", args=["echo"]),
-            {
-                "echo": "baz",
-                "error": True,
-                "file": cf,
-                "doit": doit,
-            },
+            {"echo": "baz", "error": True, "file": cf, "doit": doit},
         )
         assert resp.status_code == 200
         assert resp.json() == {
@@ -871,12 +845,7 @@ class TestOtpAPI:
 
     def test_create(self, settings, clients, users, otp_devices):
         settings.OTP_ENABLED = True
-        resp = clients["master_user"].post(
-            reverse("otp-list"),
-            {
-                "name": "default",
-            },
-        )
+        resp = clients["master_user"].post(reverse("otp-list"), {"name": "default"})
         assert resp.status_code == 201
         assert resp.data["name"] == "default"
         assert resp.data["email"] is None
@@ -889,12 +858,7 @@ class TestOtpAPI:
     ):
         settings.OTP_ENABLED = True
         EmailAddress.objects.all().delete()
-        resp = clients["master_user"].post(
-            reverse("otp-list"),
-            {
-                "name": "default",
-            },
-        )
+        resp = clients["master_user"].post(reverse("otp-list"), {"name": "default"})
         assert resp.status_code == 400
         assert "user" in resp.data
 
@@ -962,10 +926,7 @@ class TestOtpAPI:
 
     def test_verify_missing_code(self, settings, clients, users, otp_devices):
         settings.OTP_ENABLED = True
-        resp = clients["user1"].post(
-            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
-            {},
-        )
+        resp = clients["user1"].post(reverse("otp-verify", args=(otp_devices["user1"].pk,)), {})
         assert resp.status_code == 400
 
     def test_verify_other_user(self, settings, clients, users, otp_devices):
@@ -986,8 +947,7 @@ class TestOtpAPI:
         otp_devices["user1"].generate_token()
 
         resp = clients["user1"].post(
-            reverse("otp-verify", args=(otp_devices["user1"].pk,)),
-            {"code": "000000"},
+            reverse("otp-verify", args=(otp_devices["user1"].pk,)), {"code": "000000"}
         )
         assert resp.status_code == 404
         assert (

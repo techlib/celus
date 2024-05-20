@@ -267,10 +267,7 @@ def create_import_batch_or_crash(
 
 
 def wipe_empty_or_partial_import_batches(
-    report_type: ReportType,
-    organization: Organization,
-    platform: Platform,
-    month: Union[str, date],
+    report_type: ReportType, organization: Organization, platform: Platform, month: Union[str, date]
 ) -> int:
     """
     Whipes all empty or partial_data import batches which are conlicting with function arguments
@@ -283,10 +280,7 @@ def wipe_empty_or_partial_import_batches(
     # Still iterating over ib will be quite efficient here,
     # because the number of conflicting ib's should be really low.
     for ib in ImportBatch.objects.filter(
-        report_type=report_type,
-        platform=platform,
-        organization=organization,
-        date=month,
+        report_type=report_type, platform=platform, organization=organization, date=month
     ):
         if (
             SushiFetchAttempt.objects.filter(import_batch_id=ib.pk, partial_data=True).exists()

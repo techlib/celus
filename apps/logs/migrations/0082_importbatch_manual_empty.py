@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("logs", "0081_mdu_extra_and_constraints"),
-    ]
+    dependencies = [("logs", "0081_mdu_extra_and_constraints")]
 
     operations = [
         migrations.AddField(
@@ -15,5 +13,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False, help_text="If the batch was created manually by the user as empty"
             ),
-        ),
+        )
     ]

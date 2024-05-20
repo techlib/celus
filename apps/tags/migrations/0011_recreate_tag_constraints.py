@@ -4,27 +4,13 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("tags", "0010_tagging_attempts_and_more"),
-    ]
+    dependencies = [("tags", "0010_tagging_attempts_and_more")]
 
     operations = [
-        migrations.RemoveConstraint(
-            model_name="tag",
-            name="tag_owner_not_null",
-        ),
-        migrations.RemoveConstraint(
-            model_name="tag",
-            name="tag_owner_org_not_null",
-        ),
-        migrations.RemoveConstraint(
-            model_name="tagclass",
-            name="tag_class_owner_not_null",
-        ),
-        migrations.RemoveConstraint(
-            model_name="tagclass",
-            name="tag_class_owner_org_not_null",
-        ),
+        migrations.RemoveConstraint(model_name="tag", name="tag_owner_not_null"),
+        migrations.RemoveConstraint(model_name="tag", name="tag_owner_org_not_null"),
+        migrations.RemoveConstraint(model_name="tagclass", name="tag_class_owner_not_null"),
+        migrations.RemoveConstraint(model_name="tagclass", name="tag_class_owner_org_not_null"),
         migrations.AddConstraint(
             model_name="tag",
             constraint=models.CheckConstraint(

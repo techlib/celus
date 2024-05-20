@@ -119,8 +119,7 @@ class TestRequestLogging:
             instance_mock = Mock()
             redis_mock.return_value = instance_mock
             resp = client_obj.get(
-                reverse("global-platforms-list"),
-                headers={"Authorization": f"Api-Key {key_val}"},
+                reverse("global-platforms-list"), headers={"Authorization": f"Api-Key {key_val}"}
             )
             assert resp.status_code == 200
             assert instance_mock.rpush.called

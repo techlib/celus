@@ -318,10 +318,7 @@ class TestFlexibleExportAPI:
         with patch("export.tasks.process_flexible_api_export_task.apply_async") as mock_task:
             resp = client.post(
                 reverse("flexible-export-api-list"),
-                {
-                    "report": fr.pk,
-                    "file_format": "ZIP_CSV",
-                },
+                {"report": fr.pk, "file_format": "ZIP_CSV"},
                 HTTP_AUTHORIZATION=f"Api-Key {key_val}",
                 content_type="application/json",
             )
@@ -381,11 +378,7 @@ class TestFlexibleExportAPI:
         with patch("export.tasks.process_flexible_api_export_task.apply_async") as mock_task:
             resp = client.post(
                 reverse("flexible-export-api-list"),
-                {
-                    "report": fr.pk,
-                    "file_format": "ZIP_CSV",
-                    **dates,
-                },
+                {"report": fr.pk, "file_format": "ZIP_CSV", **dates},
                 HTTP_AUTHORIZATION=f"Api-Key {key_val}",
                 content_type="application/json",
             )

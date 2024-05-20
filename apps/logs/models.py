@@ -57,11 +57,7 @@ from publications.models import Platform, Title
 
 import logs
 
-from .exceptions import (
-    OrganizationHasToBeSelected,
-    WrongOrganizations,
-    WrongState,
-)
+from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
 logger = logging.getLogger(__name__)
 
@@ -389,9 +385,7 @@ class Dimension(models.Model):
 
     class Meta:
         ordering = ("reporttypetodimension",)
-        constraints = [
-            UniqueConstraint(fields=["short_name"], name="short_name_unique"),
-        ]
+        constraints = [UniqueConstraint(fields=["short_name"], name="short_name_unique")]
 
     def __str__(self):
         return self.short_name

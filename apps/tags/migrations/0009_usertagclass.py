@@ -35,8 +35,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "unique_together": {("user", "tag_class")},
-            },
-        ),
+            options={"unique_together": {("user", "tag_class")}},
+        )
     ]

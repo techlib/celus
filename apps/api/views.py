@@ -96,9 +96,7 @@ class PlatformReportView(APIView):
                 for rec in ch_backend.get_records(
                     query.group_by("target_id", "metric_id", *reported_dims)
                     .aggregate(hits=HSum("value"))
-                    .transform(
-                        metric_short_name=StoredMap("metric_id", "metric", "short_name"),
-                    )
+                    .transform(metric_short_name=StoredMap("metric_id", "metric", "short_name"))
                 )
             )
             title_ids = {

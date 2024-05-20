@@ -3,9 +3,7 @@ from typing import IO
 
 from django.core.management.base import BaseCommand
 
-from logs.models import (
-    FlexibleReport,
-)
+from logs.models import FlexibleReport
 
 
 class Command(BaseCommand):

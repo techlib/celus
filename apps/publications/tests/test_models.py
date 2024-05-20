@@ -27,9 +27,7 @@ class TestPlatformModel:
             platform = PlatformFactory(
                 short_name=platform_name,
                 source=DataSourceFactory(
-                    organization=OrganizationFactory(
-                        short_name=organization_name,
-                    ),
+                    organization=OrganizationFactory(short_name=organization_name),
                     type=DataSource.TYPE_ORGANIZATION,
                 ),
             )
@@ -37,9 +35,7 @@ class TestPlatformModel:
             platform = PlatformFactory(
                 short_name=platform_name,
                 source=DataSourceFactory(
-                    organization=None,
-                    type=DataSource.TYPE_KNOWLEDGEBASE,
-                    token="xxxx",
+                    organization=None, type=DataSource.TYPE_KNOWLEDGEBASE, token="xxxx"
                 ),
             )
 

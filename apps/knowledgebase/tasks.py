@@ -27,8 +27,7 @@ def sync_platforms_with_knowledgebase_task():
 
         if attempt.error:
             async_mail_admins.delay(
-                f"Failed to sync platforms with {attempt.source}",
-                f"{attempt.error}",
+                f"Failed to sync platforms with {attempt.source}", f"{attempt.error}"
             )
 
 
@@ -45,8 +44,7 @@ def update_platforms(attempt_id: int):
 
     if attempt.error:
         async_mail_admins.delay(
-            f"Failed to sync platforms with {attempt.source}",
-            f"{attempt.error}",
+            f"Failed to sync platforms with {attempt.source}", f"{attempt.error}"
         )
 
 
@@ -63,8 +61,7 @@ def sync_report_types_with_knowledgebase_task():
 
         if attempt.error:
             async_mail_admins.delay(
-                f"Failed to sync report types with {attempt.source}",
-                f"{attempt.error}",
+                f"Failed to sync report types with {attempt.source}", f"{attempt.error}"
             )
 
 
@@ -81,8 +78,7 @@ def update_report_types(attempt_id: int):
 
     if attempt.error:
         async_mail_admins.delay(
-            f"Failed to sync report types with {attempt.source}",
-            f"{attempt.error}",
+            f"Failed to sync report types with {attempt.source}", f"{attempt.error}"
         )
 
 
@@ -101,8 +97,7 @@ def update_parser_definitions(attempt_id: int):
 
     if attempt.error:
         async_mail_admins.delay(
-            f"Failed to sync parser definitions with {attempt.source}",
-            f"{attempt.error}",
+            f"Failed to sync parser definitions with {attempt.source}", f"{attempt.error}"
         )
 
 
@@ -119,8 +114,7 @@ def sync_parser_definitions_with_knowledgebase_task():
 
         if attempt.error:
             async_mail_admins.delay(
-                f"Failed to sync parser definitions with {attempt.source}",
-                f"{attempt.error}",
+                f"Failed to sync parser definitions with {attempt.source}", f"{attempt.error}"
             )
 
 

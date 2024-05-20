@@ -69,10 +69,7 @@ class TestExportDownloadCounterEndpoint:
     ):
         response = clients[user].get(
             reverse("counter-data-export-download", args=(counter_report_types["tr"].pk,)),
-            data={
-                "platform": platform.id,
-                "organization": organization.pk,
-            },
+            data={"platform": platform.id, "organization": organization.pk},
         )
         assert response.status_code == status_code
 
@@ -82,19 +79,13 @@ class TestExportDownloadCounterEndpoint:
 
         response = clients["master_user"].get(
             reverse("counter-data-export-download", args=(counter_report_type1.pk,)),
-            data={
-                "platform": platform.id,
-                "organization": organization.pk,
-            },
+            data={"platform": platform.id, "organization": organization.pk},
         )
         assert response.status_code == 400
 
         response = clients["master_user"].get(
             reverse("counter-data-export-download", args=(counter_report_type2.pk,)),
-            data={
-                "platform": platform.id,
-                "organization": organization.pk,
-            },
+            data={"platform": platform.id, "organization": organization.pk},
         )
         assert response.status_code == 400
 
@@ -127,10 +118,7 @@ class TestExportDownloadCounterEndpoint:
         end_date,
         output_size,
     ):
-        data = {
-            "platform": platform.id,
-            "organization": organization.pk,
-        }
+        data = {"platform": platform.id, "organization": organization.pk}
         sync_import_batches_with_clickhouse(*tr_ibs, *dr_ibs, *pr_ibs, *ir_m1_ibs)
 
         if start_date:
@@ -141,8 +129,7 @@ class TestExportDownloadCounterEndpoint:
         counter_report_type = counter_report_types[counter_report_type]
 
         response = clients["master_user"].get(
-            reverse("counter-data-export-download", args=(counter_report_type.pk,)),
-            data=data,
+            reverse("counter-data-export-download", args=(counter_report_type.pk,)), data=data
         )
         assert response.status_code == 200
 
@@ -171,10 +158,7 @@ class TestExportUsedCounterEndpoint:
     ):
         response = clients[user].get(
             reverse("counter-data-export-used"),
-            data={
-                "platform": platform.id,
-                "organization": organization.pk,
-            },
+            data={"platform": platform.id, "organization": organization.pk},
         )
         assert response.status_code == status_code
 
@@ -207,10 +191,7 @@ class TestExportUsedCounterEndpoint:
         for ib in [e for e in ir_m1_ibs if e.date == "2020-04-01"]:
             ib.delete()
 
-        data = {
-            "platform": platform.id,
-            "organization": organization.pk,
-        }
+        data = {"platform": platform.id, "organization": organization.pk}
         sync_import_batches_with_clickhouse(*tr_ibs, *dr_ibs, *pr_ibs, *ir_m1_ibs)
 
         if start_date:
@@ -218,12 +199,7 @@ class TestExportUsedCounterEndpoint:
         if end_date:
             data["end_date"] = end_date
 
-        response = clients["master_user"].get(
-            reverse(
-                "counter-data-export-used",
-            ),
-            data=data,
-        )
+        response = clients["master_user"].get(reverse("counter-data-export-used"), data=data)
         assert response.status_code == 200
 
         assert {e["code"] for e in response.data if e["used"] > 0} == codes

@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name="importbatch",
             unique_together={("report_type", "organization", "platform", "date")},
-        ),
+        )
     ]

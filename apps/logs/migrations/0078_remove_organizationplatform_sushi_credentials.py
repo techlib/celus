@@ -4,13 +4,8 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("logs", "0077_remove_source_from_dimension"),
-    ]
+    dependencies = [("logs", "0077_remove_source_from_dimension")]
 
     operations = [
-        migrations.RemoveField(
-            model_name="organizationplatform",
-            name="sushi_credentials",
-        ),
+        migrations.RemoveField(model_name="organizationplatform", name="sushi_credentials")
     ]

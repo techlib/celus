@@ -30,12 +30,7 @@ class EmailVerificationSerializer(Serializer):
 
 class EmailDeviceSerializer(ModelSerializer):
     class Meta:
-        fields = (
-            "pk",
-            "email",
-            "name",
-            "confirmed",
-        )
+        fields = ("pk", "email", "name", "confirmed")
         model = EmailDevice
 
     def validate(self, attrs):
@@ -222,9 +217,7 @@ class AccessibleUsersSerializer(ModelSerializer):
             admin_rights = validated_data.pop("is_admin")
             organization = validated_data.pop("organization")
             UserOrganization.objects.update_or_create(
-                user=instance,
-                organization=organization,
-                defaults={"is_admin": admin_rights},
+                user=instance, organization=organization, defaults={"is_admin": admin_rights}
             )
 
         return instance

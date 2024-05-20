@@ -60,10 +60,7 @@ class CoreConfig(AppConfig):
             errors = []
             for app, command in CommandManager.get_invalid_exposed_commands():
                 errors.append(
-                    Warning(
-                        f"Exposed command {app}.{command} is not available",
-                        id="core.W001",
-                    )
+                    Warning(f"Exposed command {app}.{command} is not available", id="core.W001")
                 )
             return errors
 

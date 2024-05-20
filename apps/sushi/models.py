@@ -242,9 +242,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         """List credentials which are not from fake URLs"""
         # Constructs condition - Q() | Q(url__icontains=url1) | Q(url__icontains=url2) ...
         cond = reduce(
-            lambda x, y: x | Q(url__icontains=y.rstrip("/")),
-            settings.FAKE_SUSHI_URLS,
-            Q(),
+            lambda x, y: x | Q(url__icontains=y.rstrip("/")), settings.FAKE_SUSHI_URLS, Q()
         )
         return self.exclude(cond)
 
@@ -1190,10 +1188,7 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
                 ),
                 name="last_harvestable_month_by_attempt_vs_user",
             ),
-            UniqueConstraint(
-                fields=["credentials", "counter_report"],
-                name="unique_creds_to_cr",
-            ),
+            UniqueConstraint(fields=["credentials", "counter_report"], name="unique_creds_to_cr"),
         )
         verbose_name_plural = "Counter reports to credentials"
 

@@ -72,13 +72,13 @@ def import_sushi_credentials_from_xlsx(
     if missing_cols:
         logger.warning(
             f"Following columns are missing in the sheet: {', '.join(missing_cols)}. "
-            "Make sure you don't need to import data expected to be in these columns.",
+            "Make sure you don't need to import data expected to be in these columns."
         )
     excessive_cols = set(headers) - EXPECTED_COLS
     if excessive_cols:
         logger.warning(
             f"Following columns are not expected in the sheet: {', '.join(excessive_cols)}. "
-            "Data in these columns will be ignored.",
+            "Data in these columns will be ignored."
         )
     start_row = 2
     end_row = credentials_sheet.max_row
@@ -183,11 +183,7 @@ def import_sushi_credentials_new(
             )
             continue
         if not plat_source_other and not plat_source_org:
-            log(
-                'Unknown platform "%s" for organization "%s"',
-                platform_name,
-                organization_name,
-            )
+            log('Unknown platform "%s" for organization "%s"', platform_name, organization_name)
             continue
         platform = plat_source_other or plat_source_org
 
@@ -214,10 +210,7 @@ def import_sushi_credentials_new(
         if providers:
             url = providers[0]["provider"]["url"]
         else:
-            log(
-                "can't assign url due to missing provider for the platform: '%s'",
-                platform.name_en,
-            )
+            log("can't assign url due to missing provider for the platform: '%s'", platform.name_en)
             continue
 
         # sync credentials
@@ -233,11 +226,7 @@ def import_sushi_credentials_new(
                 )
                 continue
 
-            to_sync = dict(
-                customer_id=customer_id,
-                url=url,
-                **optional,
-            )
+            to_sync = dict(customer_id=customer_id, url=url, **optional)
             cr = db_credentials[key]
             diff = {}
             for key, value in to_sync.items():
@@ -405,11 +394,7 @@ def import_sushi_credentials_old(
                 continue
             organization = organizations.get(organization_name.strip().lower())
             if not organization:
-                logger.error(
-                    '#%03d: Unknown organization: "%s"',
-                    i + 2,
-                    record.get("organization"),
-                )
+                logger.error('#%03d: Unknown organization: "%s"', i + 2, record.get("organization"))
                 stats["error"] += 1
                 continue
         # at first try global platforms

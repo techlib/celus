@@ -21,10 +21,7 @@ class Command(BaseCommand):
         # )
         # for the same reason, the argument is not required - otherwise argparse would complain
         parser.add_argument(
-            "-f",
-            dest="file",
-            help="CSV file to import",
-            type=FileType("r", encoding="utf-8"),
+            "-f", dest="file", help="CSV file to import", type=FileType("r", encoding="utf-8")
         )
         parser.add_argument("--do-it", dest="doit", action="store_true")
         parser.add_argument(

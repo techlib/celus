@@ -188,11 +188,7 @@ class Counter5Export(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def make_record_line(
-        self,
-        record: AccessLogCubeRecord,
-        month_values: List[int],
-    ) -> List[str]:
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
         pass
 
     def lines(self) -> Generator[List[str], None, None]:
@@ -236,13 +232,7 @@ class Counter5Export(metaclass=ABCMeta):
 class TRCounter5Export(Counter5Export):
     report_name = "Title Master Report"
     report_id = "TR"
-    attributes_to_show = [
-        "Data_Type",
-        "Section_Type",
-        "YOP",
-        "Access_Type",
-        "Access_Method",
-    ]
+    attributes_to_show = ["Data_Type", "Section_Type", "YOP", "Access_Type", "Access_Method"]
 
     def get_record_error(self, record: AccessLogCubeRecord) -> Optional[str]:
         if not record.target_id:
@@ -281,11 +271,7 @@ class TRCounter5Export(Counter5Export):
             "Reporting_Period_Total",
         ] + [e.strftime("%b-%Y") for e in self.months]
 
-    def make_record_line(
-        self,
-        record: AccessLogCubeRecord,
-        month_values: List[int],
-    ) -> List[str]:
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
         title, *title_ids = self.get_target_ids(record)
         return (
             title,
@@ -332,11 +318,7 @@ class DRCounter5Export(Counter5Export):
             "Reporting_Period_Total",
         ] + [e.strftime("%b-%Y") for e in self.months]
 
-    def make_record_line(
-        self,
-        record: AccessLogCubeRecord,
-        month_values: List[int],
-    ) -> List[str]:
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
         database, proprietary_id = self.get_target_ids(record)
         return (
             database,
@@ -373,11 +355,7 @@ class PRCounter5Export(Counter5Export):
             "Reporting_Period_Total",
         ] + [e.strftime("%b-%Y") for e in self.months]
 
-    def make_record_line(
-        self,
-        record: AccessLogCubeRecord,
-        month_values: List[int],
-    ) -> List[str]:
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
         platform = self.get_target_ids(record)[0]
         return (
             platform,
@@ -420,11 +398,7 @@ class IR_M1Counter5Export(Counter5Export):
             "Reporting_Period_Total",
         ] + [e.strftime("%b-%Y") for e in self.months]
 
-    def make_record_line(
-        self,
-        record: AccessLogCubeRecord,
-        month_values: List[int],
-    ) -> List[str]:
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
         item, *item_ids = self.get_target_ids(record)
         return (
             item,

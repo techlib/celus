@@ -31,34 +31,22 @@ class TestUrl:
         platform_knowledgebase = PlatformFactory(
             knowledgebase={
                 "providers": [
-                    {
-                        "counter_version": 5,
-                        "provider": {
-                            "url": "https://knowledgebase.example.com",
-                        },
-                    }
+                    {"counter_version": 5, "provider": {"url": "https://knowledgebase.example.com"}}
                 ]
             }
         )
 
         assert (
-            CredentialsFactory(
-                platform=platform_knowledgebase,
-                counter_version=5,
-            ).knowledgebase_url
+            CredentialsFactory(platform=platform_knowledgebase, counter_version=5).knowledgebase_url
             == "https://knowledgebase.example.com"
         ), "Knowledgebase has appropriate url"
         assert (
-            CredentialsFactory(
-                platform=platform_knowledgebase,
-                counter_version=4,
-            ).knowledgebase_url
+            CredentialsFactory(platform=platform_knowledgebase, counter_version=4).knowledgebase_url
             is None
         ), "No C4 url in knowledgebase"
         assert (
             CredentialsFactory(
-                platform=platform_no_knowledgebase,
-                counter_version=5,
+                platform=platform_no_knowledgebase, counter_version=5
             ).knowledgebase_url
             is None
         ), "Platform doesn't have knowledgebase"
@@ -74,9 +62,7 @@ class TestUrl:
         ),
     )
     def test_url_normalization(self, in_url, out_url):
-        cred = CredentialsFactory(
-            url=in_url,
-        )
+        cred = CredentialsFactory(url=in_url)
         cred.url = in_url
         cred.save()
         cred.refresh_from_db()

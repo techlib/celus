@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("export", "0005_flexibledataexport_file_format"),
-    ]
+    dependencies = [("export", "0005_flexibledataexport_file_format")]
 
     operations = [
         migrations.AlterField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
                 default="XLSX",
                 max_length=16,
             ),
-        ),
+        )
     ]

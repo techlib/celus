@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("sushi", "0060_alter_sushicredentials_last_updated_by"),
-    ]
+    dependencies = [("sushi", "0060_alter_sushicredentials_last_updated_by")]
 
     operations = [
         migrations.AddField(

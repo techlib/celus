@@ -991,10 +991,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
 
 class ManualDataUploadViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.RetrieveModelMixin,
-    GenericViewSet,
+    mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.RetrieveModelMixin, GenericViewSet
 ):
     queryset = ManualDataUpload.objects.all()
     permission_classes = [
@@ -1153,9 +1150,7 @@ class ManualDataUploadViewSet(
         try:
             return super().perform_create(serializer)
         except NibblerErrors as e:
-            raise BadRequestException(
-                {"nibbler_errors": [err.dict() for err in e.errors]},
-            ) from e
+            raise BadRequestException({"nibbler_errors": [err.dict() for err in e.errors]}) from e
         except MultipleReportTypes as e:
             raise BadRequestException(
                 {"multiple_report_types": [e.id for e in e.report_types]}

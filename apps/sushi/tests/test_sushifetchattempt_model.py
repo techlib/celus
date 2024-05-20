@@ -394,14 +394,12 @@ class TestSushiFetchAttemptModel:
             data_file.name = "something.json"
 
         fa = FetchAttemptFactory.create(
-            data_file=data_file,
-            credentials=credentials["standalone_tr"],
+            data_file=data_file, credentials=credentials["standalone_tr"]
         )
         assert "/standalone.standalone/" in fa.data_file.name
 
         fa = FetchAttemptFactory.create(
-            data_file=data_file,
-            credentials__platform=platforms["shared"],
+            data_file=data_file, credentials__platform=platforms["shared"]
         )
         assert "/shared/" in fa.data_file.name
 
@@ -430,8 +428,7 @@ class TestCounterReportsToCredentials:
             counter_report=counter_report_types["jr1"],
         )
         cr2c_attempt_user = CounterReportsToCredentials.objects.get(
-            credentials=credentials["branch_pr"],
-            counter_report=counter_report_types["pr"],
+            credentials=credentials["branch_pr"], counter_report=counter_report_types["pr"]
         )
 
         assert cr2c_user_user.last_harvestable_month is None

@@ -31,38 +31,23 @@ class CelusUserSerializer(serializers.ModelSerializer):
 
 class CelusOrganizationSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source="id")
-    master_organization = serializers.ReadOnlyField(
-        source="is_master_organization",
-    )
+    master_organization = serializers.ReadOnlyField(source="is_master_organization")
 
     class Meta:
         model = Organization
-        fields = (
-            "ext_id",
-            "name",
-            "short_name",
-            "raw_data_import_enabled",
-            "master_organization",
-        )
+        fields = ("ext_id", "name", "short_name", "raw_data_import_enabled", "master_organization")
 
 
 class CelusUserOrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserOrganization
-        fields = (
-            "user",
-            "organization",
-            "is_admin",
-        )
+        fields = ("user", "organization", "is_admin")
 
 
 class CelusOrganizationPlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizationPlatform
-        fields = (
-            "organization",
-            "platform",
-        )
+        fields = ("organization", "platform")
 
 
 class CallableRelatedField(serializers.SlugRelatedField):
@@ -74,30 +59,17 @@ class CelusPlatformSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source="id")
     source = serializers.StringRelatedField()
     source_type = CallableRelatedField(
-        read_only=True,
-        slug_field="get_type_display",
-        source="source",
+        read_only=True, slug_field="get_type_display", source="source"
     )
 
     class Meta:
         model = Platform
-        fields = (
-            "ext_id",
-            "short_name",
-            "name",
-            "source",
-            "source_type",
-            "counter_registry_id",
-        )
+        fields = ("ext_id", "short_name", "name", "source", "source_type", "counter_registry_id")
 
 
 class SushiCredentialsSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source="id")
-    counter_reports = serializers.SlugRelatedField(
-        many=True,
-        slug_field="code",
-        read_only=True,
-    )
+    counter_reports = serializers.SlugRelatedField(many=True, slug_field="code", read_only=True)
     verified = serializers.BooleanField(read_only=True)
 
     class Meta:

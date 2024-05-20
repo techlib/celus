@@ -254,13 +254,8 @@ class CsvBackend(AnalyticalExportBackend):
             self.stderr.write(db.generate_csv_import(tb_name, self.path))
 
 
-BACKENDS = [
-    CsvBackend,
-]
+BACKENDS = [CsvBackend]
 
 BACKENDS = {b.NAME: b for b in BACKENDS}
 
-CSV_IMPORTS = [
-    PostgresqlBackend,
-    ClickhouseBackend,
-]
+CSV_IMPORTS = [PostgresqlBackend, ClickhouseBackend]

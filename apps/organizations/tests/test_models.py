@@ -33,10 +33,7 @@ class TestOrganizationAltName:
 
     def test_name_uniqueness_with_organization_short_name(self):
         organization = OrganizationFactory(
-            internal_id="AAA",
-            name_cs="AAA",
-            name_en="AAA",
-            short_name="AA",
+            internal_id="AAA", name_cs="AAA", name_en="AAA", short_name="AA"
         )
 
         with pytest.raises(ValidationError):
@@ -48,10 +45,7 @@ class TestOrganizationAltName:
 
     def test_name_uniqueness_with_organization_name(self):
         organization = OrganizationFactory(
-            internal_id="AAA",
-            name_cs="AAA",
-            name_en="AAA",
-            short_name="AA",
+            internal_id="AAA", name_cs="AAA", name_en="AAA", short_name="AA"
         )
 
         with pytest.raises(ValidationError):
@@ -65,63 +59,31 @@ class TestOrganizationAltName:
 @pytest.mark.django_db
 class TestOrganization:
     def test_short_name_uniqueness(self, organizations):
-        OrganizationFactory(
-            ext_id=998,
-            name_cs="CCC",
-            name_en="CCC",
-            short_name="CC",
-        )
+        OrganizationFactory(ext_id=998, name_cs="CCC", name_en="CCC", short_name="CC")
         with pytest.raises(IntegrityError):
             # cannot create name with the same short_name and empty
             # we cannot use OrganizationFactory because it uses get_or_create on short_name
-            Organization.objects.create(
-                ext_id=999,
-                name_cs="DDD",
-                name_en="DDD",
-                short_name="AA",
-            )
+            Organization.objects.create(ext_id=999, name_cs="DDD", name_en="DDD", short_name="AA")
 
     def test_short_name_uniqueness_same_source(self, organizations):
         source = DataSource.objects.create(short_name="foo", type=DataSource.TYPE_API)
         OrganizationFactory(
-            ext_id=None,
-            name_cs="CCC",
-            name_en="CCC",
-            short_name="CC",
-            source=source,
+            ext_id=None, name_cs="CCC", name_en="CCC", short_name="CC", source=source
         )
         with pytest.raises(IntegrityError):
             # cannot create name with the same short_name and same source
             Organization.objects.create(
-                ext_id=None,
-                name_cs="DDD",
-                name_en="DDD",
-                short_name="CC",
-                source=source,
+                ext_id=None, name_cs="DDD", name_en="DDD", short_name="CC", source=source
             )
 
     def test_short_name_uniqueness_different_source(self, organizations):
         source = DataSource.objects.create(short_name="foo", type=DataSource.TYPE_API)
         OrganizationFactory(
-            ext_id=None,
-            name_cs="CCC",
-            name_en="CCC",
-            short_name="CC",
-            source=source,
+            ext_id=None, name_cs="CCC", name_en="CCC", short_name="CC", source=source
         )
+        OrganizationFactory(ext_id=None, name_cs="DDD", name_en="DDD", short_name="CC", source=None)
         OrganizationFactory(
-            ext_id=None,
-            name_cs="DDD",
-            name_en="DDD",
-            short_name="CC",
-            source=None,
-        )
-        OrganizationFactory(
-            ext_id=None,
-            name_cs="AAA",
-            name_en="AAA",
-            short_name="AA",
-            source=source,
+            ext_id=None, name_cs="AAA", name_en="AAA", short_name="AA", source=source
         )
 
     def test_with_altname_uniqueness(self, organizations):
@@ -131,31 +93,19 @@ class TestOrganization:
 
         with pytest.raises(ValidationError):
             org = Organization(
-                ext_id=None,
-                name_cs="XXX",
-                name_en="YYY",
-                short_name="EEE",
-                source=None,
+                ext_id=None, name_cs="XXX", name_en="YYY", short_name="EEE", source=None
             )
             org.full_clean()
 
         with pytest.raises(ValidationError):
             org = Organization(
-                ext_id=None,
-                name_cs="XXX",
-                name_en="EEE",
-                short_name="YYY",
-                source=None,
+                ext_id=None, name_cs="XXX", name_en="EEE", short_name="YYY", source=None
             )
             org.full_clean()
 
         with pytest.raises(ValidationError):
             org = Organization(
-                ext_id=None,
-                name_cs="EEE",
-                name_en="XXX",
-                short_name="YYY",
-                source=None,
+                ext_id=None, name_cs="EEE", name_en="XXX", short_name="YYY", source=None
             )
             org.full_clean()
 

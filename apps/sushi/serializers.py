@@ -17,11 +17,7 @@ from rest_framework.fields import (
     SerializerMethodField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import (
-    ModelSerializer,
-    Serializer,
-    SlugRelatedField,
-)
+from rest_framework.serializers import ModelSerializer, Serializer, SlugRelatedField
 
 from .models import (
     COUNTER_REPORTS,

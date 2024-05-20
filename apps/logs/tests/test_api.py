@@ -903,8 +903,7 @@ class TestImportBatchViewSet:
         """
         # create failed harvest
         fa = FetchAttemptFactory.create(
-            status=AttemptStatus.DOWNLOAD_FAILED,
-            start_date=date(2023, 10, 1),
+            status=AttemptStatus.DOWNLOAD_FAILED, start_date=date(2023, 10, 1)
         )
         with freeze_time(check_date):
             resp = admin_client.post(
@@ -923,11 +922,7 @@ class TestImportBatchViewSet:
 
     @pytest.mark.parametrize(
         ["matching_attempt", "allowed"],
-        [
-            (None, False),
-            (AttemptStatus.SUCCESS, False),
-            (AttemptStatus.DOWNLOAD_FAILED, True),
-        ],
+        [(None, False), (AttemptStatus.SUCCESS, False), (AttemptStatus.DOWNLOAD_FAILED, True)],
     )
     def test_create_empty_import_batch_matching_attempt(
         self, admin_client, matching_attempt, allowed
@@ -938,8 +933,7 @@ class TestImportBatchViewSet:
         """
         # create failed harvest
         fa = FetchAttemptFactory.create(
-            status=matching_attempt or AttemptStatus.DOWNLOAD_FAILED,
-            start_date=date(2023, 10, 1),
+            status=matching_attempt or AttemptStatus.DOWNLOAD_FAILED, start_date=date(2023, 10, 1)
         )
         if not matching_attempt:
             # delete the SushiFetchAttempt, but keep the object

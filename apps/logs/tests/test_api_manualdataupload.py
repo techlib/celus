@@ -75,7 +75,7 @@ class TestManualUploadForCounterData:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -161,7 +161,7 @@ class TestManualUploadForCounterData:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -253,7 +253,7 @@ class TestManualUploadForCounterData:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -352,7 +352,7 @@ class TestManualUploadForCounterData:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -386,14 +386,7 @@ class TestManualUploadForCounterData:
         assert months == {e["date"] for e in response.data["import_batches"]}
 
     def test_wrong_encoding(
-        self,
-        basic1,
-        organizations,
-        counter_report_types,
-        platforms,
-        clients,
-        tmp_path,
-        settings,
+        self, basic1, organizations, counter_report_types, platforms, clients, tmp_path, settings
     ):
         with (Path(__file__).parent / "data/counter5/TR-wrong-encoding.csv").open("rb") as f:
             data_file = ContentFile(f.read())
@@ -417,14 +410,7 @@ class TestManualUploadForCounterData:
         assert "encoding_error" in response.data
 
     def test_upload_of_private_platform_from_non_owner_organization(
-        self,
-        basic1,
-        organizations,
-        counter_report_types,
-        platforms,
-        clients,
-        tmp_path,
-        settings,
+        self, basic1, organizations, counter_report_types, platforms, clients, tmp_path, settings
     ):
         with (Path(__file__).parent / "data/counter5/counter5_table_dr.tsv").open("rb") as f:
             data_file = ContentFile(f.read())
@@ -446,14 +432,7 @@ class TestManualUploadForCounterData:
         assert response.status_code == 400
 
     def test_change_of_organization_to_unrelated_private_platform_in_preflight(
-        self,
-        basic1,
-        organizations,
-        counter_report_types,
-        platforms,
-        clients,
-        tmp_path,
-        settings,
+        self, basic1, organizations, counter_report_types, platforms, clients, tmp_path, settings
     ):
         with (Path(__file__).parent / "data/counter5/counter5_table_dr.tsv").open("rb") as f:
             data_file = ContentFile(f.read())
@@ -477,7 +456,7 @@ class TestManualUploadForCounterData:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -528,7 +507,7 @@ class TestManualUploadControlledMetrics:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -626,7 +605,7 @@ class TestManualUploadConflicts:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -664,7 +643,7 @@ class TestManualUploadConflicts:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -720,9 +699,7 @@ class TestManualUploadForRaw:
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
-        response = clients["admin2"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
-        )
+        response = clients["admin2"].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
         assert response.status_code == 200
 
         # calculate preflight in celery
@@ -781,7 +758,7 @@ class TestManualUploadForRaw:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -816,8 +793,7 @@ class TestManualUploadForRaw:
 
         preflight_data = {"organization_id": organization.pk} if organization else {}
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-preflight", args=(mdu.pk,)),
-            preflight_data,
+            reverse("manual-data-upload-preflight", args=(mdu.pk,)), preflight_data
         )
         assert response.status_code == 200
 
@@ -864,7 +840,7 @@ class TestManualUploadForRaw:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -881,10 +857,7 @@ class TestManualUploadForRaw:
             "2019-03-01",
         }
 
-        assert {e["org_id"] for e in response.data["clashing_months"]} == {
-            org1.pk,
-            org2.pk,
-        }
+        assert {e["org_id"] for e in response.data["clashing_months"]} == {org1.pk, org2.pk}
 
         # Try to import it
         response = clients["master_admin"].post(
@@ -932,9 +905,7 @@ class TestManualUploadForRaw:
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
-        response = clients["admin2"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
-        )
+        response = clients["admin2"].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
         assert response.status_code == 200
 
         # calculate preflight in celery
@@ -956,13 +927,7 @@ class TestManualUploadForRaw:
         assert AccessLog.objects.count() == access_log_count + 18, "18 logs created"
 
     @pytest.mark.parametrize(
-        [
-            "from_organization",
-            "to_organization",
-            "owner",
-            "preflight_user",
-            "status",
-        ],
+        ["from_organization", "to_organization", "owner", "preflight_user", "status"],
         [
             ["standalone", "branch", "su", "su", 200],  # super user
             ["standalone", "branch", "master_admin", "master_admin", 200],  # master admin
@@ -1014,9 +979,7 @@ class TestManualUploadForRaw:
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
-        response = clients[owner].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
-        )
+        response = clients[owner].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
         assert response.status_code == 200
 
         # calculate preflight in celery
@@ -1030,12 +993,7 @@ class TestManualUploadForRaw:
         assert response.status_code == status
 
     @pytest.mark.parametrize(
-        [
-            "organization",
-            "owner",
-            "import_user",
-            "status",
-        ],
+        ["organization", "owner", "import_user", "status"],
         [
             ["branch", "su", "su", 200],  # super user
             ["branch", "master_admin", "master_admin", 200],  # master admin
@@ -1082,9 +1040,7 @@ class TestManualUploadForRaw:
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
 
         # confirm report type
-        response = clients[owner].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
-        )
+        response = clients[owner].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
         assert response.status_code == 200
 
         # generate preflight
@@ -1099,7 +1055,7 @@ class TestManualUploadForRaw:
 
         # try to import
         response = clients[import_user].post(
-            reverse("manual-data-upload-import-data", args=(mdu.pk,)),
+            reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
 
         assert response.status_code == status
@@ -1151,7 +1107,7 @@ class TestManualUploadForRaw:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 

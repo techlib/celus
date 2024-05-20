@@ -30,10 +30,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
     else:
         # TODO remove when we are going to display per organization data in preflight view
         organizations = {
-            k: {
-                "count": v["total"]["count"],
-                "sum": v["total"]["sum"],
-            }
+            k: {"count": v["total"]["count"], "sum": v["total"]["sum"]}
             for k, v in histograms["organizations"].items()
         }
 

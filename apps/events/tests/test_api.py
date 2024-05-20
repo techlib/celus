@@ -57,12 +57,7 @@ class TestEventListAPI:
         assert all(e.pk in [rec["pk"] for rec in data["results"]] for e in events_connected)
 
     @pytest.mark.parametrize(
-        ["importance", "count"],
-        [
-            (EventImportance.NORMAL, 3),
-            (EventImportance.HIGH, 5),
-            (None, 8),
-        ],
+        ["importance", "count"], [(EventImportance.NORMAL, 3), (EventImportance.HIGH, 5), (None, 8)]
     )
     def test_user_events_list_filtering_importance(
         self, admin_client, admin_user, importance, count
@@ -78,8 +73,7 @@ class TestEventListAPI:
             e.assign_to_users([admin_user])
 
         response = admin_client.get(
-            reverse("user-events-list"),
-            {"importance": importance} if importance else None,
+            reverse("user-events-list"), {"importance": importance} if importance else None
         )
         assert response.status_code == 200
         data = response.json()
@@ -90,12 +84,7 @@ class TestEventListAPI:
 
     @pytest.mark.parametrize(
         ["category", "count"],
-        [
-            (EventCategory.SUSHI, 3),
-            (EventCategory.TAGS, 5),
-            (EventCategory.OVERLAP, 0),
-            (None, 8),
-        ],
+        [(EventCategory.SUSHI, 3), (EventCategory.TAGS, 5), (EventCategory.OVERLAP, 0), (None, 8)],
     )
     def test_user_events_list_filtering_category(self, admin_client, admin_user, category, count):
         """
@@ -109,8 +98,7 @@ class TestEventListAPI:
             e.assign_to_users([admin_user])
 
         response = admin_client.get(
-            reverse("user-events-list"),
-            {"category": category} if category else None,
+            reverse("user-events-list"), {"category": category} if category else None
         )
         assert response.status_code == 200
         data = response.json()
@@ -129,10 +117,7 @@ class TestEventListAPI:
         for idx, e in enumerate(events):
             e.assign_to_users([admin_user], read=(idx % 2 == 0))
 
-        response = admin_client.get(
-            reverse("user-events-list"),
-            {"read": str(read).lower()},
-        )
+        response = admin_client.get(reverse("user-events-list"), {"read": str(read).lower()})
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 5
@@ -140,8 +125,7 @@ class TestEventListAPI:
         assert data["results"][0]["read"] is read
 
     @pytest.mark.parametrize(
-        ["text", "count"],
-        [("bar", 8), ("foo", 3), ("moo", 5), ("baz", 3), ("quix", 0), ("", 8)],
+        ["text", "count"], [("bar", 8), ("foo", 3), ("moo", 5), ("baz", 3), ("quix", 0), ("", 8)]
     )
     def test_user_events_list_search_filter(self, admin_client, admin_user, text, count):
         """
@@ -154,10 +138,7 @@ class TestEventListAPI:
         for e in events1 + events2:
             e.assign_to_users([admin_user])
 
-        response = admin_client.get(
-            reverse("user-events-list"),
-            {"search": text},
-        )
+        response = admin_client.get(reverse("user-events-list"), {"search": text})
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == count
@@ -179,8 +160,7 @@ class TestEventListAPI:
             e.assign_to_users([admin_user], read=(idx % 2 == 0))
 
         response = admin_client.get(
-            reverse("user-events-list"),
-            {"order_by": order_by, "desc": str(desc).lower()},
+            reverse("user-events-list"), {"order_by": order_by, "desc": str(desc).lower()}
         )
         assert response.status_code == 200
         data = response.json()
@@ -199,15 +179,7 @@ class TestEventListAPI:
 
     @pytest.mark.parametrize(
         ["page", "page_size", "count"],
-        [
-            (1, 5, 5),
-            (2, 5, 5),
-            (3, 5, 3),
-            (1, 10, 10),
-            (2, 10, 3),
-            (1, 20, 13),
-            (2, 20, 0),
-        ],
+        [(1, 5, 5), (2, 5, 5), (3, 5, 3), (1, 10, 10), (2, 10, 3), (1, 20, 13), (2, 20, 0)],
     )
     def test_user_events_list_pagination(self, admin_client, admin_user, page, page_size, count):
         """
@@ -239,10 +211,7 @@ class TestEventListAPI:
                     8,
                     3,
                     {
-                        "read": [
-                            {"read": False, "count": 3},
-                            {"read": True, "count": 5},
-                        ],
+                        "read": [{"read": False, "count": 3}, {"read": True, "count": 5}],
                         "category": [
                             {"category": "overlap", "count": 4},
                             {"category": "sushi", "count": 4},
@@ -262,9 +231,7 @@ class TestEventListAPI:
                     5,
                     0,
                     {
-                        "read": [
-                            {"read": True, "count": 5},
-                        ],
+                        "read": [{"read": True, "count": 5}],
                         "category": [
                             {"category": "overlap", "count": 2},
                             {"category": "sushi", "count": 3},
@@ -277,12 +244,7 @@ class TestEventListAPI:
                 ),
                 True,
             ),
-            (
-                "2023-03-03",
-                {},
-                (0, 0, {"category": [], "importance": [], "read": []}),
-                False,
-            ),
+            ("2023-03-03", {}, (0, 0, {"category": [], "importance": [], "read": []}), False),
             (
                 "2023-01-03",
                 {"read": True},
@@ -290,10 +252,7 @@ class TestEventListAPI:
                     8,
                     3,
                     {
-                        "read": [
-                            {"read": False, "count": 3},
-                            {"read": True, "count": 5},
-                        ],
+                        "read": [{"read": False, "count": 3}, {"read": True, "count": 5}],
                         "category": [
                             {"category": "overlap", "count": 2},
                             {"category": "sushi", "count": 3},
@@ -313,10 +272,7 @@ class TestEventListAPI:
                     8,
                     3,
                     {
-                        "read": [
-                            {"read": False, "count": 1},
-                            {"read": True, "count": 3},
-                        ],
+                        "read": [{"read": False, "count": 1}, {"read": True, "count": 3}],
                         "category": [
                             {"category": "overlap", "count": 4},
                             {"category": "sushi", "count": 4},
@@ -336,10 +292,7 @@ class TestEventListAPI:
                     8,
                     3,
                     {
-                        "read": [
-                            {"read": False, "count": 1},
-                            {"read": True, "count": 2},
-                        ],
+                        "read": [{"read": False, "count": 1}, {"read": True, "count": 2}],
                         "category": [
                             {"category": "overlap", "count": 2},
                             {"category": "sushi", "count": 1},
@@ -359,10 +312,7 @@ class TestEventListAPI:
                     8,
                     3,
                     {
-                        "read": [
-                            {"read": False, "count": 1},
-                            {"read": True, "count": 2},
-                        ],
+                        "read": [{"read": False, "count": 1}, {"read": True, "count": 2}],
                         "category": [
                             {"category": "overlap", "count": 1},
                             {"category": "sushi", "count": 2},
@@ -487,12 +437,7 @@ class TestEventListAPI:
 class TestUserEventExtraActions:
     @pytest.mark.parametrize(
         ["read_before", "read_after", "read_date_is_set"],
-        [
-            (True, True, False),
-            (True, False, True),
-            (False, True, True),
-            (False, False, False),
-        ],
+        [(True, True, False), (True, False, True), (False, True, True), (False, False, False)],
     )
     def test_mark_read(self, admin_client, admin_user, read_before, read_after, read_date_is_set):
         """

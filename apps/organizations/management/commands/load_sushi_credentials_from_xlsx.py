@@ -42,10 +42,7 @@ class Command(BaseCommand):
             help="update unverified credentials",
         )
         parser.add_argument(
-            "--update-all",
-            dest="update_all",
-            action="store_true",
-            help="update all credentials",
+            "--update-all", dest="update_all", action="store_true", help="update all credentials"
         )
         parser.add_argument(
             "--log-diff-off",

@@ -453,7 +453,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                 dimensions = []
                 for dimension_data in report_type_data["dimensions"]:
                     dimension, dimension_created = Dimension.objects.get_or_create(
-                        short_name=dimension_data["short_name"],
+                        short_name=dimension_data["short_name"]
                     )
                     if dimension_created:
                         logger.info(

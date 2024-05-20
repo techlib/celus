@@ -260,9 +260,7 @@ class DataCoverageExtractor:
             .filter(date__gte=self.start_month, date__lte=self.end_month)
             .annotate(foo=Value(42))  # dummy value to have something if split_by is empty
             .values("foo", *split_by)
-            .annotate(
-                ib_count=Count("pk", distinct=True),
-            )
+            .annotate(ib_count=Count("pk", distinct=True))
             .order_by(*split_by)
         )
         if self.report_type.is_interest_rt:

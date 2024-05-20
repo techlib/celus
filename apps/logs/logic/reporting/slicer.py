@@ -102,7 +102,7 @@ class FlexibleDataSlicer:
                 for f in self.base_subset_filters + self.compared_subset_filters
             ):
                 raise ValueError(
-                    "Only date filters are implemented for subsets in trend mode for now",
+                    "Only date filters are implemented for subsets in trend mode for now"
                 )
 
         self.dimension_filters: List[DimensionFilter] = []
@@ -510,12 +510,7 @@ class FlexibleDataSlicer:
         return {"count": count, "values": data, "cropped": cropped}
 
     def get_possible_dimension_values(
-        self,
-        dimension,
-        max_values_count=100,
-        ignore_self=False,
-        text_filter=None,
-        pks=None,
+        self, dimension, max_values_count=100, ignore_self=False, text_filter=None, pks=None
     ):
         """
         For a given dimension it returns which values are present in the filtered data and can thus

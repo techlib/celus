@@ -38,9 +38,4 @@ This email was sent because of a recent login attempt into your Celus account wh
  correct email and password. If you are not trying to log in into your Celus account,
  you should change your Celus password immediately.
 """
-    send_mail(
-        subject,
-        msg,
-        settings.SERVER_EMAIL,
-        [email],
-    )
+    send_mail(subject, msg, settings.SERVER_EMAIL, [email])

@@ -12,15 +12,9 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument("title_id", help="Title id from publications/title (Title/Database)")
         parser.add_argument(
-            "title_id",
-            help="Title id from publications/title (Title/Database)",
-        )
-        parser.add_argument(
-            "--json",
-            help="Print only valid json",
-            action="store_true",
-            dest="json",
+            "--json", help="Print only valid json", action="store_true", dest="json"
         )
         parser.add_argument(
             "--indent",

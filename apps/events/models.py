@@ -235,19 +235,13 @@ class UserEventQuerySet(models.QuerySet):
             "importance": list(
                 qs.filter(importance_agg_filter & event_filter)
                 .values("event__importance")
-                .annotate(
-                    importance=F("event__importance"),
-                    count=Count("event_id", distinct=True),
-                )
+                .annotate(importance=F("event__importance"), count=Count("event_id", distinct=True))
                 .values("count", "importance")
             ),
             "category": list(
                 qs.filter(category_agg_filter & event_filter)
                 .values("event__category")
-                .annotate(
-                    category=F("event__category"),
-                    count=Count("event_id", distinct=True),
-                )
+                .annotate(category=F("event__category"), count=Count("event_id", distinct=True))
                 .values("category", "count")
             ),
         }

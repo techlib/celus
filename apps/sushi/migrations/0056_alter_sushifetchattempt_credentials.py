@@ -5,9 +5,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("sushi", "0055_fill_missing_extracted_data"),
-    ]
+    dependencies = [("sushi", "0055_fill_missing_extracted_data")]
 
     operations = [
         migrations.AlterField(
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True, on_delete=django.db.models.deletion.SET_NULL, to="sushi.sushicredentials"
             ),
-        ),
+        )
     ]

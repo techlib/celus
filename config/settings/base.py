@@ -258,7 +258,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # 'remote_api' - number of calls per API key per the specified period
         # used by the APIKeyBasedThrottle
-        "remote_api": config("REMOTE_API_THROTTLE_RATE", cast=str, default="20/minute"),
+        "remote_api": config("REMOTE_API_THROTTLE_RATE", cast=str, default="20/minute")
     },
 }
 
@@ -607,11 +607,7 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "colored",
-        },
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "colored"},
         "errorlog": {
             "class": "logging.handlers.WatchedFileHandler",
             "filename": BASE_DIR / "error.log",

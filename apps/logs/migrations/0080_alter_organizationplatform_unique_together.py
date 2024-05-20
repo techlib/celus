@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(ensure_unique_organizationplatform, migrations.RunPython.noop),
         migrations.AlterUniqueTogether(
-            name="organizationplatform",
-            unique_together={("organization", "platform")},
+            name="organizationplatform", unique_together={("organization", "platform")}
         ),
     ]

@@ -13,11 +13,7 @@ from logs.logic.attempt_import import import_one_sushi_attempt
 from logs.models import ImportBatch, OrganizationPlatform
 from logs.tasks import import_one_sushi_attempt_task
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import (
-    AttemptStatus,
-    CounterReportsToCredentials,
-    SushiCredentials,
-)
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
 
 from scheduler import tasks
 from scheduler.fake_data import (
@@ -1188,20 +1184,11 @@ class TestScheduler:
             "attempt": None,
         }
 
-        fi1 = FetchIntentionFactory(
-            start_date=date(2020, 1, 1),
-            **common_fi_attrs,
-        )
+        fi1 = FetchIntentionFactory(start_date=date(2020, 1, 1), **common_fi_attrs)
 
-        fi2 = FetchIntentionFactory(
-            start_date=date(2020, 2, 1),
-            **common_fi_attrs,
-        )
+        fi2 = FetchIntentionFactory(start_date=date(2020, 2, 1), **common_fi_attrs)
 
-        fi3 = FetchIntentionFactory(
-            start_date=date(2020, 3, 1),
-            **common_fi_attrs,
-        )
+        fi3 = FetchIntentionFactory(start_date=date(2020, 3, 1), **common_fi_attrs)
 
         assert fi2.process() == ProcessResponse.SUCCESS
         fi2.refresh_from_db()
@@ -1534,11 +1521,7 @@ class TestHarvest:
 class TestAutomatic:
     @freeze_time(datetime(2020, 2, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_update_for_last_month(
-        self,
-        credentials,
-        organizations,
-        counter_report_types,
-        verified_credentials,
+        self, credentials, organizations, counter_report_types, verified_credentials
     ):
         start_date = date(2020, 2, 1)
 
@@ -1648,11 +1631,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 2, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_update_for_last_month_rerun(
-        self,
-        credentials,
-        organizations,
-        counter_report_types,
-        verified_credentials,
+        self, credentials, organizations, counter_report_types, verified_credentials
     ):
         # all empty
         assert FetchIntention.objects.count() == 0
@@ -1675,11 +1654,7 @@ class TestAutomatic:
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
-        self,
-        counter_report_types,
-        credentials,
-        verified_credentials,
-        monkeypatch,
+        self, counter_report_types, credentials, verified_credentials, monkeypatch
     ):
         """Test whether automatic harvests are update when
         credentials or credentails to counter report mapping
@@ -1874,12 +1849,7 @@ class TestAutomatic:
     @pytest.mark.parametrize(["retry_count", "has_ib"], [(0, False), (2, False), (10, True)])
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals_with_no_error_code(
-        self,
-        counter_report_types,
-        credentials,
-        verified_credentials,
-        retry_count,
-        has_ib,
+        self, counter_report_types, credentials, verified_credentials, retry_count, has_ib
     ):
         # Clear all harvests
         Harvest.objects.all().delete()

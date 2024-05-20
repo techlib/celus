@@ -14,11 +14,7 @@ class TestSushiCredentialsTasks:
     @pytest.mark.parametrize("ib1_included", [True, False])
     @pytest.mark.parametrize("ib2_included", [True, False])
     def test_delete_fetchattempts_and_related_importbatches_task(
-        self,
-        fa1_included,
-        fa2_included,
-        ib1_included,
-        ib2_included,
+        self, fa1_included, fa2_included, ib1_included, ib2_included
     ):
         fa1, fa2 = FetchAttemptFactory.create_batch(2)
 

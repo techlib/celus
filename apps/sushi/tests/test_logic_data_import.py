@@ -167,12 +167,7 @@ class TestLogicDataImportXLSX:
 
     @pytest.mark.parametrize(
         ["single_org_arg", "org_colum", "value_error"],
-        [
-            [False, True, False],
-            [True, False, False],
-            [False, False, True],
-            [True, True, False],
-        ],
+        [[False, True, False], [True, False, False], [False, False, True], [True, True, False]],
     )
     def test_single_org_arg_and_organization_column(
         self, single_org_arg, org_colum, value_error, records, records_wo_org, local_organizations
@@ -312,9 +307,7 @@ class TestLogicDataImportXLSX:
             type=DataSource.TYPE_ORGANIZATION, organization=local_organizations[0]
         )
         ds_type_kb = DataSourceFactory.create(
-            type=DataSource.TYPE_KNOWLEDGEBASE,
-            url=fake.url(),
-            token=fake.uuid4(),
+            type=DataSource.TYPE_KNOWLEDGEBASE, url=fake.url(), token=fake.uuid4()
         )
         name = fake.company()
         name2 = name if name_is_identical else fake.company()
@@ -520,7 +513,7 @@ class TestLogicDataImportCSV:
                 "customer_id": "AAA",
                 "requestor_id": "RRR",
                 "URL": "http://this.is/test/",
-            },
+            }
         ]
         Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
         extra = {"default_version": default_version} if default_version is not None else {}

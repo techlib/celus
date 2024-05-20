@@ -32,13 +32,7 @@ class UserEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserEvent
-        fields = (
-            "pk",
-            "event",
-            "read",
-            "user_id",
-            "unread_count",
-        )
+        fields = ("pk", "event", "read", "user_id", "unread_count")
 
     def get_unread_count(self, obj: UserEvent):
         return UserEvent.objects.filter(user=obj.user, read=False).count()
@@ -50,11 +44,5 @@ class DefaultEmptyBooleanField(fields.BooleanField):
 
 class UserEventFilterSerializer(serializers.Serializer):
     read = DefaultEmptyBooleanField(required=False)
-    importance = serializers.ChoiceField(
-        choices=EventImportance.choices,
-        required=False,
-    )
-    category = serializers.ChoiceField(
-        choices=EventCategory.choices,
-        required=False,
-    )
+    importance = serializers.ChoiceField(choices=EventImportance.choices, required=False)
+    category = serializers.ChoiceField(choices=EventCategory.choices, required=False)

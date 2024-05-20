@@ -8,6 +8,4 @@ router.register(
     "user-preferences", views.UserEventPreferencesViewSet, basename="user-event-preferences"
 )
 
-urlpatterns = [
-    *router.urls,
-]
+urlpatterns = [*router.urls]

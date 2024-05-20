@@ -750,10 +750,7 @@ class TestHarvestFetchIntentionAPI:
 
         url = reverse(
             "harvest-intention-detail",
-            args=(
-                harvests["admin1"].pk,
-                harvests["anonymous"].latest_intentions.first().pk,
-            ),
+            args=(harvests["admin1"].pk, harvests["anonymous"].latest_intentions.first().pk),
         )
 
         resp = clients["master_admin"].get(url, {})

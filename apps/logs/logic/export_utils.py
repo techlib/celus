@@ -171,11 +171,7 @@ class MappingXlsxDictWriter(DictWriter):
                         end = xl_rowcol_to_cell(self._current_row - 1, i)
                         value = self._column_totals[col]
                         self.sheet.write_formula(
-                            self._current_row,
-                            i,
-                            f"=SUM({start}:{end})",
-                            fmt,
-                            value=value,
+                            self._current_row, i, f"=SUM({start}:{end})", fmt, value=value
                         )
                 # add totals to the widths
                 self._widths[i] = max(self._widths[i], len(str(value)))
@@ -191,12 +187,7 @@ class MappingCSVDictWriter(DictWriter):
     Special DictWriter that maps column names from row keys to different column names
     """
 
-    def __init__(
-        self,
-        sink,
-        fields: List[Tuple[str, str]],
-        **kwargs,
-    ):
+    def __init__(self, sink, fields: List[Tuple[str, str]], **kwargs):
         super().__init__(sink, fields, **kwargs)
         self.writer = csv.writer(self.sink)
         self.writer.writerow(self.columns)

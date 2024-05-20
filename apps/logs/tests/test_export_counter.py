@@ -52,13 +52,7 @@ def fixed_created(input: str):
 @pytest.mark.django_db(transaction=True)
 class TestTRCounterExport:
     @pytest.mark.parametrize(
-        "title_preload_size,csv_line_batch",
-        [
-            [10, 10],
-            [1, 10],
-            [10, 1],
-            [1, 1],
-        ],
+        "title_preload_size,csv_line_batch", [[10, 10], [1, 10], [10, 1], [1, 1]]
     )
     def test_single_month(
         self,
@@ -103,15 +97,7 @@ target2,Pub1,,Plat1,,,9781492084884,,,,Journal,Article,2022,Controlled,Regular,N
 """
         )
 
-    def test_no_months(
-        self,
-        organization,
-        platform,
-        tr,
-        tr_ibs,
-        settings,
-        clickhouse_db,
-    ):
+    def test_no_months(self, organization, platform, tr, tr_ibs, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CELUS_VERSION = "X.Y.Z"
         sync_import_batches_with_clickhouse(*tr_ibs)
@@ -144,14 +130,7 @@ target3,Pub1,,Plat1,,,,,,,Other,Chapter,2021,Controlled,Regular,No_License,37,0,
 """
         )
 
-    def test_empty(
-        self,
-        organization,
-        platform,
-        tr,
-        settings,
-        clickhouse_db,
-    ):
+    def test_empty(self, organization, platform, tr, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         export = TRCounter5Export(organization, platform, tr, None, None)
         content = "".join(export.csv()).splitlines()
@@ -160,16 +139,7 @@ target3,Pub1,,Plat1,,,,,,,Other,Chapter,2021,Controlled,Regular,No_License,37,0,
         assert content[9] == f"Reporting_Period,Begin_Date=1970-01-01; End_Date={end_date}"
         assert content[-1].startswith("Title")
 
-    def test_errors(
-        self,
-        organization,
-        platform,
-        tr,
-        tr_ibs,
-        settings,
-        clickhouse_db,
-        caplog,
-    ):
+    def test_errors(self, organization, platform, tr, tr_ibs, settings, clickhouse_db, caplog):
         tr_ibs[0].accesslog_set.update(target_id=None)
         settings.CLICKHOUSE_SYNC_ACTIVE = True
 
@@ -236,15 +206,7 @@ target2,Pub1,,Plat1,,Book,Regular,No_License,3,3\r
 """
         )
 
-    def test_no_months(
-        self,
-        organization,
-        platform,
-        dr,
-        dr_ibs,
-        settings,
-        clickhouse_db,
-    ):
+    def test_no_months(self, organization, platform, dr, dr_ibs, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CELUS_VERSION = "X.Y.Z"
         sync_import_batches_with_clickhouse(*dr_ibs)
@@ -277,14 +239,7 @@ target3,Pub1,,Plat1,,Other,Regular,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
 """
         )
 
-    def test_empty(
-        self,
-        organization,
-        platform,
-        dr,
-        settings,
-        clickhouse_db,
-    ):
+    def test_empty(self, organization, platform, dr, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         export = DRCounter5Export(organization, platform, dr, None, None)
         content = "".join(export.csv()).splitlines()
@@ -293,16 +248,7 @@ target3,Pub1,,Plat1,,Other,Regular,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
         assert content[9] == f"Reporting_Period,Begin_Date=1970-01-01; End_Date={end_date}"
         assert content[-1].startswith("Database")
 
-    def test_errors(
-        self,
-        organization,
-        platform,
-        dr,
-        dr_ibs,
-        settings,
-        clickhouse_db,
-        caplog,
-    ):
+    def test_errors(self, organization, platform, dr, dr_ibs, settings, clickhouse_db, caplog):
         dr_ibs[0].accesslog_set.update(target_id=None)
         settings.CLICKHOUSE_SYNC_ACTIVE = True
 
@@ -369,15 +315,7 @@ Plat1,Journal,Regular,No_License,29,29\r
 """
         )
 
-    def test_no_months(
-        self,
-        organization,
-        platform,
-        pr,
-        pr_ibs,
-        settings,
-        clickhouse_db,
-    ):
+    def test_no_months(self, organization, platform, pr, pr_ibs, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CELUS_VERSION = "X.Y.Z"
         sync_import_batches_with_clickhouse(*pr_ibs)
@@ -410,14 +348,7 @@ Plat1,Journal,Regular,No_License,29,0,0,29,0,0,0,0,0,0,0,0,0,0,0\r
 """
         )
 
-    def test_empty(
-        self,
-        organization,
-        platform,
-        pr,
-        settings,
-        clickhouse_db,
-    ):
+    def test_empty(self, organization, platform, pr, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         export = PRCounter5Export(organization, platform, pr, None, None)
         content = "".join(export.csv()).splitlines()
@@ -427,15 +358,7 @@ Plat1,Journal,Regular,No_License,29,0,0,29,0,0,0,0,0,0,0,0,0,0,0\r
         assert content[-1].startswith("Platform")
 
     def test_errors(
-        self,
-        organization,
-        platform,
-        pr,
-        pr_ibs,
-        settings,
-        clickhouse_db,
-        targets,
-        caplog,
+        self, organization, platform, pr, pr_ibs, settings, clickhouse_db, targets, caplog
     ):
         # Remove required platform dimension
         dim_attr = pr.dim_name_to_dim_attr("Platform")
@@ -507,15 +430,7 @@ target2,Pub1,,Plat1,,,,No_License,29,29\r
 """
         )
 
-    def test_no_months(
-        self,
-        organization,
-        platform,
-        ir_m1,
-        ir_m1_ibs,
-        settings,
-        clickhouse_db,
-    ):
+    def test_no_months(self, organization, platform, ir_m1, ir_m1_ibs, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         settings.CELUS_VERSION = "X.Y.Z"
         sync_import_batches_with_clickhouse(*ir_m1_ibs)
@@ -548,14 +463,7 @@ target3,Pub1,,Plat1,,,,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
 """
         )
 
-    def test_empty(
-        self,
-        organization,
-        platform,
-        ir_m1,
-        settings,
-        clickhouse_db,
-    ):
+    def test_empty(self, organization, platform, ir_m1, settings, clickhouse_db):
         settings.CLICKHOUSE_SYNC_ACTIVE = True
         export = IR_M1Counter5Export(organization, platform, ir_m1, None, None)
         content = "".join(export.csv()).splitlines()
@@ -565,14 +473,7 @@ target3,Pub1,,Plat1,,,,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
         assert content[-1].startswith("Item")
 
     def test_errors(
-        self,
-        organization,
-        platform,
-        ir_m1,
-        ir_m1_ibs,
-        settings,
-        clickhouse_db,
-        caplog,
+        self, organization, platform, ir_m1, ir_m1_ibs, settings, clickhouse_db, caplog
     ):
         ir_m1_ibs[0].accesslog_set.update(target_id=None)
         settings.CLICKHOUSE_SYNC_ACTIVE = True

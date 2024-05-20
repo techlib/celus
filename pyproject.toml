@@ -26,6 +26,12 @@ fixable = ['I001']  # isort: imports are incorrectly sorted
 [tool.ruff.per-file-ignores]
 "test_*.py" = ["B011"]  # test files should have asserts
 
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.isort]
+split-on-trailing-comma = false
+
 [tool.poetry]
 name = "celus"
 version = "6.0.0"

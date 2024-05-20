@@ -7,10 +7,7 @@ from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
-from core.permissions import (
-    SuperuserOrAdminPermission,
-    ViewPlatformPermission,
-)
+from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -591,7 +588,7 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         self.multiplatform = "multiplatform" in self.request.query_params
         if self.multiplatform:
             base_title_query = base_title_query.annotate(
-                platform_count=Count("platformtitle__platform_id", distinct=True),
+                platform_count=Count("platformtitle__platform_id", distinct=True)
             ).filter(platform_count__gt=1)
 
         base_title_query = base_title_query.distinct().order_by()
@@ -1058,9 +1055,7 @@ class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
             )
             .exclude(metric_id__in=excluded_metrics)
             .values("target_id", "platform_id")
-            .annotate(
-                yop_ids=ArrayAgg(dim_ref, distinct=True),
-            )
+            .annotate(yop_ids=ArrayAgg(dim_ref, distinct=True))
         )
         # the YOPs are just ids in DimensionText, we need to map them to actual values
         all_yop_ids = set()

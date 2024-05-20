@@ -30,11 +30,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 from config.permissions import IsAuthenticatedWithOptional2FA
 from core.logic.email import mail_otp_token
 from core.models import TaskProgress, User
-from core.permissions import (
-    OwnerPermission,
-    SuperuserOrAdminPermission,
-    SuperuserPermission,
-)
+from core.permissions import OwnerPermission, SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import (
     AccessibleUsersSerializer,
     EmailDeviceSerializer,
@@ -219,12 +215,7 @@ class VerifyEmailAndOtpView(VerifyEmailView):
             obj = self.get_object()  # this is EmailConfirmation for the current email address
             user = obj.email_address.user
             device, _created = EmailDevice.objects.get_or_create(
-                user=user,
-                name="default",
-                defaults={
-                    "confirmed": True,
-                    "email": None,
-                },
+                user=user, name="default", defaults={"confirmed": True, "email": None}
             )
             device.confirmed = True
             device.save()
@@ -320,7 +311,7 @@ class ManagementCommandViewSet(ViewSet):
                 "stderr": err.getvalue(),
                 "exception": exception,
                 "log": log.getvalue(),
-            },
+            }
         )
 
 
@@ -412,9 +403,7 @@ class DifferentUserVerifyEmailView(APIView):
 class OtpDeviceView(
     mixins.ListModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin, GenericViewSet
 ):
-    permission_classes = [
-        SuperuserOrAdminPermission | OwnerPermission,
-    ]
+    permission_classes = [SuperuserOrAdminPermission | OwnerPermission]
     serializer_class = EmailDeviceSerializer
 
     @staticmethod
@@ -464,8 +453,7 @@ class OtpDeviceView(
         if not request.user.email_verified:
             # can't sent token using unverified email
             return Response(
-                {"error": "user's email is not verified"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "user's email is not verified"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         if generate_allowed:
@@ -494,15 +482,9 @@ class OtpDeviceView(
         # read code / token
         token = request.data.get("code")
         if not token:
-            return Response(
-                {"code": "missing field"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"code": "missing field"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if device := match_token(
-            request.user,
-            token,
-        ):
+        if device := match_token(request.user, token):
             # no need to set anything special to request
             # after setting this cookie otp_required will be set to null
             response = Response()
@@ -511,7 +493,4 @@ class OtpDeviceView(
             return response
 
         # couldn't find token
-        return Response(
-            {"token": "token not valid"},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({"token": "token not valid"}, status=status.HTTP_404_NOT_FOUND)

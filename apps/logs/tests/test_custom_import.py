@@ -33,15 +33,7 @@ class TestCustomImport:
     """
 
     def test_custom_data_import_process(
-        self,
-        organizations,
-        report_types,
-        tmp_path,
-        settings,
-        clients,
-        users,
-        basic1,
-        platforms,
+        self, organizations, report_types, tmp_path, settings, clients, users, basic1, platforms
     ):
         """
         Complex test
@@ -80,7 +72,7 @@ class TestCustomImport:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -132,7 +124,7 @@ class TestCustomImport:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -187,7 +179,7 @@ class TestCustomImport:
 
         # confirm report type
         response = clients["master_admin"].post(
-            reverse("manual-data-upload-confirm", args=(mdu.pk,)),
+            reverse("manual-data-upload-confirm", args=(mdu.pk,))
         )
         assert response.status_code == 200
 
@@ -391,13 +383,7 @@ class TestCustomImport:
 
     @pytest.mark.parametrize(["content_prefix"], [[""], ["\ufeff"]])
     def test_mdu_data_to_records(
-        self,
-        organizations,
-        platforms,
-        report_types,
-        tmp_path,
-        settings,
-        content_prefix,
+        self, organizations, platforms, report_types, tmp_path, settings, content_prefix
     ):
         """
         Check that CSV data are correctly ingested - regardless of BOM presence

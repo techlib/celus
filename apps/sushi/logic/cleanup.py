@@ -17,9 +17,7 @@ CHUNK_SIZE = 2000
 
 
 @atomic
-def delete_fetchattempts_and_related_importbatches(
-    fetch_attempts_pks: list,
-):
+def delete_fetchattempts_and_related_importbatches(fetch_attempts_pks: list):
     ImportBatch.objects.filter(sushifetchattempt__pk__in=fetch_attempts_pks).delete()
     SushiFetchAttempt.objects.filter(pk__in=fetch_attempts_pks).delete()
 

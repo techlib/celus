@@ -53,10 +53,7 @@ class Command(BaseCommand):
             # the CSV exporter has functionality which comes handy here because it creates
             # queries which contain all the "key" dimensions of accesslogs, which is exactly
             # what we need to compare the records
-            exporter = CSVExport(
-                {"platform_id": platform.pk},
-                use_clickhouse=True,
-            )
+            exporter = CSVExport({"platform_id": platform.pk}, use_clickhouse=True)
             logger.info("CH count: %d", exporter.record_count)
             dqs = exporter.create_queryset()
             cqs = exporter.create_clickhouse_query()

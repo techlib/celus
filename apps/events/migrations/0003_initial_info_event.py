@@ -37,8 +37,6 @@ def remove_initial_info_event(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("events", "0002_alter_event_last_updated_by"),
-    ]
+    dependencies = [("events", "0002_alter_event_last_updated_by")]
 
     operations = [migrations.RunPython(create_initial_info_event, remove_initial_info_event)]

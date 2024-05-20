@@ -342,9 +342,7 @@ IPEDS_REPORT_2023 = {
             "description": "E-serials Usage",
             "explanation": "COUNTER 5 TR report is used to get information about journal usage. "
             "Both Controlled and Open Access usage is reported.",
-            "stages": [
-                {"name": "TR", "formula": "tr_j"},
-            ],
+            "stages": [{"name": "TR", "formula": "tr_j"}],
         },
     ],
 }

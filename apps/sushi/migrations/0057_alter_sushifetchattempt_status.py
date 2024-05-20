@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("sushi", "0056_alter_sushifetchattempt_credentials"),
-    ]
+    dependencies = [("sushi", "0056_alter_sushifetchattempt_credentials")]
 
     operations = [
         migrations.AlterField(
@@ -27,5 +25,5 @@ class Migration(migrations.Migration):
                 default="initial",
                 max_length=20,
             ),
-        ),
+        )
     ]

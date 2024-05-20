@@ -799,8 +799,7 @@ class FetchIntention(models.Model):
 
         # Update last_harvestable_month of CounterReportsToCredentials model
         if cr2c := CounterReportsToCredentials.objects.filter(
-            counter_report=self.counter_report,
-            credentials=self.credentials,
+            counter_report=self.counter_report, credentials=self.credentials
         ).first():
             cr2c.update_last_harvestable_month_by_attempt(self.attempt)
 

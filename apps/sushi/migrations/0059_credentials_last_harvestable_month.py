@@ -40,10 +40,7 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
             ),
         ),
-        migrations.AlterUniqueTogether(
-            name="counterreportstocredentials",
-            unique_together=set(),
-        ),
+        migrations.AlterUniqueTogether(name="counterreportstocredentials", unique_together=set()),
         migrations.AddConstraint(
             model_name="counterreportstocredentials",
             constraint=models.CheckConstraint(

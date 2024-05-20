@@ -66,9 +66,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "abstract": False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
             name="UserEvent",
@@ -131,9 +129,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "unique_together": {("user", "event")},
-            },
+            options={"unique_together": {("user", "event")}},
         ),
         migrations.AddField(
             model_name="event",
@@ -191,8 +187,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "unique_together": {("user", "category", "importance")},
-            },
+            options={"unique_together": {("user", "category", "importance")}},
         ),
     ]

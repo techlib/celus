@@ -500,8 +500,7 @@ class TestChartDataAPIView:
 
         report_view = ReportDataView.objects.create(base_report_type=mdu1.report_type)
         resp = admin_client.get(
-            reverse("chart_data", args=(report_view.pk,)),
-            {"prim_dim": "date", "mdu": mdu1.pk},
+            reverse("chart_data", args=(report_view.pk,)), {"prim_dim": "date", "mdu": mdu1.pk}
         )
         assert resp.status_code == 200
         assert "data" in resp.json()

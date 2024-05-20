@@ -4,9 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("core", "0020_otp_devices"),
-    ]
+    dependencies = [("core", "0020_otp_devices")]
 
     operations = [
         migrations.AddField(
@@ -15,5 +13,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False, help_text="If set to True, 2FA auth will be bypassed"
             ),
-        ),
+        )
     ]

@@ -16,12 +16,7 @@ from publications.serializers import (
     SimplePlatformSerializer,
 )
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import (
-    BooleanField,
-    DateField,
-    IntegerField,
-    SerializerMethodField,
-)
+from rest_framework.fields import BooleanField, DateField, IntegerField, SerializerMethodField
 from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import (
     BaseSerializer,
@@ -395,7 +390,7 @@ class ManualDataUploadSerializer(ModelSerializer):
                     and platform.source.organization != organization
                 ):
                     raise ValidationError(
-                        {"organization": "platform is private and belongs to another organization"},
+                        {"organization": "platform is private and belongs to another organization"}
                     )
         else:
             if "report_type_id" in attrs:

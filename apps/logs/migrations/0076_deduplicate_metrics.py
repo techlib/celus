@@ -79,9 +79,7 @@ def empty_metric_source(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("logs", "0075_multimedia_interest"),
-    ]
+    dependencies = [("logs", "0075_multimedia_interest")]
 
     operations = [
         migrations.RunPython(empty_dimension_source, migrations.RunPython.noop),

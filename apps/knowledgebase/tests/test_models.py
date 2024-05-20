@@ -394,18 +394,12 @@ class TestPlatformImportAttempt:
             platform_with_source.name == "AAP - American Academy of Pediatrics"
         ), "linked platform updated"
 
-    @pytest.mark.parametrize(
-        "verification",
-        ("forced", "attempt"),
-    )
+    @pytest.mark.parametrize("verification", ("forced", "attempt"))
     def test_process_credentials_update(self, data_sources, report_types, verification):
         p1 = PlatformFactory(short_name="AAP", ext_id=328, source=data_sources["brain"])
         p2 = PlatformFactory(short_name="AACR", ext_id=327, source=data_sources["brain"])
         cred1 = CredentialsFactory(
-            platform=p1,
-            url="https://something.else1",
-            counter_version=5,
-            auto_update_url=True,
+            platform=p1, url="https://something.else1", counter_version=5, auto_update_url=True
         )
         if verification == "forced":
             cred1.force_current_version_verified()
@@ -417,10 +411,7 @@ class TestPlatformImportAttempt:
             )
 
         cred2 = CredentialsFactory(
-            platform=p2,
-            url="https://something.else2",
-            counter_version=4,
-            auto_update_url=True,
+            platform=p2, url="https://something.else2", counter_version=4, auto_update_url=True
         )
 
         attempt = PlatformImportAttempt(source=data_sources["brain"])
@@ -572,11 +563,7 @@ class TestReportTypeImportAttempt:
             report_type2.reportinterestmetric_set.order_by("id").values_list(
                 "metric__short_name", "interest_group__short_name"
             )
-        ) == [
-            ("metric1", "multimedia"),
-            ("metric2", "search"),
-            ("metric3", "other"),
-        ]
+        ) == [("metric1", "multimedia"), ("metric2", "search"), ("metric3", "other")]
 
         # Create import batch for on of the report types
         ImportBatchFactory(report_type=report_type2)
@@ -612,10 +599,7 @@ class TestReportTypeImportAttempt:
             report_type2.controlled_metrics.order_by("short_name").values_list(
                 "short_name", flat=True
             )
-        ) == [
-            "metric2",
-            "metric3",
-        ]
+        ) == ["metric2", "metric3"]
         assert report_type2.dimensions.count() == 2
         assert list(
             report_type2.reporttypetodimension_set.order_by("position").values_list(
@@ -626,9 +610,7 @@ class TestReportTypeImportAttempt:
             report_type2.reportinterestmetric_set.order_by("id").values_list(
                 "metric__short_name", "interest_group__short_name"
             )
-        ) == [
-            ("metric3", "search"),
-        ]
+        ) == [("metric3", "search")]
 
         report_type3 = ReportType.objects.get(short_name="three")
         assert report_type3.name == "third"

@@ -10,9 +10,7 @@ def cooldown_to_zero(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("scheduler", "0016_fix_fi_queues"),
-    ]
+    dependencies = [("scheduler", "0016_fix_fi_queues")]
 
     operations = [
         migrations.AlterField(

@@ -534,7 +534,7 @@ class ItemTag(CreatedUpdatedMixin, models.Model):
                 fields=("target", "_tag_class"),
                 condition=Q(_exclusive=True),
                 name="%(class)s_unique_tag_class_for_exclusive",
-            ),
+            )
         ]
 
     def save(self, **kwargs):
@@ -641,8 +641,7 @@ class TaggingBatchQuerySet(models.QuerySet):
         return self.annotate(
             import_count=Subquery(
                 TaggingAttempt.objects.filter(
-                    batch=OuterRef("id"),
-                    operation=TaggingAttemptOperation.IMPORT,
+                    batch=OuterRef("id"), operation=TaggingAttemptOperation.IMPORT
                 )
                 .order_by()
                 .annotate(x=Value(7))  # to ensure all sub-rows have the same value
@@ -656,10 +655,7 @@ class TaggingBatchQuerySet(models.QuerySet):
         """
         Returns the batches which should be reprocessed
         """
-        return self.filter(
-            state=TaggingBatchState.IMPORTED,
-            reprocess_after__isnull=False,
-        ).exclude(
+        return self.filter(state=TaggingBatchState.IMPORTED, reprocess_after__isnull=False).exclude(
             Exists(  # check if recent import exists
                 TaggingAttempt.objects.filter(
                     batch=OuterRef("pk"),
@@ -876,10 +872,7 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         tag_stats = {}
         if self.needs_tag_column:
             tag_stats = {
-                key: {
-                    "matched_lines": value,
-                    "matched_titles": len(tag_to_unique_title_ids[key]),
-                }
+                key: {"matched_lines": value, "matched_titles": len(tag_to_unique_title_ids[key])}
                 for key, value in tag_to_matched_lines.items()
             }
         return TaggingAttempt(

@@ -55,9 +55,7 @@ class Command(BaseCommand):
     def create_fake_report(self):
         rt, _ = ReportType.objects.get_or_create(short_name="_foo", name="_FOO")
         return CounterReportType.objects.get_or_create(
-            code="_foo",
-            report_type=rt,
-            counter_version=7,
+            code="_foo", report_type=rt, counter_version=7
         )[0]
 
     def create_fake_attempt(self, report, cr):

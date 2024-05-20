@@ -184,9 +184,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={
-                "ordering": ("batch_id", "created"),
-            },
+            options={"ordering": ("batch_id", "created")},
         ),
         migrations.AddField(
             model_name="organizationtag",
@@ -226,12 +224,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(create_taggingattempts_from_taggingbatches, migrations.RunPython.noop),
         migrations.RunPython(add_tagging_attempts, migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name="taggingbatch",
-            name="postflight",
-        ),
-        migrations.RemoveField(
-            model_name="taggingbatch",
-            name="preflight",
-        ),
+        migrations.RemoveField(model_name="taggingbatch", name="postflight"),
+        migrations.RemoveField(model_name="taggingbatch", name="preflight"),
     ]

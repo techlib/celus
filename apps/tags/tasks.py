@@ -154,7 +154,7 @@ def reprocess_due_tagging_batches_task():
         tb.save()
 
         postflight = tb.assign_tag(
-            title_id_formatter=lambda title_id: f"https://{domain_name}/titles/{title_id}",
+            title_id_formatter=lambda title_id: f"https://{domain_name}/titles/{title_id}"
         )
 
         # create corresponding event

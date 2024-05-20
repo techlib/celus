@@ -729,12 +729,7 @@ class TestSushiCredentialsViewSet:
                 assert data[1][month][0]["can_harvest"] is True
 
     def test_update_assigned_counter_reports(
-        self,
-        basic1,
-        credentials,
-        users,
-        clients,
-        counter_report_types,
+        self, basic1, credentials, users, clients, counter_report_types
     ):
         # Empty
         resp = clients["admin2"].post(
@@ -824,9 +819,7 @@ class TestSushiCredentialsViewSet:
             },
         ]
         resp = clients["master_admin"].post(
-            reverse("sushi-credentials-update-assigned-counter-reports"),
-            test_data,
-            format="json",
+            reverse("sushi-credentials-update-assigned-counter-reports"), test_data, format="json"
         )
         assert resp.status_code == 200
         assert resp.json() == {"updated": 2, "unmatched": 1, "matched": 2}
@@ -839,9 +832,7 @@ class TestSushiCredentialsViewSet:
 
         # retry with the same data - no record should be updated
         resp = clients["master_admin"].post(
-            reverse("sushi-credentials-update-assigned-counter-reports"),
-            test_data,
-            format="json",
+            reverse("sushi-credentials-update-assigned-counter-reports"), test_data, format="json"
         )
         assert resp.status_code == 200
         assert resp.json() == {"updated": 0, "unmatched": 1, "matched": 2}

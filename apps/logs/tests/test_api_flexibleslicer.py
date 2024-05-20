@@ -347,12 +347,7 @@ class TestSlicerAPI:
 
     @pytest.mark.parametrize(
         ["base_subset_present", "compared_subset_present"],
-        [
-            (True, True),
-            (True, False),
-            (False, True),
-            (False, False),
-        ],
+        [(True, True), (True, False), (False, True), (False, False)],
     )
     @pytest.mark.parametrize("zero_rows", [True, False])
     def test_trend_mode_missing_subfilters(
@@ -388,13 +383,7 @@ class TestSlicerAPI:
 
     @pytest.mark.parametrize(
         ["rt_idx", "org_idx", "exp_ib_count", "exp_ib_max"],
-        (
-            (0, 0, 9, 12),
-            (0, 1, 12, 12),
-            (1, 0, 12, 12),
-            (1, 1, 12, 12),
-            (0, None, 33, 36),
-        ),
+        ((0, 0, 9, 12), (0, 1, 12, 12), (1, 0, 12, 12), (1, 1, 12, 12), (0, None, 33, 36)),
     )
     def test_report_coverage(
         self, flexible_slicer_test_data, clients, rt_idx, org_idx, exp_ib_count, exp_ib_max

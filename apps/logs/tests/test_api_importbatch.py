@@ -764,8 +764,7 @@ class TestImportBatchesAPI:
         harvestable if they are broken for that report.
         """
         cr = CredentialsFactory.create(
-            organization=organizations["root"],
-            platform=platforms["root"],
+            organization=organizations["root"], platform=platforms["root"]
         )
         # we connect the platform and the organization to make them appear in coverage at all
         OrganizationPlatform.objects.create(
@@ -784,9 +783,7 @@ class TestImportBatchesAPI:
         )
         # connect the report to credentials in a broken state
         CounterReportsToCredentials.objects.create(
-            counter_report=crt,
-            credentials=cr,
-            broken=broken and "sushi" or None,
+            counter_report=crt, credentials=cr, broken=broken and "sushi" or None
         )
         # the test itself
         resp = clients["su"].get(
@@ -825,11 +822,7 @@ class TestImportBatchesAPI:
         org_params = {"organization": organizations[organization].pk} if organization else {}
         resp = clients["su"].get(
             reverse("import-batch-list") + "total-data-coverage/",
-            {
-                "start_date": "2020-01",
-                "end_date": "2020-03",
-                **org_params,
-            },
+            {"start_date": "2020-01", "end_date": "2020-03", **org_params},
         )
         assert resp.status_code == 200
         assert type(resp.json()) is dict  # noqa E721 - make sure it is a dict, not subtype

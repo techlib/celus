@@ -4,14 +4,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("knowledgebase", "0005_nibbler"),
-    ]
+    dependencies = [("knowledgebase", "0005_nibbler")]
 
     operations = [
         migrations.AlterField(
             model_name="routersyncattempt",
             name="last_error",
             field=models.TextField(blank=True, default=""),
-        ),
+        )
     ]

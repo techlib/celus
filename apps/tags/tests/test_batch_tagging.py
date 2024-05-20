@@ -512,9 +512,7 @@ class TestBatchTaggingWithTagsInFile:
             tag1.tag(issn_to_title[issn], users["admin1"])
         tag2 = TagForTitleFactory.create(tag_class=tc, name="bar")
         tb = TaggingBatchFactory.create(
-            tag=tag2,
-            source_file=plain_test_file_with_tags,
-            state=TaggingBatchState.PREPROCESSING,
+            tag=tag2, source_file=plain_test_file_with_tags, state=TaggingBatchState.PREPROCESSING
         )
         tb.state = TaggingBatchState.IMPORTING
         tb.assign_tag()
@@ -564,16 +562,7 @@ class TestBatchTaggingWithTagsInFile:
 @pytest.mark.django_db()
 class TestBatchTaggingAPI:
     @pytest.mark.parametrize(
-        "client_type",
-        [
-            "user1",
-            "user2",
-            "admin1",
-            "admin2",
-            "master_admin",
-            "master_user",
-            "su",
-        ],
+        "client_type", ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"]
     )
     @pytest.mark.parametrize(
         ["owner_type", "access_level", "org_name", "allowed_users"],
@@ -597,33 +586,15 @@ class TestBatchTaggingAPI:
                 "standalone",
                 ["admin2", "user2", "master_user", "master_admin", "su"],
             ),
-            (
-                "admin1",
-                AccessibleBy.ORG_ADMINS,
-                "root",
-                ["admin1", "master_admin", "su"],
-            ),
-            (
-                "admin2",
-                AccessibleBy.ORG_ADMINS,
-                "standalone",
-                ["admin2", "master_admin", "su"],
-            ),
+            ("admin1", AccessibleBy.ORG_ADMINS, "root", ["admin1", "master_admin", "su"]),
+            ("admin2", AccessibleBy.ORG_ADMINS, "standalone", ["admin2", "master_admin", "su"]),
             ("master_admin", AccessibleBy.CONS_ADMINS, None, ["master_admin", "su"]),
             ("su", AccessibleBy.CONS_ADMINS, None, ["master_admin", "su"]),
             (
                 "master_admin",
                 AccessibleBy.EVERYBODY,
                 None,
-                [
-                    "user1",
-                    "user2",
-                    "admin1",
-                    "admin2",
-                    "master_admin",
-                    "master_user",
-                    "su",
-                ],
+                ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"],
             ),
         ],
     )
@@ -644,10 +615,7 @@ class TestBatchTaggingAPI:
         """
         extra = {"owner_org": basic1["organizations"][org_name]} if org_name else {}
         tag = TagForTitleFactory.create(
-            can_assign=access_level,
-            can_see=access_level,
-            owner=users[owner_type],
-            **extra,
+            can_assign=access_level, can_see=access_level, owner=users[owner_type], **extra
         )
         tb = TaggingBatchFactory.create(
             tag=tag, source_file=plain_test_file, last_updated_by=users[owner_type]
@@ -662,16 +630,7 @@ class TestBatchTaggingAPI:
         assert sees_tb == (client_type in allowed_users)
 
     @pytest.mark.parametrize(
-        "client_type",
-        [
-            "user1",
-            "user2",
-            "admin1",
-            "admin2",
-            "master_admin",
-            "master_user",
-            "su",
-        ],
+        "client_type", ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"]
     )
     @pytest.mark.parametrize(
         ["owner_type", "access_level", "org_name", "allowed_users"],
@@ -695,33 +654,15 @@ class TestBatchTaggingAPI:
                 "standalone",
                 ["admin2", "user2", "master_user", "master_admin", "su"],
             ),
-            (
-                "admin1",
-                AccessibleBy.ORG_ADMINS,
-                "root",
-                ["admin1", "master_admin", "su"],
-            ),
-            (
-                "admin2",
-                AccessibleBy.ORG_ADMINS,
-                "standalone",
-                ["admin2", "master_admin", "su"],
-            ),
+            ("admin1", AccessibleBy.ORG_ADMINS, "root", ["admin1", "master_admin", "su"]),
+            ("admin2", AccessibleBy.ORG_ADMINS, "standalone", ["admin2", "master_admin", "su"]),
             ("master_admin", AccessibleBy.CONS_ADMINS, None, ["master_admin", "su"]),
             ("su", AccessibleBy.CONS_ADMINS, None, ["master_admin", "su"]),
             (
                 "master_admin",
                 AccessibleBy.EVERYBODY,
                 None,
-                [
-                    "user1",
-                    "user2",
-                    "admin1",
-                    "admin2",
-                    "master_admin",
-                    "master_user",
-                    "su",
-                ],
+                ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"],
             ),
         ],
     )
@@ -827,16 +768,7 @@ class TestBatchTaggingAPI:
             assert resp.json()["tag_class"]["pk"] == tb.tag_class_id
 
     @pytest.mark.parametrize(
-        "client_type",
-        [
-            "user1",
-            "user2",
-            "admin1",
-            "admin2",
-            "master_admin",
-            "master_user",
-            "su",
-        ],
+        "client_type", ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"]
     )
     def test_tagging_batch_create_tag_access_restrictions(
         self, inmemory_media, clients, users, client_type
@@ -853,16 +785,7 @@ class TestBatchTaggingAPI:
         assert resp.status_code == (201 if client_type == "user2" else 403)
 
     @pytest.mark.parametrize(
-        "client_type",
-        [
-            "user1",
-            "user2",
-            "admin1",
-            "admin2",
-            "master_admin",
-            "master_user",
-            "su",
-        ],
+        "client_type", ["user1", "user2", "admin1", "admin2", "master_admin", "master_user", "su"]
     )
     def test_tagging_batch_create_tag_class_access_restrictions(
         self, inmemory_media, clients, users, client_type
@@ -872,24 +795,17 @@ class TestBatchTaggingAPI:
         for that tag.
         """
         tc = TagClassFactory.create(
-            scope=TagScope.TITLE,
-            owner=users["user2"],
-            default_tag_can_assign=AccessibleBy.OWNER,
+            scope=TagScope.TITLE, owner=users["user2"], default_tag_can_assign=AccessibleBy.OWNER
         )
         with plain_test_file.open("rb") as infile:
             resp = clients[client_type].post(
-                reverse("tagging-batch-list"),
-                {"source_file": infile, "tag_class": tc.pk},
+                reverse("tagging-batch-list"), {"source_file": infile, "tag_class": tc.pk}
             )
         assert resp.status_code == (201 if client_type == "user2" else 403)
 
     @pytest.mark.parametrize(
         ("tag_scope", "can_create"),
-        [
-            (TagScope.TITLE, True),
-            (TagScope.PLATFORM, False),
-            (TagScope.ORGANIZATION, False),
-        ],
+        [(TagScope.TITLE, True), (TagScope.PLATFORM, False), (TagScope.ORGANIZATION, False)],
     )
     def test_tagging_batch_create_tag_scope_restrictions(
         self, inmemory_media, clients, users, tag_scope, can_create
@@ -899,9 +815,7 @@ class TestBatchTaggingAPI:
         for that tag.
         """
         tag = TagFactory.create(
-            tag_class__scope=tag_scope,
-            owner=users["user2"],
-            can_assign=AccessibleBy.OWNER,
+            tag_class__scope=tag_scope, owner=users["user2"], can_assign=AccessibleBy.OWNER
         )
         with plain_test_file.open("rb") as infile:
             resp = clients["user2"].post(
@@ -911,11 +825,7 @@ class TestBatchTaggingAPI:
 
     @pytest.mark.parametrize(
         ("tag_scope", "can_create"),
-        [
-            (TagScope.TITLE, True),
-            (TagScope.PLATFORM, False),
-            (TagScope.ORGANIZATION, False),
-        ],
+        [(TagScope.TITLE, True), (TagScope.PLATFORM, False), (TagScope.ORGANIZATION, False)],
     )
     def test_tagging_batch_create_tag_class_scope_restrictions(
         self, inmemory_media, clients, users, tag_scope, can_create
@@ -925,14 +835,11 @@ class TestBatchTaggingAPI:
         for that tag.
         """
         tc = TagClassFactory.create(
-            scope=tag_scope,
-            owner=users["user2"],
-            default_tag_can_assign=AccessibleBy.OWNER,
+            scope=tag_scope, owner=users["user2"], default_tag_can_assign=AccessibleBy.OWNER
         )
         with plain_test_file.open("rb") as infile:
             resp = clients["user2"].post(
-                reverse("tagging-batch-list"),
-                {"source_file": infile, "tag_class": tc.pk},
+                reverse("tagging-batch-list"), {"source_file": infile, "tag_class": tc.pk}
             )
         assert resp.status_code == (201 if can_create else 400)
 
@@ -961,10 +868,7 @@ class TestBatchTaggingAPI:
         with patch("tags.views.tagging_batch_preflight_task") as preflight_task:
             preflight_task.apply_async.return_value = MockTask()
             resp = clients["admin1"].post(
-                reverse(
-                    "tagging-batch-preflight",
-                    args=[tb.pk if existing_tb else tb.pk + 1],
-                )
+                reverse("tagging-batch-preflight", args=[tb.pk if existing_tb else tb.pk + 1])
             )
             assert resp.status_code == status_code
             if status_code == 202:
@@ -1005,10 +909,7 @@ class TestBatchTaggingAPI:
         with patch("tags.views.tagging_batch_assign_tag_task") as tagging_task:
             tagging_task.apply_async.return_value = MockTask()
             resp = clients["admin1"].post(
-                reverse(
-                    "tagging-batch-assign-tags",
-                    args=[tb.pk if existing_tb else tb.pk + 1],
-                )
+                reverse("tagging-batch-assign-tags", args=[tb.pk if existing_tb else tb.pk + 1])
             )
             assert resp.status_code == status_code
             if status_code == 202:
@@ -1151,9 +1052,7 @@ class TestBatchTaggingAPI:
         assert tb.reprocess_after == timedelta(days=30)
         # set it to None
         resp = clients["user2"].patch(
-            reverse("tagging-batch-detail", args=[tb.pk]),
-            {"reprocess_after": None},
-            format="json",
+            reverse("tagging-batch-detail", args=[tb.pk]), {"reprocess_after": None}, format="json"
         )
         assert resp.status_code == 200
         tb.refresh_from_db()
@@ -1174,10 +1073,7 @@ class TestTasks:
     def test_tagging_batch_preflight_task(self, inmemory_media, users, state, is_processed):
         tag = TagForTitleFactory.create()
         tb = TaggingBatchFactory.build(
-            source_file=plain_test_file,
-            last_updated_by=users["admin1"],
-            state=state,
-            tag=tag,
+            source_file=plain_test_file, last_updated_by=users["admin1"], state=state, tag=tag
         )
         tb.save()
         with patch("tags.tasks.Event") as mock_event:
@@ -1206,10 +1102,7 @@ class TestTasks:
     def test_tagging_batch_assign_tag_task(self, inmemory_media, users, state, is_assigned):
         tag = TagForTitleFactory.create()
         tb = TaggingBatchFactory.build(
-            source_file=plain_test_file,
-            last_updated_by=users["admin1"],
-            state=state,
-            tag=tag,
+            source_file=plain_test_file, last_updated_by=users["admin1"], state=state, tag=tag
         )
         tb.save()
         with patch("tags.tasks.Event") as mock_event:
@@ -1238,10 +1131,7 @@ class TestTasks:
     def test_tagging_batch_unassign_task(self, inmemory_media, users, state, is_undone):
         tag = TagForTitleFactory.create()
         tb = TaggingBatchFactory.build(
-            source_file=plain_test_file,
-            last_updated_by=users["admin1"],
-            state=state,
-            tag=tag,
+            source_file=plain_test_file, last_updated_by=users["admin1"], state=state, tag=tag
         )
         tb.save()
         with patch("tags.tasks.tagging_batch_preflight_task") as preflight_task:

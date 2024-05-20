@@ -11,7 +11,7 @@ INSTALLED_APPS += ["debug_toolbar", "django_extensions"]  # noqa F405
 MIDDLEWARE = (
     MIDDLEWARE[:-1]  # noqa F405
     + [
-        "debug_toolbar.middleware.DebugToolbarMiddleware",
+        "debug_toolbar.middleware.DebugToolbarMiddleware"
         # there is a bug in the QueryCountMiddleware -https://github.com/bradmontgomery/django-querycount/issues/32
         # temporarily disabling it
         # 'querycount.middleware.QueryCountMiddleware',
