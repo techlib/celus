@@ -1258,6 +1258,7 @@ class TestTasks:
         else:
             assert tb.state == state
 
+    @pytest.mark.django_db(transaction=True)
     def test_periodic_reprocessing(self):
         """
         Test that when a tagging batch has `reprocess_after` set, it will be reprocessed
@@ -1285,25 +1286,25 @@ class TestTasks:
             assert TaggingBatch.objects.to_reprocess().count() == 2
             # do retagging number 1
             with patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock, patch(
-                "tags.tasks.reprocess_due_tagging_batches_task.delay"
-            ) as task_delay_mock:
+                "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
+            ) as task_apply_async_mock:
                 # we create an attempt to simulate what would happen inside `assign_tag`
                 assign_tag_mock.side_effect = lambda *args, **kwargs: TaggingAttemptFactory.create(
                     batch=tb1
                 )
                 reprocess_due_tagging_batches_task()
-                assert task_delay_mock.call_count == 1, "task is requeued"
+                assert task_apply_async_mock.call_count == 1, "task is requeued"
                 assert assign_tag_mock.call_count == 1, "one batch is reprocessed"
                 assert TaggingBatch.objects.to_reprocess().count() == 1
             # do retagging number 2
             with patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock, patch(
-                "tags.tasks.reprocess_due_tagging_batches_task.delay"
-            ) as task_delay_mock:
+                "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
+            ) as task_apply_async_mock:
                 assign_tag_mock.side_effect = lambda *args, **kwargs: TaggingAttemptFactory.create(
                     batch=tb2
                 )
                 reprocess_due_tagging_batches_task()
-                assert task_delay_mock.call_count == 0, "task is not requeued"
+                assert task_apply_async_mock.call_count == 0, "task is not requeued"
                 assert assign_tag_mock.call_count == 1, "one batch is reprocessed"
                 assert TaggingBatch.objects.to_reprocess().count() == 0
 

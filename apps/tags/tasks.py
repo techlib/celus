@@ -7,7 +7,7 @@ from core.logic.error_reporting import email_if_fails
 from core.logic.util import this_celus_domain
 from core.models import TaskProgress
 from core.tasks import async_mail_admins
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.db.transaction import atomic
 from events.models import Event, EventCategory, EventImportance
 
@@ -183,5 +183,9 @@ def reprocess_due_tagging_batches_task():
             )
 
         # reschedule the task to run again to process the next batch
+        # we do it in an on_commit hook to make sure the current tb is written into DB and unlocked
+        # we also add a delay to make sure the current task is finished
         if TaggingBatch.objects.to_reprocess().exists():
-            reprocess_due_tagging_batches_task.delay()
+            transaction.on_commit(
+                lambda: reprocess_due_tagging_batches_task.apply_async(countdown=1)
+            )
