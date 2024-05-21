@@ -502,6 +502,8 @@ class AccessLogQuerySet(QuerySet):
 
 
 class AccessLog(models.Model):
+    DIMENSION_COUNT = 7
+
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE, db_index=False)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
@@ -509,13 +511,10 @@ class AccessLog(models.Model):
     target = models.ForeignKey(
         Title, on_delete=models.CASCADE, null=True, help_text="Title for which this log was created"
     )
-    dim1 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #1")
-    dim2 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #2")
-    dim3 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #3")
-    dim4 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #4")
-    dim5 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #5")
-    dim6 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #6")
-    dim7 = models.IntegerField(null=True, blank=True, help_text="Value in dimension #7")
+    for i in range(1, DIMENSION_COUNT + 1):
+        locals()[f"dim{i}"] = models.IntegerField(
+            null=True, blank=True, help_text=f"Value in dimension #{i}"
+        )
     value = models.PositiveIntegerField(help_text="The value representing number of accesses")
     date = models.DateField(verbose_name=_("Date"))
     # internal fields
@@ -566,6 +565,21 @@ class AccessLog(models.Model):
             return cls._meta.get_field(dimension), modifier
         except FieldDoesNotExist:
             return None, None
+
+    def compare(self, other: "AccessLog") -> typing.List[str]:
+        """
+        Compares two access logs and return a list attributes which are different
+        """
+        attrs = [
+            "organization_id",
+            "platform_id",
+            "report_type_id",
+            "target_id",
+            "metric_id",
+            "value",
+            "date",
+        ] + [f"dim{i}" for i in range(1, self.DIMENSION_COUNT + 1)]
+        return [attr for attr in attrs if getattr(self, attr) != getattr(other, attr)]
 
 
 class DimensionText(models.Model):
