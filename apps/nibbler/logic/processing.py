@@ -1,3 +1,4 @@
+import re
 import typing
 from datetime import date
 from functools import reduce
@@ -62,7 +63,7 @@ def celus_format_poops(
     ).make_parser()
 
     return output_to_poops(
-        eat(path, platform.short_name, [f"^{parser.name}$"], dynamic_parsers=[parser])
+        eat(path, platform.short_name, [f"^{re.escape(parser.name)}$"], dynamic_parsers=[parser])
     )
 
 
