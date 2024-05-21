@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0]  - 2024-05-23
+
+### Added
+
+#### Frontend
+
+* make it possible to apply filters from standard reports to full reports in reporting with one click
+* warn users against possible metric summation in reporting
+* make it possible to use proprietary IDs for matching titles in title tagging and title overlap
+
+#### Backend
+
+* statistics of events was added to the exported prometheus metrics
+* make it possible for a superadmin to disable second factor authentication for a user
+* improve Django admin for events
+* API endpoint for getting output of a stored report was added
+* send notifications about regular reprocessing of internal title lists to superusers
+
+### Changes
+
+#### Frontend
+
+* change display of report type selection in charts, etc.
+  * show full reports first
+  * call full reports "full reports" (not customizable reports)
+  * only add real standard views to the standard views section
+* prefer full reports when showing charts for individual import batches or manual data uploads
+* better error message was added when uploading an incompatible XLS file
+
+#### Backend
+
+* metadata from SUSHI responses are extracted during download rather than during import
+* cleanup in SUSHI harvesting code was performed and some unused code was removed
+* use skip-magic-trailing-comma for ruff format
+* the `django-prometheus` library was removed from the project
+
+### Fixed
+
+#### Frontend
+
+* on title page, make sure the title is loaded before trying to show proprietary IDs
+* missing values in chart tooltips under specific conditions were fixed
+* fix pagination of the events list with a large number of events
+* second factor authentication display was fixed for superusers without verified email
+
+#### Backend
+
+* deterministic selection of titles during data import when several candidates with equal score are
+  present was introduced
+* do not use ContentFile when storing C4 reports
+* do not create events about title list reprocessing if the list is not owned by a user (e.g. for
+  internal title lists)
+* make sure that a valid email OTP device exists for each user after login
+* get around a race-condition in locking the next tagging batch to reprocess
+* unused OTP plugins were removed reducing the number of queries to the database per request
+
+
 ## [6.0.0]  - 2024-04-24
 
 ### Added

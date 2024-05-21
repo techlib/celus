@@ -1,3 +1,25 @@
+- version: 6.1.0
+  title:
+    en: Standard views in reporting, proprietary IDs in title lists, and more in Celus 6.1.0
+    cs: Standardní pohledy v reportingu, proprietary ID v seznamu titulů a mnohem víc v Celusu 6.1.0
+  text:
+    en: |
+      - You can now apply **standard view filters** to reports in reporting with a single click
+      - When matching titles against a title list, **proprietary IDs** are now used as well
+      - Reporting now **warns about summing up metrics** in reports which is a common source of incorrect results
+      - Order and labeling of reports in report type selector was changed for better clarity
+      - Many other small improvements and fixes were introduced
+    cs: |
+      - Nyní můžete na reporty v reportingu jedním kliknutím aplikovat **filtry standardních pohledů**
+      - Při porovnávání titulů se seznamem titulů jsou nyní používány také **proprietary ID**
+      - Reporting nyní **varuje při sčítání metrik** v reportech, které může vést k nesprávným výsledkům
+      - Pořadí a označení reportů v selektoru typu reportu bylo změněno pro lepší přehlednost
+      - Bylo provedeno mnoho dalších menších vylepšení a oprav
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 6.0.0
   title:
     en: Celus version 6.0.0 with COUNTER format export, in-app notifications, fiscal year based dates and much more is here!
