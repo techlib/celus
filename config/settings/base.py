@@ -91,11 +91,6 @@ INSTALLED_APPS = [
     "impersonate",
     "colorfield",
     "django_otp",
-    # Unfortunatelly otp_static and otp_totp
-    # has to be enabled as well, otherwise
-    # device_classes() function of django-otp crashes
-    "django_otp.plugins.otp_static",
-    "django_otp.plugins.otp_totp",
     "django_otp.plugins.otp_email",
     # allauth is at the end so that we can easily override its templates
     "allauth",
