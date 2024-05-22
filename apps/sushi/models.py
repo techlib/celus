@@ -599,6 +599,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         if report:
             # Write tsv report into output (otherwise original file will remain there)
             data = client.report_to_string(report).encode()
+            file_data.seek(0)
             file_data.truncate()
             file_data.write(data)
 
