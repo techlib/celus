@@ -117,7 +117,7 @@ class TitleManager:
         names = [self.normalize_title(rec.name) if rec.name else rec.name for rec in records]
         title_qs = title_qs.annotate(lname=Lower("name")).filter(lname__in=names)
         self.name_to_records = {}
-        for row in title_qs.order_by("name").values(
+        for row in title_qs.order_by("name", "pk").values(
             "name", "isbn", "issn", "eissn", "doi", "pk", "pub_type", "proprietary_ids", "uris"
         ):
             name = row.pop("name").lower()

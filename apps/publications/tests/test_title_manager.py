@@ -376,6 +376,24 @@ class TestTitleManager:
         assert tm.stats["existing"] == 1, "find existing, not upgrade other if we don't have to"
         assert pk == t2.pk
 
+    def test_get_or_create_same_score_same_ordering(self):
+        """
+        Test a situation when two titles have exactly the same score.
+
+        In this case the older title (with lower pk) should be picked.
+        Note that this test was added to aviod non-deterministic result
+        based on db sorting.
+        """
+        Title.objects.create(name="A", doi="https://x/", eissn="2222-1111")
+        title = Title.objects.create(name="A", issn="1111-2222", doi="https://x/")
+        Title.objects.create(name="A", issn="1111-2222", eissn="2222-1111")
+
+        tm = TitleManager()
+        record = TitleRec(name="A", issn="1111-2222")
+        pk = tm.get_or_create(record)
+        assert tm.stats["existing"] == 1, "find existing, not upgrade other if we don't have to"
+        assert pk == title.pk, "oldest title with highest score was picked"
+
     def test_get_or_create_with_three_winners(self):
         """
         Test a real-world situation where there are two matching candidates in the DB.
