@@ -48,6 +48,7 @@ en:
     unknown_counter_error: Something went wrong and Celus was not able to process the data. Celus is pretty good at processing COUNTER reports, but some publishers extend them in a way that Celus does not understand. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_raw_error: Something went wrong and Celus was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    xls_error: Unable to parse .xls file. Please try to convert the file to .xlsx
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
@@ -115,6 +116,7 @@ cs:
     unknown_counter_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Celus je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému Celus nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_raw_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    xls_error: Nedaří se zpracovat .xls soubor. Prosím zkuste soubor zkonvertovat na .xlsx
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
@@ -1133,7 +1135,7 @@ export default {
           if ("nibbler_errors" in info) {
             this.showErrorDialog = true;
             this.errors = info.nibbler_errors.map((e) =>
-              this.nibblerErrorText(e.sheet_idx, e.name, e.parsers_info)
+              this.nibblerErrorText(e)
             );
           }
           if ("encoding_error" in info) {
@@ -1369,9 +1371,15 @@ export default {
       await Promise.all([this.loadMetrics(), this.loadPlatform()]);
       this.globalSpinnerOn = false;
     },
-    nibblerErrorText(sheet_idx, name, parsers_info) {
-      let readable_sheet_idx = parseInt(sheet_idx) + 1;
-      const prefix = `${this.$t("sheet")} ${readable_sheet_idx}: `;
+    nibblerErrorText(error) {
+      const sheet_idx = error.sheet_idx;
+      const name = error.name;
+      const parsers_info = error.parsers_info;
+      let prefix = "";
+      if (sheet_idx != null) {
+        let readable_sheet_idx = parseInt(sheet_idx) + 1;
+        prefix = `${this.$t("sheet")} ${readable_sheet_idx}: `;
+      }
       if (this.method === "counter") {
         // Missing counter header
         if (
@@ -1419,11 +1427,14 @@ export default {
           }
         }
       }
-      return prefix + this.$t("errors.no_parser_found");
+      return prefix + this.nibblerReason([error]);
     },
-    nibblerReason(errors, preflight) {
+    nibblerReason(errors) {
       if (errors.every((e) => e.name.startsWith("NoParser"))) {
         return this.$t("errors.no_parser_found");
+      }
+      if (errors.some((e) => e.name.startsWith("XlsError"))) {
+        return this.$t("errors.xls_error");
       }
       return this.unknownErrorMessage;
     },

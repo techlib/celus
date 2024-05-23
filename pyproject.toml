@@ -44,7 +44,7 @@ package-mode=false
 python = "^3.8.9"
 
 celery = "~5.3.1"
-celus-nibbler = "~10.1.5"
+celus-nibbler = "~10.1.6"
 celus-nigiri = "~1.4.1"
 celus-pycounter = "~4.0.1"
 colorlog = "^6.7.0"
