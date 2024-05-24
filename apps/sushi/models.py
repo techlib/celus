@@ -17,11 +17,7 @@ import reversion
 from celus_nibbler import Poop
 from celus_nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
 from celus_nigiri.client import SushiException as SushiExceptionNigiri
-from celus_nigiri.counter5 import (
-    Counter5ReportBase,
-    CounterError,
-    TransportError,
-)
+from celus_nigiri.counter5 import Counter5ReportBase, CounterError, TransportError
 from celus_nigiri.error_codes import ErrorCode
 from celus_pycounter.exceptions import SushiException
 from core.logic import url

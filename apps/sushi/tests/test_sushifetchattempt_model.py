@@ -388,44 +388,14 @@ class TestParsing:
     @pytest.mark.parametrize(
         ("filename", "counter_report_type", "header", "count", "sum"),
         (
-            (
-                "4_JR2_denials.tsv",
-                "jr2",
-                {"Institution_Name": "Higher Title"},
-                2,
-                5,
-            ),
-            (
-                "counter4_br2.tsv",
-                "br2",
-                {"Institution_Name": "ANONYMOUS"},
-                60,
-                43,
-            ),
-            (
-                "counter4_br2_one_month.tsv",
-                "br2",
-                {"Institution_Name": "ANONYMOUS"},
-                5,
-                12,
-            ),
-            (
-                "counter4_jr1_empty.tsv",
-                "jr1",
-                {"Institution_Name": "Title"},
-                0,
-                0,
-            ),
+            ("4_JR2_denials.tsv", "jr2", {"Institution_Name": "Higher Title"}, 2, 5),
+            ("counter4_br2.tsv", "br2", {"Institution_Name": "ANONYMOUS"}, 60, 43),
+            ("counter4_br2_one_month.tsv", "br2", {"Institution_Name": "ANONYMOUS"}, 5, 12),
+            ("counter4_jr1_empty.tsv", "jr1", {"Institution_Name": "Title"}, 0, 0),
         ),
     )
     def test_counter4_parsing(
-        self,
-        counter_report_types,
-        filename,
-        counter_report_type,
-        header,
-        count,
-        sum,
+        self, counter_report_types, filename, counter_report_type, header, count, sum
     ):
         with (Path(__file__).parent / "data/counter4" / filename).open("rb") as f:
             content = f.read()
@@ -509,30 +479,21 @@ class TestParsing:
             (
                 "no_data_3050.json",
                 "tr",
-                {
-                    "Created_By": "My provider",
-                    "Institution_Name": "My Library",
-                },
+                {"Created_By": "My provider", "Institution_Name": "My Library"},
                 0,
                 0,
             ),
             (
                 "no_data_3062.json",
                 "tr",
-                {
-                    "Created_By": "Provider",
-                    "Institution_Name": "My LIbrary",
-                },
+                {"Created_By": "Provider", "Institution_Name": "My LIbrary"},
                 0,
                 0,
             ),
             (
                 "some_data_3062.json",
                 "tr",
-                {
-                    "Created_By": "Provider",
-                    "Institution_Name": "My LIbrary",
-                },
+                {"Created_By": "Provider", "Institution_Name": "My LIbrary"},
                 20,
                 24,
             ),
@@ -583,10 +544,7 @@ class TestParsing:
             (
                 "some_data_3050.json",
                 "pr",
-                {
-                    "Created_By": "My provider",
-                    "Institution_Name": "My Library",
-                },
+                {"Created_By": "My provider", "Institution_Name": "My Library"},
                 8,
                 1422,
             ),
@@ -670,23 +628,14 @@ class TestParsing:
             (
                 "severity-wrong.json",
                 "pr",
-                {
-                    "Created_By": "My provider",
-                    "Institution_Name": "My university",
-                },
+                {"Created_By": "My provider", "Institution_Name": "My university"},
                 0,
                 0,
             ),
         ),
     )
     def test_counter5_parsing(
-        self,
-        counter_report_types,
-        filename,
-        counter_report_type,
-        header,
-        count,
-        sum,
+        self, counter_report_types, filename, counter_report_type, header, count, sum
     ):
         with (Path(__file__).parent / "data/counter5" / filename).open("rb") as f:
             content = f.read()

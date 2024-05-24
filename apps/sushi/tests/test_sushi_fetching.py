@@ -385,12 +385,7 @@ class TestSushiFetching:
     @pytest.mark.parametrize(
         ("path", "counter_report", "extracted_data", "import_passes"),
         (
-            (
-                "5_DR_ProQuestEbookCentral_exception.json",
-                "dr",
-                {},
-                False,
-            ),
+            ("5_DR_ProQuestEbookCentral_exception.json", "dr", {}, False),
             (
                 "5_TR_ProQuestEbookCentral.json",
                 "tr",
@@ -505,10 +500,7 @@ class TestSushiFetching:
             (
                 "stringified_error.json",
                 "tr",
-                {
-                    "Created_By": "Moogle LLC.",
-                    "Institution_Name": "Mekong Honkong",
-                },
+                {"Created_By": "Moogle LLC.", "Institution_Name": "Mekong Honkong"},
                 False,
             ),
             (

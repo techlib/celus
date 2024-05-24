@@ -210,31 +210,13 @@ class TestAttemptImport:
     @pytest.mark.parametrize(
         ["filename", "start_date", "status"],
         [
-            (
-                "5_TR_ProQuestEbookCentral.json",
-                "2019-11-01",
-                AttemptStatus.SUCCESS,
-            ),
-            (
-                "5_TR_ProQuestEbookCentral_exception.json",
-                "2017-01-01",
-                AttemptStatus.IMPORT_FAILED,
-            ),
-            (
-                "5_TR_with_warning.json",
-                "2018-11-01",
-                AttemptStatus.SUCCESS,
-            ),
+            ("5_TR_ProQuestEbookCentral.json", "2019-11-01", AttemptStatus.SUCCESS),
+            ("5_TR_ProQuestEbookCentral_exception.json", "2017-01-01", AttemptStatus.IMPORT_FAILED),
+            ("5_TR_with_warning.json", "2018-11-01", AttemptStatus.SUCCESS),
         ],
     )
     def test_counter5_imports(
-        self,
-        organizations,
-        counter_report_type_named,
-        platforms,
-        filename,
-        start_date,
-        status,
+        self, organizations, counter_report_type_named, platforms, filename, start_date, status
     ):
         cr_type = counter_report_type_named("TR", version=5)
 
