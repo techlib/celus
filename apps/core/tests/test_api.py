@@ -418,11 +418,13 @@ class TestAccountCreationAPI:
         disallow_eduid_login,
         logged_for_verification,
         client,
+        settings,
     ):
         """
         Tests that the email verification email sent when re-sending verification email has custom
         text and not the one provided with allauth.
         """
+        settings.OTP_ENABLED = True
         # make email address unverified
         email_address = EmailAddress.objects.get(user=users["user1"])
         email_address.verified = False
