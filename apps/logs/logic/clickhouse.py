@@ -2,7 +2,7 @@ import logging
 from collections import Counter
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Dict, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 from core.context_managers import needs_clickhouse_sync
 from django.db import connection
@@ -125,7 +125,9 @@ def sync_import_batch_interest_with_clickhouse(import_batch: ImportBatch, batch_
 
 
 @needs_clickhouse_sync
-def sync_accesslogs_with_clickhouse_superfast(batch_size=100_000, ignore_timestamps=False) -> int:
+def sync_accesslogs_with_clickhouse_superfast(
+    batch_size=100_000, ignore_timestamps=False, ib_ids: Optional[Iterable[int]] = None
+) -> int:
     """
     Does sync by large batches of accesslogs which are sorted by import batch, but accesslogs
     for one import batch may be split into more 'sync batches'.
@@ -139,6 +141,8 @@ def sync_accesslogs_with_clickhouse_superfast(batch_size=100_000, ignore_timesta
     qs = ImportBatch.objects.all()
     if not ignore_timestamps:
         qs = qs.filter(Q(last_clickhoused__isnull=True) | Q(last_clickhoused__lt=F("last_updated")))
+    if ib_ids is not None:
+        qs = qs.filter(pk__in=ib_ids)
     for al in (
         AccessLog.objects.filter(
             report_type__materialization_spec__isnull=True, import_batch__in=qs

@@ -539,7 +539,7 @@ def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
     if save:
         dest.save()
     # deal with clickhouse
-    if settings.CLICKHOUSE_SYNC_ACTIVE:
+    if settings.CLICKHOUSE_SYNC_ACTIVE and not skip_ch_sync:
         for ib in ImportBatch.objects.filter(pk__in=ibs_to_resync):
             resync_import_batch_with_clickhouse(ib)
     return dest, ibs_to_resync
