@@ -6,16 +6,19 @@ from contextlib import redirect_stderr, redirect_stdout
 from datetime import timedelta
 from io import StringIO
 
+import prometheus_client
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
 from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.core.management import call_command
 from django.db.models import Prefetch
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.views import View
 from django_otp import DEVICE_ID_SESSION_KEY, match_token
 from django_otp.plugins.otp_email.models import EmailDevice, GenerateNotAllowed
 from organizations.models import UserOrganization
@@ -42,6 +45,7 @@ from core.serializers import (
 
 from .logic.management_commands import CommandManager
 from .logic.type_conversion import to_bool
+from .prometheus import CACHE_STORED_GAUAGES, cache_based_metrics, celus_registry
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
@@ -494,3 +498,20 @@ class OtpDeviceView(
 
         # couldn't find token
         return Response({"token": "token not valid"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PrometheusMetricsView(View):
+    def get(self, request):
+        # update the cache-based metrics (those are not updated automatically, but rather a celery
+        # task is getting the data and pushing it to the cache, from where we get it)
+        for name, params in CACHE_STORED_GAUAGES.items():
+            dims = params.get("dims", [])
+            value = cache.get(name, {} if dims else 0)
+            if dims:
+                for labels, val in value.items():
+                    cache_based_metrics[name].labels(*labels).set(val)
+            else:
+                cache_based_metrics[name].set(value)
+
+        metrics_page = prometheus_client.generate_latest(celus_registry)
+        return HttpResponse(metrics_page, content_type=prometheus_client.CONTENT_TYPE_LATEST)

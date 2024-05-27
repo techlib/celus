@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pickle
+from time import time
 
 import celery
 import redis
@@ -142,7 +143,9 @@ def update_prometheus_db_stats():
 
     for name, params in CACHE_STORED_GAUAGES.items():
         if fn := params.get("func"):
+            start = time()
             cache.set(name, fn())
+            logger.info("Updated '%s' in %.2f s", name, time() - start)
 
 
 @celery.shared_task

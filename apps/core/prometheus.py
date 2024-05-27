@@ -1,34 +1,21 @@
+import logging
 from collections import Counter as CounterDict
+from time import time
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, F, OuterRef, Q
-from django_prometheus.conf import NAMESPACE
-from django_prometheus.middleware import (
-    Metrics,
-    PrometheusAfterMiddleware,
-    PrometheusBeforeMiddleware,
-)
-from prometheus_client import Counter, Gauge, Summary
+from prometheus_client import CollectorRegistry, Gauge
 
-report_access_total_counter = Counter(
-    "celus_report_access_total",
-    "The number of times a report type was accessed from a specific type of view. Also "
-    "split by report type",
-    ["view_type", "report_type"],
-)
+logger = logging.getLogger(__name__)
 
-report_access_time_summary = Summary(
-    "celus_report_access_time_seconds",
-    "The time it took to process request for data for each report type. Also split by view_type",
-    ["view_type", "report_type"],
-)
+celus_registry = CollectorRegistry()
 
 celus_version_num = Gauge(
     "celus_version_num",
     "CELUS version converted to int. For example 4.1.2 => 40102",
     [],
-    multiprocess_mode="livemax",
+    registry=celus_registry,
 )
 
 celus_sentry_release = Gauge(
@@ -36,7 +23,7 @@ celus_sentry_release = Gauge(
     "In production this is a git hash of deployed commit. It is stored in the hash dimension. "
     "Value is always 1",
     ["hash"],
-    multiprocess_mode="livemax",
+    registry=celus_registry,
 )
 
 
@@ -211,6 +198,7 @@ def _db_last_two_years_coverage_data():
 
     totals = CounterDict()
     for rt in rt_qs:
+        start = time()
         extractor = DataCoverageExtractor(
             rt,
             start_month=start_month,
@@ -224,6 +212,7 @@ def _db_last_two_years_coverage_data():
             data = cov_data[()]  # empty tuple key because we don't split
             totals["ib_count"] += data["ib_count"]
             totals["ib_max"] += data["ib_max"]
+        logger.info(f"Calculated coverage for {rt} in {time() - start:.2f} s")
 
     totals["ratio"] = (totals["ib_count"] / totals["ib_max"]) if totals["ib_max"] else 0
     return totals
@@ -356,33 +345,9 @@ CACHE_STORED_GAUAGES = {
     },
 }
 
+cache_based_metrics = {}
 
-class CelusMetrics(Metrics):
-    def register(self):
-        super().register()
-        self.cached_gauges = {}
-        for name, params in CACHE_STORED_GAUAGES.items():
-            dims = params.get("dims", [])
-            desc = params["desc"]
-            self.cached_gauges[name] = self.register_metric(
-                Gauge, name, desc, dims, namespace=NAMESPACE, multiprocess_mode="livemax"
-            )
-
-
-class CelusPrometheusBeforeMiddleware(PrometheusBeforeMiddleware):
-    metrics_cls = CelusMetrics
-
-
-class CelusPrometheusAfterMiddleware(PrometheusAfterMiddleware):
-    metrics_cls = CelusMetrics
-
-    def process_request(self, request):
-        super().process_request(request)
-        for name, params in CACHE_STORED_GAUAGES.items():
-            dims = params.get("dims", [])
-            value = cache.get(name, {} if dims else 0)
-            if dims:
-                for labels, val in value.items():
-                    self.metrics.cached_gauges[name].labels(*labels).set(val)
-            else:
-                self.metrics.cached_gauges[name].set(value)
+for name, params in CACHE_STORED_GAUAGES.items():
+    dims = params.get("dims", [])
+    desc = params["desc"]
+    cache_based_metrics[name] = Gauge(name, desc, dims, registry=celus_registry)

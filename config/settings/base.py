@@ -84,7 +84,6 @@ INSTALLED_APPS = [
     "necronomicon.apps.NecronomiconConfig",
     "events.apps.EventsConfig",
     "rest_pandas",
-    "django_prometheus",
     "import_export",
     "rest_framework_api_key",
     "django.contrib.postgres",
@@ -105,7 +104,6 @@ else:
     print("cachalot disabled", file=sys.stderr)
 
 MIDDLEWARE = [
-    "core.prometheus.CelusPrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -122,7 +120,6 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "core.middleware.UserLanguageMiddleware",
     "core.middleware.QueryLoggingMiddleware",
-    "core.prometheus.CelusPrometheusAfterMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -165,7 +162,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django_prometheus.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME", default="celus"),
         "USER": config("DB_USER", default="celus"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -180,7 +177,7 @@ print(f'Using database: {DATABASES["default"]["NAME"]}', file=sys.stderr)
 DB_NAME_OLD = config("DB_NAME_OLD", default="")
 if DB_NAME_OLD:
     DATABASES["old"] = {
-        "ENGINE": "django_prometheus.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": DB_NAME_OLD,
         "USER": config("DB_USER", default="celus"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -261,7 +258,6 @@ REST_FRAMEWORK = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        # "BACKEND": "django_prometheus.cache.backends.redis",
         "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -472,8 +468,8 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_prometheus_db_stats": {
         "task": "core.tasks.update_prometheus_db_stats",
-        "schedule": schedule(run_every=timedelta(minutes=5)),
-        "options": {"expires": 5 * 60},
+        "schedule": schedule(run_every=timedelta(minutes=57)),
+        "options": {"expires": 57 * 60},
     },
     "send_unsent_event_emails_task": {
         "task": "events.tasks.send_unsent_event_emails_task",
@@ -816,10 +812,6 @@ CELUS_ADMIN_SITE_PATH = config("CELUS_ADMIN_SITE_PATH", default="wsEc67YNV2sq/")
 # contacts with customers
 CONTACT_EMAIL = "ask@celus.net"
 SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL = "Credentials - COUNTER 5 import"
-
-# Need to disable prometheus migrations when collecting static without DB
-# see https://github.com/korfuri/django-prometheus/issues/34
-PROMETHEUS_EXPORT_MIGRATIONS = config("PROMETHEUS_EXPORT_MIGRATIONS", cast=bool, default=True)
 
 # sentry
 SENTRY_ENVIRONMENT = config("SENTRY_ENVIRONMENT", default="unknown")

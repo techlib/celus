@@ -3,7 +3,6 @@ from collections import Counter
 from datetime import date
 from functools import reduce
 from pprint import pprint
-from time import monotonic
 from typing import Any, Dict, Optional, Tuple
 
 from celus_nibbler.errors import WrongFileFormatError
@@ -23,7 +22,6 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     SuperuserOrMasterUserPermission,
 )
-from core.prometheus import report_access_time_summary, report_access_total_counter
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
@@ -120,14 +118,10 @@ class Counter5DataView(APIView):
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
         computer = StatsComputer(report_type, request.GET)
-        start = monotonic()
         # special attribute signaling that this view is used on dashboard and thus we
         # want to cache the data for extra speed using recache
         dashboard_view = "dashboard" in request.GET
         data = computer.get_data(request.user, recache=dashboard_view)
-        label_attrs = {"view_type": "chart_data_raw", "report_type": computer.used_report_type.pk}
-        report_access_total_counter.labels(**label_attrs).inc()
-        report_access_time_summary.labels(**label_attrs).observe(monotonic() - start)
 
         data_format = request.GET.get("format")
         if data_format in ("csv", "xlsx"):
