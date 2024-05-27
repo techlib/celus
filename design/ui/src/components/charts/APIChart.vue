@@ -728,7 +728,7 @@ export default {
               .filter((p) => p.seriesName !== "missing_data")
               .forEach((p) => {
                 let value =
-                  typeof p.value === "object" ? p.value[p.seriesName] : p.value;
+                  typeof p.value === "object" ? p.value[p.seriesId] : p.value;
                 if (
                   coverageSeries.length > 0 &&
                   p.seriesName === coverageSeries[0].name
