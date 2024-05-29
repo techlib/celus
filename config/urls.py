@@ -10,7 +10,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path("api/", include("api.urls")),
-    path("metrics/", PrometheusMetricsView.as_view(), name="metrics"),
+    path("metrics", PrometheusMetricsView.as_view(), name="metrics"),
     path(settings.CELUS_ADMIN_SITE_PATH, admin.site.urls),
 ]
 
