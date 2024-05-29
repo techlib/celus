@@ -1,6 +1,8 @@
 import logging
+import re
 from collections import Counter
 
+from celus_nibbler.parsers import get_parsers
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
@@ -25,15 +27,19 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         fix_it = options["fix_it"]
-        seen_codes = set()
-        for code, our_name, version, _json, reader, sushi in COUNTER_REPORTS:
-            # COUNTER_REPORTS contains more than one record for some reports,
-            # we only want the first one
-            if code in seen_codes:
-                continue
-            seen_codes.add(code)
-            if not sushi:
-                continue
+
+        long_name_map = {code: name for code, name in COUNTER_REPORTS}
+        regex = re.compile(r"static\.counter([^.]+)\.([^.]+)\.Tabular$")
+        reports = []
+        for parser_name, parser in get_parsers([r"static\.counter.*\.Tabular$"]):
+            if match := regex.match(parser_name):
+                version, code = match.group(1, 2)
+                dimensions = [e[0] for e in parser.areas[0].DIMENSION_NAMES_MAP]
+                # use only report types from nibbler which are defined in Celus
+                if name := long_name_map.get(code):
+                    reports.append((code, name, version, dimensions))
+
+        for code, our_name, version, dimensions in reports:
             try:
                 rt = ReportType.objects.get(short_name=code, source__isnull=True)
             except ReportType.DoesNotExist:
@@ -70,17 +76,17 @@ class Command(BaseCommand):
                     stats["created_data_view"] += 1
             # check the dimensions
             if rt:
-                reader_dims = set(reader.dimensions)
+                dims = set(dimensions)
                 rt_dims = set(rt.dimension_short_names)
-                if rt_dims != reader_dims:
-                    fixable = rt_dims.issubset(reader_dims)
+                if rt_dims != dims:
+                    fixable = rt_dims.issubset(dims)
                     print("Mismatch:", code, "fixable" if fixable else "CANNNOT FIX")
                     print("   ", rt.dimension_short_names)
-                    print("   ", reader.dimensions)
+                    print("   ", dimensions)
                     stats[f'mismatch_{"fixable" if fixable else "unfixable"}'] += 1
                     if fixable and fix_it:
                         pos = len(rt.dimension_short_names)
-                        for i, dim_name in enumerate(reader_dims - rt_dims):
+                        for i, dim_name in enumerate(dims - rt_dims):
                             if remap_data := self.dim_name_remap.get(dim_name):
                                 def_names = {
                                     f"name_{lang}": value for lang, value in remap_data.items()
@@ -93,7 +99,7 @@ class Command(BaseCommand):
                             ReportTypeToDimension.objects.create(
                                 report_type=rt, dimension=dim, position=pos + i
                             )
-                        assert {dim.short_name for dim in rt.dimensions.all()} == reader_dims
+                        assert {dim.short_name for dim in rt.dimensions.all()} == dims
                         print("  Fixed!")
                 else:
                     print("OK:", code)
