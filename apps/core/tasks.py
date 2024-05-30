@@ -144,7 +144,7 @@ def update_prometheus_db_stats():
     for name, params in CACHE_STORED_GAUAGES.items():
         if fn := params.get("func"):
             start = time()
-            cache.set(name, fn())
+            cache.set(name, fn(), timeout=7200)  # 2 hours, celery beat runs this every 57 minutes
             logger.info("Updated '%s' in %.2f s", name, time() - start)
 
 

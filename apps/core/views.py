@@ -43,9 +43,16 @@ from core.serializers import (
     UserSerializer,
 )
 
+from .apps import version_to_int
 from .logic.management_commands import CommandManager
 from .logic.type_conversion import to_bool
-from .prometheus import CACHE_STORED_GAUAGES, cache_based_metrics, celus_registry
+from .prometheus import (
+    CACHE_STORED_GAUAGES,
+    cache_based_metrics,
+    celus_registry,
+    celus_sentry_release,
+    celus_version_num,
+)
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
 
@@ -512,6 +519,9 @@ class PrometheusMetricsView(View):
                     cache_based_metrics[name].labels(*labels).set(val)
             else:
                 cache_based_metrics[name].set(value)
+
+        celus_version_num.set(version_to_int(settings.CELUS_VERSION))
+        celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)
 
         metrics_page = prometheus_client.generate_latest(celus_registry)
         return HttpResponse(metrics_page, content_type=prometheus_client.CONTENT_TYPE_LATEST)

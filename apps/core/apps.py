@@ -48,10 +48,6 @@ class CoreConfig(AppConfig):
             db,  # noqa - needed to register the ilike lookup
             signals,  # noqa - needed to register the signals
         )
-        from .prometheus import celus_sentry_release, celus_version_num
-
-        celus_version_num.set(version_to_int(settings.CELUS_VERSION))
-        celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)
 
         @register()
         def check_exposed_commands(app_configs, **kwargs):
