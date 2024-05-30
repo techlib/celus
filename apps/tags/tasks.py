@@ -163,7 +163,7 @@ def reprocess_due_tagging_batches_task():
             importance = EventImportance.NORMAL
             description = (
                 f"Title list #{tb.pk} {tb.context_desc} was re-processed, "
-                f"{postflight.tagged_titles} titles were tagged.",
+                f"{postflight.tagged_titles} titles were tagged."
             )
         else:
             title = "Periodic re-processing of title list failed"
