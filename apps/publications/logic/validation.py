@@ -4,7 +4,8 @@ import re
 from isbnlib import canonical, is_isbn10, is_isbn13, to_isbn13
 
 logger = logging.getLogger(__name__)
-issn_matcher = re.compile(r"(\d{4})-?(\d{3}[\dXx])")
+# hyphen, en dash, em dash, minus, fullwidth hyphen
+issn_matcher = re.compile(r"(\d{4})[-–—−\uFF0D]?(\d{3}[\dXx])")
 issn_number_matcher = re.compile(r"^\d{0,7}[\dXx]$")
 
 

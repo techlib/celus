@@ -13,6 +13,9 @@ class TestNormalizeISBN:
             pytest.param(" 0787960187 ", "9780787960186", id="whitespace removal with isbn10->13"),
             pytest.param("978-078796-018-6 ", "9780787960186", id="hyphen removal"),
             pytest.param("078796-018-7 ", "9780787960186", id="hyphen removal with isbn10->13"),
+            pytest.param("978–078796-018-6 ", "9780787960186", id="n-dash removal"),
+            pytest.param("978—078796-018-6 ", "9780787960186", id="m-dash removal"),
+            pytest.param("978−078796-018-6 ", "9780787960186", id="minus removal"),
         ],
     )
     def test_normalize_isbn(self, inp, expected):
@@ -34,6 +37,10 @@ class TestNormalizeISSN:
             ),
             pytest.param("123456", "0012-3456", id="adding missing leading zeros"),
             pytest.param("X12x", "X12x", id="invalid ISSN, previously falsely normalized"),
+            pytest.param("1234–5676", "1234-5676", id="ndash"),
+            pytest.param("1234—5676", "1234-5676", id="mdash"),
+            pytest.param("1234−5676", "1234-5676", id="minus"),
+            pytest.param("1234－5676", "1234-5676", id="fullwidth hyphen"),
         ],
     )
     def test_normalize_issn(self, inp, expected):
