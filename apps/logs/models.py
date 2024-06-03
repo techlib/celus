@@ -966,9 +966,10 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
     def mail_report_format(self):
         report_type = self.report_type or ""
+        user = f"{self.user.username} ( {self.user.email} )" if self.user else "None"
 
         return f"""\
-        User: {self.user.username} ( {self.user.email} )
+        User: {user}
         Organization: {self.organization}
         Platform: {self.platform}
         Method: {self.method}

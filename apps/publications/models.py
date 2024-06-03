@@ -230,10 +230,7 @@ class Platform(models.Model):
         if source := self.source:
             if org := source.organization:
                 return f"{slugify(org.short_name, allow_unicode=True)}.{platform_slug}"
-            else:
-                return platform_slug
-        else:
-            return platform_slug
+        return platform_slug
 
     def update_related_credentials_url(self) -> int:
         count = 0

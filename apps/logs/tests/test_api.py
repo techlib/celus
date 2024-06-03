@@ -1379,7 +1379,7 @@ class TestAccessLogListView:
         same data structure in both cases.
         """
         factory = ImportBatchFullFactory if has_data else ImportBatchFactory
-        params = dict(report_type=report_types["ir"], platform=platforms["branch"])
+        params = dict(report_type=report_types["ir51"], platform=platforms["branch"])
         if has_data:
             # create 2 titles and 2 items - we need two to test ordering, but we don't need more
             # because we want more items to appear on the same page
@@ -1399,7 +1399,7 @@ class TestAccessLogListView:
             # check the format of the data
             rec = data["results"][0]
             assert "date" in rec
-            assert rec["report_type"] == "IR"
+            assert rec["report_type"] == "IR51"
             assert {"platform", "organization", "metric", "value", "target", "item"}.issubset(
                 rec.keys()
             )

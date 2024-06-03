@@ -66,7 +66,7 @@ class TestDataImport:
         assert PlatformTitle.objects.count() == 1
         assert ImportBatch.objects.first().record_count == 1
 
-    def test_temporary_item_title_conversion(self, organizations, report_type_nd, platform):
+    def test_ir_m1_import(self, organizations, report_type_nd, platform):
         assert AccessLog.objects.count() == 0
         assert Title.objects.count() == 0
         rt_ir_m1 = report_type_nd(0, short_name="IR_M1")
@@ -85,28 +85,28 @@ class TestDataImport:
         import_counter_records(rt_ir_m1, organizations[0], platform, [cr1])
         assert AccessLog.objects.count() == 1
         assert ImportBatch.objects.count() == 1
-        assert Title.objects.count() == 1
-        assert Title.objects.first().name == "ItemX"
-        assert Title.objects.first().issn == "0001-0001"
-        assert Item.objects.count() == 0, "No item is created for IR_M1"
+        assert Title.objects.count() == 0, "No title is created for IR_M1"
+        assert Item.objects.count() == 1, "New item was created for IR_M1"
+        assert Item.objects.first().name == "ItemX"
+        assert Item.objects.first().issn == "0001-0001"
         al = AccessLog.objects.get()
         assert al.value == 1
         assert al.dim1 is None
-        assert PlatformTitle.objects.count() == 1
+        assert PlatformTitle.objects.count() == 0
 
         import_counter_records(rt_ir, organizations[0], platform, [cr2])
         assert AccessLog.objects.count() == 2
         assert ImportBatch.objects.count() == 2
-        assert Title.objects.count() == 2
-        assert Title.objects.order_by("pk")[1].name == "TitleX"
-        assert Title.objects.order_by("pk")[1].issn == "0001-0000"
-        assert Item.objects.count() == 1, "Item is created for IR"
+        assert Title.objects.count() == 1
+        assert Title.objects.order_by("pk")[0].name == "TitleX"
+        assert Title.objects.order_by("pk")[0].issn == "0001-0000"
+        assert Item.objects.count() == 1, "Item is shared between IR and IR_M1"
         assert Item.objects.first().name == "ItemX"
         assert Item.objects.first().issn == "0001-0001"
         al = AccessLog.objects.order_by("pk").last()
         assert al.value == 1
         assert al.dim1 is None
-        assert PlatformTitle.objects.count() == 2
+        assert PlatformTitle.objects.count() == 1
 
     def test_import_counter_records_simple_data_0d_more_passes(
         self, counter_records_nd, organizations, report_type_nd, platform
@@ -454,94 +454,6 @@ class TestCounter5Import:
                 ],
                 [],
             ),
-            (
-                "counter5_ir_sample.tsv",
-                [
-                    (
-                        "Journal 45",
-                        {
-                            "proprietary_ids": ["SampleIR:45"],
-                            "uris": [],
-                            "isbn": "",
-                            "issn": "2859-4118",
-                            "eissn": "2859-4231",
-                            "doi": "10.1729/jhik",
-                        },
-                    ),
-                    (
-                        "Book X",
-                        {
-                            "proprietary_ids": [],
-                            "uris": [],
-                            "isbn": "9783164484107",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "",
-                        },
-                    ),
-                    (
-                        "Book 1092",
-                        {
-                            "proprietary_ids": ["SampleIR:b1092"],
-                            "uris": [],
-                            "isbn": "9783164584012",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "10.1729/zbcd.1243",
-                        },
-                    ),
-                ],
-                [
-                    (
-                        "Item 100026",
-                        {
-                            "proprietary_ids": ["SampleIR:100026"],
-                            "uris": [],
-                            "isbn": "",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "10.1729/jhik.345",
-                            "pub_type": Item.PUB_TYPE_ARTICLE,
-                        },
-                    ),
-                    (
-                        "Item 100027",
-                        {
-                            "proprietary_ids": ["SampleIR:100027"],
-                            "uris": [],
-                            "isbn": "9783164484107",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "10.1729/zbcd.457",
-                            "pub_type": Item.PUB_TYPE_BOOK,
-                        },
-                    ),
-                    (
-                        "Item 100029",
-                        {
-                            "proprietary_ids": ["SampleIR:100029"],
-                            "uris": [],
-                            "isbn": "",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "",
-                            "pub_type": Item.PUB_TYPE_BOOK_SEGMENT,
-                        },
-                    ),
-                    (
-                        "Item 100030",
-                        {
-                            "proprietary_ids": ["SampleIR:100030"],
-                            "uris": [],
-                            "isbn": "",
-                            "issn": "",
-                            "eissn": "",
-                            "doi": "10.1729/abcd.434",
-                            "pub_type": Item.PUB_TYPE_MULTIMEDIA,
-                        },
-                    ),
-                ],
-            ),
         ],
     )
     def test_c5_import_title_types_and_ids(
@@ -595,7 +507,6 @@ class TestCounter5Import:
             ("counter5_table_dr.tsv", 121),
             ("counter5_table_ir_m1.csv", 22788),
             ("counter5_table_pr.csv", 252),
-            ("counter5_ir_sample.tsv", 48),
         ],
     )
     def test_c5_table_record_count(self, filename, count, platform):

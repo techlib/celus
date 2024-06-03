@@ -87,7 +87,7 @@ def custom_import_preflight_check(mdu: ManualDataUpload):
 @atomic
 def import_custom_data(
     mdu: ManualDataUpload,
-    user: User,
+    user: typing.Optional[User],
     months: typing.Optional[typing.Iterable[str]] = None,
     empty=False,
 ) -> dict:

@@ -20,6 +20,7 @@ from django_celery_results.models import TaskResult
 
 from core.exceptions import FileConsistencyError
 from core.logic.url import extract_organization_id_from_request_query
+from core.logic.util import checksum_and_size_fileobj
 
 if typing.TYPE_CHECKING:
     from organizations.models import Organization
@@ -489,17 +490,7 @@ class SourceFileMixin(models.Model):
 
     @classmethod
     def checksum_fileobj(cls, fileobj) -> (str, int):
-        orig_pos = fileobj.tell()
-        fileobj.seek(0)
-        hasher = cls.create_hasher()
-        size = 0
-        while chunk := fileobj.read(1024 * 1024):
-            if isinstance(chunk, str):
-                chunk = chunk.encode("utf-8")
-            hasher.update(chunk)
-            size += len(chunk)
-        fileobj.seek(orig_pos)
-        return hasher.hexdigest(), size
+        return checksum_and_size_fileobj(fileobj, cls.DIGEST_SIZE)
 
     def checksum_self(self) -> (str, int):
         return self.checksum_fileobj(self.data_file)

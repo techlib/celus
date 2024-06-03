@@ -111,7 +111,7 @@ class CredentialsDataFrame:
             sushicred_dict[Col.REQUESTOR_ID].append(cr.requestor_id)
             sushicred_dict[Col.CUSTOMER_ID].append(cr.customer_id)
 
-            report_types = {rep.report_type.short_name for rep in cr.counter_reports.all()}
+            report_types = {rep.code for rep in cr.counter_reports.all()}
             if self.report_types:
                 for crt_code in self.report_types:
                     sushicred_dict[crt_code].append("active" if crt_code in report_types else "")

@@ -916,7 +916,7 @@ AUTO_HARVESTING_PROBABILITIES = config(
 )
 
 # item support
-ENABLE_ITEMS = config("ENABLE_ITEMS", cast=bool, default=False)
+ENABLE_ITEMS = config("ENABLE_ITEMS", cast=bool, default=True)
 
 # social authentication providers
 SITE_ID = config("SITE_ID", cast=int, default=1)

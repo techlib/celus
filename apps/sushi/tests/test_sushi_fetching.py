@@ -530,8 +530,8 @@ class TestSushiFetching:
                 True,
             ),
             (
-                "counter5_ir_sample.json",
-                "ir",
+                "Sample-IR_M1.json",
+                "ir_m1",
                 {
                     "Created_By": "Sample Institutional Repository",
                     "Institution_Name": "Client Demo Site",

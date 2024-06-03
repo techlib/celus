@@ -827,7 +827,7 @@ class TestImportBatchesAPI:
             {
                 "start_date": "2020-01",
                 "end_date": "2020-03",
-                "report_type": report_types[rt.lower()].pk,
+                "report_type": report_types[rt.lower() + ("51" if cv == 51 else "")].pk,
             },
         )
         assert resp.status_code == 200

@@ -709,12 +709,12 @@ class TestPlatformAPI:
             reverse("platform-detail", args=[org_id, platform.pk]),
             {
                 "counter_reports_source": "manual",
-                "counter_reports": [counter_report_types["ir"].pk, counter_report_types["tr51"].pk],
+                "counter_reports": [counter_report_types["dr"].pk, counter_report_types["tr51"].pk],
             },
         )
         assert resp.status_code == 200
         assert set(platform.counter_reports.values_list("counter_version", "code")) == {
-            (5, "IR"),
+            (5, "DR"),
             (51, "TR"),
         }, "report types are manually set"
 
@@ -739,7 +739,7 @@ class TestPlatformAPI:
             reverse("platform-detail", args=[org_id, platform.pk]),
             {
                 "counter_reports_source": "knowledgebase",
-                "counter_reports": [counter_report_types["ir"].pk, counter_report_types["tr51"].pk],
+                "counter_reports": [counter_report_types["dr"].pk, counter_report_types["tr51"].pk],
             },
         )
         assert resp.status_code == 200
@@ -2955,10 +2955,12 @@ class TestItemViewSet:
         for rec in data:
             assert rec["pk"] in item_ids or rec["pk"] in extra_item_ids
 
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize("interest", [True, False, None])
     @pytest.mark.parametrize("parent_titles", [True, False, None])
     def test_item_list_for_org_platform(
-        self, master_user_client, interest_rt, interest, parent_titles
+        self, master_user_client, interest_rt, interest, parent_titles, clickhouse_on_off
     ):
         """
         Test that the item list API returns the correct items for a given organization and platform.
@@ -2991,6 +2993,42 @@ class TestItemViewSet:
                 assert "parent_titles" in rec
             else:
                 assert "parent_titles" not in rec
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    @pytest.mark.parametrize("interest", [True, False, None])
+    @pytest.mark.parametrize("parent_titles", [True, False, None])
+    def test_item_detail_for_org_platform(
+        self, master_user_client, interest_rt, interest, parent_titles, clickhouse_on_off
+    ):
+        """
+        Test that the item detail API returns the correct data
+        """
+        pl = PlatformFactory()
+        org = OrganizationFactory()
+        items = ItemFactory.create_batch(10, usage__platform=pl, usage__organization=org)
+        # create some extra items that should not be in the response
+        ItemFactory.create_batch(3, usage__platform=pl)
+        ItemFactory.create_batch(4, usage__organization=org)
+        params = {}
+        if interest is not None:
+            params["interest"] = interest
+        if parent_titles is not None:
+            params["parent_titles"] = parent_titles
+        resp = master_user_client.get(
+            reverse("organization-platform-items-detail", args=[org.pk, pl.pk, items[0].pk]), params
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pk"] == items[0].pk
+        if interest:
+            assert "interests" in data
+        else:
+            assert "interests" not in data
+        if parent_titles:
+            assert "parent_titles" in data
+        else:
+            assert "parent_titles" not in data
 
     @pytest.mark.parametrize(
         ["org_in_query", "org_has_config", "exp_value"],

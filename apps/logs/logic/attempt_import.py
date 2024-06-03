@@ -8,6 +8,8 @@ from celus_nigiri.counter5 import CounterError, TransportError
 from celus_nigiri.record import CounterRecord
 from core.exceptions import FileConsistencyError
 from django.db.transaction import atomic
+from organizations.models import Organization
+from publications.models import Platform
 from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
@@ -49,7 +51,33 @@ def get_empty_records(
 
 
 @atomic
-def import_one_sushi_attempt(attempt: SushiFetchAttempt):
+def import_one_sushi_attempt(
+    attempt: SushiFetchAttempt,
+    counter_version: typing.Optional[int] = None,
+    organization: typing.Optional[Organization] = None,
+    platform: typing.Optional[Platform] = None,
+):
+    """
+    When `counter_version`, `organization` and `platform` are provided, they override the
+    credentials of the attempt. This can only be used when the attempt does not have credentials.
+    (result of deletion of credentials without removal of the data)
+    """
+    if attempt.credentials is None:
+        if counter_version is None or organization is None or platform is None:
+            raise ValueError(
+                "counter_version, organization and platform must be provided when the attempt does "
+                "not have credentials"
+            )
+    else:
+        if counter_version is not None or organization is not None or platform is not None:
+            raise ValueError(
+                "counter_version, organization and platform must not be provided when the attempt "
+                "has credentials"
+            )
+        counter_version = attempt.credentials.counter_version
+        organization = attempt.credentials.organization
+        platform = attempt.credentials.platform
+
     # check file consistency first
     try:
         attempt.check_self_checksum()
@@ -59,7 +87,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     attempt.check_importable()
 
     try:
-        poop = attempt.get_nibbler_poop(json_format=attempt.file_is_json())
+        poop = attempt.get_nibbler_poop(platform=platform)
         records = (e[1] for e in poop.records_basic())
 
     except NibblerErrors as e:
@@ -84,7 +112,6 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         else:
             errors.append(counter_error)
 
-    counter_version = attempt.credentials.counter_version
     try:
         # Note that only C5X is validated here
         if counter_version == 5:
@@ -124,20 +151,13 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
         # remove empty import batches to avoid the clash during import
         if count := wipe_empty_or_partial_import_batches(
-            attempt.counter_report.report_type,
-            attempt.credentials.organization,
-            attempt.credentials.platform,
-            month,
+            attempt.counter_report.report_type, organization, platform, month
         ):
             logger.info("%d empty conflicting ImportBatch(es) were deleted", count)
 
         try:
             import_batches, stats = import_counter_records(
-                attempt.counter_report.report_type,
-                attempt.credentials.organization,
-                attempt.credentials.platform,
-                records,
-                months=[month],
+                attempt.counter_report.report_type, organization, platform, records, months=[month]
             )
         except SushiException as e:
             logger.error("Failed to parse data due to sushi error", exc_info=e)
@@ -153,15 +173,16 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             logger.error("Data validity error - marking report as broken: '%s'", e)
             attempt.mark_crashed(e)
             # mark the report as broken for the credentials
-            try:
-                cr2c = CounterReportsToCredentials.objects.get(
-                    credentials=attempt.credentials, counter_report=attempt.counter_report
-                )
-                cr2c.set_broken(attempt, SushiCredentials.BROKEN_SUSHI)
-            except CounterReportsToCredentials.DoesNotExist:
-                # Counter report was removed from credentials - we can ignore this
-                pass
-            return
+            if attempt.credentials:
+                try:
+                    cr2c = CounterReportsToCredentials.objects.get(
+                        credentials=attempt.credentials, counter_report=attempt.counter_report
+                    )
+                    cr2c.set_broken(attempt, SushiCredentials.BROKEN_SUSHI)
+                except CounterReportsToCredentials.DoesNotExist:
+                    # Counter report was removed from credentials - we can ignore this
+                    pass
+                return
 
         if len(import_batches) > 1:
             raise DataStructureError("Cannot import data for more than one month from SUSHI")
@@ -189,8 +210,8 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         # create empty import batch each time empty data are imported
         attempt.import_batch = create_import_batch_or_crash(
             report_type=attempt.counter_report.report_type,
-            organization=attempt.credentials.organization,
-            platform=attempt.credentials.platform,
+            organization=organization,
+            platform=platform,
             month=attempt.start_date,
         )
         attempt.save()

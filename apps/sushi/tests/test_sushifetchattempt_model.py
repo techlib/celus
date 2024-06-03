@@ -406,7 +406,7 @@ class TestParsing:
             data_file__filename="input.tsv",
         )
 
-        poop = fa.get_nibbler_poop(fa.file_is_json())
+        poop = fa.get_nibbler_poop()
         fa.extract_header_data(poop.extras)
         assert fa.extracted_data == header
         logs = (e[1] for e in poop.records_basic())
@@ -646,7 +646,7 @@ class TestParsing:
             data_file__filename="input.json",
         )
 
-        poop = fa.get_nibbler_poop(fa.file_is_json())
+        poop = fa.get_nibbler_poop()
         fa.extract_header_data(poop.extras)
         assert fa.extracted_data == header
         logs = (e[1] for e in poop.records_basic())

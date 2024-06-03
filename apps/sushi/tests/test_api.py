@@ -121,7 +121,7 @@ def get_empty_credentials_c4():
 def get_empty_credentials_c5():
     empty_credentials_c5 = get_core_attrs_credentials()
     empty_credentials_c5.update(
-        {key: None for key in ["api key", "platform filter", "DR", "IR", "PR", "TR"]}
+        {key: None for key in ["api key", "platform filter", "DR", "IR_M1", "PR", "TR"]}
     )
     return empty_credentials_c5
 
@@ -259,7 +259,7 @@ def sushi_cred_with_platforms_dataframe_fixture(sushi_cred_dataframe_fixture):
             df = add_platforms_to_dataframe(
                 df_map[sheetname], [e for e in platforms if e not in used_platforms]
             )
-            df = df.drop(columns=["SUSHI url", "TR", "DR", "PR", "IR"], errors="ignore")
+            df = df.drop(columns=["SUSHI url", "TR", "DR", "PR", "IR", "IR_M1"], errors="ignore")
             if not all_organizations:
                 df.drop(columns=["organization"], inplace=True)
             df = sort(df, all_organizations)

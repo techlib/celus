@@ -113,6 +113,7 @@ def sync_platform_title_links(pretend=False):
 
     if memories:
         logger.info("max memory used: %.2f", max(memories))
+
     return stats
 
 

@@ -511,21 +511,27 @@ class TestPlatformImportAttempt:
             source=data_sources["brain"],
             counter_reports_source=counter_reports_source,
         )
-        CounterReportPlatform.objects.create(platform=p1, counter_report=counter_report_types["ir"])
+        CounterReportPlatform.objects.create(
+            platform=p1, counter_report=counter_report_types["ir_m1"]
+        )
         p2 = PlatformFactory(
             short_name="AACR",
             ext_id=327,
             source=data_sources["brain"],
             counter_reports_source="manual",
         )
-        CounterReportPlatform.objects.create(platform=p2, counter_report=counter_report_types["ir"])
+        CounterReportPlatform.objects.create(
+            platform=p2, counter_report=counter_report_types["ir_m1"]
+        )
         p3 = PlatformFactory(
             short_name="APS",
             ext_id=339,
             source=data_sources["brain"],
             counter_reports_source="knowledgebase",
         )
-        CounterReportPlatform.objects.create(platform=p3, counter_report=counter_report_types["ir"])
+        CounterReportPlatform.objects.create(
+            platform=p3, counter_report=counter_report_types["ir_m1"]
+        )
 
         creds_affected = CredentialsFactory(
             platform=p1,
@@ -571,8 +577,8 @@ class TestPlatformImportAttempt:
                 (4, "JR1"),
             }
         else:
-            assert set(p1.counter_reports.values_list("counter_version", "code")) == {(5, "IR")}
-        assert set(p2.counter_reports.values_list("counter_version", "code")) == {(5, "IR")}
+            assert set(p1.counter_reports.values_list("counter_version", "code")) == {(5, "IR_M1")}
+        assert set(p2.counter_reports.values_list("counter_version", "code")) == {(5, "IR_M1")}
         assert set(p3.counter_reports.values_list("counter_version", "code")) == set()
 
         if creds_updated:
@@ -581,11 +587,11 @@ class TestPlatformImportAttempt:
             }
         else:
             # affected credentials can be either
-            # IR - if platform report types were not synced
+            # IR_M1 - if platform report types were not synced
             # or DR when it were synced
             assert set(
                 creds_affected.counter_reports.values_list("counter_version", "code")
-            ).issubset({(5, "DR"), (5, "IR")})
+            ).issubset({(5, "DR"), (5, "IR_M1")})
         assert set(creds_manual.counter_reports.values_list("counter_version", "code")) == {
             (5, "PR")
         }

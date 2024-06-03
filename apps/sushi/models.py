@@ -1327,7 +1327,10 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 
         if self.import_batch:
             stats = self.import_batch.delete()  # deletes the access logs as well
-            self.import_batch = None
+            # reload the import_batch field and possibly the clashing_import_batch
+            # if we attempted to do a .save() later and those fields would not be cleaned
+            # we would get an IntegrityError because we will be referencing a deleted object
+            self.refresh_from_db()
         self.status = AttemptStatus.IMPORTING
         self.log = ""
         self.extracted_data = {}
@@ -1443,12 +1446,13 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return True
         return False
 
-    def get_nibbler_poop(self, json_format: bool = False) -> Poop:
+    def get_nibbler_poop(self, platform: Optional[Platform] = None) -> Poop:
+        platform = platform or self.credentials.platform
         nibbler_parser = self.counter_report.get_nibbler_parser(json_format=self.file_is_json())
 
         path = Path(settings.MEDIA_ROOT) / self.data_file.name
         logger.debug("Processing file: %s; time: %.3f", self.data_file.name, time())
-        poops = counter_format_poops(path, self.credentials.platform, nibbler_parser)
+        poops = counter_format_poops(path, platform, nibbler_parser)
         # Check the output note that poops.extras should countain counter header
         poop = output_to_poops(poops)[0]
         logger.debug("Records parsed; time: %.3f", time())

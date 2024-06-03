@@ -193,6 +193,7 @@ class ImportBatchAdmin(admin.ModelAdmin):
     list_display = ["created", "report_type", "organization", "platform", "date", "record_count"]
     list_filter = ["report_type", "organization", "platform"]
     list_select_related = ["report_type", "organization", "platform"]
+    readonly_fields = ["interest_ib"]
 
 
 @admin.register(models.ReportMaterializationSpec)

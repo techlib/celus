@@ -65,39 +65,50 @@ from logs.serializers import FlexibleReportUserEmailNewSerializer
 logger = logging.getLogger(__file__)
 
 
+# how many attempts to import at once, should not be too much to avoid celery killing the task
+# but not too little to avoid the celery scheduling overhead
+IMPORT_BATCH_SIZE = 100
+
+
 @celery.shared_task
 @logged_task
 @email_if_fails
-@atomic
 def import_new_sushi_attempts_task():
     """
-    Go over new sushi attempts that contain data and import them
+    Go over new sushi attempts that contain data and import them.
+    We want to make sure that this task does not run forever, because it would be
+    killed by Celery. So we limit the number of attempts to import to IMPORT_BATCH_SIZE and
+    reschedule the task after that.
     """
-    try:
-        # select_for_update locks fetch attempts
-        attempts = SushiFetchAttempt.objects.select_for_update(nowait=True).filter(
-            status=AttemptStatus.IMPORTING
-        )
-        count = attempts.count()
-        logger.info("Found %d unprocessed successful download attempts matching criteria", count)
+    attempts = SushiFetchAttempt.objects.filter(status=AttemptStatus.IMPORTING).order_by("pk")
+    count = attempts.count()
+    # get the first 100 attempts to import and then try them one by one locking them one by one
+    to_do = attempts.values_list("pk", flat=True)[:IMPORT_BATCH_SIZE]
+    logger.info("Found %d unprocessed successful attempts, importing %d of them", count, len(to_do))
 
-        for i, attempt in enumerate(attempts):
-            logger.info("----- Importing attempt #%d -----", i)
-            try:
-                attempt.check_importable()
-                import_one_sushi_attempt(attempt)
-            except Exception as e:
-                # we catch any kind of error to make sure that the loop does not die
-                logger.error("Importing sushi attempt #%d crashed: %s", attempt.pk, e)
-                attempt.mark_crashed(e)
+    for attempt_pk in to_do:
+        with atomic():
+            if attempt := attempts.select_for_update(skip_locked=True).get(pk=attempt_pk):
+                logger.info("----- Importing attempt #%d -----", attempt.pk)
+                try:
+                    attempt.check_importable()
+                    import_one_sushi_attempt(attempt)
+                except Exception as e:
+                    # we catch any kind of error to make sure that the loop does not die
+                    logger.error("Importing sushi attempt #%d crashed: %s", attempt.pk, e)
+                    attempt.mark_crashed(e)
 
-            finally:
-                # Close the file (celery might keep the file opened)
-                if attempt.data_file:
-                    attempt.data_file.close()
-
-    except DatabaseError:
-        logger.warning("Sushi import attempts are currently being processed.")
+                finally:
+                    # Close the file (celery might keep the file opened)
+                    if attempt.data_file:
+                        attempt.data_file.close()
+            else:
+                logger.warning(
+                    "----- Attempt #%d is no longer available for import -----", attempt_pk
+                )
+    if attempts.exists():
+        # reschedule the task to import the next batch of attempts immediately
+        import_new_sushi_attempts_task.delay()
 
 
 @celery.shared_task
@@ -425,13 +436,13 @@ def prepare_preflights():
 @logged_task
 @email_if_fails
 @atomic
-def import_manual_upload_data(mdu_id: int, user_id: int):
+def import_manual_upload_data(mdu_id: int, user_id: Optional[int] = None):
     try:
         mdu = ManualDataUpload.objects.select_for_update(nowait=True).get(
             pk=mdu_id, state=MduState.IMPORTING
         )
         mdu.check_self_checksum()  # check file integrity using a stored checksum
-        user = User.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id) if user_id else mdu.user
         if mdu.preflight["log_count"] == 0:
             # Try to fill in empty import batches based on provided months
             res = import_custom_data(mdu, user, empty=True)
@@ -507,7 +518,7 @@ def unstuck_import_manual_upload_data():
         Q(state=MduState.IMPORTING)
         & Q(created__lt=now() - timedelta(minutes=5))  # don't start right away
     ):
-        import_manual_upload_data.delay(mdu.pk, mdu.user.pk)
+        import_manual_upload_data.delay(mdu.pk, mdu.user_id)
 
 
 @celery.shared_task
@@ -520,7 +531,7 @@ def reprocess_mdu_task(mdu_id):
         logger.error(f"MDU #{mdu_id} for reprocessing does not exist")
     else:
         mdu.unprocess()
-        import_manual_upload_data.delay(mdu.pk, mdu.user.pk)
+        import_manual_upload_data.delay(mdu.pk, mdu.user_id)
 
 
 @celery.shared_task

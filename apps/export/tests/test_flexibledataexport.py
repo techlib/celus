@@ -265,6 +265,7 @@ class TestFlexibleDataExport:
         slicer = FlexibleDataSlicer(primary_dimension="item")
         slicer.order_by = ["item__name"]
         slicer.add_group_by("metric")
+        slicer.order_by = ["item__name"]
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
         assert data.splitlines()[0].startswith("Item,DOI,ISSN,EISSN,ISBN,Publication date,")
