@@ -84,3 +84,15 @@ class CoreConfig(AppConfig):
                     )
                 ]
             return []
+
+        @register()
+        def check_eduid_and_otp(app_configs, **kwargs):
+            if settings.ALLOW_EDUID_LOGIN and settings.OTP_ENABLED:
+                return [
+                    Error(
+                        "Both EDUID (ALLOW_EDUID_LOGIN) and OTP (OTP_ENABLED) are enabled. "
+                        "This is not supported.",
+                        id="core.E002",
+                    )
+                ]
+            return []

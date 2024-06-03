@@ -1,11 +1,15 @@
 import typing
 from datetime import datetime
 
+from allauth.account.forms import default_token_generator
+from allauth.account.utils import url_str_to_user_pk as uid_decoder
 from django.conf import settings
+from django.utils.encoding import force_str
 from django_otp import DEVICE_ID_SESSION_KEY, devices_for_user, user_has_device
 from django_otp.plugins.otp_email.models import EmailDevice
 from organizations.models import Organization, UserOrganization
 from organizations.serializers import OrganizationShortSerializer
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     BooleanField,
@@ -221,3 +225,26 @@ class AccessibleUsersSerializer(ModelSerializer):
             )
 
         return instance
+
+
+class EduIdIdentityConfirmSerializer(serializers.Serializer):
+    """
+    Serializer for validation of an invitation/reset token
+    """
+
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    user = None
+
+    def validate(self, attrs):
+        # Decode the uidb64 (allauth use base36) to uid to get User object
+        try:
+            uid = force_str(uid_decoder(attrs["uid"]))
+            self.user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise ValidationError({"uid": ["Invalid value"]}) from None
+
+        if not default_token_generator.check_token(self.user, attrs["token"]):
+            raise ValidationError({"token": ["Invalid value"]})
+
+        return attrs

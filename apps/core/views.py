@@ -12,12 +12,14 @@ from allauth.account.utils import send_email_confirmation, sync_user_email_addre
 from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
+from django.contrib.auth.admin import sensitive_post_parameters_m
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.core.management import call_command
 from django.db.models import Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.utils.timezone import now
 from django.views import View
 from django_otp import DEVICE_ID_SESSION_KEY, match_token
 from django_otp.plugins.otp_email.models import EmailDevice, GenerateNotAllowed
@@ -32,10 +34,11 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
 from config.permissions import IsAuthenticatedWithOptional2FA
 from core.logic.email import mail_otp_token
-from core.models import TaskProgress, User
+from core.models import Identity, TaskProgress, User
 from core.permissions import OwnerPermission, SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import (
     AccessibleUsersSerializer,
+    EduIdIdentityConfirmSerializer,
     EmailDeviceSerializer,
     EmailVerificationSerializer,
     TaskProgressSerializer,
@@ -55,6 +58,8 @@ from .prometheus import (
 )
 from .signals import password_reset_signal
 from .tasks import erms_sync_users_and_identities_task
+
+logger = logging.getLogger(__name__)
 
 
 class UserView(GenericAPIView):
@@ -525,3 +530,44 @@ class PrometheusMetricsView(View):
 
         metrics_page = prometheus_client.generate_latest(celus_registry)
         return HttpResponse(metrics_page, content_type=prometheus_client.CONTENT_TYPE_LATEST)
+
+
+class EduIdIdentityConfirmView(GenericAPIView):
+    """
+    Used to connect the identity obtained from the eduID service with the user in the system.
+    Uses a system similar to the password reset/invitation confirmation view.
+    """
+
+    serializer_class = EduIdIdentityConfirmSerializer
+    permission_classes = (AllowAny,)
+
+    @sensitive_post_parameters_m
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if identity_value := request.META.get(settings.EDUID_IDENTITY_HEADER):
+            identity_obj, created = Identity.objects.get_or_create(
+                identity=identity_value, defaults={"user": serializer.user}
+            )
+            if not created and identity_obj.user != serializer.user:
+                logger.warning(
+                    "Identity %s reassigned from %s to user %s",
+                    identity_value,
+                    identity_obj.user,
+                    serializer.user,
+                )
+                identity_obj.user = serializer.user
+                identity_obj.save()
+            # force update of the last_login field to invalidate the verification token
+            serializer.user.last_login = now()
+            serializer.user.save()
+            return Response(
+                {"detail": f"Identity '{identity_value}' assigned to user '{serializer.user}'."}
+            )
+        else:
+            return Response(
+                {"detail": "No identity header found."}, status=status.HTTP_400_BAD_REQUEST
+            )

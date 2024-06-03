@@ -558,6 +558,50 @@ class TestInvitationAndPasswordResetAPI:
         # one more thing - check that the user email is thus verified
         assert user.email_verified
 
+    def test_invitation_workflow_works_with_eduid(
+        self, admin_client, client, mailoutbox, settings, site
+    ):
+        """
+        Test that password can be changed using the link sent when inviting users
+        """
+        settings.ALLOWED_HOSTS = ["testserver", site.domain]
+        settings.ALLOW_EDUID_LOGIN = True
+        settings.ALLOW_EMAIL_LOGIN = False
+        user = User.objects.create(username="foo", email="foo@bar.baz")
+        # invitation is sent using an admin action
+        resp = admin_client.post(
+            reverse("admin:core_user_changelist"),
+            {"action": "send_invitation_emails", ACTION_CHECKBOX_NAME: [user.pk]},
+        )
+        assert resp.status_code == 302
+        assert len(mailoutbox) == 1
+        # extract uid and token to use for the endpoint
+        # - the link itself points to frontend so it is not directly usable
+        uid = re.search(r"\?uid=(\w+)&", mailoutbox[0].body).group(1)
+        token = re.search(r"&token=([\w-]+)", mailoutbox[0].body).group(1)
+        assert uid and token, "both uid and token must be present in the email body"
+        # now try resetting the password
+        resp = client.post(
+            reverse("confirm_identity"),
+            {"uid": uid, "token": token},
+            headers={"HTTP_X_MAIL": "foo@bar.baz", "X_IDENTITY": "foo@bar-baz.id"},
+        )
+        assert resp.status_code == 200
+        assert len(mailoutbox) == 1, "no new email after password reset"
+        user.refresh_from_db()
+        assert user.email_verified
+        assert user.identity_set.count() == 1
+        assert user.identity_set.first().identity == "foo@bar-baz.id"
+        # try it one more time to confirm that the link is one-time only
+        resp = client.post(
+            reverse("confirm_identity"),
+            {"uid": uid, "token": token},
+            headers={"HTTP_X_MAIL": "foo@bar.baz", "X_IDENTITY": "bar@bar-baz.id"},
+        )
+        assert resp.status_code == 400
+        assert user.identity_set.count() == 1
+        assert user.identity_set.first().identity == "foo@bar-baz.id", "identity should not change"
+
     @pytest.mark.parametrize(
         ["site_domain", "allowed_hosts", "ok"],
         [

@@ -47,6 +47,9 @@ urlpatterns = [
         views.DifferentUserInviteView.as_view(),
         name="send_invitation_email",
     ),
+    path(
+        "user/confirm-identity/", views.EduIdIdentityConfirmView.as_view(), name="confirm_identity"
+    ),
 ] + router.urls
 
 

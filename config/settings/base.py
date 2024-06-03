@@ -111,7 +111,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "core.middleware.CookieOTPMiddleware",
-    "core.middleware.EDUIdHeaderMiddleware",
     "impersonate.middleware.ImpersonateMiddleware",  # should be place after auth middlewares
     "core.middleware.CelusVersionHeaderMiddleware",
     "core.middleware.ClickhouseIntegrationMiddleware",
@@ -133,6 +132,9 @@ if ALLOW_EMAIL_LOGIN:
 
 ALLOW_EDUID_LOGIN = config("ALLOW_EDUID_LOGIN", cast=bool, default=True)
 if ALLOW_EDUID_LOGIN:
+    # insert EDUIdAuthenticationBackend after allauth's AuthenticationBackend
+    idx = MIDDLEWARE.index("allauth.account.middleware.AccountMiddleware")
+    MIDDLEWARE.insert(idx + 1, "core.middleware.EDUIdHeaderMiddleware")
     AUTHENTICATION_BACKENDS.append("apps.core.auth.EDUIdAuthenticationBackend")
 
 
