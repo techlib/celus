@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from dataclasses import dataclass, field
-from itertools import chain
+from itertools import chain, islice
 from typing import Dict, Iterable, List, Optional, Set
 
 from core.context_managers import needs_clickhouse_sync
@@ -384,10 +384,11 @@ def compare_titles_with_clickhouse(import_batch_id: Optional[int] = None) -> Com
 
 
 @needs_clickhouse_sync
-def deal_with_comparison_results(results: ComparisonResult):
+def deal_with_comparison_results(results: ComparisonResult, delete_batch_size=1_000):
     for ib in ImportBatch.objects.filter(pk__in=results.import_batches_to_resync):
         logger.debug("Resyncing #%s", ib.pk)
         resync_import_batch_with_clickhouse(ib)
-    for ib_id in results.import_batches_to_delete:
-        logger.debug("Deleting #%s", ib_id)
-        AccessLogCube.delete_import_batch(ch_backend, ib_id)
+    iterator = iter(results.import_batches_to_delete)
+    while batch := list(islice(iterator, delete_batch_size)):
+        logger.debug("Deleting batch %s", batch)
+        ch_backend.delete_records(AccessLogCube.query().filter(import_batch_id__in=list(batch)))
