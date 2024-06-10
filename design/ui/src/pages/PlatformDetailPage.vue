@@ -211,7 +211,7 @@ cs:
         <v-icon class="mr-2">fa-download</v-icon>
         <span v-text="$t('sushi')"></span>
       </v-tab>
-      <v-tab v-if="showAdminStuff && platform" href="#admin">
+      <v-tab v-if="platform" href="#admin">
         <v-icon class="mr-2">fa-tools</v-icon>
         <span v-text="$t('data_management')"></span>
       </v-tab>
@@ -266,93 +266,102 @@ cs:
           </SushiCredentialsManagementWidget>
         </v-tab-item>
 
-        <v-tab-item value="admin" v-if="showAdminStuff">
+        <v-tab-item value="admin">
           <v-sheet class="ma-1">
             <v-card>
               <v-card-text>
-                <v-container class="pa-2 pb-10">
-                  <v-row>
-                    <v-col>
-                      <h3 class="text-h4">{{ $t("labels.data_export") }}</h3>
-                    </v-col>
-                  </v-row>
-                  <v-row>
-                    <v-col>
-                      <p>{{ $t("raw_export_text") }}</p>
-                      <p>
-                        <i18n path="raw_export_reporting_link">
-                          <template #reporting_module="">
-                            <router-link :to="{ name: 'flexitable' }">{{
-                              $t("reporting_module")
-                            }}</router-link>
-                          </template>
-                        </i18n>
-                      </p>
-                    </v-col>
-                  </v-row>
-                  <v-row no-gutters>
-                    <v-col>
-                      <raw-data-export-widget
-                        color="primary"
-                        :platform="platformId"
-                      ></raw-data-export-widget>
-                    </v-col>
-                  </v-row>
-
-                  <v-row v-if="clickhouseQueryActive">
-                    <v-col>
-                      <h3 class="text-h4 mt-3">
-                        {{ $t("labels.counter_data_export") }}
-                      </h3>
-                      <v-alert
-                        v-if="(selectedOrganizationId || 0) <= 0"
-                        class="mt-2 mb-1"
-                        outlined
-                        type="warning"
-                      >
-                        <p class="mb-0">
-                          {{ $t("counter_data_export_no_org") }}
+                <v-container class="pa-2 pb-2">
+                  <section v-if="showAdminStuff" class="pb-8">
+                    <!-- raw data export -->
+                    <v-row>
+                      <v-col>
+                        <h3 class="text-h4">{{ $t("labels.data_export") }}</h3>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col>
+                        <p>{{ $t("raw_export_text") }}</p>
+                        <p>
+                          <i18n path="raw_export_reporting_link">
+                            <template #reporting_module="">
+                              <router-link :to="{ name: 'flexitable' }">{{
+                                $t("reporting_module")
+                              }}</router-link>
+                            </template>
+                          </i18n>
                         </p>
-                      </v-alert>
-                    </v-col>
-                  </v-row>
-                  <v-row v-if="clickhouseQueryActive">
-                    <v-col>
-                      <p>{{ $t("counter_data_export_text") }}</p>
-                    </v-col>
-                  </v-row>
-                  <v-row no-gutters v-if="clickhouseQueryActive">
-                    <span
-                      v-for="item in exportableCounterReportTypes"
-                      :key="item.pk"
-                      class="ml-1"
-                    >
-                      <CounterDataExportWidget
-                        :platform="platformObj"
-                        :counter-report-type="item"
-                      />
-                    </span>
-                  </v-row>
+                      </v-col>
+                    </v-row>
+                    <v-row no-gutters>
+                      <v-col>
+                        <raw-data-export-widget
+                          color="primary"
+                          :platform="platformId"
+                        ></raw-data-export-widget>
+                      </v-col>
+                    </v-row>
+                  </section>
 
-                  <v-row class="pt-4">
-                    <v-col>
-                      <h3 class="text-h4">{{ $t("labels.delete_data") }}</h3>
-                    </v-col>
-                  </v-row>
+                  <section v-if="clickhouseQueryActive" class="pt-4 pb-8">
+                    <!-- counter data export -->
+                    <v-row>
+                      <v-col>
+                        <h3 class="text-h4">
+                          {{ $t("labels.counter_data_export") }}
+                        </h3>
+                        <v-alert
+                          v-if="(selectedOrganizationId || 0) <= 0"
+                          class="mt-2 mb-1"
+                          outlined
+                          type="warning"
+                        >
+                          <p class="mb-0">
+                            {{ $t("counter_data_export_no_org") }}
+                          </p>
+                        </v-alert>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col>
+                        <p>{{ $t("counter_data_export_text") }}</p>
+                      </v-col>
+                    </v-row>
+                    <v-row no-gutters>
+                      <span
+                        v-for="item in exportableCounterReportTypes"
+                        :key="item.pk"
+                        class="ml-1"
+                      >
+                        <CounterDataExportWidget
+                          :platform="platformObj"
+                          :counter-report-type="item"
+                        />
+                      </span>
+                    </v-row>
+                  </section>
 
-                  <v-row>
-                    <v-col>
-                      <p>{{ $t("delete_data_text") }}</p>
-                    </v-col>
-                  </v-row>
-                  <v-row no-gutters>
-                    <v-col>
-                      <DeletePlatformDataWidget
-                        :platform="platform"
-                        @finished="deleteFinished"
-                      />
-                    </v-col>
-                  </v-row>
+                  <section v-if="showAdminStuff" class="pt-4 pb-8">
+                    <!-- delete data -->
+                    <v-row>
+                      <v-col>
+                        <h3 class="text-h4">{{ $t("labels.delete_data") }}</h3>
+                      </v-col>
+                    </v-row>
+
+                    <v-row>
+                      <v-col>
+                        <p>{{ $t("delete_data_text") }}</p>
+                      </v-col>
+                    </v-row>
+                    <v-row no-gutters>
+                      <v-col>
+                        <DeletePlatformDataWidget
+                          :platform="platform"
+                          @finished="deleteFinished"
+                        />
+                      </v-col>
+                    </v-row>
+                  </section>
                 </v-container>
               </v-card-text>
             </v-card>
