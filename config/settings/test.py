@@ -6,7 +6,9 @@ os.environ["DISABLE_CACHALOT"] = "true"
 
 from .base import *  # noqa
 
+TESTING = True
 LIVE_ERMS_AUTHENTICATION = False
+ALLOW_EDUID_LOGIN = True  # some tests rely on eduid login being enabled
 
 DATABASES["default"]["NAME"] = config("POSTGRES_DB", "celus")  # noqa F405
 DATABASES["default"]["USER"] = config("POSTGRES_USER", "celus")  # noqa F405

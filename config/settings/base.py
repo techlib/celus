@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
+
 import socket
 import sys
 from datetime import timedelta
@@ -36,6 +37,7 @@ USES_ERMS = config("USES_ERMS", cast=bool, default=False)
 
 CELUS_VERSION = get_version(BASE_DIR)
 DEBUG = config("DEBUG", cast=bool, default=False)
+TESTING = False  # set to True in tests
 OTP_ENABLED = config("OTP_ENABLED", cast=bool, default=False)
 # automatically create EmailDevices when OTP_ENABLED=True
 OTP_CREATE_EMAIL_DEVICES = True
@@ -130,7 +132,8 @@ ALLOW_EMAIL_LOGIN = config("ALLOW_EMAIL_LOGIN", cast=bool, default=True)
 if ALLOW_EMAIL_LOGIN:
     AUTHENTICATION_BACKENDS.append("allauth.account.auth_backends.AuthenticationBackend")
 
-ALLOW_EDUID_LOGIN = config("ALLOW_EDUID_LOGIN", cast=bool, default=True)
+# EDUID is mutually exclusive with email login, so we can derive default from ALLOW_EMAIL_LOGIN
+ALLOW_EDUID_LOGIN = config("ALLOW_EDUID_LOGIN", cast=bool, default=not ALLOW_EMAIL_LOGIN)
 if ALLOW_EDUID_LOGIN:
     # insert EDUIdAuthenticationBackend after allauth's AuthenticationBackend
     idx = MIDDLEWARE.index("allauth.account.middleware.AccountMiddleware")
