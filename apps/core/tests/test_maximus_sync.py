@@ -83,6 +83,7 @@ class TestMaximusSync:
                 "email": "",
                 "date_joined": date_joined,
                 "last_login": None,
+                "is_active": True,
             },
         )
         out = json.loads(json.dumps(get_users()))
@@ -96,6 +97,7 @@ class TestMaximusSync:
             last_name="Bobster",
             email="bob@bobster.com",
             date_joined=date_joined,
+            is_active=False,
         )
         check = (
             {
@@ -106,6 +108,7 @@ class TestMaximusSync:
                 "email": "",
                 "date_joined": date_joined,
                 "last_login": None,
+                "is_active": True,
             },
             {
                 "ext_id": u2.id,
@@ -115,6 +118,7 @@ class TestMaximusSync:
                 "email": "bob@bobster.com",
                 "date_joined": date_joined,
                 "last_login": None,
+                "is_active": False,
             },
         )
         out = json.loads(json.dumps(get_users()))

@@ -26,6 +26,7 @@ class CelusUserSerializer(serializers.ModelSerializer):
             "email",
             "date_joined",
             "last_login",
+            "is_active",
         )
 
 
