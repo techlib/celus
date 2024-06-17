@@ -42,7 +42,7 @@ class Command(BaseCommand):
                     continue
 
                 registry_id = re.match(
-                    r"^https://registry.projectcounter.org/platform/([-0-9a-f]+)$", registry_url
+                    r"^https://registry.countermetrics.org/platform/([-0-9a-f]+)$", registry_url
                 ).group(1)
                 if str(platform.counter_registry_id) == registry_id:
                     logger.debug("Platform with ext_id=%s has correct registry ID", ext_id)

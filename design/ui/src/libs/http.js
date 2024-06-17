@@ -9,7 +9,9 @@ axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 axios.interceptors.request.use(
   function (config) {
-    if (!config.url.includes("projectcounter.org")) {
+    if (!config.url.includes("countermetrics.org")) {
+      // we do not want to send the custom header to countermetrics.org
+      // because is messes up the CORS headers
       config.headers["celus-version"] = store.getters.celusVersion;
     }
     return config;

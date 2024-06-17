@@ -306,7 +306,7 @@ cs:
                     <span v-on="on" class="align-self-end mb-3 ms-1">
                       <a
                         target="_blank"
-                        :href="`https://registry.projectcounter.org/platform/${activePlatform.counter_registry_id}/`"
+                        :href="`${registryUrlBase}platform/${activePlatform.counter_registry_id}/`"
                         style="line-height: 2rem"
                       >
                         <v-icon small color="counterRegistry"
@@ -854,6 +854,7 @@ export default {
       prefixPlatform: "",
       initializing: true,
       showDebug: false,
+      registryUrlBase: "https://registry.countermetrics.org/",
     };
   },
   computed: {
@@ -1083,7 +1084,7 @@ export default {
     },
     platformRegistryLink() {
       if (this.activePlatform && this.activePlatform.counter_registry_id) {
-        return `https://registry.projectcounter.org/api/v1/platform/${this.activePlatform.counter_registry_id}/`;
+        return `${this.registryUrlBase}api/v1/platform/${this.activePlatform.counter_registry_id}/`;
       }
     },
     registrySushiService() {
@@ -1573,6 +1574,7 @@ export default {
         } catch (error) {
           this.showSnackbar({
             content: "Could not load data from the COUNTER registry",
+            color: "warning",
           });
         }
       }
