@@ -147,8 +147,8 @@ class TestLogicDataImportXLSX:
             stats = import_sushi_credentials_from_xlsx(file_name, sheet_no=2)
             assert stats["added"] == 2
             # test sheet empty
-            with pytest.raises(ValueError):
-                import_sushi_credentials_from_xlsx(file_name, sheet_no=1)
+            stats = import_sushi_credentials_from_xlsx(file_name, sheet_no=1)
+            assert stats["added"] == 0
             # test sheet out of range
             with pytest.raises(ValueError):
                 import_sushi_credentials_from_xlsx(file_name, sheet_no=3)

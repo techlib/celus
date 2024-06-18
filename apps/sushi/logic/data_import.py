@@ -37,10 +37,7 @@ def import_sushi_credentials_from_xlsx(
     if sheet_no > len(workbook.worksheets):
         raise ValueError("chosen sheet doesn't exist")
     credentials_sheet = workbook.worksheets[sheet_no - 1]
-    if credentials_sheet.max_row > 1:
-        headers = [header.value for header in credentials_sheet[1] if header.value]
-    else:
-        raise ValueError("sheet is empty")
+    headers = [header.value for header in credentials_sheet[1] if header.value]
     if Col.PUBLISHER_VENDOR_PLATFORM.value not in headers or Col.CUSTOMER_ID.value not in headers:
         raise ValueError("essential headers are missing")
 
