@@ -1,3 +1,4 @@
+from core.filters import PkMultiValueFilterBackend
 from rest_framework import filters
 
 
@@ -48,3 +49,13 @@ class PrimaryDimensionFlexiReportFilter(filters.BaseFilterBackend):
         if primary_dimension := request.GET.get("primary_dimension"):
             queryset = queryset.filter(report_config__primary_dimension=primary_dimension)
         return queryset
+
+
+class MultiPlatformFilter(PkMultiValueFilterBackend):
+    filter_field = "platform_id"
+    query_param = "platform_ids"
+
+
+class MultiReportTypeFilter(PkMultiValueFilterBackend):
+    filter_field = "report_type_id"
+    query_param = "report_type_ids"

@@ -44,6 +44,7 @@ from rest_framework.fields import (
     HiddenField,
     ListField,
 )
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -1171,15 +1172,36 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
             | (OwnerLevelBasedPermissions & CanAccessOrganizationRelatedObjectPermission)
         )
     ]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [
+        SearchFilter,
+        filters.MultiPlatformFilter,
+        filters.MultiReportTypeFilter,
+        filters.OrderByFilter,
+    ]
+    search_fields = [
+        "platform__name",
+        "platform__short_name",
+        "organization__name",
+        "organization__short_name",
+        "report_type__name",
+        "report_type__short_name",
+        "user__username",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+    ]
 
-    def get_queryset(self):
+    def filter_org_qs(self, qs):
         org_filter = organization_filter_from_org_id(
             self.kwargs.get("organization_pk"), self.request.user
         )
-        qs = (
-            ManualDataUpload.objects.filter(**org_filter)
-            .select_related("organization", "platform", "report_type", "user")
-            .prefetch_related("import_batches", "import_batches__user")
+        return qs.filter(**org_filter)
+
+    def get_queryset(self):
+        qs = self.filter_org_qs(super().get_queryset())
+        qs = qs.select_related("organization", "platform", "report_type", "user").prefetch_related(
+            "import_batches", "import_batches__user"
         )
         # add access level stuff
         org_to_level = {}  # this is used to cache user access level for the same organization
@@ -1193,18 +1215,42 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
             mdu.can_edit = user_org_level >= mdu.owner_level
         return qs
 
+    @action(detail=False, methods=["get"], url_path="stats")
+    def stats(self, request, organization_pk):
+        qs = self.filter_org_qs(self.queryset)  # unfiltered qs
+        counts = {
+            "platforms": list(
+                qs.order_by("platform_id")
+                .values("platform_id")
+                .annotate(count=Count("pk"))
+                .values("platform_id", "count")
+            ),
+            "report_types": list(
+                qs.order_by("report_type_id")
+                .values("report_type_id")
+                .annotate(count=Count("pk"))
+                .values("report_type_id", "count")
+            ),
+        }
+        return Response({"counts": counts})
+
 
 class OrganizationReportTypesViewSet(ModelViewSet):
     queryset = ReportType.objects.all()
     serializer_class = ReportTypeSerializer
 
     def get_queryset(self):
-        organization = get_object_or_404(
-            self.request.user.accessible_organizations(), pk=self.kwargs.get("organization_pk")
-        )
-        allowed_sources = DataSource.objects.filter(
-            Q(organization__isnull=True) | Q(organization=organization)
-        )
+        organization_pk = self.kwargs.get("organization_pk")
+        if organization_pk == "-1":
+            allowed_sources = DataSource.objects.all()
+        else:
+            organization = get_object_or_404(
+                self.request.user.accessible_organizations(), pk=organization_pk
+            )
+            allowed_sources = DataSource.objects.filter(
+                Q(organization__isnull=True) | Q(organization=organization)
+            )
+
         return ReportType.objects.filter(
             Q(source__in=allowed_sources) | Q(source__isnull=True)
         ).select_related("source", "counterreporttype")

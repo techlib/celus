@@ -4,6 +4,7 @@ from random import randint
 import factory
 import faker
 from celus_nigiri.counter5 import CounterRecord
+from core.fake_data import UserFactory
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
@@ -146,6 +147,7 @@ class ManualDataUploadFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
+    user = factory.SubFactory(UserFactory)
 
     state = MduState.IMPORTED
     when_processed = factory.LazyAttribute(

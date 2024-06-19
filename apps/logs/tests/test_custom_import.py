@@ -453,4 +453,4 @@ class TestCustomImport:
         mdus += ManualDataUploadFullFactory.create_batch(5, state=MduState.IMPORTED)
         resp = clients["su"].get(reverse("organization-manual-data-upload-list", args=(-1,)))
         assert resp.status_code == 200
-        assert len(resp.json()) == 10
+        assert len(resp.json()["results"]) == 10

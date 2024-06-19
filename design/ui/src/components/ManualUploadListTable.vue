@@ -32,7 +32,7 @@ cs:
             <v-autocomplete
               v-model="filterPlatforms"
               :label="$t('title_fields.platforms')"
-              :items="platforms"
+              :items="filteredPlatforms"
               item-value="pk"
               item-text="name"
               multiple
@@ -41,24 +41,26 @@ cs:
             ></v-autocomplete>
           </v-col>
           <v-col md="4" cols="12">
-            <v-select
+            <v-autocomplete
               v-model="filterReportTypes"
               :label="$t('title_fields.report_types')"
-              :items="reportTypes"
+              :items="filteredReportTypes"
               item-value="pk"
-              item-text="name"
+              :item-text="(item) => item.name"
               multiple
               clearable
               clear-icon="fas fa-times"
-            ></v-select>
+            ></v-autocomplete>
           </v-col>
           <v-col md="4" cols="12">
             <v-text-field
-              v-model="search"
+              v-model="searchDebounced"
               append-icon="fa-search"
               :label="$t('labels.search')"
               single-line
               hide-details
+              clearable
+              clear-icon="fas fa-times"
             >
             </v-text-field>
           </v-col>
@@ -69,10 +71,13 @@ cs:
         :headers="headers"
         :no-data-text="$t('no_data')"
         :loading="loading"
+        :sort-by.sync="sortBy"
+        :sort-desc.sync="sortDesc"
+        :server-items-length="mduCount"
+        :page.sync="page"
+        :items-per-page.sync="pageSize"
+        :search="searchDebounced"
         :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
-        sort-by="created"
-        sort-desc
-        :search="search"
       >
         <template #item.user.last_name="{ item }">
           {{ userToString(item.user) }}
@@ -83,7 +88,7 @@ cs:
         </template>
 
         <template #item.report_type.short_name="{ item }">
-          <v-tooltip bottom v-if="item.can_edit">
+          <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <span
                 v-if="!!item.report_type"
@@ -312,6 +317,7 @@ cs:
 </template>
 
 <script>
+import debounce from "lodash/debounce";
 import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import AccessLogList from "./AccessLogList";
@@ -320,11 +326,12 @@ import ManualUploadState from "@/components/ManualUploadState";
 import { userToString } from "../libs/user";
 import MDUChart from "@/components/MDUChart";
 import cancellation from "@/mixins/cancellation";
+import stateTracking from "@/mixins/stateTracking";
 
 export default {
   name: "ManualUploadListTable",
 
-  mixins: [cancellation],
+  mixins: [cancellation, stateTracking],
 
   components: {
     MDUChart,
@@ -339,10 +346,40 @@ export default {
       showBatchDialog: false,
       showDeleteDialog: false,
       selectedMDU: null,
-      dialogType: "chart",
       search: "",
       filterReportTypes: [],
+      reportTypes: [],
       filterPlatforms: [],
+      platforms: [],
+      counts: null,
+      mduCount: 0,
+      sortBy: "created",
+      sortDesc: true,
+      page: 1,
+      pageSize: 10,
+      watchedAttrs: [
+        {
+          name: "search",
+          type: String,
+        },
+        {
+          name: "filterPlatforms",
+          type: Array,
+        },
+        {
+          name: "filterReportTypes",
+          type: Array,
+        },
+        {
+          name: "sortBy",
+          type: String,
+        },
+        {
+          name: "sortDesc",
+          type: Boolean,
+          alwaysTrack: true,
+        },
+      ],
     };
   },
 
@@ -393,7 +430,7 @@ export default {
       if (!this.organizationSelected) {
         out.splice(1, 0, {
           text: this.$t("organization"),
-          value: "orgs",
+          value: "organization.name",
         });
       }
       return out;
@@ -407,20 +444,6 @@ export default {
     mdusProcessed() {
       let res = [];
       for (const record of this.mdus) {
-        // apply filters
-        if (
-          this.filterReportTypes.length > 0 &&
-          !this.filterReportTypes.includes(record.report_type.pk)
-        ) {
-          continue;
-        }
-        if (
-          this.filterPlatforms.length > 0 &&
-          !this.filterPlatforms.includes(record.platform.pk)
-        ) {
-          continue;
-        }
-
         let updated = { ...record };
         if (record.organization) {
           updated.orgs = [record.organization.name];
@@ -444,36 +467,74 @@ export default {
       }
       return res;
     },
-    reportTypes() {
-      // derived from data
-      // extract unique report types
-      let res = Object.values(
-        this.mdus
-          .filter((mdu) => mdu.report_type)
-          .map((mdu) => mdu.report_type)
-          .reduce((acc, rt) => ({ ...acc, [rt.pk]: rt }), {})
-      );
-      // sort report types
-      res.sort((a, b) => a.name.localeCompare(b.name));
-      return res;
-    },
-    platforms() {
-      // derived from data
-      // extract unique report types
-      let res = Object.values(
-        this.mdus
-          .map((mdu) => mdu.platform)
-          .reduce((acc, p) => ({ ...acc, [p.pk]: p }), {})
-      );
-      // sort report types
-      res.sort((a, b) => a.name.localeCompare(b.name));
-      return res;
-    },
     url() {
       if (this.selectedOrganizationId) {
-        return `/api/organization/${this.selectedOrganizationId}/manual-data-upload/`;
+        let url = `/api/organization/${this.selectedOrganizationId}/manual-data-upload/`;
+        let params = {};
+        if (this.filterReportTypes.length > 0) {
+          params.report_type_ids = `${this.filterReportTypes}`;
+        }
+        if (this.filterPlatforms.length > 0) {
+          params.platform_ids = `${this.filterPlatforms}`;
+        }
+        if (this.sortBy != null) {
+          let orderBy = this.sortBy.replace(".", "__");
+          params.order_by = `${orderBy}`;
+          params.desc = `${this.sortDesc ? "true" : "false"}`;
+        }
+        if (this.searchDebounced) {
+          params.search = `${this.searchDebounced}`;
+        }
+        if (this.page) {
+          params.page = `${this.page}`;
+        }
+        if (this.pageSize) {
+          params.page_size = `${this.pageSize}`;
+        }
+        return this.$router.resolve({ path: url, query: params }).href;
       }
       return null;
+    },
+    searchDebounced: {
+      get() {
+        return this.search;
+      },
+      set: debounce(function (value) {
+        this.search = value;
+      }, 500),
+    },
+    platformsBaseUrl() {
+      return `/api/organization/${this.selectedOrganizationId}/all-platform/`;
+    },
+    reportTypesBaseUrl() {
+      return `/api/organization/${this.selectedOrganizationId}/report-types/`;
+    },
+    mduStatsBaseUrl() {
+      return `/api/organization/${this.selectedOrganizationId}/manual-data-upload/stats/`;
+    },
+    filteredPlatforms() {
+      let res = [];
+      if (this.counts) {
+        const platformIds = this.counts.platforms.map((e) => e.platform_id);
+        res = this.platforms.filter((e) => platformIds.includes(e.pk));
+      } else {
+        res = [...this.platforms];
+      }
+      res.sort((a, b) => a.name.localeCompare(b.name));
+      return res;
+    },
+    filteredReportTypes() {
+      let res = [];
+      if (this.counts) {
+        const reportTypeIds = this.counts.report_types.map(
+          (e) => e.report_type_id
+        );
+        res = this.reportTypes.filter((e) => reportTypeIds.includes(e.pk));
+      } else {
+        res = [...this.reportTypes];
+      }
+      res.sort((a, b) => a.name.localeCompare(b.name));
+      return res;
     },
   },
 
@@ -487,14 +548,15 @@ export default {
     async fetchMDUs() {
       if (this.url) {
         this.loading = true;
-        const result = await this.http({
+        const reply = await this.http({
           url: this.url,
           group: "mdu-list",
         });
-        if (!result.error) {
-          this.mdus = result.response.data;
+        if (!reply.error) {
+          this.mdus = reply.response.data.results;
+          this.mduCount = reply.response.data.count;
         }
-        if (result.error !== "canceled") {
+        if (reply.error !== "canceled") {
           // if the request was cancelled, it means another request was made
           // so we do not want to swich loading off
           this.loading = false;
@@ -518,16 +580,53 @@ export default {
         });
       }
     },
+    async fetchStats() {
+      const reply = await this.http({
+        url: this.mduStatsBaseUrl,
+        group: "mdu-platforms",
+      });
+      if (!reply.error) {
+        this.counts = reply.response.data.counts;
+      }
+    },
+    async fetchPlatforms() {
+      const reply = await this.http({
+        url: this.platformsBaseUrl,
+        group: "mdu-platforms",
+      });
+      if (!reply.error) {
+        this.platforms = reply.response.data;
+      }
+    },
+    async fetchReportTypes() {
+      const reply = await this.http({
+        url: this.reportTypesBaseUrl,
+        group: "mdu-report-types",
+      });
+      if (!reply.error) {
+        this.reportTypes = reply.response.data;
+      }
+    },
+    async refetchFilters() {
+      await this.fetchStats();
+      this.fetchPlatforms();
+      this.fetchReportTypes();
+    },
   },
 
   watch: {
     url() {
       this.fetchMDUs();
+      this.page = 1; // reset page
+    },
+    selectedOrganizationId() {
+      this.refetchFilters();
     },
   },
 
   mounted() {
     this.fetchMDUs();
+    this.refetchFilters();
   },
 };
 </script>

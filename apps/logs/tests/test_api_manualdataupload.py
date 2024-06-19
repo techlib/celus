@@ -1,5 +1,6 @@
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 import pytest
 from core.tests.conftest import *  # noqa
@@ -7,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.urls import reverse
 from organizations.fake_data import OrganizationFactory
 
-from logs.fake_data import MetricFactory
+from logs.fake_data import ManualDataUploadFullFactory, MetricFactory
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
 from logs.tasks import import_manual_upload_data, prepare_preflight
 from test_scenarios.basic import (  # noqa - fixtures
@@ -1136,3 +1137,156 @@ class TestManualUploadForRaw:
         assert response.data["method"] == new_method
         assert response.data["can_import"] is False
         assert mdu.import_batches.count() == batch_count
+
+
+@pytest.mark.django_db
+class TestOrganizationManualDataUploadViewSet:
+    @pytest.mark.parametrize(
+        ["search", "report_type", "platform", "count"],
+        (
+            ("", [], [], 5),
+            ("stand", [], [], 5),
+            ("shared", [], [], 3),
+            ("", ["tr", "dr"], [], 4),
+            ("", [], ["shared"], 3),
+            ("", ["tr", "dr"], ["standalone"], 2),
+            ("", ["pr", "dr"], ["standalone", "shared"], 3),
+            ("sha", ["pr", "dr"], ["standalone", "shared"], 2),
+        ),
+    )
+    def test_list_filter(
+        self,
+        basic1,
+        clients,
+        organizations,
+        report_types,
+        platforms,
+        users,
+        search,
+        report_type,
+        platform,
+        count,
+    ):
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["dr"],
+            platform=platforms["shared"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["pr"],
+            platform=platforms["shared"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["tr"],
+            platform=platforms["standalone"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["dr"],
+            platform=platforms["standalone"],
+        )
+
+        params = {}
+        if search:
+            params["search"] = search
+        if report_type:
+            params["report_type_ids"] = ",".join([str(report_types[p].pk) for p in report_type])
+        if platform:
+            params["platform_ids"] = ",".join([str(platforms[p].pk) for p in platform])
+
+        url = reverse(
+            "organization-manual-data-upload-list", args=(organizations["standalone"].pk,)
+        )
+        if params:
+            url += "?" + urlencode(params)
+
+        response = clients["master_admin"].get(url)
+
+        assert response.status_code == 200
+        assert len(response.data["results"]) == count
+
+    @pytest.mark.parametrize(
+        ["order_by", "order"],
+        (
+            ("", [0, 1, 2]),
+            ("user__last_name", [1, 2, 0]),
+            ("report_type__short_name", [2, 1, 0]),
+            ("platform__name", [2, 0, 1]),
+        ),
+    )
+    def test_list_order_by(
+        self, basic1, clients, organizations, report_types, platforms, order_by, order
+    ):
+        pks = [
+            ManualDataUploadFullFactory(
+                organization=organizations["standalone"],
+                report_type=report_types["tr"],
+                platform__name="platform2",
+                user__last_name="user3",
+            ).pk,
+            ManualDataUploadFullFactory(
+                organization=organizations["standalone"],
+                report_type=report_types["pr"],
+                platform__name="platform3",
+                user__last_name="user1",
+            ).pk,
+            ManualDataUploadFullFactory(
+                organization=organizations["standalone"],
+                report_type=report_types["dr"],
+                platform__name="platform1",
+                user__last_name="user2",
+            ).pk,
+        ]
+
+        url = reverse(
+            "organization-manual-data-upload-list", args=(organizations["standalone"].pk,)
+        )
+        if order_by:
+            url += "?" + urlencode({"order_by": order_by})
+
+        response = clients["master_admin"].get(url)
+        assert response.status_code == 200
+        assert len(response.data["results"]) == len(pks)
+
+        for idx, pos in enumerate(order):
+            assert response.data["results"][idx]["pk"] == pks[pos]
+
+    def test_stats(self, basic1, clients, organizations, report_types, platforms):
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["pr"],
+            platform=platforms["shared"],
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["standalone"],
+            report_type=report_types["dr"],
+            platform=platforms["empty"],
+        )
+        url = reverse(
+            "organization-manual-data-upload-stats", args=(organizations["standalone"].pk,)
+        )
+        response = clients["master_admin"].get(url)
+        assert response.status_code == 200
+        assert response.data["counts"] == {
+            "platforms": [
+                {"platform_id": platforms["empty"].pk, "count": 1},
+                {"platform_id": platforms["shared"].pk, "count": 2},
+            ],
+            "report_types": [
+                {"report_type_id": report_types["tr"].pk, "count": 1},
+                {"report_type_id": report_types["dr"].pk, "count": 1},
+                {"report_type_id": report_types["pr"].pk, "count": 1},
+            ],
+        }

@@ -7,6 +7,7 @@ en:
       prefailed: Generating overview failed
       importing: Importing data
       imported: Imported
+      failed: Import failed
 
 cs:
   manual_data_upload:
@@ -16,6 +17,7 @@ cs:
       prefailed: Chyba při generování přehledu selhalo
       importing: Importuji data
       imported: Naimportováno
+      failed: Import selhal
 </i18n>
 
 <template>

@@ -1178,35 +1178,31 @@ export default {
     },
     async loadReportTypes() {
       let url = `/api/organization/${this.organizationId}/all-platform/${this.platformId}/report-types/`;
-      if (url) {
-        try {
-          const response = await axios.get(url);
+      try {
+        const response = await axios.get(url);
 
-          this.reportTypes = response.data.sort((a, b) =>
-            a.name.localeCompare(b.name)
-          );
+        this.reportTypes = response.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
 
-          if (this.$router.currentRoute.query?.report_type_id) {
-            let rt_id = parseInt(
-              this.$router.currentRoute.query.report_type_id
+        if (this.$router.currentRoute.query?.report_type_id) {
+          let rt_id = parseInt(this.$router.currentRoute.query.report_type_id);
+          if (rt_id) {
+            this.selectedReportType = this.reportTypesToSelect.find(
+              (rt) => rt.pk === rt_id
             );
-            if (rt_id) {
-              this.selectedReportType = this.reportTypesToSelect.find(
-                (rt) => rt.pk === rt_id
-              );
-            }
           }
-
-          // Select default report type
-          this.selectedReportType ??=
-            this.reportTypes.length > 0 ? this.reportTypesToSelect[0] : null;
-
-          this.reportTypesFetched = true;
-        } catch (error) {
-          this.showSnackbar({
-            content: "Error loading report types: " + error,
-          });
         }
+
+        // Select default report type
+        this.selectedReportType ??=
+          this.reportTypes.length > 0 ? this.reportTypesToSelect[0] : null;
+
+        this.reportTypesFetched = true;
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error loading report types: " + error,
+        });
       }
     },
     async loadOrganizations() {
