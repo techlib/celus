@@ -57,7 +57,7 @@ API endpoints
 Platforms
 =========
 
-Path: ``/api/platforms/``
+Path: ``/api/platform/``
 
 This endpoint returns a list of all platforms which are available in this particular Celus
 instance. The records look like this:
