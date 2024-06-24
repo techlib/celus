@@ -1,4 +1,5 @@
 import typing
+from datetime import timedelta
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -18,16 +19,31 @@ class BatchStatus(models.TextChoices):
     PREPARED = "prepared", _("Stats Prepared")
     DELETE = "delete", _("Deleting")
     DELETED = "deleted", _("Deleted")
+    OUTDATED = "outdated", _("Outdated")
+
+
+class BatchQuerySet(models.QuerySet):
+    def expired(self) -> models.QuerySet:
+        return self.filter(
+            ~models.Q(status=BatchStatus.DELETED)
+            & models.Q(created__lt=now() - Batch.EXPIRED_PERIOD)
+        )
 
 
 class Batch(models.Model):
     """Transaction unit -> all changes are done here or none"""
 
+    EXPIRED_PERIOD = timedelta(days=1)
+
     created = models.DateTimeField(default=now)
+    prepared = models.DateTimeField(null=True, blank=True)
+    deleted = models.DateTimeField(null=True, blank=True)
     status = models.CharField(
         max_length=20, choices=BatchStatus.choices, default=BatchStatus.INITIAL
     )
     task_result_id = models.IntegerField(null=True, blank=True)
+
+    objects = BatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = _("Batches")
@@ -56,7 +72,7 @@ class Batch(models.Model):
 
     @cached_property
     def info(self):
-        return [e.info for e in self.candidates.all()]
+        return [e.info for e in self.candidates.all().order_by("pk")]
 
     def plan_delete_batch_targets(self) -> bool:
         with transaction.atomic():
@@ -82,27 +98,38 @@ class Batch(models.Model):
     ) -> typing.Optional[int]:
         # Should be run by a celery task
 
-        with transaction.atomic():
-            # lock
-            try:
-                Batch.objects.filter(pk=self.pk).select_for_update()
-            except DatabaseError:
-                # abort -> something is already running
-                return None
+        try:
+            with transaction.atomic():
+                self.task_result_id = task_result and task_result.pk
+                if self.created + self.EXPIRED_PERIOD < now():
+                    self.status = BatchStatus.OUTDATED
+                    self.save()
+                    return None
 
-            if self.status != BatchStatus.DELETE:
-                return None
+                # lock
+                try:
+                    Batch.objects.filter(pk=self.pk).select_for_update()
+                except DatabaseError:
+                    # abort -> something is already running
+                    return None
 
-            count = 0
-            for candidate in self.candidates.all():
-                if candidate.content_object:
-                    candidate.delete_object()
-                    count += 1
-            self.status = BatchStatus.DELETED
-            self.task_result_id = task_result and task_result.pk
+                if self.status != BatchStatus.DELETE:
+                    return None
+
+                count = 0
+                for candidate in self.candidates.all():
+                    if candidate.content_object:
+                        if not candidate.delete_object():
+                            raise RuntimeError("Abort")
+                        count += 1
+                self.status = BatchStatus.DELETED
+                self.deleted = now()
+                self.save()
+            return count
+        except RuntimeError:
+            self.status = BatchStatus.OUTDATED
             self.save()
-
-        return count
+            return None
 
     def prepare_batch(self, task_result: typing.Optional[TaskResult]) -> typing.Optional[int]:
         # Should be run by a celery task
@@ -126,6 +153,7 @@ class Batch(models.Model):
 
             self.status = BatchStatus.PREPARED
             self.task_result_id = task_result and task_result.pk
+            self.prepared = now()
             self.save()
 
             return count
@@ -208,12 +236,17 @@ class Candidate(models.Model):
                 info={"object": self.serialized_object(), "stats": stats}
             )
 
-    def delete_object(self):
+    def delete_object(self) -> bool:
         model_class = self.content_type.model_class()
         if self.content_object:
-            Candidate.objects.filter(pk=self.pk).update(
-                info={
-                    "object": self.serialized_object(),
-                    "stats": model_class.objects.filter(pk=self.object_id).delete(),
-                }
-            )
+            try:
+                with transaction.atomic():
+                    stats = list(model_class.objects.filter(pk=self.object_id).delete())
+                    if stats != self.info.get("stats"):
+                        # Abort deletion when stats are different
+                        raise RuntimeError("Abort")
+            except RuntimeError:
+                return False
+
+        # Was deleted or it had been deleted before
+        return True

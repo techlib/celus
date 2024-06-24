@@ -43,9 +43,18 @@ class CandidateInlineModelAdmin(TabularInline):
 class BatchAdmin(admin.ModelAdmin):
     change_form_template = "necronomicon/admin/change_form.html"
     inlines = (CandidateInlineModelAdmin,)
-    list_display = ("pk", "created", "object_type", "candidates_count", "status")
-    actions = ["plan_delete"]
-    readonly_fields = ("created", "task_result_url", "status")
+    list_display = (
+        "pk",
+        "created",
+        "prepared",
+        "deleted",
+        "object_type",
+        "candidates_count",
+        "status",
+    )
+    list_filter = ["status", "candidates__content_type__model"]
+    actions = []
+    readonly_fields = ("created", "prepared", "deleted", "task_result_url", "status")
 
     def task_result_url(self, obj):
         url = reverse("admin:django_celery_results_taskresult_change", args=[obj.task_result_id])
@@ -58,7 +67,7 @@ class BatchAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.annotate(
             candidates_count=Count("candidates"),
-            # Batch should the same content type
+            # Batch should have the same content type
             object_type=Max("candidates__content_type__model"),
         ).prefetch_related("candidates__content_type")
 

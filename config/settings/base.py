@@ -388,6 +388,9 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.sync_materialized_reports_task": {"queue": "interest"},
     "logs.tasks.sync_organizationplatform_records_task": {"queue": "celery"},
     "logs.tasks.update_report_approx_record_count_task": {"queue": "interest"},
+    "necronomicon.tasks.prepare_batches": {"queue": "celery"},
+    "necronomicon.tasks.delete_batches_targets": {"queue": "celery"},
+    "necronomicon.tasks.clean_expired": {"queue": "celery"},
     "publications.tasks.sync_platform_title_links_task": {"queue": "interest"},
     "publications.tasks.delete_platform_data_task": {"queue": "import"},
     "publications.tasks.merge_titles_task": {"queue": "interest"},
@@ -469,6 +472,11 @@ CELERY_BEAT_SCHEDULE = {
     "necronomicon_delete": {
         "task": "necronomicon.tasks.delete_batches_targets",
         "schedule": schedule(run_every=timedelta(hours=1)),
+        "options": {"expires": 60 * 60},
+    },
+    "necronomicon_expired": {
+        "task": "necronomicon.tasks.clean_expired",
+        "schedule": crontab(hour=1, minute=0),
         "options": {"expires": 60 * 60},
     },
     "update_prometheus_db_stats": {

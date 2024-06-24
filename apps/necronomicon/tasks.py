@@ -90,3 +90,13 @@ def prepare_batches():
         ):
             # plant to generate info
             prepare_batch.delay(batch.id)
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def clean_expired():
+    from .models import Batch
+
+    with transaction.atomic():
+        return Batch.objects.expired().delete()
