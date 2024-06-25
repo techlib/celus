@@ -220,6 +220,31 @@ class TestSlicerAPI:
             [tags[0].pk, tags[2].pk] if show_zero else [tags[0].pk]
         )
 
+    @pytest.mark.parametrize("order_by", ["tag", "platform"])
+    def test_tag_roll_up_with_order_by(
+        self, flexible_slicer_test_data_with_tags, clients, order_by
+    ):
+        """
+        Test that when tag_roll_up is requested, only ordering by tag is supported, but other
+        versions do not crash.
+        This is a test for a bug that was fixed in the code to guard against a regression.
+        """
+        resp = clients["su"].get(
+            reverse("flexible-slicer"),
+            {
+                "primary_dimension": "platform",
+                "groups": b64json(["metric"]),
+                "tag_roll_up": "true",
+                "zero_rows": False,
+                "order_by": order_by,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert (
+            data["count"] == 0
+        ), "no data should be returned, we are just checking the query does not crash"
+
     def test_filter_by_tag_class(self, flexible_slicer_test_data_with_tags, clients):
         """
         Test that tag_class filter works in the api.

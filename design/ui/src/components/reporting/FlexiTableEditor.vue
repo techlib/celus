@@ -1750,6 +1750,9 @@ export default {
       if (!this.tagRollUp) {
         this.showRemainder = false;
       }
+      // we want to invalidate the ordering because primary dimension
+      // effectively changes with tag roll up
+      this.orderBy = [];
     },
   },
 };

@@ -648,7 +648,9 @@ class FlexibleDataSlicer:
                 # implicit columns created for period-over-period
                 obs.append(prefix + ob)
                 dealt_with = True
-            elif ob == self.primary_dimension and not ob.startswith("date"):
+            elif (
+                ob == self.primary_dimension and not ob.startswith("date") and not self.tag_roll_up
+            ):
                 if ob == "target":
                     # title does not have `short_name`, just `name`
                     obs.append(prefix + "name")
@@ -658,7 +660,7 @@ class FlexibleDataSlicer:
                     qs = qs.annotate(sort_name=Concat(F(f"name_{lang}"), F("short_name")))
                     obs.append(prefix + "sort_name")
                 dealt_with = True
-            elif ob.startswith(self.primary_dimension):
+            elif ob.startswith(self.primary_dimension) and not self.tag_roll_up:
                 if self._primary_dimension_query:
                     # we are querying the related model, not accesslog, we need to process the
                     # order by definition
@@ -1093,7 +1095,6 @@ class SlicerConfigErrorCode(Enum):
 
 
 class SlicerConfigError(Exception):
-
     """
     E100: It is not possible to group by explicit dimension unless exactly one report
           type is selected by a filter
