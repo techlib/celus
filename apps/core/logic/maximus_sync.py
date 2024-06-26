@@ -6,7 +6,7 @@ from logs.models import FlexibleReport, OrganizationPlatform
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform
 from rest_framework import serializers
-from sushi.models import SushiCredentials
+from sushi.models import CounterReportsToCredentials, SushiCredentials
 
 from ..models import User
 
@@ -68,9 +68,21 @@ class CelusPlatformSerializer(serializers.ModelSerializer):
         fields = ("ext_id", "short_name", "name", "source", "source_type", "counter_registry_id")
 
 
+class CounterReportsToCredentialsSerializer(serializers.ModelSerializer):
+    counter_report_type = serializers.SlugRelatedField(
+        slug_field="code", read_only=True, source="counter_report"
+    )
+
+    class Meta:
+        model = CounterReportsToCredentials
+        fields = ("counter_report_type", "broken")
+
+
 class SushiCredentialsSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source="id")
-    counter_reports = serializers.SlugRelatedField(many=True, slug_field="code", read_only=True)
+    counter_reports = CounterReportsToCredentialsSerializer(
+        many=True, source="counterreportstocredentials_set"
+    )
     verified = serializers.BooleanField(read_only=True)
 
     class Meta:
@@ -136,7 +148,9 @@ def get_platforms():
 
 def get_sushi_credentials():
     return SushiCredentialsSerializer(
-        SushiCredentials.objects.all().prefetch_related("counter_reports").annotate_verified(),
+        SushiCredentials.objects.all()
+        .prefetch_related("counterreportstocredentials_set__counter_report")
+        .annotate_verified(),
         many=True,
     ).data
 

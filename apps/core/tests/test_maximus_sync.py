@@ -9,7 +9,13 @@ from organizations.models import Organization
 from publications.fake_data import PlatformFactory
 from rest_framework.fields import DateTimeField
 from sushi.fake_data import CounterReportTypeFactory
-from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    AttemptStatus,
+    BrokenCredentialsMixin,
+    CounterReportsToCredentials,
+    SushiCredentials,
+    SushiFetchAttempt,
+)
 
 from core.fake_data import DataSourceFactory, UserFactory
 from core.logic.maximus_sync import (
@@ -218,8 +224,15 @@ class TestMaximusSync:
             )
             for i in range(2)
         ]
-        s[0].counter_reports.add(ct[0], ct[1])
-        s[1].counter_reports.add(ct[1], ct[2])
+        CounterReportsToCredentials.objects.create(credentials=s[0], counter_report=ct[0])
+        CounterReportsToCredentials.objects.create(
+            credentials=s[0], counter_report=ct[1], broken=BrokenCredentialsMixin.BROKEN_HTTP
+        )
+        CounterReportsToCredentials.objects.create(credentials=s[1], counter_report=ct[1])
+        CounterReportsToCredentials.objects.create(
+            credentials=s[1], counter_report=ct[2], broken=BrokenCredentialsMixin.BROKEN_HTTP
+        )
+
         SushiFetchAttempt.objects.create(
             status=AttemptStatus.SUCCESS,
             credentials=s[0],
@@ -237,7 +250,13 @@ class TestMaximusSync:
                 "url": "http://example.com/",
                 "counter_version": 5,
                 "customer_id": "1234",
-                "counter_reports": [ct[i].code, ct[i + 1].code],
+                "counter_reports": [
+                    {"counter_report_type": ct[i].code, "broken": None},
+                    {
+                        "counter_report_type": ct[i + 1].code,
+                        "broken": BrokenCredentialsMixin.BROKEN_HTTP,
+                    },
+                ],
                 "api_key": "",
                 "enabled": True,
                 "extra_params": {},
