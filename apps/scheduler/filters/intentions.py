@@ -67,10 +67,14 @@ class ModeFilter(filters.BaseFilterBackend):
         mode = request.query_params.get("mode", "all" if view.detail else "")
 
         if mode == "success_and_current":
-            return queryset.filter(
-                Q(attempt__credentials_version_hash=F("credentials__version_hash"))
-                | Q(attempt__status__in=AttemptStatus.successes())
-            ).latest_intentions()
+            return (
+                queryset.filter(
+                    Q(attempt__credentials_version_hash=F("credentials__version_hash"))
+                    | Q(attempt__status__in=AttemptStatus.successes())
+                )
+                .exclude(attempt__clashing_import_batch__isnull=False)
+                .latest_intentions()
+            )
         elif mode == "all":
             # No filtering in all mode
             return queryset

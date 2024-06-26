@@ -1,6 +1,7 @@
 """
 Celery tasks reside here
 """
+
 import logging
 import traceback
 from collections import Counter
@@ -25,7 +26,7 @@ from nibbler.models import get_report_types_from_nibbler_output
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
 from logs.exceptions import (
-    DataStructureError,
+    DataAlreadyPresent,
     ImportNotPossible,
     MultipleReportTypes,
     NibblerErrors,
@@ -147,7 +148,8 @@ def import_one_sushi_attempt_task(attempt_id: int, reimport: bool = False):
         if attempt.data_file:
             attempt.data_file.close()
     # check the harvest status and create an Event when harvest is finished
-    if attempt.status == AttemptStatus.SUCCESS:
+    # (only if there is a connected fetch intention - in some tests it may not be so)
+    if attempt.status == AttemptStatus.SUCCESS and hasattr(attempt, "fetchintention"):
         attempt.fetchintention.harvest.create_event_if_finished()
 
 
@@ -462,7 +464,7 @@ def import_manual_upload_data(mdu_id: int, user_id: int):
         mdu.state = MduState.FAILED
         mdu.save()
 
-    except (Exception, DataStructureError, ImportNotPossible) as e:
+    except (Exception, DataAlreadyPresent, ImportNotPossible) as e:
         # generic import error handling
 
         mdu.log = f"""\
@@ -474,7 +476,7 @@ Exception: {e}
 Traceback: {traceback.format_exc()}
 """
 
-        if isinstance(e, DataStructureError):
+        if isinstance(e, DataAlreadyPresent):
             mdu.error = "clashing-data"
         elif isinstance(e, ImportNotPossible):
             mdu.error = "import-not-possible"

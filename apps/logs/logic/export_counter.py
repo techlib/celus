@@ -171,7 +171,7 @@ class Counter5Export(metaclass=ABCMeta):
             yield line
 
         if self.errors:
-            logger.warn(
+            logger.warning(
                 "There are structural errors in the data",
                 exc_info=DataStructureError(", ".join(f"{k}: {v}" for k, v in self.errors.items())),
             )

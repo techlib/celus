@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from events.models import Event, EventCategory, EventImportance
-from logs.exceptions import DataStructureError
+from logs.exceptions import DataAlreadyPresent
 from logs.logic.data_import import create_import_batch_or_crash
 from logs.models import AccessLog, ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
@@ -684,12 +684,12 @@ class FetchIntention(models.Model):
                         platform=self.credentials.platform,
                         month=self.start_date,
                     )
-                except DataStructureError:
+                except DataAlreadyPresent as e:
                     # skip if there is already existing import batch
                     # Note that this function should not raise an exception
                     # The transaction needs to be committed otherwise
                     # the same function is going to be re-triggered in celery
-                    pass
+                    self.attempt.clashing_import_batch = e.import_batch
                 self.attempt.save()
             return
 

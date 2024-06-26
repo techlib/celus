@@ -22,7 +22,7 @@ from sushi.models import SushiFetchAttempt
 
 from logs.models import ImportBatch
 
-from ..exceptions import DataStructureError, UnknownMetric, UnsupportedMetric
+from ..exceptions import DataAlreadyPresent, UnknownMetric, UnsupportedMetric
 from ..models import AccessLog, DimensionText, Metric, ReportType
 from .materialized_interest import (
     find_superseeded_import_batches,
@@ -254,12 +254,13 @@ def create_import_batch_or_crash(
         f"create_import_batch_{report_type.pk}_{organization.pk}_{platform.pk}_{month}",
         blocking_timeout=10,
     ):
-        if ImportBatch.objects.filter(
+        if clashing_ib := ImportBatch.objects.filter(
             report_type=report_type, platform=platform, organization=organization, date=month
-        ):
-            raise DataStructureError(
+        ).first():
+            raise DataAlreadyPresent(
+                clashing_ib,
                 f'Clashing import batch exists for report type "{report_type}"'
-                f', platform "{platform}", organization "{organization}" and date "{month}"'
+                f', platform "{platform}", organization "{organization}" and date "{month}"',
             )
         kwargs = ib_kwargs or {}
         return ImportBatch.objects.create(

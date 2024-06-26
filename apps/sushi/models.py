@@ -42,6 +42,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from events.models import Event, EventCategory, EventImportance
+from logs.exceptions import DataAlreadyPresent
 from logs.models import AccessLog, ImportBatch
 from nibbler.logic.processing import counter_format_poops, output_to_poops
 from organizations.models import Organization
@@ -804,6 +805,15 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     partial_data = models.BooleanField(default=False, help_text="Data may not be complete")
     when_processed = models.DateTimeField(null=True, blank=True)
     import_batch = models.OneToOneField(ImportBatch, null=True, on_delete=models.SET_NULL)
+    clashing_import_batch = models.ForeignKey(
+        ImportBatch,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="If the attempt cannot be imported because of a clashing import batch, "
+        "this field will contain the clashing import batch",
+        related_name="clashing_attempts",
+    )
     credentials_version_hash = models.CharField(
         max_length=2 * SushiCredentials.BLAKE_HASH_SIZE,
         help_text="Hash computed from the credentials at the time this attempt was made",
@@ -936,6 +946,8 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         self.log += str(exception)
         self.status = AttemptStatus.IMPORT_FAILED
         self.processing_info["import_crash_traceback"] = traceback.format_exc()
+        if isinstance(exception, DataAlreadyPresent):
+            self.clashing_import_batch = exception.import_batch
         self.save()
 
     @atomic

@@ -47,12 +47,6 @@ cs:
                 <v-col cols="auto" class="py-0">
                   <FetchAttemptModeFilter v-model="historyMode" />
                 </v-col>
-                <!--v-col cols="auto" class="py-0">
-                                    <v-switch v-model="showSuccess" :label="$t('show_success')" color="success" dense></v-switch>
-                                </v-col>
-                                <v-col cols="auto" class="py-0">
-                                    <v-switch v-model="showFailure" :label="$t('show_failure')" color="error" dense></v-switch>
-                                </v-col-->
               </v-row>
             </v-container>
           </v-col>

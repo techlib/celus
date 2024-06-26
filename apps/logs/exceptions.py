@@ -5,6 +5,16 @@ class DataStructureError(ValueError):
     """
 
 
+class DataAlreadyPresent(DataStructureError):
+    """
+    Exception signalling that the data is already present in the database from some other source
+    """
+
+    def __init__(self, import_batch, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.import_batch = import_batch
+
+
 class SourceFileMissingError(Exception):
     """
     Used in re-importing code if is finds that the file to read is not there

@@ -26,13 +26,12 @@ from logs.models import (
 )
 
 from ..cubes import AccessLogCube, ch_backend
-from ..exceptions import DataStructureError
+from ..exceptions import DataAlreadyPresent
 from ..logic.data_import import import_counter_records
 
 
 @pytest.mark.django_db
 class TestDataImport:
-
     """
     Tests functionality of the logic.data_import module
     """
@@ -175,7 +174,7 @@ class TestDataImport:
         assert Title.objects.count() == 1
         assert stats["new logs"] == 1
         assert stats["new platformtitles"] == 1
-        with pytest.raises(DataStructureError):
+        with pytest.raises(DataAlreadyPresent):
             import_counter_records(rt, organizations[0], platform, crs)
 
     @pytest.mark.parametrize(["buffer_size"], [(10,), (3,), (2,), (1,)])

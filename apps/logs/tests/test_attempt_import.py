@@ -20,9 +20,10 @@ from test_scenarios.basic import (  # noqa - fixtures
     report_types,
 )
 
-from ..exceptions import DataStructureError, UnknownMetric
+from ..exceptions import DataAlreadyPresent, UnknownMetric
 from ..logic.attempt_import import import_one_sushi_attempt
 from ..models import ImportBatch, Metric
+from ..tasks import import_one_sushi_attempt_task
 
 
 @pytest.mark.django_db
@@ -323,7 +324,46 @@ class TestAttemptImport:
             data_file=data_file,
             status=AttemptStatus.IMPORTING,
         )
-        with pytest.raises(DataStructureError):
+        with pytest.raises(DataAlreadyPresent):
             import_one_sushi_attempt(fetch_attempt)
 
         assert ImportBatch.objects.filter(pk=ib.pk).exists() is True, "non-empty ib exists"
+
+    def test_clashing_import_batch_saved(
+        self, organizations, counter_report_types, platforms, credentials, report_types
+    ):
+        with (Path(__file__).parent / "data/counter5/counter5_tr_test1.json").open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.json"
+
+        fetch_attempt = FetchAttemptFactory.create(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2019-02-01",
+            end_date="2019-02-28",
+            data_file=data_file,
+            status=AttemptStatus.IMPORTING,
+        )
+
+        import_one_sushi_attempt_task(fetch_attempt.pk)
+        fetch_attempt.refresh_from_db()
+
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
+
+        # do another attempt for the same date
+        ib = fetch_attempt.import_batch
+        fetch_attempt = FetchAttemptFactory.create(
+            credentials=credentials["standalone_tr"],
+            counter_report=counter_report_types["tr"],
+            start_date="2019-02-01",
+            end_date="2019-02-28",
+            data_file=data_file,
+            status=AttemptStatus.IMPORTING,
+        )
+        # we run the task, but without delay, so it runs synchronously as normal function
+        import_one_sushi_attempt_task(fetch_attempt.pk)
+        fetch_attempt.refresh_from_db()
+
+        assert fetch_attempt.status == AttemptStatus.IMPORT_FAILED
+        assert fetch_attempt.import_batch is None
+        assert fetch_attempt.clashing_import_batch == ib
