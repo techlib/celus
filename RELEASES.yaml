@@ -1,3 +1,22 @@
+- version: 6.1.1
+  title:
+    en: Bug fix release 6.1.1 is out
+    cs: Opravné vydání 6.1.1 je venku
+  text:
+    en: |
+      - export to COUNTER format is newly visible to all users - not only admins
+      - obscure bug in reports with platforms as rows + merging by tag enabled was fixed
+      - endless loop of background re-authentication requests after user session expiration was fixed
+      - several other small improvements and fixes were introduced
+    cs: |
+      - export ve formátu COUNTER je nyní viditelný pro všechny uživatele - nejen pro administrátory
+      - byla opravena vzácná chyba v reportech s platformami jako řádky + sloučením řádků podle štítků
+      - byla opravena nekonečná smyčka pokusů o reautentizaci po vypršení uživatelské relace
+      - bylo provedeno několik dalších menších vylepšení a oprav
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+
 - version: 6.1.0
   title:
     en: Standard views in reporting, proprietary IDs in title lists, and more in Celus 6.1.0

@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.1]  - 2024-06-28
+
+### Added
+
+#### Backend
+
+* a CLI script was added to export and import fetch attempts to aid with accidental data deletion
+  recovery
+* support for user invitations when external SSO is enabled was added
+
+
+### Changes
+
+#### Backend
+
+* various dash types (n-dash, m-dash, minus) are now normalized to a single character during
+  ISSN and eISSN normalization
+* deleting data from Clickhouse was optimized to delete more than one import batch at once
+
+
+### Fixed
+
+#### Frontend
+
+* export to COUNTER format was made visible to non-admin users
+* endless loop in websocket reauthentication when the user session expires was fixed
+* bug causing errors when saved report with platforms in rows was modified to merge rows by tags
+  was fixed (result ordering is invalidated when row merging is toggled)
+* a typo in the documentation leading to incorrect API endpoint URL was fixed
+* COUNTER registry domain name was updated to the new one (fixes CORS issues)
+
+#### Backend
+
+* loading of Excel files with credentials which do not include row number information
+  (as produced by Google Sheets) was fixed
+* extra safety features were added to the necronomicon app for deleting data (remove unfinished
+  batches after one day, re-check stats before delete, etc.)
+
+
+
 ## [6.1.0]  - 2024-05-23
 
 ### Added
