@@ -498,6 +498,7 @@ export default new Vuex.Store({
           error.response?.status === 401 &&
           error.response?.headers?.["www-authenticate"] === "Session"
         ) {
+          dispatch("cleanUserData");
           dispatch("setShowLoginDialog", { show: true });
         } else {
           dispatch("showSnackbar", {
@@ -704,17 +705,21 @@ export default new Vuex.Store({
               newest_pk: data.newest_pk,
             });
           } else if (e.data.type === "wsAuthError") {
-            if (state.user?.sesame_token) {
-              console.log("Worker: Auth error, trying to reauthenticate");
+            if (state.user) {
+              console.log("WS: Auth error, trying to reauthenticate");
               await dispatch("loadUserData");
-              worker.port.postMessage({
-                command: "startWs",
-                token: state.user.sesame_token,
-              });
+              if (state.user?.sesame_token) {
+                worker.port.postMessage({
+                  command: "startWs",
+                  token: state.user.sesame_token,
+                });
+              } else {
+                console.error(
+                  "WS: reauthentication failed - user not logged in"
+                );
+              }
             } else {
-              console.error(
-                "Worker: no auth token available - cannot reauthenticate"
-              );
+              console.error("WS: no user info - cannot reauthenticate");
             }
           }
         };
