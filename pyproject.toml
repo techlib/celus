@@ -75,6 +75,10 @@ drf-nested-routers = "~0.93.4"
 hcube = "0.15.4"
 isbnlib = "^3.10.3"
 lz4 = "~4.3.2"
+numpy = [   # keeps numpy-2.0.0 from being installed - pandas does not pin numpy correctly
+    {version = "^1.24.4", python = "3.8"},
+    {version = "^1.26.4", python = ">=3.9"}
+]
 openpyxl = "~3.1.2"
 pandas = "^2.0.3"  # pandas 2.1 requires python 3.9
 Pillow = "^10.0.1"
@@ -142,6 +146,7 @@ DEP002 = [
     'django-redis',
     'django-test-migrations',
     'lz4',
+    'numpy',  # used through pandas
     'Pillow',
     'psycopg2-binary',
     'python-decouple',
