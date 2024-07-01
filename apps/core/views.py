@@ -1,6 +1,7 @@
 import base64
 import codecs
 import logging
+import platform
 import secrets
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import timedelta
@@ -52,6 +53,8 @@ from .logic.type_conversion import to_bool
 from .prometheus import (
     CACHE_STORED_GAUAGES,
     cache_based_metrics,
+    celus_os_info,
+    celus_python_info,
     celus_registry,
     celus_sentry_release,
     celus_version_num,
@@ -527,6 +530,18 @@ class PrometheusMetricsView(View):
 
         celus_version_num.set(version_to_int(settings.CELUS_VERSION))
         celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)
+        os_info = platform.freedesktop_os_release()
+        celus_os_info.labels(
+            name=os_info.get("NAME", "unknown"),
+            version=os_info.get("VERSION", "unknown"),
+            version_id=os_info.get("VERSION_ID", "unknown"),
+            version_codename=os_info.get("VERSION_CODENAME", "unknown"),
+            pretty_name=os_info.get("PRETTY_NAME", "unknown"),
+        ).set(1.0)
+        major, minor, micro = platform.python_version_tuple()
+        celus_python_info.labels(
+            version=platform.python_version(), major=str(major), minor=str(minor), micro=str(micro)
+        ).set(1.0)
 
         metrics_page = prometheus_client.generate_latest(celus_registry)
         return HttpResponse(metrics_page, content_type=prometheus_client.CONTENT_TYPE_LATEST)

@@ -26,6 +26,21 @@ celus_sentry_release = Gauge(
     registry=celus_registry,
 )
 
+celus_os_info = Gauge(
+    name="celus_os_info",
+    documentation="A metric with a constant '1' value labeled by name, pretty_name, version, "
+    "version_codename, version_id.",
+    labelnames=["name", "pretty_name", "version", "version_codename", "version_id"],
+    registry=celus_registry,
+)
+
+celus_python_info = Gauge(
+    "celus_python_info",
+    "A metric with a constant '1' value labeled by major, minor, micro, version",
+    labelnames=["major", "minor", "micro", "version"],
+    registry=celus_registry,
+)
+
 
 def db_access_log_num():
     if settings.CLICKHOUSE_SYNC_ACTIVE:
