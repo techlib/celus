@@ -516,6 +516,16 @@ class OtpDeviceView(
 
 
 class PrometheusMetricsView(View):
+    @classmethod
+    def get_os_info(cls):
+        try:
+            return platform.freedesktop_os_release()
+        except AttributeError:
+            with open("/etc/os-release", "rt") as f:
+                return {
+                    line.split("=", 1)[0]: line.split("=", 1)[1].strip().strip('"') for line in f
+                }
+
     def get(self, request):
         # update the cache-based metrics (those are not updated automatically, but rather a celery
         # task is getting the data and pushing it to the cache, from where we get it)
@@ -530,7 +540,7 @@ class PrometheusMetricsView(View):
 
         celus_version_num.set(version_to_int(settings.CELUS_VERSION))
         celus_sentry_release.labels(hash=settings.SENTRY_RELEASE).set(1.0)
-        os_info = platform.freedesktop_os_release()
+        os_info = self.get_os_info()
         celus_os_info.labels(
             name=os_info.get("NAME", "unknown"),
             version=os_info.get("VERSION", "unknown"),
