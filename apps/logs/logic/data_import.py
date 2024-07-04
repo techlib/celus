@@ -4,6 +4,7 @@ import logging
 from collections import Counter
 from datetime import date
 from io import StringIO
+from time import time
 from typing import Dict, Generator, Iterable, List, Optional, Set, Union
 
 from celus_nigiri import CounterRecord
@@ -153,6 +154,7 @@ def import_counter_records(
         )
 
     buff: List[CounterRecord] = []
+    buff_idx = 0
     for record in records:
         # check months and skip early to avoid extra work on multi-month files
         if (
@@ -165,11 +167,14 @@ def import_counter_records(
         buff.append(record)
         if len(buff) >= buffer_size:
             process_buffer(buff)
+            logger.info("Preprocessed buffer #%d", buff_idx)
+            buff_idx += 1
             buff = []
             gc.collect()
 
     # flush the rest of the buffer
     if buff:
+        logger.info("Preprocessed buffer #%d", buff_idx)
         process_buffer(buff)
 
     # after this, the ib_id_to_key_to_value is full and we can process it
@@ -325,6 +330,7 @@ def _preprocess_counter_records(
 
     title_rec: TitleRec
     record: CounterRecord
+    last_log = time()
     for title_rec, record in zip(title_recs, records):
         # attributes that define the identity of the log
         title_id = tm.get_or_create(title_rec)
@@ -358,6 +364,11 @@ def _preprocess_counter_records(
             to_insert[key] += record.value
         else:
             to_insert[key] = record.value
+        if time() - last_log > 10:
+            # log statistics every 10 seconds so that we can see the progress and celerus
+            # does not try to kill us :)
+            logger.info("Title statistics sofar: %s", tm.stats)
+            last_log = time()
     logger.info("Title statistics: %s", tm.stats)
 
 
@@ -413,7 +424,6 @@ def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [Plat
 
 
 class IBCopyMapping(CopyMapping):
-
     """
     The original CopyMapping is not thread-safe as it always uses the same temporary
     table. This version uses a table name dependent on the import batch ID, which should

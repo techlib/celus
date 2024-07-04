@@ -195,6 +195,7 @@ class TitleManager:
 
         # make sure that `prefetch_titles` was called at least for this record
         if not self.name_to_records:
+            logger.warning("prefetch_titles was not done - doing it now")
             self.prefetch_titles([record])
 
         winner = self.find_matching_title(record)
