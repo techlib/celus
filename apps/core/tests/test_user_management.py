@@ -94,24 +94,29 @@ class TestAccessibleUsers:
 
     # superuser can remove all users from orgs
     @pytest.mark.parametrize(
-        ["user", "org"],
+        ["user", "org", "user_deleted"],
         [
-            ("user1", "branch"),
-            ("user2", "standalone"),
-            ("master_user", "master"),
-            ("master_admin", "master"),
-            ("admin1", "root"),
-            ("admin2", "standalone"),
+            ("user1", "branch", True),
+            ("user2", "standalone", True),
+            ("master_user", "master", True),
+            ("master_admin", "master", True),
+            ("admin1", "root", False),  # admin1 is member of branch and root org
+            ("admin2", "standalone", True),
         ],
     )
     def test_superuser_delete_user(
-        self, basic1, organizations, platforms, clients, users, user, org
+        self, basic1, organizations, platforms, clients, users, user, org, user_deleted
     ):
+        user_pk = users[user].pk
         resp = clients["su"].post(
-            reverse("user-management-delete-relation", args=[users[user].pk]),
+            reverse("user-management-delete-relation", args=[user_pk]),
             data={"organization": organizations[org].pk},
         )
         assert resp.status_code == 200, "superuser should be able to delete all users"
+        if user_deleted:
+            assert not User.objects.filter(pk=user_pk).exists(), "user should be deleted"
+        else:
+            assert User.objects.filter(pk=user_pk).exists(), "user should not be deleted"
 
     # admin of master org can add to all orgs
     @pytest.mark.parametrize("org", ["root", "branch", "standalone", "master"])

@@ -35,7 +35,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
 from config.permissions import IsAuthenticatedWithOptional2FA
 from core.logic.email import mail_otp_token
-from core.models import Identity, TaskProgress, User
+from core.models import UL_ORG_ADMIN, Identity, TaskProgress, User
 from core.permissions import OwnerPermission, SuperuserOrAdminPermission, SuperuserPermission
 from core.serializers import (
     AccessibleUsersSerializer,
@@ -353,7 +353,7 @@ class AccessibleUsersViewSet(ModelViewSet):
     def delete_relation(self, request, pk):
         org_pk = request.data.get("organization")
 
-        if request.user.organization_relationship(org_id=request.data.get("organization")) < 300:
+        if request.user.organization_relationship(org_id=org_pk) < UL_ORG_ADMIN:
             return Response(
                 {"detail": "You are not admin of this organization."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -366,15 +366,27 @@ class AccessibleUsersViewSet(ModelViewSet):
 
         else:
             user_org_instance = UserOrganization.objects.get(user=pk, organization=org_pk)
-            user_org_instance.delete()
-            return Response(
-                {"detail": "User has been removed from the organization."},
-                status=status.HTTP_200_OK,
-            )
+            unlinked_user = user_org_instance.user
+            if (
+                not unlinked_user.userorganization_set.exclude(pk=user_org_instance.pk).exists()
+                and not unlinked_user.is_superuser
+            ):
+                # delete users whithout organization (excluding superusers)
+                unlinked_user.delete()
+                return Response({"detail": "User was deleted."}, status=status.HTTP_200_OK)
+            else:
+                user_org_instance.delete()
+                return Response(
+                    {"detail": "User has been removed from the organization."},
+                    status=status.HTTP_200_OK,
+                )
 
     def create(self, request):
         # check whether the request.user is allowed to add to this org
-        if request.user.organization_relationship(org_id=request.data.get("organization")) < 300:
+        if (
+            request.user.organization_relationship(org_id=request.data.get("organization"))
+            < UL_ORG_ADMIN
+        ):
             return Response(
                 {"detail": "You are not admin of this organization."},
                 status=status.HTTP_403_FORBIDDEN,
