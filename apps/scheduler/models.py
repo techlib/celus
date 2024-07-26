@@ -69,8 +69,12 @@ class ProcessResponse(Enum):
 class Scheduler(models.Model):
     """Represents attempt scheduling based on remote URL"""
 
-    DEFAULT_COOLDOWN_DELAY = 0  # in seconds
-    DEFAULT_TOO_MANY_REQUESTS_DELAY = 60 * 60  # in seconds
+    DEFAULT_COOLDOWN_DELAY = 1  # in seconds
+    # TOO_MANY_REQUESTS_DELAY is applied when 1020 error is encountered. We get those mostly
+    # from platforms on SiQ and for AIP. SiQ wants 1 second back-off, AIP wants 5 minutes.
+    # We use 10 seconds as a default value for now and will try to implement some by-platform
+    # configuration in the future.
+    DEFAULT_TOO_MANY_REQUESTS_DELAY = 10  # in seconds
     DEFAULT_SERVICE_NOT_AVAILABLE_DELAY = 60 * 60  # in seconds
     DEFAULT_SERVICE_BUSY_DELAY = 60  # in seconds
 
@@ -208,8 +212,11 @@ class Scheduler(models.Model):
                 # Credentials are broken
                 res = RunResponse.BROKEN
             else:
-                # Update cooldown delay
-                self.when_ready = timezone.now() + timedelta(seconds=self.cooldown)
+                # Update cooldown delay - but respect a higher delay if it was set in the handler
+                new_ready = intention.when_processed + timedelta(seconds=self.cooldown)
+                if new_ready > self.when_ready:
+                    self.when_ready = new_ready
+                    logger.warning("Updating when_ready from run_next: %s", self.when_ready)
                 res = RunResponse.PROCESSED
 
             self.unassign_intention()

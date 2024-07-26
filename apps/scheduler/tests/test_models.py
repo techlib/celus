@@ -389,15 +389,15 @@ class TestFetchIntention:
                 True,  # automatic
                 False,  # empty_ib
                 [
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
-                    timedelta(hours=1),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
+                    timedelta(seconds=10),
                 ],  # delays
                 True,  # last_canceled
                 id="too_many_requests",

@@ -1541,7 +1541,7 @@ export default {
     ruleUrlValid() {
       const result = validate(
         { website: this.url },
-        { website: { url: true } }
+        { website: { url: { allowLocal: true } } }
       );
       if (result && result.website) {
         return this.$t("invalid_url");
