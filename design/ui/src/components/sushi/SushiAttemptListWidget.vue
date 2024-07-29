@@ -11,6 +11,7 @@ en:
   not_older_than: Not older than
   counter_version: Counter version
   data_file: Data file
+  used_url: Used URL
 
 cs:
   sushi_fetch_attempts: Pokusy o stažení Sushi
@@ -22,6 +23,7 @@ cs:
   not_older_than: Ne starší než
   counter_version: Verze Counter
   data_file: Datový soubor
+  used_url: Použitá URL
 </i18n>
 
 <template>
@@ -91,6 +93,11 @@ cs:
                       </div>
                       <!-- extracted data -->
                       <AttemptExtractedData :attempt="item.attempt" />
+                    </div>
+                    <div class="ml-auto" v-if="!!item.attempt.used_url">
+                      <a :href="item.attempt.used_url" target="_blank">
+                        {{ $t("used_url") }}
+                      </a>
                     </div>
                     <div class="ml-auto">
                       <a

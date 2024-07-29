@@ -547,7 +547,13 @@ class TestSushiFetching:
     ):
         """Just test that processing of test data works as excpected"""
         credentials = CredentialsFactory(
-            organization=organizations["empty"], platform=platforms["empty"], counter_version=5
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            url="https://example.com/sushi/",
+            customer_id="CCCCCCC",
+            requestor_id="RRRRRRR",
+            api_key="AAAAAAAA",
         )
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
@@ -558,6 +564,11 @@ class TestSushiFetching:
                 counter_report_types[counter_report], start_date="2019-04-01", end_date="2019-04-30"
             )
             assert attempt.extracted_data == extracted_data
+            url = (
+                f"https://example.com/sushi/reports/{counter_report}?customer_id=CCCCCCC"
+                "&requestor_id=RRRRRRR&api_key=AAAAAAAA"
+            )
+            assert attempt.used_url.startswith(url)
 
             if import_passes:
                 import_one_sushi_attempt(attempt)

@@ -29,6 +29,7 @@ en:
     future: In the future
     never: Can't be run
   harvest_not_found: The requested harvest was not found
+  used_url: Used URL
 
 cs:
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
@@ -59,6 +60,7 @@ cs:
     future: V budoucnu
     never: Nelze pustit
   harvest_not_found: Požadované stahování nebylo nalezeno
+  used_url: Použitá URL
 </i18n>
 <template>
   <v-container fluid class="pt-0 pb-0">
@@ -197,6 +199,13 @@ cs:
               ></span>
               <div v-else-if="item.attempt">
                 <AttemptExtractedData :attempt="item.attempt" />
+                <div v-if="!!item.attempt.used_url" class="text-truncate">
+                  <strong>{{ $t("used_url") }}</strong
+                  >:
+                  <a :href="item.attempt.used_url" target="_blank">
+                    {{ item.attempt.used_url }}
+                  </a>
+                </div>
                 <div v-if="item.attempt && item.attempt.data_file">
                   <strong>{{ $t("title_fields.data_file") }}</strong
                   >:

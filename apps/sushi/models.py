@@ -11,6 +11,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from time import time
 from typing import IO, Dict, Iterable, Optional, Union
+from urllib.parse import urlencode
 
 import requests
 import reversion
@@ -33,6 +34,7 @@ from core.models import (
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.files.base import File
+from django.core.validators import URLValidator
 from django.db import models
 from django.db.models import Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
@@ -576,14 +578,18 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         return attempt
 
-    def _v5_get_report_data(
-        self, client, counter_report, start_date, end_date, file_data
-    ) -> Counter5ReportBase:
+    def _build_params(self, client, counter_report):
         # params must be a copy, otherwise we will pollute it with EXTRA_PARAMS
         params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(counter_report.code.lower(), {}))
         params.update(deepcopy(client.EXTRA_PARAMS["filters"].get(counter_report.code.lower(), {})))
         extra = self.extra_params or {}
         params.update(extra)
+        return params
+
+    def _v5_get_report_data(
+        self, client, counter_report, start_date, end_date, file_data
+    ) -> Counter5ReportBase:
+        params = self._build_params(client, counter_report)
         report = client.get_report_data(
             counter_report.code, start_date, end_date, output_content=file_data, params=params
         )
@@ -595,11 +601,17 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         """
         Returns an usaved SushiFetchAttempt object
         """
+        url = client.make_download_url(counter_report.code)
+        params = self._build_params(client, counter_report)
+        params = client.make_download_params(params, start_date, end_date)
+        used_url = url + "?" + urlencode(params)
+
         attempt = SushiFetchAttempt(
             credentials=self,
             counter_report=counter_report,
             start_date=start_date,
             end_date=end_date,
+            used_url=used_url,
         )
         try:
             report = self._v5_get_report_data(
@@ -831,6 +843,12 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     )
     extracted_data = models.JSONField(
         default=dict, help_text="Information extracted from the SUSHI data header"
+    )
+    used_url = models.TextField(
+        help_text="Url used for sushi harvesting",
+        blank=True,
+        default="",
+        validators=[URLValidator()],
     )
 
     EXTRACTED_DATA_KEYS = ("Created_By", "Institution_Name", "Institution_ID")
