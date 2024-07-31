@@ -55,6 +55,7 @@ cs:
 
 <script>
 import axios from "axios";
+import { mapActions } from "vuex";
 
 export default {
   name: "VerifyEmailPage",
@@ -70,6 +71,7 @@ export default {
   },
 
   methods: {
+    ...mapActions({ showSnackbar: "showSnackbar" }),
     async verifyEmail() {
       try {
         await axios.post(
@@ -79,6 +81,12 @@ export default {
         );
         this.attemptFinished = true;
         this.emailVerified = true;
+        // try to redirect to dashboard - if it for some reason fails, user can still click the link
+        await this.showSnackbar({
+          content: this.$t("success"),
+          color: "success",
+        });
+        await this.$router.push({ name: "dashboard" });
       } catch (error) {
         this.errorObj = error;
         if (error.response?.status === 404 && error.response?.data?.detail) {
