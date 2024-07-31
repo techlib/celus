@@ -22,7 +22,6 @@ cs:
         cols="auto"
         class="py-0"
         id="date-range-selector"
-        data-tour="date-range"
         :style="
           highlight
             ? {

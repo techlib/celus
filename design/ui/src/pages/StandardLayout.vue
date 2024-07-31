@@ -19,13 +19,9 @@ cs:
 
 <template>
   <v-app>
-    <SidePanel
-      v-model="showSidePanel"
-      data-tour="side-panel"
-      :tour-name="offeredTour"
-    />
+    <SidePanel v-model="showSidePanel" />
 
-    <v-app-bar app clipped-left clipped-right data-tour="app-bar">
+    <v-app-bar app clipped-left clipped-right>
       <v-toolbar-title class="flex-sm-shrink-0">
         <img
           :src="
@@ -146,7 +142,7 @@ cs:
           <template v-slot:activator="{ on }">
             <span v-on="on">
               <router-link :to="{ name: 'user-page' }">
-                <v-avatar color="primary" class="mt-2" data-tour="user-avatar">
+                <v-avatar color="primary" class="mt-2">
                   <v-gravatar
                     v-if="loggedIn && user"
                     :email="user.email"
@@ -166,7 +162,6 @@ cs:
       <v-btn
         @click.stop="showSidePanel = !showSidePanel"
         icon
-        data-tour="menu-show-button"
         v-if="$vuetify.breakpoint.mobile"
       >
         <v-icon>fa fa-bars</v-icon>
@@ -253,8 +248,6 @@ cs:
 
     <LoginDialog />
     <CreateOrganizationDialog v-if="showCreateOrganizationDialog" />
-
-    <UITour name="basic" />
   </v-app>
 </template>
 
@@ -266,13 +259,11 @@ import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import LoginDialog from "@/components/account/LoginDialog";
 import VGravatar from "vue-gravatar";
 import CreateOrganizationDialog from "@/components/account/CreateOrganizationDialog";
-import UITour from "@/components/help/UITour";
 import axios from "axios";
 
 export default {
   name: "Dashboard",
   components: {
-    UITour,
     CreateOrganizationDialog,
     LoginDialog,
     SelectedDateRangeWidget,
@@ -284,7 +275,6 @@ export default {
     return {
       navbarExpanded: false,
       showSidePanel: true,
-      basicsTourName: "basic",
       helpLink: false,
       helpText: "",
     };
@@ -311,8 +301,6 @@ export default {
       bootUpFinished: "bootUpFinished",
       emailVerified: "emailVerified",
       impersonator: "impersonator",
-      tourFinished: "tourFinished",
-      tourNeverSeen: "tourNeverSeen",
       showCreateOrganizationDialog: "showCreateOrganizationDialog",
       activeLanguageCodes: "activeLanguageCodes",
     }),
@@ -353,9 +341,6 @@ export default {
         this.$router.go();
       },
     },
-    userBasicTourFinished() {
-      return this.tourFinished(this.basicsTourName);
-    },
     showLanguageSelector() {
       return this.activeLanguageCodes.length > 1;
     },
@@ -374,18 +359,6 @@ export default {
         !this.$route.meta.hideDateRangeSelector
       );
     },
-    canShowBasicTour() {
-      // the tour requires date range and organization selectors to be visible
-      return this.showOrganizationSelector && this.showDateRangeSelector;
-    },
-    offeredTour() {
-      // it should only be offered in the side bar when it has already been
-      // finished by the user
-      if (this.canShowBasicTour && this.userBasicTourFinished) {
-        return "basic";
-      }
-      return null;
-    },
     showHelpButton() {
       return !!this.helpLink;
     },
@@ -394,7 +367,6 @@ export default {
   methods: {
     ...mapActions({
       hideSnackbar: "hideSnackbar",
-      backstageChangeTourStatus: "backstageChangeTourStatus",
       dismissLastRelease: "dismissLastRelease",
     }),
     toggleNavbar() {
@@ -417,30 +389,11 @@ export default {
 
   async mounted() {
     this.$i18n.locale = this.appLanguage;
-    if (
-      !this.userBasicTourFinished &&
-      !this.showCreateOrganizationDialog &&
-      this.canShowBasicTour
-    ) {
-      this.$tours[this.basicsTourName].start();
-    }
   },
 
   watch: {
     appLanguage() {
       this.$i18n.locale = this.appLanguage;
-    },
-
-    userBasicTourFinished() {
-      if (!this.userBasicTourFinished && this.canShowBasicTour) {
-        this.$tours[this.basicsTourName].start();
-      }
-    },
-
-    showCreateOrganizationDialog() {
-      if (!this.showCreateOrganizationDialog && !this.userBasicTourFinished) {
-        this.$tours[this.basicsTourName].start();
-      }
     },
 
     $route: {
@@ -472,12 +425,6 @@ img.logo {
 
 img.logow {
   max-height: 92px;
-}
-
-.v-navigation-drawer {
-  &.v-tour__target--relative {
-    position: fixed;
-  }
 }
 
 .fs-20 {

@@ -7,7 +7,6 @@ import store from "./store";
 import router from "./router";
 import i18n from "./i18n";
 import vuetify from "./plugins/vuetify";
-import VueTour from "vue-tour";
 import * as Sentry from "@sentry/browser";
 import { Vue as VueIntegration } from "@sentry/integrations";
 import VuetifyConfirm from "vuetify-confirm";
@@ -23,10 +22,6 @@ Sentry.init({
 
 // This should be the same as server_name from python part of sentry
 Sentry.setTag("server_name", location.hostname.replace(/\./g, "-"));
-
-require("vue-tour/dist/vue-tour.css");
-
-Vue.use(VueTour);
 
 Vue.use(VuetifyConfirm, {
   vuetify,

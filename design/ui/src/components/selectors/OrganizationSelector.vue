@@ -22,7 +22,6 @@
           :menu-props="{ width: '800px' }"
           :filter="filter"
           :label="label"
-          data-tour="organization-select"
           :rules="[required]"
           :disabled="disabled"
         >

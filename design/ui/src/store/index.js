@@ -18,7 +18,6 @@ import { sortOrganizations } from "@/libs/organizations";
 import cancellation from "./modules/cancellation";
 import interest from "./modules/interest";
 import maintenance from "./modules/maintenance";
-import tour from "./modules/tour";
 import login from "./modules/login";
 import events from "./modules/events";
 import pageSettings from "./modules/page-settings";
@@ -76,7 +75,6 @@ export default new Vuex.Store({
     login,
     maintenance,
     siteConfig,
-    tour,
     pageSettings,
     events,
   },

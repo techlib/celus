@@ -1,6 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/notifications.yaml"></i18n>
-<i18n lang="yaml" src="@/locales/tours.yaml"></i18n>
 
 <template>
   <v-navigation-drawer v-model="show" :mini-variant.sync="mini" clipped app>
@@ -39,16 +38,6 @@
     </v-list>
 
     <template #append>
-      <div class="pb-3 text-center">
-        <v-btn
-          v-if="tourName"
-          outlined
-          color="grey"
-          @click="activateTour({ name: tourName })"
-        >
-          {{ $t(tourToShow.title) }}
-        </v-btn>
-      </div>
       <div class="small subdued text-center mb-2">
         <router-link :to="{ name: 'changelog' }">
           {{ $t("celus_version") }}: {{ celusVersion }}
@@ -68,7 +57,6 @@ export default {
   components: { MenuListItem, SelectedDateRangeWidget, OrganizationSelector },
   props: {
     value: { default: true, type: Boolean },
-    tourName: { default: null, required: false, type: String },
   },
   data() {
     return {
@@ -87,14 +75,10 @@ export default {
       showManagementStuff: "showManagementStuff",
       notifications: "getNotifications",
       consortialInstall: "consortialInstall",
-      tourByName: "tourByName",
       celusVersion: "celusVersion",
       isRawImportEnabled: "isRawImportEnabled",
       allowUserManagement: "allowUserManagement",
     }),
-    tourToShow() {
-      return this.tourByName(this.tourName);
-    },
     isSuperuser() {
       return this.user && this.user.is_superuser;
     },
@@ -349,12 +333,6 @@ export default {
     activeGroups() {
       return this.groups.filter((group) => group.show);
     },
-  },
-
-  methods: {
-    ...mapActions({
-      activateTour: "activateTour",
-    }),
   },
 
   watch: {
