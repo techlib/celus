@@ -2,6 +2,7 @@
 Intended to store all code needed to create and possibly update a database used for storing
 logs. This is a separate clickhouse database.
 """
+
 import logging
 
 from django.core.management.base import BaseCommand

@@ -52,7 +52,6 @@ DATA_SOURCE_TYPE_KNOWLEDGEBASE = 3
 
 
 class DataSource(models.Model):
-
     """
     Represents a source of data, such as identities, organizations, etc.
     Its main purpose is to be able to distinguish where did different pieces of data come

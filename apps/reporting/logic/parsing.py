@@ -31,7 +31,6 @@ def parse_formula(formula):
 
 
 class ReportDataSourceSerializer(s.Serializer):
-
     """
     If `name` is not present, it is taken from `reportType` or `id`.
     If `id` is not present, it is taken from `name`.

@@ -6,7 +6,6 @@ from logs.models import AccessLog, Dimension, DimensionText, ReportType
 
 
 class ReportDataView(models.Model):
-
     """
     A view of the report type - it is used to expose a report type filtered in some way.
     This is the default object to be used to obtain data for charts.
@@ -63,7 +62,6 @@ class ReportDataView(models.Model):
 
 
 class DimensionFilter(models.Model):
-
     """
     Used to specify how data from one dimension in ReportDataView should be filtered
     """

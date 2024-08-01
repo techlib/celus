@@ -11,7 +11,6 @@ in the future, we can apply this migration and have it fixed.
 Also, a migration is a convenient way how to fix it in all Celus installations.
 """
 
-
 from django.db import migrations
 from django.db.models import F
 

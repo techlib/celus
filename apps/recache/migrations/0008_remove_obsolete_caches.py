@@ -3,6 +3,7 @@
 This data migration removes caches which would no longer be valid after the
 recent changes to the lifetime of cached queries and introduction of the duration threshold.
 """
+
 from datetime import timedelta
 
 from django.db import migrations

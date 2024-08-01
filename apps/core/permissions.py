@@ -6,7 +6,6 @@ from core.logic.url import extract_field_from_request, extract_organization_id_f
 
 
 class OwnerLevelBasedPermissions(BasePermission):
-
     """
     For models that have the 'owner_level' attribute checks that the current user has
     high enough privileges to modify that model.
@@ -22,7 +21,6 @@ class OwnerLevelBasedPermissions(BasePermission):
 
 
 class OrganizationRelatedPermissionMixin:
-
     """
     Base class for permissions that have to check if user is related to an organization and how
     """
@@ -45,7 +43,6 @@ class OrganizationRelatedPermissionMixin:
 
 
 class ViewPlatformPermission(IsAuthenticatedWithOptional2FA):
-
     """
     Permission to view platform object
     """
@@ -58,7 +55,6 @@ class ViewPlatformPermission(IsAuthenticatedWithOptional2FA):
 
 
 class CanPostOrganizationDataPermission(OrganizationRelatedPermissionMixin, BasePermission):
-
     """
     Checks that organization sent in POST (and PUT and PATCH) data is accessible by the user
     """

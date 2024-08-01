@@ -10,7 +10,7 @@ from django.db.models import F, Q, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
-from hcube.backends.clickhouse.dictionaries import PostgresqlSource
+from hcube.backends.clickhouse.data_sources import PostgresqlSource
 from publications.models import Title
 
 from ..cubes import AccessLogCube, ch_backend

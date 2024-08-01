@@ -1,6 +1,7 @@
 """
 Celery tasks
 """
+
 import logging
 
 import celery

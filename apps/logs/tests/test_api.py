@@ -72,7 +72,6 @@ from ..logic.materialized_reports import sync_materialized_reports
 
 @pytest.mark.django_db
 class TestChartDataAPI:
-
     """
     Tests functionality of the view chart-data
     """

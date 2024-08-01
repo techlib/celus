@@ -5,6 +5,7 @@ report type dimensions being the same.
 
 It only exports the import batches "own data" - no interest and no materialized reports.
 """
+
 import json
 import logging
 import os.path

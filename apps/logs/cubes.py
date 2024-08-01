@@ -6,11 +6,8 @@ from hcube.api.models.dimensions import DateDimension, IntDimension
 from hcube.api.models.materialized_views import AggregatingMaterializedView
 from hcube.api.models.metrics import IntMetric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
-from hcube.backends.clickhouse.dictionaries import (
-    DictionaryAttr,
-    DictionaryDefinition,
-    PostgresqlSource,
-)
+from hcube.backends.clickhouse.data_sources import PostgresqlSource
+from hcube.backends.clickhouse.dictionaries import DictionaryAttr, DictionaryDefinition
 from hcube.settings import GlobalSettings
 
 from logs.models import DIMENSION_COUNT, AccessLog, ImportBatch, ReportType
@@ -212,7 +209,7 @@ AccessLogCubeRecord = AccessLogCube.record_type()
 
 
 class PlatformTitleOrganizationProjection(AggregatingMaterializedView):
-    cube = AccessLogCube
-    preserved_dimensions = ["target_id", "item_id", "platform_id", "organization_id", "date"]
+    src_cube = AccessLogCube
+    preserved_dimensions = ["target_id", "platform_id", "organization_id", "date"]
     aggregated_metrics = ["value"]
     projection = False

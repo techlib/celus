@@ -104,9 +104,9 @@ class AnnotationsViewSet(ModelViewSet):
                 )
             else:
                 if annot.organization_id not in org_to_level:
-                    org_to_level[
-                        annot.organization_id
-                    ] = self.request.user.organization_relationship(annot.organization_id)
+                    org_to_level[annot.organization_id] = (
+                        self.request.user.organization_relationship(annot.organization_id)
+                    )
                 user_org_level = org_to_level[annot.organization_id]
             annot.can_edit = user_org_level >= annot.owner_level
         return qs

@@ -9,7 +9,6 @@ from annotations.fake_data import AnnotationFactory
 
 @pytest.mark.django_db
 class TestAuthorization:
-
     """
     What we should test:
 

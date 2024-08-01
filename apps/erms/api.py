@@ -11,7 +11,6 @@ class ERMSError(Exception):
 
 
 class ERMS:
-
     """
     Possible queries:
 

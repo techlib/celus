@@ -1,6 +1,7 @@
 """
 Stuff related to the artificial (materialized) report type 'interest' and its computation
 """
+
 import logging
 from collections import Counter
 from time import time

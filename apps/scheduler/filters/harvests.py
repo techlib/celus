@@ -1,7 +1,7 @@
 import typing
-from distutils.util import strtobool
 
 from core.logic.dates import parse_month
+from core.logic.type_conversion import strtobool
 from django.db.models import F
 from rest_framework import filters
 

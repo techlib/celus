@@ -22,7 +22,6 @@ from test_scenarios.basic import data_sources, report_types  # noqa - fixtures
 
 @pytest.mark.django_db
 class TestReportType:
-
     """
     Tests basic methods of the TestReport model
     """

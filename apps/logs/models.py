@@ -93,7 +93,6 @@ class ReportTypeQuerySet(models.QuerySet):
 
 
 class ReportType(models.Model):
-
     """
     Represents type of report, such as 'TR' or 'DR' in Sushi
     """
@@ -204,7 +203,6 @@ class ReportType(models.Model):
 
 
 class ReportMaterializationSpec(models.Model):
-
     """
     Describes how to slice a report type to get a new one. Used for materializing new report
     types from existing ones.
@@ -271,7 +269,6 @@ class ReportMaterializationSpec(models.Model):
 
 
 class InterestGroup(models.Model):
-
     """
     Describes a measure of interest of users. It is assigned to Metrics which are
     deemed as interest-defining. If more metrics refer to the same InterestGroup
@@ -295,7 +292,6 @@ class InterestGroup(models.Model):
 
 
 class Metric(models.Model):
-
     """
     Type of metric, such as 'Unique_Item_Requests', etc.
     """
@@ -345,7 +341,6 @@ class ControlledMetric(models.Model):
 
 
 class ReportInterestMetric(models.Model):
-
     """
     Links a report type to metric which signifies interest for that report type.
     If it is desired that in the outcome, the metric appears as a different one,
@@ -373,7 +368,6 @@ class ReportInterestMetric(models.Model):
 
 
 class Dimension(models.Model):
-
     """
     Represents a specific dimension of multidimensional data
     """
@@ -391,7 +385,6 @@ class Dimension(models.Model):
 
 
 class ReportTypeToDimension(models.Model):
-
     """
     Intermediate model to facilitate connection between report_type and dimension with
     additional position attribute
@@ -438,7 +431,6 @@ class ImportBatchQuerySet(models.QuerySet):
 
 
 class ImportBatch(models.Model):
-
     """
     Represents one batch of imported data. Such data share common source, such as a file
     and the user who created them.

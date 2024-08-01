@@ -2,6 +2,7 @@
 Stuff related to synchronization of organization data between the local database
 and an external source
 """
+
 import logging
 
 from core.models import DataSource

@@ -3,6 +3,7 @@
 """
 Creates a new Event informing about the introduction of events and connects it to all existing users
 """
+
 from datetime import timedelta
 
 from django.db import migrations

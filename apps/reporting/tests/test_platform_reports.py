@@ -1,6 +1,7 @@
 """
 Test for reports like the Rebiun report which use platform as rows
 """
+
 from datetime import date
 
 import pytest

@@ -56,9 +56,9 @@ class CelusAccountAdapter(DefaultAccountAdapter):
             kwargs = resolve(orig_url.path).kwargs
             uid = kwargs.get("uidb64")
             token = kwargs.get("token")
-            context[
-                "reset_url"
-            ] = f"{orig_url.scheme}://{orig_url.netloc}/reset-password/?uid={uid}&token={token}"
+            context["reset_url"] = (
+                f"{orig_url.scheme}://{orig_url.netloc}/reset-password/?uid={uid}&token={token}"
+            )
             context["site_name"] = orig_url.netloc
 
             msg = self.render_mail("registration/password_reset", email, context)

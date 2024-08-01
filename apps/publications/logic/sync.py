@@ -2,6 +2,7 @@
 Stuff related to synchronization of organization data between the local database
 and an external source
 """
+
 from core.models import DataSource
 from core.task_support import cache_based_lock
 from django.conf import settings

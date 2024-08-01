@@ -1,6 +1,5 @@
-from distutils.util import strtobool
-
 from celus_nigiri.utils import parse_date_fuzzy
+from core.logic.type_conversion import strtobool
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import filters

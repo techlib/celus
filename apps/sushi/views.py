@@ -210,9 +210,9 @@ class SushiCredentialsViewSet(ModelViewSet):
             else Organization.objects.get(id=selected_organization_id).short_name
         )
         org_suffix = org_suffix.replace("/", "_")
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="SushiCredentials-{today}_{org_suffix}.xlsx"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="SushiCredentials-{today}_{org_suffix}.xlsx"'
+        )
         return response
 
     @action(
@@ -286,9 +286,9 @@ class SushiCredentialsViewSet(ModelViewSet):
             if selected_organization_id == "-1"
             else Organization.objects.get(id=selected_organization_id).short_name
         )
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="Template_for_import_SushiCredentials_{org_suffix}.xlsx"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="Template_for_import_SushiCredentials_{org_suffix}.xlsx"'
+        )
         return response
 
     @action(
@@ -385,9 +385,9 @@ class SushiCredentialsViewSet(ModelViewSet):
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "failed"
                     elif attempt.partial_data and before in ["untried", "failed", "no_data"]:
                         # untried, failed, no_data => partial_data
-                        result[start.year][f"{start.month:02d}"][report_type][
-                            "status"
-                        ] = "partial_data"
+                        result[start.year][f"{start.month:02d}"][report_type]["status"] = (
+                            "partial_data"
+                        )
                     elif status == AttemptStatus.NO_DATA and before in ["untried", "failed"]:
                         # failed, untried => no_data
                         result[start.year][f"{start.month:02d}"][report_type]["status"] = "no_data"

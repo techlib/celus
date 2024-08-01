@@ -27,7 +27,6 @@ from test_scenarios.basic import (  # noqa - fixtures
 
 @pytest.mark.django_db
 class TestCustomImport:
-
     """
     Tests functionality of the logic.custom_import module
     """

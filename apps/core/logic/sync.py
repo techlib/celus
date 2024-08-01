@@ -2,6 +2,7 @@
 Stuff related to synchronization of user and identity data between the local database
 and an external source
 """
+
 import logging
 
 from django.conf import settings

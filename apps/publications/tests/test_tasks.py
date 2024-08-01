@@ -4,6 +4,7 @@ sure that the tasks do not fail with an error.
 
 The tasks are not run through celery, but as simple functions
 """
+
 import pytest
 
 from .. import tasks

@@ -1,6 +1,7 @@
 """
 Functions that help in constructing django queries
 """
+
 import logging
 from typing import Iterable, Optional, Union
 
@@ -267,11 +268,9 @@ class StatsComputer:
         # here we present the original report type
         self.original_used_report_type = self.used_report_type
         # decode the dimensions to find out what we need to have in the query
-        (
-            self.io_prim_dim_name,
-            self.prim_dim_name,
-            self.prim_dim_obj,
-        ) = self._translate_dimension_spec(params.get("prim_dim", "date"))
+        (self.io_prim_dim_name, self.prim_dim_name, self.prim_dim_obj) = (
+            self._translate_dimension_spec(params.get("prim_dim", "date"))
+        )
         self.io_sec_dim_name, self.sec_dim_name, self.sec_dim_obj = self._translate_dimension_spec(
             params.get("sec_dim")
         )

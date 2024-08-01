@@ -4,7 +4,6 @@ from tags.models import Tag, TagClass
 
 
 class TagClassPermissions(BasePermission):
-
     """
     Checks tag_class object level permissions
     """
@@ -17,7 +16,6 @@ class TagClassPermissions(BasePermission):
 
 
 class TagPermissions(BasePermission):
-
     """
     Checks tag and tag_class permissions
     """

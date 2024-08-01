@@ -182,7 +182,6 @@ class MappingXlsxDictWriter(DictWriter):
 
 
 class MappingCSVDictWriter(DictWriter):
-
     """
     Special DictWriter that maps column names from row keys to different column names
     """
@@ -266,7 +265,6 @@ class XlsxListWriter(ListWriter):
 
 
 class CSVListWriter(ListWriter):
-
     """
     Special DictWriter that maps column names from row keys to different column names
     """
