@@ -17,12 +17,14 @@
 
 # -- Project information -----------------------------------------------------
 
+from datetime import date
+
 project = "Celus"
-copyright = "2022, BigDigData"
+copyright = f"{date.today().year}, BigDigData"
 author = "Beda Kosata"
 
 # The full version, including alpha/beta/rc tags
-release = "5.0"
+release = "5.3.0"
 
 
 # -- General configuration ---------------------------------------------------
