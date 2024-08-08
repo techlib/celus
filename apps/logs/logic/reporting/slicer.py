@@ -629,7 +629,7 @@ class FlexibleDataSlicer:
             if ob == "tag" and self.tag_roll_up:
                 dealt_with = True
                 obs.append(prefix + "name")
-            if ob.startswith("dim"):
+            elif ob.startswith("dim"):
                 # when sorting by dimX we need to map the IDs to the corresponding texts
                 # because the mapping does not use a Foreign key relationship, we use a subquery
                 dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values("text")[:1]
@@ -671,6 +671,9 @@ class FlexibleDataSlicer:
                     # than produce wrong results, so we leave it as is
                     obs.append(prefix + ob)
                 dealt_with = True
+            elif ob == self.COL_TOTAL:
+                # ordering by the row totals (the column called `COL_TOTAL`)
+                obs.append(prefix + self.COL_TOTAL)
             if not dealt_with:
                 # this means that the order by is not consistent with the rest of the query
                 # it would be prudent to raise an error, but there are already existing data

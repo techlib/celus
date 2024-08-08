@@ -343,7 +343,7 @@ export default {
           headers.push({
             text: this.$t("row_total"),
             value: "_total",
-            sortable: false,
+            sortable: true,
             align: "right",
           });
         }
