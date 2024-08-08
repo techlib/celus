@@ -916,7 +916,8 @@ class FlexibleDataSlicer:
         slicer.include_row_totals = to_bool(params.get("row_totals", ""))
         slicer.include_col_totals = to_bool(params.get("col_totals", ""))
         slicer.tag_roll_up = to_bool(params.get("tag_roll_up", ""))
-        slicer.tag_class = params.get("tag_class")
+        if tag_class := params.get("tag_class"):
+            slicer.tag_class = int(tag_class)
         slicer.show_untagged_remainder = to_bool(params.get("show_untagged_remainder", ""))
         return slicer
 

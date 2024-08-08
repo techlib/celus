@@ -61,7 +61,6 @@ from sushi.models import (
     SushiFetchAttempt,
 )
 from sushi.serializers import CounterReportTypeSerializer
-from tags.models import Tag
 
 from config.permissions import IsAuthenticatedWithOptional2FA
 from logs.logic.export import CSVExport
@@ -99,6 +98,7 @@ from .exceptions import MultipleReportTypes, NibblerErrors
 from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
+from .logic.reporting.helpers import user_visible_tags
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .permissions import AccessiblePlatformFromOrganization
 from .tasks import export_raw_data_task, sync_organizationplatform_records_task
@@ -1237,7 +1237,9 @@ class FlexibleSlicerBaseView(APIView):
             slicer = FlexibleDataSlicer.create_from_params(request.query_params)
             slicer.use_clickhouse = request.USE_CLICKHOUSE
             if slicer.tag_roll_up:
-                slicer.tag_filter = Q(pk__in=Tag.objects.user_accessible_tags(request.user))
+                slicer.tag_filter = user_visible_tags(
+                    request.user, selected_tag_class=slicer.tag_class
+                )
             slicer.add_extra_organization_filter(request.user.accessible_organizations())
             if settings.DEBUG:
                 pprint(slicer.config())

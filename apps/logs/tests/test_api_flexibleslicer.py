@@ -220,6 +220,58 @@ class TestSlicerAPI:
             [tags[0].pk, tags[2].pk] if show_zero else [tags[0].pk]
         )
 
+    @pytest.mark.parametrize("show_zero", [True, False])
+    def test_tag_roll_up_with_hidden_tag_class(
+        self, flexible_slicer_test_data_with_tags, clients, users, show_zero
+    ):
+        """
+        Test that tag_roll_up is properly applied to the data. Also checks that tags which the
+        user has explicitly hidden are not returned.
+        """
+        t1, t2, t3 = flexible_slicer_test_data_with_tags["tags"]
+        t1.tag_class.change_hidden_for_user(users["su"], True)
+        resp = clients["su"].get(
+            reverse("flexible-slicer"),
+            {
+                "primary_dimension": "target",
+                "groups": b64json(["metric"]),
+                "tag_roll_up": "true",
+                "zero_rows": str(show_zero).lower(),
+                "order_by": "tag",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["count"] == (1 if show_zero else 0)
+        assert [row["pk"] for row in data["results"]] == ([t3.pk] if show_zero else [])
+
+    @pytest.mark.parametrize("show_zero", [True, False])
+    def test_tag_roll_up_with_hidden_tag_class_explicitly_added(
+        self, flexible_slicer_test_data_with_tags, clients, users, show_zero
+    ):
+        """
+        Test that tag_roll_up is properly applied to the data. Also checks that tags which the
+        user has explicitly hidden are returned when the tag class is explicitly selected.
+        """
+        t1, t2, t3 = flexible_slicer_test_data_with_tags["tags"]
+        t1.tag_class.change_hidden_for_user(users["su"], True)
+        resp = clients["su"].get(
+            reverse("flexible-slicer"),
+            {
+                "primary_dimension": "target",
+                "groups": b64json(["metric"]),
+                "tag_roll_up": "true",
+                "zero_rows": str(show_zero).lower(),
+                "tag_class": str(t1.tag_class.pk),  # explicitly add the hidden tag class
+                "order_by": "tag",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        # t1 should be present in both cases as t3 will not pass the tag_class filter
+        assert data["count"] == 1
+        assert [row["pk"] for row in data["results"]] == [t1.pk]
+
     @pytest.mark.parametrize("order_by", ["tag", "platform"])
     def test_tag_roll_up_with_order_by(
         self, flexible_slicer_test_data_with_tags, clients, order_by

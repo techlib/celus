@@ -13,6 +13,7 @@ from logs.logic.reporting.export import (
     FlexibleDataZipCSVExporter,
 )
 from logs.logic.reporting.filters import DateDimensionFilter
+from logs.logic.reporting.helpers import user_visible_tags
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
 from tags.models import Tag
 
@@ -136,7 +137,7 @@ class FlexibleDataExport(ExportBase):
 
     def write_data(self, stream, progress_monitor=None) -> int:
         slicer = FlexibleDataSlicer.create_from_config(self.export_params)
-        slicer.tag_filter = Q(pk__in=Tag.objects.user_accessible_tags(self.owner))
+        slicer.tag_filter = user_visible_tags(self.owner, selected_tag_class=slicer.tag_class)
         slicer.add_extra_organization_filter(self.owner.accessible_organizations())
         export_cls = format_to_exporter[self.file_format]
         exporter = export_cls(

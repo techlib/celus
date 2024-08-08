@@ -156,6 +156,36 @@ class TestFlexibleDataExport:
                 "-- untagged remainder --,51894,52866,53838",
             ]
 
+    def test_create_output_file_with_tag_rollup_and_hidden_tag_class(
+        self, tagged_titles, flexible_slicer_test_data, admin_user, export_output
+    ):
+        """
+        Tags from hidden tag class should not be visible in the output
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        report_type = flexible_slicer_test_data["report_types"][0]
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
+        slicer.tag_roll_up = True
+        slicer.primary_dimension = "target"
+        slicer.show_untagged_remainder = False
+        slicer.add_group_by("metric")
+
+        # mark class for tag1 as hidden (it is shared by tag1 and tag2, so both should be hidden)
+        tag1 = tagged_titles["tag1"]
+        tag1.tag_class.change_hidden_for_user(admin_user, True)
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        assert data.splitlines() == [], "no tags should be visible"
+
+        # add new tag with a new class - it should be visible
+        new_tag = TagForTitleFactory(name="New Tag")
+        new_tag.tag(flexible_slicer_test_data["targets"][2], admin_user)
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        assert data.splitlines() == ["Tag,Metric 1,Metric 2,Metric 3", "New Tag,51894,52866,53838"]
+
     @pytest.mark.parametrize("hide_tag_class", [True, False])
     def test_create_output_file_with_tag_filter(
         self, tagged_titles, flexible_slicer_test_data, admin_user, export_output, hide_tag_class
@@ -205,7 +235,7 @@ class TestFlexibleDataExport:
         slicer.add_group_by("metric")
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
-        with django_assert_max_num_queries(25):
+        with django_assert_max_num_queries(26):
             # we want to avoid the n+1 query problem, so the number of queries should
             # be much lower than the number of titles
             data = export_output(export)
