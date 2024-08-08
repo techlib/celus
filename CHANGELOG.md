@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.2]  - 2024-08-08
+
+### Changes
+
+#### Frontend
+
+* after email verification, the user is automatically redirected to the dashboard without needing to
+  click on a button
+* the "Introductory tour" feature was removed (it was buggy anyway)
+* when removing users from the UI, the account is actually deleted when removed from the last
+  organization
+* clashing import batches (usually in situations where the same data is requested while a download
+  is in progress) are not shown by default in the list of downloads
+
+#### Backend
+
+* a one-second delay was added between downloads from the same SUSHI URL to ease the load on fast
+  SUSHI servers (thanks to ScholarlyIQ for reporting this issue)
+
+
+### Fixed
+
+#### Frontend
+
+* an error in reporting causing unresponsive "Run report" button when report type was changed
+  under specific conditions was fixed
+
+#### Backend
+
+* a bug causing Celus not to respect the 1020 (too many requests) SUSHI exception was fixed
+  (thanks to ScholarlyIQ for reporting this issue)
+
+
 ## [6.1.1]  - 2024-06-28
 
 ### Added

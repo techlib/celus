@@ -1,3 +1,25 @@
+- version: 6.1.2
+  title:
+    en: Version 6.1.2 brings a few bug fixes and small changes
+    cs: Verze 5.2.1 přináší několik oprav a drobných změn
+  text:
+    en: |
+      - the "Introductory tour" feature was removed
+      - a bug preventing Celus from properly reacting to SUSHI exception 1020 was fixed
+      - an error in reporting causing unresponsive "Run report" button when report type was changed
+        under specific conditions was fixed
+      - several other small changes and fixes were introduced
+    cs: |
+      - funkce "Úvodní tour" byla odstraněna
+      - byla opravena chyba, která bránila Celusu správně reagovat na SUSHI výjimku 1020
+      - byla opravena chyba v reportingu způsobující neodpovídající tlačítko "Spustit report" při
+        změně typu reportu za specifických podmínek
+      - bylo provedeno několik dalších drobných změn a oprav
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 6.1.1
   title:
     en: Bug fix release 6.1.1 is out
@@ -16,6 +38,7 @@
   is_new_feature: FALSE
   is_update: FALSE
   is_bug_fix: TRUE
+  notify_users: FALSE
 
 - version: 6.1.0
   title:
