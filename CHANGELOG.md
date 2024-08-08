@@ -7,10 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [6.1.2]  - 2024-08-08
 
+### Added
+
+#### Frontend
+
+* in reporting, it is now possible to order the rows by the row totals
+* in reporting, when "merge rows by tag" is active, it is now possible to order the results by the
+  tag name
+
+
 ### Changes
 
 #### Frontend
 
+* when "merge rows by tag" is active, tags from classes which have been marked as hidden by the user
+  are no longer shown in the report - unless the class was explicitly selected by the user
 * after email verification, the user is automatically redirected to the dashboard without needing to
   click on a button
 * the "Introductory tour" feature was removed (it was buggy anyway)

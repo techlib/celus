@@ -1,20 +1,24 @@
 - version: 6.1.2
   title:
     en: Version 6.1.2 brings a few bug fixes and small changes
-    cs: Verze 5.2.1 přináší několik oprav a drobných změn
+    cs: Verze 6.1.2 přináší několik oprav a drobných změn
   text:
     en: |
+      - in reporting, tags from hidden tag classes are no longer shown in the report output when
+        "merge rows by tag" is used
       - the "Introductory tour" feature was removed
       - a bug preventing Celus from properly reacting to SUSHI exception 1020 was fixed
       - an error in reporting causing unresponsive "Run report" button when report type was changed
         under specific conditions was fixed
-      - several other small changes and fixes were introduced
+      - several other small changes, improvements and fixes were introduced
     cs: |
+      - v reportingu při použití funkce "sloučení řádků podle štítků" již nejsou ve výstupu
+        zobrazeny štítky z tříd štítků, které byly uživatelem označeny jako skryté
       - funkce "Úvodní tour" byla odstraněna
       - byla opravena chyba, která bránila Celusu správně reagovat na SUSHI výjimku 1020
       - byla opravena chyba v reportingu způsobující neodpovídající tlačítko "Spustit report" při
         změně typu reportu za specifických podmínek
-      - bylo provedeno několik dalších drobných změn a oprav
+      - bylo provedeno několik dalších drobných změn, vylepšení a oprav
   is_new_feature: FALSE
   is_update: TRUE
   is_bug_fix: TRUE
