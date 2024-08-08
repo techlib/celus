@@ -364,7 +364,7 @@ export default {
               {
                 text: this.$t("labels.tags"),
                 value: "assignedTags",
-                sortable: false,
+                sortable: this.report.tagRollUp,
               },
             ]
           : [];
