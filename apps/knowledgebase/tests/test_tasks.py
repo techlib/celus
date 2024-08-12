@@ -8,12 +8,15 @@ import pytest
 import requests_mock
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from nibbler.models import ParserDefinition
+from publications.fake_data import PlatformFactory
 from publications.models import Platform, PlatformInterestReport
+from sushi.fake_data import FetchAttemptFactory
 
 from knowledgebase.models import ImportAttempt
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
+    counter_report_types,
     data_sources,
     interests,
     metrics,
@@ -49,6 +52,10 @@ class TestCeleryTasks:
             definition["data_format"]["name"] = "three"
             definition["data_format"]["id"] = 333
             definition["lowest_nibbler_version"] = version("celus_nibbler")
+            m.get(
+                re.compile(f'^{data_sources["brain"].url}/knowledgebase/report_types/'),
+                text=json.dumps(REPORT_TYPE_INPUT_DATA2),
+            )
             definition["highest_nibbler_version"] = version("celus_nibbler")
             definition["platforms"] = ["APS"]
             parser_definitions["parser1"].delete()
@@ -119,3 +126,44 @@ class TestCeleryTasks:
             with patch("knowledgebase.tasks.async_mail_admins") as email_task:
                 tasks.sync_platforms_with_knowledgebase_task()
                 assert email_task.delay.called
+
+    def test_export_data_sync(
+        self, data_sources, parser_definitions, interests, settings, counter_report_types
+    ):
+        settings.KNOWLEDGEBASE_EXPORT_DATA = True
+        platform = PlatformFactory(
+            short_name="fake", name="fake", ext_id=8888, source=data_sources["brain"]
+        )
+        FetchAttemptFactory(
+            credentials__platform=platform,
+            counter_report=counter_report_types["tr"],
+            used_url="https://sushi.example.com/reports/tr/",
+        )
+        FetchAttemptFactory(
+            credentials__platform=platform,
+            counter_report=counter_report_types["dr"],
+            used_url="https://sushi.example.com/reports/dr/",
+        )
+        with requests_mock.Mocker() as m:
+            m.post(
+                re.compile(
+                    f'^{data_sources["brain"].url}/knowledgebase/platforms/update-assigned-report-types/'
+                ),
+                text=json.dumps(PLATFORM_INPUT_DATA),
+            )
+            tasks.sync_platforms_with_knowledgebase_task()
+            assert m.last_request.json() == [
+                {
+                    "counter_report_code": "TR",
+                    "platform_id": 8888,
+                    "counter_version": 5,
+                    "urls": ["https://sushi.example.com/reports/tr/"],
+                },
+                {
+                    "counter_report_code": "DR",
+                    "platform_id": 8888,
+                    "counter_version": 5,
+                    "urls": ["https://sushi.example.com/reports/dr/"],
+                },
+            ], "Post data matches"
+        assert Platform.objects.filter(ext_id=328).exists(), "Platform was created"

@@ -12,6 +12,7 @@ import requests
 from core.models import DataSource
 from core.tasks import async_mail_admins
 from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
 from django.db.transaction import on_commit
@@ -27,6 +28,7 @@ from logs.models import (
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 from semantic_version import Version
+from sushi.models import SushiFetchAttempt
 
 from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
 
@@ -138,12 +140,6 @@ class ImportAttempt(AuthTokenMixin, models.Model):
         (KIND_PARSER_DEFINITION, "Parser definition"),
     )
 
-    URL_MAP = {
-        KIND_PLATFORM: "/knowledgebase/platforms/",
-        KIND_REPORT_TYPE: "/knowledgebase/report_types/",
-        KIND_PARSER_DEFINITION: "/knowledgebase/parsers/",
-    }
-
     url = models.URLField()
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE)
     kind = models.CharField(max_length=20, choices=KINDS)
@@ -160,8 +156,14 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 
     def save(self, *args, **kwargs):
         self.kind = self.required_kind
-        self.url = urljoin(self.source.url, ImportAttempt.URL_MAP[self.kind])
+        self.url = self.get_url()
         return super().save(*args, **kwargs)
+
+    def get_url(self):
+        raise NotImplementedError()
+
+    def get_response(self) -> requests.Response:
+        return requests.get(self.url, headers=self.request_headers)
 
     @property
     def status(self) -> "ImportAttempt.State":
@@ -220,7 +222,7 @@ class ImportAttempt(AuthTokenMixin, models.Model):
             )
 
             # download
-            resp = requests.get(self.url, headers=self.request_headers)
+            resp = self.get_response()
             resp.raise_for_status()
 
             # store hash
@@ -251,6 +253,32 @@ class ImportAttempt(AuthTokenMixin, models.Model):
 class PlatformImportAttempt(ImportAttempt):
     class Meta:
         proxy = True
+
+    def get_url(self):
+        return urljoin(self.source.url, "/knowledgebase/platforms/")
+
+    def get_post_url(self):
+        return urljoin(self.source.url, "/knowledgebase/platforms/update-assigned-report-types/")
+
+    def get_response(self):
+        if settings.KNOWLEDGEBASE_EXPORT_DATA:
+            input_data = (
+                SushiFetchAttempt.objects.filter(credentials__platform__source=self.source)
+                .annotate(
+                    platform_id=models.F("credentials__platform__ext_id"),
+                    counter_report_code=models.F("counter_report__code"),
+                    counter_version=models.F("counter_report__counter_version"),
+                    urls=ArrayAgg("used_url"),
+                )
+                .values("platform_id", "counter_report_code", "counter_version", "urls")
+                .order_by("credentials_id", "counter_report_id")
+                .distinct()
+            )
+            return requests.post(
+                self.get_post_url(), headers=self.request_headers, json=list(input_data)
+            )
+        else:
+            return super().get_response()
 
     def plan(self):
         from .tasks import update_platforms
@@ -412,6 +440,9 @@ class PlatformImportAttempt(ImportAttempt):
 class ReportTypeImportAttempt(ImportAttempt):
     class Meta:
         proxy = True
+
+    def get_url(self):
+        return urljoin(self.source.url, "/knowledgebase/report_types/")
 
     def plan(self):
         from .tasks import update_report_types
@@ -594,6 +625,9 @@ class ReportTypeImportAttempt(ImportAttempt):
 class ParserDefinitionImportAttempt(ImportAttempt):
     class Meta:
         proxy = True
+
+    def get_url(self):
+        return urljoin(self.source.url, "/knowledgebase/parsers/")
 
     def plan(self):
         from .tasks import update_parser_definitions

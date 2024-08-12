@@ -337,6 +337,7 @@ MAXIMUS_TOKEN = config("MAXIMUS_TOKEN", default="")
 
 # Knowledgebase integration
 KNOWLEDGEBASE_TOKEN = config("KNOWLEDGEBASE_TOKEN", default="")
+KNOWLEDGEBASE_EXPORT_DATA = config("KNOWLEDGEBASE_EXPORT_DATA", default=False, cast=bool)
 
 # Celery
 CELERY_RESULT_BACKEND = "django-db"
