@@ -292,6 +292,7 @@ export default {
       footerImages: (state) => state.siteConfig.footerImages,
       unreadEventCount: (state) => state.events.unreadCount,
       forceDisableOrganizationSelector: "forceDisableOrganizationSelector",
+      forceHideDateRangeSelector: "forceHideDateRangeSelector",
     }),
     ...mapGetters({
       loggedIn: "loggedIn",
@@ -347,6 +348,9 @@ export default {
     disableOrganizationSelector() {
       return !!this.forceDisableOrganizationSelector[this.$route.name];
     },
+    hideDateRangeSelector() {
+      return !!this.forceHideDateRangeSelector[this.$route.name];
+    },
     showOrganizationSelector() {
       return (
         this.$vuetify.breakpoint.mdAndUp &&
@@ -356,7 +360,8 @@ export default {
     showDateRangeSelector() {
       return (
         this.$vuetify.breakpoint.mdAndUp &&
-        !this.$route.meta.hideDateRangeSelector
+        !this.$route.meta.hideDateRangeSelector &&
+        !this.hideDateRangeSelector
       );
     },
     showHelpButton() {

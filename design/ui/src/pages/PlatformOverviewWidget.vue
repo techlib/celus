@@ -106,6 +106,7 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      changeForceHideDateRangeSelector: "changeForceHideDateRangeSelector",
     }),
     formatInteger: formatInteger,
     async loadPlatforms() {
@@ -244,6 +245,15 @@ export default {
     this.loadPlatforms();
   },
   watch: {
+    viewType: {
+      handler() {
+        this.changeForceHideDateRangeSelector({
+          hide: this.viewType === "cost" ? true : false,
+          route: this.$router.currentRoute.name,
+        });
+      },
+      immediate: true,
+    },
     platformsURL() {
       this.loadPlatforms();
     },

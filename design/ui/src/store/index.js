@@ -109,6 +109,7 @@ export default new Vuex.Store({
     eventWorker: null,
     ws: null, // web socket for notifications
     forceDisableOrganizationSelector: {},
+    forceHideDateRangeSelector: {},
     otpRequired: false,
   },
 
@@ -745,6 +746,9 @@ export default new Vuex.Store({
     async changeForceDisableOrganizationSelector(context, { hide, route }) {
       context.commit("setForceDisableOrganizationSelector", { hide, route });
     },
+    async changeForceHideDateRangeSelector(context, { hide, route }) {
+      context.commit("setForceHideDateRangeSelector", { hide, route });
+    },
     setFiscalYearStart(context, month) {
       context.commit("setFiscalYearStart", month);
       axios.post("/api/user/extra-data", { fiscal_year_start_month: month });
@@ -832,6 +836,9 @@ export default new Vuex.Store({
     },
     setForceDisableOrganizationSelector(state, { hide, route }) {
       Vue.set(state.forceDisableOrganizationSelector, route, hide);
+    },
+    setForceHideDateRangeSelector(state, { hide, route }) {
+      Vue.set(state.forceHideDateRangeSelector, route, hide);
     },
     setOtpRequired(state, { required }) {
       state.otpRequired = required;
