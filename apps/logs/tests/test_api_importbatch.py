@@ -685,6 +685,7 @@ class TestImportBatchesAPI:
         organizations,
         platforms,
         report_types,
+        counter_report_types,
         rt,
         credentials_count,
         months,
@@ -713,7 +714,7 @@ class TestImportBatchesAPI:
         broken_cr = CredentialsFactory.create(
             organization=organizations["root"],
             platform=platforms["root"],
-            report_types=["TR", "PR", "BR1"],
+            report_types=[(5, "TR"), (5, "PR"), (4, "BR1")],
         )
         # we connect the platform and the organization to make them appear in coverage at all
         OrganizationPlatform.objects.create(

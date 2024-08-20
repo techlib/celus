@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
 from logs.fake_data import ReportTypeFactory
+from logs.models import ReportType
 from organizations.fake_data import OrganizationFactory
 from publications.fake_data import PlatformFactory
 from scheduler import signals as scheduler_signals
@@ -62,10 +63,13 @@ class CredentialsFactory(factory.django.DjangoModelFactory):
         if not create:
             return
         if extracted:
-            for report_type_name in extracted:
-                rt = CounterReportTypeFactory(code=report_type_name)
+            for counter_version, report_type_name in extracted:
+                rt, _ = ReportType.objects.get_or_create(short_name=report_type_name)
+                crt, _ = CounterReportType.objects.get_or_create(
+                    report_type=rt, code=report_type_name, counter_version=counter_version
+                )
                 CounterReportsToCredentials.objects.get_or_create(
-                    counter_report=rt, credentials=obj
+                    counter_report=crt, credentials=obj
                 )
 
 

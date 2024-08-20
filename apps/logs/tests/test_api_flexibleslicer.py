@@ -10,6 +10,7 @@ from tags.models import TagScope, TitleTag
 from logs.models import ImportBatch, OrganizationPlatform, ReportType
 from test_scenarios.basic import (  # noqa
     clients,
+    counter_report_types,
     data_sources,
     identities,
     organizations,
@@ -499,7 +500,7 @@ class TestSlicerAPI:
 
     @pytest.mark.parametrize(["end_date", "exp_ib_max"], (("2020-02-28", 2), (None, 0)))
     def test_report_coverage_no_data(
-        self, clients, organizations, report_types, end_date, exp_ib_max
+        self, clients, organizations, report_types, counter_report_types, end_date, exp_ib_max
     ):
         pl = PlatformFactory.create()  # create one platform
         org = organizations["branch"]
@@ -507,7 +508,7 @@ class TestSlicerAPI:
         start_date = "2020-01-01"
         # connect the platform to the organization
         OrganizationPlatform.objects.create(platform=pl, organization=org)
-        CredentialsFactory.create(organization=org, platform=pl, report_types=[report_type])
+        CredentialsFactory.create(organization=org, platform=pl, report_types=[(5, "TR")])
         resp = clients["su"].get(
             reverse("flexible-slicer-coverage"),
             {

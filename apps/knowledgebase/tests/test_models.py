@@ -12,11 +12,13 @@ from api.fake_data import OrganizationAPIKeyFactory
 from core.fake_data import DataSourceFactory
 from core.models import DataSource
 from django.utils.timezone import now
+from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory, MetricFactory
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from publications.fake_data import PlatformFactory
 from publications.logic import knowledgebase
 from publications.models import Platform, PlatformInterestReport
+from scheduler.models import FetchIntention
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, SushiCredentials
 
@@ -27,6 +29,7 @@ from knowledgebase.models import (
     RouterSyncAttempt,
 )
 from test_scenarios.basic import (  # noqa - fixtures
+    counter_report_types,
     data_sources,
     interests,
     metrics,
@@ -394,12 +397,23 @@ class TestPlatformImportAttempt:
             platform_with_source.name == "AAP - American Academy of Pediatrics"
         ), "linked platform updated"
 
+    @freeze_time("2020-01-15 00:00:00")
     @pytest.mark.parametrize("verification", ("forced", "attempt"))
-    def test_process_credentials_update(self, data_sources, report_types, verification):
+    def test_process_credentials_update(
+        self, data_sources, report_types, counter_report_types, verification, organizations
+    ):
+        org = organizations["standalone"]
         p1 = PlatformFactory(short_name="AAP", ext_id=328, source=data_sources["brain"])
         p2 = PlatformFactory(short_name="AACR", ext_id=327, source=data_sources["brain"])
+        # auto + enabled + verfied
         cred1 = CredentialsFactory(
-            platform=p1, url="https://something.else1", counter_version=5, auto_update_url=True
+            platform=p1,
+            url="https://something.else1",
+            counter_version=5,
+            auto_update_url=True,
+            organization=org,
+            enabled=True,
+            report_types=[(5, "TR")],
         )
         if verification == "forced":
             cred1.force_current_version_verified()
@@ -410,12 +424,39 @@ class TestPlatformImportAttempt:
                 credentials_version_hash=cred1.version_hash,
             )
 
+        # auto + enabled
         cred2 = CredentialsFactory(
-            platform=p2, url="https://something.else2", counter_version=4, auto_update_url=True
+            platform=p2,
+            url="https://something.else2",
+            counter_version=4,
+            auto_update_url=True,
+            organization=org,
+            enabled=True,
+            report_types=[(4, "JR1")],
+        )
+
+        # auto + verified
+        cred3 = CredentialsFactory(
+            platform=p2,
+            url="https://something.else3",
+            counter_version=5,
+            auto_update_url=True,
+            organization=org,
+            enabled=False,
+            report_types=[(5, "DR")],
+        )
+        cred3.force_current_version_verified()
+
+        # Create ib for one of the platforms
+        # => should not create intention for the period
+        ImportBatchFactory(
+            date="2019-12-01", organization=org, platform=p1, report_type=report_types["tr"]
         )
 
         attempt = PlatformImportAttempt(source=data_sources["brain"])
         attempt.save()
+
+        assert FetchIntention.objects.count() == 0, "No intention exists so far"
 
         attempt.process(PLATFORM_INPUT_DATA)
 
@@ -425,6 +466,7 @@ class TestPlatformImportAttempt:
         # We need to discard cached_properties so we need to refetch the objects again
         cred1 = SushiCredentials.objects.get(pk=cred1.pk)
         cred2 = SushiCredentials.objects.get(pk=cred2.pk)
+        cred3 = SushiCredentials.objects.get(pk=cred3.pk)
 
         # Both knowledgebase url were updated
         assert (
@@ -439,9 +481,19 @@ class TestPlatformImportAttempt:
             == knowledgebase.get_url(cred2.platform.knowledgebase, cred2.counter_version)
             == PLATFORM_INPUT_DATA[1]["providers"][0]["provider"]["url"]
         )
+        assert (
+            cred3.url
+            == cred3.knowledgebase_url
+            == knowledgebase.get_url(cred3.platform.knowledgebase, cred3.counter_version)
+            == PLATFORM_INPUT_DATA[1]["providers"][1]["provider"]["url"]
+        )
 
         assert cred1.is_verified is True, "Credentials must remain verified"
-        assert cred2.is_verified is False, "Credentials remained unverified"
+        assert cred2.is_verified is False, "Credentials must remain unverified"
+        assert cred3.is_verified is True, "Credentials must remain verified"
+
+        assert FetchIntention.objects.count() == 1, "Intention created"
+        assert FetchIntention.objects.last().start_date.strftime("%Y-%m-%d") == "2019-11-01"
 
 
 @pytest.mark.django_db

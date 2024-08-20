@@ -22,7 +22,7 @@ from celus_nigiri.counter5 import Counter5ReportBase, CounterError, TransportErr
 from celus_nigiri.error_codes import ErrorCode
 from celus_pycounter.exceptions import SushiException
 from core.logic import url
-from core.logic.dates import month_start, parse_date
+from core.logic.dates import month_end, month_start, parse_date, this_month
 from core.models import (
     UL_CONS_ADMIN,
     UL_CONS_STAFF,
@@ -214,6 +214,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         (UL_CONS_ADMIN, "Superuser"),
     )
     BLAKE_HASH_SIZE = 16
+    NUMBER_OF_MONTHS_REPLANNED = 2
 
     title = models.CharField(max_length=120, blank=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -300,21 +301,70 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             )
 
     def perform_auto_update(self, new_url: str) -> bool:
+        from scheduler.models import Automatic, FetchIntention, Harvest
+
         new_url = url.normalize_url(new_url)
-        if new_url != self.url:
-            verified = self.is_verified
-            self.url = new_url
+        if new_url == self.url:
+            return False
 
-            if verified:
-                # When credentials were verified we need to keep the verification
-                # `force_current_version_verified` also saves the object to the db
-                self.force_current_version_verified()
-            else:
-                # Resave unverified credentials to update the hash
-                self.save()
+        verified = self.is_verified
+        self.url = new_url
 
-            return True
-        return False
+        if verified:
+            # When credentials were verified we need to keep the verification
+            # `force_current_version_verified` also saves the object to the db
+            self.force_current_version_verified()
+
+            if self.enabled:
+                # Try to plan a harvest for last NUMBER_OF_MONTHS_REPLANNED
+
+                # Remove broken status
+                self.unset_broken()
+                for cr2c in self.counterreportstocredentials_set.filter(broken__isnull=False):
+                    cr2c.unset_broken()
+
+                # Get related months
+                current_month = this_month()
+                months = [
+                    current_month - relativedelta(months=i + 1)
+                    for i in range(self.NUMBER_OF_MONTHS_REPLANNED)
+                ]
+
+                # Find out which months contain data
+                present = {
+                    (e.date, e.report_type.counterreporttype.pk)
+                    for e in ImportBatch.objects.filter(
+                        date__in=months,
+                        organization=self.organization,
+                        platform=self.platform,
+                        report_type__counterreporttype__isnull=False,
+                    ).select_related("report_type", "report_type__counterreporttype")
+                }
+
+                # Plan the harvests
+                for month in months:
+                    month_e = month_end(month)
+                    automatic = Automatic.get_or_create(month, self.organization)
+                    intentions = []
+                    for cr2c in self.counterreportstocredentials_set.all():
+                        if (month, cr2c.counter_report_id) not in present:
+                            intentions.append(
+                                FetchIntention(
+                                    priority=FetchIntention.PRIORITY_NORMAL,
+                                    credentials=self,
+                                    counter_report=cr2c.counter_report,
+                                    start_date=month,
+                                    end_date=month_e,
+                                )
+                            )
+
+                    if intentions:
+                        Harvest.plan_harvesting(intentions, automatic.harvest)
+
+        # Save will update the hashes
+        self.save()
+
+        return True
 
     def change_lock(self, user: User, level: int):
         """
