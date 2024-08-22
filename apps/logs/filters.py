@@ -28,12 +28,8 @@ class OrderByFilter(filters.BaseFilterBackend):
         order_by = request.GET.get("order_by", "created")
         if request.GET.get("desc") in ("true", 1):
             order_by = "-" + order_by
-        # ensure that .created is always part of ordering because it is the only value we can
-        # be reasonably sure is different between instances
-        if order_by != "created":
-            order_by = [order_by, "created"]
-        else:
-            order_by = [order_by]
+        # ensure that pk is always part of ordering to ensure stable ordering in case of same values
+        order_by = [order_by, "pk"]
         return queryset.order_by(*order_by)
 
 

@@ -276,6 +276,11 @@ export default {
       type: Number,
       required: false,
     },
+    item: {
+      // id of the item to filter on
+      type: Number,
+      required: false,
+    },
     importBatch: {
       // id of the Batch
       required: false,
@@ -395,6 +400,7 @@ export default {
       if (this.platform) url += `&platform=${this.platform}`;
       if (this.organization) url += `&organization=${this.organization}`;
       if (this.title) url += `&target=${this.title}`;
+      if (this.item) url += `&item=${this.item}`;
       if (this.importBatch) url += `&import_batch=${this.importBatch}`;
       if (this.mduId) url += `&mdu=${this.mduId}`;
       if (this.dashboardChart) {

@@ -590,7 +590,7 @@ class TestImportBatchesAPI:
             )
             if last_tr and superseding:
                 # superseding was requested - we make the last_tr superseding current RT
-                last_tr.superseeded_by = report_types[rt_name]
+                last_tr.superseded_by = report_types[rt_name]
                 last_tr.save()
             last_tr = report_types[rt_name]
         sync_interest_by_import_batches()

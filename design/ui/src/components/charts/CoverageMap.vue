@@ -301,8 +301,8 @@ export default {
         this.coverageData = response.data;
         if (this.splitByOrg) {
           this.coverageData.forEach((item) => {
-            item.organization =
-              this.organizations[item.organization_id][`name_${this.lang}`];
+            const org = this.organizations[item.organization_id];
+            item.organization = org[`name_${this.lang}`] || org.name;
           });
         }
         if (this.splitByPlatform) {

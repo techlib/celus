@@ -5,6 +5,7 @@ import typing
 from collections import Counter
 from copy import deepcopy
 from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 
 import magic
@@ -79,6 +80,15 @@ class OrganizationPlatform(models.Model):
 
 class ReportTypeQuerySet(models.QuerySet):
     def get_interest_rt(self):
+        # we want to cache this, but `as_manager()` uses some dark magic to only
+        # copy some methods to the resulting manager and a `cache` is not one of them.
+        # But by caching a private method, we can achieve the same effect, because private
+        # methods are all copied
+        return self._get_interest_rt()
+
+    # TODO: switch to just functools.cache, once we do not need support for Python 3.8
+    @lru_cache  # noqa B019 - caching a method without an argument, so no memory leak
+    def _get_interest_rt(self):
         # we use get_or_create to make sure interest is always present
         # this is mostly for tests, because in production it should be always present
         return self.get_or_create(
@@ -107,13 +117,16 @@ class ReportType(models.Model):
     interest_metrics = models.ManyToManyField(
         "Metric", through="ReportInterestMetric", through_fields=("report_type", "metric")
     )
-    superseeded_by = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="superseeds"
+    superseded_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="supersedes"
     )
-    materialization_spec = models.ForeignKey(
-        "ReportMaterializationSpec", null=True, blank=True, on_delete=models.SET_NULL
+    materialization_spec = models.OneToOneField(
+        "ReportMaterializationSpec", null=True, blank=True, on_delete=models.CASCADE
     )
-    default_platform_interest = models.BooleanField(default=False)
+    default_platform_interest = models.BooleanField(
+        default=False,
+        help_text="Should this report type be automatically connected to new platforms?",
+    )
     materialization_date = models.DateTimeField(
         default=now,
         help_text="All data materialized before this data will be recomputed - can be used to "
@@ -219,6 +232,7 @@ class ReportMaterializationSpec(models.Model):
     keep_organization = models.BooleanField(default=True)
     keep_platform = models.BooleanField(default=True)
     keep_target = models.BooleanField(default=True)
+    keep_item = models.BooleanField(default=False)
     for i in range(DIMENSION_COUNT):
         locals()[f"keep_dim{i + 1}"] = models.BooleanField(default=True)
     keep_date = models.BooleanField(default=True)
@@ -251,7 +265,7 @@ class ReportMaterializationSpec(models.Model):
         keep = []
         remove = []
         id_postfix = "_id" if add_id_postfix else ""
-        for attr in ("metric", "organization", "platform", "target"):
+        for attr in ("metric", "organization", "platform", "target", "item"):
             if getattr(self, "keep_" + attr):
                 keep.append(attr + id_postfix)
             else:

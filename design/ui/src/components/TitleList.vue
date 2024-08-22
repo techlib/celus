@@ -223,7 +223,6 @@ export default {
       showDOI: false,
       selectedPubType: null,
       searchString: "",
-      pubTypes: [],
       cancelTokenSource: null,
       platforms: {},
       // table state
@@ -388,6 +387,23 @@ export default {
       }
       return this.url;
     },
+    pubTypes() {
+      let all = {
+        text: this.$t("pub_type.all"),
+        value: null,
+        icon: "fa-expand",
+      };
+      return [
+        all,
+        ...pubTypes.map((item) => {
+          return {
+            text: this.$t(item.title),
+            icon: item.icon,
+            value: item.code,
+          };
+        }),
+      ];
+    },
   },
 
   methods: {
@@ -404,10 +420,6 @@ export default {
         this.cancelTokenSource.cancel("new data requested");
         this.cancelTokenSource = null;
       }
-      // it seems there is an issue in i18n that makes this.$i18n undefined after the
-      // await call later on. To make i18n work, we store it here and then pass it on
-      // to the extractPubTypes method
-      const i18n = this.$i18n;
       if (this.fullUrl) {
         this.loading = true;
         this.cancelTokenSource = axios.CancelToken.source();
@@ -435,10 +447,6 @@ export default {
           // and this is not the most recent request
         }
 
-        // if (!this.selectedPubType) {
-        //   // if we do not filter by pubType, we extract the available pub types here
-        this.pubTypes = this.extractPubTypes(i18n);
-        // }
         if (this.titles.length) {
           await this.getTagsForObjectsById(
             "title",
@@ -447,23 +455,6 @@ export default {
         }
         this.loading = false;
       }
-    },
-    extractPubTypes(i18n) {
-      let all = {
-        text: i18n.t("pub_type.all"),
-        value: null,
-        icon: "fa-expand",
-      };
-      return [
-        all,
-        ...pubTypes.map((item) => {
-          return {
-            text: i18n.t(item.title),
-            icon: item.icon,
-            value: item.code,
-          };
-        }),
-      ];
     },
     async loadPlatforms() {
       const reply = await this.http({
@@ -515,6 +506,11 @@ export default {
       this.page = 1;
     },
     searchDebounced() {
+      this.page = 1;
+    },
+    url() {
+      // if the base url has changed, it means that either the date range or the
+      // platform has changed, so we need to reset the page
       this.page = 1;
     },
   },

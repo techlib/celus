@@ -20,7 +20,12 @@ from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
 
 from .logic import knowledgebase as kb
-from .logic.validation import AUTHOR_ID_LEN, normalize_author_id
+from .logic.validation import (
+    AUTHOR_ID_LEN,
+    AUTHOR_NAME_LEN,
+    normalize_author_id,
+    normalize_author_name,
+)
 
 
 class PlatformInterestReport(models.Model):
@@ -203,7 +208,7 @@ class Platform(models.Model):
         return count
 
 
-class Title(models.Model):
+class PubTypeMixin(models.Model):
     PUB_TYPE_BOOK = "B"
     PUB_TYPE_JOURNAL = "J"
     PUB_TYPE_UNKNOWN = "U"
@@ -253,13 +258,29 @@ class Title(models.Model):
         "thesis_or_dissertation": PUB_TYPE_THESIS_OR_DISSERTATION,
     }
 
-    name = models.TextField()
     pub_type = models.CharField(
         max_length=1,
         choices=PUB_TYPE_CHOICES,
         default=PUB_TYPE_UNKNOWN,
         verbose_name="Publication type",
     )
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def data_type_to_pub_type(cls, data_type: str) -> str:
+        """
+        Takes a Data_Type value as it could appear in COUNTER data and translate it to
+        the pub_type value as would be stored in the database for the title.
+        Does some string manipulation for greater flexibility
+        """
+        data_type = data_type.replace(" ", "_").lower()
+        return cls.data_type_to_pub_type_map.get(data_type, cls.PUB_TYPE_UNKNOWN)
+
+
+class Title(CreatedUpdatedMixin, PubTypeMixin, models.Model):
+    name = models.TextField()
     isbn = models.CharField(max_length=20, blank=True, default="")
     issn = models.CharField(max_length=9, blank=True, default="", db_index=True)
     eissn = models.CharField(
@@ -276,16 +297,6 @@ class Title(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def data_type_to_pub_type(cls, data_type: str) -> str:
-        """
-        Takes a Data_Type value as it could appear in COUNTER data and translate it to
-        the pub_type value as would be stored in the database for the title.
-        Does some string manipulation for greater flexibility
-        """
-        data_type = data_type.replace(" ", "_").lower()
-        return cls.data_type_to_pub_type_map.get(data_type, cls.PUB_TYPE_UNKNOWN)
-
     def guess_pub_type(self):
         """
         Based on presence of isbn, issn and eissn attrs, guess what type of publication this is
@@ -298,8 +309,11 @@ class Title(models.Model):
         return self.PUB_TYPE_UNKNOWN
 
 
-class Author(models.Model):
-    name = models.TextField()
+class Author(CreatedUpdatedMixin, models.Model):
+    # limit length to 250 characters - some sources have very long author names
+    # (e.g. 1000+ characters) and this then messes up the unique constraint because the data
+    # does not fit into the index
+    name = models.CharField(max_length=AUTHOR_NAME_LEN, blank=True)
     # ISNI contains 16 characters
     isni = models.CharField(max_length=AUTHOR_ID_LEN, blank=True, default="")
     # ORCID contains 16 charactes
@@ -325,6 +339,7 @@ class Author(models.Model):
     def save(self, *args, **kwargs):
         self.isni = normalize_author_id(self.isni)
         self.orcid = normalize_author_id(self.orcid)
+        self.name = normalize_author_name(self.name)
         return super().save(*args, **kwargs)
 
     @classmethod
@@ -332,13 +347,13 @@ class Author(models.Model):
         # Need to normalize identifiers
         # (this function may be used with batch_create which doesn't perform save
         return cls(
-            name=author.name,
+            name=normalize_author_name(author.name),
             isni=normalize_author_id(author.ISNI),
             orcid=normalize_author_id(author.ORCID),
         )
 
 
-class Item(models.Model):
+class Item(CreatedUpdatedMixin, PubTypeMixin, models.Model):
     name = models.TextField()
     publication_date = models.DateField(null=True, blank=True)
     doi = models.CharField(max_length=250, blank=True, default="")
@@ -357,10 +372,6 @@ class Item(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def data_type_to_pub_type(cls, data_type: str) -> str:
-        return Title.data_type_to_pub_type(data_type)
-
 
 class AuthorToItem(models.Model):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
@@ -369,6 +380,7 @@ class AuthorToItem(models.Model):
 
     class Meta:
         unique_together = (("author", "item"),)
+        ordering = ("item_id", "author_id", "position")
 
 
 class PlatformTitle(models.Model):

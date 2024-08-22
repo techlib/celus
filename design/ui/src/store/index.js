@@ -318,6 +318,12 @@ export default new Vuex.Store({
       }
       return null;
     },
+    enableItems(state) {
+      if ("ENABLE_ITEMS" in state.basicInfo) {
+        return state.basicInfo["ENABLE_ITEMS"];
+      }
+      return false;
+    },
     subjectForImportCredEmail(state) {
       if ("SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL" in state.basicInfo) {
         return state.basicInfo["SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL"];

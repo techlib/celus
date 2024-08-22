@@ -6,14 +6,22 @@ from typing import Dict, Generator, List, Optional, Set, Tuple, Union
 
 from celus_nigiri import CounterRecord
 from celus_nigiri.record import Author
+from core.logic.dates import parse_date
 from django.contrib.postgres.expressions import ArraySubquery
 from django.db.models import OuterRef
 from django.db.models.functions import Lower
 
 from publications import models
 
+from ..models import Item
 from .title_management import Cache, TitleManager
-from .validation import normalize_author_id, normalize_isbn, normalize_issn, normalize_title
+from .validation import (
+    normalize_author_id,
+    normalize_author_name,
+    normalize_isbn,
+    normalize_issn,
+    normalize_title,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +37,7 @@ class ItemRec:
     uris: Set[str] = field(default_factory=set)
     publication_date: str = ""
     authors: List[Author] = field(default_factory=list)
+    pub_type: str = Item.PUB_TYPE_UNKNOWN
 
     def __post_init__(self):
         # ensure set is used
@@ -40,12 +49,22 @@ class ItemRec:
         self.eissn = self.eissn and normalize_issn(self.eissn)
         if isinstance(self.publication_date, date):
             self.publication_date = self.publication_date.isoformat()
+        else:
+            # the date as string may contain strange things, like "-", etc.
+            # we want to normalize it in order not to crash the import into database
+            try:
+                self.publication_date = parse_date(self.publication_date).isoformat()
+            except ValueError:
+                self.publication_date = ""
         for author in self.authors:
             author.ISNI = normalize_author_id(author.ISNI or "")
             author.ORCID = normalize_author_id(author.ORCID or "")
+            author.name = normalize_author_name(author.name or "")
 
     @classmethod
-    def from_counter_record(cls, record: CounterRecord) -> Optional["ItemRec"]:
+    def from_counter_record(
+        cls, record: CounterRecord, pub_type: Optional[str] = Item.PUB_TYPE_UNKNOWN
+    ) -> Optional["ItemRec"]:
         if not record.item:
             return None
 
@@ -75,17 +94,21 @@ class ItemRec:
             uris=uris,
             publication_date=publication_date,
             authors=authors,
+            pub_type=pub_type,
         )
 
     def update(self, other: "ItemRec"):
-        # Opdate only when records are same
+        # Update only when records are same
         if self == other:
             # merge uris and proprietary_ids
             self.proprietary_ids |= other.proprietary_ids
             self.uris |= other.uris
+            if self.pub_type == Item.PUB_TYPE_UNKNOWN:
+                self.pub_type = other.pub_type
         return
 
     def __eq__(self, other: "ItemRec"):
+        # pub_type is derived from usage data, so we don't compare it
         if (
             self.name == other.name  # normalized names should match
             and self.doi == other.doi
@@ -176,6 +199,7 @@ class ItemCompareRec:
     id_set: Set[Tuple[str, str]] = field(default_factory=set)
     proprietary_ids: Set[str] = field(default_factory=set)
     authors: List[int] = field(default_factory=list)
+    pub_type: str = Item.PUB_TYPE_UNKNOWN
 
     def __post_init__(self):
         # ensure all sets are sets
@@ -231,12 +255,12 @@ class AuthorManager:
         self.author_to_id: Cache
         self.stats = Counter()
 
-    def prefetch_authors(self, authors=List[Author]):
+    def prefetch_authors(self, authors: List[Author]):
         self.author_to_id = Cache()
         prefetched_authors = {
             self.prefetched_key(name, isni, orcid): pk
             for name, isni, orcid, pk in models.Author.objects.annotate(lname=Lower("name"))
-            .filter(lname__in=[e.name.lower() for e in authors])
+            .filter(lname__in=[TitleManager.normalize_title(e.name) for e in authors])
             .values_list("name", "isni", "orcid", "pk")
         }
         for author in authors:
@@ -250,12 +274,12 @@ class AuthorManager:
 
     @classmethod
     def prefetched_key(cls, name: str, isni: str, orcid: str) -> str:
-        return f"{name.lower()}|{isni}|{orcid}"
+        return f"{TitleManager.normalize_title(name)}|{isni}|{orcid}"
 
     @classmethod
     def key(cls, author: Author) -> str:
         return (
-            f"{author.name.lower()}|"
+            f"{TitleManager.normalize_title(author.name)}|"
             f"{normalize_author_id(author.ISNI).lower()}|"
             f"{normalize_author_id(author.ORCID).lower()}"
         )
@@ -308,6 +332,7 @@ class ItemManager:
                 "proprietary_ids",
                 "authors_ids",
                 "uris",
+                "pub_type",
             )
         ):
             authors = row.pop("authors_ids")
@@ -320,6 +345,7 @@ class ItemManager:
                     uris=row["uris"],
                     proprietary_ids=row["proprietary_ids"],
                     authors=authors,
+                    pub_type=row["pub_type"],
                 )
             )
         self._prefetch_done = True
@@ -329,12 +355,32 @@ class ItemManager:
     def normalize_item(cls, name: str) -> str:
         return TitleManager.normalize_title(name)
 
-    def counter_record_to_item_rec(self, record: CounterRecord) -> ItemRec:
+    @classmethod
+    def deduce_pub_type(cls, eissn, isbn, issn, record):
+        pub_type = Item.PUB_TYPE_UNKNOWN
+        if "Data_Type" in record.dimension_data:
+            data_type = record.dimension_data["Data_Type"]
+            pub_type = Item.data_type_to_pub_type(data_type)
+        if pub_type == Item.PUB_TYPE_UNKNOWN:
+            # we try harder - based on isbn, issn, etc.
+            if (issn or eissn) and not isbn:
+                pub_type = Item.PUB_TYPE_ARTICLE
+            elif isbn and not (issn or eissn):
+                pub_type = Item.PUB_TYPE_BOOK_SEGMENT
+        return pub_type
+
+    def counter_record_to_item_rec(self, record: CounterRecord) -> Optional[ItemRec]:
+        # short-circuit if there is no item
+        if not record.item:
+            return None
         cache_key = (record.item, frozenset(record.item_ids.items()))
         if item_rec := self._counter_rec_to_item_rec_cache.get(cache_key):
             return item_rec
 
-        item = ItemRec.from_counter_record(record)
+        pub_type = self.deduce_pub_type(
+            record.item_ids.Online_ISSN, record.item_ids.ISBN, record.item_ids.Print_ISSN, record
+        )
+        item = ItemRec.from_counter_record(record, pub_type=pub_type)
         self._counter_rec_to_item_rec_cache[cache_key] = item
         return item
 
@@ -393,6 +439,7 @@ class ItemManager:
                 issn=record.issn,
                 eissn=record.eissn,
                 doi=record.doi or "",
+                pub_type=record.pub_type,
                 uris=list(record.uris),
                 proprietary_ids=list(record.proprietary_ids),
                 publication_date=record.publication_date or None,
@@ -408,6 +455,7 @@ class ItemManager:
                     proprietary_ids=item.proprietary_ids,
                     id_set=record.ids_to_set(),
                     authors=[self.authors.get(e) for e in record.authors],
+                    pub_type=record.pub_type,
                 )
             )
             self.stats["created"] += 1
@@ -423,7 +471,12 @@ class ItemManager:
         rec_id_set = record.ids_to_set()
         extra_ids = rec_id_set - winner.id_set
         extra_prop_ids = record.proprietary_ids - winner.proprietary_ids
-        if extra_ids or extra_prop_ids or (record.uris and not record.uris & winner.uris):
+        if (
+            extra_ids
+            or extra_prop_ids
+            or (record.uris and not record.uris & winner.uris)
+            or (winner.pub_type != record.pub_type and winner.pub_type == Item.PUB_TYPE_UNKNOWN)
+        ):
             item = models.Item.objects.get(pk=winner.pk)
             item.proprietary_ids = item.proprietary_ids + list(extra_prop_ids)
             winner.proprietary_ids |= extra_prop_ids
@@ -435,6 +488,9 @@ class ItemManager:
                 merged_uris = set(item.uris) | record.uris
                 item.uris = list(merged_uris)
                 winner.uris = merged_uris
+            if winner.pub_type == Item.PUB_TYPE_UNKNOWN:
+                item.pub_type = record.pub_type
+                winner.pub_type = record.pub_type
             item.save()
             self.stats["update"] += 1
         else:

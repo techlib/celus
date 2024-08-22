@@ -463,6 +463,17 @@ class TestCounter5Import:
                         },
                     ),
                     (
+                        "Book X",
+                        {
+                            "proprietary_ids": [],
+                            "uris": [],
+                            "isbn": "9783164484107",
+                            "issn": "",
+                            "eissn": "",
+                            "doi": "",
+                        },
+                    ),
+                    (
                         "Book 1092",
                         {
                             "proprietary_ids": ["SampleIR:b1092"],
@@ -484,6 +495,7 @@ class TestCounter5Import:
                             "issn": "",
                             "eissn": "",
                             "doi": "10.1729/jhik.345",
+                            "pub_type": Item.PUB_TYPE_ARTICLE,
                         },
                     ),
                     (
@@ -495,6 +507,7 @@ class TestCounter5Import:
                             "issn": "",
                             "eissn": "",
                             "doi": "10.1729/zbcd.457",
+                            "pub_type": Item.PUB_TYPE_BOOK,
                         },
                     ),
                     (
@@ -506,6 +519,7 @@ class TestCounter5Import:
                             "issn": "",
                             "eissn": "",
                             "doi": "",
+                            "pub_type": Item.PUB_TYPE_BOOK_SEGMENT,
                         },
                     ),
                     (
@@ -517,6 +531,7 @@ class TestCounter5Import:
                             "issn": "",
                             "eissn": "",
                             "doi": "10.1729/abcd.434",
+                            "pub_type": Item.PUB_TYPE_MULTIMEDIA,
                         },
                     ),
                 ],
@@ -553,7 +568,15 @@ class TestCounter5Import:
         for item in Item.objects.all():
             for exp_title, ids in expected_items:
                 if exp_title == item.name:
-                    for id in ["proprietary_ids", "uris", "isbn", "issn", "eissn", "doi"]:
+                    for id in [
+                        "proprietary_ids",
+                        "uris",
+                        "isbn",
+                        "issn",
+                        "eissn",
+                        "doi",
+                        "pub_type",
+                    ]:
                         assert getattr(item, id) == ids[id], f"item {id} mismatch"
                     break
             else:

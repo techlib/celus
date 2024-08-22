@@ -223,7 +223,15 @@ class DimensionTextViewSet(ReadOnlyModelViewSet):
 
 class AccessLogListViewBase(ListAPIView):
     serializer_class = AccessLogSerializer
-    implicit_dims = ["platform", "metric", "organization", "target", "report_type", "import_batch"]
+    implicit_dims = [
+        "platform",
+        "metric",
+        "organization",
+        "target",
+        "item",
+        "report_type",
+        "import_batch",
+    ]
     pagination_class = StandardResultsSetPagination
 
     def get_base_queryset(self):
@@ -290,7 +298,7 @@ class AccessLogListViewBase(ListAPIView):
         return query_params
 
     @classmethod
-    def extract_order_args(cls, request) -> dict:
+    def extract_order_args(cls, request) -> list:
         order_by = request.query_params.get("order_by", "pk")
         desc = to_bool(request.query_params.get("desc", "false").lower())
         spec = ("-" if desc else "") + order_by

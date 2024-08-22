@@ -66,7 +66,7 @@ class Command(BaseCommand):
                         base_report_type=rt,
                         name=rt.name,
                         short_name=rt.short_name,
-                        is_standard_view=True,
+                        is_standard_view=False,
                     )
                     # connect the generic charts to the new data view
                     for i, cd in enumerate(ChartDefinition.objects.filter(is_generic=True)):

@@ -6,7 +6,7 @@ from django.utils.translation import ngettext
 from modeltranslation.admin import TranslationAdmin
 
 from . import models
-from .models import MduState, ReportInterestMetric
+from .models import DIMENSION_COUNT, MduState, ReportInterestMetric
 from .tasks import import_manual_upload_data
 
 
@@ -56,7 +56,7 @@ class ReportTypeAdmin(TranslationAdmin):
         "name",
         "dimension_list",
         "source",
-        "superseeded_by",
+        "superseded_by",
         "materialized",
         "rim_count",
         "cm_count",
@@ -64,9 +64,10 @@ class ReportTypeAdmin(TranslationAdmin):
     ]
     ordering = ["short_name"]
     list_filter = ["source", IsMaterialized, "default_platform_interest"]
-    readonly_fields = ["approx_record_count"]
+    readonly_fields = ["approx_record_count", "materialization_date"]
     inlines = [ReportInterestMetricInline]
     list_select_related = ["source__organization"]
+    search_fields = ["short_name", "name"]
 
     class Media:
         css = {"all": ["css/report_type.css"]}
@@ -109,6 +110,11 @@ class ReportTypeAdmin(TranslationAdmin):
     @classmethod
     def record_count(cls, obj: models.ReportType):
         return f"{obj.approx_record_count:,}"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ["materialization_spec"] + super().get_readonly_fields(request, obj)
+        return super().get_readonly_fields(request, obj)
 
 
 @admin.register(models.Metric)
@@ -197,6 +203,20 @@ class ImportBatchAdmin(admin.ModelAdmin):
 @admin.register(models.ReportMaterializationSpec)
 class ReportMaterializationSpecAdmin(admin.ModelAdmin):
     list_display = ["name", "base_report_type", "description"]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            # if the object already exists, we do not allow changing the materialization spec
+            return [
+                "base_report_type",
+                "keep_metric",
+                "keep_organization",
+                "keep_platform",
+                "keep_target",
+                "keep_item",
+                "keep_date",
+            ] + [f"keep_dim{i + 1}" for i in range(DIMENSION_COUNT)]
+        return []
 
 
 @admin.register(models.FlexibleReport)

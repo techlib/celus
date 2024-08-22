@@ -4,6 +4,7 @@ from itertools import product
 import faker
 import pytest
 from celus_nigiri.counter5 import CounterRecord
+from celus_nigiri.record import Identifiers
 from celus_nigiri.utils import parse_date_fuzzy
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform, Title
@@ -95,12 +96,49 @@ def counter_records():
             value = row[-1]
             rec = CounterRecord(
                 start=start,
-                end=end.isoformat(),
+                end=end,
                 metric=metric if metric else f"Metric {fake.pyint()}",
                 value=value,
                 dimension_data=dim_data,
                 title=title,
-                title_ids={"Print_ISSN": "1234-5678"},
+                title_ids=Identifiers(Print_ISSN="1234-5678"),
+            )
+            yield rec
+
+    return fn
+
+
+@pytest.fixture
+def counter_records_with_item():
+    def fn(datapoints, metric=None):
+        """
+        :param metric:
+        :param datapoints: matrix of data,
+          the first column must be title (or None to generate fake),
+          the second column is date,
+          last column is the actual value,
+          columns in between are for the additional dimensions
+        :return:
+        """
+        fake = faker.Faker()
+        for row in datapoints:
+            assert len(row) >= 3
+            title = row[0] or fake.sentence()
+            item = row[1]
+            start = row[2]
+            end = parse_date_fuzzy(start)
+            end = end.replace(day=calendar.monthrange(end.year, end.month)[1])  # last day of month
+            dim_data = {f"dim{i}": value for i, value in enumerate(row[3:-1])}
+            value = row[-1]
+            rec = CounterRecord(
+                start=start,
+                end=end,
+                metric=metric or f"Metric {fake.pyint()}",
+                value=value,
+                dimension_data=dim_data,
+                title=title,
+                title_ids=Identifiers(Print_ISSN="1234-5678"),
+                item=item,
             )
             yield rec
 

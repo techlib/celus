@@ -225,25 +225,49 @@ cs:
       ></AnnotationsWidget>
     </section>
 
-    <section v-if="isReady">
-      <v-row>
-        <v-col>
-          <h3>{{ $t("overview") }}</h3>
-        </v-col>
-        <v-col cols="auto">
-          <data-export-widget :title="titleId" :platform="platformId">
-          </data-export-widget>
-        </v-col>
-      </v-row>
+    <v-tabs
+      v-if="isReady"
+      v-model="tab"
+      background-color="#f5f5f5"
+      centered
+      grow
+      class="mt-1"
+    >
+      <v-tab href="#charts">{{ $t("charts") }}</v-tab>
+      <v-tab href="#items" v-if="enableItems">{{ $t("labels.items") }}</v-tab>
 
-      <CounterChartSet
-        :platform-id="platformId"
-        :title-id="titleId"
-        :report-views-url="reportViewsUrl"
-        scope="title"
-      >
-      </CounterChartSet>
-    </section>
+      <v-tabs-items v-model="tab" class="platform-page">
+        <v-tab-item value="charts">
+          <v-container>
+            <v-row>
+              <v-col>
+                <h3>{{ $t("overview") }}</h3>
+              </v-col>
+              <v-col cols="auto">
+                <data-export-widget :title="titleId" :platform="platformId">
+                </data-export-widget>
+              </v-col>
+            </v-row>
+
+            <CounterChartSet
+              :platform-id="platformId"
+              :title-id="titleId"
+              :report-views-url="reportViewsUrl"
+              scope="title"
+            >
+            </CounterChartSet>
+          </v-container>
+        </v-tab-item>
+
+        <v-tab-item value="items" v-if="enableItems">
+          <ItemList
+            :organization-id="selectedOrganization.pk"
+            :platform-id="platformId"
+            :title-id="titleId"
+          />
+        </v-tab-item>
+      </v-tabs-items>
+    </v-tabs>
   </v-container>
 </template>
 
@@ -256,10 +280,12 @@ import goTo from "vuetify/es5/services/goto";
 import { formatInteger } from "@/libs/numbers";
 import cancellation from "@/mixins/cancellation";
 import TagCard from "@/components/tags/TagCard";
+import ItemList from "@/components/items/ItemList.vue";
 
 export default {
   name: "TitleDetailPage",
   components: {
+    ItemList,
     TagCard,
     DataExportWidget,
     CounterChartSet,
@@ -279,6 +305,7 @@ export default {
       annotationsCount: 0,
       availableFromPlatforms: null,
       hasInterestOutsideOfTimeRange: false,
+      tab: "charts",
     };
   },
   computed: {
@@ -289,6 +316,7 @@ export default {
       selectedOrganization: "selectedOrganization",
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
+      enableItems: "enableItems",
     }),
     isReady() {
       return this.selectedOrganization && this.titleId;

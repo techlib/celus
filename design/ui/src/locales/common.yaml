@@ -20,6 +20,7 @@ en:
     heatmap: Interest heatmap
     import_batches: Import batches
     interest_overview: Interests
+    item_detail: Item detail
     maintenance: Maintenance
     management: Management
     management_commands: Management commands
@@ -57,55 +58,55 @@ en:
   month: Month
   year: Year
   title_fields:
+    access_level: Visibility
+    actions: Actions
+    active_reports: Active reports
+    contains_data: Contains data
+    counter_version: COUNTER version
+    created: Created
+    data_coverage: Data coverage
+    data_file: Data file
+    doi: DOI
+    download_success: Download successful
+    eissn: eISSN
+    enabled: Enabled
+    end_date: End date
+    error_code: Error code
     id: ID
-    name: Name
-    short_name: Short name
-    type: Type
+    info: Info
     isbn: ISBN
     issn: ISSN
-    eissn: eISSN
-    doi: DOI
-    proprietary_ids: Proprietary IDs
-    proprietary_ids_tt: Internal title identifiers used by individual platforms/publishers
-    actions: Actions
-    reports: Reports
-    active_reports: Active reports
-    counter_version: COUNTER version
-    enabled: Enabled
-    success: Success
-    start_date: Start date
-    end_date: End date
-    processed: Imported
-    download_success: Download successful
-    processing_success: Processing successful
-    error_code: Error code
-    contains_data: Contains data
-    log: Log
-    data_file: Data file
-    lock: Lock
-    outside_consortium: Outside consortium
-    uploaded: Uploaded
-    queued: Queued
-    status: Status
-    platforms: Platforms
-    report_types: Report types
-    platform_count: Platform count
-    total_interest: Total interest
-    ratios: Ratio
-    organizations: Organizations
-    primary_dimension: Rows
-    access_level: Visibility
-    not_before: Cannot start until
-    split_by: Split by
-    non_counter: Non-COUNTER
-    select_platform: Select platform
-    data_coverage: Data coverage
-    info: Info
     knowledgebase: Knowledgebase
     last_harvestable_month: Last harvestable month
     last_modified: Last modified
     last_modified_by: Last modified by
-    created: Created
+    lock: Lock
+    log: Log
+    name: Name
+    non_counter: Non-COUNTER
+    not_before: Cannot start until
+    organizations: Organizations
+    outside_consortium: Outside consortium
+    platform_count: Platform count
+    platforms: Platforms
+    primary_dimension: Rows
+    processed: Imported
+    processing_success: Processing successful
+    proprietary_ids: Proprietary IDs
+    proprietary_ids_tt: Internal title identifiers used by individual platforms/publishers
+    queued: Queued
+    ratios: Ratio
+    report_types: Report types
+    reports: Reports
+    select_platform: Select platform
+    short_name: Short name
+    split_by: Split by
+    start_date: Start date
+    status: Status
+    success: Success
+    total_interest: Total interest
+    type: Type
+    uploaded: Uploaded
   titles: Titles
   overview: Overview
   chart:
@@ -131,9 +132,11 @@ en:
     annotated_file: Annotated file
     annotations: Annotations
     api_key: API key
+    authors: Authors
     bg_color: Background color
     chart: Chart
     columns: Columns
+    counter_data_export: Data export in COUNTER format
     counter_version: COUNTER version
     coverage: Coverage
     created: Created
@@ -165,6 +168,8 @@ en:
     http_authentication: HTTP authentication
     http_password: Password
     http_username: Username
+    item: Item
+    items: Items
     last_name: Last name
     last_updated_by: Last updated by
     loading: Loading
@@ -186,6 +191,7 @@ en:
     preview: Preview
     problematic_only: Problematic only
     provider: Provider
+    publication_date: Publication date
     relative: Relative
     report_name: Report name
     report_output: Report output
@@ -235,7 +241,6 @@ en:
     variable_value: Parameter value
     year: Year
     year_and_month: Year and month
-    counter_data_export: Data export in COUNTER format
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
   available_report_types: Choose report type to display
@@ -419,6 +424,7 @@ cs:
     heatmap: Heatmapa zájmu
     import_batches: Importované dávky
     interest_overview: Zájmy
+    item_detail: Detail položky
     maintenance: Údržba
     management: Management
     management_commands: Management příkazy
@@ -456,55 +462,55 @@ cs:
   month: Měsíc
   year: Rok
   title_fields:
+    access_level: Viditelnost
+    actions: Akce
+    active_reports: Aktivní reporty
+    contains_data: Obsahuje data
+    counter_version: Verze COUNTER
+    created: Vytvořeno
+    data_coverage: Pokrytí daty
+    data_file: Datový soubor
+    doi: DOI
+    download_success: Úspěšné stažení
+    eissn: eISSN
+    enabled: Zapnuto
+    end_date: Koncové datum
+    error_code: Kód chyby
     id: ID
-    name: Název
-    short_name: Krátký název
-    type: Typ
+    info: Informace
     isbn: ISBN
     issn: ISSN
-    eissn: eISSN
-    doi: DOI
-    proprietary_ids: Interní ID
-    proprietary_ids_tt: Interní identifikátory titulu u jednotlivých platformem/vydavatelů
-    actions: Akce
-    reports: Reporty
-    active_reports: Aktivní reporty
-    counter_version: Verze COUNTER
-    enabled: Zapnuto
-    success: Úspěch
-    start_date: Počáteční datum
-    end_date: Koncové datum
-    processed: Importováno
-    download_success: Úspěšné stažení
-    processing_success: Úspěšné zpracování
-    error_code: Kód chyby
-    contains_data: Obsahuje data
-    log: Log
-    data_file: Datový soubor
-    lock: Zámek
-    outside_consortium: Mimo konzorcium
-    uploaded: Nahráno
-    queued: Odloženo
-    status: Stav
-    platforms: Platformy
-    report_types: Typy reportů
-    platform_count: Počet platforem
-    total_interest: Celkový zájem
-    ratios: Rozložení
-    organizations: Organizace
-    primary_dimension: Řádky
-    access_level: Viditelnost
-    not_before: Stažení nejdříve
-    split_by: Rozdělit podle
-    non_counter: Non-COUNTER
-    select_platform: Vyberte platformu
-    data_coverage: Pokrytí daty
-    info: Informace
     knowledgebase: Znalostní báze
     last_harvestable_month: Poslední stáhnutelný měsíc
     last_modified: Naposledy změněno
     last_modified_by: Naposledy změněno uživatelem
-    created: Vytvořeno
+    lock: Zámek
+    log: Log
+    name: Název
+    non_counter: Non-COUNTER
+    not_before: Stažení nejdříve
+    organizations: Organizace
+    outside_consortium: Mimo konzorcium
+    platform_count: Počet platforem
+    platforms: Platformy
+    primary_dimension: Řádky
+    processed: Importováno
+    processing_success: Úspěšné zpracování
+    proprietary_ids: Interní ID
+    proprietary_ids_tt: Interní identifikátory titulu u jednotlivých platformem/vydavatelů
+    queued: Odloženo
+    ratios: Rozložení
+    report_types: Typy reportů
+    reports: Reporty
+    select_platform: Vyberte platformu
+    short_name: Krátký název
+    split_by: Rozdělit podle
+    start_date: Počáteční datum
+    status: Stav
+    success: Úspěch
+    total_interest: Celkový zájem
+    type: Typ
+    uploaded: Nahráno
   titles: Tituly
   overview: Přehled
   chart:
@@ -529,10 +535,12 @@ cs:
     all_tags: Všechny
     annotated_file: Anotovaný soubor
     annotations: Poznámky
+    authors: Autoři
     api_key: API key
     bg_color: Barva pozadí
     chart: Graf
     columns: Sloupce
+    counter_data_export: Export dat v COUNTER formátu
     counter_version: Verze COUNTER
     coverage: Pokrytí
     created: Datum vytvoření
@@ -564,6 +572,8 @@ cs:
     http_authentication: HTTP autentizace
     http_password: Heslo
     http_username: Uživatelské jméno
+    item: Položka
+    items: Položky
     last_name: Příjmení
     last_updated_by: Naposledy upravil
     loading: Načítání
@@ -585,6 +595,7 @@ cs:
     preview: Náhled
     problematic_only: Jen problematické
     provider: Poskytovatel
+    publication_date: Datum publikace
     relative: Relativně
     report_name: Jméno reportu
     report_output: Výstup reportu
@@ -634,7 +645,6 @@ cs:
     variable_value: Hodnota parametru
     year: Rok
     year_and_month: Rok a měsíc
-    counter_data_export: Export dat v COUNTER formátu
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
   available_report_types: Vyberte typ reportu

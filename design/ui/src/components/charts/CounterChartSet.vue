@@ -81,6 +81,7 @@ cs:
           :organization="organizationForChart"
           :platform="platformForChart"
           :title="titleId"
+          :item="itemId"
           :import-batch="importBatchId"
           :mdu-id="mduId"
           :stack="
@@ -133,6 +134,7 @@ export default {
   props: {
     platformId: { required: false, type: Number },
     titleId: { required: false, type: Number },
+    itemId: { required: false, type: Number },
     reportViewsUrl: {},
     importBatchId: { required: false, type: Number },
     mduId: { required: false, type: Number },
@@ -254,6 +256,7 @@ export default {
       if (this.organization)
         url += `&organization=${this.organizationForChart}`;
       if (this.titleId) url += `&target=${this.titleId}`;
+      if (this.itemId) url += `&item=${this.itemId}`;
       if (this.importBatch) url += `&import_batch=${this.importBatch}`;
       if (this.mduId) url += `&mdu=${this.mduId}`;
 

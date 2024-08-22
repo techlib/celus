@@ -97,6 +97,8 @@ class AccessLogFactory(factory.django.DjangoModelFactory):
     organization = factory.SelfAttribute("import_batch.organization")
     report_type = factory.SelfAttribute("import_batch.report_type")
     platform = factory.SelfAttribute("import_batch.platform")
+    target = None
+    item = None
 
     class Meta:
         model = AccessLog
@@ -117,6 +119,7 @@ class ImportBatchFullFactory(ImportBatchFactory):
             metrics = MetricFactory.create_batch(2)
         if not (titles := kwargs.pop("titles", None)):
             titles = TitleFactory.create_batch(10)
+        items = kwargs.pop("items", [None])
         value = kwargs.pop("value", None)  # all access logs will have the same value if provided
 
         attrs = {
@@ -130,8 +133,9 @@ class ImportBatchFullFactory(ImportBatchFactory):
         als = []
         for m in metrics:
             als += [
-                AccessLog(value=value or fake.random_int(), metric=m, target=t, **attrs)
+                AccessLog(value=value or fake.random_int(), metric=m, target=t, item=item, **attrs)
                 for t in titles
+                for item in items
             ]
         AccessLog.objects.bulk_create(als)
 

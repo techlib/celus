@@ -233,6 +233,60 @@ class TestMaterializedReport:
         mat_report.save()
         assert materialized_import_batch_queryset(mat_report).count() == 1
 
+    def test_not_item(self, counter_records_with_item, organizations, report_type_nd, platform):
+        data1 = [
+            ["Title1", "Item 1", "2018-01-01", "1v1", 1],
+            ["Title2", "Item 2", "2018-01-01", "1v2", 2],
+            ["Title2", "Item 3", "2018-01-01", "1v2", 4],
+        ]
+        crs1 = counter_records_with_item(data1, metric="Hits")
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        import_counter_records(report_type, organization, platform, crs1)
+        assert AccessLog.objects.count() == 3
+        # now define materialized report
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_item=False
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name="m", name="m")
+        assert mat_report.accesslog_set.count() == 0
+        # let's calculate the data
+        sync_materialized_reports()
+        # test it
+        assert mat_report.accesslog_set.count() == 2
+        assert {rec["value"] for rec in mat_report.accesslog_set.values("value")} == {1, 6}
+        assert all(rec["item"] is None for rec in mat_report.accesslog_set.values("item"))
+
+    def test_item_but_no_title(
+        self, counter_records_with_item, organizations, report_type_nd, platform
+    ):
+        """
+        This test is needed to make sure the materialization code does take items into account
+        (it did not before, so the above test for dropping items would pass even with the old code)
+        """
+        data1 = [
+            ["Title1", "Item 1", "2018-01-01", "1v1", 1],
+            ["Title2", "Item 2", "2018-01-01", "1v2", 2],
+            ["Title2", "Item 3", "2018-01-01", "1v2", 4],
+        ]
+        crs1 = counter_records_with_item(data1, metric="Hits")
+        report_type = report_type_nd(1)
+        organization = organizations[0]
+        import_counter_records(report_type, organization, platform, crs1)
+        assert AccessLog.objects.count() == 3
+        # now define materialized report
+        spec = ReportMaterializationSpec.objects.create(
+            base_report_type=report_type, keep_target=False, keep_item=True
+        )
+        mat_report = ReportType.objects.create(materialization_spec=spec, short_name="m", name="m")
+        assert mat_report.accesslog_set.count() == 0
+        # let's calculate the data
+        sync_materialized_reports()
+        # test it
+        assert mat_report.accesslog_set.count() == 3
+        assert {rec["value"] for rec in mat_report.accesslog_set.values("value")} == {1, 2, 4}
+        assert all(rec["item"] is not None for rec in mat_report.accesslog_set.values("item"))
+
 
 @pytest.mark.django_db()
 class TestMaterializedReportManagementCommands:

@@ -18,7 +18,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         for platform in Platform.objects.all():
-            stats += platform.create_default_interests()
+            pstats = platform.create_default_interests()
+            if options["verbosity"] > 1:
+                print(f"Platform {platform} done: {pstats}")
+            stats += pstats
         print(stats)
+
         if not options["doit"]:
             raise ValueError("preventing db commit, use --do-it to really do it ;)")

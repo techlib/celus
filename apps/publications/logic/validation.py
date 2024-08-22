@@ -9,6 +9,7 @@ issn_matcher = re.compile(r"(\d{4})[-–—−\uFF0D]?(\d{3}[\dXx])")
 issn_number_matcher = re.compile(r"^\d{0,7}[\dXx]$")
 
 AUTHOR_ID_LEN = 16
+AUTHOR_NAME_LEN = 250
 
 
 def normalize_issn(text: str) -> str:
@@ -69,3 +70,7 @@ def normalize_author_id(value: str) -> str:
 
     # fill in zeros
     return value.zfill(AUTHOR_ID_LEN)
+
+
+def normalize_author_name(value: str) -> str:
+    return value.strip()[:AUTHOR_NAME_LEN].strip()  # strip potential whitespace after truncation

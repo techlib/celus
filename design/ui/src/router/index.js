@@ -116,6 +116,32 @@ export default new Router({
       },
     },
     {
+      path: "/platforms/:platformId/title/:titleId/item/:itemId",
+      name: "platform-title-item-detail",
+      component: () => import("../pages/ItemDetailPage.vue"),
+      props: (route) => ({
+        platformId: Number.parseInt(route.params.platformId, 10),
+        titleId: Number.parseInt(route.params.titleId, 10),
+        itemId: Number.parseInt(route.params.itemId, 10),
+      }),
+      meta: {
+        title: "pages.item_detail",
+      },
+    },
+    {
+      path: "/titles/:titleId/item/:itemId",
+      name: "title-item-detail",
+      component: () => import("../pages/ItemDetailPage.vue"),
+      props: (route) => ({
+        platformId: null,
+        titleId: Number.parseInt(route.params.titleId, 10),
+        itemId: Number.parseInt(route.params.itemId, 10),
+      }),
+      meta: {
+        title: "pages.item_detail",
+      },
+    },
+    {
       path: "/interests",
       name: "interest-overview",
       component: () => import("../pages/InterestOverviewPage.vue"),

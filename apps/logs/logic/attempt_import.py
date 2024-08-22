@@ -8,9 +8,14 @@ from celus_nigiri.counter5 import CounterError, TransportError
 from celus_nigiri.record import CounterRecord
 from core.exceptions import FileConsistencyError
 from django.db.transaction import atomic
-from sushi.models import AttemptStatus, SushiFetchAttempt
+from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    SushiCredentials,
+    SushiFetchAttempt,
+)
 
-from logs.exceptions import DataStructureError, NibblerErrors
+from logs.exceptions import DataStructureError, NibblerErrors, ReportDataValidityError
 from logs.logic.data_import import (
     create_import_batch_or_crash,
     import_counter_records,
@@ -143,6 +148,19 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
                 "Failed to parse file using nibbler while processing records", exc_info=e
             )
             attempt.mark_crashed(e)
+            return
+        except ReportDataValidityError as e:
+            logger.error("Data validity error - marking report as broken: '%s'", e)
+            attempt.mark_crashed(e)
+            # mark the report as broken for the credentials
+            try:
+                cr2c = CounterReportsToCredentials.objects.get(
+                    credentials=attempt.credentials, counter_report=attempt.counter_report
+                )
+                cr2c.set_broken(attempt, SushiCredentials.BROKEN_SUSHI)
+            except CounterReportsToCredentials.DoesNotExist:
+                # Counter report was removed from credentials - we can ignore this
+                pass
             return
 
         if len(import_batches) > 1:

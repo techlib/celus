@@ -87,7 +87,7 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
 
 def extract_accesslog_attr_query_params(
     params,
-    dimensions=("date", "platform", "metric", "organization", "target"),
+    dimensions=("date", "platform", "metric", "organization", "target", "item"),
     mdu_filter: bool = False,
     use_ids=False,
 ):
@@ -232,7 +232,7 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
 
 
 class StatsComputer:
-    implicit_dims = ["date", "platform", "metric", "organization", "target", "import_batch"]
+    implicit_dims = ["date", "platform", "metric", "organization", "target", "item", "import_batch"]
     input_dim_to_query_dim = {"interest": "metric"}
     extra_query_params = {"interest": lambda rt: {"metric__reportinterestmetric__report_type": rt}}
     implicit_dim_to_text_fn = {

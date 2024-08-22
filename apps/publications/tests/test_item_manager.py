@@ -391,6 +391,25 @@ class TestItemManager:
         else:
             assert Item.objects.count() == 2, "items should not be merged"
 
+    @pytest.mark.parametrize(
+        ["db_pub_type", "in_pub_type", "expected_pub_type"],
+        [
+            (Item.PUB_TYPE_UNKNOWN, Item.PUB_TYPE_ARTICLE, Item.PUB_TYPE_ARTICLE),
+            (Item.PUB_TYPE_ARTICLE, Item.PUB_TYPE_UNKNOWN, Item.PUB_TYPE_ARTICLE),
+            (Item.PUB_TYPE_UNKNOWN, Item.PUB_TYPE_UNKNOWN, Item.PUB_TYPE_UNKNOWN),
+            (Item.PUB_TYPE_ARTICLE, Item.PUB_TYPE_BOOK_SEGMENT, Item.PUB_TYPE_ARTICLE),
+        ],
+    )
+    def test_pub_type_upgrade(self, db_pub_type, in_pub_type, expected_pub_type):
+        item = Item.objects.create(name="AAA", doi="10.1234/foo", pub_type=db_pub_type)
+        item_rec = ItemRec(name="AAA", doi="10.1234/foo", pub_type=in_pub_type)
+        im = ItemManager()
+        im.prefetch_items([item_rec])
+        new_pk = im.get_or_create(item_rec)
+        assert new_pk == item.pk
+        item.refresh_from_db()
+        assert item.pub_type == expected_pub_type
+
     def test_get_or_create(self):
         """
         Creating same item

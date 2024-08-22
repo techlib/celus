@@ -12,11 +12,72 @@ from django.conf import settings
 from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
-from publications.models import Platform
+from publications.models import Platform, PlatformInterestReport
 
 from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
 from logs.logic.interest import get_interest_type_dim_from_interest_rt
+from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metric, ReportType
+
+# default COUNTER report types for interest
+# `filters` are not used at the moment, they are just an idea for the future when we integrate
+# IR fully and need them to distinguish between different types of interest from the same report
+# This is why the `multimedia` interest from IR is commented out for now
+# TODO: check in 5.1
+INTEREST_DEFAULT_REPORT_TYPES = {
+    (5, "IR"): {
+        "interest": {
+            "full_text": {
+                "metrics": ["Total_Item_Requests"],
+                "filters": [{"dimension": "Data_Type", "values": ["Multimedia"], "negate": True}],
+            },
+            # Multimedia interest uses the same metric as the full_text interest, and only differs
+            # in the filter applied to it.
+            # Because we do not support filters in the interest computation yet, we cannot use it.
+            # Thus, multimedia interest is not computed from IR and IR_M1 has to be used
+            #
+            # "multimedia": {
+            #     "metrics": ["Total_Item_Requests"],
+            #     "filters": [{"dimension": "Data_Type", "values": ["Multimedia"]}],
+            # },
+            "full_text_denial": {
+                "metrics": ["No_License", "Limit_Exceeded"],
+                "filters": [{"dimension": "Data_Type", "values": ["Multimedia"], "negate": True}],
+            },
+        }
+    },
+    (5, "TR"): {
+        "interest": {
+            "full_text": {"metrics": ["Total_Item_Requests"]},
+            "full_text_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
+        },
+        "superseded_by": (5, "IR"),
+    },
+    (5, "IR_M1"): {
+        "interest": {"multimedia": {"metrics": ["Total_Item_Requests"]}}
+        # IR_M1 would be superseded by IR, but we cannot compute multimedia interest from IR yet,
+        # so we have to keep it as a separate report type for now
+        # "superseded_by": (5, "IR"),
+    },
+    (5, "DR"): {
+        "interest": {
+            "search": {"metrics": ["Searches_Regular"]},
+            "search_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
+        }
+    },
+    (4, "JR1"): {
+        "interest": {"full_text": {"metrics": ["FT Article Requests"]}},
+        "superseded_by": (5, "TR"),
+    },
+    (4, "BR2"): {
+        "interest": {"full_text": {"metrics": ["Book Section Requests"]}},
+        "superseded_by": (5, "TR"),
+    },
+    (4, "DB1"): {
+        "interest": {"search": {"metrics": ["Regular Searches"]}},
+        "superseded_by": (5, "DR"),
+    },
+}
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +117,7 @@ def sync_interest_for_import_batch(
     # prepare the data
     new_log_dicts = extract_interest_from_import_batch(import_batch, interest_rt)
     # compare it with existing data
-    accesslog_keys = ("organization_id", "metric_id", "platform_id", "target_id", "date")
+    accesslog_keys = ("organization_id", "metric_id", "platform_id", "target_id", "item_id", "date")
     old_log_dicts = import_batch.accesslog_set.filter(report_type=interest_rt).values(
         "pk", *accesslog_keys
     )
@@ -78,6 +139,9 @@ def sync_interest_for_import_batch(
     stats["existing"] = same
     stats["removed"] = len(to_delete_pks)
     logger.debug("Import took: %.2f s; Stats: %s", time() - start, stats)
+    # potentially update materialized reports based on interest
+    if really_new or to_delete_pks:
+        sync_materialized_reports_for_import_batch(import_batch, interest_only=True)
     # sync with clickhouse
     if (
         settings.CLICKHOUSE_SYNC_ACTIVE
@@ -179,7 +243,7 @@ def extract_interest_from_import_batch(
     # for the following dates, there are data for a superseding report type, so we do not
     # want to created interest records for them
     clashing_dates = {}
-    if import_batch.report_type.superseeded_by:
+    if import_batch.report_type.superseded_by:
         if hasattr(import_batch, "min_date") and hasattr(import_batch, "max_date"):
             # check if we have an annotated queryset and do not need to compute the min-max dates
             min_date = import_batch.min_date
@@ -194,7 +258,7 @@ def extract_interest_from_import_batch(
             # the accesslog_set might be empty and then there is nothing that could be clashing
             clashing_dates = {
                 x["date"]
-                for x in import_batch.report_type.superseeded_by.accesslog_set.filter(
+                for x in import_batch.report_type.superseded_by.accesslog_set.filter(
                     platform_id=import_batch.platform_id,
                     organization_id=import_batch.organization_id,
                     date__lte=max_date,
@@ -206,7 +270,7 @@ def extract_interest_from_import_batch(
             report_type=import_batch.report_type, metric_id__in=interest_metrics
         )
         .exclude(date__in=clashing_dates)
-        .values("organization_id", "metric_id", "platform_id", "target_id", "date")
+        .values("organization_id", "metric_id", "platform_id", "target_id", "item_id", "date")
         .annotate(value=Sum("value"))
         .iterator()
     ):
@@ -220,15 +284,20 @@ def extract_interest_from_import_batch(
     return new_logs
 
 
-def find_superseeded_import_batches(import_batch: ImportBatch) -> QuerySet[ImportBatch]:
+def find_superseded_import_batches(import_batch: ImportBatch) -> QuerySet[ImportBatch]:
     """
-    Find all import batches for which interest is superseeded by the given import batch
+    Find all import batches for which interest is superseded by the given import batch
     and thus need recomputation
     """
+    if not PlatformInterestReport.objects.filter(
+        platform_id=import_batch.platform_id, report_type_id=import_batch.report_type_id
+    ).exists():
+        # the import batch is not used for interest computation, so it cannot supersede anything
+        return ImportBatch.objects.none()
     return ImportBatch.objects.filter(
         organization_id=import_batch.organization_id,
         platform_id=import_batch.platform_id,
-        report_type__superseeded_by=import_batch.report_type,
+        report_type__superseded_by=import_batch.report_type,
         date=import_batch.date,
     )
 
@@ -267,7 +336,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
             queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
         # WARNING: the following messes up the queries when they are more complex and can
         #          lead to memory exhaustion - I leave it here as a memento against future attempts
-        # queryset = queryset.select_related('report_type__superseeded_by', 'platform').\
+        # queryset = queryset.select_related('report_type__superseded_by', 'platform').\
         #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
         stats = Counter()
         total_count = queryset.count()
@@ -425,24 +494,24 @@ def _find_report_type_metric_disconnect():
         yield query
 
 
-def _find_superseeded_import_batches():
+def _find_superseded_import_batches():
     """
-    Find import batches that have interest computed for superseeded report_type and clashing
-    data appeared with the superseeding report_type
+    Find import batches that have interest computed for superseded report_type and clashing
+    data appeared with the superseding report_type
 
     WARNING: This works, but is incredibly slow as it does full scan of the AccessLog table;
              DO NOT USE IT!
     """
     logger.warning("This code is slooooow - do not use it")
-    superseeding_al = AccessLog.objects.filter(
+    superseding_al = AccessLog.objects.filter(
         platform=OuterRef("platform"),
         organization=OuterRef("organization"),
-        report_type=OuterRef("report_type__superseeded_by"),
+        report_type=OuterRef("report_type__superseded_by"),
         date=OuterRef("date"),
     )
     al_query = (
-        AccessLog.objects.filter(report_type__superseeded_by__isnull=False)
-        .annotate(has_clash=Exists(superseeding_al))
+        AccessLog.objects.filter(report_type__superseded_by__isnull=False)
+        .annotate(has_clash=Exists(superseding_al))
         .filter(has_clash=True)
         .values("import_batch")
         .distinct()
@@ -451,7 +520,7 @@ def _find_superseeded_import_batches():
         import_batch=OuterRef("pk"), report_type=ReportType.objects.get_interest_rt()
     )
     query = (
-        ImportBatch.objects.filter(report_type__superseeded_by__isnull=False)
+        ImportBatch.objects.filter(report_type__superseded_by__isnull=False)
         .annotate(has_interest=Exists(interest_al))
         .filter(has_interest=True, pk__in=al_query)
     )
@@ -472,11 +541,11 @@ def _find_potentially_superseded_import_batches():
     superseding_ib = ImportBatch.objects.filter(
         platform=OuterRef("platform"),
         organization=OuterRef("organization"),
-        report_type=OuterRef("report_type__superseeded_by"),
+        report_type=OuterRef("report_type__superseded_by"),
         interest_timestamp__gt=OuterRef("interest_timestamp"),
     )
     query = (
-        ImportBatch.objects.filter(report_type__superseeded_by__isnull=False)
+        ImportBatch.objects.filter(report_type__superseded_by__isnull=False)
         .annotate(has_clash=Exists(superseding_ib))
         .filter(has_clash=True)
     )

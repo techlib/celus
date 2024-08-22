@@ -4,7 +4,9 @@ import factory
 import factory.fuzzy
 import faker
 from core.fake_data import UserFactory
+from django.conf import settings
 from django.core.files.base import ContentFile
+from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from organizations.fake_data import OrganizationFactory
 
 from publications.models import (
@@ -98,6 +100,55 @@ class ItemFactory(factory.django.DjangoModelFactory):
         if extracted:
             for position, author in enumerate(extracted):
                 AuthorToItem.objects.get_or_create(position=position, author=author, item=obj)
+
+    @factory.post_generation
+    def usage(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if not extracted and not kwargs:
+            # if we call this without some kwargs, or without setting usage=True,
+            # we don't create any logs
+            return
+
+        from logs.fake_data import (
+            AccessLogFactory,
+            ImportBatchFactory,
+            MetricFactory,
+            ReportTypeFactory,
+        )
+
+        platform = kwargs.get("platform") or PlatformFactory()
+        rt = kwargs.get("report_type") or ReportTypeFactory()
+        organization = kwargs.get("organization") or OrganizationFactory()
+        value = kwargs.get("value") or fake.random_int(min=1, max=1000)
+        date = kwargs.get("date") or fake.date_this_century()
+        metric = kwargs.get("metric") or MetricFactory()
+        title = kwargs.get("title") or TitleFactory()
+        al_count = kwargs.get("count", 1)
+        ib = ImportBatchFactory.create(
+            platform=platform, report_type=rt, organization=organization, date=date
+        )
+        # if value is not provided, we leave it to the AccessLogFactory to generate it
+        extra = {"value": value} if "value" in kwargs else {}
+        AccessLogFactory.create_batch(
+            al_count,
+            import_batch=ib,
+            metric=metric,
+            target=title,
+            platform=platform,
+            report_type=rt,
+            organization=organization,
+            date=date,
+            item=self,
+            **extra,
+        )
+        PlatformTitle.objects.get_or_create(
+            platform=platform, organization=organization, date=date, title=title
+        )
+
+        if settings.CLICKHOUSE_SYNC_ACTIVE:
+            sync_import_batch_with_clickhouse(ib)
 
 
 class PlatformFactory(factory.django.DjangoModelFactory):

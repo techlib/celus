@@ -22,6 +22,9 @@ org_sub_router.register(
 org_sub_router.register(
     r"top-title-interest", views.TopTitleInterestViewSet, basename="top-title-interest"
 )
+
+org_sub_router.register("item", views.ItemViewSet, basename="organization-item")
+
 org_sub_router.register(
     r"report-types", OrganizationReportTypesViewSet, basename="organization-report-types"
 )
@@ -37,6 +40,13 @@ title_sub_router = NestedSimpleRouter(org_sub_router, r"title", lookup="title")
 title_sub_router.register(
     "report-views", views.TitleReportDataViewViewSet, basename="title-report-data-views"
 )
+title_sub_router.register("item", views.ItemViewSet, basename="organization-title-items")
+
+title_item_sub_router = NestedSimpleRouter(title_sub_router, r"item", lookup="item")
+title_item_sub_router.register(
+    "report-views", views.ItemReportDataViewViewSet, basename="title-item-report-data-views"
+)
+
 
 platform_sub_router = NestedSimpleRouter(org_sub_router, r"platform", lookup="platform")
 platform_sub_router.register("title", views.PlatformTitleViewSet, basename="platform-title")
@@ -53,6 +63,20 @@ platform_title_sub_router.register(
     views.PlatformTitleReportDataViewViewSet,
     basename="platform-title-report-data-views",
 )
+platform_title_sub_router.register(
+    "item", views.ItemViewSet, basename="organization-platform-title-items"
+)
+
+platform_title_item_sub_router = NestedSimpleRouter(
+    platform_title_sub_router, r"item", lookup="item"
+)
+platform_title_item_sub_router.register(
+    "report-views",
+    views.ItemReportDataViewViewSet,
+    basename="platform-title-item-report-data-views",
+)
+
+platform_sub_router.register("item", views.ItemViewSet, basename="organization-platform-items")
 
 root_router.register(r"platform", views.GlobalPlatformsViewSet, basename="global-platforms")
 root_router.register(r"title", views.GlobalTitleViewSet, basename="global-titles")
@@ -67,6 +91,8 @@ root_router.register(
     "title-overlap-batch", views.TitleOverlapBatchViewSet, basename="title-overlap-batch"
 )
 
+root_router.register("item", views.ItemViewSet, basename="global-items")
+
 urlpatterns = [path("run-task/erms-sync-platforms", views.StartERMSSyncPlatformsTask.as_view())]
 
 urlpatterns += root_router.urls
@@ -74,3 +100,5 @@ urlpatterns += org_sub_router.urls
 urlpatterns += platform_sub_router.urls
 urlpatterns += title_sub_router.urls
 urlpatterns += platform_title_sub_router.urls
+urlpatterns += platform_title_item_sub_router.urls
+urlpatterns += title_item_sub_router.urls

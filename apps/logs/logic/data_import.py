@@ -23,10 +23,15 @@ from sushi.models import SushiFetchAttempt
 
 from logs.models import ImportBatch
 
-from ..exceptions import DataAlreadyPresent, UnknownMetric, UnsupportedMetric
+from ..exceptions import (
+    DataAlreadyPresent,
+    ReportDataValidityError,
+    UnknownMetric,
+    UnsupportedMetric,
+)
 from ..models import AccessLog, DimensionText, Metric, ReportType
 from .materialized_interest import (
-    find_superseeded_import_batches,
+    find_superseded_import_batches,
     recompute_interest_by_batch,
     sync_interest_for_import_batch,
 )
@@ -223,7 +228,7 @@ def import_counter_records(
         # if interest of this ib supersedes interest of other ibs, then we need to recompute
         # but we only do it in `on_commit` to leave it after the current transaction
         ibs_for_interest_recompute.update(
-            set(find_superseeded_import_batches(ib).values_list("pk", flat=True))
+            set(find_superseded_import_batches(ib).values_list("pk", flat=True))
         )
         # compute materialized report types
         sync_materialized_reports_for_import_batch(ib)
@@ -334,6 +339,70 @@ def prepare_items(im, records: Iterable[CounterRecord], stats: Counter):
     return res
 
 
+# According to the COUNTER CoP (
+# https://cop5.projectcounter.org/en/5.1/03-specifications/03-counter-report-common-attributes-and-elements.html#data-types
+# Table 3.q), the following Data_Types should have Parent_Data_Types and thus
+# require title_id to be present when item_id is present:
+#
+# - Article
+# - Book_Segment
+# - Conference_Item
+# - Database_Full_Item
+# - News_Item
+# - Reference_Item
+#
+# The same is true for Data_Types which should only be in title report (mapped from the above),
+# but if we find them in item report, we should expect parent data to be present as well:
+#
+# - Journal
+# - Book
+# - Conference
+# - Database_Full
+# - Newspaper_or_Newsletter
+# - Reference_Work
+#
+# According to Tasha, any Data_Type not present in the above linked table should not have
+# Parent_Data_Type and thus should not require title_id to be present when item_id is present.
+
+
+PARENT_REQUIRING_DATA_TYPES = [
+    # Data_Types
+    "Article",
+    "Book_Segment",
+    "Conference_Item",
+    "Database_Full_Item",
+    "News_Item",
+    "Reference_Item",
+    # Parent_Data_Types
+    "Journal",
+    "Book",
+    "Conference",
+    "Database_Full",
+    "Newspaper_or_Newsletter",
+    "Reference_Work",
+]
+
+
+def check_item_and_title_presence(
+    record: CounterRecord, title_id: Optional[int], item_id: Optional[int]
+):
+    """
+    Ensures that - when the record requires it - title_id is present when item_id is present.
+    This ensures that we do not ingest IR data without corresponding title data (when the SUSHI
+    provider does not respect Include_Parent_Details) which would not allow
+    us to compute interest on the title level from the item report.
+    """
+    if item_id and not title_id:
+        # check that the data type does not belong to the list of data types that require parent
+        if (dt := record.dimension_data.get("Data_Type")) in PARENT_REQUIRING_DATA_TYPES:
+            raise ReportDataValidityError(
+                "Parent identificaton is missing in record containing item which requires it "
+                f"(Data_Type={dt}). This is likely caused by the SUSHI provider not respecting "
+                "Include_Parent_Details, which means the item level data is unusable as it would "
+                "cause inconsistencies between the item and title reports."
+            )
+
+
 def _preprocess_counter_records(
     report_type: ReportType,
     records: Iterable[CounterRecord],
@@ -370,6 +439,8 @@ def _preprocess_counter_records(
     record: CounterRecord
     last_log = time()
     for title_id, item_id, record in zip(title_ids, item_ids, records):
+        # check if the record is valid first
+        check_item_and_title_presence(record, title_id, item_id)
         # attributes that define the identity of the log
         if isinstance(record.metric, int):
             # we can pass a specific metric by numeric ID

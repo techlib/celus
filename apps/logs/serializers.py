@@ -260,6 +260,7 @@ class AccessLogSerializer(BaseSerializer):
     platform = StringRelatedField()
     metric = StringRelatedField()
     target = StringRelatedField()
+    item = StringRelatedField()
 
     class Meta:
         model = AccessLog
@@ -272,6 +273,7 @@ class AccessLogSerializer(BaseSerializer):
             "platform": str(obj.platform),
             "organization": str(obj.organization),
             "target": str(obj.target) if obj.target else None,
+            "item": str(obj.item) if obj.item else None,
             "metric": str(obj.metric),
             "value": obj.value,
         }

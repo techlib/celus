@@ -387,7 +387,7 @@ class TitleManager:
             # we try harder - based on isbn, issn, etc.
             if (issn or eissn) and not isbn:
                 pub_type = Title.PUB_TYPE_JOURNAL
-            elif isbn and not issn:
+            elif isbn and not (issn or eissn):
                 pub_type = Title.PUB_TYPE_BOOK
         return pub_type
 

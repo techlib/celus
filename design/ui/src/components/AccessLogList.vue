@@ -46,33 +46,41 @@ export default {
 
   computed: {
     headers() {
-      return [
+      let out = [
         {
-          text: this.$i18n.t("labels.date"),
+          text: this.$t("labels.date"),
           value: "date",
         },
         ...(this.showOrganization
           ? [
               {
-                text: this.$i18n.t("labels.organization"),
+                text: this.$t("labels.organization"),
                 value: "organization",
               },
             ]
           : []),
         {
-          text: this.$i18n.t("labels.title"),
+          text: this.$t("labels.title"),
           value: "target",
+        },
+        {
+          text: this.$t("labels.item"),
+          value: "item",
         },
         ...this.dynamicHeaders,
         {
-          text: this.$i18n.t("labels.metric"),
+          text: this.$t("labels.metric"),
           value: "metric",
         },
         {
-          text: this.$i18n.t("labels.value"),
+          text: this.$t("labels.value"),
           value: "value",
         },
       ];
+      return out.filter(
+        (header) =>
+          this.nonEmptyAttrs.has(header.value) || header.value === "value"
+      );
     },
     dynamicHeaders() {
       let headers = [];
@@ -86,6 +94,7 @@ export default {
             key !== "platform" &&
             key !== "report_type" &&
             key !== "target" &&
+            key !== "item" &&
             key !== "row"
           ) {
             headers.push({
@@ -97,6 +106,17 @@ export default {
         }
       }
       return headers;
+    },
+    nonEmptyAttrs() {
+      return new Set(
+        this.accessLogs
+          .map((log) =>
+            Object.entries(log)
+              .filter((e) => !!e[1])
+              .map((e) => e[0])
+          )
+          .flat()
+      );
     },
     queryUrl() {
       let url = "";

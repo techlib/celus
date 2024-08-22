@@ -382,7 +382,6 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.prepare_preflight": {"queue": "preflight"},
     "logs.tasks.prepare_preflights": {"queue": "preflight"},
     "logs.tasks.process_outstanding_import_batch_sync_logs_task": {"queue": "celery"},
-    "logs.tasks.recompute_interest_by_batch_task": {"queue": "interest"},
     "logs.tasks.reprocess_mdu_task": {"queue": "import"},
     "logs.tasks.smart_interest_sync_task": {"queue": "interest"},
     "logs.tasks.sync_interest_task": {"queue": "interest"},
@@ -798,6 +797,9 @@ AUTO_HARVESTING_PROBABILITIES = config(
     "AUTO_HARVESTING_PROBABILITIES", cast=Csv(float), default="0.5, 0.75, 0.875, 0.95, 1.0"
 )
 
+# item support
+ENABLE_ITEMS = config("ENABLE_ITEMS", cast=bool, default=False)
+
 # social authentication providers
 SITE_ID = config("SITE_ID", cast=int, default=1)
 
@@ -951,6 +953,7 @@ EXPORTED_SETTINGS = [
     "CLICKHOUSE_QUERY_ACTIVE",
     "CONSORTIAL_INSTALLATION",
     "CONTACT_EMAIL",
+    "ENABLE_ITEMS",
     "ENABLE_RAW_DATA_IMPORT",
     "EXPORT_DELETING_PERIOD",
     "HARVESTER_IPV4_ADDRESSES",

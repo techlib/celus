@@ -8,3 +8,10 @@ class PlatformFilter(filters.BaseFilterBackend):
         if request.query_params.get("public_only", "").lower() == "true":
             queryset = queryset.filter(~models.Q(source__type=DataSource.TYPE_ORGANIZATION))
         return queryset
+
+
+class PubTypeFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if pub_type := request.GET.get("pub_type"):
+            queryset = queryset.filter(pub_type=pub_type)
+        return queryset

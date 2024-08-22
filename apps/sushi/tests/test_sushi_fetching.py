@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
 
 from sushi.fake_data import CredentialsFactory
-from sushi.models import AttemptStatus, SushiFetchAttempt
+from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
@@ -575,3 +575,81 @@ class TestSushiFetching:
             else:
                 with pytest.raises(ValueError):
                     import_one_sushi_attempt(attempt)
+
+    @pytest.mark.parametrize(
+        ("path", "counter_report", "extracted_data", "breaks_report"),
+        (
+            (
+                # even though requested, Parent_Details are not present and we need to crash
+                # such an import - otherwise we will get items unconnected to titles, which
+                # messes up the interest computation
+                "counter5_ir_sample_no_parents.json",
+                "ir",
+                {
+                    "Created_By": "Sample Institutional Repository",
+                    "Institution_Name": "Client Demo Site",
+                    "Institution_ID": [{"Type": "ISNI", "Value": "1234123412341234"}],
+                },
+                True,
+            ),
+            (
+                # this one has parent details where necessary and only lacks it for Multimedia,
+                # where parent details are not required
+                "counter5_ir_sample.json",
+                "ir",
+                {
+                    "Created_By": "Sample Institutional Repository",
+                    "Institution_Name": "Client Demo Site",
+                    "Institution_ID": [{"Type": "ISNI", "Value": "1234123412341234"}],
+                },
+                False,
+            ),
+        ),
+    )
+    def test_c5_ir_without_parent_details_breaks_report(
+        self,
+        path,
+        counter_report,
+        extracted_data,
+        breaks_report,
+        counter_report_types,
+        organizations,
+        platforms,
+    ):
+        """
+        Test that processing IR reports without parent details and with article data breaks the
+        report if title details are missing.
+        """
+        credentials = CredentialsFactory(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            url="https://example.com/sushi/",
+            customer_id="CCCCCCC",
+            requestor_id="RRRRRRR",
+            api_key="AAAAAAAA",
+        )
+        crt = counter_report_types[counter_report]
+        cr2c = CounterReportsToCredentials.objects.create(
+            credentials=credentials, counter_report=crt
+        )
+        with requests_mock.Mocker() as m:
+            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
+                m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
+            attempt: SushiFetchAttempt = credentials.fetch_report(
+                crt, start_date="2016-01-01", end_date="2016-01-31"
+            )
+            assert attempt.extracted_data == extracted_data
+            url = (
+                f"https://example.com/sushi/reports/{counter_report}?customer_id=CCCCCCC"
+                "&requestor_id=RRRRRRR&api_key=AAAAAAAA"
+            )
+            assert attempt.used_url.startswith(url)
+
+            cr2c.refresh_from_db()
+            assert cr2c.is_broken() is False, "The report should not be broken before import"
+
+            import_one_sushi_attempt(attempt)
+            attempt.refresh_from_db()
+            cr2c.refresh_from_db()
+            assert cr2c.is_broken() == breaks_report

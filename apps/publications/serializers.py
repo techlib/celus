@@ -14,7 +14,7 @@ from rest_framework.fields import (
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import IntegerField, ModelSerializer, Serializer
 
-from .models import Platform, Title, TitleOverlapBatch
+from .models import Author, Item, Platform, Title, TitleOverlapBatch
 
 
 class SimplePlatformSerializer(ModelSerializer):
@@ -195,3 +195,31 @@ class TitleOverlapBatchCreateSerializer(TitleOverlapBatchSerializer):
 class DeleteAllDataPlatformSerializer(Serializer):
     delete_platform = BooleanField(required=False, default=False)
     delete_credentials = BooleanField(required=False, default=False)
+
+
+class AuthorSerializer(ModelSerializer):
+    class Meta:
+        model = Author
+        fields = ("pk", "name", "isni", "orcid")
+
+
+class ItemSerializer(ModelSerializer):
+    interests = JSONField(read_only=True)
+    authors = AuthorSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Item
+        fields = (
+            "pk",
+            "name",
+            "pub_type",
+            "publication_date",
+            "doi",
+            "isbn",
+            "issn",
+            "eissn",
+            "uris",
+            "proprietary_ids",
+            "authors",
+            "interests",
+        )

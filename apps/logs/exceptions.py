@@ -130,3 +130,10 @@ class NibblerErrors(Exception):
     def __init__(self, errors):
         super().__init__(errors)
         self.errors = errors
+
+
+class ReportDataValidityError(Exception):
+    """
+    Data inside a report are not valid (not conforming to the CoP) to such an extent that the report
+    cannot be ingested and the report type should be marked as broken.
+    """

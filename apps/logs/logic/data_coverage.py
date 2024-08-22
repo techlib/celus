@@ -209,7 +209,7 @@ class DataCoverageExtractor:
                     rt_count=Subquery(
                         ReportType.objects.filter(
                             platforminterestreport__platform=OuterRef("platform"),
-                            superseeded_by__isnull=True,
+                            superseded_by__isnull=True,
                         )
                         .annotate(x=Value(7))
                         .values("x")

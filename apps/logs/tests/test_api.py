@@ -20,7 +20,7 @@ from django.db.models import Max, Min
 from django.urls import reverse
 from freezegun import freeze_time
 from organizations.models import UserOrganization
-from publications.fake_data import PlatformFactory, TitleFactory
+from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
 from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixtures
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
@@ -1173,6 +1173,8 @@ class TestAccessLogListView:
             ("metric", True),
             ("target", False),
             ("target", True),
+            ("item", False),
+            ("item", True),
         ],
     )
     def test_raw_data_ib(
@@ -1193,7 +1195,13 @@ class TestAccessLogListView:
         same data structure in both cases.
         """
         factory = ImportBatchFullFactory if has_data else ImportBatchFactory
-        ib = factory.create(report_type=report_types["jr1"], platform=platforms["branch"])
+        params = dict(report_type=report_types["ir"], platform=platforms["branch"])
+        if has_data:
+            # create 2 titles and 2 items - we need two to test ordering, but we don't need more
+            # because we want more items to appear on the same page
+            params["create_accesslogs__titles"] = TitleFactory.create_batch(2)
+            params["create_accesslogs__items"] = ItemFactory.create_batch(2)
+        ib = factory.create(**params)
         resp = master_admin_client.get(
             reverse("ib-access-logs", args=[ib.pk]),
             {"order_by": order_by, "desc": desc, "page_size": page_size},
@@ -1207,8 +1215,10 @@ class TestAccessLogListView:
             # check the format of the data
             rec = data["results"][0]
             assert "date" in rec
-            assert rec["report_type"] == "JR1"
-            assert {"platform", "organization", "metric", "value", "target"}.issubset(rec.keys())
+            assert rec["report_type"] == "IR"
+            assert {"platform", "organization", "metric", "value", "target", "item"}.issubset(
+                rec.keys()
+            )
             # check ordering
             # we need to set some UTF-8 locale to get correct sorting
             locale.setlocale(locale.LC_ALL, "en_US.UTF8")

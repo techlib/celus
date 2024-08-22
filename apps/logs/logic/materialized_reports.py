@@ -26,13 +26,18 @@ def sync_materialized_reports(report_type_qs: Optional[QuerySet[ReportType]] = N
             )
 
 
-def sync_materialized_reports_for_import_batch(ib: ImportBatch):
+def sync_materialized_reports_for_import_batch(ib: ImportBatch, interest_only=False):
     """
     Create AccessLogs for all materialized report types for one import batch
+    :param ib: ImportBatch to process
+    :param interest_only: if True, only interest based materialized reports will be processed
+        - not the report type of the import batch itself - useful when we know that only
+        the interest has changed
     """
     interest_rt = ReportType.objects.get_interest_rt()
+    rts = [interest_rt] if interest_only else [ib.report_type, interest_rt]
     for mat_rt in ReportType.objects.only_materialized().filter(
-        materialization_spec__base_report_type__in=[ib.report_type, interest_rt]
+        materialization_spec__base_report_type__in=rts
     ):
         if added := create_materialized_accesslogs_for_importbatches(mat_rt, [ib]):
             ReportType.objects.filter(pk=mat_rt.pk).update(

@@ -7,7 +7,7 @@ from charts.models import ReportDataView
 from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
-from core.logic.dates import date_filter_from_params
+from core.logic.dates import date_filter_from_params, parse_month
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
@@ -18,6 +18,7 @@ from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch
 from django.db.models.functions import Coalesce
 from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
+from logs.filters import OrderByFilter
 from logs.logic.interest import (
     get_interest_subdim_ids_implying_availability,
     get_interest_type_dim_from_interest_rt,
@@ -51,6 +52,7 @@ from tags.models import Tag
 
 from config.permissions import IsAuthenticatedWithOptional2FA
 from publications.models import (
+    Item,
     Platform,
     PlatformTitle,
     Title,
@@ -59,6 +61,7 @@ from publications.models import (
 )
 from publications.serializers import (
     DeleteAllDataPlatformSerializer,
+    ItemSerializer,
     SimplePlatformSerializer,
     TitleCountSerializer,
     TitleOverlapBatchCreateSerializer,
@@ -66,7 +69,7 @@ from publications.serializers import (
     UseCaseSerializer,
 )
 
-from .filters import PlatformFilter
+from .filters import PlatformFilter, PubTypeFilter
 from .logic.use_cases import get_use_cases
 from .serializers import (
     AllPlatformSerializer,
@@ -815,6 +818,20 @@ class TitleReportDataViewViewSet(BaseReportDataViewViewSet):
         return {"target": title}
 
 
+class ItemReportDataViewViewSet(BaseReportDataViewViewSet):
+    """
+    Provides a list of report types for specific title for specific organization
+    """
+
+    def _extra_filters(self, org_filter):
+        title = get_object_or_404(Title.objects.all(), pk=self.kwargs["title_pk"])
+        item = get_object_or_404(Item.objects.all(), pk=self.kwargs["item_pk"])
+        out = {"target": title, "item": item}
+        if platform_id := self.kwargs.get("platform_pk"):
+            out["platform"] = get_object_or_404(Platform.objects.all(), pk=platform_id)
+        return out
+
+
 class PlatformReportDataViewViewSet(BaseReportDataViewViewSet):
     """
     Provides a list of report types for specific organization and platform
@@ -1076,3 +1093,87 @@ class OrganizationAltNameViewSet(CreateModelMixin, DestroyModelMixin, GenericVie
         except DjangoValidationError as e:
             # Rewrap django exception (used in django admin) to drf exception (API)
             raise ValidationError(e.message_dict) from None
+
+
+class ItemViewSet(ReadOnlyModelViewSet):
+    serializer_class = ItemSerializer
+    filter_backends = [PkMultiValueFilterBackend, OrderByFilter, PubTypeFilter]
+    pagination_class = StandardResultsSetPagination
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.interest_rt = ReportType.objects.get_interest_rt()
+        self.interest_type_dim = get_interest_type_dim_from_interest_rt(self.interest_rt)
+        self.interest_groups_names = {
+            x["short_name"] for x in InterestGroup.objects.all().values("short_name")
+        }
+        self.interest_types = {
+            interest_type.text
+            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
+                text__in=self.interest_groups_names
+            )
+        }
+        self.organization_id = None
+        self.platform_id = None
+        self.title_id = None
+
+    def get_queryset(self):
+        self.organization_id = self.kwargs.get("organization_pk")
+        self.platform_id = self.kwargs.get("platform_pk")
+        self.title_id = self.kwargs.get("title_pk")
+        fltrs = {}
+        if self.organization_id:
+            fltrs.update(organization_filter_from_org_id(self.organization_id, self.request.user))
+        if self.platform_id:
+            fltrs["platform_id"] = self.platform_id
+        if self.title_id:
+            fltrs["target_id"] = self.title_id
+        if date_from := self.request.query_params.get("start"):
+            fltrs["date__gte"] = parse_month(date_from)
+        if date_to := self.request.query_params.get("end"):
+            fltrs["date__lte"] = parse_month(date_to)
+        qs = Item.objects.all().prefetch_related("authors")
+        if fltrs:
+            # until we have something equivalent to PlatformTitle for Items, this is the best we
+            # can do. It will be good enough until there are many item-related records in AccessLog
+            item_ids = (
+                AccessLog.objects.exclude(item_id__isnull=True)
+                .filter(**fltrs)
+                .values_list("item_id", flat=True)
+            )
+            qs = qs.filter(pk__in=item_ids)
+
+        # add interest annotations
+        accesslog_filter = {f"accesslog__{fltr}": val for fltr, val in fltrs.items()}
+        accesslog_filter["accesslog__report_type_id"] = self.interest_rt.pk
+        qs = qs.annotate(
+            relevant_accesslogs=FilteredRelation("accesslog", condition=Q(**accesslog_filter))
+        )
+        interest_annot_params = {
+            interest_type.text: Coalesce(
+                Sum(
+                    "relevant_accesslogs__value",
+                    filter=Q(relevant_accesslogs__dim1=interest_type.pk),
+                ),
+                0,
+            )
+            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
+                text__in=self.interest_groups_names
+            )
+        }
+        qs = qs.annotate(**interest_annot_params)
+        return qs
+
+    def _transform_interests(self, record):
+        record.interests = {it: getattr(record, it) for it in self.interest_types}
+        return record
+
+    def paginate_queryset(self, queryset):
+        qs = super().paginate_queryset(queryset)
+        for record in qs:
+            self._transform_interests(record)
+        return qs
+
+    def get_object(self):
+        ret = super().get_object()
+        return self._transform_interests(ret)

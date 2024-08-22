@@ -41,7 +41,7 @@ from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
 from tags.fake_data import TagForTitleFactory
 from tags.models import AccessibleBy
 
-from publications.fake_data import PlatformFactory, TitleFactory
+from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from test_scenarios.basic import *  # noqa - fixtures
 
@@ -2016,3 +2016,199 @@ class TestTitleInterestViewSet:
             values = [(rec[column], rec["pk"]) for rec in data]
         resorted = sorted(values, reverse=desc == "true")
         assert values == resorted
+
+
+@pytest.mark.django_db
+class TestItemViewSet:
+    def test_item_list_no_filter(
+        self, master_user_client, interest_rt, django_assert_max_num_queries
+    ):
+        items = ItemFactory.create_batch(20)
+        with django_assert_max_num_queries(20):
+            resp = master_user_client.get(reverse("global-items-list"))
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for rec in data:
+            assert rec["pk"] in item_ids
+            item = next(item for item in items if item.pk == rec["pk"])
+            assert rec["pk"] == item.pk
+            assert rec["doi"] == item.doi
+            assert rec["name"] == item.name
+            assert rec["issn"] == item.issn
+            assert rec["eissn"] == item.eissn
+            assert rec["isbn"] == item.isbn
+            assert "interests" in rec
+            assert "authors" in rec
+
+    @pytest.mark.parametrize(["page_size", "expected_count"], [(5, 5), (15, 10)])
+    def test_item_list_no_filter_pagination(
+        self, master_user_client, interest_rt, page_size, expected_count
+    ):
+        items = ItemFactory.create_batch(10)
+        resp = master_user_client.get(reverse("global-items-list"), {"page_size": page_size})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["count"] == len(items)
+        assert len(data["results"]) == expected_count
+        item_ids = {item.pk for item in items}
+        for rec in data["results"]:
+            assert rec["pk"] in item_ids
+
+    @pytest.mark.parametrize(
+        ["order_by", "desc"],
+        [("name", "true"), ("name", "false"), ("doi", "true"), ("doi", "false")],
+    )
+    def test_item_list_no_filter_pagination_order_by(
+        self, master_user_client, interest_rt, order_by, desc
+    ):
+        items = ItemFactory.create_batch(10)
+        resp = master_user_client.get(
+            reverse("global-items-list"), {"order_by": order_by, "desc": desc}
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for i, rec in enumerate(data):
+            assert rec["pk"] in item_ids
+            if i > 0:
+                if desc == "true":
+                    assert rec[order_by] <= data[i - 1][order_by]
+                else:
+                    assert rec[order_by] >= data[i - 1][order_by]
+
+    @pytest.mark.parametrize(
+        ["date_from", "date_to", "exp_count"],
+        [
+            ("2019-01-01", "2020-01-01", 0),
+            ("2020-01-01", "2021-01-01", 3),
+            ("2020-01-01", "", 10),
+            ("", "2020-01-01", 0),
+            ("", "", 10),
+            ("", "2021-01-01", 3),
+        ],
+    )
+    def test_item_list_date_filter(
+        self, master_user_client, interest_rt, date_from, date_to, exp_count
+    ):
+        ItemFactory.create_batch(3, usage__date="2020-06-01")
+        ItemFactory.create_batch(7, usage__date="2021-06-01")
+        resp = master_user_client.get(
+            reverse("global-items-list"), {"start": date_from, "end": date_to}
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == exp_count
+
+    def test_item_list_for_organization(self, master_user_client, interest_rt):
+        org = OrganizationFactory()
+        items = ItemFactory.create_batch(10, usage__organization=org)
+        # create some extra items that should not be in the response
+        ItemFactory.create_batch(7)
+        resp = master_user_client.get(reverse("organization-item-list", args=[org.pk]))
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for rec in data:
+            assert rec["pk"] in item_ids
+
+    def test_item_list_for_organization_all_orgs(self, master_user_client, interest_rt):
+        org = OrganizationFactory()
+        items = ItemFactory.create_batch(10, usage__organization=org)
+        # create some extra items that should not be in the response
+        extra_items = ItemFactory.create_batch(7)
+        resp = master_user_client.get(reverse("organization-item-list", args=[-1]))
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items) + len(extra_items)
+        item_ids = {item.pk for item in items}
+        extra_item_ids = {item.pk for item in extra_items}
+        for rec in data:
+            assert rec["pk"] in item_ids or rec["pk"] in extra_item_ids
+
+    def test_item_list_for_org_platform(self, master_user_client, interest_rt):
+        pl = PlatformFactory()
+        org = OrganizationFactory()
+        items = ItemFactory.create_batch(10, usage__platform=pl, usage__organization=org)
+        # create some extra items that should not be in the response
+        ItemFactory.create_batch(3, usage__platform=pl)
+        ItemFactory.create_batch(4, usage__organization=org)
+        resp = master_user_client.get(
+            reverse("organization-platform-items-list", args=[org.pk, pl.pk])
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for rec in data:
+            assert rec["pk"] in item_ids
+
+    def test_item_list_for_org_platform_title(self, master_user_client, interest_rt):
+        pl = PlatformFactory()
+        org = OrganizationFactory()
+        title = TitleFactory()
+        items = ItemFactory.create_batch(
+            10, usage__platform=pl, usage__organization=org, usage__title=title
+        )
+        # create some extra items that should not be in the response
+        ItemFactory.create_batch(3, usage__platform=pl)
+        ItemFactory.create_batch(4, usage__organization=org)
+        ItemFactory.create_batch(5, usage__title=title)
+        resp = master_user_client.get(
+            reverse("organization-platform-title-items-list", args=[org.pk, pl.pk, title.pk])
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for rec in data:
+            assert rec["pk"] in item_ids
+
+    def test_item_list_for_org_title(self, master_user_client, interest_rt):
+        org = OrganizationFactory()
+        title = TitleFactory()
+        items = ItemFactory.create_batch(
+            10, usage=True, usage__organization=org, usage__title=title
+        )
+        # create some extra items that should not be in the response
+        ItemFactory.create_batch(4, usage__organization=org)
+        ItemFactory.create_batch(5, usage__title=title)
+        resp = master_user_client.get(
+            reverse("organization-title-items-list", args=[org.pk, title.pk])
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == len(items)
+        item_ids = {item.pk for item in items}
+        for rec in data:
+            assert rec["pk"] in item_ids
+
+    def test_item_detail(self, master_user_client, interest_rt):
+        item = ItemFactory()
+        resp = master_user_client.get(reverse("global-items-detail", args=[item.pk]))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pk"] == item.pk
+        assert data["doi"] == item.doi
+        assert data["name"] == item.name
+        assert data["issn"] == item.issn
+        assert data["eissn"] == item.eissn
+        assert data["isbn"] == item.isbn
+        assert "interests" in data
+        assert "authors" in data
+
+    @pytest.mark.parametrize(["pub_type", "exp_count"], [("J", 3), ("B", 7), ("", 10), ("X", 0)])
+    def test_item_list_filter_by_pub_type(
+        self, master_user_client, interest_rt, pub_type, exp_count
+    ):
+        ItemFactory.create_batch(3, pub_type="J")
+        ItemFactory.create_batch(7, pub_type="B")
+        resp = master_user_client.get(reverse("global-items-list"), {"pub_type": pub_type})
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == exp_count
+        if pub_type:
+            assert all(rec["pub_type"] == pub_type for rec in data)

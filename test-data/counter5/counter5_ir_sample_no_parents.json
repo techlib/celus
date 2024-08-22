@@ -68,28 +68,6 @@
           "Value": "SampleIR:100026"
         }
       ],
-      "Item_Parent": {
-        "Item_Name": "Journal 45",
-        "Data_Type": "Journal",
-        "Item_ID": [
-          {
-            "Type": "DOI",
-            "Value": "10.1729/jhik"
-          },
-          {
-            "Type": "Proprietary",
-            "Value": "SampleIR:45"
-          },
-          {
-            "Type": "Print_ISSN",
-            "Value": "2859-4118"
-          },
-          {
-            "Type": "Online_ISSN",
-            "Value": "2859-4231"
-          }
-        ]
-      },
       "Data_Type": "Article",
       "YOP": "2015",
       "Access_Type": "OA_Gold",
@@ -158,16 +136,6 @@
           "Value": "978-3-16-448410-7"
         }
       ],
-      "Item_Parent": {
-        "Item_Name": "Book X",
-        "Data_Type": "Book",
-        "Item_ID": [
-          {
-            "Type": "ISBN",
-            "Value": "978-3-16-448410-7"
-          }
-        ]
-      },
       "Data_Type": "Book",
       "YOP": "2015",
       "Access_Type": "Other_Free_To_Read",
@@ -228,43 +196,6 @@
           "Value": "SampleIR:100029"
         }
       ],
-      "Item_Parent": {
-        "Item_Name": "Book 1092",
-        "Item_Contributors": [
-          {
-            "Type": "Author",
-            "Name": "E Yellow",
-            "Identifier": "ISNI:2345234523452345"
-          }
-        ],
-        "Item_Dates": [
-          {
-            "Type": "Publication_Date",
-            "Value": "2014-03-03"
-          }
-        ],
-        "Item_Attributes": [
-          {
-            "Type": "Article_Version",
-            "Value": "VoR"
-          }
-        ],
-        "Data_Type": "Book",
-        "Item_ID": [
-          {
-            "Type": "DOI",
-            "Value": "10.1729/zbcd.1243"
-          },
-          {
-            "Type": "Proprietary",
-            "Value": "SampleIR:b1092"
-          },
-          {
-            "Type": "ISBN",
-            "Value": "978-3-16-458401-2"
-          }
-        ]
-      },
       "Data_Type": "Book_Segment",
       "YOP": "2014",
       "Access_Type": "Other_Free_To_Read",
