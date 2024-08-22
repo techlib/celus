@@ -265,42 +265,37 @@ cs:
                   height="2.75rem"
                 >
                 </v-text-field>
-                <v-autocomplete
+                <PlatformSelector
                   v-else
+                  :platforms="allowedPlatforms"
                   v-model="platform"
-                  :items="allowedPlatforms"
-                  item-text="name"
-                  item-value="pk"
                   :label="$t('platform')"
                   return-object
                   :loading="loadingPlatforms"
-                  :rules="[ruleRequired, ruleNoConflictingCredentials]"
                   dense
                   height="2.75rem"
-                  :menu-props="{ maxHeight: 480 }"
                   ref="platformField"
                 >
-                  <template v-slot:prepend-item>
-                    <AddPlatformButton
-                      v-if="
-                        allowUserCreatePlatforms &&
-                        (!credentials || !credentials.pk)
-                      "
-                      @update-platforms="preselectCreatedPlatform"
-                      :text="true"
-                      small
-                      color="success"
-                      class="pl-1"
-                    />
+                  <template
+                    #prepend
+                    v-if="
+                      allowUserCreatePlatforms &&
+                      (!credentials || !credentials.pk)
+                    "
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        <AddPlatformButton
+                          @update-platforms="preselectCreatedPlatform"
+                          :text="true"
+                          small
+                          color="success"
+                          class="pl-1"
+                        />
+                      </v-list-item-title>
+                    </v-list-item-content>
                   </template>
-                  <template v-slot:item="{ item }">
-                    <ItemBadge
-                      inner-class="v-list-item__title"
-                      tag="span"
-                      :item="item"
-                    />
-                  </template>
-                </v-autocomplete>
+                </PlatformSelector>
                 <v-tooltip bottom v-if="platformRegistryLink">
                   <template #activator="{ on }">
                     <span v-on="on" class="align-self-end mb-3 ms-1">
@@ -784,10 +779,12 @@ import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
 import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
 import LastHarvestableMonthEntryWidget from "@/components/sushi/LastHarvestableMonthEntryWidget.vue";
 import ItemBadge from "@/components/util/ItemBadge";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 
 export default {
   name: "SushiCredentialsEditDialog",
   components: {
+    PlatformSelector,
     LastHarvestableMonthEntryWidget,
     HarvesterIPAddressList,
     RegistryIcon,

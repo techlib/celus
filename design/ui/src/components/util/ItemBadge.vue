@@ -3,21 +3,21 @@
 
 <template>
   <component :is="tag">
-    <v-tooltip bottom max-width="600px" v-if="badge(item)">
+    <v-tooltip bottom max-width="600px" v-if="badgeInfo">
       <template #activator="{ on }">
         <span :class="innerClass">{{ item.name }}</span>
         <v-badge
           :inline="badgeInline"
-          :content="$t(badge(item).content)"
-          :color="badge(item).color"
+          :content="$t(badgeInfo.content)"
+          :color="badgeInfo.color"
           :class="badgeClass"
         >
           <template v-slot:badge>
-            <span v-on="on">{{ $t(badge(item).content) }}</span>
+            <span v-on="on">{{ $t(badgeInfo.content) }}</span>
           </template>
         </v-badge>
       </template>
-      <span>{{ $t(badge(item).tooltip) }}</span>
+      <span>{{ $t(badgeInfo.tooltip) }}</span>
     </v-tooltip>
     <span :class="innerClass" v-else>
       {{ item.name }}
@@ -37,8 +37,10 @@ export default {
     item: { type: Object, required: true },
   },
 
-  methods: {
-    badge,
+  computed: {
+    badgeInfo() {
+      return badge(this.item);
+    },
   },
 };
 </script>

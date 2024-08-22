@@ -79,14 +79,11 @@ cs:
             ></v-select>
           </v-col>
           <v-col cols="12" sm="6" md="4" lg="3">
-            <v-combobox
-              :label="$t('platform')"
+            <PlatformSelector
+              :platforms="usedPlatforms"
               v-model="selectedPlatform"
-              :items="usedPlatforms"
-              item-value="pk"
-              item-text="name"
-            >
-            </v-combobox>
+              :label="$t('platform')"
+            />
           </v-col>
           <v-col cols="6" md="auto">
             <v-switch v-model="hideSuccessful" :label="$t('hide_successful')">
@@ -239,6 +236,7 @@ import {
 } from "@/libs/attempt-state";
 import cancellation from "@/mixins/cancellation";
 import IconButton from "@/components/sushi/IconButton";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 
 export default {
   name: "SushiCredentialsMonthOverviewWidget",
@@ -246,6 +244,7 @@ export default {
   mixins: [cancellation],
 
   components: {
+    PlatformSelector,
     IconButton,
     SushiFetchIntentionStateIcon,
     SushiAttemptListWidget,
@@ -365,10 +364,7 @@ export default {
           )
           .map((item) => item.platform)
       );
-      return [
-        { name: this.$t("all_platforms"), pk: null },
-        ...[...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name)),
-      ];
+      return [...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name));
     },
     activeIntentions() {
       let intentions = [];
