@@ -1122,15 +1122,22 @@ class Automatic(models.Model):
         month_last = month_end(month)
 
         new_intentions: typing.List[FetchIntention] = []
+
+        creds_to_verify = {
+            cr["pk"]: cr["verified"]
+            for cr in SushiCredentials.objects.all().annotate_verified().values("pk", "verified")
+        }
+
         for cr2c in (
             CounterReportsToCredentials.objects.filter(
                 credentials__enabled=True, broken__isnull=True, credentials__broken__isnull=True
             )
             .order_by("credentials_id")
-            .select_related("credentials")
+            .select_related("credentials", "credentials__organization", "counter_report")
         ):
             # only verified credentials can be automatically planned
-            if not cr2c.credentials.is_verified:
+            # to save queries per-credentials, we use preloaded verification status
+            if not creds_to_verify.get(cr2c.credentials_id, False):
                 continue
 
             new_intentions.append(
@@ -1147,7 +1154,9 @@ class Automatic(models.Model):
         # group by organization
         organization_to_intentions = {
             e.organization: []
-            for e in Automatic.objects.filter(month=month)  # prefill with already planned
+            for e in Automatic.objects.filter(month=month).select_related(
+                "organization"
+            )  # prefill with already planned
         }
 
         for intention in new_intentions:
@@ -1164,11 +1173,13 @@ class Automatic(models.Model):
             if automatic:
                 # delete missing
                 existing_intentions = list(
-                    FetchIntention.objects.select_for_update().filter(
+                    FetchIntention.objects.select_for_update()
+                    .filter(
                         start_date=month,
                         end_date=month_last,
                         credentials__organization=organization,
                     )
+                    .select_related("credentials", "counter_report")
                 )
                 to_add, to_delete = cls._cmp_intentions(intentions, existing_intentions)
                 counter.update({"added": len(to_add), "deleted": len(to_delete)})

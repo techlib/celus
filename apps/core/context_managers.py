@@ -79,7 +79,6 @@ def logged_task(fn):
             end_ch_qc - start_ch_qc,
             fn.__name__,
         )
-
         return out
 
     return decorated

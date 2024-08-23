@@ -342,8 +342,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     @cached_property
     def is_verified(self):
         return (
-            self.current_successful_attempts.exists()
-            or self.version_hash == self.forced_verified_hash
+            self.version_hash == self.forced_verified_hash
+            or self.current_successful_attempts.exists()
         )
 
     @property
