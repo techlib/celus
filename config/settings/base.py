@@ -476,7 +476,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "necronomicon_expired": {
         "task": "necronomicon.tasks.clean_expired",
-        "schedule": crontab(hour=1, minute=0),
+        "schedule": crontab(hour="1", minute="0"),
         "options": {"expires": 60 * 60},
     },
     "update_prometheus_db_stats": {
@@ -580,8 +580,8 @@ if CLICKHOUSE_SYNC_ACTIVE:
 MAXIMUS_CELERY_SCHEDULE = {
     "sync_with_maximus_task": {
         "task": "core.tasks.sync_with_maximus_task",
-        "schedule": crontab(hour="21", minute="30"),  # every day at 21:30
-        "options": {"expires": 24 * 60 * 60},
+        "schedule": crontab(minute=randmin(0, 20)),  # every hour at 0-20 minutes
+        "options": {"expires": 30 * 60},
     }
 }
 
