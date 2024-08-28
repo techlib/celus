@@ -27,6 +27,7 @@ from django_otp.plugins.otp_email.models import EmailDevice, GenerateNotAllowed
 from organizations.models import UserOrganization
 from rest_framework import mixins, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -349,17 +350,28 @@ class AccessibleUsersViewSet(ModelViewSet):
         )
         return queryset
 
+    def check_user_permissions(self, request, org_pk):
+        user_role = request.user.organization_relationship(org_id=org_pk)
+        if settings.ALLOW_ORG_ADMINS_TO_MANAGE_USERS:  # Organization admins can manage users
+            if user_role < UL_ORG_ADMIN:
+                raise PermissionDenied(
+                    "You are not allowed to manage users as you are not an admin\
+                                        of this organization."
+                )
+        # Only consortial admins + superusers can manage users
+        elif not (request.user.is_admin_of_master_organization or request.user.is_superuser):
+            raise PermissionDenied(
+                "You are not allowed to manage users as you are not a \
+                                   consortial admin."
+            )
+
     @action(detail=True, methods=["post"], url_path="delete-org-relation")
     def delete_relation(self, request, pk):
         org_pk = request.data.get("organization")
 
-        if request.user.organization_relationship(org_id=org_pk) < UL_ORG_ADMIN:
-            return Response(
-                {"detail": "You are not admin of this organization."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        self.check_user_permissions(request, org_pk)
 
-        elif int(pk) == int(request.user.pk):  # pk is the same as request user pk
+        if int(pk) == int(request.user.pk):  # pk is the same as request user pk
             return Response(
                 {"detail": "You cannot delete your own account."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -382,16 +394,9 @@ class AccessibleUsersViewSet(ModelViewSet):
                 )
 
     def create(self, request):
+        org_pk = request.data.get("organization")
         # check whether the request.user is allowed to add to this org
-        if (
-            request.user.organization_relationship(org_id=request.data.get("organization"))
-            < UL_ORG_ADMIN
-        ):
-            return Response(
-                {"detail": "You are not admin of this organization."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
+        self.check_user_permissions(request, org_pk)
         return super().create(request)
 
 

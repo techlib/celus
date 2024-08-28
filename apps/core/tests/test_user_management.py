@@ -203,7 +203,6 @@ class TestAccessibleUsers:
     @pytest.mark.parametrize("user", ["admin1", "admin2"])
     def test_non_master_admin(self, basic1, organizations, platforms, clients, users, user):
         resp = clients[user].get(reverse("user-management-list"))
-        print(resp.json())
         # cannot see any superuser
         assert not any(
             [user["is_superuser"] for user in resp.json()]
@@ -214,11 +213,12 @@ class TestAccessibleUsers:
         ), "non-master admin should not be able to see master admins"
 
     # test that users are sucessfully created and added to appropriate orgs and permissions
-    def test_create(self, basic1, organizations, platforms, clients, users):
+    @pytest.mark.parametrize("is_admin", [True, False])
+    def test_create(self, basic1, organizations, platforms, clients, users, is_admin):
         users_count = User.objects.count()
         standalone_users_cnt = organizations["standalone"].users.all().count()
 
-        # create non-admin user
+        # superuser - can create users
         clients["su"].post(
             reverse("user-management-list"),
             data={
@@ -226,7 +226,7 @@ class TestAccessibleUsers:
                 "last_name": "name",
                 "username": "name",
                 "email": "name@email.com",
-                "is_admin": False,
+                "is_admin": is_admin,
                 "organization": organizations["standalone"].pk,
             },
         )
@@ -235,15 +235,27 @@ class TestAccessibleUsers:
         assert User.objects.count() == users_count + 1
         # check that new user was added to standalone org
         assert organizations["standalone"].users.all().count() == standalone_users_cnt + 1
-        # check that new user was added as non-admin
+        # check that new user was added with the correct permissions
         assert (
             organizations["standalone"]
             .users.last()
             .has_organization_admin_permission(organizations["standalone"].pk)
-            is False
+            == is_admin
         )
 
-        # create admin user
+
+@pytest.mark.django_db
+class TestOrgAdminsManagingSettings:
+    # is the ALLOW_ORG_ADMINS_TO_MANAGE_USERS settings is set to yes, we want to allow admins
+    # to manage users in their orgs
+    # if the ALLOW_ORG_ADMINS_TO_MANAGE_USERS setting is set to no, we want only master_admin
+    # to be able to manage users
+
+    def test_with_allow_admin(self, basic1, organizations, platforms, clients, users, settings):
+        settings.ALLOW_ORG_ADMINS_TO_MANAGE_USERS = True
+        standalone_users_cnt = organizations["standalone"].users.all().count()
+
+        # admin 2 can create users in his org
         clients["admin2"].post(
             reverse("user-management-list"),
             data={
@@ -251,19 +263,55 @@ class TestAccessibleUsers:
                 "last_name": "name2",
                 "username": "name2",
                 "email": "name2@email.com",
-                "is_admin": True,
+                "is_admin": False,
                 "organization": organizations["standalone"].pk,
             },
         )
 
-        assert User.objects.count() == users_count + 2
-        assert organizations["standalone"].users.all().count() == standalone_users_cnt + 2
         assert (
-            organizations["standalone"]
-            .users.last()
-            .has_organization_admin_permission(organizations["standalone"].pk)
-            is True
+            organizations["standalone"].users.all().count() == standalone_users_cnt + 1
+        ), "admin2 should be able to add users to his org when \
+            ALLOW_ORG_ADMINS_TO_MANAGE_USERS = True"
+
+    @pytest.mark.parametrize("is_admin", [True, False])
+    def test_without_allow_admin(
+        self, basic1, organizations, platforms, clients, users, is_admin, settings
+    ):
+        settings.ALLOW_ORG_ADMINS_TO_MANAGE_USERS = False
+        # admin 2 cannot create users in his org
+        standalone_users_cnt = organizations["standalone"].users.all().count()
+        resp = clients["admin2"].post(
+            reverse("user-management-list"),
+            data={
+                "first_name": "name2",
+                "last_name": "name2",
+                "username": "name2",
+                "email": "name2@email.com",
+                "is_admin": is_admin,
+                "organization": organizations["standalone"].pk,
+            },
         )
+
+        assert resp.status_code == 403, "Non-master admin should not be able to add users when \
+            ALLOW_ORG_ADMINS_TO_MANAGE_USERS = False"
+
+        # but master admin can create users in this org
+        clients["master_admin"].post(
+            reverse("user-management-list"),
+            data={
+                "first_name": "name2",
+                "last_name": "name2",
+                "username": "name2",
+                "email": "name2@email.com",
+                "is_admin": is_admin,
+                "organization": organizations["standalone"].pk,
+            },
+        )
+
+        assert (
+            organizations["standalone"].users.all().count() == standalone_users_cnt + 1
+        ), "Master admin should be able to add users when \
+            ALLOW_ORG_ADMINS_TO_MANAGE_USERS = False"
 
 
 @pytest.mark.django_db

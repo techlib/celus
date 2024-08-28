@@ -773,6 +773,9 @@ ALLOW_USER_CREATED_PLATFORMS = config("ALLOW_USER_CREATED_PLATFORMS", cast=bool,
 
 # Allow to manage organization users
 ALLOW_USER_MANAGEMENT = config("ALLOW_USER_MANAGEMENT", cast=bool, default=False)
+ALLOW_ORG_ADMINS_TO_MANAGE_USERS = config(
+    "ALLOW_ORG_ADMINS_TO_MANAGE_USERS", cast=bool, default=True
+)
 
 # Allows to create new metrics during data import
 # When False, user has to create metrics via admin,
@@ -939,6 +942,7 @@ EXPORTED_SETTINGS = [
     "ALLOW_EMAIL_LOGIN",
     "ALLOW_USER_CREATED_PLATFORMS",
     "ALLOW_USER_MANAGEMENT",
+    "ALLOW_ORG_ADMINS_TO_MANAGE_USERS",
     "ALLOW_USER_REGISTRATION",
     "AUTO_HARVESTING_PROBABILITIES",
     "AUTOMATICALLY_CREATE_METRICS",

@@ -297,9 +297,11 @@ export default new Vuex.Store({
       }
     },
     allowUserManagement(state, getters) {
+      if (state.basicInfo?.ALLOW_USER_MANAGEMENT == false) return false;
       return (
-        getters.showAdminStuff &&
-        (state.basicInfo?.ALLOW_USER_MANAGEMENT ?? false)
+        (state.basicInfo?.ALLOW_ORG_ADMINS_TO_MANAGE_USERS &&
+          getters.showAdminStuff) ||
+        getters.showManagementStuff
       );
     },
     consortialInstall(state) {
