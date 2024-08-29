@@ -283,6 +283,11 @@ class InterestGroup(models.Model):
         default=False, help_text="Important interest groups should be shown preferentially to users"
     )
     position = models.PositiveSmallIntegerField(help_text="Used for sorting")
+    implies_availability = models.BooleanField(
+        default=True,
+        help_text="Does existence of this kind of interest imply that the resource is available? "
+        "Should be set to False for denials.",
+    )
 
     class Meta:
         ordering = ("position", "important")

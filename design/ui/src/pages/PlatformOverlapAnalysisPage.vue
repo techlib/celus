@@ -48,6 +48,8 @@ en:
     of 500. On the other side, it would be calculated as 'unique interest' only if the other platform was deselected.
     </p>
     "
+  no_organization_selected: Please select an organization first.
+  no_organization_selected_info: Because different organizations subscribe to different sets of titles and typically do not share their resources, overlap between platforms would not make sense unless one organization is selected.
 
 cs:
   platform_overlap: Překryv platforem
@@ -64,9 +66,9 @@ cs:
   info:
     Následující tabulka ukazuje počet titulů sdílených mezi platformami. Obsahuje pouze platformy, které mají alespoň
     jeden titul společný s jinou platformou.
-  info2:
-    Můžete přepínat mezi absolutním a relativním vyjádřením překryvu. V případě nejasností můžete využít nápovědu
-    pro každou buňku v tabulce, která obsahuje vysvětlení daného čísla.
+  info2: Můžete přepínat mezi absolutním a relativním vyjádřením překryvu.
+  info2_tooltips: V případě nejasností můžete využít nápovědu pro každou buňku v tabulce, která obsahuje vysvětlení daného čísla.
+  info2_no_tooltips: Upozorňujeme, že nápovědy byly s ohledem na výkon vypnuty z důvodu velkého počtu platforem.
   info_vs_all:
     Následující tabulka ukazuje, kolik titulů platforma sdílí s ostatními platformami. Pravá část tabulky pak ukazuje
     zájem o tituly, které se překrývají s ostaními platformami.
@@ -99,10 +101,15 @@ cs:
     tento zájem by se objevil jako 'unikátní zájem' pouze v případě, že by jedna z platforem nebyla zaškrtnutá.
     </p>
     "
+  no_organization_selected: Prosím vyberte nejprve organizaci.
+  no_organization_selected_info: Protože různé organizace mají různá předplatná a typicky mezi sebou přístup k titulům nesdílí, překryv mezi platformami by nedával smysl, pokud není vybrána jen jedna organizace.
 </i18n>
 
 <template>
-  <v-container v-if="selectedOrganizationId" fluid>
+  <v-container
+    v-if="selectedOrganizationId && selectedOrganizationId > 0"
+    fluid
+  >
     <v-row>
       <v-col xl="8">
         <v-alert type="warning" outlined
@@ -232,6 +239,17 @@ cs:
             </v-tab-item>
           </v-tabs>
         </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+  <v-container v-else>
+    <v-row>
+      <v-col>
+        <v-alert type="info" outlined class="mt-16">
+          <strong>{{ $t("no_organization_selected") }}</strong>
+          <br />
+          {{ $t("no_organization_selected_info") }}
+        </v-alert>
       </v-col>
     </v-row>
   </v-container>

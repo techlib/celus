@@ -15,6 +15,7 @@ from django.utils.timezone import now
 from publications.models import Platform
 
 from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
+from logs.logic.interest import get_interest_type_dim_from_interest_rt
 from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metric, ReportType
 
 logger = logging.getLogger(__name__)
@@ -158,13 +159,13 @@ def extract_interest_from_import_batch(
         interest_metrics.append(rim.metric_id)
         metric_to_ig[rim.metric_id] = rim.interest_group
     # remap interest groups into DimensionText
-    metric_to_dim1 = {}
-    dim1 = interest_rt.dimensions_sorted[0]
+    metric_to_it_dim = {}
+    it_dim = get_interest_type_dim_from_interest_rt(interest_rt)
     for metric_id, ig in metric_to_ig.items():
         # we do not use update_or_create here, because it creates one select and one update
         # even if nothing has changed
         dim_text, _created = DimensionText.objects.get_or_create(
-            dimension=dim1,
+            dimension=it_dim,
             text=ig.short_name,
             defaults={"text_local_en": ig.name_en, "text_local_cs": ig.name_cs},
         )
@@ -172,7 +173,7 @@ def extract_interest_from_import_batch(
             dim_text.text_local_en = ig.name_en
             dim_text.text_local_cs = ig.name_cs
             dim_text.save()
-        metric_to_dim1[metric_id] = dim_text.pk
+        metric_to_it_dim[metric_id] = dim_text.pk
     # get source data for the new logs
     new_logs = []
     # for the following dates, there are data for a superseding report type, so we do not
@@ -212,7 +213,7 @@ def extract_interest_from_import_batch(
         # deal with stuff related to the metric
         metric_id = new_log_dict["metric_id"]
         # fill in dim1 based on the interest group of the metric
-        new_log_dict["dim1"] = metric_to_dim1[metric_id]
+        new_log_dict["dim1"] = metric_to_it_dim[metric_id]
         # remap metric to target metric if desired
         new_log_dict["metric_id"] = metric_remap.get(metric_id, metric_id)
         new_logs.append(new_log_dict)

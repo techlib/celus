@@ -5,15 +5,11 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 from events.models import EventImportance
+from logs.fake_data import create_interest_for_title
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from organizations.fake_data import OrganizationFactory
 
-from publications.fake_data import (
-    PlatformFactory,
-    PlatformTitleFactory,
-    TitleFactory,
-    TitleOverlapBatchFactory,
-)
+from publications.fake_data import PlatformFactory, TitleFactory, TitleOverlapBatchFactory
 from publications.logic.title_list_overlap import CsvTitleListOverlapReader
 from publications.models import TitleOverlapBatch, TitleOverlapBatchState
 from publications.tasks import process_title_overlap_batch_task
@@ -35,26 +31,44 @@ class TestTitleListOverlap:
         ["batch_size", "num_queries"], [(1, 6), (2, 3), (6, 1), (10, 1), (1000, 1)]
     )
     @pytest.mark.parametrize(
-        ["merge_issns", "expected_counts"],
-        [(False, [1, 1, 0, 0, 0, 0]), (True, [1, 1, 0, 0, 1, 0])],
+        ["merge_issns", "t2_full_text_interest", "expected_counts"],
+        [
+            (False, True, [1, 1, 0, 0, 0, 0]),
+            (True, True, [1, 1, 0, 0, 1, 0]),
+            (False, False, [1, 0, 0, 0, 0, 0]),  # t2 will not be matched with only no license
+            (True, False, [1, 0, 0, 0, 0, 0]),  # t2 will not be matched with only no license
+        ],
     )
     def test_title_matching(
-        self, merge_issns, expected_counts, batch_size, num_queries, django_assert_max_num_queries
+        self,
+        interest_rt,
+        merge_issns,
+        t2_full_text_interest,
+        expected_counts,
+        batch_size,
+        num_queries,
+        django_assert_max_num_queries,
     ):
         p_foo = PlatformFactory.create(name="Foo")
         p_bar = PlatformFactory.create(name="Bar")
         # t1 is on platform Foo only
         t1 = TitleFactory.create(isbn="9780787960186")
-        PlatformTitleFactory.create(title=t1, platform=p_foo, date="2020-01-01")
+        create_interest_for_title(
+            t1, platforms=[p_foo], dates=["2020-01-01"], create_full_text=True
+        )
         # t2 is on both platforms
         t2 = TitleFactory.create(issn="1234-5678")
-        PlatformTitleFactory.create(title=t2, platform=p_foo, date="2019-01-01")
-        PlatformTitleFactory.create(title=t2, platform=p_bar, date="2019-03-01")
+        create_interest_for_title(
+            t2, platforms=[p_foo], dates=["2019-01-01"], create_full_text=t2_full_text_interest
+        )
+        create_interest_for_title(
+            t2, platforms=[p_bar], dates=["2019-03-01"], create_full_text=t2_full_text_interest
+        )
 
         reader = CsvTitleListOverlapReader()
         dump = BytesIO()
         with open("test-data/tagging_batch/plain-title-list.csv", "r") as infile:
-            with django_assert_max_num_queries(num_queries * 3):  # 3 queries per batch
+            with django_assert_max_num_queries(num_queries * 5 + 2):  # 5 queries per batch
                 data = list(
                     reader.process_source(
                         infile, merge_issns=merge_issns, batch_size=batch_size, dump_file=dump
@@ -100,15 +114,28 @@ class TestTitleListOverlap:
             "t2_pfoo_org",
             "t2_pbar_org",
             "query_org",
+            "full_text_interest",
+            "no_license_interest",
             "t1_pfoo_match",
             "t2_pfoo_match",
             "t2_pbar_match",
         ],
         [
-            (0, 0, 0, 0, True, True, True),  # the same org for all title-platforms and the query
-            (0, 1, 1, 0, True, False, False),  # t2 not matched because of different org
-            (0, 1, 1, 1, False, True, True),  # t1 not matched because of different org
-            (0, 0, 1, 0, True, True, False),  # t2 only matched on Foo
+            # both types of interest
+            (0, 0, 0, 0, True, True, True, True, True),  # the same org for all titles
+            (0, 1, 1, 0, True, True, True, False, False),  # t2 not matched because of different org
+            (0, 1, 1, 1, True, True, False, True, True),  # t1 not matched because of different org
+            (0, 0, 1, 0, True, True, True, True, False),  # t2 only matched on Foo
+            # only full text interest - same as both types of interest
+            (0, 0, 0, 0, True, False, True, True, True),  # the same org for all titles
+            (0, 1, 1, 0, True, False, True, False, False),  # t2 not matched - different org
+            (0, 1, 1, 1, True, False, False, True, True),  # t1 not matched because of different org
+            (0, 0, 1, 0, True, False, True, True, False),  # t2 only matched on Foo
+            # only no license interest - nothing matches because of the lack of interest
+            (0, 0, 0, 0, False, True, False, False, False),
+            (0, 1, 1, 0, False, True, False, False, False),
+            (0, 1, 1, 1, False, True, False, False, False),
+            (0, 0, 1, 0, False, True, False, False, False),
         ],
     )
     def test_title_matching_organizations(
@@ -117,20 +144,44 @@ class TestTitleListOverlap:
         t2_pfoo_org,
         t2_pbar_org,
         query_org,
+        full_text_interest,
+        no_license_interest,
         t1_pfoo_match,
         t2_pfoo_match,
         t2_pbar_match,
+        interest_rt,
     ):
         orgs = OrganizationFactory.create_batch(2)
         p_foo = PlatformFactory.create(name="Foo")
         p_bar = PlatformFactory.create(name="Bar")
         # t1 is on platform Foo only
         t1 = TitleFactory.create(isbn="9780787960186")
-        PlatformTitleFactory.create(title=t1, platform=p_foo, organization=orgs[t1_pfoo_org])
+        create_interest_for_title(
+            t1,
+            org=orgs[t1_pfoo_org],
+            platforms=[p_foo],
+            dates=["2020-01-01"],  # need different dates for each title to create new IBs
+            create_full_text=full_text_interest,
+            create_no_license=no_license_interest,
+        )
         # t2 is on both platforms
         t2 = TitleFactory.create(issn="1234-5678")
-        PlatformTitleFactory.create(title=t2, platform=p_foo, organization=orgs[t2_pfoo_org])
-        PlatformTitleFactory.create(title=t2, platform=p_bar, organization=orgs[t2_pbar_org])
+        create_interest_for_title(
+            t2,
+            org=orgs[t2_pfoo_org],
+            platforms=[p_foo],
+            dates=["2019-01-01"],
+            create_full_text=full_text_interest,
+            create_no_license=no_license_interest,
+        )
+        create_interest_for_title(
+            t2,
+            org=orgs[t2_pbar_org],
+            platforms=[p_bar],
+            dates=["2019-03-01"],
+            create_full_text=full_text_interest,
+            create_no_license=no_license_interest,
+        )
 
         reader = CsvTitleListOverlapReader(organization=orgs[query_org])
         dump = BytesIO()
@@ -160,7 +211,7 @@ plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plai
 
 @pytest.mark.django_db
 class TestTitleOverlapBatchModel:
-    def test_title_overlap_batch_no_titles(self, inmemory_media, admin_user):
+    def test_title_overlap_batch_no_titles(self, inmemory_media, admin_user, interest_rt):
         batch = TitleOverlapBatchFactory.create(
             source_file=plain_test_file, last_updated_by=admin_user
         )
@@ -189,15 +240,15 @@ class TestTitleOverlapBatchModel:
         ["used_org", "matched_rows", "matched_titles"], [(0, 3, 2), (1, 0, 0), (-1, 3, 2)]
     )
     def test_title_overlap_batch_with_titles(
-        self, inmemory_media, used_org, matched_rows, matched_titles
+        self, inmemory_media, used_org, matched_rows, matched_titles, interest_rt
     ):
         # two organizations
         orgs = OrganizationFactory.create_batch(2)
         # two titles - both connected to the first organization
         t1 = TitleFactory.create(isbn="9780787960186")
-        PlatformTitleFactory.create(title=t1, organization=orgs[0])
+        create_interest_for_title(t1, org=orgs[0])
         t2 = TitleFactory.create(issn="1234-5678")
-        PlatformTitleFactory.create(title=t2, organization=orgs[0])
+        create_interest_for_title(t2, org=orgs[0])
         # create the batch
         org = orgs[used_org] if used_org >= 0 else None
         batch = TitleOverlapBatchFactory.create(source_file=plain_test_file, organization=org)
@@ -289,7 +340,7 @@ class TestTitleOverlapBatchAPI:
         else:
             assert response.status_code == 403
 
-    def test_create_batch(self, admin_client, inmemory_media):
+    def test_create_batch(self, admin_client, inmemory_media, interest_rt):
         """
         Check the workflow of creating a batch and the structure of the serialized data.
         """
@@ -321,10 +372,11 @@ class TestTitleOverlapBatchAPI:
         # check the batch data
         response = admin_client.get(reverse("title-overlap-batch-detail", args=[batch.pk]))
         assert response.status_code == 200
+        print(response.data)
         assert response.data["state"] == TitleOverlapBatchState.DONE
         assert response.data["annotated_file"].endswith("-annotated.csv")
 
-    def test_process_batch(self, admin_client, inmemory_media):
+    def test_process_batch(self, admin_client, inmemory_media, interest_rt):
         """
         Check the endpoint for processing a batch in the context of the workflow of creating a batch
         and then processing it.

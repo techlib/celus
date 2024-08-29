@@ -9,6 +9,7 @@ from hcube.api.models.aggregation import Sum as HSum
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import Platform, PlatformInterestReport, Title
+from publications.tests.conftest import interest_rt  # noqa  - used as fixture
 
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import ImportBatchFullFactory, MetricFactory
@@ -30,7 +31,6 @@ from logs.models import (
     InterestGroup,
     Metric,
     ReportInterestMetric,
-    ReportType,
 )
 from logs.tasks import (
     compare_db_with_clickhouse_task,
@@ -95,6 +95,7 @@ class TestClickhouseSync:
         counter_records,
         organizations,
         report_type_nd,
+        interest_rt,
         metric: Union[dict, str] = "Hits",
         lowlevel=False,
         report_type=None,
@@ -123,7 +124,6 @@ class TestClickhouseSync:
         if not report_type:
             report_type = report_type_nd(3)
         # prepare interest
-        report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
@@ -136,8 +136,12 @@ class TestClickhouseSync:
         )
         return platform, report_type, import_batches
 
-    def test_one_import_batch_sync(self, counter_records, organizations, report_type_nd):
-        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
+    def test_one_import_batch_sync(
+        self, counter_records, organizations, report_type_nd, interest_rt
+    ):
+        *_, ibs = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, interest_rt
+        )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
@@ -151,8 +155,12 @@ class TestClickhouseSync:
             assert ib.last_clickhoused is not None
             assert ib.last_clickhoused > ib.last_updated
 
-    def test_general_accesslog_sync(self, counter_records, organizations, report_type_nd):
-        self._prepare_counter_records(counter_records, organizations, report_type_nd, lowlevel=True)
+    def test_general_accesslog_sync(
+        self, counter_records, organizations, report_type_nd, interest_rt
+    ):
+        self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, interest_rt, lowlevel=True
+        )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert ch_backend.get_count(AccessLogCube.query()) == 0
         count = sync_accesslogs_with_clickhouse_superfast()
@@ -163,21 +171,23 @@ class TestClickhouseSync:
         assert sync_accesslogs_with_clickhouse_superfast() == 0, "no more syncs"
 
     def test_one_import_batch_sync_interest_calculation(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Interest is calculated as part of data ingestion
         """
-        self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        self._prepare_counter_records(counter_records, organizations, report_type_nd, interest_rt)
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
         assert ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum == 126
 
     def test_import_batch_delete_from_model_instance(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
-        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        *_, ibs = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, interest_rt
+        )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
@@ -190,9 +200,11 @@ class TestClickhouseSync:
         assert ImportBatchSyncLog.objects.count() == 0, "sync log was removed as well"
 
     def test_import_batch_delete_from_queryset_method(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
-        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        *_, ibs = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, interest_rt
+        )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         ch_recs = list(ch_backend.get_records(AccessLogCube.query()))
         assert len(ch_recs) == 11
@@ -203,13 +215,15 @@ class TestClickhouseSync:
         assert len(ch_recs) == 0, "all records should be deleted from clickhouse"
         assert ImportBatchSyncLog.objects.count() == 0, "sync log was removed as well"
 
-    def test_import_batch_outdated_sync_logs(self, counter_records, organizations, report_type_nd):
+    def test_import_batch_outdated_sync_logs(
+        self, counter_records, organizations, report_type_nd, interest_rt
+    ):
         """
         We simulate a situation where an import batch was created but not synced with clickhouse
         for some reason.
         """
         *_, ibs = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd, lowlevel=True
+            counter_records, organizations, report_type_nd, interest_rt, lowlevel=True
         )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
@@ -227,14 +241,14 @@ class TestClickhouseSync:
             mail_task.delay.assert_called_once()
 
     def test_import_batch_outdated_sync_logs_task_internals(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Tests the code that is run from `process_outstanding_import_batch_sync_logs_task` because
         it is hard to test otherwise
         """
         *_, ibs = self._prepare_counter_records(
-            counter_records, organizations, report_type_nd, lowlevel=True
+            counter_records, organizations, report_type_nd, interest_rt, lowlevel=True
         )
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
@@ -248,13 +262,13 @@ class TestClickhouseSync:
             assert len(list(ch_backend.get_records(AccessLogCube.query()))) == al_count
 
     def test_import_batch_sync_after_interest_recalculation_with_delete(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
-        self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        self._prepare_counter_records(counter_records, organizations, report_type_nd, interest_rt)
         # check result
         assert AccessLog.objects.count() == 11, "6 orig + 5 interest"
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 11
@@ -267,16 +281,19 @@ class TestClickhouseSync:
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 6, "back to 6 in CH"
 
     def test_import_batch_sync_after_interest_recalculation_with_change(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Test that when we update interest definition and recalculate interest that clickhouse
         will be synced correctly.
         """
         self._prepare_counter_records(
-            counter_records, organizations, report_type_nd, metric={"Hits": 1, "Visits": 2}
+            counter_records,
+            organizations,
+            report_type_nd,
+            interest_rt,
+            metric={"Hits": 1, "Visits": 2},
         )
-        interest_rt = ReportType.objects.get_interest_rt()
         # check result
         assert AccessLog.objects.count() == 17, "12 orig + 5 interest"
         interest_al_pks = set(
@@ -317,9 +334,11 @@ class TestClickhouseSync:
         ), "the interest with the new metric should be doubled"
 
     def test_sync_import_batch_with_clickhouse_with_exception(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
-        *_, ibs = self._prepare_counter_records(counter_records, organizations, report_type_nd)
+        *_, ibs = self._prepare_counter_records(
+            counter_records, organizations, report_type_nd, interest_rt
+        )
         with pytest.raises(TypeError):
             # value error about string not being comparable to int should be raised
             sync_import_batch_with_clickhouse(ibs[0], batch_size="aaaa")

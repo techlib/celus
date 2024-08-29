@@ -72,12 +72,12 @@ class TitleFactory(factory.django.DjangoModelFactory):
 
 
 class AuthorFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("sentence")
-    isni = maybe_blank(fake.doi)
-    orcid = maybe_blank(fake.doi)
-
     class Meta:
         model = Author
+
+    name = factory.Faker("name")
+    isni = maybe_blank(fake.isni)
+    orcid = maybe_blank(fake.isni)
 
 
 class ItemFactory(factory.django.DjangoModelFactory):
@@ -98,14 +98,6 @@ class ItemFactory(factory.django.DjangoModelFactory):
         if extracted:
             for position, author in enumerate(extracted):
                 AuthorToItem.objects.get_or_create(position=position, author=author, item=obj)
-
-
-class AuthorFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Author
-
-    isni = maybe_blank(fake.isni)
-    orcid = maybe_blank(fake.isni)
 
 
 class PlatformFactory(factory.django.DjangoModelFactory):

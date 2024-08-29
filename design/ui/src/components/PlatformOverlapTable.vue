@@ -1,21 +1,31 @@
 <i18n lang="yaml">
 en:
   loading_data: "Please wait while Celus is crunching the data for you. It has to go over all the titles and that takes some time."
-  tooltip_two_platforms: "{absValue} ({relValue}) {titles} from {platformName1} {is_also_available} from {platformName2}"
+  tooltip_two_platforms_titles: "{absValue} ({relValue}) {titles} from {platformName1} {is_also_available} from {platformName2}"
+  tooltip_two_platforms_interest: "{absValue} ({relValue}) of the interest in titles from <strong>{platformName1}</strong> could also be satisfied on <strong>{platformName2}</strong>"
   is_also_available: is also available | are also available
   titles: title | titles
-  absolute_numbers: Absolute numbers
-  relative_numbers: Relative numbers in %
+  absolute_titles: Absolute number of titles
+  relative_titles: Relative number of titles in %
+  absolute_interest: Absolute interest
+  relative_interest: Relative interest in %
   no_overlap_data: There are no overlapping platforms
+  platform_titles: "Platform <strong>{platform}</strong> has {value} title | Platform <strong>{platform}</strong> has {value} titles"
+  platform_interest: "Total interest on platform <strong>{platform}</strong> is {value}"
 
 cs:
   loading_data: "Prosíme o chvilku strpení, než Celus přechroupe data. Musí zpracovat záznamy o všech titulech a to nějakou dobu zabere."
-  tooltip_two_platforms: "{absValue} ({relValue}) {titles} z {platformName1} {is_also_available} z {platformName2}"
+  tooltip_two_platforms_titles: "{absValue} ({relValue}) {titles} z {platformName1} {is_also_available} z {platformName2}"
+  tooltip_two_platforms_interest: "{absValue} ({relValue}) zájmu o tituly z <strong>{platformName1}</strong> by mohlo být uspokojeno také na <strong>{platformName2}</strong>"
   is_also_available: "je také dostupný | jsou také dostupné | je také dostupných"
   titles: "titul | tituly | titulů"
-  absolute_numbers: Absolutní čísla
-  relative_numbers: Relativní vyjádření v %
+  absolute_titles: Absolutní počet titulů
+  relative_titles: Relativní počet titulů v %
+  absolute_interest: Absolutní zájem
+  relative_interest: Relativní zájem v %
   no_overlap_data: Žádné platformy nemají překryv
+  platform_titles: "Platforma <strong>{platform}</strong> má {value} titul | Platforma <strong>{platform}</strong> má {value} tituly | Platforma <strong>{platform}</strong> má {value} titulů"
+  platform_interest: "Celkový zájem o platformu <strong>{platform}</strong> je {value}"
 </i18n>
 
 <template>
@@ -35,18 +45,42 @@ cs:
       <thead>
         <tr>
           <th class="pt-8 bottom">
-            <v-btn-toggle v-model="relative" mandatory dense>
+            <v-btn-toggle v-model="mode" mandatory dense>
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn :value="false" small v-on="on">123</v-btn>
+                  <v-btn value="titles" small v-on="on">
+                    <v-icon x-small :color="iconColor">fa-book</v-icon>
+                    123
+                  </v-btn>
                 </template>
-                {{ $t("absolute_numbers") }}
+                {{ $t("absolute_titles") }}
               </v-tooltip>
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn :value="true" small v-on="on">%</v-btn>
+                  <v-btn value="rel-titles" small v-on="on">
+                    <v-icon x-small :color="iconColor">fa-book</v-icon>
+                    %
+                  </v-btn>
                 </template>
-                {{ $t("relative_numbers") }}
+                {{ $t("relative_titles") }}
+              </v-tooltip>
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <v-btn value="interest" small v-on="on">
+                    <v-icon x-small :color="iconColor">fa-search</v-icon>
+                    123
+                  </v-btn>
+                </template>
+                {{ $t("absolute_interest") }}
+              </v-tooltip>
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <v-btn value="rel-interest" small v-on="on">
+                    <v-icon x-small :color="iconColor">fa-search</v-icon>
+                    %
+                  </v-btn>
+                </template>
+                {{ $t("relative_interest") }}
               </v-tooltip>
             </v-btn-toggle>
           </th>
@@ -73,14 +107,31 @@ cs:
             :class="{ 'self-overlap': platform1.pk === platform2.pk }"
             :style="{ backgroundColor: overlapColor(platform1, platform2) }"
           >
-            <v-tooltip bottom v-if="!disableTooltips">
+            <v-tooltip
+              bottom
+              v-if="
+                !disableTooltips && overlapValue(platform1, platform2, false)
+              "
+            >
               <template #activator="{ on }">
                 <span v-on="on" class="full">
                   {{ overlapValue(platform1, platform2, relative) }}
                 </span>
               </template>
               <span v-if="platform1.pk !== platform2.pk">
-                <i18n path="tooltip_two_platforms" tag="span">
+                <span
+                  v-if="showInterest"
+                  v-html="
+                    $t('tooltip_two_platforms_interest', {
+                      absValue: overlapValue(platform1, platform2, false),
+                      relValue: overlapValue(platform1, platform2, true),
+                      platformName1: platform1.short_name,
+                      platformName2: platform2.short_name,
+                    })
+                  "
+                ></span>
+                <!-- tooltip about titles is more complicated as it requires pluralization -->
+                <i18n v-else path="tooltip_two_platforms_titles" tag="span">
                   <template v-slot:absValue>
                     {{ overlapValue(platform1, platform2, false) }}
                   </template>
@@ -108,10 +159,19 @@ cs:
                   </template>
                 </i18n>
               </span>
-              <span v-else>
-                <strong>{{ platform1.short_name }}</strong> has
-                {{ overlapValue(platform1, platform2, false) }} titles
-              </span>
+              <span
+                v-else
+                v-html="
+                  $tc(
+                    showInterest ? 'platform_interest' : 'platform_titles',
+                    overlapValue(platform1, platform2, false),
+                    {
+                      platform: platform1.short_name,
+                      value: overlapValue(platform1, platform2, false),
+                    }
+                  )
+                "
+              ></span>
             </v-tooltip>
             <span v-else>
               {{ overlapValue(platform1, platform2, relative) }}
@@ -143,7 +203,9 @@ export default {
       platforms: new Map(),
       loading: false,
       relative: false,
+      showInterest: false,
       platformsLoading: false,
+      iconColor: "#666666",
     };
   },
 
@@ -155,6 +217,39 @@ export default {
       dateStart: "dateRangeStartText",
       dateEnd: "dateRangeEndText",
     }),
+    mode: {
+      get() {
+        if (this.relative) {
+          if (this.showInterest) {
+            return "rel-interest";
+          }
+          return "rel-titles";
+        }
+        if (this.showInterest) {
+          return "interest";
+        }
+        return "titles";
+      },
+      set(value) {
+        switch (value) {
+          case "rel-interest":
+            this.relative = true;
+            this.showInterest = true;
+            break;
+          case "rel-titles":
+            this.relative = true;
+            this.showInterest = false;
+            break;
+          case "interest":
+            this.relative = false;
+            this.showInterest = true;
+            break;
+          default:
+            this.relative = false;
+            this.showInterest = false;
+        }
+      },
+    },
     overlapDataUrl() {
       if (this.selectedOrganizationId) {
         return `/api/organization/${this.selectedOrganizationId}/platform-overlap/?start=${this.dateStart}&end=${this.dateEnd}`;
@@ -186,7 +281,7 @@ export default {
       );
     },
     disableTooltips() {
-      return this.usedPlatforms.length >= 30;
+      return this.overlapMap.size > 500;
     },
   },
 
@@ -235,15 +330,22 @@ export default {
       // overlap map
       let overlapMap = new Map();
       this.overlapData.forEach((item) => {
-        overlapMap.set(`${item.platform1}-${item.platform2}`, item.overlap);
+        overlapMap.set(`${item.platform1}-${item.platform2}`, {
+          overlap: item.overlap,
+          interest: item.interest,
+        });
         if (item.platform1 !== item.platform2) {
           // reverse mapping
-          overlapMap.set(`${item.platform2}-${item.platform1}`, item.overlap);
+          overlapMap.set(`${item.platform2}-${item.platform1}`, {
+            overlap: item.overlap,
+            interest: item.interest,
+          });
         }
       });
       this.overlapMap = overlapMap;
     },
-    overlapValue(platform1, platform2, relative = false) {
+    overlapValue(platform1, platform2, relative) {
+      const key = this.showInterest ? "interest" : "overlap";
       let overlapAbs = this.overlapMap.get(`${platform1.pk}-${platform2.pk}`);
       if (overlapAbs == null) {
         return "";
@@ -252,11 +354,14 @@ export default {
         const platformAbs = this.overlapMap.get(
           `${platform1.pk}-${platform1.pk}`
         );
-        return smartFormatFloat((100 * overlapAbs) / platformAbs, 1) + "%";
+        return (
+          smartFormatFloat((100 * overlapAbs[key]) / platformAbs[key], 1) + "%"
+        );
       }
-      return overlapAbs;
+      return overlapAbs[key];
     },
     overlapColor(platform1, platform2) {
+      const key = this.showInterest ? "interest" : "overlap";
       if (platform1.pk === platform2.pk) {
         return "#dddddd";
       }
@@ -267,7 +372,7 @@ export default {
       const platformAbs = this.overlapMap.get(
         `${platform1.pk}-${platform1.pk}`
       );
-      const ratio = overlapAbs / platformAbs;
+      const ratio = overlapAbs[key] / platformAbs[key];
       return Color("#00bb66").alpha(Math.sqrt(ratio)).rgb().string();
     },
   },

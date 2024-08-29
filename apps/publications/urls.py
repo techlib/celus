@@ -23,12 +23,6 @@ org_sub_router.register(
     r"top-title-interest", views.TopTitleInterestViewSet, basename="top-title-interest"
 )
 org_sub_router.register(
-    r"title-interest-by-platform",
-    views.TitleInterestByPlatformViewSet,
-    basename="title-interest-by-platform",
-)
-
-org_sub_router.register(
     r"report-types", OrganizationReportTypesViewSet, basename="organization-report-types"
 )
 org_sub_router.register(

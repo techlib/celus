@@ -9,20 +9,22 @@ from core.logic.dates import date_filter_from_params
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
 from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
+from logs.logic.interest import (
+    get_interest_subdim_ids_implying_availability,
+    get_interest_type_dim_from_interest_rt,
+)
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
     AccessLog,
     DimensionText,
     ImportBatch,
     InterestGroup,
-    Metric,
     ReportInterestMetric,
     ReportType,
 )
@@ -255,8 +257,6 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
     def title_count(self, request, organization_pk):
         date_filter_params = date_filter_from_params(request.GET)
         if request.USE_CLICKHOUSE:
-            from logs.cubes import AccessLogCube, ch_backend
-
             org_filter = organization_filter_from_org_id(
                 organization_pk, request.user, clickhouse=True
             )
@@ -345,7 +345,7 @@ class PlatformInterestViewSet(ViewSet):
     def get_report_type_and_filters(cls):
         interest_rt = ReportType.objects.get_interest_rt()
         # parameters for annotation defining an annotation for each of the interest groups
-        interest_type_dim = interest_rt.dimensions_sorted[0]
+        interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
         # we get active InterestGroups in order to filter out unused InterestGroups
         # for which the dimension text mapping still exists
         ig_names = {x["short_name"] for x in InterestGroup.objects.all().values("short_name")}
@@ -487,7 +487,6 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         # the queryset used to select relevant titles - stored for usage elsewhere,
         # e.g. in postprocessing
         self.title_selection_query = None
-        self.multiplatform = False
 
     def _extra_filters(self):
         return {}
@@ -502,22 +501,6 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         return result
 
     def _postprocess_paginated(self, result):
-        if not result:
-            return result
-        # the stored .title_selection_query contains the basic filters for titles
-        result_title_ids = [title.pk for title in result]
-        title_info = {
-            record["pk"]: record
-            for record in self.title_selection_query.annotate(
-                platform_count=Count("platformtitle__platform_id", distinct=True),
-                platform_ids=ArrayAgg("platformtitle__platform_id", distinct=True),
-            )
-            .filter(pk__in=result_title_ids)
-            .values("pk", "platform_count", "platform_ids")
-        }
-        for record in result:
-            record.platform_count = title_info[record.pk]["platform_count"]
-            record.platform_ids = title_info[record.pk]["platform_ids"]
         return result
 
     def _before_queryset(self):
@@ -585,12 +568,6 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
             **extend_query_filter(self.org_filter, "platformtitle__"),
             **extra_filters,
         )
-        self.multiplatform = "multiplatform" in self.request.query_params
-        if self.multiplatform:
-            base_title_query = base_title_query.annotate(
-                platform_count=Count("platformtitle__platform_id", distinct=True)
-            ).filter(platform_count__gt=1)
-
         base_title_query = base_title_query.distinct().order_by()
         self.title_selection_query = base_title_query
         result = title_qs.filter(pk__in=base_title_query)
@@ -643,13 +620,19 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
         )
         date_filter = date_filter_from_params(self.request.GET)
         interest_rt = ReportType.objects.get_interest_rt()
+        dim1_ids = get_interest_subdim_ids_implying_availability(interest_rt)
+
         search_filters = []
         pub_type_arg = self.request.query_params.get("pub_type")
         if pub_type_arg:
             search_filters.append(Q(target__pub_type__in=pub_type_arg.split(",")))
         queryset = (
             AccessLog.objects.filter(
-                *search_filters, report_type=interest_rt, **date_filter, **org_filter
+                *search_filters,
+                report_type=interest_rt,
+                dim1__in=dim1_ids,  # only those interest types which imply availability
+                **date_filter,
+                **org_filter,
             )
             .values("target_id")
             .exclude(target_id__isnull=True)
@@ -692,7 +675,7 @@ class TitleInterestMixin:
 
     def _before_queryset(self):
         self.interest_rt = ReportType.objects.get_interest_rt()
-        self.interest_type_dim = self.interest_rt.dimensions_sorted[0]
+        self.interest_type_dim = get_interest_type_dim_from_interest_rt(self.interest_rt)
         self.interest_groups_names = {
             x["short_name"] for x in InterestGroup.objects.all().values("short_name")
         }
@@ -878,7 +861,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         interest_rt = ReportType.objects.get_interest_rt()
-        interest_type_dim = interest_rt.dimensions_sorted[0]
+        interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
         interest_type_name = self.request.query_params.get("order_by", "full_text")
 
         # -- title filters --
@@ -898,7 +881,6 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
 
         if self.request.USE_CLICKHOUSE and not pub_type_arg:
             from hcube.api.models.aggregation import Sum as HSum
-            from logs.cubes import AccessLogCube, ch_backend
 
             org_filter = organization_filter_from_org_id(
                 self.kwargs.get("organization_pk"), self.request.user, clickhouse=True
@@ -995,9 +977,6 @@ class InterestByPlatformMixin:
         }
         annotations.update(interest_annot_params)
         annotations["total_interest"] = Coalesce(Sum("relevant_accesslogs__value"), 0)
-        annotations["nonzero_platform_count"] = Count(
-            "relevant_accesslogs__platform", distinct=True
-        )
         return annotations
 
     def _postprocess_paginated(self, result):
@@ -1017,75 +996,6 @@ class InterestByPlatformMixin:
             prefix = "-" if desc == "true" else ""
             result = result.order_by(prefix + order_by)
         # result = result.filter(**{f'pl_{platform.pk}__gt': 0 for platform in self.all_platforms})
-        return result
-
-
-class TitleInterestByPlatformViewSet(InterestByPlatformMixin, BaseTitleViewSet):
-    """
-    View for all titles with interest summed up by platform.
-
-    This is used only in the "Titles on multiple platforms" view.
-    """
-
-    serializer_class = TitleCountSerializer
-    pagination_class = SmartResultsSetPagination
-    YOP_EXCLUDED_METRICS = ["No_License"]
-
-    def _postprocess_paginated(self, result):
-        """
-        We want to add min and max YOP per platform for each returned title.
-        """
-        result = super()._postprocess_paginated(result)
-        try:
-            tr = ReportType.objects.get(short_name="TR")
-        except ReportType.DoesNotExist:
-            # if TR report is not present, we can't add YOPs
-            return result
-        dim_ref = tr.dim_name_to_dim_attr("YOP")
-        title_ids = {r.pk for r in result}
-        excluded_metrics = Metric.objects.filter(short_name__in=self.YOP_EXCLUDED_METRICS)
-        # add list of non-null YOPs for each title
-        qs = (
-            AccessLog.objects.filter(
-                target_id__in=title_ids,
-                report_type_id=tr.pk,
-                **{f"{dim_ref}__isnull": False},
-                **self.date_filter,
-                **self.org_filter,
-            )
-            .exclude(metric_id__in=excluded_metrics)
-            .values("target_id", "platform_id")
-            .annotate(yop_ids=ArrayAgg(dim_ref, distinct=True))
-        )
-        # the YOPs are just ids in DimensionText, we need to map them to actual values
-        all_yop_ids = set()
-        title_platform_ids_to_yop_ids = {}
-        for rec in qs:
-            all_yop_ids.update(rec["yop_ids"])
-            title_platform_ids_to_yop_ids[(rec["target_id"], rec["platform_id"])] = rec["yop_ids"]
-        remap = {
-            rec["pk"]: rec["text"]
-            for rec in DimensionText.objects.filter(pk__in=all_yop_ids).values("pk", "text")
-        }
-        for record in result:
-            yops_rec = {}
-            for platform_id in record.platform_ids:
-                yops = set()
-                for yop_id in title_platform_ids_to_yop_ids.get((record.pk, platform_id), []):
-                    yop = remap[yop_id]
-                    try:
-                        yop = int(yop)
-                    except ValueError:
-                        # we are only interested in integer values which represent years
-                        continue
-                    if 1000 < yop < 3000:
-                        # 0001 and 9999 are used as placeholders for unknown years or ahead of print
-                        # to guard against other strange values, we only accept years between
-                        # 1000 and 3000
-                        yops.add(yop)
-                if yops:
-                    yops_rec[platform_id] = {"min": min(yops), "max": max(yops)}
-            record.yops = yops_rec
         return result
 
 

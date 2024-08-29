@@ -1,7 +1,9 @@
 from typing import Callable, List, Optional
 
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Exists, Max, Min, OuterRef
+from django.db.models import Max, Min
+from logs.logic.interest import get_interest_subdim_ids_implying_availability
+from logs.models import AccessLog, ReportType
 from organizations.models import Organization
 from tags.logic.titles_lists import CsvReaderMixin, TitleListReader, TitleTaggingRecord
 
@@ -30,12 +32,20 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
 
     def title_qs(self):
         """
-        We only want to match titles that are linked to the organization in `self.organization`.
+        We only want to match titles that have interest for a specific organization
+        `self.organization` or have some interest at all.
+
+        We only use types of interest which imply that the title is available on a platform.
         :return:
         """
-        return Title.objects.filter(
-            Exists(PlatformTitle.objects.filter(title_id=OuterRef("pk"), **self.org_filter()))
-        )
+        interest_rt = ReportType.objects.get_interest_rt()
+        # resolving the dims into list makes the subsequent query slightly faster
+        dim1_ids = list(get_interest_subdim_ids_implying_availability(interest_rt))
+        title_ids_query = AccessLog.objects.filter(
+            report_type=interest_rt, dim1__in=dim1_ids, target_id__isnull=False, **self.org_filter()
+        ).values("target_id")
+        qs = Title.objects.filter(pk__in=title_ids_query)
+        return qs
 
     def extra_column_names(self) -> [str]:
         return [

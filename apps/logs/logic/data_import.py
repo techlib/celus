@@ -426,7 +426,7 @@ def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [Plat
     """
     data = {(al.organization_id, al.platform_id, al.target_id, al.date) for al in accesslogs}
     possible_clashing = {
-        (pt.organization_id, pt.platform_id, pt.target_id, pt.date)
+        (pt.organization_id, pt.platform_id, pt.title_id, pt.date)
         for pt in PlatformTitle.objects.filter(
             organization_id__in={rec[0] for rec in data},
             platform_id__in={rec[1] for rec in data},

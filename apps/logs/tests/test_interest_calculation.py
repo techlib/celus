@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.utils.timezone import now
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform, PlatformInterestReport
+from publications.tests.conftest import interest_rt  # noqa - fixture
 
 from logs.fake_data import MetricFactory
 from logs.logic.data_import import import_counter_records
@@ -31,14 +32,13 @@ from logs.models import (
 
 @pytest.mark.django_db()
 class TestInterestCalculation:
-    def test_simple(self, counter_records, organizations, report_type_nd):
+    def test_simple(self, counter_records, organizations, report_type_nd, interest_rt):
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type = report_type_nd(1)
         organization = organizations[0]
         # define the interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
@@ -64,7 +64,7 @@ class TestInterestCalculation:
     @pytest.mark.parametrize(["new_before_old"], [[True], [False]])
     @pytest.mark.django_db(transaction=True)
     def test_superseeded_report_types(
-        self, counter_records, organizations, report_type_nd, new_before_old
+        self, counter_records, organizations, report_type_nd, new_before_old, interest_rt
     ):
         """
         Test that when there are data for two report types from which one obsoletes the other,
@@ -85,7 +85,6 @@ class TestInterestCalculation:
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
         # now define the interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
         hit_metric = MetricFactory.create(short_name="Hits")
@@ -130,7 +129,7 @@ class TestInterestCalculation:
         assert interest_rt.accesslog_set.count() == 4, "3 new interest logs + 1 remaining old"
 
     def test_two_report_types_with_the_same_metric(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Test that when two report types use the same metric for interest calculation,
@@ -143,7 +142,6 @@ class TestInterestCalculation:
         report_type_1: ReportType = report_type_nd(1, short_name="old")
         report_type_2: ReportType = report_type_nd(1, short_name="new")
         # now define the interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_1)
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_2)
         hit_metric = MetricFactory.create(short_name="Hits")
@@ -187,7 +185,9 @@ class TestInterestCalculation:
             sum=Sum("value")
         ) == {"sum": 56}
 
-    def test_with_materialized_reports(self, counter_records, organizations, report_type_nd):
+    def test_with_materialized_reports(
+        self, counter_records, organizations, report_type_nd, interest_rt
+    ):
         """
         Test that when there are materialized report data present in import batch that they
         are not counted into interest.
@@ -198,7 +198,6 @@ class TestInterestCalculation:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # define interest
-        interest_rt = report_type_nd(1, short_name="interest")
         data1 = [
             ["Title1", "2018-01-01", "1v1", 1],
             ["Title2", "2018-01-01", "1v2", 2],
@@ -429,13 +428,12 @@ class TestInterestRecomputationDetection:
         qs = _find_platform_report_type_disconnect()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_report_type_metric_disconnect(self, organizations, report_type_nd):
+    def test_find_report_type_metric_disconnect(self, organizations, report_type_nd, interest_rt):
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
-        interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatch.objects.create(
@@ -468,13 +466,12 @@ class TestInterestRecomputationDetection:
         qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_superseeded_import_batches(self, organizations, report_type_nd):
+    def test_find_superseeded_import_batches(self, organizations, report_type_nd, interest_rt):
         organization = organizations[0]
         platform = Platform.objects.create(
             ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         rt_old: ReportType = report_type_nd(1, short_name="old")
-        interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=rt_old)
         ib_old = ImportBatch.objects.create(
@@ -549,7 +546,7 @@ class TestInterestRecomputationDetection:
 
     @pytest.mark.django_db(transaction=True)
     def test_superseeded_interest_deleted_with_different_titles(
-        self, counter_records, organizations, report_type_nd
+        self, counter_records, organizations, report_type_nd, interest_rt
     ):
         """
         Test that there are old data for obsolete interest and I import new ones for the
@@ -564,7 +561,6 @@ class TestInterestRecomputationDetection:
         report_type_old.superseeded_by = report_type_new
         report_type_old.save()
         # define interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
         hit_metric = MetricFactory.create(short_name="Hits")

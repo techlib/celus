@@ -15,7 +15,7 @@ cs:
 
       <TitleList
         :url="titleListURL"
-        :interest-by-platform="true"
+        titles-on-multiple-platforms
         :no-data-text="$t('no_overlap_titles')"
       ></TitleList>
     </section>
@@ -44,7 +44,7 @@ export default {
       selectedOrganizationId: "selectedOrganizationId",
     }),
     titleListURL() {
-      return `/api/organization/${this.selectedOrganizationId}/title-interest-by-platform/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&multiplatform`;
+      return `/api/organization/${this.selectedOrganizationId}/titles-on-multiple-platforms/?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
     },
   },
   methods: {

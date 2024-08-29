@@ -80,7 +80,6 @@ cs:
       :page.sync="page"
       :sort-desc.sync="orderDesc"
       :no-data-text="emptyDataText"
-      class="auto-table"
     >
       <template v-slot:item.name="{ item }">
         <router-link
@@ -211,7 +210,7 @@ export default {
     url: { required: true },
     platformId: { required: false },
     orderInterest: { required: false, default: null, type: String },
-    interestByPlatform: { default: false, type: Boolean },
+    titlesOnMultiplePlatforms: { default: false, type: Boolean },
     noDataText: { default: null, type: String },
   },
 
@@ -324,7 +323,7 @@ export default {
           // cellClass: "auto-width",
         });
       }
-      if (this.interestByPlatform) {
+      if (this.titlesOnMultiplePlatforms) {
         base.push({
           text: this.$i18n.t("title_fields.ratios"),
           value: "ratios",
@@ -338,8 +337,8 @@ export default {
           sortable: false,
         });
         base.push({
-          text: this.$i18n.t("title_fields.nonzero_platforms"),
-          value: "nonzero_platform_count",
+          text: this.$i18n.t("title_fields.platform_count"),
+          value: "platform_count",
         });
         base.push({
           text: this.$i18n.t("title_fields.total_interest"),
@@ -491,7 +490,7 @@ export default {
 
   mounted() {
     this.loadData();
-    if (this.interestByPlatform) {
+    if (this.titlesOnMultiplePlatforms) {
       this.loadPlatforms();
     }
   },

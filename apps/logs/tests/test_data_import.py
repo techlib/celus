@@ -15,6 +15,7 @@ from organizations.tests.conftest import organization_random, organizations  # n
 from publications.fake_data import PlatformFactory
 from publications.logic.title_management import find_mergeable_titles, merge_titles
 from publications.models import Item, PlatformInterestReport, PlatformTitle, Title
+from publications.tests.conftest import interest_rt  # noqa - fixture
 
 from logs.fake_data import ManualDataUploadFullFactory, MetricFactory, ReportTypeFactory
 from logs.models import (
@@ -208,7 +209,7 @@ class TestDataImport:
     @pytest.mark.clickhouse
     @pytest.mark.django_db(transaction=True)
     def test_interest_and_materialization_are_done_during_import(
-        self, counter_records, organizations, report_type_nd, clickhouse_on_off
+        self, counter_records, organizations, report_type_nd, clickhouse_on_off, interest_rt
     ):
         """
         Test that when records are imported, interest and materialization are done
@@ -218,7 +219,6 @@ class TestDataImport:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # now define the interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,

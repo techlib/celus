@@ -13,6 +13,7 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from recache.util import recache_queryset
 
+from logs.logic.interest import get_interest_type_dim_from_interest_rt
 from logs.logic.remap import remap_dicts
 from logs.models import (
     AccessLog,
@@ -48,7 +49,7 @@ def interest_annotation_params(
     :param prefix: prefix to use for the accesslog fields
     :return:
     """
-    interest_type_dim = interest_rt.dimensions_sorted[0]
+    interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
     interest_annot_params = {
         interest_value_to_annot_name(interest_type): Coalesce(
             Sum(
@@ -72,7 +73,7 @@ def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
     :param objects: objects of extraction
     :return:
     """
-    interest_type_dim = interest_rt.dimensions_sorted[0]
+    interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
     int_param_name_to_interest_type = {
         interest_value_to_annot_name(dt): dt for dt in interest_type_dim.dimensiontext_set.all()
     }

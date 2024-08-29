@@ -38,6 +38,8 @@ from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
+from tags.fake_data import TagForTitleFactory
+from tags.models import AccessibleBy
 
 from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
@@ -754,104 +756,6 @@ class TestPlatformTitleAPI:
         assert data[0]["name"] == titles[0].name
         assert data[0]["interests"]["interest1"] == 3
 
-    def test_authorized_user_accessible_platforms_interest_by_platform(
-        self, authenticated_client, accesslogs_with_interest, valid_identity
-    ):
-        """
-        Tests the view that returns interest summed up by platform for each title
-        """
-        identity = Identity.objects.select_related("user").get(identity=valid_identity)
-        organization = accesslogs_with_interest["organization"]
-        platform = accesslogs_with_interest["platform"]
-        UserOrganization.objects.create(user=identity.user, organization=organization)
-        resp = authenticated_client.get(
-            reverse("title-interest-by-platform-list", args=[organization.pk])
-        )
-        assert resp.status_code == 200
-        assert "results" in resp.json()
-        data = resp.json()["results"]
-        assert len(data) == 2
-        assert str(platform.pk) in data[0]["interests"]
-
-    def test_authorized_user_accessible_platforms_interest_by_platform_more_platforms(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
-    ):
-        identity = Identity.objects.select_related("user").get(identity=valid_identity)
-        organization = accesslogs_with_interest["organization"]
-        platform = accesslogs_with_interest["platform"]
-        titles = accesslogs_with_interest["titles"]
-        UserOrganization.objects.create(user=identity.user, organization=organization)
-        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformTitle.objects.create(
-            platform=platform2, title=titles[0], organization=organization, date="2020-01-01"
-        )
-        resp = authenticated_client.get(
-            reverse("title-interest-by-platform-list", args=[organization.pk])
-        )
-        assert resp.status_code == 200
-        assert "results" in resp.json()
-        data = resp.json()["results"]
-        assert len(data) == 2
-        assert len(data[0]["interests"]) == 2, "there should be interest for two platforms"
-        assert str(platform.pk) in data[0]["interests"]
-        assert str(platform2.pk) in data[0]["interests"]
-
-    def test_title_interest_by_platform_with_yops(self, admin_client, interest_rt):
-        """
-        Tests the view that returns interest summed up by platform for each title
-        """
-        org = OrganizationFactory()
-        tr: ReportType = ReportTypeFactory(short_name="TR", dimensions=["YOP"])
-        yop_attr = tr.dim_name_to_dim_attr("YOP")
-        yop_dim = tr.dimension_by_attr_name(yop_attr)
-        t1, t2, t3, t4 = TitleFactory.create_batch(4)
-        ib = ImportBatchFactory(report_type=tr, organization=org)
-        metric = MetricFactory(short_name="Total_Item_Investigations")
-        yop_2010 = DimensionText.objects.create(text="2010", dimension=yop_dim)
-        yop_2011 = DimensionText.objects.create(text="2011", dimension=yop_dim)
-        # t1 will have yop 2010 and 2011
-        AccessLogFactory(
-            import_batch=ib, target=t1, value=1, metric=metric, **{yop_attr: yop_2010.pk}
-        )
-        AccessLogFactory(
-            import_batch=ib, target=t1, value=2, metric=metric, **{yop_attr: yop_2011.pk}
-        )
-        # t2 will have yop 2011
-        AccessLogFactory(
-            import_batch=ib, target=t2, value=3, metric=metric, **{yop_attr: yop_2011.pk}
-        )
-        # t3 will have no yop
-        AccessLogFactory(import_batch=ib, target=t3, value=5, metric=metric)
-        # t4 will have yop 2010 and 2011 but with No_License metric, so it should not be included
-        AccessLogFactory(
-            import_batch=ib, target=t4, value=7, metric=metric, **{yop_attr: yop_2010.pk}
-        )
-        AccessLogFactory(
-            import_batch=ib,
-            target=t4,
-            value=7,
-            metric=MetricFactory(short_name="No_License"),
-            **{yop_attr: yop_2011.pk},
-        )
-        create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
-
-        resp = admin_client.get(reverse("title-interest-by-platform-list", args=[org.pk]))
-        assert resp.status_code == 200
-        assert "results" in resp.json()
-        data = resp.json()["results"]
-        assert len(data) == 4
-        for rec in data:
-            if rec["pk"] == t1.pk:
-                assert rec["yops"] == {f"{ib.platform_id}": {"min": 2010, "max": 2011}}
-            elif rec["pk"] == t2.pk:
-                assert rec["yops"] == {f"{ib.platform_id}": {"min": 2011, "max": 2011}}
-            elif rec["pk"] == t3.pk:
-                assert f"{ib.platform_id}" not in rec["yops"]
-            elif rec["pk"] == t4.pk:
-                assert rec["yops"] == {
-                    f"{ib.platform_id}": {"min": 2010, "max": 2010}
-                }, "2011 should be ignored because of No_License metric"
-
     def test_organization_platforms_overlap(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
@@ -860,10 +764,29 @@ class TestPlatformTitleAPI:
         platform = accesslogs_with_interest["platform"]
         titles = accesslogs_with_interest["titles"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
-        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformTitle.objects.create(
-            platform=platform2, title=titles[0], organization=organization, date="2020-01-01"
+
+        # first without any overlap and one platform
+        resp = authenticated_client.get(
+            reverse("organization-platform-overlap", args=[organization.pk])
         )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, "1 self-overlap record"
+
+        # add some usage to platform 2 and title 1 to create overlap
+        platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
+        rt = accesslogs_with_interest["rt"]
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
+        ib = ImportBatchFullFactory.create(
+            platform=platform2,
+            organization=organization,
+            date="2020-01-01",
+            report_type=rt,
+            create_accesslogs__titles=[titles[0]],
+            create_accesslogs__metrics=[accesslogs_with_interest["metric"]],
+        )
+        sync_interest_by_import_batches(ImportBatch.objects.filter(pk=ib.pk))
+
         resp = authenticated_client.get(
             reverse("organization-platform-overlap", args=[organization.pk])
         )
@@ -891,10 +814,21 @@ class TestPlatformTitleAPI:
         platform = accesslogs_with_interest["platform"]
         titles = accesslogs_with_interest["titles"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
+
+        # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformTitle.objects.create(
-            platform=platform2, title=titles[0], organization=organization, date="2019-03-01"
+        rt = accesslogs_with_interest["rt"]
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
+        ib = ImportBatchFullFactory.create(
+            platform=platform2,
+            organization=organization,
+            date="2019-03-01",
+            report_type=rt,
+            create_accesslogs__titles=[titles[0]],
+            create_accesslogs__metrics=[accesslogs_with_interest["metric"]],
         )
+        sync_interest_by_import_batches(ImportBatch.objects.filter(pk=ib.pk))
+
         # first with start_date allowing all records in
         resp = authenticated_client.get(
             reverse("organization-platform-overlap", args=[organization.pk]), {"start": "2019-01"}
@@ -924,18 +858,31 @@ class TestPlatformTitleAPI:
         ), "1 self-overlap"
 
     def test_organization_all_platform_overlap(
-        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
+        self, authenticated_client, accesslogs_with_interest, valid_identity, platforms, interest_rt
     ):
         identity = Identity.objects.select_related("user").get(identity=valid_identity)
         organization = accesslogs_with_interest["organization"]
         platform = accesslogs_with_interest["platform"]
         titles = accesslogs_with_interest["titles"]
         UserOrganization.objects.create(user=identity.user, organization=organization)
+
+        # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformTitle.objects.create(
-            platform=platform2, title=titles[0], organization=organization, date="2020-01-01"
+        rt = accesslogs_with_interest["rt"]
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
+        ib = ImportBatchFullFactory.create(
+            platform=platform2,
+            organization=organization,
+            date="2019-03-01",
+            report_type=rt,
+            create_accesslogs__titles=[titles[0]],
+            create_accesslogs__metrics=[accesslogs_with_interest["metric"]],
+            create_accesslogs__value=1,
         )
-        OrganizationPlatform.objects.create(organization=organization, platform=platform2)
+        sync_interest_by_import_batches(ImportBatch.objects.filter(pk=ib.pk))
+
+        print(list(AccessLog.objects.filter(report_type=interest_rt)))
+
         resp = authenticated_client.get(
             reverse("organization-all-platforms-overlap", args=[organization.pk])
         )
@@ -948,8 +895,8 @@ class TestPlatformTitleAPI:
                 assert rec["overlap_interest"] == 3
                 assert rec["total_interest"] == 7
             else:
-                assert rec["overlap_interest"] == 0, "no interest on platform 2"
-                assert rec["total_interest"] == 0, "no interest on platform 2"
+                assert rec["overlap_interest"] == 1, "interest is 1 on platform 2"
+                assert rec["total_interest"] == 1, "interest is 1 on platform 2"
 
     def test_organization_all_platform_overlap_2(
         self,
@@ -1099,11 +1046,22 @@ class TestPlatformTitleAPI:
         organization = accesslogs_with_interest["organization"]
         platform = accesslogs_with_interest["platform"]
         titles = accesslogs_with_interest["titles"]
+
+        # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformTitle.objects.create(
-            platform=platform2, title=titles[0], organization=organization, date="2020-01-01"
+        rt = accesslogs_with_interest["rt"]
+        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
+        ib = ImportBatchFullFactory.create(
+            platform=platform2,
+            organization=organization,
+            date="2020-01-01",
+            report_type=rt,
+            create_accesslogs__titles=[titles[0]],
+            create_accesslogs__metrics=[accesslogs_with_interest["metric"]],
+            create_accesslogs__value=1,
         )
-        OrganizationPlatform.objects.create(organization=organization, platform=platform2)
+        sync_interest_by_import_batches(ImportBatch.objects.filter(pk=ib.pk))
+
         resp = master_user_client.get(reverse("organization-all-platforms-overlap", args=["-1"]))
         assert resp.status_code == 200
         data = resp.json()
@@ -1111,11 +1069,11 @@ class TestPlatformTitleAPI:
         for rec in data:
             assert rec["overlap"] == 1, "both platforms share the same title"
             if rec["platform"] == platform.pk:
-                assert rec["overlap_interest"] == 11
+                assert rec["overlap_interest"] == 3
                 assert rec["total_interest"] == 15
             else:
-                assert rec["overlap_interest"] == 0, "no interest on platform 2"
-                assert rec["total_interest"] == 0, "no interest on platform 2"
+                assert rec["overlap_interest"] == 1, "no interest on platform 2"
+                assert rec["total_interest"] == 1, "no interest on platform 2"
 
     def test_platform_title_ids_list(self, master_user_client, accesslogs_with_interest):
         """
@@ -1247,6 +1205,261 @@ class TestPlatformTitleAPI:
             assert data[0]["pk"] == t.pk
         else:
             assert len(data) == 0, f'nothing should match "{q}"'
+
+
+@pytest.mark.django_db
+class TestTitlesOnMultiplePlatforms:
+    """
+    Tests the `titles-on-multiple-platforms` view because it contains a raw SQL query and thus needs
+    more attention.
+    """
+
+    @pytest.fixture
+    def overlaping_data(self, interest_rt, users):
+        """
+        Creates 4 titles with some TR usage and corresponding interest. The titles are on multiple
+        platforms and have YOP data.
+        """
+        org = OrganizationFactory()
+        tr: ReportType = ReportTypeFactory(short_name="TR", dimensions=["Access_Type", "YOP"])
+        yop_attr = tr.dim_name_to_dim_attr("YOP")
+        at_attr = tr.dim_name_to_dim_attr("Access_Type")
+        yop_dim = tr.dimension_by_attr_name(yop_attr)
+        at_dim = tr.dimension_by_attr_name(at_attr)
+        t1 = TitleFactory(pub_type="J", name="foo", issn="1234-5678")
+        t2 = TitleFactory(pub_type="J", name="bar", eissn="2345-6789")
+        t3 = TitleFactory(pub_type="J", name="foobar", issn="1234-9876")
+        t4 = TitleFactory(pub_type="B", name="bazooka", doi="10.1007/9876.5432")
+        p1, p2 = PlatformFactory.create_batch(2)
+        ib1 = ImportBatchFactory(report_type=tr, organization=org, platform=p1)
+        ib2 = ImportBatchFactory(report_type=tr, organization=org, platform=p2)
+        metric = MetricFactory(short_name="Total_Item_Requests")
+        yop_2010 = DimensionText.objects.create(text="2010", dimension=yop_dim)
+        yop_2011 = DimensionText.objects.create(text="2011", dimension=yop_dim)
+        at_controlled = DimensionText.objects.create(text="Controlled", dimension=at_dim)
+        # define interest for the TR report type
+        PlatformInterestReport.objects.create(report_type=tr, platform=p1)
+        PlatformInterestReport.objects.create(report_type=tr, platform=p2)
+        ReportInterestMetric.objects.create(
+            report_type=tr,
+            metric=metric,
+            interest_group=InterestGroup.objects.create(
+                short_name="interest1", position=1, implies_availability=True
+            ),
+        )
+        # add tags to some of the titles
+        # t1 - tag1, tag2, tag3
+        # t2 - tag2
+        # t4 - tag3
+        tag1, tag2 = TagForTitleFactory.create_batch(2)
+        tag3 = TagForTitleFactory(owner=users["admin2"], can_see=AccessibleBy.OWNER)
+        tag1.tag(t1, users["admin1"])
+        tag1.tag(t2, users["admin1"])
+        tag2.tag(t1, users["admin1"])
+        tag3.tag(t1, users["admin2"])
+        tag3.tag(t4, users["admin2"])
+        # t1 will have yop 2010 and 2011 and both platforms
+        for ib_idx, ib in enumerate([ib1, ib2]):
+            for yop_idx, yop in enumerate([yop_2010, yop_2011]):
+                AccessLogFactory(
+                    import_batch=ib,
+                    target=t1,
+                    value=(ib_idx + 2) * (yop_idx + 1),
+                    metric=metric,
+                    **{yop_attr: yop.pk, at_attr: at_controlled.pk},
+                )
+        # t2 will have yop 2011 and both platforms
+        for ib_idx, ib in enumerate([ib1, ib2]):
+            AccessLogFactory(
+                import_batch=ib,
+                target=t2,
+                value=ib_idx + 3,
+                metric=metric,
+                **{yop_attr: yop_2011.pk, at_attr: at_controlled.pk},
+            )
+        # t3 will have only one platform
+        AccessLogFactory(
+            import_batch=ib,
+            target=t3,
+            value=5,
+            metric=metric,
+            **{at_attr: at_controlled.pk, yop_attr: yop_2010.pk},
+        )
+        # t4 will have both platforms and yop 2010 and 2011 but with No_License metric,
+        # so it should be included, but not have YOP 2011
+        no_license_metric = MetricFactory(short_name="No_License")
+        for ib_idx, ib in enumerate([ib1, ib2]):
+            AccessLogFactory(
+                import_batch=ib,
+                target=t4,
+                value=(ib_idx + 1) * 7,
+                metric=metric,
+                **{yop_attr: yop_2010.pk, at_attr: at_controlled.pk},
+            )
+            AccessLogFactory(
+                import_batch=ib,
+                target=t4,
+                value=(ib_idx + 1) * 11,
+                metric=no_license_metric,
+                **{yop_attr: yop_2011.pk, at_attr: at_controlled.pk},
+            )
+            # the following will not have Access_Type 'Controlled' and should not be included
+            AccessLogFactory(
+                import_batch=ib,
+                target=t4,
+                value=(ib_idx + 1) * 13,
+                metric=metric,
+                **{yop_attr: yop_2011.pk},
+            )
+        sync_interest_by_import_batches()
+        create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
+        return {
+            "org": org,
+            "t1": t1,
+            "t2": t2,
+            "t3": t3,
+            "t4": t4,
+            "ib1": ib1,
+            "ib2": ib2,
+            "tr": tr,
+            "metric": metric,
+            "interest_rt": interest_rt,
+            "tag1": tag1,
+            "tag2": tag2,
+            "tag3": tag3,
+        }
+
+    def test_titles_on_multiple_platforms_output_structure(self, admin_client, overlaping_data):
+        """
+        Tests that `titles-on-multiple-platforms` view returns correct data - both the correct
+        list of titles and the correct YOPs for each title
+        """
+        org = overlaping_data["org"]
+        t1 = overlaping_data["t1"]
+        t2 = overlaping_data["t2"]
+        t4 = overlaping_data["t4"]
+        ib1 = overlaping_data["ib1"]
+        ib2 = overlaping_data["ib2"]
+
+        resp = admin_client.get(reverse("organization-titles-on-multiple-platforms", args=[org.pk]))
+        assert resp.status_code == 200
+        assert "results" in resp.json()
+        data = resp.json()["results"]
+        assert len(data) == 3
+        for rec in data:
+            if rec["pk"] == t1.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2010, "max": 2011},
+                    f"{ib2.platform_id}": {"min": 2010, "max": 2011},
+                }
+                assert rec["total_interest"] == 2 + 3 + 4 + 6
+            elif rec["pk"] == t2.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2011, "max": 2011},
+                    f"{ib2.platform_id}": {"min": 2011, "max": 2011},
+                }
+                assert rec["total_interest"] == 3 + 4
+            elif rec["pk"] == t4.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2010, "max": 2010},
+                    f"{ib2.platform_id}": {"min": 2010, "max": 2010},
+                }, "2011 should be ignored - no No_License metric and no Controlled access type"
+                assert rec["total_interest"] == 7 + 14 + 13 + 26
+
+    @pytest.mark.parametrize(
+        "order_by", ["total_interest", "name", "issn", "isbn", "doi", "platform_count"]
+    )
+    @pytest.mark.parametrize("desc", [True, False])
+    def test_output_ordering(self, admin_client, overlaping_data, order_by, desc):
+        """
+        Tests that the output of `titles-on-multiple-platforms` view is ordered by total interest
+        """
+        org = overlaping_data["org"]
+
+        resp = admin_client.get(
+            reverse("organization-titles-on-multiple-platforms", args=[org.pk]),
+            {"order_by": order_by, "desc": desc},
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 3
+        if desc:
+            data = list(reversed(data))
+        assert data[0][order_by] <= data[1][order_by] <= data[2][order_by]
+
+    @pytest.mark.parametrize(
+        ["pub_type", "result"], [("J", ["t1", "t2"]), ("B", ["t4"]), ("N", [])]
+    )
+    def test_pub_type_filter(self, admin_client, overlaping_data, pub_type, result):
+        """
+        Tests that the pub_type filter works as expected
+        """
+        org = overlaping_data["org"]
+
+        resp = admin_client.get(
+            reverse("organization-titles-on-multiple-platforms", args=[org.pk]),
+            {"pub_type": pub_type},
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert {rec["pk"] for rec in data} == {
+            getattr(overlaping_data[title], "pk", None) for title in result
+        }
+
+    @pytest.mark.parametrize(
+        ["tags", "result"],
+        [
+            (["tag1"], ["t1", "t2"]),
+            (["tag2"], ["t1"]),
+            (["tag1", "tag2"], ["t1", "t2"]),
+            (["tag3"], []),  # admin1 does not have access to tag3
+        ],
+    )
+    def test_tag_filter(self, admin_client, overlaping_data, tags, result):
+        """
+        Tests that the tag filter works as expected
+        """
+        org = overlaping_data["org"]
+
+        resp = admin_client.get(
+            reverse("organization-titles-on-multiple-platforms", args=[org.pk]),
+            {"tags": ",".join(str(overlaping_data[tag].pk) for tag in tags)},
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert {rec["pk"] for rec in data} == {
+            getattr(overlaping_data[title], "pk", None) for title in result
+        }
+
+    @pytest.mark.parametrize(
+        ["q", "result"],
+        [
+            ("foo", ["t1"]),
+            ("bar", ["t2"]),
+            ("baz", ["t4"]),
+            ("ba", ["t2", "t4"]),
+            ("prase", []),
+            ("123", ["t1"]),  # issn
+            ("234", ["t1", "t2"]),  # issn and eissn
+            ("9876", ["t4"]),  # isbn
+            ("1007", ["t4"]),  # doi
+            ("foo 1234", ["t1"]),  # name + issn
+        ],
+    )
+    def test_search_filter(self, admin_client, overlaping_data, q, result):
+        """
+        Tests that the search filter works as expected
+        """
+        org = overlaping_data["org"]
+
+        resp = admin_client.get(
+            reverse("organization-titles-on-multiple-platforms", args=[org.pk]), {"q": q}
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert {rec["pk"] for rec in data} == {
+            getattr(overlaping_data[title], "pk", None) for title in result
+        }
 
 
 @pytest.mark.django_db
@@ -1477,8 +1690,8 @@ class TestAllPlatformsAPI:
         )
         assert resp.status_code == 200
         assert len(resp.data) == record_count
-        for record in resp.data:
-            assert record.keys() == {
+        for rec in resp.data:
+            assert rec.keys() == {
                 "url",
                 "organization",
                 "platform",
@@ -1600,7 +1813,7 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     organization = organizations["root"]
     platform = platforms["root"]
     rt = report_type_nd(0)
-    ig = InterestGroup.objects.create(short_name="interest1", position=1)
+    ig = InterestGroup.objects.create(short_name="interest1", position=1, implies_availability=True)
     metric = Metric.objects.create(short_name="m1", name="Metric1")
     ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
     PlatformInterestReport.objects.create(report_type=rt, platform=platform)
@@ -1648,7 +1861,8 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     return {
         key: val
         for key, val in locals().items()
-        if key in ("accesslogs", "titles", "organization", "platform", "import_batch", "metric")
+        if key
+        in ("accesslogs", "titles", "organization", "platform", "import_batch", "metric", "rt")
     }
 
 

@@ -1,5 +1,6 @@
 from datetime import date
 from random import randint
+from typing import List, Optional, Union
 
 import factory
 import faker
@@ -9,10 +10,13 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
 from organizations.fake_data import OrganizationFactory
+from organizations.models import Organization
 from publications.fake_data import PlatformFactory, TitleFactory
-from publications.models import PlatformTitle
+from publications.models import Platform, PlatformInterestReport, PlatformTitle
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
+from logs.logic.data_import import create_platformtitle_links_from_accesslogs
+from logs.logic.materialized_interest import sync_interest_by_import_batches
 from logs.models import (
     AccessLog,
     Dimension,
@@ -22,6 +26,7 @@ from logs.models import (
     ManualDataUpload,
     MduState,
     Metric,
+    ReportInterestMetric,
     ReportType,
     ReportTypeToDimension,
 )
@@ -41,6 +46,7 @@ C,views,Pub2,Denied,4,4,4"""
 class MetricFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Metric
+        django_get_or_create = ("short_name",)
 
     short_name = factory.Faker("name")
     name = factory.Faker("name")
@@ -62,7 +68,9 @@ class ReportTypeFactory(factory.django.DjangoModelFactory):
         if extracted:
             for i, d in enumerate(extracted):
                 dim, _created = Dimension.objects.get_or_create(short_name=d, defaults={"name": d})
-                ReportTypeToDimension.objects.create(report_type=obj, dimension=dim, position=i)
+                ReportTypeToDimension.objects.get_or_create(
+                    report_type=obj, dimension=dim, position=i
+                )
 
 
 class ImportBatchFactory(factory.django.DjangoModelFactory):
@@ -73,6 +81,7 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ImportBatch
+        django_get_or_create = ("organization", "platform", "report_type", "date")
 
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
@@ -236,3 +245,63 @@ class DimensionTextFactory(factory.django.DjangoModelFactory):
         model = DimensionText
 
     dimension = factory.SubFactory(DimensionFactory)
+
+
+def create_interest_for_title(
+    title,
+    org: Optional[Organization] = None,
+    platforms: Optional[List[Platform]] = None,
+    dates: Optional[List[Union[date, str]]] = None,
+    create_full_text=True,
+    create_no_license=True,
+):
+    org = org or OrganizationFactory()
+    platforms = platforms or [PlatformFactory()]
+    dates = dates or [date(2021, 1, 1)]
+    tr: ReportType = ReportTypeFactory(short_name="TR", dimensions=["Access_Type"])
+    at_attr = tr.dim_name_to_dim_attr("Access_Type")
+    at_dim = tr.dimension_by_attr_name(at_attr)
+    ibs = [
+        ImportBatchFactory(report_type=tr, organization=org, platform=p, date=d)
+        for p in platforms
+        for d in dates
+    ]
+    full_text_metric = MetricFactory(short_name="Total_Item_Requests")
+    no_license_metric = MetricFactory(short_name="No_License")
+    at_controlled, _created = DimensionText.objects.get_or_create(
+        text="Controlled", dimension=at_dim
+    )
+    # define interest for the TR report type
+    for p in platforms:
+        PlatformInterestReport.objects.get_or_create(report_type=tr, platform=p)
+    ReportInterestMetric.objects.get_or_create(
+        report_type=tr,
+        metric=full_text_metric,
+        interest_group=InterestGroupFactory.create(
+            short_name="interest1", position=1, implies_availability=True
+        ),
+    )
+    ReportInterestMetric.objects.get_or_create(
+        report_type=tr,
+        metric=no_license_metric,
+        interest_group=InterestGroupFactory.create(
+            short_name="interest2", position=2, implies_availability=False
+        ),
+    )
+    metrics = []
+    if create_full_text:
+        metrics.append(full_text_metric)
+    if create_no_license:
+        metrics.append(no_license_metric)
+    for ib_idx, ib in enumerate(ibs):
+        for m_idx, m in enumerate(metrics):
+            AccessLogFactory(
+                import_batch=ib,
+                target=title,
+                value=(ib_idx + 1) * (m_idx + 2),
+                metric=m,
+                **{at_attr: at_controlled.pk},
+            )
+    sync_interest_by_import_batches()
+    create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
+    return {"import_batches": ibs, "organization": org, "platforms": platforms}

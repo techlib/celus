@@ -89,7 +89,7 @@ en:
     status: Status
     platforms: Platforms
     report_types: Report types
-    nonzero_platforms: Non-zero interest platforms
+    platform_count: Platform count
     total_interest: Total interest
     ratios: Ratio
     organizations: Organizations
@@ -484,7 +484,7 @@ cs:
     status: Stav
     platforms: Platformy
     report_types: Typy reportů
-    nonzero_platforms: Platformy s nenulovým zájmem
+    platform_count: Počet platforem
     total_interest: Celkový zájem
     ratios: Rozložení
     organizations: Organizace

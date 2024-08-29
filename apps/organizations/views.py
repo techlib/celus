@@ -3,22 +3,26 @@ import logging
 from collections import Counter
 from time import monotonic
 
+from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.bins import bin_hits
 from core.logic.dates import date_filter_from_params, month_end
+from core.logic.type_conversion import to_bool
 from core.logic.util import text_hash
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from core.tasks import async_mail_customer_care_admins
 from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.cache import cache
 from django.db import connection, transaction
 from django.db.models import Count, Exists, Max, Min, OuterRef, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.urls import reverse
+from logs.logic.interest import get_interest_subdim_ids_implying_availability
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import AccessLog, OrganizationPlatform, ReportType
+from logs.models import AccessLog, DimensionText, Metric, OrganizationPlatform, ReportType
 from recache.util import recache_queryset
 from rest_framework import status
 from rest_framework.decorators import action
@@ -26,6 +30,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from sushi.models import SushiCredentials
+from tags.models import Tag
 
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
@@ -254,48 +259,64 @@ For more info see Django admin: {request.build_absolute_uri(
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
 
+    def _overlap_accesslog_filters(self, request, pk) -> (str, dict, dict):
+        """
+        Returns
+
+        * a string with SQL WHERE part,
+        * a dictionary with parameters for the WHERE part,
+        * a dictionary with filters for the AccessLog query as used by Django ORM.
+
+        All are related to accesslogs filters applied to the request and used for overlap analysis.
+        """
+        org_filter = organization_filter_from_org_id(pk, request.user, prefix="")
+        logger.debug("Org filter: %s", org_filter)
+        date_filter = date_filter_from_params(request.GET)
+        interest_rt = ReportType.objects.get_interest_rt()
+        dim1_ids = get_interest_subdim_ids_implying_availability(interest_rt)
+
+        where_parts = ["report_type_id = %(rt_id)s", "dim1 IN %(dim1_ids)s"]
+        where_params = {"rt_id": interest_rt.pk, "dim1_ids": tuple(dim1_ids)}
+        if "date__gte" in date_filter:
+            where_parts.append("date >= %(date__gte)s")
+            where_params.update(date_filter)
+        if "date__lte" in date_filter:
+            where_parts.append("date <= %(date__lte)s")
+            where_params.update(date_filter)
+        if org_filter:
+            where_parts.append("organization_id = %(org_id)s")
+            where_params["org_id"] = org_filter["organization__pk"]
+
+        if where_part := " AND ".join(where_parts):
+            where_part = "WHERE " + where_part
+
+        return (
+            where_part,
+            where_params,
+            {"report_type": interest_rt, "dim1__in": dim1_ids, **org_filter, **date_filter},
+        )
+
     @action(detail=True, url_path="platform-overlap")
     def platform_overlap(self, request, pk):
         """
         API that returns a specific reply for platform-platform overlap analysis
         """
-        org_filter = organization_filter_from_org_id(pk, request.user, prefix=None)
-        date_filter = date_filter_from_params(request.GET)
-        main_where_parts = []
-        sub_where_parts = []
-        where_params = {}
-        if "date__gte" in date_filter:
-            sub_where_parts.append("date >= %(date__gte)s")
-            where_params.update(date_filter)
-        if "date__lte" in date_filter:
-            sub_where_parts.append("date <= %(date__lte)s")
-            where_params.update(date_filter)
-        if org_filter:
-            main_where_parts.append(
-                "A.organization_id = %(org_id)s AND B.organization_id = %(org_id)s"
-            )
-            where_params["org_id"] = org_filter["pk"]
-
-        main_where_part = " AND ".join(main_where_parts)
-        if main_where_part:
-            main_where_part = "WHERE " + main_where_part
-
-        sub_where_part = " AND ".join(sub_where_parts)
-        if sub_where_part:
-            sub_where_part = "WHERE " + sub_where_part
+        where_sql, where_params, _dj_filters = self._overlap_accesslog_filters(request, pk)
 
         query = f"""
           SELECT A."platform_id",
                  B."platform_id",
-                 COUNT(DISTINCT A."title_id") AS "count"
+                 COUNT(DISTINCT A."title_id") AS "count",
+                 SUM(value) AS sum
           FROM
-              (SELECT DISTINCT organization_id, platform_id, title_id FROM
-               publications_platformtitle {sub_where_part}) AS A
+              (SELECT organization_id, platform_id, target_id as title_id, SUM(value) AS value
+               FROM logs_accesslog {where_sql}
+               GROUP BY organization_id, platform_id, target_id
+               ) AS A
             INNER JOIN
-              (SELECT DISTINCT organization_id, platform_id, title_id FROM
-               publications_platformtitle {sub_where_part}) AS B
+              (SELECT DISTINCT organization_id, platform_id, target_id as title_id
+               FROM logs_accesslog {where_sql}) AS B
             ON (A."title_id" = B."title_id" AND A."organization_id" = B."organization_id")
-            {main_where_part}
           GROUP BY A."platform_id", B."platform_id";"""
         logger.debug("Overlap raw query: %s", query)
 
@@ -306,8 +327,8 @@ For more info see Django admin: {request.build_absolute_uri(
                 start = monotonic()
                 cursor.execute(query, where_params)
                 result = [
-                    {"platform1": p1, "platform2": p2, "overlap": overlap}
-                    for p1, p2, overlap in cursor.fetchall()
+                    {"platform1": p1, "platform2": p2, "overlap": overlap, "interest": interest}
+                    for p1, p2, overlap, interest in cursor.fetchall()
                 ]
                 if monotonic() - start > 2:
                     # only cache results that take more than 2 seconds to compute
@@ -324,73 +345,34 @@ For more info see Django admin: {request.build_absolute_uri(
         API that returns an overlap of each platform with all the other platforms together.
 
         This view uses similar approach to the previous one - most of the calculation is done
-        by a hand crafter raw SQL query.
-
-        Compared to the previous version this one fixes an error where overlap was sometimes
-        reported in interest even thouth the overlapping titles were for different organizations.
-        It is also significantly faster. In my tests on copy of K1 db it took 18 seconds
-        compared to 76 seconds for the previous version.
+        by a hand-crafted raw SQL query.
         """
-        org_filter = organization_filter_from_org_id(pk, request.user, prefix="")
-        date_filter = date_filter_from_params(request.GET)
-        interest_rt = ReportType.objects.get_interest_rt()
-        main_where_parts = []
-        sub_where_parts = []
-        join_parts = ["report_type_id = %(rt_id)s"]
-        where_params = {"rt_id": interest_rt.pk}
-        if "date__gte" in date_filter:
-            sub_where_parts.append("date >= %(date__gte)s")
-            join_parts.append("date >= %(date__gte)s")
-            where_params.update(date_filter)
-        if "date__lte" in date_filter:
-            sub_where_parts.append("date <= %(date__lte)s")
-            join_parts.append("date <= %(date__lte)s")
-            where_params.update(date_filter)
-        if org_filter:
-            main_where_parts.append(
-                "A.organization_id = %(org_id)s AND B.organization_id = %(org_id)s"
-            )
-            sub_where_parts.append("organization_id = %(org_id)s")
-            join_parts.append("organization_id = %(org_id)s")
-            where_params["org_id"] = org_filter["organization__pk"]
+        where_sql, where_params, accesslog_filters = self._overlap_accesslog_filters(request, pk)
 
-        if main_where_part := " AND ".join(main_where_parts):
-            main_where_part = "WHERE " + main_where_part
-
-        if sub_where_part := " AND ".join(sub_where_parts):
-            sub_where_part = "WHERE " + sub_where_part
-
-        if join_part := " AND ".join(join_parts):
-            join_part = "AND " + join_part
-
-        # left outer join below is used to correctly count all the titles, not only
-        # those with interest
         query = f"""
-        SELECT X.platform_id, COALESCE(SUM(al.value), 0), COUNT(DISTINCT X.title_id)
-            FROM (
-                SELECT A."platform_id", A."title_id"
-                FROM (
-                    SELECT DISTINCT organization_id,
-                           platform_id,
-                           title_id
-                      FROM publications_platformtitle {sub_where_part}
-                    ) AS A
-                    INNER JOIN (
-                        SELECT DISTINCT organization_id,
-                               platform_id,
-                               title_id
-                          FROM publications_platformtitle {sub_where_part}
-                       ) AS B
-                    ON (A."title_id" = B."title_id"
-                        AND A."organization_id" = B."organization_id"
-                        AND A."platform_id" != B."platform_id")
-                    {main_where_part}
-                    GROUP BY A."platform_id", A.title_id
-                ) AS X
-        LEFT OUTER JOIN logs_accesslog al
-            ON al.platform_id = X.platform_id
-            {join_part}
-            AND target_id = X.title_id
+        SELECT X.platform_id,
+               COALESCE(SUM(X.value), 0) as sum,
+               COUNT(DISTINCT X.title_id) as count
+        FROM (
+        SELECT A.platform_id,
+               A.title_id,
+               MIN(A.value) AS value -- for each platform and title, take only one value -
+               -- all are the same anyway, so we use min
+               -- this prevents double counting when a title is on multiple other platforms
+        FROM (SELECT organization_id,
+                     platform_id,
+                     target_id as title_id,
+                     SUM(value) AS value
+              FROM logs_accesslog {where_sql}
+              GROUP BY organization_id, platform_id, target_id) AS A
+                 INNER JOIN (SELECT DISTINCT organization_id,
+                                             platform_id,
+                                             target_id as title_id
+                             FROM logs_accesslog {where_sql}) AS B
+                            ON (A."title_id" = B."title_id" AND
+                                A."organization_id" = B."organization_id" AND
+                                A."platform_id" != B."platform_id")
+        GROUP BY A."platform_id", A.title_id) AS X
         GROUP BY X.platform_id;
         """
         start = monotonic()
@@ -409,10 +391,9 @@ For more info see Django admin: {request.build_absolute_uri(
                     cache.set(cache_key, pid_to_counts, timeout=5 * 60)
 
         # overall interest
-        accesslog_filter = {"report_type": interest_rt, **org_filter, **date_filter}
-        replace_report_type_with_materialized(accesslog_filter)
+        replace_report_type_with_materialized(accesslog_filters)
         total_overlap_interests = (
-            AccessLog.objects.filter(**accesslog_filter)
+            AccessLog.objects.filter(**accesslog_filters)
             .values("platform")
             .annotate(interest=Coalesce(Sum("value"), 0))
         )
@@ -421,6 +402,7 @@ For more info see Django admin: {request.build_absolute_uri(
         )
         pk_to_total_interest = {rec["platform"]: rec["interest"] for rec in total_overlap_interests}
 
+        org_filter = organization_filter_from_org_id(pk, request.user, prefix="")
         org_pl_qs = OrganizationPlatform.objects.filter(**org_filter)
         result = [
             {
@@ -432,6 +414,196 @@ For more info see Django admin: {request.build_absolute_uri(
             for pl_id in org_pl_qs.values_list("platform_id", flat=True).distinct()
         ]
         return Response(result)
+
+    @action(detail=True, url_path="titles-on-multiple-platforms")
+    def titles_on_multiple_platforms(self, request, pk):
+        where_sql, where_params, accesslog_filters = self._overlap_accesslog_filters(request, pk)
+
+        # pagination and ordering parameters
+        page = int(request.query_params.get("page", 1))
+        page_size = int(request.query_params.get("page_size", 25))
+        where_params["limit"] = page_size
+        where_params["offset"] = (page - 1) * page_size
+        order_by = request.query_params.get("order_by", "total_interest")
+        if order_by in ("name", "isbn", "issn", "eissn", "doi", "pub_type"):
+            order_by = f"t.{order_by}"
+        elif order_by in ("total_interest", "platform_count"):
+            pass
+        else:
+            raise BadRequestException(f"Invalid order_by value: {order_by}")
+        desc = to_bool(request.query_params.get("desc", "true"))
+        desc_chunk = "DESC" if desc else "ASC"
+
+        # title filters
+        title_where_parts = []
+
+        if q := request.query_params.get("q"):
+            full_text_attrs = ("name", "isbn", "issn", "eissn", "doi")
+            for i, p in enumerate(q.split()):
+                title_where_parts.append(
+                    " OR ".join(f"t.{attr} ILIKE %(q{i:03})s" for attr in full_text_attrs)
+                )
+                where_params[f"q{i:03}"] = f"%{p}%"
+        if pub_type := request.query_params.get("pub_type"):
+            title_where_parts.append("t.pub_type = %(pub_type)s")
+            where_params["pub_type"] = pub_type
+        if tags := request.query_params.get("tags", "").strip():
+            tag_ids = [int(tag_id) for tag_id in tags.split(",")]
+            # clean the tag_ids to only those that are accessible by the user
+            if tag_ids := tuple(
+                Tag.objects.user_accessible_tags(self.request.user)
+                .filter(pk__in=tag_ids)
+                .values_list("pk", flat=True)
+            ):
+                title_where_parts.append(
+                    "t.id IN "
+                    "(SELECT DISTINCT target_id FROM tags_titletag WHERE tag_id IN %(tags)s)"
+                )
+                where_params["tags"] = tag_ids
+            else:
+                # no tags made it through the filter, so we want to return an empty result
+                # (for some reason, `IN ()` does not work in Postgres)
+                title_where_parts.append("FALSE")
+
+        title_where_sql = ""
+        if title_where_parts:
+            title_where_sql = "WHERE " + " AND ".join(title_where_parts)
+
+        query = f"""
+        SELECT target_id, total_interest, platform_count, platform_interest, _count,
+               t.name, t.pub_type, t.isbn, t.issn, t.eissn, t.doi, t.proprietary_ids
+        FROM(
+            SELECT target_id,
+                   COALESCE(SUM(X."value"), 0)               AS "total_interest",
+                   COUNT(DISTINCT X."platform_id")           AS "platform_count",
+                   json_object_agg(X."platform_id", X.value) AS platform_interest,
+                   COUNT(*) OVER ()                          AS "_count"
+            FROM (
+                SELECT target_id, platform_id, SUM(value) as value
+                    FROM logs_accesslog {where_sql}
+                    GROUP BY target_id, platform_id
+                ) AS X
+            GROUP BY target_id
+            HAVING COUNT(X."platform_id") > 1
+            ) AS Y
+        JOIN publications_title t ON t.id = Y.target_id
+        {title_where_sql}
+        ORDER BY {order_by} {desc_chunk}
+        LIMIT %(limit)s OFFSET %(offset)s;
+        """
+        logger.debug("Titles on multiple platforms raw query: %s", query)
+        total_count = 0
+        result = []
+        with connection.cursor() as cursor:
+            cursor.execute(query, where_params)
+            for (
+                target_id,
+                total_interest,
+                platform_count,
+                platform_interest,
+                _count,
+                name,
+                pub_type,
+                isbn,
+                issn,
+                eissn,
+                doi,
+                proprietary_ids,
+            ) in cursor.fetchall():
+                total_count = _count
+
+                result.append(
+                    {
+                        "pk": target_id,
+                        "name": name,
+                        "issn": issn,
+                        "isbn": isbn,
+                        "eissn": eissn,
+                        "doi": doi,
+                        "pub_type": pub_type,
+                        "proprietary_ids": proprietary_ids,
+                        "total_interest": int(total_interest),
+                        "platform_count": platform_count,
+                        "interests": platform_interest,
+                    }
+                )
+
+        # add YOP information from the TR
+        yop_excluded_metrics = [
+            "No_License",
+            "Limit_Exceeded",
+            "Total_Item_Investigations",
+            "Unique_Item_Investigations",
+        ]
+        allowed_access_types = ["Controlled"]
+        try:
+            tr = ReportType.objects.get(short_name="TR")
+        except ReportType.DoesNotExist:
+            # if TR report is not present, we can't add YOPs
+            return Response({"count": total_count, "results": result})
+
+        dim_ref = tr.dim_name_to_dim_attr("YOP")
+        title_ids = {r["pk"] for r in result}
+        excluded_metrics = Metric.objects.filter(short_name__in=yop_excluded_metrics)
+        # we want to limit the access types to only "Controlled", OA will be available regardless
+        # of the subscription the organization has
+        access_type_dim_ref = tr.dim_name_to_dim_attr("Access_Type")
+        access_type_dim = tr.dimension_by_attr_name(access_type_dim_ref)
+        access_type_ids = {
+            dt.pk
+            for dt in DimensionText.objects.filter(
+                text__in=allowed_access_types, dimension=access_type_dim
+            )
+        }
+        # add list of non-null YOPs for each title
+        # we use the filters from the above `accesslog_filters` but we remove the `dim1__in` filter
+        # and the `report_type` filter
+        al_filters = {
+            k: v for k, v in accesslog_filters.items() if k not in ("report_type", "dim1__in")
+        }
+        al_filters[f"{access_type_dim_ref}__in"] = access_type_ids
+        qs = (
+            AccessLog.objects.filter(
+                target_id__in=title_ids,
+                report_type_id=tr.pk,
+                **{f"{dim_ref}__isnull": False},
+                **al_filters,
+            )
+            .exclude(metric_id__in=excluded_metrics)
+            .values("target_id", "platform_id")
+            .annotate(yop_ids=ArrayAgg(dim_ref, distinct=True))
+        )
+        # the YOPs are just ids in DimensionText, we need to map them to actual values
+        all_yop_ids = set()
+        title_platform_ids_to_yop_ids = {}
+        for rec in qs:
+            all_yop_ids.update(rec["yop_ids"])
+            title_platform_ids_to_yop_ids[(rec["target_id"], rec["platform_id"])] = rec["yop_ids"]
+        remap = {
+            rec["pk"]: rec["text"]
+            for rec in DimensionText.objects.filter(pk__in=all_yop_ids).values("pk", "text")
+        }
+        for record in result:
+            yops_rec = {}
+            for platform_id in record["interests"].keys():
+                platform_id = int(platform_id)
+                yops = set()
+                for yop_id in title_platform_ids_to_yop_ids.get((record["pk"], platform_id), []):
+                    yop = remap[yop_id]
+                    try:
+                        yop = int(yop)
+                    except ValueError:
+                        # we are only interested in integer values which represent years
+                        continue
+                    if 1000 < yop < 3000:
+                        # 0001 and 9999 are used as placeholders for unknown years or ahead of print
+                        # to guard against other strange values, we only accept years between
+                        # 1000 and 3000
+                        yops.add(yop)
+                if yops:
+                    yops_rec[platform_id] = {"min": min(yops), "max": max(yops)}
+            record["yops"] = yops_rec
+        return Response({"count": total_count, "results": result})
 
 
 class StartERMSSyncOrganizationsTask(APIView):

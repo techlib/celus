@@ -2,7 +2,11 @@
 <i18n lang="yaml">
 en:
   select_pub_type: Title type filter
-  revert_selection: Revert selection
+  revert_selection: Invert selection
+
+cs:
+  select_pub_type: Typ titulu
+  revert_selection: Invertovat výběr
 </i18n>
 
 <template>

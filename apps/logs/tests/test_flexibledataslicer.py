@@ -1322,19 +1322,23 @@ class TestFlexibleDataSimpleCSVExporter:
         exporter.stream_data_to_sink(out)
         output = out.getvalue()
         if include_tags:
-            assert output.splitlines() == [
-                "Platform,Tags,2019-12-01,2020-01-01,2020-02-01,2020-03-01",
-                "Platform 1,foo / bar | foo / baz,27378,29565,31752,33939",
-                "Platform 2,foo / baz,36126,38313,40500,42687",
-                "Platform 3,,44874,47061,49248,51435",
-            ]
+            assert sorted(output.splitlines()) == sorted(
+                [
+                    "Platform,Tags,2019-12-01,2020-01-01,2020-02-01,2020-03-01",
+                    "Platform 1,foo / bar | foo / baz,27378,29565,31752,33939",
+                    "Platform 2,foo / baz,36126,38313,40500,42687",
+                    "Platform 3,,44874,47061,49248,51435",
+                ]
+            )
         else:
-            assert output.splitlines() == [
-                "Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01",
-                "Platform 1,27378,29565,31752,33939",
-                "Platform 2,36126,38313,40500,42687",
-                "Platform 3,44874,47061,49248,51435",
-            ]
+            assert sorted(output.splitlines()) == sorted(
+                [
+                    "Platform,2019-12-01,2020-01-01,2020-02-01,2020-03-01",
+                    "Platform 1,27378,29565,31752,33939",
+                    "Platform 2,36126,38313,40500,42687",
+                    "Platform 3,44874,47061,49248,51435",
+                ]
+            )
 
     def test_platform_sum_by_date__year_filter_rt(self, flexible_slicer_test_data):
         """

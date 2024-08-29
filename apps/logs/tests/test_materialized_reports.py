@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.utils.timezone import now
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import PlatformInterestReport
-from publications.tests.conftest import platform  # noqa - fixture
+from publications.tests.conftest import interest_rt, platform  # noqa - fixture
 
 from logs.fake_data import MetricFactory
 from logs.logic.data_import import import_counter_records
@@ -153,7 +153,9 @@ class TestMaterializedReport:
         qp = {"report_type": report_type, **query_params}
         assert replace_report_type_with_materialized(qp, other_used_dimensions=other_dims) == result
 
-    def test_recomputation_after_interest_changes(self, organizations, report_type_nd, platform):
+    def test_recomputation_after_interest_changes(
+        self, organizations, report_type_nd, platform, interest_rt
+    ):
         """
         When interest definition changes and interest is thus recomputed after materialization
         occurs, we need to recompute materialized reports as well.
@@ -161,7 +163,6 @@ class TestMaterializedReport:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # now define the interest
-        interest_rt = report_type_nd(1, short_name="interest")
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         # we use metric m1 with one record - we will switch to m2 later
         rim = ReportInterestMetric.objects.create(
