@@ -256,7 +256,7 @@ class TestBatchTagging:
         """
         Test that an annotated_file is correctly created during preflight and processing
         """
-        TitleFactory.create(isbn="9780787960186")
+        t1 = TitleFactory.create(isbn="9780787960186")
         TitleFactory.create(issn="1234-5678")
 
         tb = TaggingBatchFactory.create(
@@ -267,10 +267,11 @@ class TestBatchTagging:
         tb.do_preflight()
         assert tb.state == TaggingBatchState.PREFLIGHT
         reader = get_dict_reader_from_csv(tb.annotated_file.file.file)
-        assert "_Celus info_" in reader.fieldnames
+        assert "_Matched titles_" in reader.fieldnames
         row1 = next(reader)
         assert row1["ISBN"] == "9780787960186"
-        assert row1["_Celus info_"].startswith("1 match")
+        assert row1["_Matched titles_"] == "1"
+        assert row1[None][0] == str(t1.pk)
 
         # check that the annotated file is updated during import
         # first replace the file with empty one
@@ -281,10 +282,11 @@ class TestBatchTagging:
         assert tb.state == TaggingBatchState.IMPORTED
         # recheck
         reader = get_dict_reader_from_csv(tb.annotated_file.file.file)
-        assert "_Celus info_" in reader.fieldnames
+        assert "_Matched titles_" in reader.fieldnames
         row1 = next(reader)
         assert row1["ISBN"] == "9780787960186"
-        assert row1["_Celus info_"].startswith("1 match")
+        assert row1["_Matched titles_"] == "1"
+        assert row1[None][0] == str(t1.pk)
 
     def test_tagging_batch_unassign(self, inmemory_media, users):
         TitleFactory.create(isbn="9780787960186")

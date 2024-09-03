@@ -73,19 +73,19 @@ class TestTitleListOverlap:
             "eISSN",
             "note",
             "_Found on platforms_",
-            "_Matched titles_",
             "_First usage data_",
             "_Last usage data_",
+            "_Matched titles_",
         ]
         for i, rec in enumerate(reader_recs):
             if expected_counts[i] == 0:
-                assert rec["_Matched titles_"] == ""
+                assert rec["_Matched titles_"] == "0"
                 assert rec["_Found on platforms_"] == ""
                 assert rec["_First usage data_"] == ""
                 assert rec["_Last usage data_"] == ""
             else:
-                assert rec["_Matched titles_"] != ""
-                if int(rec["_Matched titles_"]) == t1.pk:
+                assert rec["_Matched titles_"] == str(expected_counts[i])
+                if int(rec[None][0]) == t1.pk:
                     assert rec["_Found on platforms_"] == "Foo"
                     assert rec["_First usage data_"] == "2020-01-01"
                     assert rec["_Last usage data_"] == "2020-01-01"

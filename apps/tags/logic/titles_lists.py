@@ -6,8 +6,7 @@ import operator
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import reduce
-from gettext import ngettext
-from typing import Any, BinaryIO, Callable, Dict, Generator, Iterable, Optional, Set
+from typing import Any, BinaryIO, Callable, Dict, Generator, Iterable, List, Optional, Set
 
 from django.db.models import Q
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
@@ -41,20 +40,17 @@ class TitleListReader(abc.ABC):
             if dump_file:
                 if not dump_writer:
                     dump_stream = codecs.getwriter("utf-8")(dump_file)
-                    dump_writer = csv.DictWriter(
-                        dump_stream,
-                        fieldnames=list(rec.source_data.keys()) + self.extra_column_names(),
-                    )
-                    dump_writer.writeheader()
+                    dump_writer = csv.writer(dump_stream)
+                    dump_writer.writerow(list(rec.source_data.keys()) + self.extra_column_names())
                 annotations = self.annotate_dump_record(rec)
-                dump_writer.writerow({**rec.source_data, **annotations})
+                dump_writer.writerow(list(rec.source_data.values()) + annotations)
             yield rec
 
     def extra_column_names(self) -> [str]:
         return []
 
-    def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
-        return {}
+    def annotate_dump_record(self, record: TitleTaggingRecord) -> List[str]:
+        return []
 
     def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):  # noqa: B027
         """
@@ -241,19 +237,15 @@ class CsvReaderMixin:
 
 
 class CsvTitleListReader(CsvReaderMixin, TitleListReader):
-    annotation_column = "_Celus info_"
+    matches_column = "_Matched titles_"
 
     def __init__(self, dump_id_formatter: Callable[[int], str] = str, **kwargs):
         super().__init__(**kwargs)
         self.dump_id_formatter = dump_id_formatter
 
     def extra_column_names(self) -> [str]:
-        return [self.annotation_column]
+        return [self.matches_column]
 
-    def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
+    def annotate_dump_record(self, record: TitleTaggingRecord) -> List[str]:
         count = len(record.title_ids)
-        annotation = ngettext("{} match", "{} matches", count).format(count)
-        if count:
-            title_ids = ", ".join(map(self.dump_id_formatter, sorted(record.title_ids)))
-            annotation += f" ({title_ids})"
-        return {self.annotation_column: annotation}
+        return [count] + list(map(self.dump_id_formatter, sorted(record.title_ids)))

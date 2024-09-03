@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Exists, Max, Min, OuterRef
@@ -40,20 +40,18 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
     def extra_column_names(self) -> [str]:
         return [
             self.platform_list_column,
-            self.match_column,
             self.start_date_column,
             self.end_date_column,
+            self.match_column,
         ]
 
-    def annotate_dump_record(self, record: TitleTaggingRecord) -> dict:
-        out = {}
-        if record.title_ids:
-            title_ids = ", ".join(map(self.dump_id_formatter, sorted(record.title_ids)))
-            out[self.match_column] = title_ids
-            out[self.platform_list_column] = ", ".join(record.extra_data["platforms"])
-            out[self.start_date_column] = record.extra_data["start_date"]
-            out[self.end_date_column] = record.extra_data["end_date"]
-        return out
+    def annotate_dump_record(self, record: TitleTaggingRecord) -> List:
+        return [
+            ", ".join(record.extra_data["platforms"]),
+            record.extra_data["start_date"],
+            record.extra_data["end_date"],
+            len(record.title_ids),
+        ] + list(map(self.dump_id_formatter, sorted(record.title_ids)))
 
     def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):
         title_ids = set()
