@@ -625,9 +625,7 @@ class FlexibleDataSlicer:
         for ob in self.order_by:
             prefix = "-" if ob.startswith("-") else ""
             ob = ob.lstrip("-")
-            dealt_with = False
             if ob == "tag" and self.tag_roll_up:
-                dealt_with = True
                 obs.append(prefix + "name")
             elif ob.startswith("dim"):
                 # when sorting by dimX we need to map the IDs to the corresponding texts
@@ -635,19 +633,15 @@ class FlexibleDataSlicer:
                 dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values("text")[:1]
                 qs = qs.annotate(**{ob + "sort": Subquery(dt_query)})
                 obs.append(prefix + ob + "sort")
-                dealt_with = True
             elif ob.startswith("grp-"):
                 if ob not in self._annotations:
                     # we ignore sort groups that are not in the data
                     logger.debug('Ignoring unknown order by "%s"', ob)
-                    dealt_with = True
                 else:
                     obs.append(prefix + ob)
-                    dealt_with = True
             elif self.trend_mode and ob in self.TREND_MODE_COLS:
                 # implicit columns created for period-over-period
                 obs.append(prefix + ob)
-                dealt_with = True
             elif (
                 ob == self.primary_dimension and not ob.startswith("date") and not self.tag_roll_up
             ):
@@ -659,7 +653,6 @@ class FlexibleDataSlicer:
                     # the following simulates this
                     qs = qs.annotate(sort_name=Concat(F(f"name_{lang}"), F("short_name")))
                     obs.append(prefix + "sort_name")
-                dealt_with = True
             elif ob.startswith(self.primary_dimension) and not self.tag_roll_up:
                 if self._primary_dimension_query:
                     # we are querying the related model, not accesslog, we need to process the
@@ -670,11 +663,10 @@ class FlexibleDataSlicer:
                     # we do not validate this, so it could be a problem, but it would crash rather
                     # than produce wrong results, so we leave it as is
                     obs.append(prefix + ob)
-                dealt_with = True
             elif ob == self.COL_TOTAL:
                 # ordering by the row totals (the column called `COL_TOTAL`)
                 obs.append(prefix + self.COL_TOTAL)
-            if not dealt_with:
+            else:
                 # this means that the order by is not consistent with the rest of the query
                 # it would be prudent to raise an error, but there are already existing data
                 # which have this problem, so we just ignore it and drop the ordering
