@@ -37,10 +37,6 @@ logger = logging.getLogger(__name__)
 
 SERVICE_NOT_AVAILABLE_MAX_RETRY_TIME = timedelta(days=1)
 SERVICE_BUSY_MAX_RETRY_TIME = timedelta(days=1)
-NO_DATA_RETRY_PERIOD = timedelta(days=1)
-DATA_NOT_READY_RETRY_PERIOD = timedelta(days=1)
-PARTIAL_DATA_RETRY_PERIOD = timedelta(days=1)
-MAX_RETRY_GAP = timedelta(days=8)
 
 # If the time between end of the harvested month and the current date is less than this
 # and the status is something that may be fixed by later attempts (e.g. no data, partial data)
@@ -48,6 +44,9 @@ MAX_RETRY_GAP = timedelta(days=8)
 # If the time gap is longer than this, we will accept the data as definitive
 # Note: currently only used for 3040, more will come later
 FIXABLE_STATUS_GRACE_PERIOD = timedelta(days=45)
+
+# Use when plannig retries using probability
+LAST_RETRY_ATTEMPT_DELAY = timedelta(days=45)
 
 
 class RunResponse(Enum):
@@ -490,9 +489,9 @@ class FetchIntention(models.Model):
             return self.handle_service_not_available
         elif error_code in [ErrorCode.SERVICE_BUSY, ErrorCode.PREPARING_DATA]:
             return self.handle_service_busy
-        elif error_code == ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS:
+        elif error_code == ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS:  # 3031
             return self.handle_data_not_ready
-        elif error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS:
+        elif error_code == ErrorCode.NO_DATA_FOR_DATE_ARGS:  # 3030
             return self.handle_no_data
         elif error_code == ErrorCode.TOO_MANY_REQUESTS:
             return self.handle_too_many_requests
@@ -569,6 +568,36 @@ class FetchIntention(models.Model):
             self.save()
 
         return True
+
+    @staticmethod
+    def next_probability(
+        start_date: typing.Union[date, str],
+        platform: Platform,
+        last_attempt_time: typing.Optional[datetime],
+    ) -> typing.Optional[datetime]:
+        """
+        :returns: datetime when next attempt should be made or None
+        """
+        # Make sure that start_date is a date
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+
+        # Convert date => datetime otherwise the arithmetrics won't work
+        now = timezone.now()
+        start_date = datetime.combine(start_date, datetime.min.time(), tzinfo=now.tzinfo)
+
+        # Harvest will start next month
+        harvest_start = start_date + relativedelta(months=1)
+
+        if result := platform.calculate_next_arrival(harvest_start, last_attempt_time or now):
+            return result
+        else:
+            # Try to create final attempt without arrival stats
+            if now < harvest_start + LAST_RETRY_ATTEMPT_DELAY:
+                return harvest_start + LAST_RETRY_ATTEMPT_DELAY
+
+        # No attempt should be created
+        return None
 
     @staticmethod
     def next_exponential(
@@ -680,7 +709,9 @@ class FetchIntention(models.Model):
         is_automatic = self.harvest.is_automatic
 
         # Check whether not to terminate
-        if not is_automatic or self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT:
+        if not is_automatic or self.data_not_ready_retry > len(
+            settings.AUTO_HARVESTING_PROBABILITIES
+        ):
             if final_import_batch:
                 # giving up - last retry will be we showing empty data
                 # represented by empty import batch
@@ -701,12 +732,10 @@ class FetchIntention(models.Model):
             return
 
         # Prepare retry
-        next_time, _ = FetchIntention.next_exponential(
-            self.data_not_ready_retry,
-            DATA_NOT_READY_RETRY_PERIOD.total_seconds(),
-            MAX_RETRY_GAP.total_seconds(),
-        )
-        self._create_retry(next_time, inc_data_not_ready_retry=True)
+        if next_time := FetchIntention.next_probability(
+            self.start_date, self.credentials.platform, self.when_processed
+        ):
+            self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_no_data(self):
         """Some vendors use no_data status as data_not_ready status"""
@@ -785,19 +814,14 @@ class FetchIntention(models.Model):
             return
 
         # After too many retries or for data that is too old to retry - we do not want to retry
-        if (
-            self.data_not_ready_retry >= settings.QUEUED_SUSHI_MAX_RETRY_COUNT
-            or self.attempt.time_gap > FIXABLE_STATUS_GRACE_PERIOD
-        ):
+        if self.attempt.time_gap > FIXABLE_STATUS_GRACE_PERIOD:
             return
 
         # prepare retry
-        next_time, _ = FetchIntention.next_exponential(
-            self.data_not_ready_retry,
-            PARTIAL_DATA_RETRY_PERIOD.total_seconds(),
-            MAX_RETRY_GAP.total_seconds(),
-        )
-        self._create_retry(next_time, inc_data_not_ready_retry=True)
+        if next_time := FetchIntention.next_probability(
+            self.start_date, self.credentials.platform, self.when_processed
+        ):
+            self._create_retry(next_time, inc_data_not_ready_retry=True)
 
     def handle_no_longer_available(self):
         """
@@ -1103,16 +1127,6 @@ class Automatic(models.Model):
         return (to_add, to_delete)
 
     @classmethod
-    def trigger_time(cls, month: date):
-        return (
-            datetime.combine(
-                month_start(month), datetime.min.time(), tzinfo=timezone.get_current_timezone()
-            )
-            + timedelta(days=2)  # TODO customizable delta per scheduler
-            + relativedelta(months=1)  # triger one month after
-        )
-
-    @classmethod
     @transaction.atomic
     def update_for_month(cls, month: date) -> Counter:
         """Updates automatic updates for selected month"""
@@ -1142,7 +1156,9 @@ class Automatic(models.Model):
 
             new_intentions.append(
                 FetchIntention(
-                    not_before=cls.trigger_time(month_last),
+                    not_before=FetchIntention.next_probability(
+                        month, cr2c.credentials.platform, None
+                    ),
                     priority=FetchIntention.PRIORITY_NORMAL,
                     credentials=cr2c.credentials,
                     counter_report=cr2c.counter_report,

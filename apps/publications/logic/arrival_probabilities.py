@@ -90,14 +90,12 @@ def update_all_arrival_curves(attempt_count_threshold=10, lookback_days=365):
     # test if there are enough attempts to create a generic curve
     # if not, we will use the default curve - see the description of the DEFAULT_ARRIVAL_STATS
     generic_count, generic_curve = get_probabilities(None, lookback_days=lookback_days)
-    print(generic_count)
     if generic_count < attempt_count_threshold:
         generic_curve = DEFAULT_ARRIVAL_STATS["curve"]
         quantiles = DEFAULT_ARRIVAL_STATS["probabs"]
 
     for platform in Platform.objects.all():
         count, curve = get_probabilities(platform.id, lookback_days=lookback_days)
-        print(platform, count)
         if count >= attempt_count_threshold:
             curve_source = "specific"
         else:

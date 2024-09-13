@@ -46,7 +46,10 @@ def update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         else:
             # No intention found -> create a new one
             FetchIntention.objects.create(
-                not_before=Automatic.trigger_time(automatic.month), **attrs
+                not_before=FetchIntention.next_probability(
+                    automatic.month, cr2c.credentials.platform, None
+                ),
+                **attrs,
             )
 
     else:

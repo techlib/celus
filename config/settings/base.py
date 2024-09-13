@@ -752,8 +752,6 @@ EDUID_IDENTITY_HEADER = config("EDUID_IDENTITY_HEADER", default="HTTP_X_IDENTITY
 MASTER_ORGANIZATIONS = config("MASTER_ORGANIZATIONS", cast=Csv(), default="NTK-61387142-CEL")
 # should we try to authenticate against ERMS before trying local data?
 LIVE_ERMS_AUTHENTICATION = config("LIVE_ERMS_AUTHENTICATION", cast=bool, default=USES_ERMS)
-# how many times max should we retry queued attempts
-QUEUED_SUSHI_MAX_RETRY_COUNT = config("QUEUED_SUSHI_MAX_RETRY_COUNT", cast=int, default=5)
 # this is the currency used for price calculation
 REFERENCE_CURRENCY = config("REFERENCE_CURRENCY", default="CZK")
 # quantiles to use when computing the curve of SUSHI data arrival times

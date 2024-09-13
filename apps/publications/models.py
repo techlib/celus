@@ -1,12 +1,14 @@
 import os
 import tempfile
 from collections import Counter
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import BinaryIO, Callable, Optional
 
 import magic
 from celus_nigiri.record import Author as NigiriAuthor
 from core.models import CreatedUpdatedMixin, DataSource
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -95,6 +97,70 @@ class Platform(models.Model):
 
     def __str__(self):
         return self.short_name
+
+    def _find_probability_on_curve(self, curve_day: float) -> Optional[float]:
+        curve = self.sushi_arrival_stats.get("curve", DEFAULT_ARRIVAL_STATS["curve"])
+        probabs = self.sushi_arrival_stats.get("probabs", DEFAULT_ARRIVAL_STATS["probabs"])
+        min_day = 0.0
+        min_probab = 0.0
+        for day, probab in zip(curve, probabs):
+            # Exact match
+            if day == curve_day:
+                return probab
+            elif day < curve_day:
+                min_day = day
+                min_probab = probab
+            elif day > curve_day:
+                # Gap found
+                # calcualte probability
+                return (probab - min_probab) / (day - min_day) * (curve_day - min_day) + min_probab
+        return None
+
+    def _find_days_on_curve(self, curve_probab: float) -> Optional[float]:
+        curve = self.sushi_arrival_stats.get("curve", DEFAULT_ARRIVAL_STATS["curve"])
+        probabs = self.sushi_arrival_stats.get("probabs", DEFAULT_ARRIVAL_STATS["probabs"])
+        min_day = 0.0
+        min_probab = 0.0
+        for day, probab in zip(curve, probabs):
+            # Exact match
+            if probab == curve_probab:
+                return day
+            elif probab < curve_probab:
+                min_day = day
+                min_probab = probab
+            elif probab > curve_probab:
+                # Gap found
+                # calcualte days
+                return (day - min_day) / (probab - min_probab) * (
+                    curve_probab - min_probab
+                ) + min_day
+
+        return None
+
+    def calculate_next_arrival(
+        self, harvest_start: datetime, current_date: datetime
+    ) -> Optional[datetime]:
+        current_day = (current_date - harvest_start) / timedelta(days=1)
+
+        current_prob = self._find_probability_on_curve(current_day)
+        if current_prob is None:
+            # Beyond curve -> skip calculation
+            return None
+
+        for prob in settings.AUTO_HARVESTING_PROBABILITIES:
+            if prob > current_prob:
+                new_prob = prob
+                break
+        else:
+            # No next prob found
+            return None
+
+        if next_days := self._find_days_on_curve(new_prob):
+            min_start = current_day + 1
+            # convert date to datetime
+            return harvest_start + timedelta(days=max(next_days, min_start))
+
+        return None
 
     def create_default_interests(self) -> Counter:
         from logs.models import ReportType

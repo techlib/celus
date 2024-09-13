@@ -163,17 +163,16 @@ class TestFetchIntention:
         assert fi2.duplicate_of == fi1
         assert fi2.process() == ProcessResponse.DUPLICATE
 
-    @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     @pytest.mark.parametrize(
-        "error_code,seconds_not_before,seconds_when_ready",
+        "error_code,seconds_not_before,seconds_when_ready,new_fi",
         (
-            ("", 0, 0),
-            (ErrorCode.SERVICE_NOT_AVAILABLE.value, 20 * 2**3, 20 * 2**3),
-            (ErrorCode.SERVICE_BUSY.value, 30 * 2**4, 30 * 2**4),
-            (ErrorCode.PREPARING_DATA.value, 30 * 2**4, 30 * 2**4),
-            (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2**2, 0),
-            (ErrorCode.NO_DATA_FOR_DATE_ARGS.value, 60 * 60 * 24 * 2**2, 0),
-            (ErrorCode.TOO_MANY_REQUESTS.value, 10, 10),
+            ("", None, 0, False),
+            (ErrorCode.SERVICE_NOT_AVAILABLE.value, 20 * 2**3, 20 * 2**3, True),
+            (ErrorCode.SERVICE_BUSY.value, 30 * 2**4, 30 * 2**4, True),
+            (ErrorCode.PREPARING_DATA.value, 30 * 2**4, 30 * 2**4, True),
+            (ErrorCode.DATA_NOT_READY_FOR_DATE_ARGS.value, None, 0, True),
+            (ErrorCode.NO_DATA_FOR_DATE_ARGS.value, None, 0, True),
+            (ErrorCode.TOO_MANY_REQUESTS.value, 10, 10, True),
         ),
         ids=(
             "SUCCESS",
@@ -190,110 +189,117 @@ class TestFetchIntention:
         error_code,
         seconds_not_before,
         seconds_when_ready,
+        new_fi,
         monkeypatch,
         counter_report_types,
         credentials,
         users,
     ):
-        error_code = str(error_code)
-        sch = SchedulerFactory(
-            cooldown=0,
-            too_many_requests_delay=10,
-            service_not_available_delay=20,
-            service_busy_delay=30,
-        )
-
-        def mocked_fetch_report(*args, **kwargs):
-            return FetchAttemptFactory(
-                error_code=error_code,
-                credentials=credentials["standalone_tr"],
-                counter_report=counter_report_types["tr"],
+        tzinfo = timezone.now().tzinfo
+        with freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=tzinfo)):
+            error_code = str(error_code)
+            sch = SchedulerFactory(
+                cooldown=0,
+                too_many_requests_delay=10,
+                service_not_available_delay=20,
+                service_busy_delay=30,
             )
 
-        monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
+            def mocked_fetch_report(*args, **kwargs):
+                return FetchAttemptFactory(
+                    error_code=error_code,
+                    credentials=credentials["standalone_tr"],
+                    counter_report=counter_report_types["tr"],
+                )
 
-        fi = FetchIntentionFactory(
-            harvest=AutomaticFactory(harvest__last_updated_by=users["admin1"]).harvest,
-            not_before=timezone.now(),
-            scheduler=sch,
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            data_not_ready_retry=2,
-            service_not_available_retry=3,
-            service_busy_retry=4,
-            harvest__last_updated_by=users["admin1"],
-        )
-        assert fi.process() == ProcessResponse.SUCCESS
-        assert fi.attempt.triggered_by == users["admin1"]
-        assert fi.when_processed == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz)
+            monkeypatch.setattr(SushiCredentials, "fetch_report", mocked_fetch_report)
 
-        # test not_before for newly created FetchIntentions
-        last = FetchIntention.objects.order_by("pk").last()
-        if seconds_not_before:
-            assert last.pk != fi.pk
-            assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
-            assert last.queue_id == fi.pk
-            assert fi.queue_id == fi.pk
-        else:
-            assert last.pk == fi.pk
+            fi = FetchIntentionFactory(
+                harvest=AutomaticFactory(harvest__last_updated_by=users["admin1"]).harvest,
+                not_before=timezone.now(),
+                scheduler=sch,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                data_not_ready_retry=2,
+                service_not_available_retry=3,
+                service_busy_retry=4,
+                harvest__last_updated_by=users["admin1"],
+            )
+            assert fi.process() == ProcessResponse.SUCCESS
+            assert fi.attempt.triggered_by == users["admin1"]
+            assert fi.when_processed == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=tzinfo)
 
-        # test scheduler's when_ready updates
-        assert sch.when_ready == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz) + timedelta(
-            seconds=seconds_when_ready
-        )
+            # test not_before for newly created FetchIntentions
+            last = FetchIntention.objects.order_by("pk").last()
 
-    def test_schedulers_to_trigger(self, credentials, counter_report_types):
-        old_sch = SchedulerFactory(
-            when_ready=timezone.now() + timedelta(minutes=1), url=credentials["standalone_tr"].url
-        )
-        FetchIntentionFactory(
-            not_before=timezone.now(),
-            scheduler=None,
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            data_not_ready_retry=2,
-            service_not_available_retry=3,
-            service_busy_retry=4,
-        )
+            if new_fi:
+                assert last.pk != fi.pk
+            else:
+                assert last.pk == fi.pk
 
-        FetchIntentionFactory(
-            not_before=timezone.now() + timedelta(minutes=1),
-            scheduler=None,
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["br1"],
-            data_not_ready_retry=2,
-            service_not_available_retry=3,
-            service_busy_retry=4,
-        )
-        FetchIntentionFactory(
-            not_before=timezone.now() - timedelta(minutes=1),
-            scheduler=None,
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["jr1"],
-            data_not_ready_retry=2,
-            service_not_available_retry=3,
-            service_busy_retry=4,
-        )
+            if seconds_not_before:
+                assert (last.not_before - fi.not_before).total_seconds() == seconds_not_before
+                assert last.queue_id == fi.pk
+                assert fi.queue_id == fi.pk
 
-        to_trigger = FetchIntention.objects.schedulers_to_trigger()
+            # test scheduler's when_ready updates
+            assert sch.when_ready == datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=tzinfo) + timedelta(
+                seconds=seconds_when_ready
+            )
 
-        # Created scheduler
-        new_sch = Scheduler.objects.order_by("pk").last()
+        def test_schedulers_to_trigger(self, credentials, counter_report_types):
+            old_sch = SchedulerFactory(
+                when_ready=timezone.now() + timedelta(minutes=1),
+                url=credentials["standalone_tr"].url,
+            )
+            FetchIntentionFactory(
+                not_before=timezone.now(),
+                scheduler=None,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                data_not_ready_retry=2,
+                service_not_available_retry=3,
+                service_busy_retry=4,
+            )
 
-        assert len(to_trigger) == 1
-        assert to_trigger[0] == new_sch
+            FetchIntentionFactory(
+                not_before=timezone.now() + timedelta(minutes=1),
+                scheduler=None,
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["br1"],
+                data_not_ready_retry=2,
+                service_not_available_retry=3,
+                service_busy_retry=4,
+            )
+            FetchIntentionFactory(
+                not_before=timezone.now() - timedelta(minutes=1),
+                scheduler=None,
+                credentials=credentials["standalone_br1_jr1"],
+                counter_report=counter_report_types["jr1"],
+                data_not_ready_retry=2,
+                service_not_available_retry=3,
+                service_busy_retry=4,
+            )
 
-        # adding FetchIntention with higher priority for old_sch
-        FetchIntentionFactory(
-            not_before=timezone.now(),
-            scheduler=None,
-            credentials=credentials["standalone_tr"],
-            counter_report=counter_report_types["tr"],
-            priority=FetchIntention.PRIORITY_NOW,
-        )
-        assert {new_sch.pk, old_sch.pk} == {
-            e.pk for e in FetchIntention.objects.schedulers_to_trigger()
-        }
+            to_trigger = FetchIntention.objects.schedulers_to_trigger()
+
+            # Created scheduler
+            new_sch = Scheduler.objects.order_by("pk").last()
+
+            assert len(to_trigger) == 1
+            assert to_trigger[0] == new_sch
+
+            # adding FetchIntention with higher priority for old_sch
+            FetchIntentionFactory(
+                not_before=timezone.now(),
+                scheduler=None,
+                credentials=credentials["standalone_tr"],
+                counter_report=counter_report_types["tr"],
+                priority=FetchIntention.PRIORITY_NOW,
+            )
+            assert {new_sch.pk, old_sch.pk} == {
+                e.pk for e in FetchIntention.objects.schedulers_to_trigger()
+            }
 
     @pytest.mark.parametrize(
         "error_code,status,recent_success,automatic,empty_ib,delays,last_canceled",
@@ -305,13 +311,12 @@ class TestFetchIntention:
                 True,  # automatic
                 False,  # empty_ib
                 [
-                    timedelta(days=1),
-                    timedelta(days=2),
-                    timedelta(days=4),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
+                    timedelta(days=31 + 2),  # 50 %
+                    timedelta(days=10),  # 75 %
+                    timedelta(days=4.75),  # 87.5 %
+                    timedelta(days=7.25),  # 95 %
+                    timedelta(days=19),  # 100 %
+                    timedelta(days=1),  # final
                     None,
                 ],  # delays
                 False,  # last_canceled
@@ -324,13 +329,12 @@ class TestFetchIntention:
                 True,  # automatic
                 True,  # empty_ib
                 [
-                    timedelta(days=1),
-                    timedelta(days=2),
-                    timedelta(days=4),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
+                    timedelta(days=31 + 2),  # 50 %
+                    timedelta(days=10),  # 75 %
+                    timedelta(days=4.75),  # 87.5 %
+                    timedelta(days=7.25),  # 95 %
+                    timedelta(days=19),  # 100 %
+                    timedelta(days=1),  # final
                     None,
                 ],  # delays
                 False,  # last_canceled
@@ -426,13 +430,12 @@ class TestFetchIntention:
                 True,  # automatic
                 True,  # empty_ib
                 [
-                    timedelta(days=1),
-                    timedelta(days=2),
-                    timedelta(days=4),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
+                    timedelta(days=31 + 2),  # 50 %
+                    timedelta(days=10),  # 75 %
+                    timedelta(days=4.75),  # 87.5 %
+                    timedelta(days=7.25),  # 95 %
+                    timedelta(days=19),  # 100 %
+                    timedelta(days=1),  # final
                     None,
                 ],  # delays
                 False,  # last_canceled
@@ -455,13 +458,12 @@ class TestFetchIntention:
                 True,  # automatic
                 False,  # empty_ib
                 [
-                    timedelta(days=1),
-                    timedelta(days=2),
-                    timedelta(days=4),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
-                    timedelta(days=8),
+                    timedelta(days=31 + 2),  # 50 %
+                    timedelta(days=10),  # 75 %
+                    timedelta(days=4.75),  # 87.5 %
+                    timedelta(days=7.25),  # 95 %
+                    timedelta(days=19),  # 100 %
+                    timedelta(days=1),  # final
                     None,
                 ],  # delays
                 False,  # last_canceled
@@ -536,10 +538,10 @@ class TestFetchIntention:
         last_canceled,
         settings,
     ):
-        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
         scheduler = SchedulerFactory(url=credentials["standalone_tr"].url)
 
-        start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=current_tz)
+        tzinfo = timezone.now().tzinfo
+        start = datetime(2020, 1, 2, 0, 0, 0, 0, tzinfo=tzinfo)
 
         if recent_success:
             with freeze_time(start - timedelta(days=30)):
@@ -574,6 +576,7 @@ class TestFetchIntention:
             fi: FetchIntention,
             expected: typing.Optional[datetime],
             queue: typing.Optional[FetchIntentionQueue],
+            idx: int,
         ) -> FetchIntention:
             with freeze_time(fi.not_before):
                 fi.scheduler = scheduler
@@ -612,20 +615,20 @@ class TestFetchIntention:
             assert new_fi is not None
 
             if expected:
-                assert fi.pk != new_fi.pk, "new intention created"
-                assert new_fi.not_before == expected, "new planned date matches"
-                assert not new_fi.is_processed, "new intention is not processed"
-                assert new_fi.canceled is False, "fetch not canceled"
-                assert new_fi.queue is not None, "New intetions is a part of a queue"
+                assert fi.pk != new_fi.pk, f"new intention created {idx}."
+                assert new_fi.not_before == expected, f"new planned date matches {idx}."
+                assert not new_fi.is_processed, f"new intention is not processed {idx}."
+                assert new_fi.canceled is False, f"fetch not canceled {idx}."
+                assert new_fi.queue is not None, f"New intetions is a part of a queue {idx}."
                 if queue:
-                    assert new_fi.queue == queue, "Queue equals queue of prev intention"
+                    assert new_fi.queue == queue, f"Queue equals queue of prev intention {idx}."
             else:
                 if last_canceled:
-                    assert fi.pk != new_fi.pk, "new intention created"
+                    assert fi.pk != new_fi.pk, f"new intention created {idx}."
                     assert new_fi.canceled is True
                 else:
                     assert new_fi.canceled is False
-                assert new_fi.is_processed, "marked as processed"
+                assert new_fi.is_processed, f"marked as processed {idx}."
 
             return new_fi
 
@@ -646,8 +649,8 @@ class TestFetchIntention:
             )
 
         queue_to_check = None
-        for delay in delays:
-            fi = check_retry(fi, start + delay if delay else None, None)
+        for idx, delay in enumerate(delays):
+            fi = check_retry(fi, start + delay if delay else None, None, idx)
             queue_to_check = queue_to_check if queue_to_check else fi.queue
             if delay:
                 start += delay
@@ -677,7 +680,6 @@ class TestFetchIntention:
         If the new intention is processed without 3040, the data will replace the old one.
         """
 
-        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
         # prepare the content of the responses
         with open("test-data/counter5/C5_PR_with_3040.json", "r") as f:
             data_with_3040 = f.read()
@@ -835,8 +837,6 @@ class TestFetchIntention:
         Test how subsequent harvests with already existing attempt behaves depending on exceptions
         present in individual harvests.
         """
-
-        settings.QUEUED_SUSHI_MAX_RETRY_COUNT = 7
 
         scheduler = SchedulerFactory(url=credentials["branch_pr"].url)
         # start should ensure that the first attempt is final and empty ib is created for 3030
