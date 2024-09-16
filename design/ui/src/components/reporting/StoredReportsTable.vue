@@ -17,6 +17,7 @@
           :loading="loading"
           :search="search"
           class="auto-table"
+          filter-mode="union"
           single-select
         >
           <template #top>
@@ -230,8 +231,43 @@
             </v-tooltip>
           </template>
 
-          <template #item.splitBy.name="{ item }">
-            {{ item.splitBy ? item.splitBy.getName($i18n) : "" }}
+          <template #item.lastUpdated="{ item }">
+            <span v-html="isoDateTimeFormatSpans(item.lastUpdated)" />
+          </template>
+
+          <template #item.lastUpdatedBy="{ item }">
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <span v-on="on">
+                  {{ userToString(item.lastUpdatedBy, "", true) }}
+                </span>
+              </template>
+              <span v-if="!!item.lastUpdatedBy?.first_name">
+                <strong>{{ $t("labels.first_name") }}:</strong>
+                {{ item.lastUpdatedBy.first_name }}
+                <br />
+              </span>
+              <span v-if="!!item.lastUpdatedBy?.last_name">
+                <strong>{{ $t("labels.last_name") }}:</strong>
+                {{ item.lastUpdatedBy.last_name }}
+                <br />
+              </span>
+              <span v-if="!!item.lastUpdatedBy?.email">
+                <strong>{{ $t("labels.email") }}:</strong>
+                {{ item.lastUpdatedBy.email }}
+                <br />
+              </span>
+              <span
+                v-if="
+                  !!item.lastUpdatedBy?.username &&
+                  item.lastUpdatedBy.username != item.lastUpdatedBy?.email
+                "
+              >
+                <strong>{{ $t("labels.username") }}:</strong>
+                {{ item.lastUpdatedBy.username }}
+                <br />
+              </span>
+            </v-tooltip>
           </template>
 
           <template #expanded-item="{ item, headers }">
@@ -282,14 +318,15 @@
 import { mapActions, mapState } from "vuex";
 import axios from "axios";
 import {
-  isoDateTimeFormatSpans,
   parseDateTime,
   smartMonthRange,
+  isoDateTimeFormatSpans,
 } from "@/libs/dates";
 import { dimensionMixin } from "@/mixins/dimensions";
 import reportTypes from "@/mixins/reportTypes";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import { FlexiReport } from "@/libs/flexi-reports";
+import { userToString } from "@/libs/user";
 import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
 import CopyReportDialog from "@/components/reporting/CopyReportDialog";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
@@ -336,8 +373,17 @@ export default {
           value: "primaryDimension.name",
         },
         {
-          text: this.$t("title_fields.split_by"),
-          value: "splitBy.name",
+          text: this.$t("title_fields.last_modified"),
+          value: "lastUpdated",
+        },
+        {
+          text: this.$t("title_fields.last_modified_by"),
+          value: "lastUpdatedBy",
+          filter: (value, search, item) =>
+            !search ||
+            ["first_name", "last_name", "email", "username"]
+              .map((attr) => (item.lastUpdatedBy || {})[attr] || "")
+              .some((e) => e.toLowerCase().includes(search.toLowerCase())),
         },
         {
           text: this.$t("title_fields.actions"),
@@ -381,6 +427,8 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    isoDateTimeFormatSpans,
+    userToString,
     async fetchData() {
       this.loading = true;
       try {
@@ -399,9 +447,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    formatDate(date) {
-      return isoDateTimeFormatSpans(parseDateTime(date));
     },
     async saveNewName(reportId, value) {
       try {

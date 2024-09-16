@@ -1126,13 +1126,20 @@ class FlexibleReport(models.Model):
 
     name = models.CharField(max_length=120)
     created = models.DateTimeField(default=now)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_flexible_reports",
+    )
     last_updated = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="owned_flexible_reports",
+        related_name="last_updated_flexible_reports",
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True

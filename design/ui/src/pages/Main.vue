@@ -244,6 +244,10 @@ th.auto-width {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 6rem;
+
+    &:first-child {
+      min-width: 1.5rem;
+    }
   }
 
   th.text-right {

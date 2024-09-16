@@ -103,6 +103,9 @@ en:
     info: Info
     knowledgebase: Knowledgebase
     last_harvestable_month: Last harvestable month
+    last_modified: Last modified
+    last_modified_by: Last modified by
+    created: Created
   titles: Titles
   overview: Overview
   chart:
@@ -226,6 +229,7 @@ en:
     unread_messages: Unread messages
     url: URL
     user: User
+    username: Username
     value: Value
     variable: Parameter name
     variable_value: Parameter value
@@ -498,6 +502,9 @@ cs:
     info: Informace
     knowledgebase: Znalostní báze
     last_harvestable_month: Poslední stáhnutelný měsíc
+    last_modified: Naposledy změněno
+    last_modified_by: Naposledy změněno uživatelem
+    created: Vytvořeno
   titles: Tituly
   overview: Přehled
   chart:
@@ -621,6 +628,7 @@ cs:
     unread_messages: Nepřečtené zprávy
     url: URL
     user: Uživatel
+    username: Uživatelské jméno
     value: Hodnota
     variable: Název parametru
     variable_value: Hodnota parametru

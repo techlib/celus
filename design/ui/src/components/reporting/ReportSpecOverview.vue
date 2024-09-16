@@ -34,6 +34,18 @@
           {{ report.groupBy.map((fltr) => fltr.getName($i18n)).join(", ") }}
         </td>
       </tr>
+      <tr>
+        <th>{{ $t("title_fields.last_modified") }}:</th>
+        <td>
+          {{ dateAndUser(report.lastUpdated, report.lastUpdatedBy, true) }}
+        </td>
+      </tr>
+      <tr>
+        <th>{{ $t("title_fields.created") }}:</th>
+        <td>
+          {{ dateAndUser(report.created, report.createdBy, true) }}
+        </td>
+      </tr>
       <tr v-if="!twoPanes">
         <th class="align-top">{{ $t("labels.filters") }}:</th>
         <td>
@@ -90,6 +102,7 @@
 <script>
 import { smartMonthRange } from "@/libs/dates";
 import FilterSpec from "@/components/reporting/FilterSpec.vue";
+import { dateAndUser } from "@/libs/user";
 
 export default {
   name: "ReportSpecOverview",
@@ -101,6 +114,7 @@ export default {
   },
 
   methods: {
+    dateAndUser,
     smartMonthRange,
   },
 };

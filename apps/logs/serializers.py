@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from core.models import DATA_SOURCE_TYPE_ORGANIZATION, UL_CONS_STAFF, DataSource, SourceFileMixin
+from core.models import (
+    DATA_SOURCE_TYPE_ORGANIZATION,
+    UL_CONS_STAFF,
+    DataSource,
+    SourceFileMixin,
+    User,
+)
 from core.serializers import UserSimpleSerializer
 from django.conf import settings
 from django.db import transaction
@@ -507,7 +513,14 @@ class DimensionTextSerializer(ModelSerializer):
 
 
 class FlexibleReportSerializer(ModelSerializer):
-    last_updated_by = HiddenField(default=CurrentUserDefault())
+    created_by_id = PrimaryKeyRelatedField(
+        queryset=User.objects.all(), write_only=True, many=False, required=False
+    )
+    last_updated_by_id = PrimaryKeyRelatedField(
+        queryset=User.objects.all(), write_only=True, many=False, required=False
+    )
+    created_by = UserSimpleSerializer(read_only=True, many=False, allow_null=True)
+    last_updated_by = UserSimpleSerializer(read_only=True, many=False, allow_null=True)
 
     class Meta:
         model = FlexibleReport
@@ -518,10 +531,22 @@ class FlexibleReportSerializer(ModelSerializer):
             "owner_organization",
             "last_updated",
             "last_updated_by",
+            "last_updated_by_id",
             "created",
+            "created_by",
+            "created_by_id",
             "report_config",
             "config",
         )
+
+    def create(self, validated_data):
+        validated_data["last_updated_by_id"] = self.context["request"].user.pk
+        validated_data["created_by_id"] = self.context["request"].user.pk
+        return super().create(validated_data)
+
+    def update(self, instance: FlexibleReport, validated_data):
+        validated_data["last_updated_by_id"] = self.context["request"].user.pk
+        return super().update(instance, validated_data)
 
 
 class PlatformInterestReportSerializer(ModelSerializer):

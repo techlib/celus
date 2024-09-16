@@ -116,6 +116,10 @@ class FlexiReport {
     this.trendMode = false;
     this.baseSubsetDateRange = null;
     this.comparedSubsetDateRange = null;
+    this.created = null;
+    this.createdBy = null;
+    this.lastUpdated = null;
+    this.lastUpdatedBy = null;
   }
 
   get accessLevel() {
@@ -152,6 +156,10 @@ class FlexiReport {
     report.pk = data.pk;
     report.name = data.name;
     report.owner = data.owner;
+    report.lastUpdated = data.last_updated;
+    report.lastUpdatedBy = data.last_updated_by;
+    report.created = data.created;
+    report.createdBy = data.created_by;
     report.ownerOrganization = data.owner_organization;
     await report.readConfig(data.config, allReportTypes);
     return report;

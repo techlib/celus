@@ -1,10 +1,18 @@
-function userToString(user) {
+import { isoDateTimeFormat, parseDateTime, isoDateFormat } from "@/libs/dates";
+
+function userToString(user, empty_str, skip_comma) {
+  empty_str ??= "-";
+  skip_comma = !!skip_comma;
   if (!user) {
-    return "-";
+    return empty_str;
   }
   if (user.last_name) {
     if (user.first_name) {
-      return `${user.last_name}, ${user.first_name}`;
+      if (skip_comma) {
+        return `${user.last_name} ${user.first_name}`;
+      } else {
+        return `${user.last_name}, ${user.first_name}`;
+      }
     }
     return user.last_name;
   }
@@ -17,7 +25,25 @@ function userToString(user) {
   if (user.pk) {
     return user.pk.toString();
   }
-  return "-";
+  return empty_str;
 }
 
-export { userToString };
+function dateAndUser(date, user, full_date) {
+  full_date ??= false;
+  if (typeof date === "string") {
+    date = parseDateTime(date);
+  }
+  let date_part = "";
+  if (full_date) {
+    date_part = isoDateTimeFormat(date);
+  } else {
+    date_part = isoDateFormat(date);
+  }
+  if (!!user) {
+    return `${date_part}, ${userToString(user, "", true)}`;
+  } else {
+    return date_part;
+  }
+}
+
+export { userToString, dateAndUser };
