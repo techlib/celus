@@ -1595,7 +1595,7 @@ export default {
       if (this.platformFilter) {
         searchParams.append("platform", this.platformFilter);
       }
-      return `${base}reports/${rt.code}/?${searchParams.toString()}`;
+      return `${base}reports/${rt.code.toLowerCase()}/?${searchParams.toString()}`;
     },
     async closeLastHarvestableMonthDialog() {
       this.showLastHarvestableMonthDialog = false;
