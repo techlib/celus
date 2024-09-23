@@ -68,7 +68,7 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
     ]
     list_filter = ["enabled", "broken", "counter_version", "organization", "platform"]
     search_fields = ["organization__name", "platform__name", "pk", "url"]
-    readonly_fields = ["first_broken_attempt"]
+    readonly_fields = ["first_broken_attempt", "version_hash"]
     resource_class = SushiCredentialsResource  # for django-import-export
 
     @classmethod

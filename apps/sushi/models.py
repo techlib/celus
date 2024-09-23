@@ -36,7 +36,7 @@ from django.conf import settings
 from django.core.files.base import File
 from django.core.validators import URLValidator
 from django.db import models
-from django.db.models import Exists, ExpressionWrapper, F, OuterRef, Q
+from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q, Subquery, Value
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.lookups import Exact
 from django.db.transaction import atomic
@@ -204,6 +204,35 @@ class SushiCredentialsQuerySet(models.QuerySet):
         )
         return self.exclude(cond)
 
+    def annotate_same_counts(self):
+        """Annotates how many organization with same credentials are used"""
+        if settings.CONSORTIAL_INSTALLATION:
+            global_kwargs = {
+                "same_global": Subquery(
+                    SushiCredentials.objects.filter(version_hash=OuterRef("version_hash"))
+                    .values("version_hash")
+                    .annotate(count=Count("pk"))
+                    .values_list("count")[:1]
+                )
+            }
+        else:
+            # We don't want to leak info regarding credentails
+            # in non-consortial installs
+            global_kwargs = {"same_global": Value(0)}
+
+        return self.annotate(
+            same_in_org=Subquery(
+                SushiCredentials.objects.filter(
+                    version_hash=OuterRef("version_hash"),
+                    organization_id=OuterRef("organization_id"),
+                )
+                .values("version_hash")
+                .annotate(count=Count("pk"))
+                .values_list("count")[:1]
+            ),
+            **global_kwargs,
+        )
+
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     UNLOCKED = 0
@@ -215,6 +244,16 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     )
     BLAKE_HASH_SIZE = 16
     NUMBER_OF_MONTHS_REPLANNED = 2
+    VERSION_HASH_KEYS = [
+        "url",
+        "counter_version",
+        "requestor_id",
+        "customer_id",
+        "http_username",
+        "http_password",
+        "api_key",
+        "extra_params",
+    ]
 
     title = models.CharField(max_length=120, blank=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -441,17 +480,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         source for hashing for `credentials_version_hash`.
         :return:
         """
-        keys = {
-            "url",
-            "counter_version",
-            "requestor_id",
-            "customer_id",
-            "http_username",
-            "http_password",
-            "api_key",
-            "extra_params",
-        }
-        return {key: getattr(self, key) for key in keys}
+        return {key: getattr(self, key) for key in self.VERSION_HASH_KEYS}
 
     @classmethod
     def hash_version_dict(cls, data):

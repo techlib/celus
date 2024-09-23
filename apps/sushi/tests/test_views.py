@@ -836,3 +836,159 @@ class TestSushiCredentialsViewSet:
         )
         assert resp.status_code == 200
         assert resp.json() == {"updated": 0, "unmatched": 1, "matched": 2}
+
+    @pytest.mark.parametrize(
+        "consortial,in_org,forced,passed",
+        (
+            (True, True, True, True),
+            (False, True, True, True),
+            (True, False, True, True),
+            (True, True, False, False),
+            (True, False, False, False),
+            (False, True, False, False),
+            (False, False, True, True),
+            (False, False, False, True),
+        ),
+    )
+    def test_create_with_same_hash(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        users,
+        counter_report_types,
+        settings,
+        consortial,
+        in_org,
+        forced,
+        passed,
+    ):
+        """
+        Test creating credentials with the same hash => downloaded data should
+        be the same as data from other credentials, which might not be desirable.
+
+        From the user point of view he should be able to store these credentials
+        anyways after supressing some warning `forced=True`.
+
+        Also we want to supress the warning in non-consortial installs,
+        when the credentails are stored in different organizations
+        `consortial=True`
+
+        `in_org=True` says that the credentials with the same hash
+        will be stored within the same organization.
+        """
+        settings.CONSORTIAL_INSTALLATION = consortial
+        same_params = {
+            "url": "https://example.com/",
+            "customer_id": "C1",
+            "requestor_id": "R1",
+            "api_key": "A",
+            "counter_version": 5,
+            "http_username": "",
+            "http_password": "",
+            "extra_params": {},
+        }
+        if in_org:
+            CredentialsFactory(organization=organizations["root"], **same_params)
+        else:
+            CredentialsFactory(organization=organizations["standalone"], **same_params)
+        url = reverse("sushi-credentials-list")
+        data = {
+            "title": "Foo bar credentials",
+            "platform_id": platforms["brain"].pk,
+            "organization_id": organizations["root"].pk,
+            "counter_reports": [counter_report_types["tr"].pk],
+            **same_params,
+        }
+        if forced:
+            data["forced"] = True
+        assert SushiCredentials.objects.count() == 1
+        resp = clients["master_admin"].post(url, data, format="json")
+        if passed:
+            assert resp.status_code == 201
+            assert SushiCredentials.objects.count() == 2
+        else:
+            assert resp.status_code == 400
+            error_code = "same-exists-within-org" if in_org else "same-exists-globally"
+            assert resp.data[0].code == error_code
+            assert SushiCredentials.objects.count() == 1
+
+    @pytest.mark.parametrize(
+        "consortial,in_org,forced,passed",
+        (
+            (True, True, True, True),
+            (False, True, True, True),
+            (True, False, True, True),
+            (True, True, False, False),
+            (True, False, False, False),
+            (False, True, False, False),
+            (False, False, True, True),
+            (False, False, False, True),
+        ),
+    )
+    def test_update_with_same_hash(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        users,
+        counter_report_types,
+        settings,
+        consortial,
+        in_org,
+        forced,
+        passed,
+    ):
+        """
+        Test updating credentials with the same hash => downloaded data should
+        be the same as data from other credentials, which might not be desirable.
+
+        From the user point of view he should be able to store these credentials
+        anyways after supressing some warning `forced=True`.
+
+        Also we want to supress the warning in non-consortial installs,
+        when the credentails are stored in different organizations
+        `consortial=True`
+
+        `in_org=True` says that the credentials with the same hash
+        will be stored within the same organization.
+        """
+        settings.CONSORTIAL_INSTALLATION = consortial
+        same_params = {
+            "url": "https://example.com/",
+            "customer_id": "C1",
+            "requestor_id": "R1",
+            "api_key": "A",
+            "counter_version": 5,
+            "http_username": "",
+            "http_password": "",
+            "extra_params": {},
+        }
+        cred = CredentialsFactory(platform=platforms["brain"], organization=organizations["root"])
+        if in_org:
+            CredentialsFactory(
+                platform=platforms["shared"], organization=organizations["root"], **same_params
+            )
+        else:
+            CredentialsFactory(
+                platform=platforms["shared"], organization=organizations["branch"], **same_params
+            )
+        url = reverse("sushi-credentials-detail", args=(cred.pk,))
+        data = {
+            "title": "Foo bar credentials",
+            "platform_id": platforms["brain"].pk,
+            "organization_id": organizations["root"].pk,
+            "counter_reports": [counter_report_types["tr"].pk],
+            **same_params,
+        }
+        if forced:
+            data["forced"] = True
+        resp = clients["master_admin"].patch(url, data, format="json")
+        if passed:
+            assert resp.status_code == 200
+        else:
+            assert resp.status_code == 400
+            error_code = "same-exists-within-org" if in_org else "same-exists-globally"
+            assert resp.data[0].code == error_code

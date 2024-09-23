@@ -4,6 +4,7 @@ from core.logic.dates import month_end, month_start
 from core.models import UL_CONS_STAFF
 from core.permissions import SuperuserOrAdminPermission
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.db import transaction
 from django.db.models import BooleanField, F, Min
 from django.db.models.functions import Cast
@@ -32,6 +33,8 @@ from .models import AttemptStatus, CounterReportsToCredentials, CounterReportTyp
 from .serializers import (
     CounterReportTypeSerializer,
     SushiCredentialsDataSerializer,
+    SushiCredentialsNoSameGlobalSerializer,
+    SushiCredentialsNoSameInOrgSerializer,
     SushiCredentialsSerializer,
     UnsetBrokenSerializer,
     UpdateAssignedCounterReportsSerializer,
@@ -39,7 +42,6 @@ from .serializers import (
 
 
 class SushiCredentialsViewSet(ModelViewSet):
-    serializer_class = SushiCredentialsSerializer
     queryset = SushiCredentials.objects.none()
 
     def _post_process_queryset(self, qs):
@@ -77,10 +79,20 @@ class SushiCredentialsViewSet(ModelViewSet):
             qs = qs.filter(platform_id=platform_id)
         qs = (
             qs.annotate_verified()
+            .annotate_same_counts()
             .prefetch_related("counterreportstocredentials_set__counter_report")
             .select_related("organization", "platform", "platform__source")
         )
         return qs
+
+    def get_serializer_class(self):
+        forced = self.request.data.get("forced", False)
+        if not forced:
+            if settings.CONSORTIAL_INSTALLATION:
+                return SushiCredentialsNoSameGlobalSerializer
+            else:
+                return SushiCredentialsNoSameInOrgSerializer
+        return SushiCredentialsSerializer
 
     def list(self, request, *args, **kwargs):
         """

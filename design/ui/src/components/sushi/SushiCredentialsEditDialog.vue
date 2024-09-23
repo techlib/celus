@@ -10,6 +10,7 @@ en:
   all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
   save_and_verify: Save & verify
   save_and_verify_tooltip: Saves current version of credentials and displays a dialog allowing harvesting of data for specified period using these credentials. Very useful to <strong>verify credentials and/or manually download data</strong>.
+  ignore_and_save: Ignore and save
   outside: Purchased outside of consortium
   outside_tooltip: Marks if access to this resource was purchased outside the consortium.
   only_managers_can_change: Only managers may change this option.
@@ -39,6 +40,10 @@ en:
   unverified_title: Credentials are not verified
   unverified_details: There are no successful harvests using the current version of these credentials.
   unverified_note: Please verify the credentials by performing a harvest. Note that the credentials won't be used for automatic harvesting unless a successful harvest is performed.
+  same_credentials_title: Same credentials are already used
+  same_credentials_global_text: The same credentials are already used by other organization. @:same_credentials_text
+  same_credentials_in_org_text: The same credentials are already used for a different platform for this organization. @:same_credentials_text
+  same_credentials_text: This indicates that one of these credentials is likely misconfigured and will lead to duplicate data being harvested.
   plan_harvest: Plan harvest
   requestor_id_not_required: Requestor ID is not required for this platform
   see_registry_hint: The Registry icon contains tooltip about this field from the COUNTER registry
@@ -72,6 +77,7 @@ cs:
   save_and_verify_tooltip:
     Uloží tuto verzi přihlašovacích údajů a zobrazí dialog pro stahování dat za vybrané období. Tato funkce
     je velmi užitečná pro <strong>ověření správnosti přihlašovacích údajů a/nebo manuální stahování dat</strong>.
+  ignore_and_save: Ignoruj a ulož
   outside: Nákup mimo konzorcium
   outside_tooltip: Označuje přístupové údaje k nákupům mimo konzorcium.
   only_managers_can_change: Jen správci mohou měnit tuto hodnotu.
@@ -101,6 +107,10 @@ cs:
   unverified_title: Přihlašovací údaje nejsou ověřeny
   unverified_details: Současná verze těcho přihlašovacích údajů zatím nebyla úspěšně použita pro stažení dat.
   unverified_note: Ověřte prosím platnost přihlašovacích údajů stažením dat. Upozorňujeme, že dokud nebdou přihlašovací údaje ověřeny, nebude u nich probíhat automatické stahování dat.
+  same_credentials_title: Stejné přístupové údaje jsou již použity jinde
+  same_credentials_in_org_text: Stejné přístupové údaje jsou již použity pro jinou platformu u této organizace. @:same_credentials_text
+  same_credentials_global_text: Stejné přístupové údaje jsou již použity jinou organizací. @:same_credentials_text
+  same_credentials_text: To indikuje, že jedny z těchto přístupových údajů nejsou správně. Důsledkem bude zdvojení dat.
   plan_harvest: Naplánovat stahování
   requestor_id_not_required: Requestor ID není pro tuto platformu vyžadováno
   see_registry_hint: Ikona registru obsahuje nápovědu pro toto pole z COUNTER registru
@@ -1256,20 +1266,25 @@ export default {
     closeDialog() {
       this.$emit("input", false);
     },
-    async saveData() {
+    async saveData(forced) {
+      forced |= false;
       this.errors = {};
       this.saving = true;
       try {
         let response = null;
+        let data = structuredClone(this.apiData);
+        if (forced) {
+          data.forced = true;
+        }
         if (this.credentials) {
           // we have existing credentials - we patch it
           response = await axios.patch(
             `/api/sushi-credentials/${this.credentials.pk}/`,
-            this.apiData
+            data
           );
         } else {
           // we create new credentials
-          response = await axios.post(`/api/sushi-credentials/`, this.apiData);
+          response = await axios.post(`/api/sushi-credentials/`, data);
         }
         this.savedCredentials = response.data;
         await this.showSnackbar({
@@ -1280,12 +1295,32 @@ export default {
         await this.saveLastHarvestableMonths();
         return response.data;
       } catch (error) {
-        this.showSnackbar({
-          content: this.$t("error_saving"),
-          color: "error",
-        });
-        if (error.response != null) {
-          this.processErrors(error.response.data);
+        // Show waring for same credentials
+        let respData = error.response?.data;
+        if (!forced && respData && respData[0].startsWith("Same credentials")) {
+          let text_ref =
+            respData[0] == "Same credentials exists - globally"
+              ? "same_credentials_global_text"
+              : "same_credentials_in_org_text";
+          const res = await this.$confirm(this.$t(text_ref), {
+            title: this.$t("same_credentials_title"),
+            buttonTrueText: this.$t("ignore_and_save"),
+            buttonFalseText: this.$t("cancel"),
+            icon: "fa fa-copy",
+            width: 500,
+          });
+          if (res) {
+            // User really wants to save the it
+            return await this.saveData(true);
+          }
+        } else {
+          this.showSnackbar({
+            content: this.$t("error_saving"),
+            color: "error",
+          });
+          if (error.response != null) {
+            this.processErrors(error.response.data);
+          }
         }
         return null;
       } finally {

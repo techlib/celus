@@ -1,4 +1,5 @@
 from core.models import UL_CONS_STAFF
+from django.db.models import Q
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.models import Platform
@@ -93,6 +94,9 @@ class SushiCredentialsSerializer(ModelSerializer):
     submitter = HiddenField(default=CurrentUserDefault())
     locked = SerializerMethodField()
     verified = BooleanField(read_only=True)
+    same_global = IntegerField(read_only=True)
+    same_in_org = IntegerField(read_only=True)
+    forced = BooleanField(write_only=True, default=False)
 
     class Meta:
         model = SushiCredentials
@@ -122,13 +126,23 @@ class SushiCredentialsSerializer(ModelSerializer):
             "outside_consortium",
             "broken",
             "verified",
+            "same_global",
+            "same_in_org",
             "auto_update_url",
+            "forced",
         )
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF
 
     def update(self, instance: SushiCredentials, validated_data):
+        # `forced` attribute is not a part of a credentails model
+        # it is used to store the credentails eventhought credentials
+        # with the same hash exists (otherwise 400 is triggered)
+        #
+        # We need to remove it here so that the credentails are updated
+        # properly
+        validated_data.pop("forced", None)
         # check existing credentials for this organization, platform and counter version
         if (
             SushiCredentials.objects.filter(
@@ -155,6 +169,13 @@ class SushiCredentialsSerializer(ModelSerializer):
         return result
 
     def create(self, validated_data):
+        # `forced` attribute is not a part of a credentails model
+        # it is used to store the credentails eventhought credentials
+        # with the same hash exists (otherwise 400 is triggered)
+        #
+        # We need to remove it here so that the credentails are updated
+        # properly
+        validated_data.pop("forced", None)
         # check existing credentials for this organization, platform and counter version
         if SushiCredentials.objects.filter(
             organization=validated_data["organization"],
@@ -173,6 +194,62 @@ class SushiCredentialsSerializer(ModelSerializer):
         result.can_lock = submitter_level >= UL_CONS_STAFF
         result.locked_for_me = submitter_level < result.lock_level
         return result
+
+
+class SushiCredentialsNoSameGlobalSerializer(SushiCredentialsSerializer):
+    same_global_allowed = False
+
+    def _get_hash(self, validated_data, instance=None):
+        instance_dict = (
+            instance and {e: getattr(instance, e, None) for e in SushiCredentials.VERSION_HASH_KEYS}
+        ) or {}
+        return SushiCredentials.hash_version_dict(
+            {
+                e: validated_data.get(e, instance_dict.get(e))
+                for e in SushiCredentials.VERSION_HASH_KEYS
+            }
+        )
+
+    def _check_same(self, fltr, validated_data, instance=None):
+        if self.same_global_allowed:
+            fltr = fltr & Q(organization=validated_data["organization"])
+
+        same_credentials = list(
+            SushiCredentials.objects.filter(fltr).values_list("organization_id", flat=True)
+        )
+        if instance:
+            organization_id = (validated_data.get("organization") or instance.organization).pk
+        else:
+            organization_id = validated_data["organization"].pk
+        if same_credentials:
+            if organization_id in same_credentials:
+                raise ValidationError(
+                    "Same credentials exists - within org", code="same-exists-within-org"
+                )
+            else:
+                raise ValidationError(
+                    "Same credentials exists - globally", code="same-exists-globally"
+                )
+
+    def create(self, validated_data):
+        version_hash = self._get_hash(validated_data)
+
+        fltr = Q(version_hash=version_hash)
+        self._check_same(fltr, validated_data)
+
+        return super().create(validated_data)
+
+    def update(self, instance: SushiCredentials, validated_data):
+        version_hash = self._get_hash(validated_data, instance)
+
+        fltr = Q(version_hash=version_hash) & ~Q(pk=instance.pk)
+        self._check_same(fltr, validated_data, instance)
+
+        return super().update(instance, validated_data)
+
+
+class SushiCredentialsNoSameInOrgSerializer(SushiCredentialsNoSameGlobalSerializer):
+    same_global_allowed = True
 
 
 class SushiCredentialsDataCounterReportSerializer(Serializer):

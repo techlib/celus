@@ -32,6 +32,8 @@ en:
   there_are_no_credentials: There are no credentials
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
   unverified_tooltip: No data has been obtained yet using the current version of these credentials. Please verify the credentials by manually harvesting some data.
+  warn_same_credentials_in_org_tooltip: The same credentials are used for a different platform as well. This is likely an error and will cause data duplication.
+  warn_same_credentials_global_tooltip: The same credentials are used by another organization. This is likely an error and will cause data duplication.
   filter_at_least_one_credentials: Please filter at least one set of SUSHI credentials using filers above.
   first_add_some_credentials: You have not added any SUSHI credentials yet, please first add credentials using button above.
   import_credentials_confirm_title: Automatic import under construction
@@ -78,6 +80,8 @@ cs:
   there_are_no_credentials: Nemáte uloženy žádné přihlašovací údaje
   select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
   unverified_tooltip: Žádná data zatím nebyla stažena se současnou verzí těchto přístupových údajů. Ověřte prosím platnost přihlašovacích údajů manuálním stažením dat.
+  warn_same_credentials_in_org_tooltip: Stejné přístupové údaje jsou použity i u jiné platformy. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
+  warn_same_credentials_global_tooltip: Stejné přístupové údaje jsou použity jinou organizací. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
   filter_at_least_one_credentials: Vyfiltrujte prosím alespoň jedny přihlašovací údaje pomocí filtrů v horní části.
   first_add_some_credentials: Nepřidali jste žádné SUSHI přihlašovací údaje, prosím nejprve přidejte přihlačovací údaje tlačítkem výše.
   import_credentials_confirm_title: Automatický import ve vývoji
@@ -504,6 +508,20 @@ cs:
             {{ $t("actions.show_overview_details") }}
           </v-tooltip>
         </template>
+        <template v-slot:item.title="{ item }">
+          <v-tooltip bottom v-if="warnSameCredentials(item)" max-width="400">
+            <template v-slot:activator="{ on }">
+              <v-icon v-on="on" small color="warning" class="pe-1"
+                >fa-copy</v-icon
+              >
+              {{ item.title }}
+            </template>
+            {{ $t(warnSameCredentialsText(item)) }}
+          </v-tooltip>
+          <span v-else>
+            {{ item.title }}
+          </span>
+        </template>
         <template v-slot:item.enabled="{ item }">
           <CheckMark
             :value="item.enabled"
@@ -793,6 +811,7 @@ export default {
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
       selectedOrganization: "selectedOrganization",
+      consortialInstall: "consortialInstall",
     }),
     getCSRFToken() {
       let csrftoken = Cookies.get("csrftoken");
@@ -873,7 +892,11 @@ export default {
       return this.sushiCredentialsList
         .filter((item) =>
           this.problematicOnly
-            ? !item.verified || item.broken || item.has_broken_reports
+            ? !item.verified ||
+              item.broken ||
+              item.has_broken_reports ||
+              (item.same_global > 1 && this.consortialInstall) ||
+              item.same_in_org > 1
             : true
         )
         .filter(
@@ -1021,6 +1044,15 @@ export default {
       }
     },
     updateCredentials(credentials) {
+      if (
+        this.selectedCredentials.same_global != credentials.same_global ||
+        this.selectedCredentials.same_in_org != credentials.same_in_org
+      ) {
+        // Same credentials were updated => refetch all credentials to update
+        // the states of other credentials
+        this.loadSushiCredentialsList();
+        return;
+      }
       this.preprocessCredentials(credentials);
       // the new credentials as returned by the edit dialog
       // we put them at the right place in the list of credentials
@@ -1167,6 +1199,23 @@ export default {
           count: count > 1 ? `+${count - 1}` : null,
         },
       ];
+    },
+    warnSameCredentials(creds) {
+      if (this.consortialInstall) {
+        return creds.same_global > 1;
+      } else {
+        return creds.same_in_org > 1;
+      }
+      return false;
+    },
+    warnSameCredentialsText(creds) {
+      if (creds.same_in_org > 1) {
+        return "warn_same_credentials_in_org_tooltip";
+      }
+      if (creds.same_global > 1) {
+        return "warn_same_credentials_global_tooltip";
+      }
+      return "";
     },
   },
 

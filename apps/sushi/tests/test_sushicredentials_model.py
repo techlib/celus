@@ -421,3 +421,69 @@ class TestCredentialsQuerySet:
         # Real sushi - protocol mismatch
         c2 = CredentialsFactory(url="http://fake.it")
         assert set(SushiCredentials.objects.all().not_fake()) == {c1, c2}
+
+    @pytest.mark.parametrize("consortial", (True, False))
+    def test_annotate_same_counts(self, organizations, consortial, settings):
+        settings.CONSORTIAL_INSTALLATION = consortial
+        c1 = CredentialsFactory(
+            organization=organizations["branch"],
+            url="https://example.com/",
+            customer_id="C1",
+            requestor_id="R1",
+            api_key="A",
+            counter_version=5,
+            http_username="",
+            http_password="",
+            extra_params={"platform": "P1"},
+        )
+        c2 = CredentialsFactory(
+            organization=organizations["branch"],
+            url="https://example.com/",
+            customer_id="C1",
+            requestor_id="R1",
+            api_key="A",
+            counter_version=5,
+            http_username="",
+            http_password="",
+            extra_params={"platform": "P1"},
+        )
+        c3 = CredentialsFactory(
+            organization=organizations["standalone"],
+            url="https://example.com/",
+            customer_id="C1",
+            requestor_id="R1",
+            api_key="A",
+            counter_version=5,
+            http_username="",
+            http_password="",
+            extra_params={"platform": "P1"},
+        )
+
+        c4 = CredentialsFactory(
+            organization=organizations["branch"],
+            url="https://example.com/",
+            customer_id="C1",
+            requestor_id="R1",
+            api_key="A",
+            counter_version=5,
+            http_username="",
+            http_password="",
+            extra_params={},
+        )
+
+        assert c1.version_hash == c2.version_hash
+        assert c2.version_hash == c3.version_hash
+        assert not c3.version_hash == c4.version_hash
+
+        if consortial:
+            assert list(
+                SushiCredentials.objects.annotate_same_counts()
+                .order_by("pk")
+                .values_list("same_global", "same_in_org")
+            ) == [(3, 2), (3, 2), (3, 1), (1, 1)]
+        else:
+            assert list(
+                SushiCredentials.objects.annotate_same_counts()
+                .order_by("pk")
+                .values_list("same_global", "same_in_org")
+            ) == [(0, 2), (0, 2), (0, 1), (0, 1)]
