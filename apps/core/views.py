@@ -10,6 +10,7 @@ from io import StringIO
 import prometheus_client
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
+from decouple import RepositoryEnv
 from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
 from django.conf import settings
@@ -538,10 +539,7 @@ class PrometheusMetricsView(View):
         try:
             return platform.freedesktop_os_release()
         except AttributeError:
-            with open("/etc/os-release", "rt") as f:
-                return {
-                    line.split("=", 1)[0]: line.split("=", 1)[1].strip().strip('"') for line in f
-                }
+            return RepositoryEnv("/etc/os-release").data
 
     def get(self, request):
         # update the cache-based metrics (those are not updated automatically, but rather a celery
