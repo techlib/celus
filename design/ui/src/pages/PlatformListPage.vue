@@ -40,9 +40,6 @@ cs:
       >
         <v-container fluid class="py-0 pr-0">
           <v-row>
-            <v-col v-if="allowUserCreatePlatforms" cols="auto">
-              <AddPlatformButton @update-platforms="loadPlatforms()" />
-            </v-col>
             <v-col cols="auto">
               <ManualUploadButton />
             </v-col>

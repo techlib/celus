@@ -40,6 +40,7 @@ cs:
         {{ $t("actions.upload_data") }}
       </v-tooltip>
     </template>
+
     <template #item.info="{ item }">
       <v-tooltip bottom max-width="600px">
         <template #activator="{ on }">
@@ -48,9 +49,12 @@ cs:
             v-on="on"
             :href="item.knowledgebase.notes_url"
             target="_blank"
-            icon
+            text
+            small
+            color="tertiary"
           >
-            <v-icon small>fa-external-link-alt</v-icon>
+            <v-icon small color="info" class="pr-2">fa-info-circle</v-icon>
+            {{ $t("title_fields.info") }}
           </v-btn>
         </template>
         {{ $t("knowledgebase_article") }}

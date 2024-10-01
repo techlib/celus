@@ -16,6 +16,7 @@ export default new Vuetify({
         accent: colors.orange.lighten2,
         counterRegistry: "#107da6",
         anchor: "#35827b",
+        tertiary: "#666666",
       },
     },
   },
