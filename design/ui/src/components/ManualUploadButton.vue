@@ -27,7 +27,7 @@ cs:
       {{ $t("add") }}
     </v-tooltip>
     <v-dialog v-model="showDialog" v-if="showDialog" max-width="640px">
-      <PlatformSelectionWidget>
+      <PlatformSelectionWidget allow-create>
         <template v-slot:actions>
           <v-btn @click="showDialog = false">{{ $t("actions.cancel") }}</v-btn>
         </template>

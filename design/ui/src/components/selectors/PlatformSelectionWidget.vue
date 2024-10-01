@@ -11,7 +11,22 @@
         :platforms="availablePlatforms"
         v-model="platformId"
         :loading="loading"
-      />
+        :allow-create="allowCreate"
+      >
+        <template #prepend v-if="allowCreate">
+          <v-list-item-content>
+            <v-list-item-title>
+              <AddPlatformButton
+                @update-platforms="platformCreated"
+                :text="true"
+                small
+                color="success"
+                class="pl-1"
+              />
+            </v-list-item-title>
+          </v-list-item-content>
+        </template>
+      </PlatformSelector>
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
@@ -36,10 +51,17 @@
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import AddPlatformButton from "@/components/AddPlatformButton.vue";
 
 export default {
   name: "PlatformSelectionWidget",
-  components: { PlatformSelector },
+
+  components: { AddPlatformButton, PlatformSelector },
+
+  props: {
+    allowCreate: { default: false, type: Boolean },
+  },
+
   data() {
     return {
       platformId: null,
@@ -79,6 +101,11 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    async platformCreated(platform) {
+      await this.loadPlatforms();
+      this.platformId = platform.pk;
     },
   },
   mounted() {
