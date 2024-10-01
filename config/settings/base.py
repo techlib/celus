@@ -723,6 +723,9 @@ NTFY_DEFAULT_PRIORITY = config("NTFY_DEFAULT_PRIORITY", default=4, cast=int)
 default_ntfy_backends = []
 if MAILGUN_API_KEY:
     default_ntfy_backends.append("anymail.backends.mailgun.EmailBackend")
+else:
+    # use standard email backend when MG is not used
+    default_ntfy_backends.append("django.core.mail.backends.smtp.EmailBackend")
 if NTFY_DEFAULT_TOPIC:
     default_ntfy_backends.append("django_ntfy.NtfyBackend")
 EMAIL_EXPONENTIAL_RATE_LIMIT_BACKENDS = config(
