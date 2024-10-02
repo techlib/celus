@@ -34,7 +34,7 @@ from logs.models import (
 class TestInterestCalculation:
     def test_simple(self, counter_records, organizations, report_type_nd, interest_rt):
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type = report_type_nd(1)
         organization = organizations[0]
@@ -78,7 +78,7 @@ class TestInterestCalculation:
         """
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type_old: ReportType = report_type_nd(1, short_name="old")
         report_type_new: ReportType = report_type_nd(1, short_name="new")
@@ -137,7 +137,7 @@ class TestInterestCalculation:
         """
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type_1: ReportType = report_type_nd(1, short_name="old")
         report_type_2: ReportType = report_type_nd(1, short_name="new")
@@ -193,7 +193,7 @@ class TestInterestCalculation:
         are not counted into interest.
         """
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type = report_type_nd(1)
         organization = organizations[0]
@@ -239,7 +239,7 @@ class TestInterestRecomputationDetection:
     def test_find_unprocessed_batches(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
         ib1 = ImportBatch.objects.create(
@@ -265,7 +265,7 @@ class TestInterestRecomputationDetection:
     def test_find_platform_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
         ib1 = ImportBatch.objects.create(
@@ -299,7 +299,7 @@ class TestInterestRecomputationDetection:
         """
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1, short_name="rt1")
         report_type2: ReportType = report_type_nd(1, short_name="rt2")
@@ -340,7 +340,7 @@ class TestInterestRecomputationDetection:
         """
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1, short_name="rt1")
         # now define the interest
@@ -352,9 +352,7 @@ class TestInterestRecomputationDetection:
             interest_timestamp=now(),
         )
         # update pir - it should invalidate ib1
-        pir.platform = Platform.objects.create(
-            ext_id=1235, short_name="P2", name="P2", provider="P2"
-        )
+        pir.platform = Platform.objects.create(short_name="P2", name="P2", provider="P2")
         pir.save()
         assert pir.last_modified > ib1.interest_timestamp
         qs = _find_platform_interest_changes()
@@ -363,7 +361,7 @@ class TestInterestRecomputationDetection:
     def test_find_metric_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1, short_name="rt1")
         report_type2: ReportType = report_type_nd(1, short_name="rt2")
@@ -394,7 +392,7 @@ class TestInterestRecomputationDetection:
     def test_find_platform_report_type_disconnect(self, organizations, report_type_nd):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
         interest_rt: ReportType = report_type_nd(1, short_name="interest")
@@ -431,7 +429,7 @@ class TestInterestRecomputationDetection:
     def test_find_report_type_metric_disconnect(self, organizations, report_type_nd, interest_rt):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
         # now define the interest
@@ -469,7 +467,7 @@ class TestInterestRecomputationDetection:
     def test_find_superseeded_import_batches(self, organizations, report_type_nd, interest_rt):
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         rt_old: ReportType = report_type_nd(1, short_name="old")
         # now define the interest
@@ -554,7 +552,7 @@ class TestInterestRecomputationDetection:
         """
         organization = organizations[0]
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type_old: ReportType = report_type_nd(1, short_name="old")
         report_type_new: ReportType = report_type_nd(1, short_name="new")

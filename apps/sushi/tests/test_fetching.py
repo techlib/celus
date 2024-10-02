@@ -29,9 +29,7 @@ class TestURLComposition:
         knowledgebase = {
             "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
-        Platform.objects.create(
-            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
-        )
+        Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
         stats = import_sushi_credentials_new(data)
         assert stats["added"] == 1
         assert SushiCredentials.objects.count() == 1

@@ -105,7 +105,7 @@ class TestClickhouseSync:
         which does not force clickhouse sync on its own.
         """
         platform, _created = Platform.objects.get_or_create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         # metric may be a dict of name->multiplier or string
         metric_to_multi = metric if isinstance(metric, dict) else {metric: 1}
@@ -417,7 +417,7 @@ class TestClickhouseCompare:
         self, counter_records, organizations, report_type_nd, in_db, in_ch
     ):
         platform, _created = Platform.objects.get_or_create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         data = [
             ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],

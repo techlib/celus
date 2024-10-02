@@ -29,10 +29,9 @@ class TestFetchIntentionSplittingMigration:
         report_type = ReportType.objects.create(short_name="foo_rt")
         metric_a = Metric.objects.create(short_name="A")
         metric_b = Metric.objects.create(short_name="B")
-        platform = Platform.objects.create(short_name="foo_pl", ext_id=100)
+        platform = Platform.objects.create(short_name="foo_pl")
         organization = Organization.objects.create(
             short_name="foo_org",
-            ext_id=1,
             parent=None,
             # mptt related fields which are not auto-populated for some reason
             lft=0,

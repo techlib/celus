@@ -358,7 +358,7 @@ class TestLogicDataImportCSV:
                 "URL": "http://this.is/test/",
             },
         ]
-        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
         assert stats["added"] == 2
         assert stats["error"] == 1, "the last record is missing organization"
@@ -406,7 +406,7 @@ class TestLogicDataImportCSV:
                 "extra_attrs": "auth=un,pass;api_key=kekekeyyy;foo=bar",
             },
         ]
-        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
         assert stats["added"] == 2
         assert SushiCredentials.objects.count() == 2
@@ -425,15 +425,15 @@ class TestLogicDataImportCSV:
     def test_sushi_import_with_custom_platforms(self, organization_idx):
         organizations = OrganizationFactory.create_batch(2)
         assert SushiCredentials.objects.count() == 0
-        pl_global = PlatformFactory.create(short_name="pl-global", ext_id=10)
+        pl_global = PlatformFactory.create(short_name="pl-global")
         s1, _ = DataSource.objects.get_or_create(
             short_name="s1", organization=organizations[0], type=DataSource.TYPE_ORGANIZATION
         )
         s2, _ = DataSource.objects.get_or_create(
             short_name="s2", organization=organizations[1], type=DataSource.TYPE_ORGANIZATION
         )
-        pl_org1 = PlatformFactory.create(short_name="pl-org1", source=s1, ext_id=11)
-        pl_org2 = PlatformFactory.create(short_name="pl-org2", source=s2, ext_id=12)
+        pl_org1 = PlatformFactory.create(short_name="pl-org1", source=s1)
+        pl_org2 = PlatformFactory.create(short_name="pl-org2", source=s2)
         data = [
             {
                 "platform": pl_global.short_name,
@@ -494,7 +494,7 @@ class TestLogicDataImportCSV:
                 "counter_reports": "TR, DR",
             },
         ]
-        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data, override_organization=org3)
         assert stats["added"] == 2
         assert SushiCredentials.objects.count() == 2
@@ -515,7 +515,7 @@ class TestLogicDataImportCSV:
                 "URL": "http://this.is/test/",
             }
         ]
-        Platform.objects.create(short_name="XXX", name="XXXX", ext_id=10)
+        Platform.objects.create(short_name="XXX", name="XXXX")
         extra = {"default_version": default_version} if default_version is not None else {}
         stats = import_sushi_credentials_old(data, **extra)
         assert stats["added"] == 1

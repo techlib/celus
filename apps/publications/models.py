@@ -13,7 +13,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
-from django.db.models import Q, UniqueConstraint
+from django.db.models import CheckConstraint, Q, UniqueConstraint
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -77,8 +77,9 @@ class Platform(models.Model):
         verbose_name = _("Platform")
         constraints = [
             UniqueConstraint(fields=["ext_id", "source"], name="ext_id_source_not_null"),
-            UniqueConstraint(
-                fields=["ext_id"], condition=Q(source=None), name="ext_id_source_null"
+            CheckConstraint(
+                check=(Q(source=None) & Q(ext_id=None)) | ~Q(source=None),
+                name="if_source_is_null_ext_id_should_be_null",
             ),
             UniqueConstraint(
                 fields=("short_name",),

@@ -183,9 +183,7 @@ class TestCredentialsVersioning:
         knowledgebase = {
             "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
-        Platform.objects.create(
-            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
-        )
+        Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
@@ -215,9 +213,7 @@ class TestCredentialsVersioning:
         knowledgebase = {
             "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
-        Platform.objects.create(
-            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
-        )
+        Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
@@ -246,9 +242,7 @@ class TestCredentialsVersioning:
         knowledgebase = {
             "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
-        Platform.objects.create(
-            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
-        )
+        Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
@@ -279,9 +273,7 @@ class TestCredentialsVersioning:
         knowledgebase = {
             "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
         }
-        Platform.objects.create(
-            short_name="XXX", name_en="XXXX", ext_id=10, knowledgebase=knowledgebase
-        )
+        Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
         import_sushi_credentials_new(data)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()

@@ -6,9 +6,8 @@ from ..models import Platform, Title
 
 @pytest.fixture
 def platforms():
-    p1 = Platform.objects.create(ext_id=1, short_name="Plat1", name="Platform 1")
+    p1 = Platform.objects.create(short_name="Plat1", name="Platform 1")
     p2 = Platform.objects.create(
-        ext_id=2,
         short_name="Plat2",
         name="Platform 2",
         provider="Provider X",
@@ -19,9 +18,7 @@ def platforms():
 
 @pytest.fixture
 def platform():
-    return Platform.objects.create(
-        ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
-    )
+    return Platform.objects.create(short_name="Platform1", name="Platform 1", provider="Provider 1")
 
 
 @pytest.fixture

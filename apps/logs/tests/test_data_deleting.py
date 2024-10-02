@@ -11,7 +11,7 @@ from logs.models import AccessLog, ImportBatch
 class TestDataDeleting:
     def _prepare_accesslogs(self, counter_records, organizations, report_type_nd) -> [ImportBatch]:
         platform = Platform.objects.create(
-            ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         data = [
             ["Title1", "2018-01-01", "1v1", "2v1", "3v1", 1],

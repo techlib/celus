@@ -105,7 +105,7 @@ class PlatformFactory(factory.django.DjangoModelFactory):
         model = Platform
         django_get_or_create = ("short_name", "source")
 
-    ext_id = factory.Sequence(lambda n: n)
+    ext_id = None
     name = factory.Faker("name")
     short_name = factory.LazyAttribute(lambda x: x.name[:10])
     url = factory.Faker("url")

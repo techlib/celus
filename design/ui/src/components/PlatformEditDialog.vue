@@ -21,6 +21,7 @@ en:
     similar_platform_name: A platform with similar name already exists
   errors:
     invalid_url: "Invalid URL (valid URL starts with 'http(s)://', e.g. 'https://www.cambridge.org/core')"
+    short_name_not_unique: "Short name is not unique"
     saving_error: Failed to save the platform.
 
 cs:
@@ -41,9 +42,10 @@ cs:
       name: Celé jméno platformy (např. Cambridge University Presss)
       provider: Poskytovatel (provozovatel) - kdo zajišťuje chod platformy
       url: "Webová stránka platformy (např. https://www.cambridge.org/core/). Pozn: tato URL není URL pro SUSHI."
-    similar_platform_name: Platformy s podobným jménem už existuje
+    similar_platform_name: Platforma s podobným jménem už existuje
   errors:
     invalid_url: "Neplatná URL (platná URL začíná na 'http(s)://', např. 'https://www.cambridge.org/core')"
+    short_name_not_unique: "Krátké jméno není unikátní"
     saving_error: Nepodařilo se uložit platformu.
 </i18n>
 
@@ -75,7 +77,7 @@ cs:
                 :label="$t('form.organization')"
                 return-object
                 :disabled="fixedOrganization"
-                :rules="[ruleRequired]"
+                :rules="[rules.required]"
               >
                 <template v-slot:item="{ item }">
                   <span
@@ -91,7 +93,7 @@ cs:
               <v-text-field
                 v-model="platform.short_name"
                 :label="$t('form.short_name')"
-                :rules="[ruleRequired]"
+                :rules="[rules.required, ruleUniqueShortName]"
                 :hint="$t('form.hint.short_name')"
                 persistent-hint
               >
@@ -101,7 +103,7 @@ cs:
               <v-text-field
                 v-model="platform.name"
                 :label="$t('form.name')"
-                :rules="[ruleRequired]"
+                :rules="[rules.required]"
                 :hint="$t('form.hint.name')"
                 persistent-hint
               >
@@ -125,7 +127,7 @@ cs:
               <v-text-field
                 v-model="platform.provider"
                 :label="$t('form.provider')"
-                :rules="[ruleRequired]"
+                :rules="[rules.required]"
                 :hint="$t('form.hint.provider')"
                 persistent-hint
               >
@@ -157,7 +159,12 @@ cs:
                 <v-icon small class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>
-              <v-btn color="primary" @click="saveAndClose()" class="mr-2">
+              <v-btn
+                color="primary"
+                @click="saveAndClose()"
+                class="mr-2"
+                :disabled="!isValid"
+              >
                 <v-icon small class="mr-1">fa fa-save</v-icon>
                 {{ $t("save") }}
               </v-btn>
@@ -174,9 +181,13 @@ import axios from "axios";
 import { mapActions, mapGetters } from "vuex";
 import validate from "validate.js";
 import stringSimilarity from "string-similarity";
+import formRulesMixin from "@/mixins/formRulesMixin";
 
 export default {
   name: "PlatformEditDialog",
+
+  mixins: [formRulesMixin],
+
   props: {
     platformId: { required: false, type: Number },
   },
@@ -403,8 +414,11 @@ export default {
         this.$refs.form.resetValidation();
       }
     },
-    ruleRequired(value) {
-      return !!value || this.$t("required");
+    ruleUniqueShortName(value) {
+      return (
+        !this.platforms.some((e) => e.short_name === value) ||
+        this.$t("errors.short_name_not_unique")
+      );
     },
     ruleUrlValid() {
       if (!this.platform.url) {

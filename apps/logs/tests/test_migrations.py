@@ -22,7 +22,7 @@ class TestMigrations:
         ReportTypeToDimension.objects.create(dimension=dim1, report_type=rt, position=0)
         ReportTypeToDimension.objects.create(dimension=dim2, report_type=rt, position=1)
         m1 = Metric.objects.create(short_name="m1")
-        p1 = Platform.objects.create(short_name="p1", ext_id=1234)
+        p1 = Platform.objects.create(short_name="p1")
         dt1 = DimensionText.objects.create(text="dim1text", dimension=dim1)
         org = Organization.objects.create(
             short_name="org",

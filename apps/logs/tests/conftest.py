@@ -131,7 +131,7 @@ def report_type_nd():
 @pytest.fixture
 def platform():
     platform = Platform.objects.create(
-        ext_id=1234, short_name="Platform1", name="Platform 1", provider="Provider 1"
+        short_name="Platform1", name="Platform 1", provider="Provider 1"
     )
     return platform
 

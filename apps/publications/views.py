@@ -1,3 +1,5 @@
+import typing
+
 from allauth.utils import build_absolute_uri
 from api.auth import extract_org_from_request_api_key
 from api.permissions import HasOrganizationAPIKey
@@ -6,6 +8,7 @@ from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params
+from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
@@ -196,6 +199,21 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
         return [permission() for permission in permission_classes]
 
+    def _short_name_check(
+        self,
+        short_name: str,
+        source: typing.Optional[DataSource],
+        instance_pk: typing.Optional[int],
+    ):
+        if (
+            Platform.objects.filter(
+                Q(short_name=short_name) & (Q(source__isnull=True) | Q(source=source))
+            )
+            .exclude(pk=instance_pk)
+            .exists()
+        ):
+            raise ValidationError({"short_name": "Already exists"}, code="unique")
+
     @transaction.atomic
     def perform_create(self, serializer):
         if self.kwargs["organization_pk"] != "-1":
@@ -205,17 +223,17 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
             source = None
 
         serializer.is_valid()  # -> sets validated_data
-        if Platform.objects.filter(
-            Q(ext_id__isnull=True)
-            & Q(short_name=serializer.validated_data["short_name"])
-            & (Q(source__isnull=True) | Q(source=source))
-        ).exists():
-            raise ValidationError({"short_name": "Already exists"}, code="unique")
+        self._short_name_check(serializer.validated_data["short_name"], source, None)
 
         platform = serializer.save(ext_id=None, source=source)
         platform.create_default_interests()
 
     def perform_update(self, serializer):
+        serializer.is_valid()  # -> sets validated_data
+        platform = self.get_object()
+        self._short_name_check(
+            serializer.validated_data["short_name"], platform.source, platform.pk
+        )
         serializer.save(
             ext_id=None, source=self.get_object().source
         )  # source can be selected only on create
