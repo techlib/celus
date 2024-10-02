@@ -394,14 +394,12 @@ export default {
   },
   computed: {
     itemsPerPageOptions() {
-      return [
-        this.counterReports.length,
-        this.counterReports.length * 2,
-        this.counterReports.length * 3,
-      ];
+      return [...Array(5).keys()].map(
+        (i) => (i + 1) * this.counterReports.length
+      );
     },
     itemsPerPage() {
-      return this.counterReports.length;
+      return this.counterReports.length * 2; // 2 years by default
     },
     credentialsDataUrl() {
       if (this.credentials && this.credentials.pk) {
