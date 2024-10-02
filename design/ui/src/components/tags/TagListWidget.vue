@@ -18,7 +18,7 @@ cs:
   tag_delete_success: Štítek "{tag}" byl úspěšně smazán
   confirm_tag_class_delete: Potvrzení smazání typu štítků
   delete_tag_class_tag_count: Opravdu chcete smazat typ štítků "{name}" s {count} štítkem? | Opravdu chcete smazat typ štítků "{name}" s {count} štítky?
-  tag_class_delete_success: Typ štítků "{name}" byl úspěšně smazán
+  tag_class_delete_success: Typ štítků "{tag_class}" byl úspěšně smazán
   performance_warning: Pro optimalizaci výkonu, když je zobrazeno mnoho štítků, je zobrazen pouze text štítku, nikoliv plný náhled.
   show_system_tags: Zobrazit systémové štítky
   tag_class_hidden: Tento typ štítků nebude zobrazen při výpisu položek se štítky, například titulů. Kliknutím přepnete.
@@ -494,10 +494,15 @@ export default {
         });
         if (!reply.error) {
           this.showSnackbar({
-            content: this.$t("tag_class_delete_success", cls),
+            content: this.$t("tag_class_delete_success", {
+              tag_class: cls.name,
+            }),
             color: "success",
           });
           this.tags = this.tags.filter((item) => item.tag_class.pk !== cls.pk);
+          this.tagClasses = this.tagClasses.filter(
+            (item) => item.pk !== cls.pk
+          );
         }
       }
     },
