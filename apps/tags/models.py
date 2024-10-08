@@ -319,11 +319,13 @@ class TagClass(CreatedUpdatedMixin, models.Model):
         """
         out = {tag.name: tag for tag in Tag.objects.filter(tag_class=self, name__in=tag_names)}
         missing_names = set(tag_names) - set(out.keys())
+        owner_org = self.owner_org
         to_insert = [
             Tag(
                 tag_class=self,
                 name=name,
                 owner=owner,
+                owner_org=owner_org,
                 can_assign=self.default_tag_can_assign,
                 can_see=self.default_tag_can_see,
                 bg_color=self.bg_color,

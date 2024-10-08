@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.core.management import call_command
 from freezegun import freeze_time
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
+from organizations.fake_data import OrganizationFactory
 from publications.fake_data import TitleFactory
 from publications.tests.test_api import MockTask
 from rest_framework.reverse import reverse
@@ -378,6 +379,16 @@ class TestBatchTaggingWithTagsInFile:
         assert preflight.rows_no_tag == 1
 
     @pytest.mark.parametrize(
+        "tag_visibility",
+        [
+            AccessibleBy.ORG_ADMINS,
+            AccessibleBy.ORG_USERS,
+            AccessibleBy.EVERYBODY,
+            AccessibleBy.CONS_ADMINS,
+            AccessibleBy.OWNER,
+        ],
+    )
+    @pytest.mark.parametrize(
         ["issn", "tag_stats"],
         [
             ("1234-5678", {"hroch": 2, "prase": 1, "praze": 2}),
@@ -386,11 +397,19 @@ class TestBatchTaggingWithTagsInFile:
             ("2546-5794", {"hroch": 0, "prase": 3, "praze": 0}),
         ],
     )
-    def test_tagging_batch_tagging(self, inmemory_media, users, issn, tag_stats):
+    def test_tagging_batch_tagging(self, inmemory_media, issn, tag_stats, tag_visibility, users):
         TitleFactory.create(isbn="9780787960186")
         TitleFactory.create(issn=issn)
         TitleFactory.create(eissn=issn)
-        tc = TagClassFactory.create(scope=TagScope.TITLE)
+        org = OrganizationFactory()
+        extra_attrs = {}
+        if tag_visibility == AccessibleBy.OWNER:
+            extra_attrs["owner"] = users["admin1"]
+        elif tag_visibility in (AccessibleBy.ORG_ADMINS, AccessibleBy.ORG_USERS):
+            extra_attrs["owner_org"] = org
+        tc = TagClassFactory.create(
+            scope=TagScope.TITLE, default_tag_can_see=tag_visibility, **extra_attrs
+        )
         tb = TaggingBatchFactory.create(
             tag_class=tc,
             source_file=plain_test_file_with_tags,
