@@ -15,12 +15,20 @@ cs:
         <TaggingBatchStateWidget :batch="taggingBatch" />
       </td>
     </tr>
+
     <tr v-if="taggingBatch.tag">
       <th>{{ $t("labels.tag") }}</th>
       <td class="text-right">
         <TagChip :tag="taggingBatch.tag" show-class />
       </td>
     </tr>
+    <tr v-else-if="taggingBatch.tag_class">
+      <th>{{ $t("labels.tag_class") }}</th>
+      <td class="text-right">
+        <TagChip :tag="taggingBatch.tag_class" />
+      </td>
+    </tr>
+
     <tr v-if="taggingBatch.state === 'imported'">
       <th>{{ $t("tagging.automatic_reprocessing") }}</th>
       <td class="text-right">
