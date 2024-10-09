@@ -37,11 +37,6 @@ export default new Router({
       },
     },
     {
-      path: "/intro/",
-      name: "intro",
-      component: () => import("../pages/IntroPage.vue"),
-    },
-    {
       path: "/dashboard/",
       name: "dashboard",
       component: () => import("../pages/DashboardPage.vue"),

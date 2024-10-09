@@ -25,8 +25,7 @@ cs:
 </i18n>
 
 <template>
-  <IntroPage v-if="loggedIn && showIntro" />
-  <v-container fluid v-else-if="organizationId" pa-0 pa-sm-2>
+  <v-container fluid v-if="organizationId" pa-0 pa-sm-2>
     <!--v-row>
             <v-col>
                 <h1 v-text="$t('pages.dashboard')"></h1>
@@ -170,7 +169,6 @@ import LargeSpinner from "@/components/util/LargeSpinner";
 import { formatInteger, smartFormatFloat } from "@/libs/numbers";
 import { pubTypes } from "@/libs/pub-types";
 import TopTenDashboardWidget from "@/components/TopTenDashboardWidget";
-import IntroPage from "./IntroPage";
 import SushiStatusChart from "@/components/charts/SushiStatusChart";
 import startOfMonth from "date-fns/startOfMonth";
 import addDays from "date-fns/addDays";
@@ -188,7 +186,6 @@ export default {
     OverallCoverageDashboardWidget,
     SushiStatsDashboardWidget,
     SushiStatusChart,
-    IntroPage,
     TopTenDashboardWidget,
     LargeSpinner,
     APIChart,
@@ -216,7 +213,6 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       loggedIn: "loggedIn",
-      showIntro: "showIntro",
       showAdminStuff: "showAdminStuff",
     }),
     interestGroupTitlesSorted() {
