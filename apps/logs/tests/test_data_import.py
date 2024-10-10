@@ -1,3 +1,4 @@
+import copy
 import typing
 from pathlib import Path
 from unittest.mock import patch
@@ -57,6 +58,48 @@ class TestDataImport:
         assert al.value == 50
         assert al.dim1 is None
         assert PlatformTitle.objects.count() == 1
+
+    def test_temporary_item_title_conversion(self, organizations, report_type_nd, platform):
+        assert AccessLog.objects.count() == 0
+        assert Title.objects.count() == 0
+        rt_ir_m1 = report_type_nd(0, short_name="IR_M1")
+        rt_ir = report_type_nd(0, short_name="IR")
+        cr1 = CounterRecord(
+            start="2020-01-01",
+            end="2020-01-31",
+            metric="Total_Item_Requests",
+            value=1,
+            item="ItemX",
+            item_ids={"Print_ISSN": "00010001"},
+            title="TitleX",
+            title_ids={"Print_ISSN": "00010000"},
+        )
+        cr2 = copy.deepcopy(cr1)  # CounterRecords are altered during processing
+        import_counter_records(rt_ir_m1, organizations[0], platform, [cr1])
+        assert AccessLog.objects.count() == 1
+        assert ImportBatch.objects.count() == 1
+        assert Title.objects.count() == 1
+        assert Title.objects.first().name == "ItemX"
+        assert Title.objects.first().issn == "0001-0001"
+        assert Item.objects.count() == 0, "No item is created for IR_M1"
+        al = AccessLog.objects.get()
+        assert al.value == 1
+        assert al.dim1 is None
+        assert PlatformTitle.objects.count() == 1
+
+        import_counter_records(rt_ir, organizations[0], platform, [cr2])
+        assert AccessLog.objects.count() == 2
+        assert ImportBatch.objects.count() == 2
+        assert Title.objects.count() == 2
+        assert Title.objects.order_by("pk")[1].name == "TitleX"
+        assert Title.objects.order_by("pk")[1].issn == "0001-0000"
+        assert Item.objects.count() == 1, "Item is created for IR"
+        assert Item.objects.first().name == "ItemX"
+        assert Item.objects.first().issn == "0001-0001"
+        al = AccessLog.objects.order_by("pk").last()
+        assert al.value == 1
+        assert al.dim1 is None
+        assert PlatformTitle.objects.count() == 2
 
     def test_import_counter_records_simple_data_0d_more_passes(
         self, counter_records_nd, organizations, report_type_nd, platform
