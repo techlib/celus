@@ -299,7 +299,6 @@ export default {
       avatarText: "avatarText",
       avatarImg: "avatarImg",
       usernameText: "usernameText",
-      bootUpFinished: "bootUpFinished",
       emailVerified: "emailVerified",
       impersonator: "impersonator",
       showCreateOrganizationDialog: "showCreateOrganizationDialog",

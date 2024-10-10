@@ -27,6 +27,7 @@ import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
 import Worker from "@/workers/event-worker";
 import endOfMonth from "date-fns/endOfMonth";
+import router from "@/router";
 
 Vue.use(Vuex);
 
@@ -111,6 +112,7 @@ export default new Vuex.Store({
     forceDisableOrganizationSelector: {},
     forceHideDateRangeSelector: {},
     otpRequired: false,
+    bootUpFinishedInternal: false,
   },
 
   getters: {
@@ -367,11 +369,11 @@ export default new Vuex.Store({
       return false;
     },
     bootUpFinished(state) {
-      /*
-      true when all data necessary for startup are loaded, false if it is still in progress
-       */
-      // as for now, when organizations are loaded, we consider boot-up finished
-      return state.organizations !== null && true;
+      // true when all data necessary for startup are loaded,
+      // false if it is still in progress
+      // we use a getter for this because it is possible that we will need to
+      // mix in some other conditions in the future
+      return state.bootUpFinishedInternal;
     },
     showCreateOrganizationDialog(state, getters) {
       return (
@@ -427,28 +429,57 @@ export default new Vuex.Store({
       await dispatch("loadUserData"); // we need user data first
       await dispatch("afterAuthentication");
     },
-    async afterAuthentication({ dispatch, state, getters }) {
+    async afterAuthentication({ dispatch, state, getters, commit }) {
+      // only attempt to load data if user is authenticated and fully functional
+      // (i.e. not in the process of checking 2FA)
       if (state.user && !state.otpRequired) {
-        // only attempt to load data if user is authenticated and fully functional
-        // (i.e. not in the process of checking 2FA)
-        await dispatch("loadOrganizations");
-        await dispatch("fetchLatestPublishedRelease");
-        // store current version as last seen if user value is undefined
-        // this should only happen for new users, for whom we do not want to show the release notes
-        if (
-          state.user.extra_data?.last_seen_release === undefined ||
-          state.user.extra_data?.last_dismissed_release === undefined
-        ) {
-          dispatch("dismissLastRelease", true);
-        }
-        dispatch("changeDateRangeObject", state.dateRangeName);
-        dispatch("interest/fetchInterestGroups");
-        dispatch("loadSushiCredentialsCount");
+        let promises = [
+          dispatch("loadOrganizations"),
+          dispatch("fetchLatestPublishedRelease"),
+          dispatch("loadSushiCredentialsCount"),
+          dispatch("changeDateRangeObject", state.dateRangeName),
+          dispatch("interest/fetchInterestGroups"),
+          dispatch("loadEvents", {}),
+          dispatch("startEventWorker"),
+        ];
         if (getters.showManagementStuff) {
-          dispatch("fetchNoInterestPlatforms");
+          promises.push(dispatch("fetchNoInterestPlatforms"));
         }
-        dispatch("loadEvents", {});
-        dispatch("startEventWorker");
+
+        try {
+          await Promise.all(promises);
+        } finally {
+          // we want to run after-boot stuff regardless of the outcome
+          // of the previous promises
+          try {
+            await dispatch("afterBootUp");
+          } finally {
+            // we want to set bootUpFinished to true after `afterBootUp` is done
+            // but regardless of the outcome of the `afterBootUp`
+            commit("setBootUpFinishedInternal", true);
+          }
+        }
+      }
+    },
+    async afterBootUp({ dispatch, state, getters }) {
+      // if after loading sushi credentials we have none,
+      // we redirect to the sushi credentials page, where an intro should
+      // be shown
+      // we only redirect admins - read only users should not be bothered
+      // as they cannot do anything about it anyway (and do not see the page)
+      if (getters.showIntro && getters.showAdminStuff) {
+        if (window.location.pathname !== "/admin/sushi-credentials") {
+          await router.push("/admin/sushi-credentials");
+        }
+      }
+      // store current version as last seen if user value is undefined
+      // this should only happen for new users, for whom we do not want to
+      // show the release notes
+      if (
+        state.user.extra_data?.last_seen_release === undefined ||
+        state.user.extra_data?.last_dismissed_release === undefined
+      ) {
+        await dispatch("dismissLastRelease", true);
       }
     },
     showSnackbar(context, { content, color }) {
@@ -847,6 +878,9 @@ export default new Vuex.Store({
     },
     setFiscalYearStart(state, month) {
       state.fiscalYearStart = month;
+    },
+    setBootUpFinishedInternal(state, finished) {
+      state.bootUpFinishedInternal = finished;
     },
   },
 });
