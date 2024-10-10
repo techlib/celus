@@ -11,6 +11,8 @@ en:
   interest_totals: Interest summary
   sushi_overview: SUSHI overview
   coverage_overview: Data coverage overview
+  celus_is_hungry: "There is no SUSHI. CELUS is hungry! Please feed it some SUSHI."
+  go_to_sushi: Go to SUSHI management
 
 cs:
   total_interest: Celkový zájem
@@ -22,6 +24,8 @@ cs:
   interest_totals: Celkový zájem
   sushi_overview: Přehled SUSHI
   coverage_overview: Přehled pokrytí daty
+  celus_is_hungry: "Není dostupné SUSHI. CELUS je hladový! Prosím nakrmte ho SUSHI."
+  go_to_sushi: Jít na správu SUSHI
 </i18n>
 
 <template>
@@ -72,23 +76,46 @@ cs:
                 ></v-btn>
               </v-btn-toggle>
             </div>
+            <br />
             <SushiStatusChart
               :month="sushiMonth"
               :organization-id="organizationId"
-            />
-            <div class="font-weight-light pt-6">
-              <span v-text="$t('sushi_status_info')" class="pr-1"></span>
-              <span>
-                <router-link
-                  :to="{
-                    name: 'sushi-monthly-overview',
-                    query: { month: sushiMonth },
-                  }"
-                >
-                  <span v-text="$t('details_here')"></span>
-                </router-link>
-              </span>
-            </div>
+            >
+              <template #no-data>
+                <div class="text-center align-self-center">
+                  <img
+                    src="@/assets/hungry-celus-240.png"
+                    alt="Hungry CELUS"
+                    style="width: 60%; max-width: 240px; height: auto"
+                    class="pt-4"
+                  />
+                  <div>{{ $t("celus_is_hungry") }}</div>
+                  <div class="pt-8">
+                    <v-btn
+                      color="primary"
+                      :to="{ name: 'sushi-credentials-list' }"
+                    >
+                      {{ $t("go_to_sushi") }}
+                    </v-btn>
+                  </div>
+                </div>
+              </template>
+              <template #data-footer>
+                <div class="font-weight-light pt-6">
+                  <span v-text="$t('sushi_status_info')" class="pr-1"></span>
+                  <span>
+                    <router-link
+                      :to="{
+                        name: 'sushi-monthly-overview',
+                        query: { month: sushiMonth },
+                      }"
+                    >
+                      <span v-text="$t('details_here')"></span>
+                    </router-link>
+                  </span>
+                </div>
+              </template>
+            </SushiStatusChart>
           </v-card-text>
         </v-card>
       </v-col>
@@ -244,7 +271,6 @@ export default {
   },
 
   methods: {
-    ...mapActions(["loadSushiCredentialsCount"]),
     ...mapActions("interest", [
       "fetchInterestGroups",
       "fetchInterestReportType",
@@ -270,14 +296,15 @@ export default {
   },
 
   mounted() {
-    this.loadSushiCredentialsCount(this._cid);
     this.fetchInterestReportType(this._cid);
     this.fetchInterestGroups(this._cid);
     this.fetchTotalInterest(this.totalInterestRequest);
   },
 
   watch: {
-    totalInterestRequest: "fetchTotalInterest",
+    totalInterestRequest() {
+      this.fetchTotalInterest(this.totalInterestRequest);
+    },
   },
 };
 </script>

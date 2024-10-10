@@ -1,9 +1,17 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
-  <LoaderWidget v-if="loading" height="370px" />
-  <div v-else :style="{ height: height }">
+  <LoaderWidget v-if="loading" :height="height" />
+  <div
+    v-else-if="noData"
+    class="d-flex justify-center"
+    :style="{ height: height - 20 + 'px' }"
+  >
+    <slot name="no-data" />
+  </div>
+  <div v-else :style="{ height: height - 20 + 'px' }">
     <v-chart :option="option" />
+    <slot name="data-footer" />
   </div>
 </template>
 
@@ -66,7 +74,7 @@ export default {
       loadingCredentials: false,
       loadingStats: false,
       sushiCredentialsList: [],
-      height: "370px",
+      height: 370,
       states: [
         ATTEMPT_NOT_MADE,
         INTENTION_QUEUED,
@@ -106,6 +114,9 @@ export default {
         month: this.month,
         ...(this.showInactive && { disabled: true }),
       };
+    },
+    noData() {
+      return this.sushiCredentialsList.length === 0;
     },
     option() {
       return {
