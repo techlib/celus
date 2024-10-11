@@ -3,6 +3,7 @@ en:
   platform_overlap: Platform overlap
   platform_vs_platform_overlap: Overlap with individual platforms
   platform_vs_all_overlap: Overlap with all other platforms
+  note: <strong>Note</strong>
   overlap_pyramid: Portfolio optimization
   cancel_simulation: Cancellation simulation
   warning:
@@ -20,34 +21,35 @@ en:
     The following table shows for each platform how many titles are shared with other platforms. The right part of
     the table shows interest in the overlapping titles.
   info_vs_all2: You can use tooltips for each value in the table for explanation of the meaning of the number.
-  info_pyramid:
-    "<p>This view simulates creation of a portfolio from the currently available platforms. It starts with an empty
+  info_pyramid_1: |
+    This view simulates creation of a portfolio from the currently available platforms. It starts with an empty
     table and adds the platform which contains titles with the highest sum of interest into the first row. A second
     platform is then selected, which adds new titles (titles not available from the first platform) with the highest
     sum of interest. This process is repeated until all the platforms are added to the table.
-    </p>
-    <p>
+
+  info_pyramid_2: |
     The result is a list of platforms sorted by how much new and interesting content they bring to the porfolio.
-    </p>
-    <p>
+
+  info_pyramid_3: |
     If you wanted to select only subset of your current portfolio and ensure that you cover the most interest possible,
     you would simply select the appropriate level of interest you wanted to keep in the <em>Cumulative interest</em> column and
     keep all the platforms above this cut-off value.
-    </p>
-    <p><strong>Note</strong>: You can limit the displayed data to only specific title types in order to
+
+  info_pyramid_4: |
+    @:note: You can limit the displayed data to only specific title types in order to
     distinguish between database, journal and book interest.
-    </p>"
-  info_cancel:
-    "<p>This view shows an interactive table where you can simulate real-time impact of cancelling subscription to one
+
+  info_cancel_1: |
+    This view shows an interactive table where you can simulate real-time impact of cancelling subscription to one
     or more platforms by simply deselecting it. The table is <em>live</em> and recalculates data after each platform is deselected
-    to correctly account for titles available from more than one platform.</p>
-    <p>
-    <p><strong>Note</strong>: The interest show in this table is always the total interest in titles available from a specific platform,
+    to correctly account for titles available from more than one platform.
+
+  info_cancel_2: |
+    @:note: The interest show in this table is always the total interest in titles available from a specific platform,
     not only interest realized through that platform. That means that if you had access to 'Nature' from platforms A and B
     with 100 and 400 article downloads respectively, both platforms would show interest
     of 500. On the other side, it would be calculated as 'unique interest' only if the other platform was deselected.
-    </p>
-    "
+
   no_organization_selected: Please select an organization first.
   no_organization_selected_info: Because different organizations subscribe to different sets of titles and typically do not share their resources, overlap between platforms would not make sense unless one organization is selected.
 
@@ -55,6 +57,7 @@ cs:
   platform_overlap: Překryv platforem
   platform_vs_platform_overlap: Překryv s jednotlivými platformami
   platform_vs_all_overlap: Překryv se všemi ostatními platformami
+  note: <strong>Poznámka</strong>
   overlap_pyramid: Optimalizace portofia
   cancel_simulation: Simulace zrušení
   warning:
@@ -73,34 +76,29 @@ cs:
     Následující tabulka ukazuje, kolik titulů platforma sdílí s ostatními platformami. Pravá část tabulky pak ukazuje
     zájem o tituly, které se překrývají s ostaními platformami.
   info_vs_all2: Můžete použít tooltipy k jednotlivým buňkám pro vysvětlení jejich významu.
-  info_pyramid:
-    "<p>Tento pohled simuluje vytvoření portfolia ze současně dostupných platforem. Začíná prázdnou tabulkou, do které
+  info_pyramid_1: |
+    Tento pohled simuluje vytvoření portfolia ze současně dostupných platforem. Začíná prázdnou tabulkou, do které
     přidá platformu s nejvyšším součtem zájmů v obsažených titulech. Jako druhá se přídá platforma, která má nejvyšší
     součet zájmu v nově přidaných titulech (titulech, které nejsou dostupné na první přidané platformě). Tento proces
     se pak opakuje dokud nejsou do tabulky přidané všechny platformy.
-    </p>
-    <p>
+  info_pyramid_2: |
     Výsledkem je seznam platforem seřazený podle toho, jak moc nového a zajímavého obsahu přinášejí do portfolia.
-    </p>
-    <p>
+  info_pyramid_3: |
     Pokud byste měli za úkol vybrat podmnožinu současného portfolia, která pokrývá maximum současného zájmu,
     stačilo by prostě určit jak velkou část zájmu chcete pokrýt ze sloupce <em>Kumulovaný zájem</em> a ponechat všechny
     platformy, které jsou nad tímto řádkem.
-    </p>
-    <p><strong>Poznámka</strong>: Můžete omezit zobrazená data je na specifické typy titulů a odlišit tak zájem o databáze,
+  info_pyramid_4: |
+    @:note: Můžete omezit zobrazená data je na specifické typy titulů a odlišit tak zájem o databáze,
     časopisy nebo knihy.
-    </p>"
-  info_cancel:
-    "<p>Tento pohled obsahuje interaktivní tabulku, která umožňuje simulovat dopad zrušení předplatného k jedné nebo více
+  info_cancel_1: |
+    Tento pohled obsahuje interaktivní tabulku, která umožňuje simulovat dopad zrušení předplatného k jedné nebo více
     platformám. Stačí odstranit zaškrtnutí platformy v tabulce a tabulka interaktivně přepočítá data pro ostatní platformy
     i s ohledem na překryv titulů na více platformách.
-    </p>
-    <p><strong>Poznámka</strong>: Zájem zobrazený v tabulce je vždy celkový zájem o tituly, které jsou dostupné na dané platformě,
+  info_cancel_2: |
+    @:note: Zájem zobrazený v tabulce je vždy celkový zájem o tituly, které jsou dostupné na dané platformě,
     nikoli jen zájem realizovaný přes danou platformu. Pokud bychom tedy měli například přístup k časopisu 'Nature'
     na platformách A a B se 100 a 400 staženými články, obě platformy by ukazovaly hodnotu zájmu 500. Na druhou stranu
     tento zájem by se objevil jako 'unikátní zájem' pouze v případě, že by jedna z platforem nebyla zaškrtnutá.
-    </p>
-    "
   no_organization_selected: Prosím vyberte nejprve organizaci.
   no_organization_selected_info: Protože různé organizace mají různá předplatná a typicky mezi sebou přístup k titulům nesdílí, překryv mezi platformami by nedával smysl, pokud není vybrána jen jedna organizace.
 </i18n>
@@ -205,12 +203,12 @@ cs:
             <v-tab-item value="pyramid">
               <v-container class="px-8 pb-10">
                 <v-row>
-                  <v-col
-                    cols="12"
-                    lg="12"
-                    xl="8"
-                    v-html="$t('info_pyramid')"
-                  ></v-col>
+                  <v-col cols="12" lg="12" xl="8">
+                    <p v-html="$t('info_pyramid_1')" />
+                    <p v-html="$t('info_pyramid_2')" />
+                    <p v-html="$t('info_pyramid_3')" />
+                    <p v-html="$t('info_pyramid_4')" />
+                  </v-col>
                 </v-row>
                 <v-row>
                   <v-col xl="8">
@@ -223,12 +221,10 @@ cs:
             <v-tab-item value="cancel">
               <v-container class="px-8 pb-10">
                 <v-row>
-                  <v-col
-                    cols="12"
-                    lg="12"
-                    xl="8"
-                    v-html="$t('info_cancel')"
-                  ></v-col>
+                  <v-col cols="12" lg="12" xl="8">
+                    <p v-html="$t('info_cancel_1')" />
+                    <p v-html="$t('info_cancel_2')" />
+                  </v-col>
                 </v-row>
                 <v-row>
                   <v-col xl="8">

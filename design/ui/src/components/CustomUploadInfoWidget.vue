@@ -5,6 +5,7 @@ en:
     counter: Counter
     raw: From file
   description: For correct import of data, it is necessary to provide data in the <strong>right format</strong>.
+  note: <em>Note</em>
   non_counter:
     part1:
       For platforms that do not use COUNTER, you need to <strong>prepare data according to the rules below</strong>.
@@ -13,9 +14,8 @@ en:
     non_counter_data:
       Because of the large variability in formats that providers use to deliver non-COUNTER
       data, it is not possible to implement support for all of them. Instead, you have to convert
-      the data into a common format described below.
-      <br><br>
-      <em>Note</em> - It is often most practical to prepare your data in a table editor
+      the data into a common format described below. <br><br>
+      @:note - It is often most practical to prepare your data in a table editor
       and then export it into the CSV format with the correct parameters.
     ncd_file_format_h: File format
     ncd_file_format:
@@ -28,8 +28,7 @@ en:
       The first row of the table contains a header which describes the meaning of individual
       columns. Data for individual titles, metrics, etc. are stored in separate rows.
       If the file contains data for more than one month, they are stored as part of one
-      row in separate columns.
-      <br>
+      row in separate columns. <br>
       Names of individual columns are defined by the report type used (more exactly the
       the dimensions it contains).
       List of dimensions for a specific report type will be displayed when it is selected from
@@ -37,9 +36,8 @@ en:
       Besides the columns for individual dimensions, columns for data for individual months
       are supported. These have to be named in the "Month Year" form, e.g. "Jan 2019"
       (month is specified using its English 3-letter abbreviation) or in
-      the "YYYY-MM" format, e.g. "2019-01".
-      <br><br>
-      <em>Note</em> - the order of columns is not important, but their names must strictly
+      the "YYYY-MM" format, e.g. "2019-01". <br><br>
+      @:note - the order of columns is not important, but their names must strictly
       match the report type specification.
     ncd_file_example_h: Example
     example_img_desc:
@@ -59,6 +57,7 @@ cs:
     counter: Counter
     raw: Ze souboru
   description: Pro správné nahrání dat je nutné data nahrát ve <strong>správném formátu</strong>.
+  note: <em>Poznámka</em>
   non_counter:
     part1:
       Pro platformy, které nevyužívají standardní formát COUNTER, je třeba data
@@ -68,9 +67,8 @@ cs:
     non_counter_data:
       Vzhledem k velké rozmanitosti formátů, ve který poskytovatelé dodávají data mimo formát
       COUNTER není možné implementovat jejich podporu. Je proto nutné pro import data připravit
-      do jednotného formátu, který je popsán níže.
-      <br><br>
-      <em>Poznámka</em> - Data je ideální připravit v tabulkovém editoru a vyexportovat do
+      do jednotného formátu, který je popsán níže. <br><br>
+      @:note - Data je ideální připravit v tabulkovém editoru a vyexportovat do
       formátu CSV se správným nastavením parametrů ukládání.
     ncd_file_format_h: Formát souboru
     ncd_file_format:
@@ -82,16 +80,14 @@ cs:
       První řádek tabulky obsahuje její hlavičku, která určuje význam jednotlivých sloupců.
       Data pro jednotlivé tituly, metriky, atp. jsou uložena na samostatných řádcích.
       Pokud soubor obsahuje data za více měsíců, jsou uložena vždy v rámci jednoho řádku
-      v samostatných sloupcích.
-      <br>
+      v samostatných sloupcích.<br>
       Názvy jednotlivých sloupců jsou dané typem reportu, resp. rozměry, které obsahuje.
       Seznam rozměrů se zobrazí při výběru konkrétního typu reportu v polích
       "Standardní rozměry" a "Rozměry specifické pro report". Kromě sloupců pro jednotlivé
       rozměry jsou podporovány ještě sloupce s daty pro jednotlivé měsíce. Ty musí mít název
       v podobě "Month Year", např. "Jan 2019" (názvy měsíců jsou třípísmenné anglické zkratky)
-      a nebo "YYYY-MM", např. "2019-01".
-      <br><br>
-      <em>Poznámka</em> - pořadí sloupců není důležité, ale jejich názvy musí přesně odpovídat
+      a nebo "YYYY-MM", např. "2019-01".<br><br>
+      @:note - pořadí sloupců není důležité, ale jejich názvy musí přesně odpovídat
       specifikaci pro daný typ reportu.
     ncd_file_example_h: Ukázka
     example_img_desc:
@@ -101,9 +97,9 @@ cs:
     text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
     note: Upozorňujeme, že tato funkce je experimentální a nejsou podporovány všechny možné formáty.
   counter:
-    text1: Pro platformy, které jej podporují, můžete data nahrát
-      <strong>ve formátu COUNTER</strong> uložená do souboru ve formátu
-      <strong>CSV</strong> nebo <strong>TSV</strong>.
+    text1:
+      Pro platformy, které jej podporují, můžete data nahrát <strong>ve formátu COUNTER</strong> uložená do souboru
+      ve formátu <strong>CSV</strong> nebo <strong>TSV</strong>.
 </i18n>
 
 <template>
