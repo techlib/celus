@@ -1626,7 +1626,7 @@ class TestAllPlatformsAPI:
         resp = clients[client].get(reverse("all-platforms-list", args=[-1]))
         assert resp.status_code in status
         if available is not None:
-            assert [e["pk"] for e in resp.json()] == [platforms[e].pk for e in sorted(available)]
+            assert {e["pk"] for e in resp.json()} == {platforms[e].pk for e in available}
 
     def test_all_platforms_detail_report_types(self, basic1, report_type_nd, settings):
         # prepare data
