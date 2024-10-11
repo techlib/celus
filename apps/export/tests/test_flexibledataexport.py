@@ -16,7 +16,7 @@ from logs.logic.reporting.filters import (
     ForeignKeyDimensionFilter,
     TagDimensionFilter,
 )
-from logs.logic.reporting.slicer import FlexibleDataSlicer
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import DimensionText
 from publications.fake_data import TitleFactory
 from tags.fake_data import TagClassFactory, TagForTitleFactory
@@ -517,3 +517,50 @@ class TestFlexibleDataExportExcel:
             if include_col_totals:
                 expected_output.append(["Total", "=SUM(B2:B4)", "=SUM(C2:C4)", "=SUM(D2:D4)"])
         assert [[cell.value for cell in row] for row in ws.rows] == expected_output
+
+    @pytest.mark.parametrize(["max_parts", "error"], [(2, True), (3, False)])
+    def test_maximum_part_number_excel(self, flexible_slicer_test_data, max_parts, error):
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.MAXIMUM_POSSIBLE_PARTS = max_parts
+        slicer.add_group_by("metric")
+        slicer.add_split_by("target")
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        if error:
+            with pytest.raises(SlicerConfigError) as exc:
+                exporter.stream_data_to_sink(out)
+            assert exc.value.code == SlicerConfigErrorCode.E112.value
+        else:
+            # should not raise an exception
+            exporter.stream_data_to_sink(out)
+
+    @pytest.mark.parametrize(["max_cols", "error"], [(2, True), (3, False)])
+    def test_maximum_column_number(self, flexible_slicer_test_data, max_cols, error):
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.MAXIMUM_POSSIBLE_GROUPS = max_cols
+        slicer.add_group_by("metric")
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        if error:
+            with pytest.raises(SlicerConfigError) as exc:
+                exporter.stream_data_to_sink(out)
+            assert exc.value.code == SlicerConfigErrorCode.E101.value
+        else:
+            # should not raise an exception
+            exporter.stream_data_to_sink(out)
+
+    @pytest.mark.parametrize(["max_parts", "error"], [(2, True), (3, False)])
+    def test_maximum_part_number_csv(self, flexible_slicer_test_data, max_parts, error):
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.MAXIMUM_POSSIBLE_PARTS = max_parts
+        slicer.add_group_by("metric")
+        slicer.add_split_by("target")
+        exporter = FlexibleDataZipCSVExporter(slicer, include_tags=False)
+        out = BytesIO()
+        if error:
+            with pytest.raises(SlicerConfigError) as exc:
+                exporter.stream_data_to_sink(out)
+            assert exc.value.code == SlicerConfigErrorCode.E112.value
+        else:
+            # should not raise an exception
+            exporter.stream_data_to_sink(out)

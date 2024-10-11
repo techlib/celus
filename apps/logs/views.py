@@ -1361,8 +1361,6 @@ class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):
 
 
 class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
-    MAX_COUNT = 1000
-
     def get(self, request):
         slicer = self.create_slicer(request)
         qs = slicer.get_parts_queryset()
@@ -1370,8 +1368,8 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
         count = 0
         if qs:
             count = qs.count()
-            if count > self.MAX_COUNT:
-                qs = qs[: self.MAX_COUNT]
+            if count > slicer.MAXIMUM_POSSIBLE_PARTS:
+                qs = qs[: slicer.MAXIMUM_POSSIBLE_PARTS]
                 cropped = True
         return Response({"count": count, "values": qs or [], "cropped": cropped})
 

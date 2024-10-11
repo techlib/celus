@@ -30,7 +30,7 @@ from logs.logic.export_utils import (
     MappingXlsxDictWriter,
     XlsxListWriter,
 )
-from logs.logic.reporting.slicer import FlexibleDataSlicer
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import AccessLog, DimensionText, ReportType
 
 logger = logging.getLogger(__name__)
@@ -489,6 +489,14 @@ class FlexibleDataExporter(ABC):
     def sum_row_skip_cols(self) -> int:
         return len(self.remapped_keys()) + (1 if self.include_tags else 0)
 
+    def _check_maximum_parts_number(self, total: int):
+        if total > self.slicer.MAXIMUM_POSSIBLE_PARTS:
+            raise SlicerConfigError(
+                f"Too many parts to export ({total}). Please refine you report to lower "
+                f"the number of parts.",
+                code=SlicerConfigErrorCode.E112,
+            )
+
 
 class FlexibleDataSimpleCSVExporter(FlexibleDataExporter):
     """
@@ -543,6 +551,7 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
                     )
             else:
                 total = parts.count()
+                self._check_maximum_parts_number(total)
                 for i, part in enumerate(parts):
                     key = [part[name] for name in self.slicer.split_by]
                     qs = self.slicer.get_data(part=key)
@@ -613,6 +622,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                     self.add_chart_sheet(workbook, sheetname, row_count=row_count)
             else:
                 total = parts.count()
+                self._check_maximum_parts_number(total)
                 sheetname_parts = [
                     (
                         self.unique_sheetname(
@@ -624,6 +634,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 ]
                 sheetname_parts.sort()
                 for i, (sheetname, part) in enumerate(sheetname_parts):
+                    if i % 100 == 0:
+                        logger.info(f"Exported {i} sheets of {total}")
                     key = [part[name] for name in self.slicer.split_by]
                     qs = self.slicer.get_data(part=key)
 
@@ -631,6 +643,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                     row_count = self.write_qs_to_output(
                         sheet, qs, extra_row_fn=self._remainder_fn(part=key)
                     )
+                    self._close_sheet(sheet)
                     if self.include_charts and row_count > 0:
                         self.add_chart_sheet(workbook, sheetname, row_count=row_count)
                     if progress_monitor:
@@ -696,6 +709,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         chart.set_legend({"font": {"name": "Arial"}})
         # chart.set_title({'name': self.report_name})
         sheet.insert_chart(2, 1, chart)
+        self._close_sheet(sheet)
 
     @classmethod
     def cleanup_sheetname(cls, sheetname: str):
@@ -739,6 +753,17 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             i += 1
         self._seen_sheetnames.add(new_sheetname.lower())
         return new_sheetname
+
+    @classmethod
+    def _close_sheet(cls, sheet):
+        """
+        Closes the sheet to avoid file descriptor limit, see
+        https://github.com/jmcnamara/XlsxWriter/issues/58
+        for discussion why this is needed and why it is a private method.
+
+        The code is extracted to a method to isolate the workaround
+        """
+        sheet._opt_close()
 
 
 class FlexibleDataExcelExporterNoCharts(FlexibleDataExcelExporter):

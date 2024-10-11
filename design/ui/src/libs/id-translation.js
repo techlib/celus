@@ -55,8 +55,26 @@ class IdTranslation {
           if ("results" in data) {
             data = data.results;
           }
-          data.forEach((item) => this.dict.set(item.pk, item));
-          this.toTranslate = new Set();
+          data.forEach((item) => {
+            this.dict.set(item.pk, item);
+            this.toTranslate.delete(item.pk);
+          });
+          // check if there are some untranslated items
+          if (this.toTranslate.size > 0) {
+            if ((response.data.count || 0) > response.data.results.length) {
+              // this means that pagination prevented us from getting all the data
+              // so we need to do another pass
+              console.info(
+                `Could not translate ${this.toTranslate.size} items; doing another pass`
+              );
+              await this.updateDictionary();
+            } else {
+              console.info(
+                `Could not translate ${this.toTranslate.size} items; giving up`
+              );
+              this.toTranslate = new Set();
+            }
+          }
         } catch (error) {
           console.error(`Could not load ID translation from url "${url}"`);
         }

@@ -14,6 +14,7 @@ en:
   change: Change
   change_percent: Change %
   pop_out: Expand to full screen
+  parts_cropped: There are too many parts ({count}), showing only the first {max}. Note - unless the number of parts is reduced, export will fail.
 
 cs:
   detail: Detail
@@ -28,6 +29,7 @@ cs:
   change: Změna
   change_percent: Změna %
   pop_out: Roztáhnout na celou obrazovku
+  parts_cropped: Report obsahuje příliš mnoho částí ({count}), zobrazuji pouze prvních {max}. Poznámka - pokud počet částí nesnížíte, export selže.
 </i18n>
 
 <template>
@@ -70,6 +72,14 @@ cs:
             outlined
             dense
           />
+          <v-alert v-if="partsCropped" type="warning" outlined>
+            {{
+              $t("parts_cropped", {
+                count: formatInteger(totalParts),
+                max: splitParts.length,
+              })
+            }}
+          </v-alert>
         </div>
         <div v-else></div>
 
@@ -277,6 +287,7 @@ export default {
       splitParts: [],
       currentPart: null,
       loadingParts: false,
+      totalParts: 0,
       view: "table",
       baseWidth: 0,
       remainder: null,
@@ -456,6 +467,9 @@ export default {
     noPartAvailable() {
       return this.report.splitBy && !this.currentPart && !this.loadingParts;
     },
+    partsCropped() {
+      return this.totalParts > this.splitParts.length;
+    },
   },
 
   methods: {
@@ -503,20 +517,19 @@ export default {
         params: this.report.urlParams(),
       });
       if (resp.response) {
+        this.totalParts = resp.response.data.count;
         let splitParts = resp.response.data.values.map(
           (item) => item[this.report.splitBy.ref]
         );
         const translator = this.getTranslator(this.report.splitBy);
         if (translator) {
           await translator.prepareTranslation(splitParts);
-          this.splitParts = splitParts
-            .map((item) => {
-              return {
-                id: item,
-                text: translator.translateKeyToString(item, this.$i18n.locale),
-              };
-            })
-            .sort((a, b) => a.text.localeCompare(b.text));
+          this.splitParts = splitParts.map((item) => {
+            return {
+              id: item,
+              text: translator.translateKeyToString(item, this.$i18n.locale),
+            };
+          });
         } else {
           this.splitParts = splitParts.map((item) => {
             return { id: item, text: item.toString() };

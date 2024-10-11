@@ -53,6 +53,8 @@ class FlexibleDataSlicer:
     COL_DIFF = "diff"
     COL_REL_DIFF = "reldiff"
     COL_TOTAL = "_total"
+    MAXIMUM_POSSIBLE_GROUPS = 100
+    MAXIMUM_POSSIBLE_PARTS = 1000
 
     TREND_MODE_COLS = (COL_BASE, COL_COMPARED, COL_DIFF, COL_REL_DIFF)
 
@@ -161,7 +163,7 @@ class FlexibleDataSlicer:
             if df.dimension not in ignore_dimensions or isinstance(df, TagDimensionFilter):
                 # tag filters are not ignored even if they are for an ignored dimension
                 ret.update(df.query_params(clickhouse_compatible=use_clickhouse))
-        logger.info("filters: %s", ret)
+        logger.debug("filters: %s", ret)
         if self.organization_filter is not None:
             # convert organization filter to a list of ids for easier compatibility with
             # clickhouse and for simpler query (even though that is not a big deal)
@@ -171,7 +173,7 @@ class FlexibleDataSlicer:
                 ret["organization_id__in"] = list(orig_orgs & org_filter_pks)
             else:
                 ret["organization_id__in"] = list(org_filter_pks)
-        logger.info("filters with org: %s", ret)
+        logger.debug("filters with org: %s", ret)
         return ret
 
     def _resolve_extra_organization_filter_to_pks(self) -> Set[int]:
@@ -351,9 +353,7 @@ class FlexibleDataSlicer:
                 ret.update(df.query_params(primary_filter=True))
         return ret
 
-    def _prepare_annotations(
-        self, max_number=100, accesslog_prefix="relevant_accesslogs__"
-    ) -> dict:
+    def _prepare_annotations(self, accesslog_prefix="relevant_accesslogs__") -> dict:
         if self.trend_mode:
 
             def getQ(subset_filters: List[DimensionFilter]):
@@ -387,7 +387,7 @@ class FlexibleDataSlicer:
                     "total": Coalesce(Sum(f"{accesslog_prefix}value"), 0),
                     self.COL_TOTAL: Coalesce(Sum(f"{accesslog_prefix}value"), 0),
                 }
-            if gb_query.count() > max_number:
+            if gb_query.count() > self.MAXIMUM_POSSIBLE_GROUPS:
                 raise SlicerConfigError(
                     f"There are too many ({gb_query.count()}) possible groups, please refine "
                     f"you configuration",
@@ -1085,6 +1085,7 @@ class SlicerConfigErrorCode(Enum):
     E109 = "E109"
     E110 = "E110"
     E111 = "E111"
+    E112 = "E112"
 
     def __str__(self):
         return self.value
@@ -1105,6 +1106,7 @@ class SlicerConfigError(Exception):
     E109: Part specification is incompatible with `split_by`.
     E110: Part was specified without `split_by` being active.
     E111: Only date filters are supported for subsets in trend mode.
+    E112: There are too many possible parts, please refine you configuration.
     """
 
     def __init__(self, message, code: SlicerConfigErrorCode, *args, details=None, **kwargs):
