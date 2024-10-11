@@ -421,7 +421,7 @@ cs:
                         class="mb-1"
                         @click="toggleAutoUpdateUrl"
                       >
-                        <v-icon small color="" v-on="on"
+                        <v-icon small v-on="on"
                           >fa
                           {{ autoUpdateUrl ? "fa-edit" : "fa-book" }}</v-icon
                         >

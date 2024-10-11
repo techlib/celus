@@ -140,7 +140,7 @@ cs:
                 <template #activator="tooltip">
                   <v-menu offset-y>
                     <template #activator="menu">
-                      <v-btn v-on="{ ...menu.on, ...tooltip.on }" color="">
+                      <v-btn v-on="{ ...menu.on, ...tooltip.on }">
                         <v-icon small class="mr-2">fas fa-file-export</v-icon>
                         {{ $t("export") }}
                       </v-btn>
@@ -310,7 +310,6 @@ cs:
                 <template #activator="tooltip">
                   <v-btn
                     v-on="{ ...tooltip.on }"
-                    color=""
                     @click="showImportCredentialsModal"
                   >
                     <v-icon small class="mr-2">fas fa-file-import</v-icon>
@@ -325,7 +324,7 @@ cs:
                 <template #activator="tooltip">
                   <v-menu offset-y>
                     <template #activator="menu">
-                      <v-btn v-on="{ ...menu.on, ...tooltip.on }" color=""
+                      <v-btn v-on="{ ...menu.on, ...tooltip.on }"
                         >&hellip;</v-btn
                       >
                     </template>

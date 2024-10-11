@@ -437,7 +437,6 @@ cs:
                           v-model="selectedOrganizations"
                           dimension="organization"
                           :translator="translators.organization"
-                          name=""
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
                         />
@@ -472,7 +471,6 @@ cs:
                           v-model="selectedPlatforms"
                           dimension="platform"
                           :translator="translators.platform"
-                          name=""
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
                         />
@@ -538,7 +536,6 @@ cs:
                           v-model="selectedMetrics"
                           dimension="metric"
                           :translator="translators.metric"
-                          name=""
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
                         />
@@ -560,7 +557,6 @@ cs:
                             :query-url="selectorBaseUrl"
                             v-model="selectedDimValues[index]"
                             :dimension="`dim${index + 1}`"
-                            name=""
                             :translator="translators.explicitDimension"
                             :disabled="disableDimValuesSelectors"
                             :read-only="readOnly"

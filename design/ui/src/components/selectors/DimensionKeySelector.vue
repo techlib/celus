@@ -75,7 +75,7 @@ export default {
     dimension: { required: true, type: String },
     rules: { required: false, type: Array },
     translator: { required: false },
-    name: { required: false, default: null },
+    name: { required: false, default: "" },
     disabled: { required: false, type: Boolean, default: false },
     disabledHint: { required: false, type: String, default: "" },
     readOnly: { required: false, type: Boolean, default: false }, // not exactly disabled, but almost :)

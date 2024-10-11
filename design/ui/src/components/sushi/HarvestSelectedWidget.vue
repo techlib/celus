@@ -108,7 +108,6 @@ cs:
                 : $tc('start_harvesting', slotsFree)
           "
           color="primary"
-          class=""
           width="100%"
           :disabled="!totalReportCount || !slotsReady || slotsFree === 0"
         ></v-btn>

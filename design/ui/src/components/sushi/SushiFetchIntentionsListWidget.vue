@@ -101,7 +101,6 @@ cs:
                   cols="6"
                   sm="4"
                   lg="3"
-                  class=""
                   align-self="center"
                 >
                   <v-progress-linear
