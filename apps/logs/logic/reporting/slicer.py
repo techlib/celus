@@ -797,6 +797,7 @@ class FlexibleDataSlicer:
                 dimensions.add(self.primary_dimension)
             dimensions |= {dim.lstrip("-") for dim in self.order_by}
             dimensions |= set(self.group_by)
+            dimensions |= set(self.split_by)
             if extra_dimensions_to_preserve:
                 dimensions |= set(extra_dimensions_to_preserve)
             materialized_report = find_best_materialized_view(rt, dimensions)
