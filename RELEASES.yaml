@@ -1,3 +1,36 @@
+- version: 7.0.0
+  title:
+    en: Version 7.0.0 brings improvements in SUSHI harvesting, more precise overlap analysis, and much more
+    cs: Verze 7.0.0 přináší vylepšení v SUSHI harvestingu, přesnější analýzu překryvů a mnohem víc
+  text:
+    en: |
+      - CELUS now looks at past harvests to determine when is the best time to harvest data from
+        a platform after a month has ended.
+      - Overlap analysis was reworked to ignore usage which does not imply access to the content
+        (investigations, denials, etc.), thus giving much more precise results.
+      - Warning is newly issued when the same credentials are used for multiple platforms. This
+        mitigates a common source of incorrect data.
+      - SUSHI management was redesigned for new users to show introductory video if the user does
+        not have any credentials yet.
+      - We have added 22 new non-COUNTER platforms, primarily focused on medical and legal
+        resources, bringing the total number of processable non-COUNTER platforms to 119.
+      - Several other improvements and fixes were introduced.
+    cs: |
+      - CELUS nově používá data z minulých sklízení, aby určil, kdy je nejlepší čas sklízet data z
+        platformy po skončení měsíce.
+      - Analýza překryvů byla přepracována tak, aby ignorovala použití, které neznamená přístup
+        k obsahu (investigations, odmítnutí atd.), čímž poskytuje mnohem přesnější výsledky.
+      - CELUS nově varuje v situaci, kdy jsou stejné přihlašovací údaje použity pro více platforem.
+        Tím se eliminuje běžný zdroj nesprávných dat.
+      - Správa SUSHI byla přepracována pro nové uživatele tak, aby zobrazovala úvodní video, pokud
+        uživatel ještě nemá žádné přihlašovací údaje.
+      - Přidali jsme 22 nových non-COUNTER platforem, především zaměřených na lékařské a právní
+        zdroje, čímž jsme celkový počet zpracovatelných non-COUNTER platforem zvýšili na 119.
+      - Bylo provedeno několik dalších vylepšení a oprav.
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 6.1.2
   title:
     en: Version 6.1.2 brings a few bug fixes and small changes

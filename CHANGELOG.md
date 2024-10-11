@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0]  - 2024-10-16
+
+### Added
+
+#### Frontend
+
+* SUSHI management page now shows statistics about the day of month when the data typically becomes
+  available
+* the platform selector widget was improved to allow for searching by both short and long names
+* links to individual titles added to annotated CSV files are newly split to individual columns
+  to allow the links to render correctly in Excel
+* an option to only allow consortial managers to manage users was added
+* make it possible to create a custom platform from the dropdown when uploading data manually
+* more information was added to the list of stored reports in reporting (author, etc.)
+* tag class was added to the detailed information for title lists used tagging by tag names from
+  the uploaded file
+* warning is newly shown when the same credentials are used for multiple platforms, or by multiple
+  organizations (in consortial installations)
+
+
+#### Backend
+
+* support for storing items and related usage was added - it is considered beta and is not yet
+  exposed in the UI
+
+
+### Changes
+
+#### Frontend
+
+* overlap analysis was reworked to only use types of interest which imply title availability
+  on a platform - not denials.
+* the 'Add platform' button was removed from the platform list page (it confused people into
+  thinking it added platform to the displayed list)
+* links to knowledgebase on non-COUNTER list page were redesigned to be more visible
+* server-side pagination is used when listing manual data uploads to speed up the page load
+* SUSHI yearly overview dialog was reworked to show 2 years by default and allow up to 5 years
+  to be displayed on a single page
+* in reporting, the maximum number of displayed parts was limited to 1000 to prevent performance
+  issues
+* the SUSHI management page was reworked for new users to include an introductory video
+* the 'SUSHI status' dashboard panel was reworked to show a hungry CELUS logo when no SUSHI is
+  set up yet
+
+
+#### Backend
+
+* data harvest planning was reworked to use statistics of past harvests to better predict when
+  the data will be available
+* when a SUSHI URL of a platform is updated automatically from the knowledgebase, the last two
+  months are automatically harvested if the data is missing
+
+
+### Fixed
+
+#### Frontend
+
+* platform selector on the SUSHI month overview page did not work correctly
+* date range selector is hidden when displaying the cost tab on the platform page
+* use lowercase report names in debug SUSHI URLs in the SUSHI credentials dialog
+
+#### Backend
+
+* the number of queries run by the `update_for_month` harvest planning function was reduced
+  significantly
+* fix false warning about 'Dropping inconsistent order by "_total"'
+* more resilient parsing of /etc/os-releases was implemented
+* use django's standard smtp email backend for error handling when mailgun is not used
+* error was fixed when tagging titles from a file containing explicit tag names and using a tag
+  class owned by an organization
+* 'too many open files' error was fixed in reporting when exporting report with many parts into
+  Excel format
+* platform short-name uniqueness is newly enforced even when updating existing platforms
+
+
+
+
 ## [6.1.2]  - 2024-08-08
 
 ### Added
