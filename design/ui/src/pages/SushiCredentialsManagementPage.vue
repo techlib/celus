@@ -1,47 +1,57 @@
 <template>
-  <v-container v-if="showIntroVideo">
-    <v-row>
-      <v-col cols="12" lg="10" xl="6" offset-lg="1" offset-xl="3">
-        <h2>Add your first SUSHI credentials</h2>
-      </v-col>
-    </v-row>
-    <v-row justify="center">
-      <v-col cols="12">
-        <IntroVideo class="mx-auto"></IntroVideo>
-      </v-col>
-    </v-row>
-    <v-row justify="center">
-      <v-col class="text-center" cols="12" lg="9" xl="6">
-        CELUS needs some data to work with. Check the above video or our
-        <a
-          href="https://support.celus.net/support/solutions/articles/103000078036"
-          >knowledgebase article</a
-        >
-        to learn how to add your first SUSHI credentials. Or simply click the
-        button below to get started.
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col class="text-center pt-12">
-        <v-btn @click="showCreateDialog = true" color="primary" x-large>
-          <v-icon small class="pe-2">fa-plus</v-icon>
-          Add SUSHI credentials
-        </v-btn>
-      </v-col>
-    </v-row>
-    <v-row justify="center">
-      <v-col class="text-center pt-12" cols="12" lg="9" xl="6">
-        <em>Tip:</em>
-        If you have a lot of credentials, you can email them to us and we will
-        load them for you. <br />Just
-        <a :href="exportForImportUrl">download this template</a>, fill it in,
-        and send it to
-        <a
-          :href="`mailto:${contactEmail}?subject=${subjectForImportCredEmail}`"
-          >{{ contactEmail }}</a
-        >.
-      </v-col>
-    </v-row>
+  <div>
+    <v-container v-if="showIntroVideo">
+      <v-row>
+        <v-col cols="12" lg="10" xl="6" offset-lg="1" offset-xl="3">
+          <h2>Add your first SUSHI credentials</h2>
+        </v-col>
+      </v-row>
+      <v-row justify="center">
+        <v-col cols="12">
+          <IntroVideo class="mx-auto"></IntroVideo>
+        </v-col>
+      </v-row>
+      <v-row justify="center">
+        <v-col class="text-center" cols="12" lg="9" xl="6">
+          CELUS needs some data to work with. Check the above video or our
+          <a
+            href="https://support.celus.net/support/solutions/articles/103000078036"
+            >knowledgebase article</a
+          >
+          to learn how to add your first SUSHI credentials. Or simply click the
+          button below to get started.
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col class="text-center pt-12">
+          <v-btn @click="showCreateDialog = true" color="primary" x-large>
+            <v-icon small class="pe-2">fa-plus</v-icon>
+            Add SUSHI credentials
+          </v-btn>
+        </v-col>
+      </v-row>
+      <v-row justify="center">
+        <v-col class="text-center pt-12" cols="12" lg="9" xl="6">
+          <em>Tip:</em>
+          If you have a lot of credentials, you can email them to us and we will
+          load them for you. <br />Just
+          <a :href="exportForImportUrl">download this template</a>, fill it in,
+          and send it to
+          <a
+            :href="`mailto:${contactEmail}?subject=${subjectForImportCredEmail}`"
+            >{{ contactEmail }}</a
+          >.
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <SushiCredentialsManagementWidget
+      v-else
+      :organization-id="organizationId"
+      :show-problematic-only="brokenOnly"
+      show-platform-filter
+    />
+
     <v-dialog
       v-model="showCreateDialog"
       v-if="showCreateDialog"
@@ -52,14 +62,7 @@
         @update-credentials="updateCredentials"
       ></SushiCredentialsEditDialog>
     </v-dialog>
-  </v-container>
-
-  <SushiCredentialsManagementWidget
-    v-else
-    :organization-id="organizationId"
-    :show-problematic-only="brokenOnly"
-    show-platform-filter
-  />
+  </div>
 </template>
 
 <script>
@@ -81,6 +84,7 @@ export default {
     return {
       showCreateDialog: false,
       dialogMaxWidth: 1024,
+      intro: "intro" in this.$route.query,
     };
   },
 
@@ -100,7 +104,7 @@ export default {
       return `/api/sushi-credentials/import-template/?organization=${this.organizationId}`;
     },
     showIntroVideo() {
-      return this.showIntro || "intro" in this.$route.query;
+      return this.showIntro || this.intro;
     },
   },
 
@@ -108,9 +112,7 @@ export default {
     ...mapActions(["loadSushiCredentialsCount"]),
     updateCredentials() {
       this.$store.dispatch("loadSushiCredentialsCount");
-      if ("intro" in this.$route.query) {
-        this.$router.push({ query: {} });
-      }
+      this.intro = false;
     },
   },
 };
