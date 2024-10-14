@@ -211,16 +211,18 @@ class SushiCredentialsNoSameGlobalSerializer(SushiCredentialsSerializer):
         )
 
     def _check_same(self, fltr, validated_data, instance=None):
-        if self.same_global_allowed:
-            fltr = fltr & Q(organization=validated_data["organization"])
-
-        same_credentials = list(
-            SushiCredentials.objects.filter(fltr).values_list("organization_id", flat=True)
-        )
         if instance:
             organization_id = (validated_data.get("organization") or instance.organization).pk
         else:
             organization_id = validated_data["organization"].pk
+
+        if self.same_global_allowed:
+            fltr = fltr & Q(organization_id=organization_id)
+
+        same_credentials = list(
+            SushiCredentials.objects.filter(fltr).values_list("organization_id", flat=True)
+        )
+
         if same_credentials:
             if organization_id in same_credentials:
                 raise ValidationError(
