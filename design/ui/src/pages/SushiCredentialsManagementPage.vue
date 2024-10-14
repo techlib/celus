@@ -50,6 +50,7 @@
       :organization-id="organizationId"
       :show-problematic-only="brokenOnly"
       show-platform-filter
+      ref="sushiCredentialsWidget"
     />
 
     <v-dialog
@@ -111,8 +112,18 @@ export default {
   methods: {
     ...mapActions(["loadSushiCredentialsCount"]),
     updateCredentials() {
-      this.$store.dispatch("loadSushiCredentialsCount");
+      this.loadSushiCredentialsCount();
       this.intro = false;
+    },
+  },
+
+  watch: {
+    showCreateDialog() {
+      if (!this.showCreateDialog) {
+        if (this.$refs.sushiCredentialsWidget) {
+          this.$refs.sushiCredentialsWidget.loadSushiCredentialsList();
+        }
+      }
     },
   },
 };
