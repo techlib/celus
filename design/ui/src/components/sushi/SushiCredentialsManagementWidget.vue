@@ -811,7 +811,6 @@ export default {
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
       selectedOrganization: "selectedOrganization",
-      consortialInstall: "consortialInstall",
     }),
     getCSRFToken() {
       let csrftoken = Cookies.get("csrftoken");
@@ -1045,8 +1044,9 @@ export default {
     },
     updateCredentials(credentials) {
       if (
-        this.selectedCredentials.same_global != credentials.same_global ||
-        this.selectedCredentials.same_in_org != credentials.same_in_org
+        this.selectedCredentials &&
+        (this.selectedCredentials.same_global !== credentials.same_global ||
+          this.selectedCredentials.same_in_org !== credentials.same_in_org)
       ) {
         // Same credentials were updated => refetch all credentials to update
         // the states of other credentials
