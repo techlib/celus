@@ -15,6 +15,7 @@
         <v-col class="text-center" cols="12" lg="9" xl="6">
           CELUS needs some data to work with. Check the above video or our
           <a
+            target="_blank"
             href="https://support.celus.net/support/solutions/articles/103000078036"
             >knowledgebase article</a
           >
