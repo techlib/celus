@@ -4,6 +4,7 @@ from collections import Counter
 
 from celus_nibbler.parsers import get_parsers
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from sushi.models import COUNTER_REPORTS, CounterReportType
@@ -28,7 +29,11 @@ class Command(BaseCommand):
         stats = Counter()
         fix_it = options["fix_it"]
 
-        long_name_map = {code: name for code, name in COUNTER_REPORTS}
+        reports_to_check = list(COUNTER_REPORTS)
+        if not settings.ENABLE_ITEMS:
+            reports_to_check = [r for r in reports_to_check if r[0] != "IR"]
+
+        long_name_map = {code: name for code, name in reports_to_check}
         regex = re.compile(r"static\.counter([^.]+)\.([^.]+)\.Tabular$")
         reports = []
         for parser_name, parser in get_parsers([r"static\.counter.*\.Tabular$"]):
