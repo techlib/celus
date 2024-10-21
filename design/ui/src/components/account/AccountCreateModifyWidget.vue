@@ -7,6 +7,7 @@ en:
   edit_user: Edit user
   error_edit: Error while editing user
   error_create: Error while creating user
+  user_already_exists: User with this email already exists.
   invite_link: Send an invitation link to the specified e-mail address.
   success_create: User was successfully created
   success_edit: User was successfully edited
@@ -16,6 +17,7 @@ cs:
   edit_user: Upravit uživatele
   error_edit: Při úpravě uživatele došlo k chybě
   error_create: Při vytváření uživatele došlo k chybě
+  user_already_exists: Užvatel s tímto emailem již existuje.
   invite_link: Poslat pozvánku na zadanou e-mailovou adresu.
   success_create: Uživatel byl úspěšně vytvořen
   success_edit: Uživatel byl úspěšně upraven
@@ -28,14 +30,14 @@ cs:
         {{ editMode ? $t("edit_user") : $t("create_new_user") }}
       </v-card-title>
       <v-card-text>
-        <v-form v-model="valid">
+        <v-form v-model="valid" ref="form">
           <v-container class="pb-0">
             <v-row>
               <v-col cols="12" sm="6" md="4">
                 <v-text-field
                   :label="$t('labels.email')"
                   v-model="email"
-                  :rules="[rules.email]"
+                  :rules="[rules.email, emailAlreadyExists]"
                   required
                 />
               </v-col>
@@ -125,6 +127,7 @@ export default {
       organization: this.selectedOrganization,
       valid: false,
       sendEmail: false,
+      existingEmails: [],
     };
   },
   emits: ["cancel", "success", "send_email"],
@@ -158,6 +161,18 @@ export default {
       showSnackbar: "showSnackbar",
     }),
 
+    checkEmailExists(response) {
+      if (response.status == 400 && !!response.data.username) {
+        this.existingEmails.push(this.email.toLowerCase());
+        this.showSnackbar({
+          content: this.$t("user_already_exists"),
+          color: "error",
+        });
+        return true;
+      }
+      return false;
+    },
+
     async postData() {
       let response = await this.http({
         url: "/api/user-management/",
@@ -166,10 +181,12 @@ export default {
         dontShowError: true,
       });
       if (response.error) {
-        this.showSnackbar({
-          content: this.$t("error_create") + "" + response.error,
-          color: "error",
-        });
+        if (!this.checkEmailExists(response.error.response)) {
+          this.showSnackbar({
+            content: this.$t("error_create") + "" + response.error,
+            color: "error",
+          });
+        }
       } else {
         this.showSnackbar({
           content: this.$t("success_create"),
@@ -190,10 +207,12 @@ export default {
         dontShowError: true,
       });
       if (response.error) {
-        this.showSnackbar({
-          content: this.$t("error_edit") + "" + response.error,
-          color: "error",
-        });
+        if (!this.checkEmailExists(response.error.response)) {
+          this.showSnackbar({
+            content: this.$t("error_edit") + "" + response.error,
+            color: "error",
+          });
+        }
       } else {
         this.showSnackbar({
           content: this.$t("success_edit"),
@@ -228,9 +247,19 @@ export default {
     submit() {
       this.account ? this.putData() : this.postData();
     },
+
+    emailAlreadyExists() {
+      const email = this.email.toLowerCase();
+      return (
+        !this.existingEmails.includes(email) || this.$t("user_already_exists")
+      );
+    },
   },
 
   watch: {
+    existingEmails() {
+      this.$refs.form.validate();
+    },
     account: {
       async handler() {
         this.accountObjectToData();
