@@ -34,7 +34,7 @@ from rest_framework.serializers import (
 )
 from sushi.serializers import SushiFetchAttemptFlatSerializer
 
-from .exceptions import MultipleReportTypes, NibblerErrors
+from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType
 from .models import (
     AccessLog,
     Dimension,
@@ -446,7 +446,7 @@ class ManualDataUploadSerializer(ModelSerializer):
                         # can't resolve report type name to report type
                         # this should not happen and admin should be notified
                         # to fix the situation
-                        raise RuntimeError(f"Can't resolve {rt_names} to ReportType")
+                        raise UnsupportedReportType(rt_names)
 
                     if len({e.pk for e in report_types}) > 1:
                         # Multiple report types should not be present here

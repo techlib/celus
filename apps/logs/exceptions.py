@@ -121,6 +121,12 @@ class MultipleReportTypes(PreflightFailed):
         self.report_types = report_types
 
 
+class UnsupportedReportType(PreflightFailed):
+    def __init__(self, report_type_names):
+        super().__init__(f"Can't resolve {''.join(report_type_names)} to ReportType")
+        self.report_type_names = report_type_names
+
+
 class NibblerErrors(Exception):
     """
     Nibbler error wrapper

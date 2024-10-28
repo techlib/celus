@@ -49,6 +49,7 @@ en:
     unknown_raw_error: Something went wrong and Celus was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
     xls_error: Unable to parse .xls file. Please try to convert the file to .xlsx
+    unsupported_report_type: Detected report type "{rt}" is not currently supported.
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
@@ -117,6 +118,7 @@ cs:
     unknown_raw_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
     xls_error: Nedaří se zpracovat .xls soubor. Prosím zkuste soubor zkonvertovat na .xlsx
+    unsupported_report_type: Zjištěný typ reportu "{rt}" není v současné době podporován.
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
@@ -1131,29 +1133,36 @@ export default {
           if ("data_file" in info) {
             this.showErrorDialog = true;
             this.errors = info.data_file;
-          }
-          if ("nibbler_errors" in info) {
+          } else if ("nibbler_errors" in info) {
             this.showErrorDialog = true;
             this.errors = info.nibbler_errors.map((e) =>
               this.nibblerErrorText(e)
             );
-          }
-          if ("encoding_error" in info) {
+          } else if ("encoding_error" in info) {
             this.showErrorDialog = true;
             this.errors = [this.$t("errors.requires_utf8")];
-          }
-          if ("wrong_file_format" in info) {
+          } else if ("wrong_file_format" in info) {
             this.showErrorDialog = true;
             this.errors = [
               this.$t("errors.unsupported_file_format", {
                 format: this.dataFileExt,
               }),
             ];
-          }
-          if ("multiple_report_types" in info) {
+          } else if ("xls_error" in info) {
+            this.showErrorDialog = true;
+            this.errors = [this.$t("errors.xls_error")];
+          } else if ("multiple_report_types" in info) {
             this.handleMultipleReportTypeError();
+          } else if ("unsupported_report_type" in info) {
+            this.showErrorDialog = true;
+            this.errors = [
+              this.$t("errors.unsupported_report_type", {
+                rt: info.unsupported_report_type[0],
+              }),
+            ];
+          } else {
+            this.showSnackbar({ content: "Error sending data: " + error });
           }
-          this.showSnackbar({ content: "Error sending data: " + error });
         } else {
           this.showSnackbar({ content: "Error sending data: " + error });
         }
@@ -1428,9 +1437,6 @@ export default {
     nibblerReason(errors) {
       if (errors.every((e) => e.name.startsWith("NoParser"))) {
         return this.$t("errors.no_parser_found");
-      }
-      if (errors.some((e) => e.name.startsWith("XlsError"))) {
-        return this.$t("errors.xls_error");
       }
       return this.unknownErrorMessage;
     },

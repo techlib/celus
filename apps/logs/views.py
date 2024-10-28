@@ -5,7 +5,7 @@ from functools import reduce
 from pprint import pprint
 from typing import Any, Dict, Optional, Tuple
 
-from celus_nibbler.errors import WrongFileFormatError
+from celus_nibbler.errors import WrongFileFormatError, XlsError
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
@@ -95,7 +95,7 @@ from logs.serializers import (
 )
 
 from . import filters
-from .exceptions import MultipleReportTypes, NibblerErrors
+from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType
 from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
@@ -1162,6 +1162,10 @@ class ManualDataUploadViewSet(
             raise BadRequestException({"encoding_error": str(e)}) from e
         except WrongFileFormatError as e:
             raise BadRequestException({"wrong_file_format": str(e)}) from e
+        except XlsError as e:
+            raise BadRequestException({"xls_error": str(e)}) from e
+        except UnsupportedReportType as e:
+            raise BadRequestException({"unsupported_report_type": e.report_type_names}) from e
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
