@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import reversion
 from celus_nigiri.utils import parse_date_fuzzy
 from core.logic.dates import month_end, month_start
@@ -166,33 +168,49 @@ class SushiCredentialsViewSet(ModelViewSet):
         )
 
     @action(
-        detail=True,
+        detail=False,
         methods=["post"],
         url_path="unset-broken",
         serializer_class=UnsetBrokenSerializer,
     )
-    def unset_broken(self, request, pk):
+    def unset_broken(self, request):
         """
         Custom action to unset that SushiCredentials are broken
         """
-        credentials = get_object_or_404(SushiCredentials, pk=pk)
 
-        request_serializer = UnsetBrokenSerializer(instance=credentials, data=dict(request.data))
+        request_serializer = UnsetBrokenSerializer(data=request.data, many=True)
         request_serializer.is_valid(raise_exception=True)
+        # For some reason we need to revalidate every item
+        # otherwise no exception is raise when invalid counter_report is provided
+        for e in request.data:
+            UnsetBrokenSerializer(data=e).is_valid(raise_exception=True)
 
-        if "counter_reports" in request_serializer.validated_data:
-            for cr2c in CounterReportsToCredentials.objects.filter(
-                credentials=credentials,
-                counter_report__in=request_serializer.validated_data["counter_reports"],
-            ):
-                cr2c.unset_broken()
-        else:
-            credentials.unset_broken()
-            for cr2c in CounterReportsToCredentials.objects.filter(credentials=credentials):
-                cr2c.unset_broken()
-        credentials.refresh_from_db()
-        self._post_process_queryset([credentials])
-        return Response(SushiCredentialsSerializer(credentials).data)
+        credentials_ids = [e["credentials_id"] for e in request_serializer.validated_data]
+        credentials_map = {e.pk: e for e in SushiCredentials.objects.filter(pk__in=credentials_ids)}
+        cr2c_map = defaultdict(list)
+        for cr2c in CounterReportsToCredentials.objects.filter(
+            broken__isnull=False, credentials_id__in=credentials_ids
+        ):
+            cr2c_map[cr2c.credentials_id].append(cr2c)
+
+        with transaction.atomic():
+            for credentials_dict in request_serializer.validated_data:
+                if not (credentials := credentials_map.get(credentials_dict["credentials_id"])):
+                    # skip credentials which doesn't exist
+                    continue
+                if "counter_reports" in credentials_dict:
+                    for rt in credentials_dict["counter_reports"]:
+                        for cr2c in cr2c_map.get(credentials_dict["credentials_id"]):
+                            if cr2c.counter_report == rt:
+                                cr2c.unset_broken()
+                else:
+                    credentials.unset_broken()
+                    for cr2c in cr2c_map.get(credentials_dict["credentials_id"], []):
+                        cr2c.unset_broken()
+            qs = self._post_process_queryset(
+                SushiCredentials.objects.filter(pk__in=credentials_ids)
+            )
+            return Response(SushiCredentialsSerializer(qs, many=True).data)
 
     @action(detail=False, methods=["post", "get"], url_path="export-credentials")
     def export_credentials(self, request):

@@ -1379,19 +1379,21 @@ export default {
       if (this.credentials) {
         try {
           let response = await axios.post(
-            `/api/sushi-credentials/${this.credentials.pk}/unset-broken/`
+            "/api/sushi-credentials/unset-broken/",
+            [{ credentials_id: this.credentials.pk }]
           );
           this.showSnackbar({
             content: this.$t("mark_fixed_success"),
             color: "success",
           });
-          this.$emit("update-credentials", response.data);
+          this.$emit("update-credentials", response.data[0]);
         } catch (error) {
           this.showSnackbar({
             content: "Error marking SUSHI credentials as fixed: " + error,
             color: "error",
           });
         }
+        this.reloadCredentials();
       }
     },
     processErrors(errors) {

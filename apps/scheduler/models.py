@@ -10,7 +10,7 @@ from core.logic.dates import month_end, month_start, this_month
 from core.models import CreatedUpdatedMixin, User
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.db import DatabaseError, models, transaction
+from django.db import DatabaseError, IntegrityError, models, transaction
 from django.db.models import Exists, F, Max, Min, OuterRef, Q
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.functions import Coalesce
@@ -1229,13 +1229,22 @@ class Automatic(models.Model):
 
     @classmethod
     def get_or_create(cls, month: date, organization: Organization) -> "Automatic":
+        """
+        Gets or creates new Automatic object
+        Note that this function should be run only within transaction
+        """
         month = month.replace(day=1)  # normalize month
+
         try:
             return cls.objects.get(month=month, organization=organization)
         except cls.DoesNotExist:
-            return cls.objects.create(
-                month=month, organization=organization, harvest=Harvest.objects.create()
-            )
+            try:
+                with transaction.atomic():
+                    return cls.objects.create(
+                        month=month, organization=organization, harvest=Harvest.objects.create()
+                    )
+            except IntegrityError:
+                return cls.objects.get(month=month, organization=organization)
 
     @property
     def month_end(self):

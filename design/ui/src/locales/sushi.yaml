@@ -49,6 +49,11 @@ en:
       Automatic harvesting is disabled for such reports.
     knowledgebase_report_type_desc: This report was successfully harvested by other users for this platform.
     registry_report_type_desc: According to the COUNTER registry, this report is supported by the selected platform.
+    mark_as_fixed:
+      title: Mark credentials as fixed
+      success: Credentials were marked as fixed.
+      button: Mark as fixed
+      tooltip: If you think that the selected credentials should not be marked as broken anymore, you can manually mark them as fixed.
 
 cs:
   sushi:
@@ -101,3 +106,8 @@ cs:
       Automatické stahování je pro tyto reporty vypnuté.
     knowledgebase_report_type_desc: Tento report byl na této platformě úspěšně stažený jiným uživatelem.
     registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.
+    mark_as_fixed:
+      title: Označ přístupové údaje jako opravené
+      success: Přístupové údaje byly označeny jako opravené.
+      button: Označ jako opravené
+      tooltip: Pokud se domníváte, že by vybrané přihlašovací údaje neměly být označeny jako nefunkční, můžete je označit jako opravené.

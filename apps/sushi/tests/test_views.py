@@ -452,9 +452,12 @@ class TestSushiCredentialsViewSet:
         cr2c_tr.save()
 
         # unset entire credentials (both reports and mappings are unset)
-        url = reverse("sushi-credentials-unset-broken", args=(credentials["standalone_tr"].pk,))
-        resp = clients["master_admin"].post(url, None)
+        url = reverse("sushi-credentials-unset-broken")
+        resp = clients["master_admin"].post(
+            url, [{"credentials_id": credentials["standalone_tr"].pk}], format="json"
+        )
         assert resp.status_code == 200
+        assert len(resp.json()) == 1
         credentials["standalone_tr"].refresh_from_db()
         assert credentials["standalone_tr"].broken is None
         assert credentials["standalone_tr"].first_broken_attempt is None
@@ -486,11 +489,14 @@ class TestSushiCredentialsViewSet:
         cr2c_jr1.broken = BS.BROKEN_SUSHI
         cr2c_jr1.first_broken_attempt = attempt_jr1
         cr2c_jr1.save()
-        url = reverse(
-            "sushi-credentials-unset-broken", args=(credentials["standalone_br1_jr1"].pk,)
+        url = reverse("sushi-credentials-unset-broken")
+        resp = clients["master_admin"].post(
+            url,
+            [{"credentials_id": credentials["standalone_br1_jr1"].pk, "counter_reports": ["JR1"]}],
+            format="json",
         )
-        resp = clients["master_admin"].post(url, {"counter_reports": ["JR1"]})
         assert resp.status_code == 200
+        assert len(resp.json()) == 1
         credentials["standalone_br1_jr1"].refresh_from_db()
         assert credentials["standalone_br1_jr1"].broken == BS.BROKEN_SUSHI
         assert credentials["standalone_br1_jr1"].first_broken_attempt == attempt_br1
@@ -502,20 +508,42 @@ class TestSushiCredentialsViewSet:
         assert cr2c_jr1.first_broken_attempt is None
 
         # Wrong type
-        resp = clients["master_admin"].post(url, {"counter_reports": ["WRONG_TYPE"]})
+        resp = clients["master_admin"].post(
+            url,
+            [
+                {
+                    "counter_reports": ["WRONG_TYPE"],
+                    "credentials_id": credentials["standalone_br1_jr1"].pk,
+                }
+            ],
+            format="json",
+        )
         assert resp.status_code == 400
 
         # Non not assigned report type
-        resp = clients["master_admin"].post(url, {"counter_reports": ["BR1", "DB1"]})
+        resp = clients["master_admin"].post(
+            url,
+            [
+                {
+                    "counter_reports": ["BR1", "DB1"],
+                    "credentials_id": credentials["standalone_br1_jr1"].pk,
+                }
+            ],
+            format="json",
+        )
         assert resp.status_code == 200
+        assert len(resp.json()) == 1
         cr2c_br1.refresh_from_db()
         assert cr2c_br1.broken is None
         assert cr2c_br1.first_broken_attempt is None
 
         # Credentials not found
-        url = reverse("sushi-credentials-unset-broken", args=(0,))
-        resp = clients["master_admin"].post(url, {"counter_reports": ["JR1"]})
-        assert resp.status_code == 404
+        url = reverse("sushi-credentials-unset-broken")
+        resp = clients["master_admin"].post(
+            url, [{"credentials_id": 99999999, "counter_reports": ["JR1"]}], format="json"
+        )
+        assert resp.status_code == 200, "no credentials were updated"
+        assert len(resp.json()) == 0
 
     def test_credential_details(self, basic1, credentials, clients, counter_report_types):
         # setup

@@ -36,13 +36,14 @@ class UpdateAssignedCounterReportsSerializer(Serializer):
 
 
 class UnsetBrokenSerializer(Serializer):
+    credentials_id = IntegerField(min_value=1, required=True)
     counter_reports = SlugRelatedField(
         queryset=CounterReportType.objects, many=True, slug_field="code", required=False
     )
 
     class Meta:
         model = SushiCredentials
-        fields = ("counter_reports",)
+        fields = ("credentials_id", "counter_reports")
 
 
 class CounterReportTypeSerializer(ModelSerializer):

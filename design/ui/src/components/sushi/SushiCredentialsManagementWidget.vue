@@ -28,9 +28,11 @@ en:
     These credentials have been marked as broken because of harvesting failures.
     Automatic harvesting was postponed until the credentials are manually fixed.
   no_credentials_selected: No credentials selected
+  no_broken_credentials_selected: No broken credentials selected
   no_credentials_filtered: No credentials filtered
   there_are_no_credentials: There are no credentials
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
+  select_at_least_one_broken_credentials: Please select at least one set of broken SUSHI credentials using the checkboxes in the credentials list.
   unverified_tooltip: No data has been obtained yet using the current version of these credentials. Please verify the credentials by manually harvesting some data.
   warn_same_credentials_in_org_tooltip: The same credentials are used for a different platform as well. This is likely an error and will cause data duplication.
   warn_same_credentials_global_tooltip: The same credentials are used by another organization. This is likely an error and will cause data duplication.
@@ -76,9 +78,11 @@ cs:
     Tyto přihlašovací údaje byly označeny jako nefunkční, kvůli neúspěchům při stahování. Automatické stahování
     bylo pozastaveno do doby než budou údaje ručně opraveny.
   no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje
+  no_broken_credentials_selected: Nejsou vybrány žádné nefunkční přihlašovací údaje
   no_credentials_filtered: Nejsou vyfiltrovány žádné přihlašovací údaje
   there_are_no_credentials: Nemáte uloženy žádné přihlašovací údaje
   select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
+  select_at_least_one_broken_credentials: Vyberte prosím alespoň jedny nefunkční přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
   unverified_tooltip: Žádná data zatím nebyla stažena se současnou verzí těchto přístupových údajů. Ověřte prosím platnost přihlašovacích údajů manuálním stažením dat.
   warn_same_credentials_in_org_tooltip: Stejné přístupové údaje jsou použity i u jiné platformy. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
   warn_same_credentials_global_tooltip: Stejné přístupové údaje jsou použity jinou organizací. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
@@ -353,6 +357,30 @@ cs:
                           </v-list-item>
                         </template>
                         {{ $t("set_last_harvestable_month_tooltip") }}
+                      </v-tooltip>
+                      <v-tooltip bottom max-width="600px">
+                        <template #activator="{ on }">
+                          <v-list-item
+                            @click="triggerMarkFixed"
+                            v-if="showMarkFixed"
+                            v-on="on"
+                          >
+                            <v-list-item-icon class="mr-2">
+                              <v-icon small>fa fa-tools</v-icon>
+                            </v-list-item-icon>
+                            <v-list-item-content>
+                              <v-list-item-title>
+                                {{ $t("sushi.mark_as_fixed.button") }}
+                                <v-badge color="secondary" inline class="mt-1">
+                                  <template #badge>
+                                    {{ checkedBrokenCredentials.length }}
+                                  </template>
+                                </v-badge>
+                              </v-list-item-title>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </template>
+                        {{ $t("sushi.mark_as_fixed.tooltip") }}
                       </v-tooltip>
                     </v-list>
                   </v-menu>
@@ -679,6 +707,18 @@ cs:
         update-backend
       ></CounterReportLastHarvestableMonthWidget>
     </v-dialog>
+
+    <v-dialog
+      v-model="showMarkAsFixedDialog"
+      v-if="showMarkAsFixedDialog"
+      max-width="600px"
+    >
+      <MarkCredentialsAsFixedWidget
+        :credentials="checkedBrokenCredentials"
+        @close="closeMarkAsFixedDialog"
+        @update-credentials="updateCredentials"
+      ></MarkCredentialsAsFixedWidget>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -689,6 +729,7 @@ import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import CheckMark from "@/components/util/CheckMark";
 import CounterReportLastHarvestableMonthWidget from "@/components/sushi/CounterReportLastHarvestableMonthWidget";
+import MarkCredentialsAsFixedWidget from "@/components/sushi/MarkCredentialsAsFixedWidget";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
@@ -704,6 +745,7 @@ export default {
     CheckMark,
     HarvestSelectedWidget,
     PlatformSelector,
+    MarkCredentialsAsFixedWidget,
     CounterReportLastHarvestableMonthWidget,
     SushiAttemptListWidget,
     SushiCredentialsEditDialog,
@@ -747,6 +789,7 @@ export default {
       showCreateDialog: false,
       showDataDialog: false,
       showLastHarvestableMonthDialog: false,
+      showMarkAsFixedDialog: false,
       loading: false,
       counterVersion: null,
       withLastHarvestableMonthSet: null,
@@ -810,6 +853,7 @@ export default {
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
       selectedOrganization: "selectedOrganization",
+      showConsortialStuff: "showConsortialStuff",
     }),
     getCSRFToken() {
       let csrftoken = Cookies.get("csrftoken");
@@ -945,6 +989,14 @@ export default {
         }
       });
       return ret.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    checkedBrokenCredentials() {
+      return this.checkedCredentials.filter(
+        (e) => e.broken || e.has_broken_reports
+      );
+    },
+    showMarkFixed() {
+      return this.showConsortialStuff;
     },
   },
 
@@ -1132,6 +1184,9 @@ export default {
       }
       this.showLastHarvestableMonthDialog = false;
     },
+    closeMarkAsFixedDialog() {
+      this.showMarkAsFixedDialog = false;
+    },
     activateCreateDialog() {
       this.showCreateDialog = true;
     },
@@ -1143,6 +1198,18 @@ export default {
           title: this.$t("no_credentials_selected"),
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
+        });
+      }
+    },
+    triggerMarkFixed() {
+      if (this.checkedBrokenCredentials.length > 0) {
+        this.showMarkAsFixedDialog = true;
+      } else {
+        this.$confirm(this.$t("select_at_least_one_broken_credentials"), {
+          title: this.$t("no_broken_credentials_selected"),
+          buttonTrueText: this.$t("close"),
+          buttonFalseText: null,
+          width: 600,
         });
       }
     },
