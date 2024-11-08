@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import List, Optional
 
 import pandas as pd
-from core.models import DATA_SOURCE_TYPE_KNOWLEDGEBASE
+from core.models import DATA_SOURCE_TYPE_API, DATA_SOURCE_TYPE_KNOWLEDGEBASE
 from django.conf import settings
 from django.db.models import DurationField, ExpressionWrapper, F, FloatField, Min, Value
 from django.db.models.functions import Extract
@@ -24,7 +24,12 @@ def create_table_from_db(platform_id: Optional[int], lookback_days: Optional[int
     """
 
     if platform_id is None:
-        table = SushiFetchAttempt.objects.all()  # universal model
+        table = SushiFetchAttempt.objects.all().filter(
+            credentials__platform__source__type__in=(
+                DATA_SOURCE_TYPE_KNOWLEDGEBASE,
+                DATA_SOURCE_TYPE_API,
+            )
+        )  # universal model - all fetch attempts, but only for "trustworthy" sources
     else:
         table = SushiFetchAttempt.objects.filter(credentials__platform_id=platform_id)
     look_back_filter = {}
@@ -53,7 +58,6 @@ def create_table_from_db(platform_id: Optional[int], lookback_days: Optional[int
             ),  # start_date is always month start, so we need to add ~30 days
             import_batch_id__isnull=False,
             credentials__counter_version=5,
-            credentials__platform__source__type=DATA_SOURCE_TYPE_KNOWLEDGEBASE,
             when_processed__isnull=False,
             delay__gte=0,  # remove negative delays, these are flukes
             **look_back_filter,
