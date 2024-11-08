@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import List, Optional
 
 import pandas as pd
-from core.models import DATA_SOURCE_TYPE_API, DATA_SOURCE_TYPE_KNOWLEDGEBASE
+from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from django.conf import settings
 from django.db.models import DurationField, ExpressionWrapper, F, FloatField, Min, Value
 from django.db.models.functions import Extract
@@ -24,12 +24,9 @@ def create_table_from_db(platform_id: Optional[int], lookback_days: Optional[int
     """
 
     if platform_id is None:
-        table = SushiFetchAttempt.objects.all().filter(
-            credentials__platform__source__type__in=(
-                DATA_SOURCE_TYPE_KNOWLEDGEBASE,
-                DATA_SOURCE_TYPE_API,
-            )
-        )  # universal model - all fetch attempts, but only for "trustworthy" sources
+        table = SushiFetchAttempt.objects.exclude(
+            credentials__platform__source__type=DATA_SOURCE_TYPE_ORGANIZATION
+        )  # universal model - exclude user-added platforms not to skew the results
     else:
         table = SushiFetchAttempt.objects.filter(credentials__platform_id=platform_id)
     look_back_filter = {}
