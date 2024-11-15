@@ -637,6 +637,7 @@ def validate_mime_type(fileobj):
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "application/vnd.ms-excel",  # xls
         "application/CDFV2",  # xls (sometimes)
+        "application/x-dosexec",  # Japanese (SHIFT_JIS) encoding
     ]
 
     if fileobj.name and fileobj.name.endswith(".xlsx"):
