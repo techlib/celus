@@ -37,6 +37,8 @@ def import_sushi_credentials_from_xlsx(
     if sheet_no > len(workbook.worksheets):
         raise ValueError("chosen sheet doesn't exist")
     credentials_sheet = workbook.worksheets[sheet_no - 1]
+    # Determine whether the credentials are C5 or C51 based on the sheet name
+    counter_version = 51 if credentials_sheet.title == "Credentials-COUNTER5.1" else 5
     headers = [header.value for header in credentials_sheet[1] if header.value]
     if Col.PUBLISHER_VENDOR_PLATFORM.value not in headers or Col.CUSTOMER_ID.value not in headers:
         raise ValueError("essential headers are missing")
@@ -89,6 +91,7 @@ def import_sushi_credentials_from_xlsx(
         log_trivial=log_trivial,
         update_credentials=update_credentials,
         reversion_comment=reversion_comment,
+        counter_version=counter_version,
     )
 
 
@@ -99,6 +102,7 @@ def import_sushi_credentials_new(
     log_trivial: bool = False,
     update_credentials=Perform.UPDATE_NONE,
     reversion_comment: Optional[str] = None,
+    counter_version: int = 5,
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data - new version for xlsx
@@ -109,6 +113,7 @@ def import_sushi_credentials_new(
            otherwise, organization will be taken from the data
     :param reversion_comment: comment that will be passed to the reversion version, if None a
            default will be provided
+    :param counter_version: which counter version is used for these credentials
     :param records:
     :return:
     """
@@ -125,7 +130,7 @@ def import_sushi_credentials_new(
     }
     platform_objects = Platform.objects.all()
     source_id = lambda pl: pl.source.organization_id if pl.source else None  # noqa: E731
-    db_platforms = {(pl.name_en.lower(), source_id(pl)): pl for pl in platform_objects}
+    db_platforms = {((pl.name_en or pl.name).lower(), source_id(pl)): pl for pl in platform_objects}
 
     organization_objects = Organization.objects.all()
     db_organizations = {org.internal_id: org for org in organization_objects}
@@ -202,7 +207,9 @@ def import_sushi_credentials_new(
             providers = [
                 p
                 for p in platform.knowledgebase.get("providers", [])
-                if p["counter_version"] == 5 and "provider" in p and "url" in p["provider"]
+                if p["counter_version"] == counter_version
+                and "provider" in p
+                and "url" in p["provider"]
             ]
         if providers:
             url = providers[0]["provider"]["url"]
@@ -211,14 +218,15 @@ def import_sushi_credentials_new(
             continue
 
         # sync credentials
-        key = (organization.pk, platform.pk, 5)
+        key = (organization.pk, platform.pk, counter_version)
         if key in db_credentials:
             if key in db_identical_credentials:
                 log(
-                    'Credentials for organization "%s" platform "%s" counter 5: '
+                    'Credentials for organization "%s" platform "%s" counter %s: '
                     "have more than one corresponding instance in the database.",
                     organization.name_en,
                     platform.name_en,
+                    counter_version,
                     stat_name="duplicates_skipped",
                 )
                 continue
@@ -266,7 +274,7 @@ def import_sushi_credentials_new(
                 cr = SushiCredentials.objects.create(
                     organization=organization,
                     platform=platform,
-                    counter_version=5,
+                    counter_version=counter_version,
                     customer_id=customer_id,
                     url=url,
                     **optional,
@@ -284,7 +292,7 @@ def import_sushi_credentials_new(
                 (
                     p
                     for p in platform.knowledgebase.get("providers", [])
-                    if p["counter_version"] == 5 and p.get("assigned_report_types")
+                    if p["counter_version"] == counter_version and p.get("assigned_report_types")
                 ),
                 None,
             ):

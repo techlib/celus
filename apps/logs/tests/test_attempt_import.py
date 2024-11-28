@@ -209,27 +209,61 @@ class TestAttemptImport:
         )
 
     @pytest.mark.parametrize(
-        ["filename", "start_date", "status"],
+        ["filename", "report_type", "counter_version", "start_date", "status"],
         [
-            ("5_TR_ProQuestEbookCentral.json", "2019-11-01", AttemptStatus.SUCCESS),
-            ("5_TR_ProQuestEbookCentral_exception.json", "2017-01-01", AttemptStatus.IMPORT_FAILED),
-            ("5_TR_with_warning.json", "2018-11-01", AttemptStatus.SUCCESS),
+            (
+                "counter5/5_TR_ProQuestEbookCentral.json",
+                "TR",
+                5,
+                "2019-11-01",
+                AttemptStatus.SUCCESS,
+            ),
+            (
+                "counter5/5_TR_ProQuestEbookCentral_exception.json",
+                "TR",
+                5,
+                "2017-01-01",
+                AttemptStatus.IMPORT_FAILED,
+            ),
+            ("counter5/5_TR_with_warning.json", "TR", 5, "2018-11-01", AttemptStatus.SUCCESS),
+            (
+                "counter51/DR_sample_r51-one-month.json",
+                "DR",
+                51,
+                "2018-11-01",
+                AttemptStatus.NO_DATA,
+            ),
+            (
+                "counter51/DR_sample_r51-one-month.json",
+                "DR",
+                51,
+                "2022-01-01",
+                AttemptStatus.SUCCESS,
+            ),
         ],
     )
     def test_counter5_imports(
-        self, organizations, counter_report_type_named, platforms, filename, start_date, status
+        self,
+        organizations,
+        counter_report_type_named,
+        platforms,
+        filename,
+        report_type,
+        counter_version,
+        start_date,
+        status,
     ):
-        cr_type = counter_report_type_named("TR", version=5)
+        cr_type = counter_report_type_named(report_type, version=counter_version)
 
         creds = SushiCredentials.objects.create(
             organization=organizations["empty"],
             platform=platforms["empty"],
-            counter_version=5,
+            counter_version=counter_version,
             lock_level=UL_ORG_ADMIN,
             url="http://a.b.c/",
         )
 
-        with (Path(__file__).parent / f"data/counter5/{filename}").open() as f:
+        with (Path(__file__).parent / f"data/{filename}").open() as f:
             data_file = ContentFile(f.read())
             data_file.name = "something.json"
 

@@ -204,7 +204,15 @@ class TestPlatformAPI:
                 new_platform.platforminterestreport_set.values_list(
                     "report_type__short_name", flat=True
                 )
-            ) == {"TR", "DR", "JR1", "BR2", "DB1"}, "Interest report types created check"
+            ) == {
+                "TR",
+                "DR",
+                "JR1",
+                "BR2",
+                "DB1",
+                "TR51",
+                "DR51",
+            }, "Interest report types created check"
 
         resp = clients[client].post(
             reverse("platform-list", args=[organization_pk]),

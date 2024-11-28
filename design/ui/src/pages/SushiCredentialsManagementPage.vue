@@ -49,7 +49,7 @@
     <SushiCredentialsManagementWidget
       v-else
       :organization-id="organizationId"
-      :show-problematic-only="brokenOnly"
+      :potential-issues="brokenOnly ? 'broken' : null"
       show-platform-filter
       ref="sushiCredentialsWidget"
     />

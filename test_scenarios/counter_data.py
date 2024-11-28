@@ -25,12 +25,16 @@ def map_dimensions(
 
 
 @pytest.fixture
-def counter_report_types(tr, dr, pr, ir_m1, ir):
+def counter_report_types(tr, dr, pr, ir_m1, ir, tr51, dr51, pr51, ir51):
     tr = CounterReportTypeFactory(counter_version=5, code=tr.short_name, report_type=tr)
     dr = CounterReportTypeFactory(counter_version=5, code=dr.short_name, report_type=dr)
     pr = CounterReportTypeFactory(counter_version=5, code=pr.short_name, report_type=pr)
     ir_m1 = CounterReportTypeFactory(counter_version=5, code=ir_m1.short_name, report_type=ir_m1)
     ir = CounterReportTypeFactory(counter_version=5, code=ir.short_name, report_type=ir)
+    tr51 = CounterReportTypeFactory(counter_version=51, code=tr51.short_name, report_type=tr51)
+    dr51 = CounterReportTypeFactory(counter_version=51, code=dr51.short_name, report_type=dr51)
+    pr51 = CounterReportTypeFactory(counter_version=51, code=pr51.short_name, report_type=pr51)
+    ir51 = CounterReportTypeFactory(counter_version=51, code=ir51.short_name, report_type=ir51)
     return locals()
 
 
@@ -261,6 +265,63 @@ def ir(dimensions):
 
 
 @pytest.fixture
+def tr51(dimensions):
+    return ReportTypeFactory(
+        name="Counter 5.1 - Title Report",
+        short_name="TR51",
+        dimensions=[
+            dimensions["Access_Type"],
+            dimensions["Access_Method"],
+            dimensions["Data_Type"],
+            dimensions["YOP"],
+            dimensions["Publisher"],
+            dimensions["Platform"],
+        ],
+    )
+
+
+@pytest.fixture
+def dr51(dimensions):
+    return ReportTypeFactory(
+        name="Counter 5.1 - Database Report",
+        short_name="DR51",
+        dimensions=[
+            dimensions["Access_Method"],
+            dimensions["Data_Type"],
+            dimensions["Publisher"],
+            dimensions["Platform"],
+        ],
+    )
+
+
+@pytest.fixture
+def pr51(dimensions):
+    return ReportTypeFactory(
+        name="Counter 5.1 - Platform Report",
+        short_name="PR51",
+        dimensions=[dimensions["Access_Method"], dimensions["Data_Type"], dimensions["Platform"]],
+    )
+
+
+@pytest.fixture
+def ir51(dimensions):
+    return ReportTypeFactory(
+        name="Counter 5.1 - Item Report",
+        short_name="IR51",
+        dimensions=[
+            dimensions["Publisher"],
+            dimensions["Platform"],
+            dimensions["Access_Type"],
+            dimensions["Access_Method"],
+            dimensions["Data_Type"],
+            dimensions["Parent_Data_Type"],
+            dimensions["YOP"],
+            dimensions["Article_Version"],
+        ],
+    )
+
+
+@pytest.fixture
 def tr_dim(tr, dimension_texts):
     def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
         return map_dimensions(tr, dimension_texts, kwargs)
@@ -296,6 +357,38 @@ def ir_dim(ir, dimension_texts):
 def ir_m1_dim(ir_m1, dimension_texts):
     def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
         return map_dimensions(ir_m1, dimension_texts, kwargs)
+
+    return mapper
+
+
+@pytest.fixture
+def tr51_dim(tr51, dimension_texts):
+    def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
+        return map_dimensions(tr51, dimension_texts, kwargs)
+
+    return mapper
+
+
+@pytest.fixture
+def dr51_dim(dr51, dimension_texts):
+    def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
+        return map_dimensions(dr51, dimension_texts, kwargs)
+
+    return mapper
+
+
+@pytest.fixture
+def pr51_dim(pr51, dimension_texts):
+    def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
+        return map_dimensions(pr51, dimension_texts, kwargs)
+
+    return mapper
+
+
+@pytest.fixture
+def ir51_dim(ir51, dimension_texts):
+    def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
+        return map_dimensions(ir51, dimension_texts, kwargs)
 
     return mapper
 
@@ -853,7 +946,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=1,
         target=targets["target1"],
         item=items["item11"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["total_item_requests"],
     )
     AccessLogFactory(
@@ -862,7 +963,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=3,
         target=targets["target1"],
         item=items["item12"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["no_license"],
     )
     AccessLogFactory(
@@ -871,7 +980,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=23,
         target=targets["target2"],
         item=items["item21"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["total_item_requests"],
     )
     AccessLogFactory(
@@ -880,7 +997,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=29,
         target=targets["target2"],
         item=items["item21"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["no_license"],
     )
     AccessLogFactory(
@@ -889,7 +1014,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=5,
         target=targets["target1"],
         item=items["item12"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["total_item_requests"],
     )
     AccessLogFactory(
@@ -898,7 +1031,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=7,
         target=targets["target1"],
         item=items["item12"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["no_license"],
     )
     AccessLogFactory(
@@ -906,7 +1047,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         date="2020-04-01",
         value=31,
         item=items["item31"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["total_item_requests"],
     )
     AccessLogFactory(
@@ -914,7 +1063,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         date="2020-04-01",
         value=37,
         item=items["item31"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["unique_item_requests"],
     )
 
@@ -925,7 +1082,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=11,
         target=targets["target1"],
         item=items["item11"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["total_item_requests"],
     )
     AccessLogFactory(
@@ -934,7 +1099,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=13,
         target=targets["target1"],
         item=items["item12"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["no_license"],
     )
 
@@ -945,7 +1118,15 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=17,
         target=targets["target1"],
         item=items["item11"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
         metric=metrics["no_license"],
     )
     AccessLogFactory(
@@ -954,7 +1135,646 @@ def ir_ibs(organization, ir, ir_dim, platform, targets, items, metrics):
         value=19,
         target=targets["target1"],
         item=items["item12"],
-        **ir_dim(Publisher="Pub1", Platform="Plat1"),
+        **ir_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Article",
+            Parent_Data_Type="Journal",
+            Article_Version="VoR",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+
+    return ib1, ib2, ib3, ib4
+
+
+@pytest.fixture
+def tr51_ibs(organization, tr51, tr51_dim, platform, targets, metrics):
+    ib1 = ImportBatchFactory(
+        date="2020-02-01", organization=organization, platform=platform, report_type=tr51
+    )
+    ib2 = ImportBatchFactory(
+        date="2020-04-01", organization=organization, platform=platform, report_type=tr51
+    )
+    ib3 = ImportBatchFactory(
+        date="2019-12-01", organization=organization, platform=platform, report_type=tr51
+    )
+    ib4 = ImportBatchFactory(
+        date="2021-01-01", organization=organization, platform=platform, report_type=tr51
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=1,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=3,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=23,
+        target=targets["target2"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Journal",
+            YOP="2022",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=29,
+        target=targets["target2"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Journal",
+            YOP="2022",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=5,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=7,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=31,
+        target=targets["target3"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Other",
+            YOP="2021",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=37,
+        target=targets["target3"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Other",
+            YOP="2021",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+
+    # before
+    AccessLogFactory(
+        import_batch=ib3,
+        value=11,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib3,
+        value=13,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+
+    # after
+    AccessLogFactory(
+        import_batch=ib4,
+        value=17,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib4,
+        value=19,
+        target=targets["target1"],
+        **tr51_dim(
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            Data_Type="Book",
+            YOP="2020",
+            Publisher="Pub1",
+            Platform="Plat1",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+
+    return ib1, ib2, ib3, ib4
+
+
+@pytest.fixture
+def dr51_ibs(organization, dr51, dr51_dim, platform, targets, metrics):
+    ib1 = ImportBatchFactory(
+        date="2020-02-01", organization=organization, platform=platform, report_type=dr51
+    )
+    ib2 = ImportBatchFactory(
+        date="2020-04-01", organization=organization, platform=platform, report_type=dr51
+    )
+    ib3 = ImportBatchFactory(
+        date="2019-12-01", organization=organization, platform=platform, report_type=dr51
+    )
+    ib4 = ImportBatchFactory(
+        date="2021-01-01", organization=organization, platform=platform, report_type=dr51
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=1,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=3,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=23,
+        target=targets["target1"],
+        **dr51_dim(
+            Access_Method="Regular", Data_Type="Journal", Publisher="Pub1", Platform="Plat1"
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=29,
+        target=targets["target1"],
+        **dr51_dim(
+            Access_Method="Regular", Data_Type="Journal", Publisher="Pub1", Platform="Plat1"
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=5,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=7,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=31,
+        target=targets["target3"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Other", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=37,
+        target=targets["target3"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Other", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+
+    # before
+    AccessLogFactory(
+        import_batch=ib3,
+        value=11,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib3,
+        value=13,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+
+    # after
+    AccessLogFactory(
+        import_batch=ib4,
+        value=17,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib4,
+        date="2021-01-01",
+        value=19,
+        target=targets["target2"],
+        **dr51_dim(Access_Method="Regular", Data_Type="Book", Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+
+    return ib1, ib2, ib3, ib4
+
+
+@pytest.fixture
+def pr51_ibs(organization, pr51, pr51_dim, platform, targets, metrics):
+    ib1 = ImportBatchFactory(
+        date="2020-02-01", organization=organization, platform=platform, report_type=pr51
+    )
+    ib2 = ImportBatchFactory(
+        date="2020-04-01", organization=organization, platform=platform, report_type=pr51
+    )
+    ib3 = ImportBatchFactory(
+        date="2019-12-01", organization=organization, platform=platform, report_type=pr51
+    )
+    ib4 = ImportBatchFactory(
+        date="2021-01-01", organization=organization, platform=platform, report_type=pr51
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=1,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=3,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=23,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Journal", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        value=29,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Journal", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=5,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=7,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=31,
+        target=targets["target1"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Other", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        value=37,
+        target=targets["target1"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Other", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+
+    # before
+    AccessLogFactory(
+        import_batch=ib3,
+        value=11,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib3,
+        value=13,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+
+    # after
+    AccessLogFactory(
+        import_batch=ib4,
+        value=17,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib4,
+        value=19,
+        target=targets["target3"],
+        **pr51_dim(Access_Method="Regular", Data_Type="Book", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+
+    return ib1, ib2, ib3, ib4
+
+
+@pytest.fixture
+def ir51_ibs(organization, ir51, ir51_dim, platform, targets, items, metrics):
+    ib1 = ImportBatchFactory(
+        date="2020-02-01", organization=organization, platform=platform, report_type=ir51
+    )
+    ib2 = ImportBatchFactory(
+        date="2020-04-01", organization=organization, platform=platform, report_type=ir51
+    )
+    ib3 = ImportBatchFactory(
+        date="2019-12-01", organization=organization, platform=platform, report_type=ir51
+    )
+    ib4 = ImportBatchFactory(
+        date="2021-01-01", organization=organization, platform=platform, report_type=ir51
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=1,
+        target=targets["target1"],
+        item=items["item11"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=3,
+        target=targets["target1"],
+        item=items["item12"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=23,
+        target=targets["target2"],
+        item=items["item21"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=29,
+        target=targets["target2"],
+        item=items["item21"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=5,
+        target=targets["target1"],
+        item=items["item12"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=7,
+        target=targets["target1"],
+        item=items["item12"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=31,
+        item=items["item31"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=37,
+        item=items["item31"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["unique_item_requests"],
+    )
+
+    # before
+    AccessLogFactory(
+        import_batch=ib3,
+        date="2019-12-01",
+        value=11,
+        target=targets["target1"],
+        item=items["item11"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib3,
+        date="2019-12-01",
+        value=13,
+        target=targets["target1"],
+        item=items["item12"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["no_license"],
+    )
+
+    # after
+    AccessLogFactory(
+        import_batch=ib4,
+        date="2021-01-01",
+        value=17,
+        target=targets["target1"],
+        item=items["item11"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
+        metric=metrics["no_license"],
+    )
+    AccessLogFactory(
+        import_batch=ib4,
+        date="2021-01-01",
+        value=19,
+        target=targets["target1"],
+        item=items["item12"],
+        **ir51_dim(
+            Publisher="Pub1",
+            Platform="Plat1",
+            Data_Type="Book_Segment",
+            Parent_Data_Type="Book",
+            Access_Type="Controlled",
+            Access_Method="Regular",
+            YOP="2020",
+        ),
         metric=metrics["total_item_requests"],
     )
 

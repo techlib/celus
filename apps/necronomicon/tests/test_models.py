@@ -104,7 +104,7 @@ class TestBatch:
         plat_qs = Platform.objects.filter(pk=platforms["standalone"].pk)
 
         assert plat_qs.count() == 1
-        assert cred_qs.count() == 2
+        assert cred_qs.count() == 3
 
         CandidateFactory(batch=batch, content_object=platforms["standalone"])
 
@@ -117,9 +117,9 @@ class TestBatch:
         batch.refresh_from_db()
 
         assert plat_qs.count() == 1
-        assert cred_qs.count() == 2
+        assert cred_qs.count() == 3
 
-        assert batch.info[0]["stats"][0] == 6
+        assert batch.info[0]["stats"][0] == 8
         assert batch.status == BatchStatus.PREPARED
         assert batch.prepared is not None
 
@@ -131,7 +131,7 @@ class TestBatch:
         plat_qs = Platform.objects.filter(pk=platforms["standalone"].pk)
 
         assert plat_qs.count() == 1
-        assert cred_qs.count() == 2
+        assert cred_qs.count() == 3
 
         CandidateFactory(
             batch=batch,
@@ -139,10 +139,10 @@ class TestBatch:
             info={
                 "model": "publications.Platform",
                 "stats": [
-                    6,
+                    8,
                     {
-                        "sushi.CounterReportsToCredentials": 3,
-                        "sushi.SushiCredentials": 2,
+                        "sushi.CounterReportsToCredentials": 4,
+                        "sushi.SushiCredentials": 3,
                         "publications.Platform": 1,
                     },
                 ],
@@ -160,7 +160,7 @@ class TestBatch:
         assert plat_qs.count() == 0
         assert cred_qs.count() == 0
 
-        assert batch.info[0]["stats"][0] == 6
+        assert batch.info[0]["stats"][0] == 8
         assert batch.status == BatchStatus.DELETED
         assert batch.deleted is not None
 

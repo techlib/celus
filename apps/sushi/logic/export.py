@@ -12,7 +12,7 @@ from openpyxl.utils import get_column_letter
 from organizations.models import Organization
 from publications.models import Platform
 
-from sushi.models import CounterReportType, SushiCredentials
+from sushi.models import CounterReportType, CounterVersionChoices, SushiCredentials
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class CredentialsDataFrame:
             Col.REQUESTOR_ID,
             Col.CUSTOMER_ID,
         ]
-        if counter_version == 5:
+        if CounterVersionChoices.is_c5x(counter_version):
             cols += [Col.API_KEY, Col.PLATFORM_FILTER]
         if counter_version == 4:
             cols += [Col.HTTP_USERNAME, Col.HTTP_PASSWORD, Col.EXTRA_PARAMS]
@@ -64,7 +64,7 @@ class CredentialsDataFrame:
         return cls(counter_version, cols, report_types)
 
     @classmethod
-    def template_for_import(cls, selected_organization_id):
+    def template_for_import(cls, selected_organization_id, counter_version: CounterVersionChoices):
         cols = [
             Col.TITLE,
             Col.ORGANIZATION,
@@ -76,7 +76,7 @@ class CredentialsDataFrame:
         ]
         if selected_organization_id != "-1":
             cols.remove(Col.ORGANIZATION)
-        return cls(5, cols)
+        return cls(counter_version, cols)
 
     def platforms_to_display(self, accessible_organizations) -> QuerySet[Platform]:
         platforms = Platform.objects.exclude(source__type=DATA_SOURCE_TYPE_ORGANIZATION)

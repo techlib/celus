@@ -10,13 +10,20 @@ from hashlib import blake2b
 from pathlib import Path
 from tempfile import TemporaryFile
 from time import time
-from typing import IO, Dict, Iterable, Optional, Union
+from typing import IO, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import requests
 import reversion
 from celus_nibbler import Poop
-from celus_nigiri.client import Sushi4Client, Sushi5Client, SushiClientBase, SushiError
+from celus_nigiri.client import (
+    CounterVersion,
+    Sushi4Client,
+    Sushi5Client,
+    Sushi51Client,
+    SushiClientBase,
+    SushiError,
+)
 from celus_nigiri.client import SushiException as SushiExceptionNigiri
 from celus_nigiri.counter5 import Counter5ReportBase, CounterError, TransportError
 from celus_nigiri.error_codes import ErrorCode
@@ -36,7 +43,20 @@ from django.conf import settings
 from django.core.files.base import File
 from django.core.validators import URLValidator
 from django.db import models
-from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q, Subquery, Value
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerChoices,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
 from django.db.models.constraints import CheckConstraint, UniqueConstraint
 from django.db.models.lookups import Exact
 from django.db.transaction import atomic
@@ -54,28 +74,62 @@ from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
-COUNTER_VERSIONS = ((4, "COUNTER 4"), (5, "COUNTER 5"))
+
+class CounterVersionChoices(IntegerChoices):
+    C4 = 4, "COUNTER 4"
+    C5 = 5, "COUNTER 5"
+    C51 = 51, "COUNTER 5.1"
+
+    @classmethod
+    def is_c5x(cls, number: int) -> bool:
+        """Does the version belong to Counter 5.X?"""
+        return number in cls.c5x()
+
+    @classmethod
+    def c5x(cls) -> List["CounterVersionChoices"]:
+        """All counter 5.X classes"""
+        return [cls.C5, cls.C51]
+
+    @property
+    def short(self) -> "CounterVersionChoices":
+        if self.C51 == self:
+            return "5.1"
+        else:
+            return str(self.value)
+
+    @property
+    def nigiri(self) -> CounterVersion:
+        if self == self.C51:
+            return CounterVersion.C51
+        elif self == self.C5:
+            return CounterVersion.C51
+        else:
+            raise NotImplementedError()
+
 
 COUNTER_REPORTS = (
-    # version 4
-    ("JR1", "Counter 4 - Journal Report 1"),
-    ("JR1a", "Counter 4 - Journal Report 1a"),
-    ("JR1GOA", "Counter 4 - Journal Report 1 Gold Open Access"),
-    ("JR2", "Counter 4 - Journal Report 2"),
-    # CounterReport# ('JR5',  'Counter X - Report4,, False, , None, True),
-    ("BR1", "Counter 4 - Book Report 1"),
-    ("BR2", "Counter 4 - Book Report 2"),
-    ("BR3", "Counter 4 - Book Report 3"),
-    ("DB1", "Counter 4 - Database Report 1"),
-    ("DB2", "Counter 4 - Database Report 2"),
-    ("PR1", "Counter 4 - Platform Report 1"),
-    ("MR1", "Counter 4 - Multimedia Report 1"),
+    # counter version, ReportType.short_name, CounterReportType.code, name
+    (4, "JR1", "JR1", "COUNTER 4 - Journal Report 1"),
+    (4, "JR1a", "JR1a", "COUNTER 4 - Journal Report 1a"),
+    (4, "JR1GOA", "JR1GOA", "COUNTER 4 - Journal Report 1 Gold Open Access"),
+    (4, "JR2", "JR2", "COUNTER 4 - Journal Report 2"),
+    (4, "BR1", "BR1", "COUNTER 4 - Book Report 1"),
+    (4, "BR2", "BR2", "COUNTER 4 - Book Report 2"),
+    (4, "BR3", "BR3", "COUNTER 4 - Book Report 3"),
+    (4, "DB1", "DB1", "COUNTER 4 - Database Report 1"),
+    (4, "DB2", "DB2", "COUNTER 4 - Database Report 2"),
+    (4, "PR1", "PR1", "COUNTER 4 - Platform Report 1"),
+    (4, "MR1", "MR1", "COUNTER 4 - Multimedia Report 1"),
     # version 5
-    ("TR", "Counter 5 - Title Report"),
-    ("PR", "Counter 5 - Platform Report"),
-    ("DR", "Counter 5 - Database Report"),
-    ("IR", "Counter 5 - Item Report"),
-    ("IR_M1", "Counter 5 - Multimedia Item Report 1"),
+    (5, "TR", "TR", "COUNTER 5 - Title Master Report"),
+    (5, "PR", "PR", "COUNTER 5 - Platform Master Report"),
+    (5, "DR", "DR", "COUNTER 5 - Database Master Report"),
+    (5, "IR_M1", "IR_M1", "COUNTER 5 - Multimedia Item Requests"),
+    # verison 5.1
+    (51, "TR51", "TR", "COUNTER 5.1 - Title Report"),
+    (51, "PR51", "PR", "COUNTER 5.1 - Platform Report"),
+    (51, "DR51", "DR", "COUNTER 5.1 - Database Report"),
+    (51, "IR51", "IR", "COUNTER 5.1 - Item Report"),
 )
 
 
@@ -119,11 +173,12 @@ class BrokenCredentialsMixin(models.Model):
 
 
 class CounterReportType(models.Model):
-    CODE_CHOICES = [(e[0], e[0]) for e in COUNTER_REPORTS]
+    # Convert COUNTER_REPORTS to code choices while keeping the order
+    CODE_CHOICES = list(dict.fromkeys((e[2], e[2]) for e in COUNTER_REPORTS))
 
     code = models.CharField(max_length=10, choices=CODE_CHOICES)
     name = models.CharField(max_length=128, blank=True)
-    counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
+    counter_version = models.PositiveSmallIntegerField(choices=CounterVersionChoices.choices)
     report_type = models.OneToOneField("logs.ReportType", on_delete=models.CASCADE)
     active = models.BooleanField(
         default=True,
@@ -138,6 +193,10 @@ class CounterReportType(models.Model):
     def __str__(self):
         return f"{self.code} ({self.counter_version}) - {self.name}"
 
+    @classmethod
+    def get_mapping(cls) -> Dict[Tuple[str, CounterVersionChoices], "CounterReportType"]:
+        return {(e.code, e.counter_version): e for e in CounterReportType.objects.all()}
+
     def get_nibbler_parser(self, json_format: bool = False):
         name = "Json" if json_format else "Tabular"
         return f"static\\.counter{self.counter_version}\\.{self.code}\\.{name}"
@@ -145,21 +204,31 @@ class CounterReportType(models.Model):
     def get_counter_exporter_class(self):
         from logs.logic import export_counter
 
-        if self.counter_version != 5:
-            return None
-
-        if self.code == "TR":
-            return export_counter.TRCounter5Export
-        elif self.code == "DR":
-            return export_counter.DRCounter5Export
-        elif self.code == "PR":
-            return export_counter.PRCounter5Export
-        elif self.code == "IR_M1":
-            return export_counter.IR_M1Counter5Export
-        elif self.code == "IR":
-            return export_counter.IRCounter5Export
+        if self.counter_version == 5:
+            if self.code == "TR":
+                return export_counter.TRCounter5Export
+            elif self.code == "DR":
+                return export_counter.DRCounter5Export
+            elif self.code == "PR":
+                return export_counter.PRCounter5Export
+            elif self.code == "IR_M1":
+                return export_counter.IR_M1Counter5Export
+            elif self.code == "IR":
+                return export_counter.IRCounter5Export
+        elif self.counter_version == 51:
+            if self.code == "TR":
+                return export_counter.TRCounter51Export
+            elif self.code == "DR":
+                return export_counter.DRCounter51Export
+            elif self.code == "PR":
+                return export_counter.PRCounter51Export
+            elif self.code == "IR":
+                return export_counter.IRCounter51Export
 
         return None
+
+    def get_counter_version_display(self):
+        return CounterVersionChoices(self.counter_version).short
 
 
 class SushiCredentialsQuerySet(models.QuerySet):
@@ -233,6 +302,26 @@ class SushiCredentialsQuerySet(models.QuerySet):
             **global_kwargs,
         )
 
+    def annotate_can_update(self):
+        """Annotates whether the credentials a updatable to a newer version
+        E.g. C5 -> C51 in case that matching C51 credentials doent exist
+        """
+        return self.annotate(
+            max_version=SushiCredentials.objects.filter(
+                platform_id=OuterRef("platform_id"), organization_id=OuterRef("organization_id")
+            )
+            .values("platform", "organization")
+            .annotate(max=Max("counter_version"))
+            .values_list("max")[:1]
+        ).annotate(
+            can_update=Case(
+                When(counter_version__lt=CounterVersionChoices.C5, then=Value(False)),
+                When(max_version=CounterVersionChoices.C51, then=Value(False)),
+                default=Value(True),
+                output_field=models.BooleanField(),
+            )
+        )
+
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     UNLOCKED = 0
@@ -266,7 +355,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         " when URL is automatically updated",
         blank=True,
     )
-    counter_version = models.PositiveSmallIntegerField(choices=COUNTER_VERSIONS)
+    counter_version = models.PositiveSmallIntegerField(choices=CounterVersionChoices.choices)
     requestor_id = models.CharField(max_length=128, blank=True)
     customer_id = models.CharField(max_length=128)
     http_username = models.CharField(max_length=128, blank=True)
@@ -323,6 +412,40 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 )
 
             super().save(*args, **kwargs)
+
+    def clone_to_c51(self, report_type_mapping=None) -> Optional["SushiCredentials"]:
+        if not report_type_mapping:
+            report_type_mapping = CounterReportType.get_mapping()
+
+        if self.counter_version not in [CounterVersionChoices.C5]:
+            return None
+
+        report_type_codes = [e.code for e in self.counter_reports.all()]
+
+        self.pk = None
+        self.counter_version = CounterVersionChoices.C51
+        if self.title:
+            self.title += " (C5.1)"
+
+        # In case that there is url in knowledgebase for C5.1 use it
+        # Otherwise use url from original credentials
+        if knowledgebase_url := self.knowledgebase_url:
+            self.url = knowledgebase_url
+
+        self.save()
+
+        self.counter_reports.set(
+            {
+                report_type_mapping[(code, CounterVersionChoices.C51)]
+                for code in report_type_codes
+                if (code, CounterVersionChoices.C51) in report_type_mapping
+            }
+        )
+
+        return self
+
+    def get_counter_version_display(self):
+        return CounterVersionChoices(self.counter_version).short
 
     def force_current_version_verified(self):
         """
@@ -459,6 +582,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             attrs["auth"] = (self.http_username, self.http_password)
         if self.counter_version == 4:
             return Sushi4Client(extra_params=extra, **attrs)
+        elif self.counter_version == 51:
+            return Sushi51Client(extra_params=extra, **attrs)
         else:
             return Sushi5Client(extra_params=extra, **attrs)
 
@@ -658,9 +783,15 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         return attempt
 
     def _build_params(self, client, counter_report):
-        # params must be a copy, otherwise we will pollute it with EXTRA_PARAMS
-        params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(counter_report.code.lower(), {}))
-        params.update(deepcopy(client.EXTRA_PARAMS["filters"].get(counter_report.code.lower(), {})))
+        if self.counter_version == 5:
+            report_class = CounterVersion.C5.get_report_class(counter_report.code)
+        elif self.counter_version == 51:
+            report_class = CounterVersion.C51.get_report_class(counter_report.code)
+
+        else:
+            raise NotImplementedError()
+
+        params = deepcopy(report_class.extra_params)
         extra = self.extra_params or {}
         params.update(extra)
         return params

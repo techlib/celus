@@ -42,6 +42,7 @@ from test_scenarios.basic import (  # noqa - fixtures
 from . import (
     PLATFORM_INPUT_DATA,
     PLATFORM_INPUT_DATA2,
+    PLATFORM_INPUT_DATA3,
     REPORT_TYPE_INPUT_DATA,
     REPORT_TYPE_INPUT_DATA2,
 )
@@ -339,6 +340,27 @@ class TestPlatformImportAttempt:
 
         platform_with_removed_id.refresh_from_db()
         assert platform_with_removed_id.counter_registry_id is None
+
+        # Update one platform to C5.1 and add a new C5 platform
+        PlatformImportAttempt.objects.create(source=data_sources["brain"]).process(
+            PLATFORM_INPUT_DATA3, PlatformImportAttempt.MergeStrategy.EMPTY_SOURCE
+        )
+        assert Platform.objects.count() == 6
+        updated_platform = Platform.objects.get(ext_id=PLATFORM_INPUT_DATA3[0]["pk"])
+        assert updated_platform.knowledgebase["providers"][0]["counter_version"] == 51
+        assert (
+            updated_platform.knowledgebase["providers"][0]["assigned_report_types"][0][
+                "report_type"
+            ]
+            == "TR51"
+        )
+
+        new_platform = Platform.objects.get(ext_id=PLATFORM_INPUT_DATA3[1]["pk"])
+        assert new_platform.knowledgebase["providers"][0]["counter_version"] == 51
+        assert (
+            new_platform.knowledgebase["providers"][0]["assigned_report_types"][0]["report_type"]
+            == "TR51"
+        )
 
     def test_perform(self, data_sources, report_types):
         with requests_mock.Mocker() as m:

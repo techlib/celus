@@ -123,21 +123,21 @@ cs:
             >
               <template v-slot:activator="{ on }">
                 <span v-on="on" class="mr-3 subdued"
-                  >{{ record.version
+                  >{{ counterVersionToStr(record.version)
                   }}{{ record.outside_consortium ? "*" : "" }}</span
                 >
               </template>
               <template v-if="record.outside_consortium">
                 <i18n path="sushi_for_version_outside" tag="span">
                   <template v-slot:version>
-                    {{ record.version }}
+                    {{ counterVersionToStr(record.version) }}
                   </template>
                 </i18n>
               </template>
               <template v-else>
                 <i18n path="sushi_for_version" tag="span">
                   <template v-slot:version>
-                    {{ record.version }}
+                    {{ counterVersionToStr(record.version) }}
                   </template>
                 </i18n>
               </template>
@@ -193,6 +193,7 @@ import TagSelector from "@/components/tags/TagSelector";
 import { intersection } from "lodash";
 import stateTracking from "@/mixins/stateTracking";
 import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "PlatformList",
@@ -335,6 +336,9 @@ export default {
   },
 
   methods: {
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     editDialogSaved(platform) {
       this.showEditDialog = false;
       this.$emit("update-platforms", platform);

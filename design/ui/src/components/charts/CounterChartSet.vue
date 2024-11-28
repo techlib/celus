@@ -14,21 +14,13 @@ cs:
   </div>
   <v-container fluid v-else class="pb-0 px-0 px-sm-2">
     <v-row v-if="!(fixedChart && fixedReportView)">
-      <v-col
-        cols="12"
-        md="6"
-        lg="4"
-        xl="4"
-        class="pb-0"
+      <ReportViewSelector
         v-if="!fixedReportView"
-      >
-        <ReportViewSelector
-          v-model="selectedReportView"
-          :report-views-url="reportViewsUrl"
-          :prefer-full-report="preferFullReport"
-          ref="reportViewSelector"
-        />
-      </v-col>
+        v-model="selectedReportView"
+        :report-views-url="reportViewsUrl"
+        :prefer-full-report="preferFullReport"
+        ref="reportViewSelector"
+      />
       <v-col cols="12" md="6" lg="4" xl="4" class="pb-0" v-if="!fixedChart">
         <ChartTypeSelector
           :report-type="selectedReportView"
@@ -236,6 +228,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    reloadReportViews() {
+      this.$refs.reportViewSelector.loadReportViews();
+    },
     reloadChartData() {
       if (this.$refs.chart) {
         this.$refs.chart.loadData();

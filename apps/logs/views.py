@@ -71,6 +71,7 @@ from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
+    CounterVersionChoices,
     SushiCredentials,
     SushiFetchAttempt,
 )
@@ -488,7 +489,7 @@ class CounterExportView(GenericViewSet):
 
         qs = (
             self.get_queryset()
-            .filter(counter_version=5)
+            .filter(counter_version__in=CounterVersionChoices.c5x())
             .annotate(
                 used=Count(
                     "report_type__importbatch__pk",

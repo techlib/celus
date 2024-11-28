@@ -61,7 +61,7 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
         "organization_internal_id",
         "platform",
         "url",
-        "counter_version",
+        "display_counter_version",
         "customer_id",
         "requestor_id",
         "enabled",
@@ -75,12 +75,21 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
     def organization_internal_id(cls, obj: models.SushiCredentials):
         return obj.organization.internal_id
 
+    @admin.display(description="Counter Version", ordering="counter_version")
+    def display_counter_version(self, item):
+        return item.get_counter_version_display()
+
 
 @admin.register(models.CounterReportType)
 class CounterReportTypeAdmin(admin.ModelAdmin):
-    list_display = ["code", "name", "counter_version", "report_type", "active"]
+    list_display = ["code", "name", "display_counter_version", "report_type", "active"]
     list_filter = ["counter_version"]
+    readonly_fields = ["name"]
     ordering = ["code"]
+
+    @admin.display(description="Counter Version", ordering="counter_version")
+    def display_counter_version(self, item):
+        return item.get_counter_version_display()
 
 
 def reimport(modeladmin, request, queryset):
@@ -191,7 +200,9 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
         return obj.credentials and obj.credentials.platform
 
     def counter_version(self, obj: models.SushiFetchAttempt) -> typing.Optional[int]:
-        return obj.credentials and obj.credentials.counter_version
+        return (
+            obj.credentials and models.CounterVersionChoices(obj.credentials.counter_version).short
+        )
 
     def has_import_batch(self, obj: models.SushiFetchAttempt):
         return obj.import_batch is not None

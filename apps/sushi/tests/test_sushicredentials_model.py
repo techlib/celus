@@ -1,6 +1,5 @@
 import pytest
 from celus_nigiri.client import Sushi5Client
-from celus_nigiri.counter5 import Counter5ReportBase
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from core.tests.conftest import master_admin_identity, valid_identity  # noqa - fixtures
 from django.utils import timezone
@@ -13,7 +12,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.logic.data_import import import_sushi_credentials_new
-from sushi.models import AttemptStatus
+from sushi.models import AttemptStatus, CounterVersionChoices
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
@@ -167,7 +166,7 @@ class TestLocking:
 
 @pytest.mark.django_db
 class TestCredentialsVersioning:
-    def test_version_hash_is_stored(self, organizations):
+    def test_version_hash_is_stored(self, organizations, counter5_version):
         """
         Tests that version_hash is computed and store on save
         """
@@ -181,10 +180,12 @@ class TestCredentialsVersioning:
             }
         ]
         knowledgebase = {
-            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
+            "providers": [
+                {"counter_version": counter5_version, "provider": {"url": "http://this.is/test/2"}}
+            ]
         }
         Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
-        import_sushi_credentials_new(data)
+        import_sushi_credentials_new(data, counter_version=counter5_version)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         assert cr1.version_hash != ""
@@ -196,7 +197,7 @@ class TestCredentialsVersioning:
         assert cr1.compute_version_hash() == cr1.version_hash
         assert cr1.version_hash != old_hash
 
-    def test_version_hash_changes(self, organizations):
+    def test_version_hash_changes(self, organizations, counter5_version):
         """
         Tests that computation of version_hash from `SushiCredentials` can really distinguish
         between different versions of the same object
@@ -211,10 +212,12 @@ class TestCredentialsVersioning:
             }
         ]
         knowledgebase = {
-            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
+            "providers": [
+                {"counter_version": counter5_version, "provider": {"url": "http://this.is/test/2"}}
+            ]
         }
         Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
-        import_sushi_credentials_new(data)
+        import_sushi_credentials_new(data, counter_version=counter5_version)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         hash1 = cr1.compute_version_hash()
@@ -225,7 +228,7 @@ class TestCredentialsVersioning:
         assert cr1.compute_version_hash() != hash1
         assert cr1.compute_version_hash() != hash2
 
-    def test_version_hash_does_not_change(self, organizations):
+    def test_version_hash_does_not_change(self, organizations, counter5_version):
         """
         Tests that value of version_hash from `SushiCredentials` does not change when some
         unrelated changes are made
@@ -240,10 +243,12 @@ class TestCredentialsVersioning:
             }
         ]
         knowledgebase = {
-            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
+            "providers": [
+                {"counter_version": counter5_version, "provider": {"url": "http://this.is/test/2"}}
+            ]
         }
         Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
-        import_sushi_credentials_new(data)
+        import_sushi_credentials_new(data, counter_version=counter5_version)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         hash1 = cr1.compute_version_hash()
@@ -253,7 +258,7 @@ class TestCredentialsVersioning:
         assert cr1.compute_version_hash() == hash1
 
     def test_version_info_is_stored_in_fetch_attempt(
-        self, organizations, report_type_nd, monkeypatch
+        self, organizations, report_type_nd, monkeypatch, counter5_version
     ):
         """
         Tests that when we fetch data using `SushiCredentials`, the `SushiFetchAttempt` that is
@@ -271,20 +276,24 @@ class TestCredentialsVersioning:
             }
         ]
         knowledgebase = {
-            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
+            "providers": [
+                {"counter_version": counter5_version, "provider": {"url": "http://this.is/test/2"}}
+            ]
         }
         Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
-        import_sushi_credentials_new(data)
+        import_sushi_credentials_new(data, counter_version=counter5_version)
         assert SushiCredentials.objects.count() == 1
         cr1 = SushiCredentials.objects.get()
         cr1.create_sushi_client()
         report = CounterReportType.objects.create(
-            code="tr", name="tr", counter_version=5, report_type=report_type_nd(0)
+            code="tr", name="tr", counter_version=counter5_version, report_type=report_type_nd(0)
         )
 
         def mock_get_report_data(*args, **kwargs):
-            return Counter5ReportBase()
+            return counter5_version.nigiri.get_report_class("tr")()
 
+        # not that we can patch Sushi5Client where because Sushi51Client
+        # is derived from Sushi5Client and uses its get_report_data
         monkeypatch.setattr(Sushi5Client, "get_report_data", mock_get_report_data)
         attempt: SushiFetchAttempt = cr1.fetch_report(
             report, start_date="2020-01-01", end_date="2020-01-31"
@@ -479,3 +488,70 @@ class TestCredentialsQuerySet:
                 .order_by("pk")
                 .values_list("same_global", "same_in_org")
             ) == [(0, 2), (0, 2), (0, 1), (0, 1)]
+
+    def test_annotate_can_update(self, organizations):
+        p1 = PlatformFactory()
+        p2 = PlatformFactory()
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=p1,
+            counter_version=CounterVersionChoices.C5,
+        )
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=p1,
+            counter_version=CounterVersionChoices.C4,
+        )
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=p2,
+            counter_version=CounterVersionChoices.C5,
+        )
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=p2,
+            counter_version=CounterVersionChoices.C51,
+        )
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=p2,
+            counter_version=CounterVersionChoices.C4,
+        )
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=p2,
+            counter_version=CounterVersionChoices.C5,
+        )
+
+        assert (
+            SushiCredentials.objects.all().annotate_can_update().filter(can_update=True).count()
+            == 2
+        )
+        assert (
+            SushiCredentials.objects.filter(organization=organizations["branch"])
+            .annotate_can_update()
+            .filter(can_update=True)
+            .count()
+            == 1
+        ), ""
+        assert (
+            SushiCredentials.objects.filter(organization=organizations["branch"], platform=p1)
+            .annotate_can_update()
+            .filter(can_update=True)
+            .count()
+            == 1
+        ), ""
+        assert (
+            SushiCredentials.objects.filter(organization=organizations["branch"], platform=p2)
+            .annotate_can_update()
+            .filter(can_update=True)
+            .count()
+            == 0
+        ), ""
+        assert (
+            SushiCredentials.objects.filter(organization=organizations["standalone"])
+            .annotate_can_update()
+            .filter(can_update=True)
+            .count()
+            == 1
+        ), ""

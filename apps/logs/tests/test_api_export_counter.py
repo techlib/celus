@@ -17,9 +17,15 @@ from test_scenarios.counter_data import (
     dimension_texts,  # noqa
     dimensions,  # noqa
     dr,  # noqa
+    dr51,  # noqa
+    dr51_dim,  # noqa
+    dr51_ibs,  # noqa
     dr_dim,  # noqa
     dr_ibs,  # noqa
     ir,  # noqa
+    ir51,  # noqa
+    ir51_dim,  # noqa
+    ir51_ibs,  # noqa
     ir_dim,  # noqa
     ir_ibs,  # noqa
     ir_m1,  # noqa
@@ -27,10 +33,16 @@ from test_scenarios.counter_data import (
     ir_m1_ibs,  # noqa
     metrics,  # noqa
     pr,  # noqa
+    pr51,  # noqa
+    pr51_dim,  # noqa
+    pr51_ibs,  # noqa
     pr_dim,  # noqa
     pr_ibs,  # noqa
     targets,  # noqa
     tr,  # noqa
+    tr51,  # noqa
+    tr51_dim,  # noqa
+    tr51_ibs,  # noqa
     tr_dim,  # noqa
     tr_ibs,  # noqa
 )

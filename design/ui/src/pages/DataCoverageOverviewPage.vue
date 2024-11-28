@@ -118,7 +118,11 @@ cs:
         <v-expansion-panel v-for="cv in counterVersions" :value="cv" :key="cv">
           <v-expansion-panel-header class="justify-space-between">
             <div class="flex-grow-0 me-4">
-              {{ cv ? "COUNTER " + cv : $t("title_fields.non_counter") }}
+              {{
+                cv
+                  ? "COUNTER " + counterVersionToStr(cv)
+                  : $t("title_fields.non_counter")
+              }}
             </div>
             <v-spacer />
             <div class="mx-4" style="max-width: 200px">
@@ -400,6 +404,7 @@ import parseISO from "date-fns/parseISO";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget.vue";
 import CoverageCard from "@/components/coverage/CoverageCard.vue";
 import stateTracking from "@/mixins/stateTracking";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "DataCoverageOverviewPage",
@@ -618,6 +623,9 @@ export default {
   },
 
   methods: {
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     async fetchReportTypes() {
       let url = "/api/report-type/";
       if (!this.showingAllOrganizations) {

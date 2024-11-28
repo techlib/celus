@@ -9,6 +9,7 @@ from logging import getLogger
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
 from core.logic.dates import month_end, month_start, months_in_range
+from core.logic.util import this_celus_domain
 from django.conf import settings
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Max, Min
@@ -136,8 +137,8 @@ class Counter5Export(metaclass=ABCMeta):
             ["Report_Name", self.report_name],
             ["Report_ID", self.report_id],
             ["Release", "5"],
-            ["Institution_Name", "CELUS"],
-            ["Institution_ID", "ISNI:0000000000000000"],
+            ["Institution_Name", self.organization.name],
+            ["Institution_ID", f"CELUS:{this_celus_domain()}-{self.organization.pk}"],
             ["Metric_Types", ""],
             ["Report_Filters", ""],
             ["Report_Attributes", ";".join(e for e in [attrs] + extras if e)],
@@ -295,7 +296,7 @@ class TRCounter5Export(Counter5Export):
             *title_ids,
             self.get_dimension_value(record, "Data_Type"),
             self.get_dimension_value(record, "Section_Type"),
-            self.get_dimension_value(record, "YOP"),
+            self.get_dimension_value(record, "YOP") or "0001",  # 0001 = unknown
             self.get_dimension_value(record, "Access_Type"),
             self.get_dimension_value(record, "Access_Method"),
             record.metric,
@@ -546,10 +547,106 @@ class IRCounter5Export(BaseIRCounter5Export):
             self.get_dimension_value(record, "Parent_Data_Type"),
             *parent_ids,
             self.get_dimension_value(record, "Data_Type"),
-            self.get_dimension_value(record, "YOP"),
+            self.get_dimension_value(record, "YOP") or "0001",  # 0001 = unknown
             self.get_dimension_value(record, "Access_Type"),
             self.get_dimension_value(record, "Access_Method"),
             record.metric,
             sum(month_values),
             *month_values,
         )
+
+
+class Counter51ExportMixin:
+    def make_file_header(self) -> List[List[str]]:
+        attrs = (
+            f"Attributes_To_Show={'|'.join(self.attributes_to_show)}"
+            if self.attributes_to_show
+            else ""
+        )
+        extras = [f"{k}={v}" for k, v in self.extras.items()]
+        return [
+            ["Report_Name", self.report_name],
+            ["Report_ID", self.report_id],
+            ["Release", "5.1"],
+            ["Institution_Name", self.organization.name],
+            ["Institution_ID", f"CELUS:{this_celus_domain()}-{self.organization.pk}"],
+            ["Metric_Types", ""],
+            ["Report_Filters", ""],
+            ["Report_Attributes", ";".join(e for e in [attrs] + extras if e)],
+            ["Exceptions", ""],
+            [
+                "Reporting_Period",
+                f"Begin_Date={self.start_date.isoformat()}; "
+                f"End_Date={self.end_date.isoformat()}",
+            ],
+            ["Created", now().replace(microsecond=0).isoformat()],
+            ["Created_By", f"Celus {settings.CELUS_VERSION}"],
+            [
+                "Registry_Record",
+                "https://registry.projectcounter.org/platform/99999999-9999-9999-9999-999999999999",
+            ],
+        ]
+
+
+class TRCounter51Export(Counter51ExportMixin, TRCounter5Export):
+    report_name = "Title Report"
+    attributes_to_show = ["YOP", "Access_Type", "Access_Method"]
+
+    def make_record_header(self) -> List[str]:
+        return [
+            "Title",
+            "Publisher",
+            "Publisher_ID",
+            "Platform",
+            "DOI",
+            "Proprietary_ID",
+            "ISBN",
+            "Print_ISSN",
+            "Online_ISSN",
+            "URI",
+            "Data_Type",
+            "YOP",
+            "Access_Type",
+            "Access_Method",
+            "Metric_Type",
+            "Reporting_Period_Total",
+        ] + [e.strftime("%b-%Y") for e in self.months]
+
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
+        title, *title_ids = self.get_target_ids(record)
+        return (
+            title,
+            self.get_dimension_value(record, "Publisher"),
+            "",  # Publisher_ID
+            self.get_dimension_value(record, "Platform"),
+            *title_ids,
+            self.get_dimension_value(record, "Data_Type"),
+            self.get_dimension_value(record, "YOP") or "0001",  # 0001 = unknown
+            self.get_dimension_value(record, "Access_Type"),
+            self.get_dimension_value(record, "Access_Method"),
+            record.metric,
+            sum(month_values),
+            *month_values,
+        )
+
+
+class PRCounter51Export(Counter51ExportMixin, PRCounter5Export):
+    report_name = "Platform Report"
+    attributes_to_show = ["Access_Method"]
+
+
+class DRCounter51Export(Counter51ExportMixin, DRCounter5Export):
+    report_name = "Database Report"
+    attributes_to_show = ["Access_Method"]
+
+
+class IRCounter51Export(Counter51ExportMixin, IRCounter5Export):
+    report_name = "Item Report"
+    attributes_to_show = [
+        "Authors",
+        "Publication_Date",
+        "Article_Version",
+        "YOP",
+        "Access_Type",
+        "Access_Method",
+    ]

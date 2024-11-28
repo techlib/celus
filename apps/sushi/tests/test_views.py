@@ -57,8 +57,10 @@ class TestSushiCredentialsViewSet:
         resp = clients[user].get(reverse("sushi-credentials-list"), params)
         if can_list:
             assert resp.status_code == 200
-            assert len(resp.json()) == 1
-            assert resp.json()[0]["can_lock"] == can_lock
+            data = resp.json()
+            assert len(data) == 1
+            assert data[0]["can_lock"] == can_lock
+            assert data[0]["can_update"] is True, "can be updated to C5.1"
         else:
             # there are actually two mechanisms how the access could be denied -
             # either the list is empty or 404 is returned. The latter is used when
@@ -594,7 +596,7 @@ class TestSushiCredentialsViewSet:
 
         resp = clients["master_admin"].get(reverse("sushi-credentials-count"))
         assert resp.status_code == 200
-        assert resp.json() == {"count": 3, "broken": 1, "broken_reports": 1}
+        assert resp.json() == {"count": 4, "broken": 1, "broken_reports": 1}
 
     @freeze_time("2020-06-01")
     def test_data(self, basic1, credentials, clients, harvests, counter_report_types):
@@ -1020,3 +1022,84 @@ class TestSushiCredentialsViewSet:
             assert resp.status_code == 400
             error_code = "same-exists-within-org" if in_org else "same-exists-globally"
             assert resp.data[0].code == error_code
+
+    @pytest.mark.parametrize("with_kb_url", (True, False))
+    def test_clone_to_newer(
+        self, basic1, credentials, clients, counter_report_types, platforms, with_kb_url
+    ):
+        if with_kb_url:
+            platforms["branch"].knowledgebase = {
+                "providers": [
+                    {
+                        "assigned_report_types": [
+                            {"not_valid_after": None, "not_valid_before": None, "report_type": "PR"}
+                        ],
+                        "counter_version": 51,
+                        "provider": {
+                            "extra": {},
+                            "monthly": None,
+                            "name": "c51.branch.celus.net",
+                            "pk": 11,
+                            "url": "https://c51.branch.celus.net/sushi",
+                            "yearly": None,
+                        },
+                    }
+                ]
+            }
+            platforms["branch"].save()
+
+        # unset entire credentials (both reports and mappings are unset)
+        url = reverse("sushi-credentials-clone-to-newer")
+        resp = clients["master_admin"].post(
+            url,
+            [
+                {"credentials_id": credentials["standalone_tr"].pk},  # has C51
+                {"credentials_id": credentials["standalone_br1_jr1"].pk},  # C4
+                {"credentials_id": credentials["branch_pr"].pk},
+            ],
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert len(resp.data) == 1
+        creds = SushiCredentials.objects.order_by("pk").last()
+        assert creds.counter_reports.count() == 1
+
+        # api_key, customer_id, requestor_id, url, organization, platform
+        creds_dict = resp.data[0]
+        assert credentials["branch_pr"].title + " (C5.1)" == creds.title == creds_dict["title"]
+        assert credentials["branch_pr"].api_key == creds.api_key == creds_dict["api_key"]
+        assert (
+            credentials["branch_pr"].customer_id == creds.customer_id == creds_dict["customer_id"]
+        )
+        assert (
+            credentials["branch_pr"].requestor_id
+            == creds.requestor_id
+            == creds_dict["requestor_id"]
+        )
+        if with_kb_url:
+            assert "https://c51.branch.celus.net/sushi" == creds.url == creds_dict["url"]
+        else:
+            # Same credentials
+            assert credentials["branch_pr"].url == creds.url == creds_dict["url"]
+        assert (
+            credentials["branch_pr"].platform_id
+            == creds.platform_id
+            == creds_dict["platform"]["pk"]
+        )
+        assert (
+            credentials["branch_pr"].organization_id
+            == creds.organization_id
+            == creds_dict["organization"]["pk"]
+        )
+
+        assert (
+            credentials["branch_pr"].counter_reports.count()
+            == creds.counter_reports.count()
+            == len(creds_dict["counter_reports_long"])
+            == 1
+        )
+        assert (
+            credentials["branch_pr"].counter_reports.first().code
+            == creds.counter_reports.first().code
+            == creds_dict["counter_reports_long"][0]["code"]
+        )

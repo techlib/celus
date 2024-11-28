@@ -31,8 +31,15 @@ from sushi.models import SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 
 from .logic.export import CredentialsDataFrame, OrganizationsDataFrame, Sheet, XlsxFile
-from .models import AttemptStatus, CounterReportsToCredentials, CounterReportType, SushiCredentials
+from .models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    CounterReportType,
+    CounterVersionChoices,
+    SushiCredentials,
+)
 from .serializers import (
+    CloneToNewerSerializer,
     CounterReportTypeSerializer,
     SushiCredentialsDataSerializer,
     SushiCredentialsNoSameGlobalSerializer,
@@ -82,6 +89,7 @@ class SushiCredentialsViewSet(ModelViewSet):
         qs = (
             qs.annotate_verified()
             .annotate_same_counts()
+            .annotate_can_update()
             .prefetch_related("counterreportstocredentials_set__counter_report")
             .select_related("organization", "platform", "platform__source")
         )
@@ -212,6 +220,33 @@ class SushiCredentialsViewSet(ModelViewSet):
             )
             return Response(SushiCredentialsSerializer(qs, many=True).data)
 
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="clone-to-newer",
+        serializer_class=CloneToNewerSerializer,
+    )
+    def clone_to_newer(self, request):
+        request_serializer = CloneToNewerSerializer(data=request.data, many=True)
+        request_serializer.is_valid(raise_exception=True)
+        credentials_ids = [e["credentials_id"] for e in request_serializer.validated_data]
+        creds = list(
+            self._post_process_queryset(
+                SushiCredentials.objects.filter(pk__in=credentials_ids)
+                .annotate_can_update()
+                .filter(can_update=True)
+                .prefetch_related("counter_reports")
+            )
+        )
+
+        result = []
+        crt_mapping = CounterReportType.get_mapping()
+        for cred in creds:
+            if new_creds := cred.clone_to_c51(crt_mapping):
+                result.append(new_creds)
+
+        return Response(SushiCredentialsSerializer(result, many=True).data)
+
     @action(detail=False, methods=["post", "get"], url_path="export-credentials")
     def export_credentials(self, request):
         pks = request.data.getlist("pk")
@@ -222,10 +257,13 @@ class SushiCredentialsViewSet(ModelViewSet):
         qs = qs.prefetch_related("counter_reports")
         sheets = [
             Sheet(
-                CredentialsDataFrame.export(counter_version=4).create(qs), "Credentials-COUNTER4"
+                CredentialsDataFrame.export(counter_version=51).create(qs), "Credentials-COUNTER5.1"
             ),
             Sheet(
                 CredentialsDataFrame.export(counter_version=5).create(qs), "Credentials-COUNTER5"
+            ),
+            Sheet(
+                CredentialsDataFrame.export(counter_version=4).create(qs), "Credentials-COUNTER4"
             ),
         ]
         excel_file = XlsxFile.new(sheets).create()
@@ -294,11 +332,17 @@ class SushiCredentialsViewSet(ModelViewSet):
         qs = qs.prefetch_related("counter_reports")
         sheets = [
             Sheet(
-                CredentialsDataFrame.template_for_import(selected_organization_id).create(
-                    qs, accessible_organizations
-                ),
+                CredentialsDataFrame.template_for_import(
+                    selected_organization_id, CounterVersionChoices.C51
+                ).create(qs, accessible_organizations),
+                "Credentials-COUNTER5.1",
+            ),
+            Sheet(
+                CredentialsDataFrame.template_for_import(
+                    selected_organization_id, CounterVersionChoices.C5
+                ).create(qs, accessible_organizations),
                 "Credentials-COUNTER5",
-            )
+            ),
         ]
         if selected_organization_id == "-1":
             sheets.append(

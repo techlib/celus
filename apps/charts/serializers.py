@@ -1,5 +1,5 @@
 from logs.serializers import DimensionSerializer
-from rest_framework.fields import BooleanField, IntegerField, ListField
+from rest_framework.fields import BooleanField, CharField, IntegerField, ListField
 from rest_framework.serializers import ModelSerializer
 
 from .models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
@@ -17,6 +17,8 @@ class DimensionFilterSerializer(ModelSerializer):
 class ReportDataViewSerializer(ModelSerializer):
     public = BooleanField(default=False)
     is_proxy = BooleanField(read_only=True, default=False)
+    is_interest = BooleanField(read_only=True)
+    counter_version = CharField(read_only=True, required=False)
 
     class Meta:
         model = ReportDataView
@@ -28,6 +30,8 @@ class ReportDataViewSerializer(ModelSerializer):
             "name_en",
             "desc",
             "public",
+            "is_interest",
+            "counter_version",
             "is_standard_view",
             "position",
             "is_proxy",

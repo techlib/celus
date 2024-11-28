@@ -113,6 +113,7 @@ class ReportTypeSerializer(ModelSerializer):
     )
     counter_version = SerializerMethodField()
     counter_report_type_id = SerializerMethodField()
+    counter_code = SerializerMethodField()
 
     class Meta:
         model = ReportType
@@ -129,6 +130,7 @@ class ReportTypeSerializer(ModelSerializer):
             "controlled_metrics",
             "counter_version",
             "counter_report_type_id",
+            "counter_code",
         )
 
     def get_counter_version(self, obj: ReportType):
@@ -140,6 +142,12 @@ class ReportTypeSerializer(ModelSerializer):
     def get_counter_report_type_id(self, obj: ReportType):
         try:
             return obj.counterreporttype.pk
+        except AttributeError:
+            return None
+
+    def get_counter_code(self, obj: ReportType):
+        try:
+            return obj.counterreporttype.code
         except AttributeError:
             return None
 

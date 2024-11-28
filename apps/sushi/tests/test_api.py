@@ -126,6 +126,14 @@ def get_empty_credentials_c5():
     return empty_credentials_c5
 
 
+def get_empty_credentials_c51():
+    empty_credentials_c51 = get_core_attrs_credentials()
+    empty_credentials_c51.update(
+        {key: None for key in ["api key", "platform filter", "TR", "DR", "PR", "IR"]}
+    )
+    return empty_credentials_c51
+
+
 @pytest.fixture
 def credentials_dict(credentials):
     standalone_br1_jr1 = get_empty_credentials_c4()
@@ -182,6 +190,24 @@ def credentials_dict(credentials):
         }
     )
 
+    standalone_ir51 = get_empty_credentials_c51()
+    cr = credentials["standalone_ir51"]
+    standalone_ir51.update(
+        {
+            "title": cr.title,
+            "organization": cr.organization.name_en,
+            "publisher/vendor/platform": cr.platform.name_en,
+            "SUSHI url": cr.url,
+            "requestor id": cr.requestor_id,
+            "customer id": cr.customer_id,
+            "api key": cr.api_key,
+            "platform filter": str(cr.extra_params["platform"])
+            if "platform" in cr.extra_params
+            else None,
+            "IR": "active",
+        }
+    )
+
     del credentials
     return locals()
 
@@ -193,18 +219,22 @@ def sushi_cred_dataframe_fixture(credentials_dict):
         "Credentials-COUNTER5": pd.DataFrame(
             [credentials_dict["branch_pr"], credentials_dict["standalone_tr"]]
         ),
+        "Credentials-COUNTER5.1": pd.DataFrame(credentials_dict["standalone_ir51"], index=[0]),
     }
     su_standalone = {
         "Credentials-COUNTER4": pd.DataFrame(credentials_dict["standalone_br1_jr1"], index=[0]),
         "Credentials-COUNTER5": pd.DataFrame(credentials_dict["standalone_tr"], index=[0]),
+        "Credentials-COUNTER5.1": pd.DataFrame(credentials_dict["standalone_ir51"], index=[0]),
     }
     admin1_root = {
         "Credentials-COUNTER4": pd.DataFrame(get_empty_credentials_c4(), index=[]),
         "Credentials-COUNTER5": pd.DataFrame(get_empty_credentials_c5(), index=[]),
+        "Credentials-COUNTER5.1": pd.DataFrame(get_empty_credentials_c51(), index=[]),
     }
     admin2_standalone = {
         "Credentials-COUNTER4": pd.DataFrame(credentials_dict["standalone_br1_jr1"], index=[0]),
         "Credentials-COUNTER5": pd.DataFrame(credentials_dict["standalone_tr"], index=[0]),
+        "Credentials-COUNTER5.1": pd.DataFrame(credentials_dict["standalone_ir51"], index=[0]),
     }
     return locals()
 
@@ -222,39 +252,43 @@ def sushi_cred_with_platforms_dataframe_fixture(sushi_cred_dataframe_fixture):
         df = pd.concat([df, new_platform_df])
         return df
 
-    def get_the_dict_of_dataframes(df, platforms, all_organizations=False, organizations=None):
-        df = add_platforms_to_dataframe(df, platforms)
-        df = df.drop(columns=["SUSHI url", "TR", "DR", "PR", "IR"], errors="ignore")
-        if not all_organizations:
-            df.drop(columns=["organization"], inplace=True)
-        df = sort(df, all_organizations)
-        # breakpoint()
-        dict_of_dataframes = {"Credentials-COUNTER5": df}
+    def get_the_dict_of_dataframes(df_map, platforms, all_organizations=False, organizations=None):
+        dict_of_dataframes = {}
+        for sheetname in ["Credentials-COUNTER5", "Credentials-COUNTER5.1"]:
+            used_platforms = {e[2] for e in df_map[sheetname].to_records()}
+            df = add_platforms_to_dataframe(
+                df_map[sheetname], [e for e in platforms if e not in used_platforms]
+            )
+            df = df.drop(columns=["SUSHI url", "TR", "DR", "PR", "IR"], errors="ignore")
+            if not all_organizations:
+                df.drop(columns=["organization"], inplace=True)
+            df = sort(df, all_organizations)
+            dict_of_dataframes[sheetname] = df
         if all_organizations:
             dict_of_dataframes["Organizations"] = pd.DataFrame({"organization": organizations})
         return dict_of_dataframes
 
     su_all = get_the_dict_of_dataframes(
-        sushi_cred_dataframe_fixture["su_all"]["Credentials-COUNTER5"],
-        platforms=["root", "shared", "brain", "master", "empty"],
+        sushi_cred_dataframe_fixture["su_all"],
+        platforms=["root", "shared", "brain", "branch", "master", "empty"],
         all_organizations=True,
         organizations=["empty", "master", "root", "branch", "standalone"],
     )
 
     su_standalone = get_the_dict_of_dataframes(
-        sushi_cred_dataframe_fixture["su_standalone"]["Credentials-COUNTER5"],
+        sushi_cred_dataframe_fixture["su_standalone"],
         platforms=["root", "shared", "brain", "branch", "master", "empty"],
         all_organizations=False,
     )
 
     admin1_root = get_the_dict_of_dataframes(
-        sushi_cred_dataframe_fixture["admin1_root"]["Credentials-COUNTER5"],
+        sushi_cred_dataframe_fixture["admin1_root"],
         platforms=["root", "shared", "brain", "branch", "master", "empty"],
         all_organizations=False,
     )
 
     admin2_standalone = get_the_dict_of_dataframes(
-        sushi_cred_dataframe_fixture["admin2_standalone"]["Credentials-COUNTER5"],
+        sushi_cred_dataframe_fixture["admin2_standalone"],
         platforms=["shared", "brain", "master", "empty"],
         all_organizations=False,
     )
@@ -323,9 +357,13 @@ class TestSushiCredentialsExport:
         url += f"?organization={organization_id}"
         resp = clients[identity].post(url, data={"pk": [x.pk for x in credentials.values()]})
         resp_workbook = load_workbook(filename=BytesIO(resp.content), read_only=True)
-        sheetnames = {"Credentials-COUNTER4", "Credentials-COUNTER5"}
+        sheetnames = {"Credentials-COUNTER4", "Credentials-COUNTER5", "Credentials-COUNTER5.1"}
         assert sheetnames == set(resp_workbook.sheetnames)
         for sheetname in sheetnames:
+            if sheetname not in sushi_cred_dataframe_fixture[case]:
+                # Missing the kind of credentials in the list
+                # => skip
+                continue
             ws = resp_workbook[sheetname]
             data = list(ws.values)[1:]
             resp_df = pd.DataFrame(data=data, columns=[cell.value for cell in ws[1]])
@@ -363,10 +401,30 @@ class TestSushiCredentialsExport:
     @pytest.mark.parametrize(
         ["identity", "organization", "case", "sheetnames"],
         [
-            ["su", None, "su_all", {"Explanation", "Credentials-COUNTER5", "Organizations"}],
-            ["su", "standalone", "su_standalone", {"Explanation", "Credentials-COUNTER5"}],
-            ["admin1", "root", "admin1_root", {"Explanation", "Credentials-COUNTER5"}],
-            ["admin2", "standalone", "admin2_standalone", {"Explanation", "Credentials-COUNTER5"}],
+            [
+                "su",
+                None,
+                "su_all",
+                ["Explanation", "Credentials-COUNTER5", "Credentials-COUNTER5.1", "Organizations"],
+            ],
+            [
+                "su",
+                "standalone",
+                "su_standalone",
+                ["Explanation", "Credentials-COUNTER5", "Credentials-COUNTER5.1"],
+            ],
+            [
+                "admin1",
+                "root",
+                "admin1_root",
+                ["Explanation", "Credentials-COUNTER5", "Credentials-COUNTER5.1"],
+            ],
+            [
+                "admin2",
+                "standalone",
+                "admin2_standalone",
+                ["Explanation", "Credentials-COUNTER5", "Credentials-COUNTER5.1"],
+            ],
         ],
     )
     def test_dataframes_in_credentials_import_template(
@@ -384,7 +442,7 @@ class TestSushiCredentialsExport:
         url = reverse("sushi-credentials-import-template")
         resp = clients[identity].get(url, {"organization": organization_id})
         resp_workbook = load_workbook(filename=BytesIO(resp.content), read_only=True)
-        assert sheetnames == set(resp_workbook.sheetnames)
+        assert set(sheetnames) == set(resp_workbook.sheetnames)
         for sheetname in sheetnames:
             if sheetname == "Explanation":
                 continue

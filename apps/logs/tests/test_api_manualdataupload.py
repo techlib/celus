@@ -38,6 +38,9 @@ class TestManualUploadForCounterData:
             ("counter5/counter5_table_dr.tsv", "dr"),
             ("counter5/counter5_table_pr.csv", "pr"),
             ("counter5/counter5_tr_test1.json", "tr"),
+            ("counter51/DR_sample_r51.json", "dr"),
+            ("counter51/PR_sample_r51.json", "pr"),
+            ("counter51/TR_sample_r51.json", "tr"),
         ),
     )
     def test_counter_uploads(
@@ -120,6 +123,9 @@ class TestManualUploadForCounterData:
             ("counter5/counter5_table_dr.tsv", "dr"),
             ("counter5/counter5_table_pr.csv", "pr"),
             ("counter5/counter5_tr_test1.json", "tr"),
+            ("counter51/DR_sample_r51.json", "dr51"),
+            ("counter51/PR_sample_r51.json", "pr51"),
+            ("counter51/TR_sample_r51.json", "tr51"),
         ),
     )
     def test_counter_manual_import(
@@ -316,6 +322,26 @@ class TestManualUploadForCounterData:
                     "2017-06-01",
                 },
                 id="Months are show from header of TR report",
+            ),
+            pytest.param(
+                "counter51/TR_empty_r51.json",
+                {"2022-01-01"},
+                id="Months are show from header of TR report C5.1",
+            ),
+            pytest.param(
+                "counter51/DR_empty_r51.json",
+                {"2022-01-01"},
+                id="Months are show from header of DR report C5.1",
+            ),
+            pytest.param(
+                "counter51/PR_empty_r51.json",
+                {"2022-01-01"},
+                id="Months are show from header of PR report C5.1",
+            ),
+            pytest.param(
+                "counter51/IR_empty_r51.json",
+                {"2022-01-01"},
+                id="Months are show from header of IR report C5.1",
             ),
         ),
     )
@@ -1067,8 +1093,9 @@ class TestManualUploadForRaw:
         [
             ("data/counter5/counter5_table_dr.csv", "dr", 11, MduMethod.COUNTER),
             ("data/custom/custom_data-nibbler-simple.csv", "custom1", 1, MduMethod.RAW),
+            ("data/counter51/TR_sample_r51.json", "tr51", 12, MduMethod.COUNTER),
         ],
-        ids=("counter", "non-counter"),
+        ids=("counter5", "non-counter", "counter51"),
     )
     def test_raw_workflow(
         self,
@@ -1088,7 +1115,7 @@ class TestManualUploadForRaw:
     ):
         with (Path(__file__).parent / file_path).open() as f:
             data_file = ContentFile(f.read())
-            data_file.name = "nibbler.csv"
+            data_file.name = f"nibbler.{Path(file_path).suffix.lstrip('.')}"
 
         organization = organizations["master"]
         platform = platforms["brain"]

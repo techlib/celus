@@ -28,7 +28,7 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 from .. import tasks
-from . import PLATFORM_INPUT_DATA, REPORT_TYPE_INPUT_DATA2
+from . import PLATFORM_INPUT_DATA, PLATFORM_INPUT_DATA3, REPORT_TYPE_INPUT_DATA2
 
 
 @pytest.mark.django_db
@@ -87,9 +87,9 @@ class TestCeleryTasks:
             assert ParserDefinition.objects.count() == parser_definition_count + 1
             assert Metric.objects.count() == metric_count, "no new metrics should be created"
             assert ReportInterestMetric.objects.count() == rim_count + 3
-            # 5 report_types with default_platform_interest * 3 new platforms
+            # 7 report_types with default_platform_interest * 3 new platforms
             # + 1 from parser_definition
-            assert PlatformInterestReport.objects.count() == (pir_count + 5 * 3 + 1)
+            assert PlatformInterestReport.objects.count() == (pir_count + 7 * 3 + 1)
 
             # The REPORT_TYPE_INPUT_DATA2 contains 3 dimensions
             # 1 was created before the sync and 2 were created during the sync
@@ -135,21 +135,29 @@ class TestCeleryTasks:
             short_name="fake", name="fake", ext_id=8888, source=data_sources["brain"]
         )
         FetchAttemptFactory(
+            credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["tr"],
             used_url="https://sushi.example.com/reports/tr/",
         )
         FetchAttemptFactory(
+            credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["dr"],
             used_url="https://sushi.example.com/reports/dr/",
+        )
+        FetchAttemptFactory(
+            credentials__counter_version=51,
+            credentials__platform=platform,
+            counter_report=counter_report_types["ir51"],
+            used_url="https://sushi.example.com/reports/ir/",
         )
         with requests_mock.Mocker() as m:
             m.post(
                 re.compile(
                     f'^{data_sources["brain"].url}/knowledgebase/platforms/update-assigned-report-types/'
                 ),
-                text=json.dumps(PLATFORM_INPUT_DATA),
+                text=json.dumps(PLATFORM_INPUT_DATA3),
             )
             tasks.sync_platforms_with_knowledgebase_task()
             assert m.last_request.json() == [
@@ -164,6 +172,12 @@ class TestCeleryTasks:
                     "platform_id": 8888,
                     "counter_version": 5,
                     "urls": ["https://sushi.example.com/reports/dr/"],
+                },
+                {
+                    "counter_report_code": "IR",
+                    "platform_id": 8888,
+                    "counter_version": 51,
+                    "urls": ["https://sushi.example.com/reports/ir/"],
                 },
             ], "Post data matches"
         assert Platform.objects.filter(ext_id=328).exists(), "Platform was created"

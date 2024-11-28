@@ -46,6 +46,13 @@ class UnsetBrokenSerializer(Serializer):
         fields = ("credentials_id", "counter_reports")
 
 
+class CloneToNewerSerializer(Serializer):
+    credentials_id = IntegerField(min_value=1, required=True)
+
+    class Meta:
+        fields = ("credentials_id",)
+
+
 class CounterReportTypeSerializer(ModelSerializer):
     class Meta:
         model = CounterReportType
@@ -97,6 +104,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     verified = BooleanField(read_only=True)
     same_global = IntegerField(read_only=True)
     same_in_org = IntegerField(read_only=True)
+    can_update = BooleanField(read_only=True)
     forced = BooleanField(write_only=True, default=False)
 
     class Meta:
@@ -131,6 +139,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             "same_in_org",
             "auto_update_url",
             "forced",
+            "can_update",
         )
 
     def get_locked(self, obj: SushiCredentials):
@@ -257,7 +266,7 @@ class SushiCredentialsNoSameInOrgSerializer(SushiCredentialsNoSameGlobalSerializ
 
 class SushiCredentialsDataCounterReportSerializer(Serializer):
     id = IntegerField(required=True)
-    code = ChoiceField(choices=[e[0] for e in COUNTER_REPORTS], required=True)
+    code = ChoiceField(choices=[e[2] for e in COUNTER_REPORTS], required=True)
     name = CharField(allow_blank=True)
     report_type = IntegerField(required=True)
 

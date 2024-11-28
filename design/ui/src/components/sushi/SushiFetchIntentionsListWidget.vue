@@ -173,6 +173,12 @@ cs:
             ></span>
           </template>
 
+          <template #item.counter_report_version="{ item }">
+            <strong>{{
+              counterVersionToStr(item.counter_report_version)
+            }}</strong>
+          </template>
+
           <template #item.status="{ item }">
             <FetchIntentionStatusIcon :fetch-intention="item" />
           </template>
@@ -326,6 +332,7 @@ import {
   annotateIntention,
   intentionStateToIcon,
 } from "@/libs/intention-state";
+import { counterVersionToStr } from "@/libs/sushi";
 import CheckMark from "@/components/util/CheckMark";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
@@ -417,6 +424,11 @@ export default {
         {
           text: this.$t("labels.report_type"),
           value: "counter_report_code",
+        },
+        {
+          text: this.$t("title_fields.counter_version"),
+          value: "counter_report_version",
+          align: "center",
         },
         {
           text: this.$t("title_fields.start_date"),
@@ -533,6 +545,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
 
     triggerUrl(pk) {
       return `${this.intentionsUrl}/${pk}/trigger/`;

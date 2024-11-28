@@ -14,6 +14,7 @@
 <script>
 import { mapGetters } from "vuex";
 import axios from "axios";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "CounterDataExportWidget",

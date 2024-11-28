@@ -1,9 +1,8 @@
 import logging
-import re
 from collections import Counter
+from typing import List
 
 from celus_nibbler.parsers import get_parsers
-from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
@@ -14,8 +13,30 @@ from logs.models import Dimension, ReportType, ReportTypeToDimension
 logger = logging.getLogger(__name__)
 
 
+def make_dimension_c51_based_on_c5(rt5: ReportType, rt51: ReportType, dimensions: List[str]):
+    # We know that there are no textra dimesions in C5.1
+    # only Section_Type dimesion was removed for TR in C5.1
+    # so dims_to_create should cover all dimensions of rt51
+    # We just need to keep the order here.
+    dims_to_create = [
+        e
+        for e in rt5.reporttypetodimension_set.order_by("position").values_list(
+            "dimension__short_name", flat=True
+        )
+        if e in dimensions
+    ]
+
+    for position, dimension in enumerate(dims_to_create):
+        # dimension should be already created for C5 report
+        dim = Dimension.objects.get(short_name=dimension)
+        ReportTypeToDimension.objects.create(report_type=rt51, dimension=dim, position=position)
+
+
 class Command(BaseCommand):
-    help = "Checks that dimensions assigned to report types match what the readers have defined"
+    help = """\
+Checks that basic COUNTER defined ReportTypes, CounterReportTypes, ReportDataViews and
+ChartDefinitions are properly defined (with correct dimensions, names, filters, ...)
+"""
 
     dim_name_remap = {
         "Platform": {"en": "Platform in COUNTER data", "cs": "Platforma v COUNTER datech"}
@@ -31,91 +52,88 @@ class Command(BaseCommand):
 
         reports_to_check = list(COUNTER_REPORTS)
         if not settings.ENABLE_ITEMS:
-            reports_to_check = [r for r in reports_to_check if r[0] != "IR"]
+            reports_to_check = [r for r in reports_to_check if r[2] != "IR"]
 
-        long_name_map = {code: name for code, name in reports_to_check}
-        regex = re.compile(r"static\.counter([^.]+)\.([^.]+)\.Tabular$")
-        reports = []
-        for parser_name, parser in get_parsers([r"static\.counter.*\.Tabular$"]):
-            if match := regex.match(parser_name):
-                version, code = match.group(1, 2)
+        for version, rt_short_name, crt_code, name in reports_to_check:
+            parser_key = rf"static\.counter{version}\.{crt_code}\.Tabular"
+            if parsers := get_parsers([parser_key]):
+                parser = parsers[0][1]
                 dimensions = [e[0] for e in parser.areas[0].DIMENSION_NAMES_MAP]
-                # use only report types from nibbler which are defined in CELUS
-                if name := long_name_map.get(code):
-                    reports.append((code, name, version, dimensions))
+            else:
+                logger.error(
+                    "Can't find parser '%s' for rt '%s' in nibbler", parser_key, rt_short_name
+                )
+                continue
 
-        for code, our_name, version, dimensions in reports:
+            # Update ReportTypes
             try:
-                rt = ReportType.objects.get(short_name=code, source__isnull=True)
+                rt = ReportType.objects.get(short_name=rt_short_name, source__isnull=True)
             except ReportType.DoesNotExist:
-                print("Missing RT:", code)
+                print("Missing RT:", rt_short_name)
                 stats["missing_rt"] += 1
                 rt = None
                 if fix_it:
-                    rt = ReportType.objects.create(short_name=code, name=our_name, source=None)
+                    rt = ReportType.objects.create(short_name=rt_short_name, name=name, source=None)
+                    if version == 51:
+                        if rt5 := ReportType.objects.filter(short_name=rt_short_name[:-2]).first():
+                            make_dimension_c51_based_on_c5(rt5, rt, dimensions)
+                else:
+                    stats["missing_crt"] += 1
+                    continue
             else:
-                if our_name and rt.name != our_name:
-                    print(f'RT name mismatch ({code}): "{rt.name}" != "{our_name}"')
+                if rt.name != name:
+                    print(f'RT name mismatch ({rt_short_name}): "{rt.name}" != "{name}"')
                     stats["rt_name_mismatch"] += 1
                     if fix_it:
-                        rt.name = our_name
+                        rt.name = name
                         rt.save()
                         stats["fixed_rt_name"] += 1
-            # check the report-data-view
-            if rt and not rt.reportdataview_set.exists():
-                # there are no data views, we will create a default one
-                print("Missing data view for:", code)
-                stats["missing_data_view"] += 1
-                if fix_it:
-                    rv = ReportDataView.objects.create(
-                        base_report_type=rt,
-                        name=rt.name,
-                        short_name=rt.short_name,
-                        is_standard_view=False,
-                    )
-                    # connect the generic charts to the new data view
-                    for i, cd in enumerate(ChartDefinition.objects.filter(is_generic=True)):
-                        ReportViewToChartType.objects.create(
-                            chart_definition=cd, report_data_view=rv, position=10 * (i + 1)
+
+            # check ReportType dimensions
+            dims = set(dimensions)
+            rt_dims = set(rt.dimension_short_names)
+            if rt_dims != dims:
+                fixable = rt_dims.issubset(dims)
+                print("Mismatch:", rt_short_name, "fixable" if fixable else "CANNNOT FIX")
+                print("   ", rt.dimension_short_names)
+                print("   ", dimensions)
+                stats[f'mismatch_{"fixable" if fixable else "unfixable"}'] += 1
+                if fixable and fix_it:
+                    pos = len(rt.dimension_short_names)
+                    for i, dim_name in enumerate([e for e in dimensions if e not in rt_dims]):
+                        if remap_data := self.dim_name_remap.get(dim_name):
+                            def_names = {
+                                f"name_{lang}": value for lang, value in remap_data.items()
+                            }
+                        else:
+                            def_names = {"name": dim_name}
+                        dim, _ = Dimension.objects.get_or_create(
+                            short_name=dim_name, defaults=def_names
                         )
-                    stats["created_data_view"] += 1
-            # check the dimensions
-            if rt:
-                dims = set(dimensions)
-                rt_dims = set(rt.dimension_short_names)
-                if rt_dims != dims:
-                    fixable = rt_dims.issubset(dims)
-                    print("Mismatch:", code, "fixable" if fixable else "CANNNOT FIX")
-                    print("   ", rt.dimension_short_names)
-                    print("   ", dimensions)
-                    stats[f'mismatch_{"fixable" if fixable else "unfixable"}'] += 1
-                    if fixable and fix_it:
-                        pos = len(rt.dimension_short_names)
-                        for i, dim_name in enumerate(dims - rt_dims):
-                            if remap_data := self.dim_name_remap.get(dim_name):
-                                def_names = {
-                                    f"name_{lang}": value for lang, value in remap_data.items()
-                                }
-                            else:
-                                def_names = {"name": dim_name}
-                            dim, _ = Dimension.objects.get_or_create(
-                                short_name=dim_name, defaults=def_names
-                            )
-                            ReportTypeToDimension.objects.create(
-                                report_type=rt, dimension=dim, position=pos + i
-                            )
-                        assert {dim.short_name for dim in rt.dimensions.all()} == dims
-                        print("  Fixed!")
-                else:
-                    print("OK:", code)
-                    stats["ok"] += 1
-                # check COUNTER report type as well
-                if not CounterReportType.objects.filter(report_type=rt).exists():
-                    print("Missing CRT:", code)
-                    stats["missing_crt"] += 1
+                        ReportTypeToDimension.objects.create(
+                            report_type=rt, dimension=dim, position=pos + i
+                        )
+                    assert {dim.short_name for dim in rt.dimensions.all()} == dims
+                    print("  Fixed!")
+            else:
+                print("dims OK:", rt_short_name)
+                stats["dims_ok"] += 1
+
+            # Update CounterReportTypes
+            try:
+                crt = rt.counterreporttype
+                if crt.name != name:
+                    print(f'CRT name mismatch ({crt_code}): "{crt.name}" != "{name}"')
+                    stats["crt_name_mismatch"] += 1
                     if fix_it:
-                        CounterReportType.objects.create(
-                            code=code, name=our_name, report_type=rt, counter_version=version
-                        )
+                        crt.name = name
+                        crt.save()
+                        stats["fixed_crt_name"] += 1
+            except CounterReportType.DoesNotExist:
+                stats["missing_crt"] += 1
+                if fix_it:
+                    CounterReportType.objects.create(
+                        counter_version=version, code=crt_code, report_type=rt, name=name
+                    )
 
         print("Stats:", stats)

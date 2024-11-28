@@ -29,10 +29,12 @@ en:
     Automatic harvesting was postponed until the credentials are manually fixed.
   no_credentials_selected: No credentials selected
   no_broken_credentials_selected: No broken credentials selected
+  no_clonable_credentials_selected: No clonable credentials selected
   no_credentials_filtered: No credentials filtered
   there_are_no_credentials: There are no credentials
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
   select_at_least_one_broken_credentials: Please select at least one set of broken SUSHI credentials using the checkboxes in the credentials list.
+  select_at_least_one_clonable_credentials: Please select at least one SUSHI credentials which can be cloned using the checkboxes in the credentials list.
   unverified_tooltip: No data has been obtained yet using the current version of these credentials. Please verify the credentials by manually harvesting some data.
   warn_same_credentials_in_org_tooltip: The same credentials are used for a different platform as well. This is likely an error and will cause data duplication.
   warn_same_credentials_global_tooltip: The same credentials are used by another organization. This is likely an error and will cause data duplication.
@@ -51,6 +53,13 @@ en:
     set: Set
     not_set: Not set
   more_actions: More actions
+  new_counter_version: New COUNTER version is available for these credentials.
+  potential_issues:
+    label: Potential issues
+    broken: Broken credentials
+    not_validated: Not validated
+    can_update: Can be cloned to C 5.1
+    duplicated: Duplicated
 
 cs:
   add_new: Přidat nové SUSHI
@@ -79,10 +88,12 @@ cs:
     bylo pozastaveno do doby než budou údaje ručně opraveny.
   no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje
   no_broken_credentials_selected: Nejsou vybrány žádné nefunkční přihlašovací údaje
+  no_clonable_credentials_selected: Nejsou vybrány žádné klonovatelné přihlašovací údaje
   no_credentials_filtered: Nejsou vyfiltrovány žádné přihlašovací údaje
   there_are_no_credentials: Nemáte uloženy žádné přihlašovací údaje
   select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
   select_at_least_one_broken_credentials: Vyberte prosím alespoň jedny nefunkční přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
+  select_at_least_one_clonable_credentials: Vyberte prosím alespoň klonovatelné přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
   unverified_tooltip: Žádná data zatím nebyla stažena se současnou verzí těchto přístupových údajů. Ověřte prosím platnost přihlašovacích údajů manuálním stažením dat.
   warn_same_credentials_in_org_tooltip: Stejné přístupové údaje jsou použity i u jiné platformy. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
   warn_same_credentials_global_tooltip: Stejné přístupové údaje jsou použity jinou organizací. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
@@ -101,6 +112,13 @@ cs:
     set: Nastaven
     not_set: Nenastaven
   more_actions: Další akce
+  new_counter_version: Nová verze COUNTERu je dostupná pro tyto přihlašovací údaje.
+  potential_issues:
+    label: Potenciální problémy
+    broken: Nefunkční přístupové údaje
+    not_validated: Nezvalidované
+    can_update: Lze naklonovat do C 5.1
+    duplicated: Duplicitní
 </i18n>
 
 <template>
@@ -135,6 +153,30 @@ cs:
                   </v-btn>
                 </template>
                 {{ $t("test_checked_tooltip") }}
+              </v-tooltip>
+            </v-col>
+            <v-col>
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <v-btn
+                    @click="triggerCloneToNewer"
+                    color="secondary"
+                    v-on="on"
+                  >
+                    <v-icon small class="mr-2"
+                      >far fa-arrow-alt-circle-up</v-icon
+                    >
+                    {{ $t("sushi.clone_to_newer.button") }}
+                    <v-badge color="white" inline>
+                      <template #badge>
+                        <span class="success--text">{{
+                          checkedUpdatableCredentials.length
+                        }}</span>
+                      </template>
+                    </v-badge>
+                  </v-btn>
+                </template>
+                {{ $t("sushi.clone_to_newer.tooltip") }}
               </v-tooltip>
             </v-col>
             <v-spacer></v-spacer>
@@ -386,14 +428,35 @@ cs:
             </v-col>
           </v-row>
           <v-row>
-            <v-spacer></v-spacer>
-
-            <v-col cols="auto">
-              <v-switch
-                v-model="problematicOnly"
-                :label="$t('labels.problematic_only')"
-              ></v-switch>
+            <v-col cols="3" :md="2" :xl="1">
+              <v-select
+                v-model="potentialIssuesFilter"
+                :label="$t('potential_issues.label')"
+                :items="[
+                  {
+                    text: $t('potential_issues.broken'),
+                    value: 'broken',
+                  },
+                  {
+                    text: $t('potential_issues.not_validated'),
+                    value: 'not_validated',
+                  },
+                  {
+                    text: $t('potential_issues.can_update'),
+                    value: 'can_update',
+                  },
+                  {
+                    text: $t('potential_issues.duplicated'),
+                    value: 'duplicated',
+                  },
+                ]"
+                single-line
+                hide-details
+                clearable
+                clear-icon="fa-times"
+              ></v-select>
             </v-col>
+            <v-spacer></v-spacer>
             <v-col cols="3" :md="2" :xl="1">
               <v-select
                 :items="[
@@ -417,9 +480,10 @@ cs:
             <v-col cols="3" :md="2" :xl="1">
               <v-select
                 :items="[
-                  { text: '4 + 5', value: null },
+                  { text: $t('sushi.all_counter_versions'), value: null },
                   { text: '4', value: 4 },
                   { text: '5', value: 5 },
+                  { text: '5.1', value: 51 },
                 ]"
                 v-model="counterVersion"
                 :label="$t('labels.counter_version')"
@@ -474,6 +538,21 @@ cs:
           >
             <SushiReportIndicator :report="report" />
           </v-chip>
+        </template>
+        <template v-slot:item.counter_version="{ item }">
+          <v-tooltip bottom v-if="item.can_update">
+            <template v-slot:activator="{ on }">
+              <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
+              <i
+                class="far fa-arrow-alt-circle-up ml-1 light-blue--text"
+                v-on="on"
+              ></i>
+            </template>
+            {{ $t("new_counter_version") }}
+          </v-tooltip>
+          <strong v-else>{{
+            counterVersionToStr(item.counter_version)
+          }}</strong>
         </template>
         <template v-slot:item.last_harvestable_month="{ item }">
           <div
@@ -715,6 +794,18 @@ cs:
         @update-credentials="updateCredentials"
       ></MarkCredentialsAsFixedWidget>
     </v-dialog>
+
+    <v-dialog
+      v-model="showCloneToNewerDialog"
+      v-if="showCloneToNewerDialog"
+      max-width="600px"
+    >
+      <CloneCredentialsToNewerWidget
+        :credentials="checkedUpdatableCredentials"
+        @close="closeCloneToNewer"
+        @new-credentials="credentialsClonedHandler"
+      ></CloneCredentialsToNewerWidget>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -725,6 +816,7 @@ import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import CheckMark from "@/components/util/CheckMark";
 import CounterReportLastHarvestableMonthWidget from "@/components/sushi/CounterReportLastHarvestableMonthWidget";
+import CloneCredentialsToNewerWidget from "@/components/sushi/CloneCredentialsToNewerWidget";
 import MarkCredentialsAsFixedWidget from "@/components/sushi/MarkCredentialsAsFixedWidget";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
@@ -733,6 +825,7 @@ import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import stateTracking from "@/mixins/stateTracking";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "SushiCredentialsManagementWidget",
@@ -741,6 +834,7 @@ export default {
     CheckMark,
     HarvestSelectedWidget,
     PlatformSelector,
+    CloneCredentialsToNewerWidget,
     MarkCredentialsAsFixedWidget,
     CounterReportLastHarvestableMonthWidget,
     SushiAttemptListWidget,
@@ -765,9 +859,9 @@ export default {
       type: Number,
       required: false,
     },
-    showProblematicOnly: {
-      default: false,
-      type: Boolean,
+    potentialIssues: {
+      default: null,
+      type: String,
     },
     showPlatformFilter: {
       default: false,
@@ -786,12 +880,13 @@ export default {
       showDataDialog: false,
       showLastHarvestableMonthDialog: false,
       showMarkAsFixedDialog: false,
+      showCloneToNewerDialog: false,
       loading: false,
       counterVersion: null,
       withLastHarvestableMonthSet: null,
       checkedRows: [],
       showTestDialog: false,
-      problematicOnly: this.showProblematicOnly,
+      potentialIssuesFilter: this.potentialIssues,
       exportAllCredentialsUrl:
         "/api/sushi-credentials/export-all-credentials/?export_all=true",
       platformFilter: null,
@@ -803,7 +898,7 @@ export default {
       // state tracking support
       watchedAttrs: [
         {
-          name: "problematicOnly",
+          name: "potentialIssuesFilter",
           type: Boolean,
         },
         {
@@ -874,7 +969,7 @@ export default {
         {
           text: this.$i18n.t("title_fields.counter_version"),
           value: "counter_version",
-          align: "end",
+          align: "center",
         },
         {
           text: this.$i18n.t("title_fields.active_reports"),
@@ -927,15 +1022,23 @@ export default {
     },
     filteredCredentials() {
       return this.sushiCredentialsList
-        .filter((item) =>
-          this.problematicOnly
-            ? !item.verified ||
-              item.broken ||
-              item.has_broken_reports ||
-              (item.same_global > 1 && this.consortialInstall) ||
-              item.same_in_org > 1
-            : true
-        )
+        .filter((item) => {
+          switch (this.potentialIssuesFilter) {
+            case "broken":
+              return item.broken || item.has_broken_reports;
+            case "not_validated":
+              return !item.verified;
+            case "can_update":
+              return item.can_update;
+            case "duplicated":
+              return (
+                (item.same_global > 1 && this.consortialInstall) ||
+                item.same_in_org > 1
+              );
+            default:
+              return true;
+          }
+        })
         .filter(
           (item) =>
             this.counterVersion === null ||
@@ -990,6 +1093,9 @@ export default {
         (e) => e.broken || e.has_broken_reports
       );
     },
+    checkedUpdatableCredentials() {
+      return this.checkedCredentials.filter((e) => e.can_update);
+    },
   },
 
   methods: {
@@ -999,6 +1105,9 @@ export default {
       getPageSetting: "getPageSetting",
       setPageSetting: "setPageSetting",
     }),
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     downloadImportTemplate() {
       const link = document.createElement("a");
       link.href = this.exportForImportUrl;
@@ -1123,10 +1232,8 @@ export default {
         this.selectedCredentials = credentials;
       }
     },
-    deleteCredentials({ id }) {
-      this.sushiCredentialsList = this.sushiCredentialsList.filter(
-        (item) => item.pk !== id
-      );
+    async deleteCredentials({ id }) {
+      await this.loadSushiCredentialsList();
     },
     preprocessCredentials(item) {
       item["has_broken_reports"] = !!item.counter_reports_long.filter(
@@ -1179,6 +1286,9 @@ export default {
     closeMarkAsFixedDialog() {
       this.showMarkAsFixedDialog = false;
     },
+    closeCloneToNewer() {
+      this.showCloneToNewerDialog = false;
+    },
     activateCreateDialog() {
       this.showCreateDialog = true;
     },
@@ -1199,6 +1309,18 @@ export default {
       } else {
         this.$confirm(this.$t("select_at_least_one_broken_credentials"), {
           title: this.$t("no_broken_credentials_selected"),
+          buttonTrueText: this.$t("close"),
+          buttonFalseText: null,
+          width: 600,
+        });
+      }
+    },
+    triggerCloneToNewer() {
+      if (this.checkedUpdatableCredentials.length > 0) {
+        this.showCloneToNewerDialog = true;
+      } else {
+        this.$confirm(this.$t("select_at_least_one_clonable_credentials"), {
+          title: this.$t("no_clonable_credentials_selected"),
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
           width: 600,
@@ -1274,6 +1396,18 @@ export default {
         return "warn_same_credentials_global_tooltip";
       }
       return "";
+    },
+    async credentialsClonedHandler(credentials_pks, startHarvesting) {
+      console.log(credentials_pks);
+      await this.loadSushiCredentialsList();
+      if (startHarvesting) {
+        this.checkedRows = this.filteredCredentials.filter((e) =>
+          credentials_pks.includes(e.pk)
+        );
+        this.showTestDialog = true;
+      } else {
+        this.checkedRows = [];
+      }
     },
   },
 

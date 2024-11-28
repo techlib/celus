@@ -29,7 +29,7 @@ cs:
     </tr>
     <tr v-if="counterVersion">
       <th class="text-left">{{ $t("labels.counter_version") }}:</th>
-      <td>{{ counterVersion }}</td>
+      <td>{{ counterVersionToStr(counterVersion) }}</td>
     </tr>
     <tr v-if="month">
       <th class="text-left">{{ $t("month") }}:</th>
@@ -43,6 +43,8 @@ cs:
 </template>
 
 <script>
+import { counterVersionToStr } from "@/libs/sushi";
+
 export default {
   name: "SushiCredentialsOverviewHeaderWidget",
   props: {
@@ -53,6 +55,11 @@ export default {
     fromDate: { required: false },
     month: { required: false },
     counterVersion: { required: false },
+  },
+  methods: {
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
   },
 };
 </script>

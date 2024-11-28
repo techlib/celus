@@ -36,12 +36,12 @@ cs:
               <span class="font-weight-light"
                 >{{
                   reportType.counter_version
-                    ? "C" + reportType.counter_version
+                    ? "C" + counterVersionToStr(reportType.counter_version)
                     : "non-COUNTER"
                 }}
                 /</span
               >
-              {{ reportType.short_name }}
+              {{ reportType.counter_code || reportType.short_name }}
             </span>
           </div>
         </template>
@@ -78,6 +78,7 @@ cs:
 import { defineComponent } from "vue";
 import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
 import cancellation from "@/mixins/cancellation";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default defineComponent({
   name: "CoverageCard",
@@ -169,6 +170,9 @@ export default defineComponent({
   },
 
   methods: {
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     async fetchCoverage() {
       let extraParams = {};
       if (this.organizationIds.length) {

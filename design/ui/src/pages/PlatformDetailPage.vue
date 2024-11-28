@@ -380,16 +380,30 @@ cs:
                       </v-col>
                     </v-row>
                     <v-row no-gutters>
-                      <span
-                        v-for="item in exportableCounterReportTypes"
-                        :key="item.pk"
-                        class="ml-1"
-                      >
-                        <CounterDataExportWidget
-                          :platform="platformObj"
-                          :counter-report-type="item"
-                        />
-                      </span>
+                      <v-simple-table>
+                        <tbody>
+                          <tr>
+                            <th>COUNTER 5.1</th>
+                            <td v-for="item in exportableCounterReportTypes51">
+                              <CounterDataExportWidget
+                                v-if="item"
+                                :platform="platformObj"
+                                :counter-report-type="item"
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>COUNTER 5</th>
+                            <td v-for="item in exportableCounterReportTypes5">
+                              <CounterDataExportWidget
+                                v-if="item"
+                                :platform="platformObj"
+                                :counter-report-type="item"
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </v-simple-table>
                     </v-row>
                   </section>
 
@@ -484,6 +498,7 @@ export default {
       loadingCounterReportTypes: false,
       watchedAttrs: [{ name: "activeTab", type: String, var: "tab" }],
       showAttemptsOnCurve: false,
+      counterExportTab: null,
     };
   },
   computed: {
@@ -493,6 +508,7 @@ export default {
       showAdminStuff: "showAdminStuff",
       organizationSelected: "organizationSelected",
       clickhouseQueryActive: "clickhouseQueryActive",
+      enableItems: "enableItems",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
@@ -581,9 +597,41 @@ export default {
     platformObj() {
       return this.platform || this.unconnectedPlatform;
     },
-    exportableCounterReportTypes() {
-      // Only C5 reports are exportable to tabular format
-      return this.counterReportTypes.filter((e) => e.counter_version == 5);
+    exportableCounterReportTypes5() {
+      const map = new Map(
+        this.counterReportTypes
+          .filter((e) => e.counter_version === 5)
+          .map((e) => [e.code, e])
+      );
+      if (this.enableItems) {
+        return [
+          map.get("PR"),
+          map.get("DR"),
+          map.get("TR"),
+          map.get("IR"),
+          map.get("IR_M1"),
+        ];
+      } else {
+        return [map.get("PR"), map.get("DR"), map.get("TR"), map.get("IR_M1")];
+      }
+    },
+    exportableCounterReportTypes51() {
+      const map = new Map(
+        this.counterReportTypes
+          .filter((e) => e.counter_version === 51)
+          .map((e) => [e.code, e])
+      );
+      if (this.enableItems) {
+        return [
+          map.get("PR"),
+          map.get("DR"),
+          map.get("TR"),
+          map.get("IR"),
+          map.get("IR_M1"),
+        ];
+      } else {
+        return [map.get("PR"), map.get("DR"), map.get("TR"), map.get("IR_M1")];
+      }
     },
   },
 
@@ -713,7 +761,10 @@ export default {
     },
     activeTab() {
       if (this.activeTab === "chart" && this.$refs.chartSet) {
+        this.$refs.chartSet.reloadReportViews();
         this.$refs.chartSet.reloadChartData();
+      } else if (this.activeTab === "admin") {
+        this.loadCounterReportTypes();
       }
     },
   },

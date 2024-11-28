@@ -69,6 +69,13 @@ cs:
               :server-items-length="intentionCount"
               :page.sync="page"
             >
+              <template #item.counter_report_verbose.counter_version="{ item }">
+                <strong>{{
+                  counterVersionToStr(
+                    item.counter_report_verbose.counter_version
+                  )
+                }}</strong>
+              </template>
               <template #item.status="{ item }">
                 <SushiFetchIntentionStateIcon :intention="item" />
               </template>
@@ -208,6 +215,7 @@ import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCreden
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import filesize from "filesize";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -224,6 +232,7 @@ export default {
     organization: { required: false },
     platform: { required: false },
     report: { required: false },
+    counterVersion: { required: false },
     fromDate: { required: false },
     month: { required: false },
     counterVersion: { required: false },
@@ -247,6 +256,7 @@ export default {
       hideObsolete: true,
       historyMode: "success_and_current",
       orderingRemap: new Map([
+        ["counter_report_verbose.code", "counter_report__code"],
         ["counter_report_verbose.code", "counter_report__code"],
         ["organization.name", "credentials__organization__name"],
       ]),
@@ -290,7 +300,6 @@ export default {
         // some order_by's have to be remapped for the backend to understand it
         let order_by_param =
           typeof this.orderBy === "object" ? this.orderBy[0] : this.orderBy;
-        console.debug(order_by_param, this.orderingRemap.has(order_by_param));
         if (this.orderingRemap.has(order_by_param))
           order_by_param = this.orderingRemap.get(order_by_param);
         base += `&order_by=${order_by_param}`;
@@ -333,6 +342,13 @@ export default {
           value: "counter_report_verbose.code",
         });
       }
+      if (!this.counterVersion) {
+        ret.push({
+          text: this.$t("title_fields.counter_version"),
+          value: "counter_report_verbose.counter_version",
+          align: "center",
+        });
+      }
       ret.push({
         text: this.$t("title_fields.actions"),
         value: "actions",
@@ -357,6 +373,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     async loadIntentions() {
       if (!this.listUrl) {
         return;

@@ -23,9 +23,8 @@ from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metri
 # `filters` are not used at the moment, they are just an idea for the future when we integrate
 # IR fully and need them to distinguish between different types of interest from the same report
 # This is why the `multimedia` interest from IR is commented out for now
-# TODO: check in 5.1
 INTEREST_DEFAULT_REPORT_TYPES = {
-    (5, "IR"): {
+    (51, "IR"): {
         "interest": {
             "full_text": {
                 "metrics": ["Total_Item_Requests"],
@@ -46,6 +45,41 @@ INTEREST_DEFAULT_REPORT_TYPES = {
             },
         }
     },
+    (51, "TR"): {
+        "interest": {
+            "full_text": {"metrics": ["Total_Item_Requests"]},
+            "full_text_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
+        },
+        "superseded_by": (51, "IR"),
+    },
+    (51, "DR"): {
+        "interest": {
+            "search": {"metrics": ["Searches_Regular"]},
+            "search_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
+        }
+    },
+    (5, "IR"): {
+        "interest": {
+            "full_text": {
+                "metrics": ["Total_Item_Requests"],
+                "filters": [{"dimension": "Data_Type", "values": ["Multimedia"], "negate": True}],
+            },
+            # Multimedia interest uses the same metric as the full_text interest, and only differs
+            # in the filter applied to it.
+            # Because we do not support filters in the interest computation yet, we cannot use it.
+            # Thus, multimedia interest is not computed from IR and IR_M1 has to be used
+            #
+            # "multimedia": {
+            #     "metrics": ["Total_Item_Requests"],
+            #     "filters": [{"dimension": "Data_Type", "values": ["Multimedia"]}],
+            # },
+            "full_text_denial": {
+                "metrics": ["No_License", "Limit_Exceeded"],
+                "filters": [{"dimension": "Data_Type", "values": ["Multimedia"], "negate": True}],
+            },
+        },
+        "superseded_by": (51, "IR"),
+    },
     (5, "TR"): {
         "interest": {
             "full_text": {"metrics": ["Total_Item_Requests"]},
@@ -63,7 +97,8 @@ INTEREST_DEFAULT_REPORT_TYPES = {
         "interest": {
             "search": {"metrics": ["Searches_Regular"]},
             "search_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
-        }
+        },
+        "superseded_by": (51, "DR"),
     },
     (4, "JR1"): {
         "interest": {"full_text": {"metrics": ["FT Article Requests"]}},

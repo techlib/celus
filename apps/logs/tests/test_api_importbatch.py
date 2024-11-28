@@ -43,17 +43,20 @@ class TestImportBatchesAPI:
         """
         The created data from IB perspective are
 
-        date    | RT  | platform   | organization | source | titles
-        --------+-----+------------+--------------+--------+--------
-        2020-01 | TR  | standalone | standalone   | fa     | t1
-        2020-02 | TR  | standalone | standalone   | fa     | t1,t2
-        2020-03 | TR  | standalone | standalone   | mdu    | t2,t3
-        2020-04 | TR  | standalone | standalone   | mdu    | t1,t2,t3
-        2020-02 | BR1 | standalone | standalone   | fa     | t1
-        2020-01 | PR  | branch     | branch       | fa     | t2
-        2020-02 | PR  | branch     | branch       | mdu    | random 10
-        2020-03 | PR  | branch     | branch       | mdu    | random 10
-        2020-04 | PR  | branch     | branch       | mdu    | random 10
+        date    | RT   | platform   | organization | source | titles
+        --------+------+------------+--------------+--------+--------
+        2020-01 | TR   | standalone | standalone   | fa     | t1
+        2020-02 | TR   | standalone | standalone   | fa     | t1,t2
+        2020-03 | TR   | standalone | standalone   | mdu    | t2,t3
+        2020-04 | TR   | standalone | standalone   | mdu    | t1,t2,t3
+        2020-02 | BR1  | standalone | standalone   | fa     | t1
+        2020-01 | PR   | branch     | branch       | fa     | t2
+        2020-02 | PR   | branch     | branch       | mdu    | random 10
+        2020-03 | PR   | branch     | branch       | mdu    | random 10
+        2020-04 | PR   | branch     | branch       | mdu    | random 10
+        2022-01 | IR51 | standalone | standalone   | fa     | t1
+        2022-02 | IR51 | standalone | standalone   | fa     | t1,t2
+        2022-03 | IR51 | standalone | standalone   | fa     | t1,t2,t3
         """
         metric1 = MetricFactory.create()
         t1, t2, t3, t4 = TitleFactory.create_batch(4)
@@ -203,6 +206,66 @@ class TestImportBatchesAPI:
                 ),
             ),
         )
+        FetchIntentionFactory(
+            start_date="2022-01-01",
+            end_date="2022-01-31",
+            credentials=credentials["standalone_ir51"],
+            counter_report=counter_report_types["tr51"],
+            attempt=FetchAttemptFactory(
+                start_date="2022-01-01",
+                end_date="2022-01-31",
+                credentials=credentials["standalone_ir51"],
+                counter_report=counter_report_types["tr51"],
+                import_batch=ImportBatchFullFactory(
+                    date="2022-01-01",
+                    organization=organizations["standalone"],
+                    platform=platforms["standalone"],
+                    report_type=report_types["ir51"],
+                    create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1],
+                ),
+            ),
+        )
+        FetchIntentionFactory(
+            start_date="2022-02-01",
+            end_date="2022-02-28",
+            credentials=credentials["standalone_ir51"],
+            counter_report=counter_report_types["tr51"],
+            attempt=FetchAttemptFactory(
+                start_date="2022-02-01",
+                end_date="2022-02-28",
+                credentials=credentials["standalone_ir51"],
+                counter_report=counter_report_types["tr51"],
+                import_batch=ImportBatchFullFactory(
+                    date="2022-02-01",
+                    organization=organizations["standalone"],
+                    platform=platforms["standalone"],
+                    report_type=report_types["ir51"],
+                    create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1, t2],
+                ),
+            ),
+        )
+        FetchIntentionFactory(
+            start_date="2022-03-01",
+            end_date="2022-03-31",
+            credentials=credentials["standalone_ir51"],
+            counter_report=counter_report_types["tr51"],
+            attempt=FetchAttemptFactory(
+                start_date="2022-03-01",
+                end_date="2022-03-31",
+                credentials=credentials["standalone_ir51"],
+                counter_report=counter_report_types["tr51"],
+                import_batch=ImportBatchFullFactory(
+                    date="2022-03-01",
+                    organization=organizations["standalone"],
+                    platform=platforms["standalone"],
+                    report_type=report_types["ir51"],
+                    create_accesslogs__metrics=[metric1],
+                    create_accesslogs__titles=[t1, t2, t3],
+                ),
+            ),
+        )
         return {"metric1": metric1, "t1": t1, "t2": t2, "t3": t3, "t4": t4}
 
     def test_lookup(self, data, clients, organizations, platforms, report_types):
@@ -289,7 +352,7 @@ class TestImportBatchesAPI:
         assert resp.data == {}, "retry same request - nothing deleted"
         assert ImportBatch.objects.count() == len(batches) - 1
 
-        resp = clients["su"].post(self.purge_url, {"batches": [batches[-1]]}, format="json")
+        resp = clients["su"].post(self.purge_url, {"batches": [batches[-4]]}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
             "logs.AccessLog": 10,
@@ -298,7 +361,7 @@ class TestImportBatchesAPI:
         }, "remove ib from mdu"
         assert ImportBatch.objects.count() == len(batches) - 2
 
-        resp = clients["su"].post(self.purge_url, {"batches": batches[-3:]}, format="json")
+        resp = clients["su"].post(self.purge_url, {"batches": batches[-6:-3]}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
             "logs.AccessLog": 20,
@@ -311,12 +374,12 @@ class TestImportBatchesAPI:
         resp = clients["su"].post(self.purge_url, {"batches": batches}, format="json")
         assert resp.status_code == 200
         assert resp.data == {
-            "logs.AccessLog": 9,
-            "logs.ImportBatch": 5,
+            "logs.AccessLog": 15,
+            "logs.ImportBatch": 8,
             "logs.ManualDataUpload": 1,
             "logs.ManualDataUploadImportBatch": 2,
-            "scheduler.FetchIntention": 3,
-            "sushi.SushiFetchAttempt": 3,
+            "scheduler.FetchIntention": 6,
+            "sushi.SushiFetchAttempt": 6,
         }, "remove rest"
         assert ImportBatch.objects.count() == 0
 
@@ -636,17 +699,20 @@ class TestImportBatchesAPI:
 
         The created data from title perspective are
 
-        date    | RT  | platform   | organization | source | titles
-        --------+-----+------------+--------------+--------+--------
-        2020-01 | TR  | standalone | standalone   | fa     | t1
-        2020-02 | TR  | standalone | standalone   | fa     | t1,t2
-        2020-03 | TR  | standalone | standalone   | mdu    | t2,t3
-        2020-04 | TR  | standalone | standalone   | mdu    | t1,t2,t3
-        2020-02 | BR1 | standalone | standalone   | fa     | t1
-        2020-01 | PR  | branch     | branch       | fa     | t2
-        2020-02 | PR  | branch     | branch       | mdu    | -
-        2020-03 | PR  | branch     | branch       | mdu    | -
-        2020-04 | PR  | branch     | branch       | mdu    | -
+        date    | RT   | platform   | organization | source | titles
+        --------+------+------------+--------------+--------+--------
+        2020-01 | TR   | standalone | standalone   | fa     | t1
+        2020-02 | TR   | standalone | standalone   | fa     | t1,t2
+        2020-03 | TR   | standalone | standalone   | mdu    | t2,t3
+        2020-04 | TR   | standalone | standalone   | mdu    | t1,t2,t3
+        2020-02 | BR1  | standalone | standalone   | fa     | t1
+        2020-01 | PR   | branch     | branch       | fa     | t2
+        2020-02 | PR   | branch     | branch       | mdu    | -
+        2020-03 | PR   | branch     | branch       | mdu    | -
+        2020-04 | PR   | branch     | branch       | mdu    | -
+        2022-01 | IR51 | standalone | standalone   | fa     | t1
+        2022-02 | IR51 | standalone | standalone   | fa     | t1,t2
+        2022-03 | IR51 | standalone | standalone   | fa     | t1,t2,t3
         """
         title = data[title_id]
         resp = clients["su"].get(
@@ -665,17 +731,25 @@ class TestImportBatchesAPI:
         assert [rec["ib_count"] for rec in resp.json()] == ib_counts
 
     @pytest.mark.parametrize(
-        ["rt", "credentials_count", "months", "last_harvestable_month"],
+        ["rt", "cv", "credentials_count", "months", "last_harvestable_month"],
         [
-            ("TR", 0, [], None),  # no data missing
+            ("TR", 5, 0, [], None),  # no data missing
             (
                 "BR1",
+                4,
                 1,
                 ["2020-03-01"],
                 "2020-02-01",
             ),  # one set of credentials missing data for 2 months
-            ("PR", 0, [], None),  # no data missing
-            ("DR", 0, [], None),  # no credentials present - cannot harvest
+            ("PR", 5, 0, [], None),  # no data missing
+            ("DR", 5, 0, [], None),  # no credentials present - cannot harvest
+            (
+                "IR",
+                51,
+                1,
+                ["2020-01-01", "2020-02-01", "2020-03-01"],
+                "2020-01-01",
+            ),  # counter 5.1 is missing all 3 months
         ],
     )
     def test_data_coverage_harvestable(
@@ -687,6 +761,7 @@ class TestImportBatchesAPI:
         report_types,
         counter_report_types,
         rt,
+        cv,
         credentials_count,
         months,
         last_harvestable_month,
@@ -698,15 +773,18 @@ class TestImportBatchesAPI:
 
         The data present in the database are:
 
-        date    | RT  | platform   | organization | source
-        --------+-----+------------+--------------+-------
-        2020-01 | TR  | standalone | standalone   | fa
-        2020-02 | TR  | standalone | standalone   | fa
-        2020-03 | TR  | standalone | standalone   | mdu
-        2020-02 | BR1 | standalone | standalone   | fa
-        2020-01 | PR  | branch     | branch       | fa
-        2020-02 | PR  | branch     | branch       | mdu
-        2020-03 | PR  | branch     | branch       | mdu
+        date    | RT   | platform   | organization | source
+        --------+------+------------+--------------+-------
+        2020-01 | TR   | standalone | standalone   | fa
+        2020-02 | TR   | standalone | standalone   | fa
+        2020-03 | TR   | standalone | standalone   | mdu
+        2020-02 | BR1  | standalone | standalone   | fa
+        2020-01 | PR   | branch     | branch       | fa
+        2020-02 | PR   | branch     | branch       | mdu
+        2020-03 | PR   | branch     | branch       | mdu
+        2022-01 | IR51 | standalone | standalone   | fa
+        2022-02 | IR51 | standalone | standalone   | fa
+        2022-03 | IR51 | standalone | standalone   | fa
         """
         # create extra broken credentials - these should not appear in the counts
         # we need to make them broken but verified in order to correctly test that broken
@@ -738,9 +816,9 @@ class TestImportBatchesAPI:
         assert broken_cr.broken == "sushi"
 
         # update last_harvestable_month
-        CounterReportType.objects.get(code=rt).counterreportstocredentials_set.update(
-            last_harvestable_month=last_harvestable_month
-        )
+        CounterReportType.objects.get(
+            code=rt, counter_version=cv
+        ).counterreportstocredentials_set.update(last_harvestable_month=last_harvestable_month)
 
         # the test itself
         resp = clients["su"].get(

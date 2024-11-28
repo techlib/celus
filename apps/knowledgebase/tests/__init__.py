@@ -111,6 +111,63 @@ PLATFORM_INPUT_DATA2 = [
     }
 ]
 
+PLATFORM_INPUT_DATA3 = [
+    {
+        "name": "AAP - American Academy of Pediatrics",
+        "pk": 328,
+        "provider": "AAP",
+        "providers": [
+            {
+                "assigned_report_types": [
+                    {"not_valid_after": None, "not_valid_before": None, "report_type": "TR51"}
+                ],
+                "counter_version": 51,
+                "provider": {
+                    "extra": {},
+                    "monthly": None,
+                    "name": "hwdpapi.highwire.org",
+                    "pk": 83,
+                    "url": "https://hwdpapi.highwire.org/sushi",
+                    "yearly": None,
+                },
+            }
+        ],
+        "report_types": [],
+        "counter_registry_id": None,
+        "duplicates": [],
+        "short_name": "AAP",
+        "url": "https://www.aap.org/",
+    },
+    {
+        "name": "New C5.1 platform",
+        "pk": 399,
+        "provider": "NCP",
+        "providers": [
+            {
+                "assigned_report_types": [
+                    {"not_valid_after": None, "not_valid_before": None, "report_type": "TR51"}
+                ],
+                "counter_version": 51,
+                "provider": {
+                    "extra": {},
+                    "monthly": None,
+                    "name": "hwdpapi.highwire.org",
+                    "pk": 85,
+                    "url": "https://hwdpapi.highwire.org/sushi/",
+                    "yearly": None,
+                },
+            }
+        ],
+        "report_types": [],
+        "counter_registry_id": "11111111-1111-1111-1111-111111111111",
+        "duplicates": [],
+        "short_name": "NCP",
+        "url": "https://www.ncp.org/",
+        "platform_filter": "ncp_filter",
+        "notes_url": "https://www.example.org",
+    },
+]
+
 
 REPORT_TYPE_INPUT_DATA = [
     {"pk": 111, "short_name": "one", "name": "first", "dimensions": [], "metrics": []},

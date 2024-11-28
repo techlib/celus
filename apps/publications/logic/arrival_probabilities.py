@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import DurationField, ExpressionWrapper, F, FloatField, Min, Value
 from django.db.models.functions import Extract
 from django.utils import timezone
-from sushi.models import SushiFetchAttempt
+from sushi.models import CounterVersionChoices, SushiFetchAttempt
 
 from publications.models import DEFAULT_ARRIVAL_STATS, Platform
 
@@ -54,7 +54,7 @@ def create_table_from_db(platform_id: Optional[int], lookback_days: Optional[int
                 days=75
             ),  # start_date is always month start, so we need to add ~30 days
             import_batch_id__isnull=False,
-            credentials__counter_version=5,
+            credentials__counter_version__in=CounterVersionChoices.c5x(),
             when_processed__isnull=False,
             delay__gte=0,  # remove negative delays, these are flukes
             **look_back_filter,

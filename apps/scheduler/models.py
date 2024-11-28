@@ -856,6 +856,10 @@ class FetchIntention(models.Model):
     def counter_report_code(self):
         return self.counter_report.code
 
+    @property
+    def counter_report_version(self):
+        return self.counter_report.counter_version
+
 
 class HarvestQuerySet(models.QuerySet):
     def wipe(self):

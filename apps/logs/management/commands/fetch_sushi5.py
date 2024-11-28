@@ -3,7 +3,7 @@ import logging
 from copy import deepcopy
 from datetime import date, timedelta
 
-from celus_nigiri.client import Sushi5Client
+from celus_nigiri.client import CounterVersion
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 
@@ -14,6 +14,7 @@ class Command(BaseCommand):
     help = "Pulls data from a Sushi server and displays some simple stats"
 
     def add_arguments(self, parser):
+        parser.add_argument("--counter-version", type=CounterVersion, default=CounterVersion.C5)
         parser.add_argument("url", help="URL of the SUSHI API")
         parser.add_argument("-c", dest="customer_id", type=str, help="Customer ID")
         parser.add_argument("-r", dest="requestor_id", type=str, help="Requestor ID")
@@ -32,7 +33,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        client = Sushi5Client(
+        counter_version = options["counter_version"]
+        client_class = counter_version.sushi_client_class
+        client = client_class(
             options["url"], customer_id=options["customer_id"], requestor_id=options["requestor_id"]
         )
         report_type = options["report_type"]
@@ -46,11 +49,12 @@ class Command(BaseCommand):
         )  # previous month
         # add params to ensure maximum split (most granular) data, we copy the value to prevent
         # possible pollution by later updates
-        params = deepcopy(client.EXTRA_PARAMS["maximum_split"].get(report_type.lower(), {}))
-        params.update(deepcopy(client.EXTRA_PARAMS["filters"].get(report_type.lower(), {})))
+        params = deepcopy(counter_version.get_report_class(report_type).extra_params)
         # fetch it
         self.stderr.write(
-            self.style.WARNING(f"Getting {report_type} report from {begin_date} to {end_date}")
+            self.style.WARNING(
+                f"Getting {report_type} ({counter_version}) report from {begin_date} to {end_date}"
+            )
         )
         data = client.get_report_data(
             report_type, begin_date=begin_date, end_date=end_date, params=params

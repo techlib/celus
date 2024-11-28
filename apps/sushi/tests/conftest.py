@@ -4,7 +4,7 @@ from logs.tests.conftest import report_type_nd  # noqa
 from organizations.tests.conftest import organizations  # noqa
 from publications.tests.conftest import platforms  # noqa
 
-from sushi.models import CounterReportType, SushiCredentials
+from sushi.models import CounterReportType, CounterVersionChoices, SushiCredentials
 
 
 @pytest.fixture()
@@ -46,3 +46,8 @@ def credentials(organizations, platforms):  # noqa F811 - fixtures
         url="http://a.b.c/",
     )
     yield credentials
+
+
+@pytest.fixture(params=[CounterVersionChoices.C5, CounterVersionChoices.C51])
+def counter5_version(request):
+    return request.param

@@ -47,6 +47,16 @@ class ChartDefinitionAdmin(TranslationAdmin):
 
 @admin.register(models.ReportViewToChartType)
 class ReportViewToChartTypeAdmin(admin.ModelAdmin):
-    list_display = ["report_data_view", "chart_definition", "position"]
+    list_display = ["report_data_view", "get_report_type", "chart_definition", "position"]
     list_editable = ["position"]
     list_filter = ["report_data_view", "chart_definition"]
+
+    @admin.display(description="Report Type", ordering="report_data_view__base_report_type__name")
+    def get_report_type(self, obj):
+        return obj.report_data_view.base_report_type
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            "chart_definition", "report_data_view", "report_data_view__base_report_type"
+        )

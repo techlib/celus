@@ -27,11 +27,11 @@ class ParserDefinitionQuerySet(models.QuerySet):
             try:
                 definitions.append(Definition.parse(pd.definition))
             except PydanticValidationError as e:
-                logger.warn("Wrong definition (pk=%s): %s", pd.pk, str(e))
+                logger.warning("Wrong definition (pk=%s): %s", pd.pk, str(e))
 
         parsers = [gen_parser(e) for e in definitions]
 
-        return eat(path, platform, parsers=r"^nibbler\.dynamic\.", dynamic_parsers=parsers)
+        return eat(path, platform, parsers=[r"^dynamic\.non_counter\."], dynamic_parsers=parsers)
 
 
 class ParserDefinition(models.Model):

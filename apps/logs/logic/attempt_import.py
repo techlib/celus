@@ -3,7 +3,7 @@ import logging
 import typing
 from datetime import date
 
-from celus_nigiri.client import Sushi5Client, SushiError, SushiException
+from celus_nigiri.client import Sushi5Client, Sushi51Client, SushiError, SushiException
 from celus_nigiri.counter5 import CounterError, TransportError
 from celus_nigiri.record import CounterRecord
 from core.exceptions import FileConsistencyError
@@ -11,6 +11,7 @@ from django.db.transaction import atomic
 from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
+    CounterVersionChoices,
     SushiCredentials,
     SushiFetchAttempt,
 )
@@ -23,10 +24,6 @@ from logs.logic.data_import import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def validate_data_v5(errors, warnings):
-    Sushi5Client.validate_data(errors, warnings)
 
 
 def get_empty_records(
@@ -88,9 +85,11 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
 
     counter_version = attempt.credentials.counter_version
     try:
+        # Note that only C5X is validated here
         if counter_version == 5:
-            # Note that only C5 is validated here
             Sushi5Client.validate_data(errors, warnings)
+        elif counter_version == 51:
+            Sushi51Client.validate_data(errors, warnings)
     except SushiException as e:
         # if we find validation error on data revalidation, we switch the report success attr
         logger.error("Validation error: %s", e)
@@ -107,7 +106,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
     empty, records = get_empty_records(records)
     # check errors first - there are cases when partial data is returned together with
     # a SUSHI exception. We do not want to ingest such data
-    if counter_version == 5 and errors:
+    if CounterVersionChoices.is_c5x(counter_version) and errors:
         error = errors[0]
         attempt.log = "; ".join(str(e) for e in errors)
         logger.warning("Found errors: %s", attempt.log)
@@ -174,14 +173,14 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             attempt.status = AttemptStatus.NO_DATA
             # it may be overwritten bellow with sushi warnings, but that's not a problem
             attempt.log = "No data found during import"
-        if counter_version == 5 and (errors or warnings):
+        if CounterVersionChoices.is_c5x(counter_version) and (errors or warnings):
             attempt.log = f"Warnings: {'; '.join(str(w) for w in warnings)}"
             attempt.error_code = warnings[0].code
         attempt.save()
         logger.info("Import stats: %s", stats)
     else:
         # Process errors for counter5
-        if counter_version == 5 and warnings:
+        if CounterVersionChoices.is_c5x(counter_version) and warnings:
             attempt.log = f"Warnings: {'; '.join(str(w) for w in warnings)}"
         else:
             attempt.log = "No data found during import"

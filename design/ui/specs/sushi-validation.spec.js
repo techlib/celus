@@ -1,4 +1,4 @@
-import { testSushiUrlReport } from "@/libs/sushi-validation";
+import { testSushiUrlReport } from "@/libs/sushi";
 
 let cases = [
   // [URL, ok?]

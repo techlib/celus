@@ -10,6 +10,14 @@ from logs.models import InterestGroup, Metric, ReportInterestMetric, ReportType
 logger = logging.getLogger(__name__)
 
 
+def convert_short_name(code: str, counter_version: int) -> str:
+    """short_name conversion for Counter 5.1"""
+    if counter_version == 51:
+        return code + "51"
+    else:
+        return code
+
+
 class Command(BaseCommand):
     help = "Checks that the interest for standard reports is set up correctly"
 
@@ -22,15 +30,20 @@ class Command(BaseCommand):
         code_to_rt = {rt.short_name: rt for rt in ReportType.objects.all()}
         short_name_to_metric = {m.short_name: m for m in Metric.objects.all()}
         short_name_to_ig = {ig.short_name: ig for ig in InterestGroup.objects.all()}
-        # for now, we ignore the counter version, but once we implement C5.1 and thus have
-        # multiple versions of the same report type, we will need to handle this
-        # TODO: check in 5.1
-        for (_cver, rep_code), definition in INTEREST_DEFAULT_REPORT_TYPES.items():
+        for (cver, rep_code), definition in INTEREST_DEFAULT_REPORT_TYPES.items():
             changed = False
-            rt = code_to_rt[rep_code]
+            rep_code = convert_short_name(rep_code, cver)
+
+            # TODO these lines can be simplified once we remove ENABLE_ITEMS option
+            # and Item Reports became mandatory
+            if not (rt := code_to_rt.get(rep_code)):
+                logger.warning("Can't find report type with short name '%s'", rep_code)
+                continue
+
             sb_rt = None
             if sb := definition.get("superseded_by"):
-                sb_rt = code_to_rt[sb[1]]
+                sb_rep_code = convert_short_name(sb[1], sb[0])
+                sb_rt = code_to_rt.get(sb_rep_code)
             if rt.superseded_by != sb_rt:
                 rt.superseded_by = sb_rt
                 logger.info("Updated superseded_by for %s to %s", rt, sb_rt)

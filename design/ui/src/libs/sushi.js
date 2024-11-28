@@ -23,4 +23,17 @@ function testSushiUrlReport(url) {
   }
 }
 
-export { testSushiUrlReport };
+// Accepts counter version string and converts it to number (e.g. "5.1" => 51)
+function counterVersionToNum(value) {
+  return parseInt(value.replace(".", ""));
+}
+
+// Accepts counter version number and converts it to string (e.g. 51 => "5.1")
+function counterVersionToStr(value) {
+  if (value <= 5) {
+    return value.toString();
+  }
+  return (value / 10).toFixed(1);
+}
+
+export { testSushiUrlReport, counterVersionToStr, counterVersionToNum };

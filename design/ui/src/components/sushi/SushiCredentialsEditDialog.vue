@@ -327,7 +327,7 @@ cs:
           </v-row>
 
           <v-row>
-            <v-col cols="12" :sm="counterVersion === 5 ? 4 : 6">
+            <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
               <v-text-field
                 v-model="requestorId"
                 :label="$t('labels.requestor_id')"
@@ -340,7 +340,7 @@ cs:
                 </template>
               </v-text-field>
             </v-col>
-            <v-col cols="12" :sm="counterVersion === 5 ? 4 : 6">
+            <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
               <v-text-field
                 v-model="customerId"
                 :label="$t('labels.customer_id')"
@@ -355,7 +355,7 @@ cs:
               </v-text-field>
             </v-col>
 
-            <v-col v-if="counterVersion === 5" cols="12" :sm="4">
+            <v-col v-if="counterVersion5X" cols="12" :sm="4">
               <v-text-field
                 v-model="apiKey"
                 :label="$t('labels.api_key')"
@@ -507,7 +507,7 @@ cs:
               <v-tooltip bottom max-width="600px">
                 <template #activator="{ on }">
                   <h4
-                    v-on="counterVersion === 4 ? on : null"
+                    v-on="!counterVersion5X ? on : null"
                     class="font-weight-light pl-2"
                     v-text="$t('extra_attributes')"
                   ></h4>
@@ -515,7 +515,7 @@ cs:
                 {{ $t("extra_attributes_tooltip") }}
               </v-tooltip>
               <v-container fluid class="pa-0 pl-md-8">
-                <v-row v-if="counterVersion === 5">
+                <v-row v-if="counterVersion5X">
                   <v-col md="5" class="pt-0">
                     <v-text-field
                       v-model="platformFilter"
@@ -567,7 +567,7 @@ cs:
                     </v-text-field>
                   </v-col>
                 </v-row>
-                <div v-if="counterVersion === 4">
+                <div v-if="!counterVersion5X">
                   <v-row>
                     <v-col cols="auto" class="mt-6 py-0">
                       <span class="font-weight-light">{{
@@ -782,7 +782,7 @@ import { mapActions, mapGetters } from "vuex";
 import AddPlatformButton from "@/components/AddPlatformButton";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import validate from "validate.js";
-import { testSushiUrlReport } from "@/libs/sushi-validation";
+import { testSushiUrlReport, counterVersionToStr } from "@/libs/sushi";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
@@ -907,7 +907,7 @@ export default {
       for (let rec of this.extraParams) {
         if (rec.key.trim()) extraParams[rec.key] = rec.value;
       }
-      if (this.counterVersion === 5 && this.platformFilter.trim()) {
+      if (this.counterVersion5X && this.platformFilter.trim()) {
         extraParams.platform = this.platformFilter.trim();
       }
       const autoUpdateUrl =
@@ -1029,7 +1029,9 @@ export default {
       return this.platforms;
     },
     allowedCounterVersions() {
-      return [4, 5];
+      return [51, 5, 4].map((e) => {
+        return { text: counterVersionToStr(e), value: e };
+      });
     },
     conflictingCredentials() {
       /*
@@ -1077,9 +1079,10 @@ export default {
     urlPlaceholder() {
       switch (this.counterVersion) {
         case 4:
-          return "https://sushi.example.com/c4/";
+          return "https://counter4.example.com";
         case 5:
-          return "https://sushi.example.com/c5/";
+        case 51:
+          return "https://sushi.example.com";
         default:
           return "";
       }
@@ -1097,7 +1100,7 @@ export default {
     registrySushiService() {
       if (this.activePlatform && this.activePlatform.registry_data) {
         return this.activePlatform.registry_data.sushi_services.find(
-          (service) => service.counter_release == this.counterVersion
+          (service) => service.counter_release == this.counterVersionStr
         );
       }
       return null;
@@ -1139,7 +1142,13 @@ export default {
     },
     canShowDebugLinks() {
       // Links for C4 sushi are not working properly
-      return this.showManagementStuff && this.counterVersion != 4;
+      return this.showManagementStuff && this.counterVersion5X;
+    },
+    counterVersion5X() {
+      return this.counterVersion === 5 || this.counterVersion === 51;
+    },
+    counterVersionStr() {
+      return counterVersionToStr(this.counterVersion);
     },
   },
 
@@ -1557,7 +1566,7 @@ export default {
       return true;
     },
     ruleUrlC5NoReport() {
-      if (this.counterVersion == "5" && !testSushiUrlReport(this.url))
+      if (this.counterVersion5X && !testSushiUrlReport(this.url))
         return this.$t("url_hint_no_report");
       return true;
     },
@@ -1617,7 +1626,10 @@ export default {
       this.showDebug = !this.showDebug;
     },
     sushiUrl(rt) {
-      const base = this.url.endsWith("/") ? this.url : this.url + "/";
+      let base = this.url.endsWith("/") ? this.url : this.url + "/";
+      if (rt.counter_version === 51 && !base.endsWith("r51/")) {
+        base += "r51/";
+      }
       const searchParams = new URLSearchParams({
         customer_id: this.customerId,
         begin_date: this.debugMonth,
@@ -1702,7 +1714,9 @@ export default {
       this.selectedReportTypes = this.selectedReportTypes.filter((item) =>
         currentReportTypes.includes(item)
       );
-      this.$refs.platformField.validate();
+      if (this.$refs.platformField)
+        // sometimes platform is fixed and the field is not there
+        this.$refs.platformField.validate();
       if (!this.credentials) {
         this.guessUrl();
         this.guessPlatformFilter();

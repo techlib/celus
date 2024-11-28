@@ -1,8 +1,422 @@
+import typing
+from dataclasses import dataclass, field
+
 from core.models import DataSource
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from logs.models import AccessLog, Dimension, DimensionText, ReportType
+
+
+@dataclass
+class CounterDimensionFilter:
+    dimension: str
+    allowed_values: typing.List[str]
+
+
+@dataclass
+class CounterReportDataView:
+    base_report_type_short_name: str
+    short_name: str
+    is_standard_view: bool
+    position: int
+    name: str = ""
+    name_en: str = ""
+    name_cs: str = ""
+    desc: str = ""
+    desc_en: str = ""
+    desc_cs: str = ""
+    metric_allowed_values: typing.List[str] = field(default_factory=lambda: [])
+    filters: typing.List[CounterDimensionFilter] = field(default_factory=lambda: [])
+
+
+COUNTER_REPORT_DATA_VIEWS = [
+    # Counter 4
+    CounterReportDataView("JR1", "JR1", False, 11, name="COUNTER 4 - Journal Report 1"),
+    CounterReportDataView("JR1a", "JR1a", False, 12, name="COUNTER 4 - Journal Report 1a"),
+    CounterReportDataView("JR1GOA", "JR1GOA", False, 13, name="COUNTER 4 - Journal Report 1GOA"),
+    CounterReportDataView("JR2", "JR2", False, 14, name="COUNTER 4 - Journal Report 2"),
+    CounterReportDataView("BR1", "BR1", False, 15, name="COUNTER 4 - Book Report 1"),
+    CounterReportDataView("BR2", "BR2", False, 16, name="COUNTER 4 - Book Report 2"),
+    CounterReportDataView("BR3", "BR3", False, 17, name="COUNTER 4 - Book Report 3"),
+    CounterReportDataView("DB1", "DB1", False, 18, name="COUNTER 4 - Database Report 1"),
+    CounterReportDataView("DB2", "DB2", False, 19, name="COUNTER 4 - Database Report 2"),
+    CounterReportDataView("PR1", "PR1", False, 20, name="COUNTER 4 - Platform Report 1"),
+    CounterReportDataView("MR1", "MR1", False, 21, name="COUNTER 4 - Multimedia Report 1"),
+    # Counter 5 PR
+    CounterReportDataView(
+        "PR",
+        "PR_P1",
+        True,
+        50,
+        name="COUNTER 5 - Platform Report 1",
+        desc="Platform Usage",
+        metric_allowed_values=[
+            "Searches_Platform",
+            "Total_Item_Requests",
+            "Unique_Item_Requests",
+            "Unique_Title_Requests",
+        ],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "PR",
+        "PR",
+        False,
+        120,
+        name="COUNTER 5 - Platform Report Full",
+        desc="Platform Master Report",
+    ),
+    # Counter 5 DR
+    CounterReportDataView(
+        "DR",
+        "DR_D1",
+        True,
+        30,
+        name="COUNTER 5 - Database Report 1",
+        desc="Database Search and Item Usage",
+        metric_allowed_values=[
+            "Searches_Automated",
+            "Searches_Federated",
+            "Searches_Regular",
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+        ],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "DR",
+        "DR_D2",
+        True,
+        31,
+        name="COUNTER 5 - Database Report 2",
+        desc="Database Access Denied",
+        metric_allowed_values=["Limit_Exceeded", "No_License"],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "DR",
+        "DR",
+        False,
+        110,
+        name="COUNTER 5 - Database Report Full",
+        desc="Database Master Report",
+    ),
+    # Counter 5 TR
+    CounterReportDataView(
+        "TR",
+        "TR_J1",
+        True,
+        10,
+        name="COUNTER 5 - Journal Report 1",
+        desc="Journal Requests (Excluding OA_Gold)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Item_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_J2",
+        True,
+        11,
+        name="COUNTER 5 - Journal Report 2",
+        desc="Journal Access Denied",
+        metric_allowed_values=["No_License", "Limit_Exceeded"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_J3",
+        True,
+        12,
+        name="COUNTER 5 - Journal Report 3",
+        desc="Journal Usage by Access Type",
+        metric_allowed_values=[
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+            "Unique_Item_Investigations",
+            "Unique_Item_Requests",
+        ],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_J4",
+        True,
+        13,
+        name="COUNTER 5 - Journal Report 4",
+        desc="Journal Requests by YOP (Excluding OA_Gold)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Item_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_B1",
+        True,
+        20,
+        name="COUNTER 5 - Book Report 1",
+        desc="Book Requests (Excluding OA_Gold)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Title_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_B2",
+        True,
+        21,
+        name="COUNTER 5 - Book Report 2",
+        desc="Book Access Denied",
+        metric_allowed_values=["Limit_Exceeded", "No_License"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR",
+        "TR_B3",
+        True,
+        22,
+        name="COUNTER 5 - Book Report 3",
+        desc="Book Usage by Access Type",
+        metric_allowed_values=[
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+            "Unique_Item_Investigations",
+            "Unique_Item_Requests",
+            "Unique_Title_Investigations",
+            "Unique_Title_Requests",
+        ],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR", "TR", False, 100, name="COUNTER 5 - Title Report Full", desc="Title Master Report"
+    ),
+    # Counter 5 IR_M1
+    CounterReportDataView(
+        "IR_M1",
+        "IR_M1",
+        True,
+        100,
+        name="COUNTER 5 - Multimedia Report 1",
+        desc="Multimedia Item Requests",
+        metric_allowed_values=["Total_Item_Requests"],
+        filters=[],  # No filter because IR_M1 should be already filtered
+    ),
+    # Counter 5.1 PR
+    CounterReportDataView(
+        "PR51",
+        "PR_P1",
+        True,
+        50,
+        name="COUNTER 5.1 - Platform Report 1",
+        desc="Platform Usage",
+        metric_allowed_values=[
+            "Searches_Platform",
+            "Total_Item_Requests",
+            "Unique_Item_Requests",
+            "Unique_Title_Requests",
+        ],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "PR51", "PR", False, 120, name="COUNTER 5.1 - Platform Report Full", desc="Platform Report"
+    ),
+    # Counter 5.1 DR
+    CounterReportDataView(
+        "DR51",
+        "DR_D1",
+        True,
+        30,
+        name="COUNTER 5.1 - Database Report 1",
+        desc="Database Search and Item Usage",
+        metric_allowed_values=[
+            "Searches_Automated",
+            "Searches_Federated",
+            "Searches_Regular",
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+            "Unique_Item_Investigations",
+            "Unique_Item_Requests",
+        ],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "DR51",
+        "DR_D2",
+        True,
+        31,
+        name="COUNTER 5.1 - Database Report 2",
+        desc="Database Access Denied",
+        metric_allowed_values=["Limit_Exceeded", "No_License"],
+        filters=[CounterDimensionFilter("Access_Method", ["Regular"])],
+    ),
+    CounterReportDataView(
+        "DR51", "DR", False, 110, name="COUNTER 5.1 - Database Report Full", desc="Database Report"
+    ),
+    # Counter 5.1 TR
+    CounterReportDataView(
+        "TR51",
+        "TR_J1",
+        True,
+        10,
+        name="COUNTER 5.1 - Journal Report 1",
+        desc="Journal Requests (Controlled)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Item_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_J2",
+        True,
+        11,
+        name="COUNTER 5.1 - Journal Report 2",
+        desc="Journal Access Denied",
+        metric_allowed_values=["No_License", "Limit_Exceeded"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_J3",
+        True,
+        12,
+        name="COUNTER 5.1 - Journal Report 3",
+        desc="Journal Usage by Access Type",
+        metric_allowed_values=[
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+            "Unique_Item_Investigations",
+            "Unique_Item_Requests",
+        ],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_J4",
+        True,
+        13,
+        name="COUNTER 5.1 - Journal Report 4",
+        desc="Journal Requests by YOP (Controlled)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Item_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Journal"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_B1",
+        True,
+        20,
+        name="COUNTER 5.1 - Book Report 1",
+        desc="Book Requests (Controlled)",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Title_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book", "Reference_Work"]),
+            CounterDimensionFilter("Access_Type", ["Controlled"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_B2",
+        True,
+        21,
+        name="COUNTER 5.1 - Book Report 2",
+        desc="Book Access Denied",
+        metric_allowed_values=["Limit_Exceeded", "No_License"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book", "Reference_Work"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51",
+        "TR_B3",
+        True,
+        22,
+        name="COUNTER 5.1 - Book Report 3",
+        desc="Book Usage by Access Type",
+        metric_allowed_values=[
+            "Total_Item_Investigations",
+            "Total_Item_Requests",
+            "Unique_Item_Investigations",
+            "Unique_Item_Requests",
+            "Unique_Title_Investigations",
+            "Unique_Title_Requests",
+        ],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Book", "Reference_Work"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "TR51", "TR", False, 100, name="COUNTER 5.1 - Title Report Full", desc="Title Report"
+    ),
+    # Counter 5.1 IR
+    CounterReportDataView(
+        "IR51",
+        "IR_A1",
+        True,
+        100,
+        name="COUNTER 5 - Article Report 1",
+        desc="Journal Article Requests",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Items_Requests"],
+        filters=[
+            CounterDimensionFilter("Data_Type", ["Article"]),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "IR51",
+        "IR_M1",
+        True,
+        101,
+        name="COUNTER 5 - Multimedia Report 1",
+        desc="Multimedia Item Requests",
+        metric_allowed_values=["Total_Item_Requests", "Unique_Items_Requests"],
+        filters=[
+            CounterDimensionFilter(
+                "Data_Type", ["Audiovisual", "Image", "Interactive_Resource", "Multimedia", "Sound"]
+            ),
+            CounterDimensionFilter("Access_Method", ["Regular"]),
+        ],
+    ),
+    CounterReportDataView(
+        "IR51", "IR", False, 120, name="COUNTER 5.1 - Item Report Full", desc="Item Report"
+    ),
+]
 
 
 class ReportDataView(models.Model):
@@ -59,6 +473,17 @@ class ReportDataView(models.Model):
     @property
     def public(self):
         return self.source is None
+
+    @property
+    def is_interest(self) -> bool:
+        return self.base_report_type.short_name == "interest"
+
+    @property
+    def counter_version(self) -> typing.Optional[int]:
+        try:
+            return self.base_report_type.counterreporttype.counter_version
+        except self.DoesNotExist:
+            return None
 
 
 class DimensionFilter(models.Model):

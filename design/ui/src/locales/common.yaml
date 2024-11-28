@@ -189,7 +189,7 @@ en:
     platform_filter: Platform filter
     position: Position
     preview: Preview
-    problematic_only: Problematic only
+    potential_issues: Potential issues
     provider: Provider
     publication_date: Publication date
     relative: Relative
@@ -243,7 +243,7 @@ en:
     year_and_month: Year and month
   no_reports_available_for_title: No views are defined for the selected data
   no_chart_types_available: There are no charts available for this report type
-  available_report_types: Choose report type to display
+  type_of_report: Type of report
   interests:
     title: Interest in titles
     database: Interest in databases
@@ -595,7 +595,6 @@ cs:
     platform_filter: Filtr platformy
     position: Pozice
     preview: Náhled
-    problematic_only: Jen problematické
     provider: Poskytovatel
     publication_date: Datum publikace
     relative: Relativně
@@ -649,7 +648,7 @@ cs:
     year_and_month: Rok a měsíc
   no_reports_available_for_title: Nejsou dostupné žádné pohledy na zvolená data
   no_chart_types_available: Pro tento typ zprávy nejsou k dispozici žádné grafy
-  available_report_types: Vyberte typ reportu
+  type_of_report: Typ reportu
   interests:
     title: Zájem o tituly
     database: Zájem o databáze

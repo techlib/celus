@@ -34,12 +34,13 @@ Faker.seed(0)
 @pytest.mark.django_db
 class TestLogicDataImportXLSX:
     @staticmethod
-    def create_xlsx_file(tmp_file, records):
+    def create_xlsx_file(tmp_file, records, counter_version):
+        counter_version_str = counter_version.short
         wb = Workbook()
         headers = list(records[0].keys())
         ws1 = wb.active
         ws1.append(headers)
-        ws2 = wb.create_sheet()
+        ws2 = wb.create_sheet(f"Credentials-COUNTER{counter_version_str}")
         ws2.append(headers)
         for row in records:
             ws2.append([row[header] for header in headers])
@@ -57,7 +58,14 @@ class TestLogicDataImportXLSX:
                         "assigned_report_types": [
                             {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"}
                         ],
-                    }
+                    },
+                    {
+                        "counter_version": 51,
+                        "provider": {"url": fake.url()},
+                        "assigned_report_types": [
+                            {"not_valid_after": None, "not_valid_before": None, "report_type": "IR"}
+                        ],
+                    },
                 ]
             },
             {
@@ -77,7 +85,14 @@ class TestLogicDataImportXLSX:
                                 "report_type": "DR",
                             },
                         ],
-                    }
+                    },
+                    {
+                        "counter_version": 51,
+                        "provider": {"url": fake.url()},
+                        "assigned_report_types": [
+                            {"not_valid_after": None, "not_valid_before": None, "report_type": "IR"}
+                        ],
+                    },
                 ]
             },
         ]
@@ -141,9 +156,9 @@ class TestLogicDataImportXLSX:
         rec[1]["api key"] = fake.uuid4()
         return rec
 
-    def test_sheet_empty_and_test_sheet_out_of_range(self, records):
+    def test_sheet_empty_and_test_sheet_out_of_range(self, records, counter5_version):
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, records)
+            file_name = self.create_xlsx_file(tmp_file, records, counter5_version)
             stats = import_sushi_credentials_from_xlsx(file_name, sheet_no=2)
             assert stats["added"] == 2
             # test sheet empty
@@ -154,14 +169,14 @@ class TestLogicDataImportXLSX:
                 import_sushi_credentials_from_xlsx(file_name, sheet_no=3)
 
     @pytest.mark.parametrize("header", ["customer id", "publisher/vendor/platform"])
-    def test_essential_headers(self, records, header):
+    def test_essential_headers(self, records, header, counter5_version):
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, [records[0]])
+            file_name = self.create_xlsx_file(tmp_file, [records[0]], counter5_version)
             stats = import_sushi_credentials_from_xlsx(file_name)
             assert stats["added"] == 1
 
             records[0].pop(header)
-            file_name = self.create_xlsx_file(tmp_file, [records[0]])
+            file_name = self.create_xlsx_file(tmp_file, [records[0]], counter5_version)
             with pytest.raises(ValueError):
                 import_sushi_credentials_from_xlsx(file_name)
 
@@ -170,13 +185,20 @@ class TestLogicDataImportXLSX:
         [[False, True, False], [True, False, False], [False, False, True], [True, True, False]],
     )
     def test_single_org_arg_and_organization_column(
-        self, single_org_arg, org_colum, value_error, records, records_wo_org, local_organizations
+        self,
+        single_org_arg,
+        org_colum,
+        value_error,
+        records,
+        records_wo_org,
+        local_organizations,
+        counter5_version,
     ):
         org = OrganizationFactory()
         single_org = org.name_en if single_org_arg else None
         records = records if org_colum else records_wo_org
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, records)
+            file_name = self.create_xlsx_file(tmp_file, records, counter5_version)
 
             if value_error:
                 with pytest.raises(ValueError):
@@ -191,10 +213,10 @@ class TestLogicDataImportXLSX:
                     else:
                         assert cr.organization in local_organizations
 
-    def test_sushi_import(self, knowledgebases, records, counter_report_types):
+    def test_sushi_import(self, knowledgebases, records, counter_report_types, counter5_version):
         assert SushiCredentials.objects.count() == 0
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, records)
+            file_name = self.create_xlsx_file(tmp_file, records, counter5_version)
             stats = import_sushi_credentials_from_xlsx(file_name)
             assert stats["added"] == 2
             assert SushiCredentials.objects.count() == 2
@@ -210,15 +232,16 @@ class TestLogicDataImportXLSX:
                 assert cr.extra_params == (
                     {"platform": rec["platform filter"]} if rec["platform filter"] else {}
                 )
-                assert cr.counter_version == 5
-                assert cr.url == kb["providers"][0]["provider"]["url"]
-                expected_reports = {
-                    rec["report_type"] for rec in kb["providers"][0]["assigned_report_types"]
-                }
+                assert cr.counter_version == counter5_version
+                provider = [e for e in kb["providers"] if e["counter_version"] == counter5_version][
+                    0
+                ]
+                assert cr.url == provider["provider"]["url"]
+                expected_reports = {rec["report_type"] for rec in provider["assigned_report_types"]}
                 assert expected_reports == {rt.code for rt in cr.counter_reports.all()}
 
             # retry
-            stats = import_sushi_credentials_new(records)
+            stats = import_sushi_credentials_new(records, counter_version=counter5_version)
             assert stats["skipped"] == 2
         assert SushiCredentials.objects.count() == 2
 
@@ -239,9 +262,10 @@ class TestLogicDataImportXLSX:
         updated,
         records,
         updated_records,
+        counter5_version,
     ):
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, records)
+            file_name = self.create_xlsx_file(tmp_file, records, counter5_version)
             assert SushiCredentials.objects.count() == 0
             stats = import_sushi_credentials_from_xlsx(file_name)
             assert stats["added"] == 2
@@ -257,7 +281,7 @@ class TestLogicDataImportXLSX:
             )
             cr_verified.refresh_from_db()
             assert cr_verified.is_verified is True
-            file_name = self.create_xlsx_file(tmp_file, updated_records)
+            file_name = self.create_xlsx_file(tmp_file, updated_records, counter5_version)
             stats = import_sushi_credentials_from_xlsx(
                 file_name, update_credentials=update_credentials
             )
@@ -277,23 +301,25 @@ class TestLogicDataImportXLSX:
                 )
                 assert cr.api_key == (updated_rec["api key"] if updated else rec["api key"])
 
-    def test_existing_sushi_reimport(self, records, platforms, local_organizations):
+    def test_existing_sushi_reimport(
+        self, records, platforms, local_organizations, counter5_version
+    ):
         SushiCredentials.objects.create(
             title=fake.company(),
             organization=local_organizations[0],
             platform=platforms[0],
-            counter_version=5,
+            counter_version=counter5_version,
         )
         SushiCredentials.objects.create(
             title=fake.company(),
             organization=local_organizations[0],
             platform=platforms[0],
-            counter_version=5,
+            counter_version=counter5_version,
         )
 
         assert SushiCredentials.objects.count() == 2
         with tempfile.NamedTemporaryFile(suffix=".xlsx") as tmp_file:
-            file_name = self.create_xlsx_file(tmp_file, records)
+            file_name = self.create_xlsx_file(tmp_file, records, counter5_version)
             stats = import_sushi_credentials_from_xlsx(file_name)
             assert stats["added"] == 1
             assert stats["duplicates_skipped"] == 1
@@ -301,7 +327,7 @@ class TestLogicDataImportXLSX:
 
     @pytest.mark.parametrize(["name_is_identical", "error", "added"], [[False, 0, 1], [True, 1, 0]])
     def test_conflicting_platform_names(
-        self, local_organizations, knowledgebases, name_is_identical, error, added
+        self, local_organizations, knowledgebases, name_is_identical, error, added, counter5_version
     ):
         ds_type_org = DataSourceFactory.create(
             type=DataSource.TYPE_ORGANIZATION, organization=local_organizations[0]
@@ -321,7 +347,7 @@ class TestLogicDataImportXLSX:
                 "customer id": fake.isbn10(),
             }
         ]
-        stats = import_sushi_credentials_new(records)
+        stats = import_sushi_credentials_new(records, counter_version=counter5_version)
         assert stats["error"] == error
         assert stats["added"] == added
 
@@ -351,6 +377,16 @@ class TestLogicDataImportCSV:
                 "counter_reports": "TR, DR",
             },
             {
+                "platform": "XXX",
+                "organization": organizations[1].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRY",
+                "URL": "http://this.is/test/3",
+                "version": 51,
+                "extra_attrs": f'api_key={"key" * 100};foot=ball',
+                "counter_reports": "IR",
+            },
+            {
                 # missing organization and counter version
                 "platform": "XXX",
                 "customer_id": "AAA",
@@ -360,9 +396,9 @@ class TestLogicDataImportCSV:
         ]
         Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
-        assert stats["added"] == 2
+        assert stats["added"] == 3
         assert stats["error"] == 1, "the last record is missing organization"
-        assert SushiCredentials.objects.count() == 2
+        assert SushiCredentials.objects.count() == 3
         credentials = SushiCredentials.objects.all().order_by("pk")
         # check individual objects
         cr1 = credentials[0]
@@ -379,10 +415,18 @@ class TestLogicDataImportCSV:
         assert cr2.extra_params == {"foo": "bar"}
         assert cr2.counter_reports.count() == 2
         assert {crt.code for crt in cr2.counter_reports.all()} == {"TR", "DR"}
+        cr3 = credentials[2]
+        assert cr3.counter_version == 51
+        assert cr3.url == data[2]["URL"]
+        assert cr3.organization == organizations[1]
+        assert cr3.api_key == "key" * 100
+        assert cr3.extra_params == {"foot": "ball"}
+        assert cr3.counter_reports.count() == 1
+        assert {crt.code for crt in cr3.counter_reports.all()} == {"IR"}
         # retry
         stats = import_sushi_credentials_old(data)
-        assert stats["skipped"] == 2
-        assert SushiCredentials.objects.count() == 2
+        assert stats["skipped"] == 3
+        assert SushiCredentials.objects.count() == 3
 
     def test_sushi_reimport(self):
         organizations = OrganizationFactory.create_batch(2)
@@ -405,21 +449,35 @@ class TestLogicDataImportCSV:
                 "version": 5,
                 "extra_attrs": "auth=un,pass;api_key=kekekeyyy;foo=bar",
             },
+            {
+                "platform": "XXX",
+                "organization": organizations[1].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRY",
+                "URL": "http://this.is/test/3",
+                "version": 51,
+                "extra_attrs": f'api_key={"key" * 100};foot=ball',
+                "counter_reports": "IR",
+            },
         ]
         Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
-        assert stats["added"] == 2
-        assert SushiCredentials.objects.count() == 2
+        assert stats["added"] == 3
+        assert SushiCredentials.objects.count() == 3
         # retry
         data[1]["URL"] = "http://new.url/"
         data[1]["extra_attrs"] = "api_key=kekekeyyy;foo=bar"
+        data[2]["extra_attrs"] = "foot=ball"
         stats = import_sushi_credentials_old(data)
         assert stats["skipped"] == 1
-        assert stats["synced"] == 1
-        assert SushiCredentials.objects.count() == 2
+        assert stats["synced"] == 2
+        assert SushiCredentials.objects.count() == 3
         credentials = SushiCredentials.objects.get(url="http://new.url/")
         assert credentials.http_password == ""
         assert credentials.http_username == ""
+        credentials = SushiCredentials.objects.get(url="http://this.is/test/3")
+        assert not credentials.api_key
+        assert credentials.extra_params == {"foot": "ball"}
 
     @pytest.mark.parametrize("organization_idx", [0, 1])
     def test_sushi_import_with_custom_platforms(self, organization_idx):

@@ -69,9 +69,10 @@ cs:
           <v-col cols="6" sm="4" md="3" lg="2" xl="1">
             <v-select
               :items="[
-                { text: '4 + 5', value: null },
+                { text: $t('sushi.all_counter_versions'), value: null },
                 { text: '4', value: 4 },
                 { text: '5', value: 5 },
+                { text: '5.1', value: 51 },
               ]"
               v-model="counterVersion"
               :label="$t('labels.counter_version')"
@@ -186,7 +187,9 @@ cs:
                         >fa fa-exclamation-triangle</v-icon
                       >
                       <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
-                      {{ item.counter_version }}
+                      <strong>{{
+                        counterVersionToStr(item.counter_version)
+                      }}</strong>
                     </span>
                   </template>
                   <span v-if="item.broken">
@@ -234,6 +237,7 @@ import {
   ATTEMPT_NOT_HARVESTABLE,
   ATTEMPT_BUG,
 } from "@/libs/attempt-state";
+import { counterVersionToStr } from "@/libs/sushi";
 import cancellation from "@/mixins/cancellation";
 import IconButton from "@/components/sushi/IconButton";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
@@ -310,7 +314,7 @@ export default {
         {
           text: this.$i18n.t("title_fields.counter_version"),
           value: "counter_version",
-          align: "end",
+          align: "center",
         },
       ];
       for (let reportType of this.usedReportTypes) {
@@ -479,6 +483,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    counterVersionToStr(value) {
+      return counterVersionToStr(value);
+    },
     async loadSushiCredentialsList() {
       this.loadingCredentials = true;
       try {

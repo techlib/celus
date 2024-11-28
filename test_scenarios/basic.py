@@ -216,6 +216,16 @@ def report_types(data_sources):
     pr = ReportTypeFactory(name="Counter 5 - Platform report", short_name="PR")
     ir = ReportTypeFactory(name="Counter 5 - Item report", short_name="IR")
 
+    # Counter 5.1
+    tr51 = ReportTypeFactory(
+        name="Counter 5.1 - Title report", short_name="TR51", default_platform_interest=True
+    )
+    dr51 = ReportTypeFactory(
+        name="Counter 5.1 - Database report", short_name="DR51", default_platform_interest=True
+    )
+    pr51 = ReportTypeFactory(name="Counter 5.1 - Platform report", short_name="PR51")
+    ir51 = ReportTypeFactory(name="Counter 5.1 - Item report", short_name="IR51")
+
     # Counter 4
     br1 = ReportTypeFactory(name="Counter 4 - Book report 1", short_name="BR1")
     br2 = ReportTypeFactory(
@@ -263,6 +273,12 @@ def counter_report_types(report_types):
     ir = CounterReportTypeFactory(
         counter_version=5, code=report_types["ir"].short_name, report_type=report_types["ir"]
     )
+
+    # counter 5.1
+    tr51 = CounterReportTypeFactory(counter_version=51, code="TR", report_type=report_types["tr51"])
+    dr51 = CounterReportTypeFactory(counter_version=51, code="DR", report_type=report_types["dr51"])
+    pr51 = CounterReportTypeFactory(counter_version=51, code="PR", report_type=report_types["pr51"])
+    ir51 = CounterReportTypeFactory(counter_version=51, code="IR", report_type=report_types["ir51"])
 
     # counter 4
     br1 = CounterReportTypeFactory(
@@ -345,6 +361,14 @@ def credentials(counter_report_types, organizations, platforms):
         extra_params={"duiefn": "5ce54", "acuv": 4354, "ncjd": "as.§da"},
     )
     standalone_tr.counter_reports.add(counter_report_types["tr"])
+
+    standalone_ir51 = CredentialsFactory(
+        organization=organizations["standalone"],
+        platform=platforms["standalone"],
+        url="https://c51.standalone.example.com/",
+        counter_version=51,
+    )
+    standalone_ir51.counter_reports.add(counter_report_types["ir"])
 
     del counter_report_types, organizations, platforms
     return locals()

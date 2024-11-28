@@ -27,6 +27,12 @@ class Command(BaseCommand):
             "base_rt": "TR",
             "exclude": ["target", "item", "YOP", "Publisher", "Platform"],
         },
+        {"name": "C51 TR without title", "base_rt": "TR51", "exclude": ["target", "item"]},
+        {
+            "name": "C51 TR without title, YOP, Publisher and COUNTER Platform",
+            "base_rt": "TR51",
+            "exclude": ["target", "item", "YOP", "Publisher", "Platform"],
+        },
     ]
 
     def add_arguments(self, parser):

@@ -1,5 +1,6 @@
 en:
   sushi:
+    all_counter_versions: All
     enabled: Automatic harvesting
     enabled_tooltip: When turned on, data for these credentials get automatically downloaded each month.
     state:
@@ -54,9 +55,15 @@ en:
       success: Credentials were marked as fixed.
       button: Mark as fixed
       tooltip: If you think that the selected credentials should not be marked as broken anymore, you can manually mark them as fixed.
+    clone_to_newer:
+      title: Clone to COUNTER 5.1
+      success: Credentials were cloned to newer version of COUNTER.
+      button: Clone to C 5.1
+      tooltip: Create a copy of selected credentials with the COUNTER version upgraded to 5.1
 
 cs:
   sushi:
+    all_counter_versions: Všechny
     enabled: Automatické stahování
     enabled_tooltip: Pokud je tato volba zapnutá, budou se data pro tyto přihlašovací údaje pravidelně automaticky stahovat.
     state:
@@ -111,3 +118,8 @@ cs:
       success: Přístupové údaje byly označeny jako opravené.
       button: Označ jako opravené
       tooltip: Pokud se domníváte, že by vybrané přihlašovací údaje neměly být označeny jako nefunkční, můžete je označit jako opravené.
+    clone_to_newer:
+      title: Naklonuj do COUNTERu 5.1
+      success: Přístopové údaje byly naklonovány s novou verzí COUNTERu.
+      button: Naklonuj do C 5.1
+      tooltip: Vytvořit kopii vybraných přístupových údajů s COUNTER verzí povýšenou na 5.1

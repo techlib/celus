@@ -58,10 +58,10 @@ class Command(BaseCommand):
                 nigiri_count, nibbler_count, same = self.compare(path, report_type)
                 print(path, nigiri_count, nibbler_count, same)
             else:
-                logger.warn("ReportType %s was not found", rt)
+                logger.warning("ReportType %s was not found", rt)
                 return
         else:
-            logger.warn("Failed to detect report type from file name '%s'", path.name)
+            logger.warning("Failed to detect report type from file name '%s'", path.name)
 
     def compare(
         self, path: Path, report_type: ReportType
@@ -92,7 +92,7 @@ class Command(BaseCommand):
                 )
                 return sorted([self.format_record(r) for r in records])
             except Exception as e:
-                logger.warn("Nigiri crashed: %s", e)
+                logger.warning("Nigiri crashed: %s", e)
                 return None
 
     def parse_nibbler(self, path, report_type: ReportType) -> typing.Optional[typing.List[tuple]]:
@@ -135,7 +135,7 @@ class Command(BaseCommand):
             if poops and isinstance(poops[0], Poop):
                 return sorted([self.format_record(r) for r in poops[0].records()])
         except Exception as e:
-            logger.warn("Nibbler crashed: %s", e)
+            logger.warning("Nibbler crashed: %s", e)
             return None
 
         return None

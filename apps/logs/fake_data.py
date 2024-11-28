@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 import factory
 import faker
-from celus_nigiri.counter5 import CounterRecord
+from celus_nigiri import CounterRecord
 from core.fake_data import UserFactory
 from dateutil.relativedelta import relativedelta
 from django.conf import settings

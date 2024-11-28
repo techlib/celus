@@ -4,7 +4,7 @@ from collections import Counter
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 
-from sushi.models import CounterReportType, SushiCredentials
+from sushi.models import CounterReportType, CounterVersionChoices, SushiCredentials
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,9 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--counter-version", type=CounterVersionChoices, default=CounterVersionChoices.C5
+        )
         parser.add_argument(
             "-k",
             "--knowledgebase-only",
@@ -42,7 +45,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stats = Counter()
         report_types = {rt.code: rt for rt in CounterReportType.objects.all()}
-        qs = SushiCredentials.objects.filter(counter_version=5, counter_reports__isnull=True)
+        qs = SushiCredentials.objects.filter(
+            counter_version=options["counter_version"], counter_reports__isnull=True
+        )
         if options["organization"]:
             org = options["organization"]
             if org.isdigit():

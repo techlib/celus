@@ -1,0 +1,33 @@
+{
+    "Report_Header": {
+        "Created": "2024-01-01T00:00:00Z",
+        "Created_By": "Sample Publisher",
+        "Report_ID": "IR",
+        "Release": "5.1",
+        "Report_Name": "Item Report",
+        "Registry_Record": "https://registry.projectcounter.org/platform/99999999-9999-9999-9999-999999999999",
+        "Institution_Name": "Sample Institution",
+        "Institution_ID": {
+          "ISNI": [
+            "1234123412341234"
+          ]
+        },
+        "Exceptions": [
+            {
+                "Code": 3031,
+                "Message": "Usage Not Ready for Requested Dates",
+                "Data": "Last date processed is 2021-12-31"
+            }
+        ],
+        "Report_Filters": {
+            "Begin_Date": "2022-01-01",
+            "End_Date": "2022-01-31"
+        },
+        "Report_Attributes": {
+            "Attributes_To_Show": [
+                "Access_Method"
+            ]
+        }
+    },
+    "Report_Items": []
+}

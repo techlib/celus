@@ -13,10 +13,10 @@ from publications.fake_data import PlatformFactory
 from scheduler import signals as scheduler_signals
 
 from sushi.models import (
-    COUNTER_VERSIONS,
     AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
+    CounterVersionChoices,
     SushiCredentials,
     SushiFetchAttempt,
 )
@@ -27,7 +27,7 @@ fake = Faker()
 class CounterReportTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CounterReportType
-        django_get_or_create = ("code",)
+        django_get_or_create = ("code", "counter_version")
 
     code = "TR"
     counter_version = 5
@@ -46,7 +46,7 @@ class CredentialsFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
     url = factory.Faker("url")
-    counter_version = FuzzyChoice(COUNTER_VERSIONS, getter=lambda e: e[0])
+    counter_version = FuzzyChoice(CounterVersionChoices.values)
     lock_level = UL_ORG_ADMIN
     requestor_id = factory.Faker("password")
     customer_id = factory.Faker("password")
@@ -56,7 +56,9 @@ class CredentialsFactory(factory.django.DjangoModelFactory):
     http_password = factory.LazyAttribute(
         lambda obj: fake.password() if obj.counter_version == 4 else ""
     )
-    api_key = factory.LazyAttribute(lambda obj: fake.uuid4() if obj.counter_version == 5 else "")
+    api_key = factory.LazyAttribute(
+        lambda obj: fake.uuid4() if CounterVersionChoices.is_c5x(obj.counter_version) else ""
+    )
 
     @factory.post_generation
     def report_types(obj, create, extracted, **kwargs):  # noqa - obj name is ok here

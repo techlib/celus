@@ -5,7 +5,12 @@ from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from logs.models import ReportType
 
-from sushi.models import CounterReportType, SushiCredentials, SushiFetchAttempt
+from sushi.models import (
+    CounterReportType,
+    CounterVersionChoices,
+    SushiCredentials,
+    SushiFetchAttempt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +23,9 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--counter-version", type=CounterVersionChoices, default=CounterVersionChoices.C5
+        )
         parser.add_argument("-p", dest="platform", help="short name of the platform to process")
         parser.add_argument("original", type=str, help="Original url")
         parser.add_argument("new", type=str, help="New url")
@@ -25,7 +33,7 @@ class Command(BaseCommand):
 
     @atomic
     def handle(self, *args, **options):
-        qs = SushiCredentials.objects.filter(counter_version=5)
+        qs = SushiCredentials.objects.filter(counter_version=options["counter_version"])
         stats = Counter()
         if options["platform"]:
             qs = qs.filter(platform__short_name=options["platform"])

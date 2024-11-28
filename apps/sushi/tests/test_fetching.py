@@ -14,7 +14,7 @@ from sushi.models import CounterReportType, SushiCredentials
 @pytest.mark.django_db
 class TestURLComposition:
     def test_extra_params_is_not_polluted_by_extra_data(
-        self, organizations, report_type_nd, monkeypatch
+        self, organizations, report_type_nd, monkeypatch, counter5_version
     ):
         assert SushiCredentials.objects.count() == 0
         data = [
@@ -27,10 +27,12 @@ class TestURLComposition:
             }
         ]
         knowledgebase = {
-            "providers": [{"counter_version": 5, "provider": {"url": "http://this.is/test/2"}}]
+            "providers": [
+                {"counter_version": counter5_version, "provider": {"url": "http://this.is/test/2"}}
+            ]
         }
         Platform.objects.create(short_name="XXX", name_en="XXXX", knowledgebase=knowledgebase)
-        stats = import_sushi_credentials_new(data)
+        stats = import_sushi_credentials_new(data, counter_version=counter5_version)
         assert stats["added"] == 1
         assert SushiCredentials.objects.count() == 1
         credentials = SushiCredentials.objects.all()
@@ -38,13 +40,13 @@ class TestURLComposition:
         cr1 = credentials[0]
         cr1.create_sushi_client()
         report = CounterReportType.objects.create(
-            code="tr", name="tr", counter_version=5, report_type=report_type_nd(0)
+            code="tr", name="tr", counter_version=counter5_version, report_type=report_type_nd(0)
         )
-        orig_params = deepcopy(Sushi5Client.EXTRA_PARAMS)
+        orig_params = deepcopy(counter5_version.nigiri.get_report_class("tr").extra_params)
 
         def mock_get_report_data(*args, **kwargs):
             return Counter5ReportBase()
 
         monkeypatch.setattr(Sushi5Client, "get_report_data", mock_get_report_data)
         cr1.fetch_report(report, start_date="2020-01-01", end_date="2020-01-31")
-        assert orig_params == Sushi5Client.EXTRA_PARAMS
+        assert orig_params == counter5_version.nigiri.get_report_class("tr").extra_params
