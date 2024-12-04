@@ -44,8 +44,9 @@ def sync_platform_title_links(pretend=False):
             )
         else:
             rec_gen = (
-                AccessLog.objects.filter(organization_id=org.pk)
+                AccessLog.objects.filter(organization_id=org.pk, target_id__isnull=False)
                 .values_list("platform_id", "target_id", "date")
+                .distinct()
                 .order_by("platform_id", "target_id", "date")
                 .iterator()
             )
@@ -70,16 +71,17 @@ def sync_platform_title_links(pretend=False):
                 extra_pts.append(pt_rec[3])
                 break
 
-            while pt_rec and pt_rec[:3] < al_rec:
-                # everything extra in pt_rec goes to extra_pts
-                extra_pts.append(pt_rec[3])
-                if pt_rec := next(pt_gen, None):
-                    count += 1
+            while pt_rec and al_rec and pt_rec[:3] != al_rec:
+                while pt_rec and pt_rec[:3] < al_rec:
+                    # everything extra in pt_rec goes to extra_pts
+                    extra_pts.append(pt_rec[3])
+                    if pt_rec := next(pt_gen, None):
+                        count += 1
 
-            while al_rec and pt_rec[:3] > al_rec:
-                # everything extra in al_rec goes to missing_pts
-                missing_pts.append(al_rec)
-                al_rec = next(rec_gen, None)
+                while al_rec and pt_rec[:3] > al_rec:
+                    # everything extra in al_rec goes to missing_pts
+                    missing_pts.append(al_rec)
+                    al_rec = next(rec_gen, None)
         # gather extra stuff after one of the generators ended
         while al_extra := next(rec_gen, None):
             missing_pts.append(al_extra)
@@ -94,10 +96,13 @@ def sync_platform_title_links(pretend=False):
             stats["missing"] += len(missing_pts)
             if not pretend:
                 PlatformTitle.objects.bulk_create(
-                    PlatformTitle(
-                        organization_id=org.pk, platform_id=key[0], title_id=key[1], date=key[2]
-                    )
-                    for key in missing_pts
+                    (
+                        PlatformTitle(
+                            organization_id=org.pk, platform_id=key[0], title_id=key[1], date=key[2]
+                        )
+                        for key in missing_pts
+                    ),
+                    ignore_conflicts=True,
                 )
         # extra platform-titles
         if extra_pts:
