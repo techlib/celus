@@ -405,7 +405,7 @@ cs:
               <PlatformSelector
                 :platforms="platforms"
                 v-model="platformFilter"
-                :label="$t('labels.platform_filter')"
+                :label="$t('labels.platform')"
               />
             </v-col>
             <v-col cols="auto" class="ml-auto">
