@@ -24,7 +24,7 @@ def invalid_identity():
 @pytest.fixture
 def master_admin_identity():
     id_string = "masteradmin@user.test"
-    user = get_user_model().objects.create(username="master_admin")
+    user = get_user_model().objects.create(username="master_admin", email=id_string)
     Identity.objects.create(user=user, identity=id_string)
     user.organizations.add(
         Organization.objects.get_or_create(
@@ -46,7 +46,7 @@ def master_admin_identity():
 @pytest.fixture
 def master_user_identity():
     id_string = "masteruser@user.test"
-    user = get_user_model().objects.create(username="master_user")
+    user = get_user_model().objects.create(username="master_user", email=id_string)
     Identity.objects.create(user=user, identity=id_string)
     user.organizations.add(
         Organization.objects.get_or_create(
@@ -68,7 +68,7 @@ def master_user_identity():
 @pytest.fixture
 def admin_identity():
     id_string = "admin@user.test"
-    user = get_user_model().objects.create(username="admin", is_superuser=True)
+    user = get_user_model().objects.create(username="admin", is_superuser=True, email=id_string)
     Identity.objects.create(user=user, identity=id_string)
     yield id_string
 

@@ -332,15 +332,15 @@ class TestAccountCreationAPI:
         assert User.objects.count() == 2
 
     @pytest.mark.parametrize("first_verified", [True, False])
-    def test_create_account_same_email(self, clients, first_verified):
+    def test_create_account_same_email(self, client, first_verified):
         """
-        Tests that it is not possible to create two accounts with the same email, if the email
-        is verified. If it is not verified, it is possible to create a new account with the same
-        email.
+        Tests that it is not possible to create two accounts with the same email
+        - regardless if the email is verified (changed at the end of 2024)
         """
-        assert User.objects.count() == 8
-        with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
-            resp = clients["unauthenticated"].post(
+        user = UserFactory.create(email="foo@bar.baz")
+        EmailAddress.objects.create(user=user, email=user.email, verified=first_verified)
+        with patch("core.signals.async_mail_customer_care_admins") as mail_task:  # fake celery task
+            resp = client.post(
                 "/api/rest-auth/registration/",
                 {
                     "email": "foo@bar.baz",
@@ -348,20 +348,8 @@ class TestAccountCreationAPI:
                     "password2": "verysecret666",
                 },
             )
-            assert resp.status_code == 204
-            assert User.objects.count() == 9
-            if first_verified:
-                EmailAddress.objects.filter(email="foo@bar.baz").update(verified=True)
-            resp = clients["unauthenticated"].post(
-                "/api/rest-auth/registration/",
-                {
-                    "email": "foo@bar.baz",
-                    "password1": "verysecret555",
-                    "password2": "verysecret555",
-                },
-            )
-            assert resp.status_code == (400 if first_verified else 204)
-            assert User.objects.count() == 9 if first_verified else 10
+            assert resp.status_code == 400
+            assert not mail_task.called
 
     def test_create_account_bad_data(self, mailoutbox, clients):
         """

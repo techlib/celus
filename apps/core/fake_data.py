@@ -47,6 +47,7 @@ class EmailAddressFactory(factory.django.DjangoModelFactory):
 class EmailDeviceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EmailDevice
+        django_get_or_create = ("user", "name")
 
     name = "default"
     user = factory.SubFactory(UserFactory)

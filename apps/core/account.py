@@ -2,13 +2,17 @@ from urllib.parse import urlparse
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.forms import default_token_generator
+from allauth.account.models import EmailAddress
 from allauth.account.utils import user_pk_to_url_str as uid_encoder
 from allauth.utils import build_absolute_uri
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 from django.urls import resolve
+from rest_framework.exceptions import ValidationError
 
 
 class CelusAccountAdapter(DefaultAccountAdapter):
@@ -65,3 +69,19 @@ class CelusAccountAdapter(DefaultAccountAdapter):
             msg.send()
         else:
             super().send_mail(template_prefix, email, context)
+
+
+class CelusRegisterSerializer(RegisterSerializer):
+    """
+    The default RegisterSerializer from dj-rest-auth only raises an error if the e-mail address
+    is verified, but we want to raise an error for any e-mail address that is already in use.
+    """
+
+    def validate_email(self, email):
+        email = super().validate_email(email)
+        if email and (
+            get_user_model().objects.filter(email__iexact=email).exists()
+            or EmailAddress.objects.filter(email__iexact=email).exists()
+        ):
+            raise ValidationError("A user is already registered with this e-mail address.")
+        return email

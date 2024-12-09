@@ -11,6 +11,7 @@ from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.cache import cache
 from django.db import models
 from django.db.models import BooleanField, Exists, OuterRef, Value
+from django.db.models.functions import Lower
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
@@ -178,6 +179,16 @@ class User(AbstractUser):
         help_text="If set to True, 2FA auth will be bypassed", default=False
     )
     objects = CelusUserManager()
+
+    class Meta:
+        constraints = [
+            # there can be only one user with a given email, but empty email is allowed
+            # for multiple users - this may happen only for users created from ERMS, etc.
+            # not for users registered via the web interface
+            models.UniqueConstraint(
+                Lower("email"), name="unique-user-email", condition=~models.Q(email="")
+            )
+        ]
 
     def __str__(self) -> str:
         return self.get_usable_name()

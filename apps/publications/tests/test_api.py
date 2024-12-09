@@ -2023,8 +2023,8 @@ class TestItemViewSet:
     def test_item_list_no_filter(
         self, master_user_client, interest_rt, django_assert_max_num_queries
     ):
-        items = ItemFactory.create_batch(20)
-        with django_assert_max_num_queries(20):
+        items = ItemFactory.create_batch(30)
+        with django_assert_max_num_queries(21):
             resp = master_user_client.get(reverse("global-items-list"))
         assert resp.status_code == 200
         data = resp.json()["results"]

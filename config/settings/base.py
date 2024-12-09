@@ -605,6 +605,7 @@ ACCOUNT_ADAPTER = "core.account.CelusAccountAdapter"
 # confirmation email. The default is 3 minutes, but we set it to 1 second in DEBUG mode
 # to make testing easier
 EMAIL_CONFIRMATION_COOLDOWN = config("EMAIL_CONFIRMATION_COOLDOWN", default=1 if DEBUG else 3 * 60)
+REST_AUTH = {"REGISTER_SERIALIZER": "core.account.CelusRegisterSerializer"}
 
 # impersonate
 IMPERSONATE = {
