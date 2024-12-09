@@ -23,7 +23,7 @@ en:
       unknown: The state is not clear. There was no obvious error but no data were imported.
       queued: Data was not yet available so future attempts were queued.
       error: There was an error downloading data.
-      success: Data were successfully downloaded and ingested into Celus.
+      success: Data were successfully downloaded and ingested into CELUS.
       missing: Data retrieval was not yet performed.
       empty_data: Data was successfully harvested, but no usage was recorded at the time in question.
       broken: The credentials are marked as broken and thus automatic harvesting is turned off.

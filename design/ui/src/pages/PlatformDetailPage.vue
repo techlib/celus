@@ -6,7 +6,7 @@ en:
   sushi: Sushi
   raw_export_text: |
     You can export all records stored for this platform in a CSV format.
-    The data will be in a raw format very closely matching the structure of the Celus database.
+    The data will be in a raw format very closely matching the structure of the CELUS database.
     The format is not suitable for reporting, but rather for further machine processing.
   raw_export_reporting_link: For smarter and very configurable data export use the {reporting_module}.
   reporting_module: Reporting module
@@ -22,24 +22,24 @@ en:
     The platform "{platform}" is not associated with the selected organization. To be able to
     display usage data for you, you need to create SUSHI credentials for this platform or manually
     upload some data for it.
-  counter_data_export_text: Here you can download generated COUNTER reports directly from Celus. The data are filtered based on selected organization and date range in the page header.
+  counter_data_export_text: Here you can download generated COUNTER reports directly from CELUS. The data are filtered based on selected organization and date range in the page header.
   counter_data_export_no_org: No organization is selected, please select an organization from the top bar in order to download data in COUNTER format.
   curve_info: |
     The following curve describes on which day of month SUSHI data
     typically become available on this platform (a generic curve is
-    used when not enough data is present for a platform). Celus uses
+    used when not enough data is present for a platform). CELUS uses
     this information to plan automatic harvesting in order to minimize
     delay, but maximize chance of success.
   curve_title: SUSHI data availability curve
   stats_for_geeks: Stats for geeks
-  curve_attempts_info: The arrows shown on the curve show the typical points when Celus will attempt to (re)harvest data for this platform. The actual dates may vary slightly to accommodate internal rules and potential manual harvests.
+  curve_attempts_info: The arrows shown on the curve show the typical points when CELUS will attempt to (re)harvest data for this platform. The actual dates may vary slightly to accommodate internal rules and potential manual harvests.
 
 cs:
   no_info: Pro tuto platformu bohužel nejsou dostupná žádná data o titulech.
   sushi: Sushi
   raw_export_text: |
     Zde můžete vyexportovat všechna data pro tuto platformu ve formátu CSV.
-    Data budou uložena v surové podobě, která blízce odpovídá struktuře databáze Celus.
+    Data budou uložena v surové podobě, která blízce odpovídá struktuře databáze CELUS.
     Formát není vhodný pro přímý reporting, hodí se zejména pro další strojové zpracování.
   raw_export_reporting_link: Pro chytřejší a vysoce konfigurovatelný export doporučujeme {reporting_module}.
   reporting_module: modul Reporting
@@ -54,16 +54,16 @@ cs:
   unconnected_platform: |
     Platforma "{platform}" není přiřazená k právě vybrané instituci. Abychom vám pro ni mohli zobrazit data,
     je třeba pro ni nejprve přidat přihlašovací údaje SUSHI a nebo manuálně nahrát data.
-  counter_data_export_text: Zde si stáhnout vygenerované COUNTER reporty přímo z Celusu.  Data jsou filtrováná podle zvolené organizace a rozmezí dat v hlavičce stránky.
+  counter_data_export_text: Zde si stáhnout vygenerované COUNTER reporty přímo z CELUSu.  Data jsou filtrováná podle zvolené organizace a rozmezí dat v hlavičce stránky.
   counter_data_export_no_org: Není vybraná oranizace, prosím vyberte organizaci v horním panelu, aby bylo možné stáhnout data v COUNTER formátu.
   curve_info: |
     Následující křivka popisuje, ve kolikátý den v měsíci jsou obvykle dostupná SUSHI data
     pro tuto platformu (pokud není dostatek dat pro konkrétní platformu, použije se obecná křivka).
-    Celus tuto informaci využívá pro plánování automatického sklízení dat tak, aby minimalizoval
+    CELUS tuto informaci využívá pro plánování automatického sklízení dat tak, aby minimalizoval
     zpoždění, ale zároveň maximalizoval šanci na úspěch.
   curve_title: Křivka dostupnosti dat pro SUSHI
   stats_for_geeks: Statistiky pro nadšence
-  curve_attempts_info: Šipky na křivce ukazují typické body, kdy se Celus bude pokoušet (znovu)stáhnout data pro tuto platformu. Skutečné časy se mohou mírně lišit kvůli interním pravidlů a jsou ovlivněny případnými manuálními staženími.
+  curve_attempts_info: Šipky na křivce ukazují typické body, kdy se CELUS bude pokoušet (znovu)stáhnout data pro tuto platformu. Skutečné časy se mohou mírně lišit kvůli interním pravidlů a jsou ovlivněny případnými manuálními staženími.
 </i18n>
 
 <template>

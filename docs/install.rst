@@ -5,13 +5,13 @@ Installation
 This installation instructions manual is based on RHEL/CentOS 8.0 system. It should be possible
 to use it with only minor adjustments on other Linux systems as well.
 
-We recommend using a separate (virtual) machine for installation of Celus. The system is relatively
+We recommend using a separate (virtual) machine for installation of CELUS. The system is relatively
 self-contained, but there may be some system wide changes made during the installation that might
 conflict with other apps installed in parallel. For example, the system wide services ``celery``
-and ``celerybeat`` will be created for `Celus`.
+and ``celerybeat`` will be created for `CELUS`.
 
 
-Please note that the install procedure is tailor made for deployment of Celus for the CzechELib
+Please note that the install procedure is tailor made for deployment of CELUS for the CzechELib
 consortium. It might require extra effort to make it work in different environment. In case you
 find something missing in the instructions, we welcome fixes - ideally in form of pull requests
 on `Github <https://github.com/techlib/celus/>`_.
@@ -24,14 +24,14 @@ Apache & shibboleth
 -------------------
 
 Installation instructions presume that `Apache` webserver is already installed and configured
-to serve the hostname that you will use for the Celus system. In case `shibboleth` is used
+to serve the hostname that you will use for the CELUS system. In case `shibboleth` is used
 for authentication, it should also be set up.
 
 
 Python
 ------
 
-`Celus` uses Python 3 (version 3.6 and above). As most of the installation procedure makes use
+`CELUS` uses Python 3 (version 3.6 and above). As most of the installation procedure makes use
 of `ansible` which depends on Python, you will also need Python to run the installation.
 
 For `ansible` you can decide between Python 2 and Python 3. Python 2 is (at the time of writing
@@ -57,14 +57,14 @@ Ansible
 -------
 
 The installation is mostly done automatically by `Ansible <https://www.ansible.com/>`_ using
-a playbook which is part of the source code of `Celus`. In order to run the playbook, you
+a playbook which is part of the source code of `CELUS`. In order to run the playbook, you
 will need `Ansible` installed in version **at least 2.8**.
 
 
 Installation with Ansible
 =========================
 
-The distribution of Celus contains an Ansible playbook ``celus`` (under the ``docs/ansible``
+The distribution of CELUS contains an Ansible playbook ``celus`` (under the ``docs/ansible``
 folder), which will set up most of the system for you. You just need to provide several
 configuration options.
 
@@ -73,14 +73,14 @@ The ansible playbook will do the following:
 * install a few system-wide prerequisites (git, virtualenv support, etc.)
 * install the `celery` and `celerybeat` system-wide services - these are used for running
   background jobs like downloading SUSHI data, etc.
-* install the Celus system from the git repository under ``/opt/celus/`` (you can configure the
+* install the CELUS system from the git repository under ``/opt/celus/`` (you can configure the
   git branch you want to use)
-* create PostgreSQL database for the Celus app with the configured username and password
+* create PostgreSQL database for the CELUS app with the configured username and password
 * configure the Django installation
 * create cron scripts in ``/etc/cron.daily/`` to backup the database and downloaded SUSHI data
   under ``/root/backup/`` directory.
 * create script ``activate_virtualenv.sh`` in the ``/root/`` home directory.
-  (Use ``. activate_virtualenv.sh`` to activate the virtual Python environment under which Celus is
+  (Use ``. activate_virtualenv.sh`` to activate the virtual Python environment under which CELUS is
   used when you want to run management commands from the command line on the server.)
 
 
@@ -92,7 +92,7 @@ system. The ``docs/ansible/`` directory contains the ``host_vars`` directory whe
 for individual hosts lives. For each host that you wish to configure, you need to provide a
 directory with the corresponding name and a ``vars`` file inside that.
 
-For convenience, a sample configuration is provided with the `Celus` source code in the
+For convenience, a sample configuration is provided with the `CELUS` source code in the
 ``example.com`` dir under ``host_vars/``. You can copy this configuration to your hosts config:
 
 >>> cd host_vars
@@ -137,15 +137,15 @@ Configuring Apache
 ------------------
 
 The playbook does not attempt to configure Apache (or other webserver) in any way as there are
-many things that need to be set up there besides `Celus`. Below are examples of how we integrate
-`Celus` with Apache.
+many things that need to be set up there besides `CELUS`. Below are examples of how we integrate
+`CELUS` with Apache.
 
-Celus (as a Django application) uses WSGI to integrate with the server. We use the ``mod_wsgi``
+CELUS (as a Django application) uses WSGI to integrate with the server. We use the ``mod_wsgi``
 Apache module to accomplish this. At first you need to install the module:
 
 >>> yum install python3-mod_wsgi
 
-Then you need to integrate `Celus` into your Apache configuration. We use the following config
+Then you need to integrate `CELUS` into your Apache configuration. We use the following config
 in the ``VirtualHost`` part of config for our deployment::
 
     # Django stuff - mod_wsgi
@@ -220,7 +220,7 @@ We also recommend to turn on response compression. For example like this::
 Creating initial superuser account
 ----------------------------------
 
-In order to log in into the `Celus` administration system, where you can configure most of the
+In order to log in into the `CELUS` administration system, where you can configure most of the
 system, like add users, define report types, etc., you need a superuser account. To create one,
 you need to use the command line on the server and a Django management command ``createsuperuser``:
 
@@ -238,12 +238,12 @@ virtual environment in :ref:`cli-management`.
 Loading initial data into the database
 --------------------------------------
 
-In `Celus` many parts of the system are not hard-coded but driven by the configuration stored in
+In `CELUS` many parts of the system are not hard-coded but driven by the configuration stored in
 the application database. Just after installation this database is empty and thus many essential
 pieces are missing, such as the definitions of report types, data dimensions, etc.
 
 Because bootstrapping the whole system manually would be a lot of work which would be the same
-between installs, we provide basic set of reports, dimensions, etc. with `Celus`. This data
+between installs, we provide basic set of reports, dimensions, etc. with `CELUS`. This data
 are meant to be used only once for bootstrapping the system. If you have already made your own
 changes in the system database, you could lose data by repeating the procedure described below,
 so be careful.

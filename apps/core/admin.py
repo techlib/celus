@@ -116,9 +116,9 @@ class MyUserAdmin(ExportActionMixin, UserAdmin):
     custom_fields = ("ext_id", "source", "language", "skip_2fa", "extra_data")
 
     fieldsets = (
-        UserAdmin.fieldsets[:2] + (("Celus", {"fields": custom_fields}),) + UserAdmin.fieldsets[2:]
+        UserAdmin.fieldsets[:2] + (("CELUS", {"fields": custom_fields}),) + UserAdmin.fieldsets[2:]
     )
-    add_fieldsets = UserAdmin.add_fieldsets + (("Celus", {"fields": custom_fields}),)
+    add_fieldsets = UserAdmin.add_fieldsets + (("CELUS", {"fields": custom_fields}),)
 
     list_filter = (
         ("source", RelatedOnlyFieldListFilter),

@@ -1,9 +1,9 @@
-.. Celus documentation master file, created by
+.. CELUS documentation master file, created by
    sphinx-quickstart on Wed Jan  8 17:25:20 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Celus's documentation!
+Welcome to CELUS's documentation!
 =================================
 
 CELUS (CzechELib Usage Statistics) is a web application for collection and analysis of usage

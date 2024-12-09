@@ -283,7 +283,7 @@ en:
   cover_image: Cover image
   interest: Interest
   charts: Charts
-  celus_version: Celus version
+  celus_version: CELUS version
   warnings:
     select_one_title_type: Select at least one publication type
   blank_value: -- blank --
@@ -373,7 +373,7 @@ en:
     sushi: SUSHI
     tags: Tags
   event_category_desc:
-    general: General announcements about Celus - new releases, planned maintenance, etc.
+    general: General announcements about CELUS - new releases, planned maintenance, etc.
     overlap: Messages related to overlap analysis
     platform: Alerts about platforms - issues with SUSHI harvesting, data consistency, etc.
     sushi: Messages related to individual SUSHI harvests, such as errors, warnings, etc.
@@ -396,11 +396,13 @@ en:
     notifications_disabled: Notifications disabled
     notifications_disabled_tt: System notifications are disabled. To enable them, you need to unblock them in your browser settings first.
     enable_notifications: Enable notifications
-    enable_notifications_tt: Enable system notifications. You will be notified about new events even if you are not currently using Celus.
+    enable_notifications_tt: Enable system notifications. You will be notified about new events even if you are not currently using CELUS.
   errors:
     file_too_large: The uploaded file is too large
   options:
     all: All
+  overlap_analysis:
+    loading_data: "Please wait while CELUS is crunching the data for you. It has to go over all the titles and that takes some time."
 
 cs:
   pages:
@@ -687,7 +689,7 @@ cs:
   cover_image: Obrázek obálky
   interest: Zájem
   charts: Grafy
-  celus_version: Celus verze
+  celus_version: CELUS verze
   warnings:
     select_one_title_type: Vyberte alespoň jeden typ publikace
   blank_value: -- prázdná hodnota --
@@ -777,7 +779,7 @@ cs:
     sushi: SUSHI
     tags: Štítky
   event_category_desc:
-    general: Obecné oznámení o Celusu - nové verze, plánovaná údržba, atd.
+    general: Obecné oznámení o CELUSu - nové verze, plánovaná údržba, atd.
     overlap: Zprávy související s analýzou překryvů
     platform: Upozornění o platformách - problémy se stahováním SUSHI, konzistencí dat, atd.
     sushi: Zprávy související s jednotlivými stahováními SUSHI, jako jsou chyby, varování, atd.
@@ -800,8 +802,10 @@ cs:
     notifications_disabled: Notifikace vypnuty
     notifications_disabled_tt: Systémové notifikace jsou vypnuty. Pro jejich zapnutí je potřeba odstranit jejich blokaci v nastavení prohlížeče.
     enable_notifications: Zapnout notifikace
-    enable_notifications_tt: Zapnout systémové notifikace. Budete upozorněni na nové události i když právě nepoužíváte Celus.
+    enable_notifications_tt: Zapnout systémové notifikace. Budete upozorněni na nové události i když právě nepoužíváte CELUS.
   errors:
     file_too_large: The uploaded file is too large
   options:
     all: Všechny
+  overlap_analysis:
+    loading_data: "Prosíme o chvilku strpení, než CELUS přechroupe data. Musí zpracovat záznamy o všech titulech a to nějakou dobu zabere."

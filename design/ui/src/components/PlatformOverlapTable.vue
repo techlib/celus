@@ -1,6 +1,6 @@
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  loading_data: "Please wait while Celus is crunching the data for you. It has to go over all the titles and that takes some time."
   tooltip_two_platforms_titles: "{absValue} ({relValue}) {titles} from {platformName1} {is_also_available} from {platformName2}"
   tooltip_two_platforms_interest: "{absValue} ({relValue}) of the interest in titles from <strong>{platformName1}</strong> could also be satisfied on <strong>{platformName2}</strong>"
   is_also_available: is also available | are also available
@@ -14,7 +14,6 @@ en:
   platform_interest: "Total interest on platform <strong>{platform}</strong> is {value}"
 
 cs:
-  loading_data: "Prosíme o chvilku strpení, než Celus přechroupe data. Musí zpracovat záznamy o všech titulech a to nějakou dobu zabere."
   tooltip_two_platforms_titles: "{absValue} ({relValue}) {titles} z {platformName1} {is_also_available} z {platformName2}"
   tooltip_two_platforms_interest: "{absValue} ({relValue}) zájmu o tituly z <strong>{platformName1}</strong> by mohlo být uspokojeno také na <strong>{platformName2}</strong>"
   is_also_available: "je také dostupný | jsou také dostupné | je také dostupných"
@@ -32,7 +31,7 @@ cs:
   <LoaderWidget
     v-if="loading || platformsLoading"
     height="300"
-    :text="$t('loading_data')"
+    :text="$t('overlap_analysis.loading_data')"
   />
   <ErrorPlaceholder
     v-else-if="usedPlatforms.length === 0"

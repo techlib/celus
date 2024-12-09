@@ -3,7 +3,7 @@
 en:
   matched_rows: Matched rows
   total_rows: Total rows
-  delete_batch_tt: Delete this file from Celus
+  delete_batch_tt: Delete this file from CELUS
   delete_batch_text: Are you sure you want to delete this file?
   batch_deleted: File was successfully deleted.
   annotated_file_tt: Download annotated file
@@ -14,7 +14,7 @@ en:
 cs:
   matched_rows: Nalezené řádky
   total_rows: Celkem řádků
-  delete_batch_tt: Odstranit tento soubor z Celusu
+  delete_batch_tt: Odstranit tento soubor z CELUSu
   delete_batch_text: Opravdu chcete odstranit tento soubor?
   batch_deleted: Soubor byl úspěšně odstraněn.
   annotated_file_tt: Stáhnout anotovaný soubor

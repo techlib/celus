@@ -5,7 +5,7 @@ en:
   title: Set last harvestable month
   desc: |
     If you know that data is not available before a certain date for a
-    specific report, you can set this date here. Celus will use this information
+    specific report, you can set this date here. CELUS will use this information
     and not try to harvest data before this date.
   desc2_1: The date is set per report and applied to all credentials you have currently selected.
   desc2_2: To unset a previously set date, just remove the date and hit apply.
@@ -15,7 +15,7 @@ cs:
   title: Nastavete od kdy jsou data k dispozici
   desc: |
     Pokud víte, že data nejsou dostupná před určitým datem pro konkrétní
-    report, můžete toto datum nastavit zde. Celus bude tuto informaci používat a
+    report, můžete toto datum nastavit zde. CELUS bude tuto informaci používat a
     nebude se snažit data stáhnout před tímto datem.
   desc2_1: Datum je nastaveno pro každý report a aplikováno na všechny přihlašovací údaje, které máte aktuálně vybrané.
   desc2_2: Chcete-li zrušit dříve nastavené datum, stačí odstranit hodnotu data a stisknout tlačítko Nastavit.

@@ -665,7 +665,7 @@ class MduState(models.TextChoices):
 
 class MduMethod(models.TextChoices):
     COUNTER = "counter", _("Counter format")
-    CELUS = "celus", _("Celus format")
+    CELUS = "celus", _("CELUS format")
     RAW = "raw", _("Raw data")
 
 
@@ -1206,7 +1206,7 @@ class FlexibleReport(models.Model):
         """
         Prepares the slicer config for storage. The most important thing is that we need to
         translate primary keys to some more robust identifier in order to allow copying of
-        public reports between Celus instances.
+        public reports between CELUS instances.
         """
         new_config = {
             **config,

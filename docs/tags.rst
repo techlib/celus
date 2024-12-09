@@ -6,7 +6,7 @@ Tags
    :depth: 3
    :local:
 
-Tags are a new feature introduced in Celus 5.0 which allows users to attach arbitrary labels to
+Tags are a new feature introduced in CELUS 5.0 which allows users to attach arbitrary labels to
 individual titles, platforms and organizations.
 
 Tags may be used for filtering of the corresponding lists (list of titles, platforms, organizations)
@@ -32,7 +32,7 @@ Grouping of tags - tag classes
 ------------------------------
 
 Because there are many different purposes for using tags, it is important to have a way of
-organizing them. In Celus this is accomplished by the so called tag classes which are similar
+organizing them. In CELUS this is accomplished by the so called tag classes which are similar
 to folders and represent one specific type of tag. For example one tag class for titles could
 be “collection”, which would contain several tags named by individual collections, while another
 would be “topic” with tags like “chemistry”, “biology”, etc.
@@ -45,7 +45,7 @@ While you can assign as many tags to an item as you wish, there are specific typ
 which individual values are mutually exclusive. For example you might want to split you member
 institutions between public libraries and university libraries. To ensure that it would not be
 possible to assign both tags to one institution, you can mark the corresponding tag class as
-exclusive and Celus will enforce the mutual exclusiveness of individual tags.
+exclusive and CELUS will enforce the mutual exclusiveness of individual tags.
 
 One important feature of tags from exclusive class is that when you compute usage by individual
 tags, you can safely sum it up to produce a meaningful total.
@@ -75,7 +75,7 @@ Organization members  Only members of a specified organization can perform the a
 Organization admins   Only administrators or specified organization can perform the action
 Consortium admins     Only consortium administrators can perform the action
 Owner                 Only the owner/creator of the tag/tag class can perform the action
-System                No user can perform the action, it is reserved internally for Celus
+System                No user can perform the action, it is reserved internally for CELUS
 ====================  ====================================================================
 
 Combining the above access rights with different values allows creating tags for a wide variety of
@@ -224,7 +224,7 @@ Tagging many titles at once - title lists
 -----------------------------------------
 
 It is very common to want to tag many titles at once. Typically you would want to tag all titles
-belonging to one collection. To make this process easier, Celus allows you to upload a file
+belonging to one collection. To make this process easier, CELUS allows you to upload a file
 containing a list of titles and then assign a tag to all of them at once.
 
 To create a title list, go to the “Title lists” section of the main menu and click the “Upload
@@ -259,7 +259,7 @@ number of matched titles may be higher than the total number of rows in the file
 
 If you wish to review in detail which titles were matched and which were not, there is a link
 to the annotated source file. This file will contain the same rows as the original file, but
-an extra column (`_Celus info_`) will be added with the result of the matching. It shows the
+an extra column (`_CELUS info_`) will be added with the result of the matching. It shows the
 number of matched for that line and contains links to the matched titles.
 
 You will also be shown which columns were used for the matching. If you find that some of the
@@ -279,7 +279,7 @@ if new titles appeared in the database between the time of upload and time of ta
    :scale: 60%
 
 At this point, the tag is already applied to all the matched titles and you can use it everywhere
-else in Celus.
+else in CELUS.
 
 If you find out that some of the titles were not matched correctly or have some other reason, you
 can remove the tag from all the tagged titles. The title list remembers which titles were tagged

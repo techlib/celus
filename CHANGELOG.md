@@ -122,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-* a bug causing Celus not to respect the 1020 (too many requests) SUSHI exception was fixed
+* a bug causing CELUS not to respect the 1020 (too many requests) SUSHI exception was fixed
   (thanks to ScholarlyIQ for reporting this issue)
 
 
@@ -257,7 +257,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * unless manually changed, the SUSHI server URL will be taken from the platform metadata and
   automatically updated when the platform is updated
 * search was enabled in the platform filter selector on the SUSHI status page
-* import of "Celus format" was removed from the import format options (unless turned on in the settings)
+* import of "CELUS format" was removed from the import format options (unless turned on in the settings)
 
 #### Backend
 
@@ -342,7 +342,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   improvement
 * the API for external access was extended to allow COUNTER registry IDs for platform identification
 * a more compact method of passing list of object IDs is used to request list of tags associated
-  with them. This fixes a problem with some URL strings being too long for the server on large Celus
+  with them. This fixes a problem with some URL strings being too long for the server on large CELUS
   installations
 
 
@@ -400,7 +400,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * autocomplete is now used for selecting platforms when uploading data manually
 * during an ongoing harvest, progress checks with the backend are done progressively less often
   to reduce the load on the server
-* default logo was changed from "Celus Plus" to "Celus"
+* default logo was changed from "CELUS Plus" to "CELUS"
 * logic for displaying platforms in the list of non-COUNTER platforms was changed to use info about
   presence of support web article
 * Excel files incorrectly detected as 'application/CDFV2' are now accepted as XLSX files
@@ -440,13 +440,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Frontend
 
 - filtering by tag class (not only by individual tags) was added to reporting
-- "last harvestable month" was introduced for SUSHI credentials - Celus will not try to harvest
+- "last harvestable month" was introduced for SUSHI credentials - CELUS will not try to harvest
   data for months after this date. It is automatically extracted from failed reports and may be
   set/overridden by the user.
 - tagging titles from a title list newly supports getting tag names from the uploaded file, rather
   than being selected manually
 - tagging titles from a title list newly supports automatic periodic re-tagging of new titles
-- report type selection is no longer necessary when uploading COUNTER data - Celus will detect it
+- report type selection is no longer necessary when uploading COUNTER data - CELUS will detect it
   automatically
 - confirmation step was added to the manual data upload process to let user know what report type
   was detected
@@ -473,9 +473,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Backend
 
 - code cleanup + typo fixing was performed in the backend code
-- lazy imports were added to the nibbler library to speed up startup of Celus
+- lazy imports were added to the nibbler library to speed up startup of CELUS
 - API key based authentication was sped up by using a newer version of the corresponding library
-- CSV processing throughout Celus was unified to use the same library
+- CSV processing throughout CELUS was unified to use the same library
 
 
 ### Fixed
@@ -608,7 +608,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Backend
 
 - handling of the 3040 SUSHI exception was changed - data get ingested immediately and re-harvest
-  is scheduled for the future (previously Celus made several retries before accepting the data)
+  is scheduled for the future (previously CELUS made several retries before accepting the data)
 - SUSHI exception 3060 no longer causes the whole credentials to be marked as broken - only the
   problematic report is disabled
 - Clickhouse support was added to the external API `PlatformReportView` endpoint
@@ -719,7 +719,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - export of SUSHI credentials was improved and now uses .xlsx format
 - 'Include rows with zero usage' option is newly only enabled for some types of rows. It is disabled
-  where Celus does not have a correct source of list of possible values (e.g. for all titles
+  where CELUS does not have a correct source of list of possible values (e.g. for all titles
   available on a platform)
 - explicit information was added to the harvest dialog that it is safe to close it without
   interrupting the harvest
@@ -775,7 +775,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - support for the ACRL IPEDS report was added to the `Specialized reports` section
 - interest type `Multimedia` was added
-- it is now possible to import empty table reports (reports with no data) into Celus and thus
+- it is now possible to import empty table reports (reports with no data) into CELUS and thus
   create correct coverage records for the platform and dates at hand (only when nibbler library
   is used for parsing)
 - when deleting platform data, it is now possible to delete the related SUSHI credentials as well
@@ -851,7 +851,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Frontend
 
 - a new function was added to overlap analysis section - `Title list overlap`. It allows users
-  to compare titles present in Celus against an uploaded title list.
+  to compare titles present in CELUS against an uploaded title list.
 - the reporting section was expanded with `Specialized reports` page. It contains synthetic reports
   for specific use cases which go beyond the normal reporting capabilities. At present, it contains
   the `Rebiun report` used in Spain and the `ARL report` used in the USA.
@@ -869,7 +869,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- when the `nibbler` library is used to parse COUNTER data, Celus now does more check on the report
+- when the `nibbler` library is used to parse COUNTER data, CELUS now does more check on the report
   header to prevent user errors in selecting the correct report
 
 
@@ -889,7 +889,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-- Celus can autofill the appropriate value when a platform requires the `platform` SUSHI parameter
+- CELUS can autofill the appropriate value when a platform requires the `platform` SUSHI parameter
 
 #### Backend
 
@@ -898,7 +898,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Documentation
 
-- new section about external access to Celus was added
+- new section about external access to CELUS was added
 
 
 ### Changes
@@ -979,7 +979,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the [COUNTER registry](https://registry.projectcounter.org/) was integrated into the SUSHI
   credentials edit dialog giving extra information about the credentials for platforms in the registry
 - a basic "Troubleshooting" page for SUSHI was added containing the IP addresses of the
-  Celus server to be used when IP authentication is required
+  CELUS server to be used when IP authentication is required
 - a list of non-COUNTER platform for which raw data import is supported was added as a separate
   page
 - remember the page size of the SUSHI credentials table between visits
@@ -1053,7 +1053,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- parsing of the internal Celus format for non-COUNTER data has been reimplemented in the nibbler
+- parsing of the internal CELUS format for non-COUNTER data has been reimplemented in the nibbler
   library. It is now possible to activate this new parser by setting the
   `ENABLE_NIBBLER_FOR_CELUS_FORMAT` environment variable to `true`.
 - added `is_admin` and `is_consortial_admin` filters to User model in django admin
@@ -1409,7 +1409,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Backend
 
 - empty data in SUSHI response without a corresponding exception are treated as having exception 3030
-- Celus newly tries to re-harvest data from failed attempts (regardless of the error) if the
+- CELUS newly tries to re-harvest data from failed attempts (regardless of the error) if the
   credentials were successfully used to harvest some data lately
 - reporting speed was optimized in case when non-zero rows are not requested, most significantly
   those with titles in rows
@@ -1443,7 +1443,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- Celus newly stores checksums of files from SUSHI or manually uploaded and checks them on import
+- CELUS newly stores checksums of files from SUSHI or manually uploaded and checks them on import
   to prevent against potential data corruption or attacks
 
 ### Fixed
@@ -1530,7 +1530,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - regression of pycounter not being properly updated in 4.4.0 was fixed
 - superfluous import batches created for attempts with 3030 error code when migrating from very
-  old Celus versions were removed
+  old CELUS versions were removed
 
 ## [4.4.0] - 2022-04-29
 
@@ -1613,7 +1613,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- Celus ignores the `Severity` attribute in C5 SUSHI (marked as obsolete in CoP 5.0.2)
+- CELUS ignores the `Severity` attribute in C5 SUSHI (marked as obsolete in CoP 5.0.2)
 
 ### Fixed
 
@@ -1684,7 +1684,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the Platform dimension is newly extracted from COUNTER reports and stored in the database
 - extract data from SUSHI header and store them with harvested data (data reimport is required to
   fully take advantage)
-- Celus version was added to the prometheus exporter
+- CELUS version was added to the prometheus exporter
 - cli script was to check if report type dimensions match reader classes
 
 ### Changes
@@ -1815,7 +1815,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-- IP addresses of Celus harvesters are no longer hardcoded in the code, but rather configured in
+- IP addresses of CELUS harvesters are no longer hardcoded in the code, but rather configured in
   Django settings.
 
 #### Backend
@@ -2055,7 +2055,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - buttons for immediate harvesting and cancellation of harvests planned for later were added
 - partial-data status was added to `FetchAttempt` information
-- Celus frontend now checks the version of the backend and forces refresh if the versions do not
+- CELUS frontend now checks the version of the backend and forces refresh if the versions do not
   match
 
 #### Backend
@@ -2349,7 +2349,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - changing organization in the toolbar does not lead to reload and redirect to dashboard. The current page updates automatically instead.
 - references to CzechELib on the user page were replaced by more generic wording
 - broken credentials are now shown separately in the SUSHI status dashboard chart
-- new Celus logo was introduced
+- new CELUS logo was introduced
 
 ### Fixed
 
@@ -2514,7 +2514,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- preliminary support for centralized source of data for Celus (Celus brain) was added
+- preliminary support for centralized source of data for CELUS (CELUS brain) was added
 
 ### Fixes
 
@@ -2533,7 +2533,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Frontend
 
-- show Celus version number in the side-panel
+- show CELUS version number in the side-panel
 - add a toggle to show status of credentials that are not automatically harvested in the
   SUSHI status view
 
@@ -2561,7 +2561,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Backend
 
-- language not active for specific Celus installation cannot become users default language
+- language not active for specific CELUS installation cannot become users default language
 - when synchronizing users with ERMS, properly disconnect organizations when user is no longer
   associated with them
 - recache did not properly check for Django version when looking for cached data

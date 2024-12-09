@@ -1,10 +1,10 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
 <i18n lang="yaml">
 en:
-  knowledgebase_article: Detailed information about the format from Celus knowledgebase
+  knowledgebase_article: Detailed information about the format from CELUS knowledgebase
 
 cs:
-  knowledgebase_article: Podrobné informace o formátu ve znalostní bázi Celus
+  knowledgebase_article: Podrobné informace o formátu ve znalostní bázi CELUS
 </i18n>
 
 <template>

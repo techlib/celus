@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("counter", "Counter format"),
-                    ("celus", "Celus format"),
+                    ("celus", "CELUS format"),
                     ("raw", "Raw data"),
                 ],
                 default="counter",

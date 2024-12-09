@@ -102,7 +102,7 @@ async function notify(event) {
   }
   if (Notification.permission === "granted") {
     if (lastNotifiedEventPk !== event.pk) {
-      new Notification("Celus: new notification", {
+      new Notification("CELUS: new notification", {
         body: event.title,
         icon: "/favicon.png",
       });

@@ -30,7 +30,7 @@ en:
     were connection issues that have been resolved in the meantime), you can manually mark them as fixed.
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
-  broken_reports_warning: Some active reports have been marked as broken by Celus - they are probably not supported by this platform. Fix it by deactivating them.
+  broken_reports_warning: Some active reports have been marked as broken by CELUS - they are probably not supported by this platform. Fix it by deactivating them.
   url_hint_no_report: "URL should not contain the '/reports/' part and anything beyond this. For example 'https://example.com/sushi5/reports/tr?customer_id=1' should be cropped to 'https://example.com/sushi5/'"
   url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
   invalid_url: Please enter a valid URL
@@ -52,7 +52,7 @@ en:
   registry_link: Link to the COUNTER registry record for the selected platform
   check_input: Please check the input, some fields do not have valid values
   cannot_edit_duplicated: These credentials conflict with another set of credentials (they have the same organization, platform and COUNTER version). Unless you delete one of the sets, you cannot edit any of them.
-  cannot_create_duplicated: Celus does not support multiple sets of credentials for the same organization, platform and COUNTER version.
+  cannot_create_duplicated: CELUS does not support multiple sets of credentials for the same organization, platform and COUNTER version.
   multiple_credentials_info_link: To get more information about duplicated credentials, please see {link}.
   this_article: this article
   show_debug: Show debugging information
@@ -60,13 +60,13 @@ en:
   no_report_selected: No report selected
   last_harvestable_month: Last harvestable month
   last_harvestable_month_tt: |
-    If you know that data is not available before a certain date, you can set this date here. Celus will use this information
+    If you know that data is not available before a certain date, you can set this date here. CELUS will use this information
     and not try to harvest data before this date.
   last_harvestable_month_updated: Information about last harvestable month was successfully updated
   last_harvestable_month_error: It was not possible to update information about last harvestable month
   auto_update_url_text_off: Set URL manually
   auto_update_url_text_on: URL will be set automatically based on platform metadata
-  auto_update_url_hint: URL is automatically managed by Celus based on the platform metadata
+  auto_update_url_hint: URL is automatically managed by CELUS based on the platform metadata
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -97,7 +97,7 @@ cs:
     který mohl způsobit jejich označení), můžete je ručně označit jako opravené.
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
-  broken_reports_warning: Některé aktivní reporty Celus označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
+  broken_reports_warning: Některé aktivní reporty CELUS označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
   url_hint_no_report: "URL by neměla obsahovat část s '/reports/' a cokoliv po ní. Např. 'https://example.com/sushi5/reports/tr?customer_id=1' by mělo být zkráceno na 'https://example.com/sushi5/'"
   url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
   invalid_url: Prosím zadejte platné URL
@@ -119,7 +119,7 @@ cs:
   registry_link: Odkaz do COUNTER registru pro vybranou platformu
   check_input: Zkontrolujte prosím zadané hodnoty, některá pole nemají platnou hodnotu.
   cannot_edit_duplicated: Tyto přihlašovací údaje kolidují s jinými (stejná organizace, platforma a verze COUNTER). Dokud nebude konflikt vyřešen smazáním konfliktních údajů, nepůjde tyto údaje upravit.
-  cannot_create_duplicated: Celus nepodporuje více přihlašovacích údajů pro stejnou organizaci, platformu a verzi COUNTER.
+  cannot_create_duplicated: CELUS nepodporuje více přihlašovacích údajů pro stejnou organizaci, platformu a verzi COUNTER.
   multiple_credentials_info_link: Více informací o zdvojených přihlašovacích údajích najdete v {link}.
   this_article: tomto článku
   show_debug: Zobrazit debug informace
@@ -127,13 +127,13 @@ cs:
   no_report_selected: Nebyl vybrán žádný report
   last_harvestable_month: Poslední stáhnutelný měsíc
   last_harvestable_month_tt: |
-    Pokud víte, že data nejsou dostupná před určitým datem, můžete toto datum nastavit zde. Celus bude tuto informaci používat a
+    Pokud víte, že data nejsou dostupná před určitým datem, můžete toto datum nastavit zde. CELUS bude tuto informaci používat a
     nebude se snažit data stáhnout před tímto datem.
   last_harvestable_month_updated: Informace o posledním stáhnutelném měsíci byla úspěšně aktualizována
   last_harvestable_month_error: Informace o posledním stáhnutelném měsíci nebylo možné aktualizovat
   auto_update_url_text_off: Nastavit URL ručně
   auto_update_url_text_on: URL bude nastavena automaticky z metadat platformy
-  auto_update_url_hint: URL je automaticky spravována Celusem na základě metadat platformy
+  auto_update_url_hint: URL je automaticky spravována CELUSem na základě metadat platformy
 </i18n>
 
 <template>

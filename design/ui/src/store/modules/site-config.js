@@ -4,7 +4,7 @@ import sleep from "@/libs/sleep";
 
 export default {
   state: {
-    siteName: "Celus",
+    siteName: "CELUS",
     siteDomain: "",
     siteLogo: null,
     footerImages: [],

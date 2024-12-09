@@ -1,13 +1,13 @@
 <i18n lang="yaml">
 en:
   loading_basic_data: Loading basic data
-  waiting_for_backend: Connecting to Celus server
+  waiting_for_backend: Connecting to CELUS server
 
 # we use the English text for Czech on purpose - we do not want to accidentally show cs to
 # English speakers.
 cs:
   loading_basic_data: Loading basic data
-  waiting_for_backend: Connecting to Celus server
+  waiting_for_backend: Connecting to CELUS server
 </i18n>
 
 <template>
@@ -16,10 +16,10 @@ cs:
       <img
         src="../assets/celus-plus-white-vertical-nobg.svg"
         height="158"
-        alt="Celus Logo"
+        alt="CELUS Logo"
       />
     </div>
-    <h1 class="bootup">Welcome to Celus</h1>
+    <h1 class="bootup">Welcome to CELUS</h1>
     <LoaderWidget
       :text="$t(bootUpMessage)"
       height="300px"

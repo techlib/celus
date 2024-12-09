@@ -1,5 +1,5 @@
 """
-Celus URL Configuration
+CELUS URL Configuration
 """
 
 from core.views import PrometheusMetricsView

@@ -153,6 +153,6 @@ def update_prometheus_db_stats():
 @email_if_fails
 def sync_with_maximus_task():
     """
-    Synchronize data with Celus-Maximus.
+    Synchronize data with CELUS-Maximus.
     """
     maximus_sync()

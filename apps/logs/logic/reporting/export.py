@@ -366,7 +366,7 @@ class FlexibleDataExporter(ABC):
         writer.writerow([_("Report name"), self.report_name])
         writer.writerow([_("Created"), str(now())])
         writer.writerow([_("Created for"), str(self.report_owner or self.report_owner_org)])
-        writer.writerow([_("Celus version"), str(settings.CELUS_VERSION)])
+        writer.writerow([_("CELUS version"), str(settings.CELUS_VERSION)])
         writer.writerow(["", ""])
 
         # coverage for normal vs trend mode

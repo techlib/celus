@@ -1,14 +1,14 @@
 <i18n lang="yaml">
 en:
   create_organization: Create your organization
-  info_text: To start using Celus, you need to add your organization first. Just a name is enough for now.
+  info_text: To start using CELUS, you need to add your organization first. Just a name is enough for now.
   do_create: Create organization
   name: Name
   name_valid_msg: Name is required
 
 cs:
   create_organization: Vytvořte svou organizaci
-  info_text: K využívání Celusu je potřeba vytvořit svou organizaci. Prozatím postačí její název.
+  info_text: K využívání CELUSu je potřeba vytvořit svou organizaci. Prozatím postačí její název.
   do_create: Vytvořit organizaci
   name: Název
   name_valid_msg: Název je povinný

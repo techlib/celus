@@ -3,14 +3,14 @@
 
 <i18n lang="yaml">
 en:
-  releases: Celus releases
+  releases: CELUS releases
   email_not_verified: Your email is not verified
   impersonated: You are currently impersonating another user.
-  context_help_tt: Click for a link to the Celus knowledge base for this page
+  context_help_tt: Click for a link to the CELUS knowledge base for this page
   click_for_more_info: Click for more information about the release
 
 cs:
-  releases: Vydání Celusu
+  releases: Vydání CELUSu
   email_not_verified: Vaše emailová adresa není ověřená
   context_help_tt: Kliknutím přejdete na stránku s nápovědou k této stránce
   impersonated: Právě zosobňujete jiného uživatele.
@@ -29,7 +29,7 @@ cs:
               ? siteLogo.img
               : require('../assets/celus-horizontal-dark.svg')
           "
-          :alt="siteLogo ? siteLogo.alt_text : 'Celus'"
+          :alt="siteLogo ? siteLogo.alt_text : 'CELUS'"
           id="logo-image"
         />
       </v-toolbar-title>
@@ -404,8 +404,8 @@ export default {
       immediate: true,
       handler(to, from) {
         document.title = to.meta?.title
-          ? this.$t(to.meta.title) + " – Celus"
-          : "Celus";
+          ? this.$t(to.meta.title) + " – CELUS"
+          : "CELUS";
         this.helpLink = null;
         this.fetchHelpLink();
       },

@@ -2,7 +2,7 @@
 User documentation
 ==================
 
-This is Celus documentation for users. For administrator documentation see :doc:`admin`.
+This is CELUS documentation for users. For administrator documentation see :doc:`admin`.
 
 The document is divided into three parts depending on the access level of the user:
 
@@ -10,7 +10,7 @@ The document is divided into three parts depending on the access level of the us
 * `Normal access`_ - for users without special privileges.
 * `Privileged access`_ - for users with administration access to one or more organizations.
 
-See `Understanding access levels in Celus`_ below for explanation of differences between the access
+See `Understanding access levels in CELUS`_ below for explanation of differences between the access
 levels.
 
 
@@ -34,10 +34,10 @@ very much obsolete, the support is not full and no effort is put into improving 
 
 
 
-Understanding access levels in Celus
+Understanding access levels in CELUS
 ====================================
 
-`Celus` has the following access levels:
+`CELUS` has the following access levels:
 
 *normal user*
   has read-only access to all data related to organizations he/she is explicitly
@@ -52,7 +52,7 @@ Understanding access levels in Celus
 
 *master organization member*
   one or more organizations may be assigned the `master status`
-  in `Celus` which means that the users from this organization are allowed to perform some actions
+  in `CELUS` which means that the users from this organization are allowed to perform some actions
   for the whole consortium.
   Users from the master organization may view data for all organizations - not only those explicitly
   assigned. They can also perform all administrative tasks similarly to `organization admins`
@@ -87,20 +87,20 @@ enable easier comparison between data obtained using different version of COUNTE
 Because different platforms focus on different types of services, the definition of interest cannot
 be the same. Some platforms offer searching capabilities, some offer full texts of journal articles
 or access to whole electronic books. In order to make it possible to distinguish between these
-cases, Celus uses more than one interest type.
+cases, CELUS uses more than one interest type.
 
 
 Interest types
 --------------
 
-When creating Celus, we saw two basic types of services that e-resource platforms offer - access
+When creating CELUS, we saw two basic types of services that e-resource platforms offer - access
 to full texts and database searching. Therefore we made it possible to use different types of
 interest for these services and created the `Full text` and `Search` interest types. Thus it is
 possible to easily distinguish between types of platforms and in case a platform offers both
 types of services (e.g. EBSCO) compare the two types of interest.
 
 Another important aspect of interest is that users express it both when they successfully access
-the e-resource and when they are denied access. In order to incorporate this into Celus in a way
+the e-resource and when they are denied access. In order to incorporate this into CELUS in a way
 that would not cause confusion (as could happen if the two types of interest were simply mixed
 together), we also created a corresponding types of interest called `Denial - full text` and
 `Denial - search`. These represent denial data related to the previously mentioned types of
@@ -123,8 +123,8 @@ SUSHI management
 ----------------
 
 Setting up SUSHI downloading for your organization is usually the most important task you have to
-perform in `Celus`. Management of SUSHI is only accessible to users with organization admin
-access (see `Understanding access levels in Celus`_ for details).
+perform in `CELUS`. Management of SUSHI is only accessible to users with organization admin
+access (see `Understanding access levels in CELUS`_ for details).
 
 To manage SUSHI credentials, use the **SUSHI management** link in the side navigation:
 
@@ -302,7 +302,7 @@ When the dialog for editing SUSHI credentials is open (see `Adding new SUSHI cre
 you may use the |SAVE_AND_TEST| button to immediately test the credentials at hand.
 
 By clicking the button a new dialog will be opened where you can enter the start and end months
-for which `Celus` should try to download data. Because retreiving the data can sometimes take a
+for which `CELUS` should try to download data. Because retreiving the data can sometimes take a
 long time, we recommend using only one month (by using the same month for both start and end
 dates) in order to minimize the amount of data a speed up the process.
 
@@ -311,7 +311,7 @@ Then you hit the "START TEST" button to run the test.
 .. image:: images/sushi_test_dialog_start.png
    :scale: 75%
 
-`Celus` will the try to download reports for all report types defined in the SUSHI credentials
+`CELUS` will the try to download reports for all report types defined in the SUSHI credentials
 record. It will provide the information about the progress of the test and at the end display
 the results.
 
@@ -355,7 +355,7 @@ of SUSHI data:
 *Download successful*
   This is the first stage - if the data could not be downloaded, there is nothing we can do. The
   reason has to be fixed first. The problem is usually in wrong credentials, wrong URL or
-  sometimes the IP address of the `Celus` system not being whitelisted by the SUSHI provider.
+  sometimes the IP address of the `CELUS` system not being whitelisted by the SUSHI provider.
 
 *Processing successful*
   If data was successfully retreived but contains some errors - wrong format, etc. this column
@@ -368,7 +368,7 @@ of SUSHI data:
 
 *Imported*
   Imported means that the data from the downloaded file was already converted into internal
-  records in the `Celus` database and it is part of what you see when you look at the usage
+  records in the `CELUS` database and it is part of what you see when you look at the usage
   statistics. Because the process of actually importing data into the database is separate
   from the downloading of data, there may be some delay between successful download and import.
   Very seldom it can also happen that the import is unsuccessful.
@@ -387,7 +387,7 @@ Common SUSHI problems
   When the error code of attempting to download data is ``non-sushi``, it means that it is not
   a standard error code reported back by the SUSHI server using the SUSHI error reporting
   mechanism, but rather some other error. Very often this occurs when the given URL is not
-  correct and `Celus` gets an HTML document instead of the expected data. Displaying the downloaded
+  correct and `CELUS` gets an HTML document instead of the expected data. Displaying the downloaded
   document (if available) may help with determining this cause.
 
 *3031*
@@ -405,7 +405,7 @@ Common SUSHI problems
   Any other number besides the ones described above. These are standard SUSHI error codes. They
   are usually accompanied with a short description which may help you determine the cause of the
   problem. Sometimes your system has already made too many requests to the SUSHI server at hand,
-  sometimes the request should be retried in short time. `Celus` can deal reasonably with most
+  sometimes the request should be retried in short time. `CELUS` can deal reasonably with most
   common cases - by stopping trying other months if the credentials are obviously erroneous,
   by retrying attempts which should be retried, or by stopping attempts when the server
   reports overload.

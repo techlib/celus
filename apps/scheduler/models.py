@@ -794,7 +794,7 @@ class FetchIntention(models.Model):
             else:
                 self.attempt.log += (
                     "Partial data returned:\n"
-                    "Celus did not overwrite the previously imported partial data "
+                    "CELUS did not overwrite the previously imported partial data "
                     "and will retry downloading the data later to see if full data appears."
                 )
 

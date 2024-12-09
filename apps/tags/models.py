@@ -31,7 +31,7 @@ class AccessibleBy(models.IntegerChoices):
     ORG_ADMINS = 30, _("Organization admins")
     CONS_ADMINS = 40, _("Consortium admins")
     OWNER = 50, _("Owner")
-    SYSTEM = 100, _("System")  # only internal Celus functions can access this
+    SYSTEM = 100, _("System")  # only internal CELUS functions can access this
 
     @classmethod
     def org_related(cls) -> Tuple["AccessibleBy", "AccessibleBy"]:

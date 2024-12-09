@@ -39,15 +39,15 @@ en:
   errors:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
     unsupported_file_format: File format .{format} is not supported, please convert it to .csv or .xlsx.
-    no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
     unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please let us know at ask@celus.net to fix the problem.
     no_organization_selected: No organization found in data. You need to select organization manually.
     counter_header_not_found: Counter header was not found in data.
     unrecognized_report_name: Unrecognized counter report name found in data '{crn}'.
     unrecognized_report_id: Unrecognized counter report ID found in data '{crid}'.
-    unknown_counter_error: Something went wrong and Celus was not able to process the data. Celus is pretty good at processing COUNTER reports, but some publishers extend them in a way that Celus does not understand. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
-    unknown_raw_error: Something went wrong and Celus was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
-    unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach Celus to process it correctly.
+    unknown_counter_error: Something went wrong and CELUS was not able to process the data. CELUS is pretty good at processing COUNTER reports, but some publishers extend them in a way that CELUS does not understand. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
+    unknown_raw_error: Something went wrong and CELUS was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
+    unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
     xls_error: Unable to parse .xls file. Please try to convert the file to .xlsx
     unsupported_report_type: Detected report type "{rt}" is not currently supported.
   unauthorized_multiple_org_title: Unauthorized to import
@@ -56,9 +56,9 @@ en:
   method_counter_label_name: COUNTER
   method_counter_label_text: Use this method to import data from COUNTER table and JSON reports.
   method_raw_label_name: Raw non-COUNTER data
-  method_raw_label_text: Upload a non-COUNTER report as you received it from the publisher. Celus will try to automatically detect the format.
-  method_celus_label_name: Celus non-COUNTER custom format
-  method_celus_label_text: Upload data prepared in the custom Celus format for non-COUNTER data.
+  method_raw_label_text: Upload a non-COUNTER report as you received it from the publisher. CELUS will try to automatically detect the format.
+  method_celus_label_name: CELUS non-COUNTER custom format
+  method_celus_label_text: Upload data prepared in the custom CELUS format for non-COUNTER data.
   method_celus_disabled_tt: There are no non-COUNTER reports defined for this platform.
   method_raw_disabled_tt: There are no raw reports supported for this platform.
   method_changed_to_counter: The processing method was updated, because the provided file is in standard COUNTER format.
@@ -108,15 +108,15 @@ cs:
   errors:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
     unsupported_file_format: Typ souboru .{format} není podporovaný, prosím konvertujte jej do .csv nebo .xlsx.
-    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
     unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask@celus.net a my problém vyřešíme.
     no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
     counter_header_not_found: Nebyla nalezena hlavička counter dat.
     unrecognized_report_name: V datech se nachází neznámé jméno typu reportu '{crn}'.
     unrecognized_report_id: V datech se nachází neznámé ID typu reportu '{crid}'.
-    unknown_counter_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Celus je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému Celus nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
-    unknown_raw_error: Něco se pokazilo a Celus nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
-    unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se Celus naučit, jak ho zpracovat.
+    unknown_counter_error: Něco se pokazilo a CELUS nebyl schopen data zpracovat. CELUS je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému CELUS nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
+    unknown_raw_error: Něco se pokazilo a CELUS nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
+    unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
     xls_error: Nedaří se zpracovat .xls soubor. Prosím zkuste soubor zkonvertovat na .xlsx
     unsupported_report_type: Zjištěný typ reportu "{rt}" není v současné době podporován.
   unauthorized_multiple_org_title: Neautorizovaný import
@@ -125,9 +125,9 @@ cs:
   method_counter_label_name: COUNTER
   method_counter_label_text: Použijte tuto metodu pro import dat v tabulkovém COUNTER formátu a ve formě JSON reportu.
   method_raw_label_name: Surová ne-COUNTER data
-  method_raw_label_text: ne-COUNTER report je nahrán v takovém formátu, v jakém jste ho obdrželi od vydavatele. Celus se pokusí automaticky detekovat formát dat.
-  method_celus_label_name: Celus formát pro ne-COUNTER data
-  method_celus_label_text: Nahraná data jsou připravena ve vlastním formátu, který Celus používá pro ne-COUNTER data.
+  method_raw_label_text: ne-COUNTER report je nahrán v takovém formátu, v jakém jste ho obdrželi od vydavatele. CELUS se pokusí automaticky detekovat formát dat.
+  method_celus_label_name: CELUS formát pro ne-COUNTER data
+  method_celus_label_text: Nahraná data jsou připravena ve vlastním formátu, který CELUS používá pro ne-COUNTER data.
   method_celus_disabled_tt: Pro tuto platformu nejsou definovány žádné non-COUNTER reporty.
   method_raw_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
   method_changed_to_counter: Metoda nahrávání byla pozměněna, protože nahraný soubor je ve standardním COUNTER formátu.

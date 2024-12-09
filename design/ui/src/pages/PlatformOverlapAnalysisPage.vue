@@ -8,7 +8,7 @@ en:
   cancel_simulation: Cancellation simulation
   warning:
     The following tabs offer different views of data related to titles available on more than one platform.
-    Please keep in mind that Celus only has usage data to work with and does not know the particulars of your
+    Please keep in mind that CELUS only has usage data to work with and does not know the particulars of your
     subscriptions. Therefore the data below are meant as just pointers and you should <strong>always investigate deeper
     before taking any action</strong> based on it.
   info:
@@ -62,7 +62,7 @@ cs:
   cancel_simulation: Simulace zrušení
   warning:
     Následující záložky poskytují různý pohled na data o titulech dostupných na více platformách.
-    Při jejich interpretaci mějte prosím vždy na vědomí, že Celus má k dispozici pouze data o využívání elektronických
+    Při jejich interpretaci mějte prosím vždy na vědomí, že CELUS má k dispozici pouze data o využívání elektronických
     zdrojů a neví nic o detailech vašeho předplatného k jednotlivým titulům. Následující informace by měly být brány
     jen jako ukazatele na potenciálně zajímavé skutečnosti. Vždy <strong>proveďte detailnější analýzu dat, než
     se rozhodnete na základě těchto dat dělat nějaké změny</strong>.

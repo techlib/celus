@@ -1,5 +1,5 @@
 """
-WSGI config for Celus project.
+WSGI config for CELUS project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

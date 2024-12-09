@@ -16,26 +16,26 @@ def mail_customer_care_admins(subject, message):
 
 def mail_otp_token(email, request_id, token, language: str = "en"):
     if language == "cs":
-        subject = "Celus - Dvoufázová autentizace"
+        subject = "CELUS - Dvoufázová autentizace"
         msg = f"""\
-Zde je kód pro přihlášení k Vašemu účtu v Celusu (požadavek {request_id}):
+Zde je kód pro přihlášení k Vašemu účtu v CELUSu (požadavek {request_id}):
 
     {token}
 
-Tento email byl odeslán, protože byl proveden pokus o příhlášení k vašemu účtu v Celusu, \
+Tento email byl odeslán, protože byl proveden pokus o příhlášení k vašemu účtu v CELUSu, \
 který je spárovaný s Vaší emailovou adresou. Pokud se nesnažíte do svého účtu přihlásit, \
-změňte si neprodleně Vaše heslo v Celusu.
+změňte si neprodleně Vaše heslo v CELUSu.
 """
 
     else:
-        subject = "Celus - Two phase authentication"
+        subject = "CELUS - Two phase authentication"
         msg = f"""\
-Here is the access code for your recent login into Celus (request {request_id}):
+Here is the access code for your recent login into CELUS (request {request_id}):
 
     {token}
 
-This email was sent because of a recent login attempt into your Celus account which included your
- correct email and password. If you are not trying to log in into your Celus account,
- you should change your Celus password immediately.
+This email was sent because of a recent login attempt into your CELUS account which included your
+ correct email and password. If you are not trying to log in into your CELUS account,
+ you should change your CELUS password immediately.
 """
     send_mail(subject, msg, settings.SERVER_EMAIL, [email])

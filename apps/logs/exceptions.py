@@ -107,13 +107,13 @@ class PreflightFailed(Exception):
 
 class UnknownReportTypeInPreflight(PreflightFailed):
     """
-    ReportType from nibbler is not known in this Celus
+    ReportType from nibbler is not known in this CELUS
     """
 
 
 class MultipleReportTypes(PreflightFailed):
     """
-    ReportType from nibbler matches multiple reportype in this Celus
+    ReportType from nibbler matches multiple reportype in this CELUS
     """
 
     def __init__(self, report_types):

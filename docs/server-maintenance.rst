@@ -33,7 +33,7 @@ Using command line management scripts
 -------------------------------------
 
 There are a few thing for which you need to use the server's command line. These mostly involve
-running Django management commands. Because `Celus` is installed in its own virtual Python
+running Django management commands. Because `CELUS` is installed in its own virtual Python
 environment, you need to activate it first in order for the commands to work properly.
 
 For this purpose, the Ansible installation playbook creates the file ``activate_virtualenv.sh``
@@ -58,7 +58,7 @@ there are no configuration problems.
 Backing up data
 ---------------
 
-There are two important locations of data that `Celus` uses and that you might want to back up:
+There are two important locations of data that `CELUS` uses and that you might want to back up:
 
 * the database
 * the media directory, which contains all the downloaded SUSHI reports

@@ -2,7 +2,7 @@
 Advanced topics
 ===============
 
-This part describes more involved and technically demanding features of Celus.
+This part describes more involved and technically demanding features of CELUS.
 
 .. toctree::
    :maxdepth: 3

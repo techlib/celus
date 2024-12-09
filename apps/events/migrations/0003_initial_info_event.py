@@ -17,8 +17,8 @@ def create_initial_info_event(apps, schema_editor):
 
     event = Event.objects.create(
         title="Introducing events",
-        description="In Celus 6.0.0 we are introducing 'Events' - a new way to let you know about "
-        "what's happening in Celus. For now, events are used to inform about broken credentials, "
+        description="In CELUS 6.0.0 we are introducing 'Events' - a new way to let you know about "
+        "what's happening in CELUS. For now, events are used to inform about broken credentials, "
         "finished manual harvests, finished title list imports, and more. \n\nIn future, we will "
         "introduce more types of events and more ways to interact with them. Stay tuned!",
         expiration_date=now() + timedelta(days=90),

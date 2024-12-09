@@ -32,7 +32,7 @@ en:
   organization_count_tt: |
     The number of organizations you have access to. Without an organization filter, the report will be run for all
     these organizations.
-  zero_rows_tooltip: Rows for which the total usage is zero will be included. Please note that this functionality is only available for some rows as Celus very often does not know the correct list of possible values for a row (for example, it does not know all possible titles for a given platform).
+  zero_rows_tooltip: Rows for which the total usage is zero will be included. Please note that this functionality is only available for some rows as CELUS very often does not know the correct list of possible values for a row (for example, it does not know all possible titles for a given platform).
   zero_rows_tooltip_trend_mode: If turned off, rows for which the usage in the base period is zero will not be be included. This allows for example filtering off of new titles for which the relative change would be infinite.
   supported_rows: Supported rows are
   when_titles: when titles are filtered by tag or "merge by tag" is active
@@ -77,7 +77,7 @@ cs:
   no_tags_present: Pro zvolené řádky nejsou k dispozici žádné štítky.
   organization_count_tt: |
     Počet organizací, ke kterým máte přístup. Bez filtru organizací bude report spuštěn pro všechny tyto organizace.
-  zero_rows_tooltip: Budou zobrazeny i řádky, pro které je celkové využití nulové. Tato funkce je dostupná pouze pro některé řádky, protože Celus často nezná správný seznam možných hodnot pro daný řádek (například nezná všechny možné tituly pro danou platformu).
+  zero_rows_tooltip: Budou zobrazeny i řádky, pro které je celkové využití nulové. Tato funkce je dostupná pouze pro některé řádky, protože CELUS často nezná správný seznam možných hodnot pro daný řádek (například nezná všechny možné tituly pro danou platformu).
   zero_rows_tooltip_trend_mode: Pokud je vypnuto, řádky, pro které je využití v základním období nulové, nebudou zahrnuty. To umožňuje například odfiltrování nových titulů, pro které by byla relativní změna nekonečná.
   supported_rows: Podporované řádky jsou
   when_titles: pokud jsou tituly filtrovány štítkem nebo je aktivní "sloučit podle štítku"

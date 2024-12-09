@@ -754,7 +754,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             attempt.partial_data = True
         # if data is present, some more error codes would mean `partial_data`
         # note: this only makes sense if more than one month is requested, which should not
-        # happen in Celus. But we have tests for it and nobody knows what data we will get
+        # happen in CELUS. But we have tests for it and nobody knows what data we will get
         # so it is better to be prepared
         if report.record_found:
             possible_partial_codes = (

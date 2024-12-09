@@ -8,7 +8,7 @@ The rationale behind this is that it should not be possible to create platforms 
 so we have no idea how they appeared in the first place. But if we assume it will not happen again
 in the future, we can apply this migration and have it fixed.
 
-Also, a migration is a convenient way how to fix it in all Celus installations.
+Also, a migration is a convenient way how to fix it in all CELUS installations.
 """
 
 from django.db import migrations

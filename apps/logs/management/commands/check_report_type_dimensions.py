@@ -40,7 +40,7 @@ class Command(BaseCommand):
             if match := regex.match(parser_name):
                 version, code = match.group(1, 2)
                 dimensions = [e[0] for e in parser.areas[0].DIMENSION_NAMES_MAP]
-                # use only report types from nibbler which are defined in Celus
+                # use only report types from nibbler which are defined in CELUS
                 if name := long_name_map.get(code):
                     reports.append((code, name, version, dimensions))
 

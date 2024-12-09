@@ -3,13 +3,13 @@ en:
   no_such_key: Sorry, but we could not verify your email - the verification link is probably malformed
   some_error: 'Sorry, but we could not verify your email due to the following error: "{error}"'
   success: Your address was successfully verified
-  go_to_celus: Continue to Celus
+  go_to_celus: Continue to CELUS
 
 cs:
   no_such_key: Je nám to líto, ale nemohli jsme ověřit váš email - ověřovací odkaz je pravděpodobně poškozený
   some_error: 'Je nám to líto, ale nemohli jsme ověřit váš email z důvodu následující chyby: "{error}"'
   success: Vaše adresa byla úspěšně ověřena
-  go_to_celus: Pokračujte do aplikace Celus
+  go_to_celus: Pokračujte do aplikace CELUS
 </i18n>
 
 <template>
@@ -20,7 +20,7 @@ cs:
           <img
             src="../assets/celus-plus-white-vertical-nobg.svg"
             height="158"
-            alt="Celus Logo"
+            alt="CELUS Logo"
           />
         </v-col>
       </v-row>

@@ -19,7 +19,7 @@
 
 from datetime import date
 
-project = "Celus"
+project = "CELUS"
 copyright = f"{date.today().year}, BigDigData"
 author = "Beda Kosata"
 

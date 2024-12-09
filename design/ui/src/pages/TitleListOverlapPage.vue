@@ -3,8 +3,8 @@
 en:
   intro: |
     This tool allows you to upload a CSV file containing a list of titles and
-    match them against the titles that you already have available in Celus.
-    After processing, the uploaded file will be annotated with the Celus titles
+    match them against the titles that you already have available in CELUS.
+    After processing, the uploaded file will be annotated with the CELUS titles
     that match the titles in the uploaded file.
   intro2: |
     You can find more information about the expected file format in
@@ -14,8 +14,8 @@ en:
 cs:
   intro: |
     Tento nástroj umožňuje nahrát soubor CSV obsahující seznam titulů a
-    porovnat je s tituly, které již máte v Celusu. Po zpracování bude nahraný
-    soubor anotován informací o titulech z Celusu, které odpovídají titulům v
+    porovnat je s tituly, které již máte v CELUSu. Po zpracování bude nahraný
+    soubor anotován informací o titulech z CELUSu, které odpovídají titulům v
     nahraném souboru.
   intro2: |
     Více informací o očekávaném formátu souboru naleznete v

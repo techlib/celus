@@ -37,7 +37,7 @@ class PlatformInterestReport(models.Model):
 
 # the following curve was obtained as a generic curve from the production data on K1
 # and slightly modified to make it more generic.
-# It will be used in case there are not enough attempts in a Celus installation to create a
+# It will be used in case there are not enough attempts in a CELUS installation to create a
 # generic curve
 DEFAULT_ARRIVAL_STATS = {
     "count": 0,

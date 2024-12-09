@@ -2,8 +2,8 @@
 External API
 ============
 
-Celus offers a simple API to access the usage data stored in the system. The API uses an authorization
-mechanism independent of the Celus web interface which is based on API keys. The API key is
+CELUS offers a simple API to access the usage data stored in the system. The API uses an authorization
+mechanism independent of the CELUS web interface which is based on API keys. The API key is
 always connected to one organization and can be used to access all data of this organization.
 
 
@@ -59,7 +59,7 @@ Platforms
 
 Path: ``/api/platform/``
 
-This endpoint returns a list of all platforms which are available in this particular Celus
+This endpoint returns a list of all platforms which are available in this particular CELUS
 instance. The records look like this:
 
 .. code-block:: json
@@ -195,7 +195,7 @@ the same time.
 The ``complete_data`` field indicates whether the data returned by the API endpoint is complete.
 If the data is not complete, the ``status`` field will contain a message explaining why the data
 is not complete. One possible reason is that there is no data for the requested report. In such
-case, Celus will return a reply similar to this:
+case, CELUS will return a reply similar to this:
 
 .. code-block:: json
 
@@ -206,7 +206,7 @@ case, Celus will return a reply similar to this:
     }
 
 Also, the data may not be present for the month for which the report is generated. In such case,
-Celus will return a reply similar to this:
+CELUS will return a reply similar to this:
 
 .. code-block:: json
 
@@ -220,7 +220,7 @@ Reporting export
 ================
 
 This endpoint allows you to query a report from the reporting module, which was created manually
-by a user. The endpoint makes is easy to visually assemble and fine-tune a report in Celus and
+by a user. The endpoint makes is easy to visually assemble and fine-tune a report in CELUS and
 then query it programmatically.
 
 To make the stored reports more versatile, the API allows overriding the start and end dates of
@@ -232,7 +232,7 @@ Prerequisites and limitations
 To use this endpoint, you need to:
 
 * have a report created in the reporting module - you will **reference it by its ID**, which is part
-  of the URL in the Celus web interface when you open the report
+  of the URL in the CELUS web interface when you open the report
   (e.g. ``/analytics/flexible-reports/265?edit=true`` means the report ID is ``265``).
 * the stored report must have the **visibility set to "Organization"** with the organization set to
   the organization of the API key you are using. Trying to access a report with other visibility

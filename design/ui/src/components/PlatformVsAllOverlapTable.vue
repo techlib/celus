@@ -1,7 +1,6 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
-  loading_data: "Please wait while Celus is crunching the data for you. It has to go over all the titles and that takes some time."
   hide_zero: Hide platforms with no overlap
   tooltip_titles_relative: "{value} of titles from {platformName} are also available from other platforms."
   tooltip_titles_absolute: "{value} titles from {platformName} are also available from other platforms."
@@ -11,7 +10,6 @@ en:
   tooltip_interest_absolute: "Interest in titles on {platformName} which are also available from other platforms is {value}."
 
 cs:
-  loading_data: "Prosíme o chvilku strpení, než Celus přechroupe data. Musí zpracovat záznamy o všech titulech a to nějakou dobu zabere."
   hide_zero: Skrýt platformy bez překryvu
   tooltip_titles_relative: "{value} titulů z {platformName} je také dostupných z jiných platforem."
   tooltip_titles_absolute: "{value} titulů z {platformName} je také dostupných z jiných platforem."
@@ -29,7 +27,7 @@ cs:
     <LoaderWidget
       v-if="loading || titleCountLoading || platformsLoading"
       height="300"
-      :text="$t('loading_data')"
+      :text="$t('overlap_analysis.loading_data')"
     />
     <table v-else class="overlap">
       <thead>

@@ -15,7 +15,7 @@ en:
   import: Import
   import_tooltip: Import credentials
   import_template: Download template for COUNTER 5 SUSHI credentials import
-  import_template_tooltip: Downloads a template to be filled with COUNTER 5 SUSHI credentials you wish to import into Celus
+  import_template_tooltip: Downloads a template to be filled with COUNTER 5 SUSHI credentials you wish to import into CELUS
   is_locked: These credentials are locked.
   is_unlocked: These credentials are not locked, you may edit them.
   cannot_edit: You cannot edit them.
@@ -37,7 +37,7 @@ en:
   filter_at_least_one_credentials: Please filter at least one set of SUSHI credentials using filers above.
   first_add_some_credentials: You have not added any SUSHI credentials yet, please first add credentials using button above.
   import_credentials_confirm_title: Automatic import under construction
-  import_credentials_confirm_text_1: Celus currently doesn't support fully automatic importing of credentials, but we can load them up for you!
+  import_credentials_confirm_text_1: CELUS currently doesn't support fully automatic importing of credentials, but we can load them up for you!
   import_credentials_confirm_text_2: Please, insert the credentials you would like to import into our prefilled Excel template (download it by clicking on the button below. Don't worry, the file contains detailed explanation on how to fill it correctly). Send the filled out file to
   import_credentials_confirm_text_3: with the subject line
   import_credentials_confirm_text_4: You can contact us at the same e-mail if you have any questions or issues with the template.
@@ -63,7 +63,7 @@ cs:
   import: Importuj
   import_tooltip: Importovat přístupové údaje
   import_template: Stáhnout šablonu pro importování COUNTER 5 SUSHI přihlašovacích údajů
-  import_template_tooltip: Stáhne šablonu pro vyplnění COUNTER 5 SUSHI přihlašovacími údaji, které si přejete naimportovat do Celusu
+  import_template_tooltip: Stáhne šablonu pro vyplnění COUNTER 5 SUSHI přihlašovacími údaji, které si přejete naimportovat do CELUSu
   is_locked: Tyto přístupové údaje jsou uzamčené.
   is_unlocked: Tyto přístupové údaje nejsou uzamčené, můžete je editovat
   cannot_edit: Nemůžete je editovat.
@@ -85,7 +85,7 @@ cs:
   filter_at_least_one_credentials: Vyfiltrujte prosím alespoň jedny přihlašovací údaje pomocí filtrů v horní části.
   first_add_some_credentials: Nepřidali jste žádné SUSHI přihlašovací údaje, prosím nejprve přidejte přihlačovací údaje tlačítkem výše.
   import_credentials_confirm_title: Automatický import ve vývoji
-  import_credentials_confirm_text_1: Celus momentálně neimportuje přihlašovací údaje automaticky, ale můžete je naimportovat hromadně!
+  import_credentials_confirm_text_1: CELUS momentálně neimportuje přihlašovací údaje automaticky, ale můžete je naimportovat hromadně!
   import_credentials_confirm_text_2: Prosím, vyplňte přihlačovací údaje, které chcete importovat, do námi předvyplněného Excel souboru (stáhnete jej kliknutím na tlačítko níže. Nemějte obavy, soubor obsahuje detailní vysvětlení o tom, jak vyplnit tabulku správně). Zašlete vyplněný soubor na
   import_credentials_confirm_text_3: s předmětem
   import_credentials_confirm_text_4: Můžete nás kontaktovat na této e-mail adrese i pokud budete mít jakékoliv dotazy nebo problémy s tabulkou.

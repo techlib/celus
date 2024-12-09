@@ -10,8 +10,8 @@ en:
   organization: Organization
   is_admin: Admin
   unverified_email:
-    Your email address has not been verified. Some functions of Celus will not be available.
-    Check your email for a verification message from Celus.
+    Your email address has not been verified. Some functions of CELUS will not be available.
+    Check your email for a verification message from CELUS.
   resend_verification_email: Resend verification email
   verification_resent: Verification email was resent
   logout: Log out
@@ -43,7 +43,7 @@ cs:
   is_admin: Administrátor
   unverified_email:
     Vaše emailová adresa nebyla ověřená. Některé funkce systému nebudou k dispozici.
-    Zkontrolujte ověřovací email od aplikace Celus ve své schránce.
+    Zkontrolujte ověřovací email od aplikace CELUS ve své schránce.
   resend_verification_email: Znovu zaslat ověřovací email
   verification_resent: Ověřovací email byl znovu zaslán
   logout: Odhlásit se
@@ -70,7 +70,7 @@ cs:
       <v-col>
         <!--
           please note that normal user will not see this, as he will be
-          prevented from seeing anything in Celus until he verifies his email.
+          prevented from seeing anything in CELUS until he verifies his email.
           It may still be useful for superadmins impersonating ordinary users,
           so I am keeping it in.
          -->

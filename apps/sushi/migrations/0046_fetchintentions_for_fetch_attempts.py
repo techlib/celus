@@ -29,7 +29,7 @@ def add_fetch_intention(apps, schema_editor):
             datestamp = this_date
 
         # if the start and end date of the attempt are the same, fix the attempt
-        # (this could occur in some very old version of Celus from 2019)
+        # (this could occur in some very old version of CELUS from 2019)
         if attempt.start_date == attempt.end_date:
             attempt.start_date = month_start(attempt.start_date)
             attempt.end_date = month_end(attempt.end_date)

@@ -85,7 +85,7 @@ class TestSushiFetching:
                 "Errors: Error #2090: Got response code: 404 for request: "
                 "https://example.com/path/path\n\n",
                 False,
-                "121bf930d8c54b14e8b6361a68ad77d5cdb1e580133449734c5b6cce532ab81f",
+                "3f2fd24ecdb3c9e7df2818f3bae87fe070f0d8775d346b55c77dbc163bc5b703",
             ),
             (
                 "no_data.json",
@@ -94,7 +94,7 @@ class TestSushiFetching:
                 AttemptStatus.NO_DATA,
                 "",
                 False,
-                "18b7e642cc4e6ffee79da0b42fb824167d2aa3781757c852ec7ef1436b96bd85",
+                "9196e290f625163e1cd5d20b0e90ebe5163e93317c91366097ce7414e1b369ce",
             ),
             (
                 "invalid-customer.json",
@@ -103,7 +103,7 @@ class TestSushiFetching:
                 AttemptStatus.DOWNLOAD_FAILED,
                 "Errors: Error #1030: Invalid Customer Id\n\n",
                 True,
-                "5c8cea51a470656c1ac4f89c3bf7bbc74d4ad797693e6e4834a9665963963b8c",
+                "ee0662987472c461be97bfa9a609c663cbf006e0ddf752d408237298c423e500",
             ),
             (
                 "code-zero.json",
@@ -112,7 +112,7 @@ class TestSushiFetching:
                 AttemptStatus.NO_DATA,
                 "Infos: Info #0: Some description\n\n",
                 False,
-                "4eef561dbeb38022d1f2b171fc51365d87b56f3c6b941b2ac900740d4385e363",
+                "b161ed02ef7498aa6ea418525f7b86d561d5e6e57d4ac2f5daf4ae6ca7f7f28f",
             ),
             (
                 "no_data_3062.json",
@@ -440,7 +440,7 @@ class TestSushiFetching:
             (
                 "error-in-root.json",
                 "tr",
-                {"Created_By": "Celus LLC.", "Institution_Name": "National Library"},
+                {"Created_By": "CELUS LLC.", "Institution_Name": "National Library"},
                 False,
             ),
             ("naked_error.json", "tr", {}, False),
@@ -451,7 +451,7 @@ class TestSushiFetching:
                 "no_data.json",
                 "tr",
                 {
-                    "Created_By": "Celus LLC.",
+                    "Created_By": "CELUS LLC.",
                     "Institution_Name": "My Institution",
                     "Institution_ID": [{"Type": "Proprietary", "Value": "lyb:DDDDDDDDDDDDDD"}],
                 },

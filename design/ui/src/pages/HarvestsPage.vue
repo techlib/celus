@@ -6,7 +6,7 @@ en:
   harvests_view: Harvest Overview
   harvest_intro_1: |
     'Harvests' group together related data downloads. They are either created automatically
-    by Celus when it downloads new data, or are created by the user when he manually requests
+    by CELUS when it downloads new data, or are created by the user when he manually requests
     harvesting of data for selected credentials.
 
   harvest_intro_2: |
@@ -17,7 +17,7 @@ en:
 cs:
   harvests_view: Přehled sklizní
   harvest_intro_1: |
-    'Sklizně' sdružují dohromady příbuzná stahování. Celus je buď vytváří automaticky, když
+    'Sklizně' sdružují dohromady příbuzná stahování. CELUS je buď vytváří automaticky, když
     stahuje nová data, nebo jsou vytvořeny uživatelem ve chvíli, kdy zadá požadavek na stažení
     dat pro vybrané přihlašovací údaje.
   harvest_intro_2: |

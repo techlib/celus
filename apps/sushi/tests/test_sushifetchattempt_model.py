@@ -469,7 +469,7 @@ class TestParsing:
                 "no_data.json",
                 "tr",
                 {
-                    "Created_By": "Celus LLC.",
+                    "Created_By": "CELUS LLC.",
                     "Institution_Name": "My Institution",
                     "Institution_ID": [{"Type": "Proprietary", "Value": "lyb:DDDDDDDDDDDDDD"}],
                 },
@@ -575,7 +575,7 @@ class TestParsing:
                 "tr",
                 {
                     "Created_By": "Publisher",
-                    "Institution_Name": "Celus College",
+                    "Institution_Name": "CELUS College",
                     "Institution_ID": [{"Type": "Proprietary", "Value": "SN:8888888888"}],
                 },
                 0,

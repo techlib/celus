@@ -1,14 +1,14 @@
-# Celus
+# CELUS
 # Copyright (C) 2019-2022
 # This file is distributed under the same license as the PACKAGE package.
-# Beda Kosata <beda@ecomole.com>, 2022-2023.
+# Beda Kosata <beda@ecomole.com>, 2022-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: 4.2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-11 17:05+0200\n"
-"PO-Revision-Date: 2023-10-11 17:06+0200\n"
+"POT-Creation-Date: 2024-12-11 18:34+0100\n"
+"PO-Revision-Date: 2024-12-11 18:34+0100\n"
 "Last-Translator: Beda Kosata <beda@ecomole.com>\n"
 "Language-Team: Czech <beda@ecomole.com>\n"
 "Language: cs\n"
@@ -16,37 +16,37 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
-"X-Generator: Gtranslator 41.0\n"
+"X-Generator: Gtranslator 46.0\n"
 
-#: apps/charts/models.py:81
+#: apps/charts/models.py:78
 msgid "date"
 msgstr "datum"
 
-#: apps/charts/models.py:82
+#: apps/charts/models.py:79
 msgid "platform"
 msgstr ""
 
-#: apps/charts/models.py:83
+#: apps/charts/models.py:80
 msgid "metric"
 msgstr ""
 
-#: apps/charts/models.py:84
+#: apps/charts/models.py:81
 msgid "organization"
 msgstr ""
 
-#: apps/charts/models.py:85
+#: apps/charts/models.py:82
 msgid "target"
 msgstr ""
 
-#: apps/charts/models.py:91
+#: apps/charts/models.py:88
 msgid "horizontal bar"
 msgstr ""
 
-#: apps/charts/models.py:92
+#: apps/charts/models.py:89
 msgid "vertical bar"
 msgstr ""
 
-#: apps/charts/models.py:93
+#: apps/charts/models.py:90
 msgid "line"
 msgstr ""
 
@@ -96,7 +96,7 @@ msgid ""
 "Hello,\n"
 "\n"
 "you are receiving this email in order to verify your email address for use "
-"with Celus.\n"
+"with CELUS.\n"
 "\n"
 "To confirm your email, please go to %(activate_url)s\n"
 "\n"
@@ -105,19 +105,19 @@ msgid ""
 "\n"
 "Have a great day\n"
 "\n"
-"The Celus team\n"
+"The CELUS team\n"
 msgstr ""
 
 #: apps/core/templates/account/email/email_confirmation_subject.txt:2
 msgid ""
 "\n"
-"Please verify your email address for use with Celus\n"
+"Please verify your email address for use with CELUS\n"
 msgstr ""
 
 #: apps/core/templates/registration/invitation_email.html:2
 #, python-format
 msgid ""
-"You're invited to register into the usage statistics application Celus at "
+"You're invited to register into the usage statistics application CELUS at "
 "%(site_name)s."
 msgstr ""
 
@@ -128,19 +128,19 @@ msgid ""
 msgstr ""
 
 #: apps/core/templates/registration/invitation_email.html:9
-msgid "Looking forward to meeting you in Celus!"
+msgid "Looking forward to meeting you in CELUS!"
 msgstr ""
 
 #: apps/core/templates/registration/invitation_email.html:11
 #: apps/core/templates/registration/password_reset_message.html:12
-msgid "The Celus team"
+msgid "The CELUS team"
 msgstr ""
 
 #: apps/core/templates/registration/password_reset_message.html:2
 #, python-format
 msgid ""
 "You're receiving this email because you requested a password reset for your "
-"Celus user account at %(site_name)s."
+"CELUS user account at %(site_name)s."
 msgstr ""
 
 #: apps/core/templates/registration/password_reset_message.html:4
@@ -152,7 +152,7 @@ msgid "Your username, in case you've forgotten:"
 msgstr ""
 
 #: apps/core/templates/registration/password_reset_message.html:10
-msgid "Looking forward to seeing you in Celus again!"
+msgid "Looking forward to seeing you in CELUS again!"
 msgstr ""
 
 #: apps/core/validators.py:13
@@ -160,72 +160,87 @@ msgstr ""
 msgid "%(value)s is not in range for valid year (%(minv)d-%(maxv)d)"
 msgstr ""
 
-#: apps/logs/admin.py:241
+#: apps/logs/admin.py:261
 #, python-format
 msgid "%d preflight started to regenerate"
 msgid_plural "%d preflights started to regenerate"
 msgstr[0] ""
 msgstr[1] ""
 
-#: apps/logs/logic/reporting/export.py:200
+#: apps/logs/logic/reporting/export.py:205
 msgid "Tags"
 msgstr "Štítky"
 
-#: apps/logs/logic/reporting/export.py:203
+#: apps/logs/logic/reporting/export.py:208
 msgid "Row total"
 msgstr "Suma řádku"
 
-#: apps/logs/logic/reporting/export.py:210
+#: apps/logs/logic/reporting/export.py:215
 msgctxt "column name"
 msgid "Change"
 msgstr "Změna"
 
-#: apps/logs/logic/reporting/export.py:211
+#: apps/logs/logic/reporting/export.py:216
 msgid "Change %"
 msgstr "Změna %"
 
-#: apps/logs/logic/reporting/export.py:350
+#: apps/logs/logic/reporting/export.py:366
 msgid "Report name"
 msgstr "Název reportu"
 
-#: apps/logs/logic/reporting/export.py:351
+#: apps/logs/logic/reporting/export.py:367
 msgid "Created"
 msgstr "Vytvořeno"
 
-#: apps/logs/logic/reporting/export.py:352
+#: apps/logs/logic/reporting/export.py:368
 msgid "Created for"
 msgstr "Vytvořeno pro"
 
-#: apps/logs/logic/reporting/export.py:353
-msgid "Celus version"
-msgstr "Verze Celus"
+#: apps/logs/logic/reporting/export.py:369
+msgid "CELUS version"
+msgstr "Verze CELUSu"
 
-#: apps/logs/logic/reporting/export.py:357
+#: apps/logs/logic/reporting/export.py:379
+#: apps/logs/logic/reporting/export.py:386
+msgid "Data coverage"
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:380
+#, python-format
+msgid "Base period: %(coverage).1f%%"
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:381
+#, python-format
+msgid "Compared period: %(coverage).1f%%"
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:390
 msgid "Split by"
 msgstr "Rozdělit podle"
 
-#: apps/logs/logic/reporting/export.py:363
+#: apps/logs/logic/reporting/export.py:396
 msgid "Rows"
 msgstr "Řádky"
 
-#: apps/logs/logic/reporting/export.py:368
+#: apps/logs/logic/reporting/export.py:401
 #, python-format
 msgid "Trend analysis: %(start)s vs %(end)s"
 msgstr "Analýza trendu: %(start)s vs %(end)s"
 
-#: apps/logs/logic/reporting/export.py:371
+#: apps/logs/logic/reporting/export.py:404
 msgid "Columns"
 msgstr "Soupce"
 
-#: apps/logs/logic/reporting/export.py:374
+#: apps/logs/logic/reporting/export.py:407
 msgid "Applied filters"
 msgstr "Aplikované filtry"
 
-#: apps/logs/logic/reporting/export.py:388
+#: apps/logs/logic/reporting/export.py:422
 msgid "Included organizations"
 msgstr "Zahrnuté organizace"
 
-#: apps/logs/logic/reporting/export.py:390
+#: apps/logs/logic/reporting/export.py:424
 msgid ""
 "(No organization filter was applied, the data represent the following "
 "organizations)"
@@ -233,51 +248,51 @@ msgstr ""
 "(Nebyl použit žádný filtr organizace, data reprezentují následující "
 "organizace)"
 
-#: apps/logs/logic/reporting/export.py:417
+#: apps/logs/logic/reporting/export.py:451
 msgid "-- untagged remainder --"
 msgstr "-- zbytek bez štítků --"
 
-#: apps/logs/logic/reporting/slicer.py:981 apps/tags/models.py:42
+#: apps/logs/logic/reporting/slicer.py:980 apps/tags/models.py:42
 msgid "Title"
 msgstr "Titul"
 
-#: apps/logs/logic/reporting/slicer.py:982 apps/organizations/models.py:53
+#: apps/logs/logic/reporting/slicer.py:981 apps/organizations/models.py:53
 #: apps/tags/models.py:44
 msgid "Organization"
 msgstr "Organizace"
 
-#: apps/logs/logic/reporting/slicer.py:983 apps/publications/models.py:54
-#: apps/publications/models.py:138 apps/tags/models.py:43
+#: apps/logs/logic/reporting/slicer.py:982 apps/publications/models.py:82
+#: apps/publications/models.py:239 apps/tags/models.py:43
 msgid "Platform"
 msgstr "Platforma"
 
-#: apps/logs/logic/reporting/slicer.py:996
+#: apps/logs/logic/reporting/slicer.py:995
 msgid "tag"
 msgid_plural "tags"
 msgstr[0] "štítek"
 msgstr[1] "štítky"
 msgstr[2] "štítky"
 
-#: apps/logs/logic/reporting/slicer.py:998
+#: apps/logs/logic/reporting/slicer.py:997
 msgid "tag class"
 msgid_plural "tag classes"
 msgstr[0] "typ štítku"
 msgstr[1] "typy štítku"
 msgstr[2] "typy štítku"
 
-#: apps/logs/models.py:141
+#: apps/logs/models.py:148
 msgid "Report type"
 msgstr "Typ reportu"
 
-#: apps/logs/models.py:323
+#: apps/logs/models.py:328
 msgid "Metric"
 msgstr "Metrika"
 
-#: apps/logs/models.py:532
+#: apps/logs/models.py:529
 msgid "Date"
 msgstr "Datum"
 
-#: apps/logs/models.py:634
+#: apps/logs/models.py:649
 #, python-brace-format
 msgid ""
 "The uploaded file is not in required file type or is corrupted. The file "
@@ -285,98 +300,104 @@ msgid ""
 "type."
 msgstr ""
 
-#: apps/logs/models.py:642 apps/necronomicon/models.py:16
-#: apps/publications/models.py:228 apps/sushi/models.py:719
-#: apps/tags/models.py:532
+#: apps/logs/models.py:657 apps/necronomicon/models.py:17
+#: apps/publications/models.py:406 apps/sushi/models.py:837
+#: apps/tags/models.py:583
 msgid "Initial"
 msgstr ""
 
-#: apps/logs/models.py:643
+#: apps/logs/models.py:658
 msgid "Confirmed"
 msgstr ""
 
-#: apps/logs/models.py:644 apps/tags/models.py:534
+#: apps/logs/models.py:659 apps/tags/models.py:48 apps/tags/models.py:585
 msgid "Preflight"
 msgstr ""
 
-#: apps/logs/models.py:645 apps/sushi/models.py:723 apps/tags/models.py:535
+#: apps/logs/models.py:660 apps/sushi/models.py:841 apps/tags/models.py:586
 msgid "Importing"
 msgstr ""
 
-#: apps/logs/models.py:646 apps/tags/models.py:536
+#: apps/logs/models.py:661 apps/tags/models.py:587
 msgid "Imported"
 msgstr ""
 
-#: apps/logs/models.py:647 apps/tags/models.py:537
+#: apps/logs/models.py:662 apps/tags/models.py:588
 msgid "Preflight failed"
 msgstr ""
 
-#: apps/logs/models.py:648 apps/publications/models.py:230
-#: apps/sushi/models.py:731 apps/tags/models.py:538
+#: apps/logs/models.py:663 apps/publications/models.py:408
+#: apps/sushi/models.py:849 apps/tags/models.py:589
 msgid "Import failed"
 msgstr ""
 
-#: apps/logs/models.py:652
+#: apps/logs/models.py:667
 msgid "Counter format"
 msgstr ""
 
-#: apps/logs/models.py:653
-msgid "Celus format"
+#: apps/logs/models.py:668
+msgid "CELUS format"
 msgstr ""
 
-#: apps/logs/models.py:654
+#: apps/logs/models.py:669
 msgid "Raw data"
 msgstr ""
 
-#: apps/logs/serializers.py:90
+#: apps/logs/serializers.py:96
 msgid "Dimension with this code name already exists"
 msgstr ""
 
-#: apps/logs/serializers.py:177
+#: apps/logs/serializers.py:182
 msgid "Public report type with this code name already exists"
 msgstr ""
 
-#: apps/logs/serializers.py:186
+#: apps/logs/serializers.py:191
 #, python-brace-format
 msgid ""
 "Report type with this code name already exists for organization "
 "\"{organization}\""
 msgstr ""
 
-#: apps/necronomicon/admin.py:74
+#: apps/necronomicon/admin.py:83
 msgid "Plan to delete all related objects"
 msgstr ""
 
-#: apps/necronomicon/admin.py:87
+#: apps/necronomicon/admin.py:96
 #, python-format
 msgid "Planned to delete all related object for %(passed)s/%(total)s batches."
 msgstr ""
 
-#: apps/necronomicon/admin.py:103
+#: apps/necronomicon/admin.py:112
 msgid "Plan to delete"
 msgstr ""
 
-#: apps/necronomicon/admin.py:109
+#: apps/necronomicon/admin.py:118
 msgid "Deletion is being prepared. You need to confirm it"
 msgstr ""
 
-#: apps/necronomicon/models.py:17
+#: apps/necronomicon/models.py:18
 msgid "Preparing Stats"
 msgstr ""
 
-#: apps/necronomicon/models.py:18
+#: apps/necronomicon/models.py:19
 msgid "Stats Prepared"
 msgstr ""
 
-#: apps/necronomicon/models.py:19
+#: apps/necronomicon/models.py:20
 msgid "Deleting"
 msgstr ""
 
-#: apps/necronomicon/models.py:20
+#: apps/necronomicon/models.py:21
 msgid "Deleted"
 msgstr ""
 
-#: apps/necronomicon/models.py:33
+#: apps/necronomicon/models.py:22
+#, fuzzy
+#| msgid "date"
+msgid "Outdated"
+msgstr "datum"
+
+#: apps/necronomicon/models.py:49
 msgid "Batches"
 msgstr ""
 
@@ -406,107 +427,104 @@ msgstr ""
 msgid "An alias for organization {org} clashes with one of organization names."
 msgstr ""
 
-#: apps/publications/models.py:127
+#: apps/publications/models.py:228
 msgid "Book"
 msgstr ""
 
-#: apps/publications/models.py:128
+#: apps/publications/models.py:229
 msgid "Journal"
 msgstr ""
 
-#: apps/publications/models.py:129
+#: apps/publications/models.py:230
 msgid "Unknown"
 msgstr ""
 
-#: apps/publications/models.py:130
+#: apps/publications/models.py:231
 msgid "Database"
 msgstr ""
 
-#: apps/publications/models.py:131
+#: apps/publications/models.py:232
 msgid "Other"
 msgstr ""
 
-#: apps/publications/models.py:132
+#: apps/publications/models.py:233
 msgid "Report"
 msgstr ""
 
-#: apps/publications/models.py:133
+#: apps/publications/models.py:234
 msgid "Newspaper"
 msgstr ""
 
-#: apps/publications/models.py:134
+#: apps/publications/models.py:235
 msgid "Multimedia"
 msgstr ""
 
-#: apps/publications/models.py:135
+#: apps/publications/models.py:236
 msgid "Article"
 msgstr ""
 
-#: apps/publications/models.py:136
+#: apps/publications/models.py:237
 msgid "Book segment"
 msgstr ""
 
-#: apps/publications/models.py:137
+#: apps/publications/models.py:238
 msgid "Dataset"
 msgstr ""
 
-#: apps/publications/models.py:139
+#: apps/publications/models.py:240
 msgid "Repository item"
 msgstr ""
 
-#: apps/publications/models.py:140
+#: apps/publications/models.py:241
 msgid "Thesis or dissertation"
 msgstr ""
 
-#: apps/publications/models.py:178
+#: apps/publications/models.py:295
 msgid "Title/Database"
 msgstr ""
 
-#: apps/publications/models.py:229
+#: apps/publications/models.py:370
+msgid "Item"
+msgstr ""
+
+#: apps/publications/models.py:407
 msgid "Processing"
 msgstr ""
 
-#: apps/publications/models.py:231
+#: apps/publications/models.py:409
 msgid "Done"
 msgstr ""
 
-#: apps/publications/models.py:248 apps/tags/models.py:556
+#: apps/publications/models.py:426 apps/tags/models.py:607
 #, python-brace-format
 msgid ""
 "The uploaded file does not seem to be a CSV file. The file type seems to be "
 "'{detected_type}'. Please upload a CSV file."
 msgstr ""
 
-#: apps/sushi/models.py:721
+#: apps/sushi/models.py:839
 msgid "Downloading"
 msgstr ""
 
-#: apps/sushi/models.py:727
+#: apps/sushi/models.py:845
 msgid "Success"
 msgstr ""
 
-#: apps/sushi/models.py:729
+#: apps/sushi/models.py:847
 msgid "No data"
 msgstr ""
 
-#: apps/sushi/models.py:732
+#: apps/sushi/models.py:850
 msgid "Parsing failed"
 msgstr ""
 
-#: apps/sushi/models.py:733
+#: apps/sushi/models.py:851
 msgid "Download failed"
 msgstr ""
 
-#: apps/sushi/models.py:734
+#: apps/sushi/models.py:852
 msgid "Not used"
 msgstr ""
-
-#: apps/tags/logic/titles_lists.py:188
-msgid "{} match"
-msgid_plural "{} matches"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
 
 #: apps/tags/models.py:29
 msgid "Everybody"
@@ -532,22 +550,26 @@ msgstr ""
 msgid "System"
 msgstr ""
 
-#: apps/tags/models.py:357
+#: apps/tags/models.py:49
+msgid "Import"
+msgstr ""
+
+#: apps/tags/models.py:404
 msgid "Tag"
 msgstr "Štítek"
 
-#: apps/tags/models.py:533
+#: apps/tags/models.py:584
 msgid "Preprocessing"
 msgstr ""
 
-#: apps/tags/models.py:539
+#: apps/tags/models.py:590
 msgid "Undoing"
 msgstr ""
 
-#: config/settings/base.py:203
+#: config/settings/base.py:221
 msgid "English"
 msgstr ""
 
-#: config/settings/base.py:203
+#: config/settings/base.py:221
 msgid "Czech"
 msgstr ""

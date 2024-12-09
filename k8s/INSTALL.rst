@@ -1,4 +1,4 @@
-How to install Celus to Digital Ocean k8s cluster
+How to install CELUS to Digital Ocean k8s cluster
 =================================================
 
 Inspired by https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
@@ -64,7 +64,7 @@ And you cat try to parse the json::
     echo ... | base64 -d
 
 
-Celus infrastructure
+CELUS infrastructure
 --------------------
 
 Fill the file `secrets/secrets-celus.yaml` with appropriate values. And load it using::

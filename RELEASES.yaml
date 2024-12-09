@@ -40,7 +40,7 @@
       - in reporting, tags from hidden tag classes are no longer shown in the report output when
         "merge rows by tag" is used
       - the "Introductory tour" feature was removed
-      - a bug preventing Celus from properly reacting to SUSHI exception 1020 was fixed
+      - a bug preventing CELUS from properly reacting to SUSHI exception 1020 was fixed
       - an error in reporting causing unresponsive "Run report" button when report type was changed
         under specific conditions was fixed
       - several other small changes, improvements and fixes were introduced
@@ -48,7 +48,7 @@
       - v reportingu při použití funkce "sloučení řádků podle štítků" již nejsou ve výstupu
         zobrazeny štítky z tříd štítků, které byly uživatelem označeny jako skryté
       - funkce "Úvodní tour" byla odstraněna
-      - byla opravena chyba, která bránila Celusu správně reagovat na SUSHI výjimku 1020
+      - byla opravena chyba, která bránila CELUSu správně reagovat na SUSHI výjimku 1020
       - byla opravena chyba v reportingu způsobující neodpovídající tlačítko "Spustit report" při
         změně typu reportu za specifických podmínek
       - bylo provedeno několik dalších drobných změn, vylepšení a oprav
@@ -79,8 +79,8 @@
 
 - version: 6.1.0
   title:
-    en: Standard views in reporting, proprietary IDs in title lists, and more in Celus 6.1.0
-    cs: Standardní pohledy v reportingu, proprietary ID v seznamu titulů a mnohem víc v Celusu 6.1.0
+    en: Standard views in reporting, proprietary IDs in title lists, and more in CELUS 6.1.0
+    cs: Standardní pohledy v reportingu, proprietary ID v seznamu titulů a mnohem víc v CELUSu 6.1.0
   text:
     en: |
       - You can now apply **[standard view filters](https://support.celus.net/support/solutions/articles/103000284639-how-to-create-a-report-in-celus-)** to reports in reporting with a single click
@@ -103,14 +103,14 @@
 
 - version: 6.0.0
   title:
-    en: Celus version 6.0.0 with COUNTER format export, in-app notifications, fiscal year based dates and much more is here!
-    cs: Celus verze 6.0.0 s exportem ve formátu COUNTER, notifikacemi v aplikaci, daty podle fiskálního roku a mnohem víc je tady!
+    en: CELUS version 6.0.0 with COUNTER format export, in-app notifications, fiscal year based dates and much more is here!
+    cs: CELUS verze 6.0.0 s exportem ve formátu COUNTER, notifikacemi v aplikaci, daty podle fiskálního roku a mnohem víc je tady!
 
   text:
     en: |
       - Finished harvests, broken SUSHI credentials and other events newly show as **in-app notifications** with optional desktop notifications
       - You can now **export your data in the COUNTER format** from the platform detail page
-      - Set your fiscal year start in the date range selector and use **FY based dates** throughout Celus
+      - Set your fiscal year start in the date range selector and use **FY based dates** throughout CELUS
       - Unsuccessful harvests can now be **manually marked as "empty data"** to prevent further harvesting attempts and fix data coverage numbers
       - Email based **two-factor authentication** was added to all accounts for extra security
       - Unless manually overridden, SUSHI server URL will be automatically updated using platform metadata
@@ -119,7 +119,7 @@
     cs: |
       - Dokončená sklízení, chybné SUSHI credentials a další události se nově zobrazují jako **notifikace v aplikaci** s možností desktopových notifikací
       - Nyní můžete **exportovat data ve formátu COUNTER** z detailu platformy
-      - Nastavte začátek svého fiskálního roku v selektoru dat a používejte **data podle fiskálního roku** v celém Celusu
+      - Nastavte začátek svého fiskálního roku v selektoru dat a používejte **data podle fiskálního roku** v celém CELUSu
       - Neúspěšná sklízení mohou být nyní **ručně označena jako "prázdná data"** pro zabránění dalších pokusů o sklizeň a opravu pokrytí daty
       - K účtům byla přidána **dvoufaktorová autentizace pomocí emailu** pro extra bezpečnost
       - Pokud není ručně přepsáno, URL SUSHI serveru bude automaticky aktualizováno pomocí metadat platformy
@@ -166,8 +166,8 @@
 
 - version: 5.9.0
   title:
-    en: Easier reharvesting, reporting improvements, and many more non-COUNTER reports arrive with Celus 5.9.0
-    cs: Snazší reharvesting, vylepšení reportingu a mnoho dalších non-COUNTER reportů přichází s Celusem 5.9.0
+    en: Easier reharvesting, reporting improvements, and many more non-COUNTER reports arrive with CELUS 5.9.0
+    cs: Snazší reharvesting, vylepšení reportingu a mnoho dalších non-COUNTER reportů přichází s CELUSem 5.9.0
   text:
     en: |
       - organization admins in single-library installations now have the ability to **[manage their users](https://support.celus.net/en/support/solutions/articles/103000260180)**
@@ -201,16 +201,16 @@
 
 - version: 5.8.0
   title:
-    en: Tagging improvements, smarter SUSHI harvesting, support for Kanopy non-COUNTER report, and much more in Celus 5.8.0
-    cs: Vylepšení štítkování, chytřejší SUSHI harvesting, podpora non-COUNTER reportů Kanopy a mnoho dalšího v Celusu 5.8.0
+    en: Tagging improvements, smarter SUSHI harvesting, support for Kanopy non-COUNTER report, and much more in CELUS 5.8.0
+    cs: Vylepšení štítkování, chytřejší SUSHI harvesting, podpora non-COUNTER reportů Kanopy a mnoho dalšího v CELUSu 5.8.0
   text:
     en: |
       - support for Kanopy non-COUNTER report was added
       - when tagging title from a file, it is now possible to apply many tags at once by explicitly listing them in the file
       - title lists newly support periodic re-tagging of new titles
       - in reporting it is now possible to filter by tag class - not only by individual tags
-      - "last harvestable month" was introduced for SUSHI credentials - Celus will not try to harvest data for months after this date. It is automatically extracted from failed reports and may be set/overridden by the user.
-      - links to knowledgebase articles were added to many Celus pages - look for the blue questionmark in the lower right corner
+      - "last harvestable month" was introduced for SUSHI credentials - CELUS will not try to harvest data for months after this date. It is automatically extracted from failed reports and may be set/overridden by the user.
+      - links to knowledgebase articles were added to many CELUS pages - look for the blue questionmark in the lower right corner
       - users can newly see title lists created by other users which are related to tags and tag classes they can assign
       - several other small improvements and fixes were introduced
     cs: |
@@ -218,8 +218,8 @@
       - při štítkování titulů ze souboru je nyní možné aplikovat více štítků najednou uvedením jednotlivých štítků přímo v souboru
       - titulové seznamy nově podporují pravidelné znovu-zpracování pro označení nových titulů
       - v reportingu je nyní možné filtrovat podle typu štítků - nejen podle jednotlivých štítků
-      - byl přidán parametr "poslední stáhnutelný měsíc" pro SUSHI přihlašovací údaje - Celus se nebude pro pozdější měsíce pokoušet sklízet data. Tento parametr je automaticky extrahován z neúspěšných sklízení a může být nastaven/přepsán uživatelem.
-      - na mnoha stránkách Celusu byly přidány odkazy na články v naší znalostní bázi - hledejte modrý otazník v pravém dolním rohu
+      - byl přidán parametr "poslední stáhnutelný měsíc" pro SUSHI přihlašovací údaje - CELUS se nebude pro pozdější měsíce pokoušet sklízet data. Tento parametr je automaticky extrahován z neúspěšných sklízení a může být nastaven/přepsán uživatelem.
+      - na mnoha stránkách CELUSu byly přidány odkazy na články v naší znalostní bázi - hledejte modrý otazník v pravém dolním rohu
       - uživatelé nyní vidí titulové seznamy vytvořené jinými uživateli, které jsou spojeny se štítky a typy štítků, které mohou přiřazovat
       - bylo provedeno několik dalších menších vylepšení a oprav
 
@@ -242,8 +242,8 @@
 
 - version: 5.7.0
   title:
-    en: Adjusting tag visibility, full screen reporting output, faster title tagging and more in Celus 5.7.0
-    cs: Nastavení viditelnosti štítků, zobrazení reportů na celou obrazovku, rychlejší značkování titulů a další v Celusu 5.7.0
+    en: Adjusting tag visibility, full screen reporting output, faster title tagging and more in CELUS 5.7.0
+    cs: Nastavení viditelnosti štítků, zobrazení reportů na celou obrazovku, rychlejší značkování titulů a další v CELUSu 5.7.0
   text:
     en: |
       - in tag management, it is now possible to [hide some tag classes](https://support.celus.net/support/solutions/articles/103000205017) from being listed together with the tagged items (e.g. in reporting output, "All titles", etc.)
@@ -267,25 +267,25 @@
 
 - version: 5.6.0
   title:
-    en: Trend analysis, data coverage in reporting, topic tags and meeting in Charleston - read what's new in Celus 5.6.0
-    cs: Analýza trendů, pokrytí dat v reportech, štítky témat a setkání v Charlestonu - přečtěte si, co je nového v Celusu 5.6.0
+    en: Trend analysis, data coverage in reporting, topic tags and meeting in Charleston - read what's new in CELUS 5.6.0
+    cs: Analýza trendů, pokrytí dat v reportech, štítky témat a setkání v Charlestonu - přečtěte si, co je nového v CELUSu 5.6.0
   text:
     en: |
       - Reporting newly contains a [**trend analysis** mode](https://support.celus.net/support/solutions/articles/103000204316) where you can compare data from two time periods
       - **[Reporting now shows data coverage](https://support.celus.net/support/solutions/articles/103000204996)** so that you know how complete the analyzed data are
-      - We added topic [tags from the Scopus title list](https://support.celus.net/support/solutions/articles/103000205001) to titles in Celus
-      - The Celus user interface was slightly cleaned up and improved
+      - We added topic [tags from the Scopus title list](https://support.celus.net/support/solutions/articles/103000205001) to titles in CELUS
+      - The CELUS user interface was slightly cleaned up and improved
       - Come have a **chat with us at the Charleston conference 2023** at booth #16 on the Vendor Showcase Day (7 Nov) or [schedule a meeting with us](https://calendly.com/support-lj8/charleston-conference?month=2023-11)
-      - Celus is now processing **even more non-COUNTER reports**: Hanwen, Embase, Calis, Airiti, Lexis Plus and HeinOnline. See the full list of available non-COUNTER reports [here](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
+      - CELUS is now processing **even more non-COUNTER reports**: Hanwen, Embase, Calis, Airiti, Lexis Plus and HeinOnline. See the full list of available non-COUNTER reports [here](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
       - user email validation is now enforced before working with the system
       - many other small and larger improvements and fixes
     cs: |
       - Reporting nově obsahuje mód [**analýzy trendu**](https://support.celus.net/support/solutions/articles/103000204316), ve kterém můžete porovnávat data ze dvou časových období
       - **[Reporting nyní zobrazuje pokrytí dat](https://support.celus.net/support/solutions/articles/103000204996)**, takže víte, jak kompletní jsou analyzovaná data
-      - Přidali jsme do Celusu [štítky témat z titulového seznamu Scopus](https://support.celus.net/support/solutions/articles/103000205001)
-      - Uživatelské rozhraní Celusu bylo mírně vyčištěno a vylepšeno
+      - Přidali jsme do CELUSu [štítky témat z titulového seznamu Scopus](https://support.celus.net/support/solutions/articles/103000205001)
+      - Uživatelské rozhraní CELUSu bylo mírně vyčištěno a vylepšeno
       - Přijďte si s námi popovídat na **Charleston conference 2023** na stánek #16 na Vendor Showcase Day (7. listopadu) nebo [si s námi domluvte schůzku](https://calendly.com/support-lj8/charleston-conference?month=2023-11)
-      - Celus nyní zpracovává **ještě více non-COUNTER reportů**: Hanwen, Embase, Calis, Airiti, Lexis Plus a HeinOnline. Seznam všech dostupných non-COUNTER reportů najdete [zde](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
+      - CELUS nyní zpracovává **ještě více non-COUNTER reportů**: Hanwen, Embase, Calis, Airiti, Lexis Plus a HeinOnline. Seznam všech dostupných non-COUNTER reportů najdete [zde](https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus)
       - validace uživatelského emailu je nyní vyžadována před prací se systémem
       - mnoho dalších menších i větších vylepšení a oprav
 
@@ -313,8 +313,8 @@
 
 - version: 5.5.1
   title:
-    en: Celus 5.5.1 adds improved 'Titles on multiple platforms' view to the dedicated coverage overview page and 20 new non-COUNTER platforms from 5.5.0
-    cs: Celus 5.5.1 přídává vylepšený pohled 'Tituly na více platformách' ke stránce s přehledem pokrytí a 20 novými non-COUNTER platformám z 5.5.0
+    en: CELUS 5.5.1 adds improved 'Titles on multiple platforms' view to the dedicated coverage overview page and 20 new non-COUNTER platforms from 5.5.0
+    cs: CELUS 5.5.1 přídává vylepšený pohled 'Tituly na více platformách' ke stránce s přehledem pokrytí a 20 novými non-COUNTER platformám z 5.5.0
   text:
     en: |
       - The "Titles on multiple platforms" view now shows the span of years of publication from the TR report for each platform and title
@@ -328,11 +328,11 @@
 
 - version: 5.5.0
   title:
-    en: Celus 5.5.0 brings a dedicated page with coverage overview, 20 new non-COUNTER platform reports and much more
-    cs: Celus 5.5.0 přináší stránku s přehledem pokrytí, 20 nových reportů non-COUNTER platforem a mnoho dalšího
+    en: CELUS 5.5.0 brings a dedicated page with coverage overview, 20 new non-COUNTER platform reports and much more
+    cs: CELUS 5.5.0 přináší stránku s přehledem pokrytí, 20 nových reportů non-COUNTER platforem a mnoho dalšího
   text:
     en: |
-      - Celus is now able to process 20 non-COUNTER platform reports – Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate and Women Writers Online. You can find all the information about this in the [non-COUNTER platforms section of our Support portal](https://support.celus.net/support/solutions/folders/103000394714).
+      - CELUS is now able to process 20 non-COUNTER platform reports – Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate and Women Writers Online. You can find all the information about this in the [non-COUNTER platforms section of our Support portal](https://support.celus.net/support/solutions/folders/103000394714).
       - We added a [dedicated page for overview of data coverage](https://support.celus.net/support/solutions/articles/103000115033) throughout the whole system, so you can harvest missing data easily
       - You can now download a [template for importing SUSHI credentials](https://support.celus.net/support/solutions/articles/103000115060)
       - Exports from reporting now include row and column totals
@@ -342,7 +342,7 @@
       - the `Title overlap` feature newly adds information about the first and last month of available data for each title
       - when deleting SUSHI credentials, it is now possible to delete the related usage data as well
     cs: |
-      - Celus nově umožňuje zpracování 20 reportů non-COUNTER platforem - Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate a Women Writers Online. Více informací naleznete v [sekci non-COUNTER platforem našeho Support portálu](https://support.celus.net/support/solutions/folders/103000394714).
+      - CELUS nově umožňuje zpracování 20 reportů non-COUNTER platforem - Choice Reviews, DBpia, eHRAF, Encyclopaedia Britannica, Factiva, Harpweek, ITER, Langenscheidt, Mergent, Naxos, New York Times, OCLC, O’Reilly, SciFinder, SciFinder_n, Statista, Swank, Ulrichsweb, UpToDate a Women Writers Online. Více informací naleznete v [sekci non-COUNTER platforem našeho Support portálu](https://support.celus.net/support/solutions/folders/103000394714).
       - Přidali jsme [stránku pro přehled pokrytí daty](https://support.celus.net/support/solutions/articles/103000115033) v celém systému, takže můžete snadno zjistit, která data chybí
       - Nyní si můžete stáhnout [šablonu pro import SUSHI přihlašovacích údajů](https://support.celus.net/support/solutions/articles/103000115060)
       - Exporty z reportů nyní obsahují řádkové a sloupcové součty
@@ -357,18 +357,18 @@
 
 - version: 5.4.0
   title:
-    en: Celus 5.4.0 brings IPEDS reporting and "Multimedia" interest type
-    cs: Celus 5.4.0 přináší IPEDS reporty a nový typ zájmu "Multimédia"
+    en: CELUS 5.4.0 brings IPEDS reporting and "Multimedia" interest type
+    cs: CELUS 5.4.0 přináší IPEDS reporty a nový typ zájmu "Multimédia"
   text:
     en: |
-      - Celus is now able to calculate your **ACRL IPEDS report** - [read more about it here](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
+      - CELUS is now able to calculate your **ACRL IPEDS report** - [read more about it here](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
       - interest type **"Multimedia"** was added
       - **only one set of SUSHI credentials per platform**, organization and COUNTER version is allowed - [more info](https://support.celus.net/support/solutions/articles/103000063863)
       - the title overlap function newly adds info about first and last month of available data for each title
       - an option to delete platform data together with its SUSHI credentials was added
       - as usual some bugs were squashed and things tweaked for better performance
     cs: |
-      - Celus nyní umí vypočítat **ACRL IPEDS report** - [více informací zde](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
+      - CELUS nyní umí vypočítat **ACRL IPEDS report** - [více informací zde](https://support.celus.net/support/solutions/articles/103000092778-acrl-ipeds-report)
       - byl přidán typ zájmu **"Multimédia"**
       - pro platformu, organizaci a verzi COUNTER je nyní povolena **pouze jedna sada SUSHI přihlašovacích údajů** - [více informací](https://support.celus.net/support/solutions/articles/103000063863)
       - funkce pro analýzu překryvu titulů nyní přidává informace o prvním a posledním měsíci dostupných dat pro každý titul
@@ -384,13 +384,13 @@
     cs: Verze 5.3.0 s analýzou překryvu titulů a speciálními reporty
   text:
     en: |
-      - Overlap analysis – you can now **compare titles** present in your Celus **with an uploaded list** of titles. [Read more](https://support.celus.net/a/solutions/articles/103000064763).
-      - Celus is now able to generate specialized reports. So far, the **ARL report** used in the USA and the **Rebiun report** required by Spanish libraries are implemented. We are currently preparing the **ACRL/IPEDS** report. [Read more about how to use the specialized reports](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
+      - Overlap analysis – you can now **compare titles** present in your CELUS **with an uploaded list** of titles. [Read more](https://support.celus.net/a/solutions/articles/103000064763).
+      - CELUS is now able to generate specialized reports. So far, the **ARL report** used in the USA and the **Rebiun report** required by Spanish libraries are implemented. We are currently preparing the **ACRL/IPEDS** report. [Read more about how to use the specialized reports](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
       - It is now possible to **delete a user-created platform** together with all its data.
       - Release dates were added to the changelog and releases pages.
     cs: |
-      - Analýza překryvu titulů – nyní můžete **porovnat tituly** v Celus **s nahraným seznamem titulů**. [Více informací](https://support.celus.net/a/solutions/articles/103000064763).
-      - Celus nyní umí generovat speciální reporty. Zatím jsou k dispozici **ARL report** používaný v USA a **Rebiun report** požadovaný španělskými knihovnami. Aktuálně připravujeme **ACRL/IPEDS**. [Více informací o použití speciálních reportů](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
+      - Analýza překryvu titulů – nyní můžete **porovnat tituly** v CELUS **s nahraným seznamem titulů**. [Více informací](https://support.celus.net/a/solutions/articles/103000064763).
+      - CELUS nyní umí generovat speciální reporty. Zatím jsou k dispozici **ARL report** používaný v USA a **Rebiun report** požadovaný španělskými knihovnami. Aktuálně připravujeme **ACRL/IPEDS**. [Více informací o použití speciálních reportů](https://support.celus.net/support/solutions/articles/103000064738-specialized-reports).
       - Nově je možné **smazat uživatelsky vytvořenou platformu** spolu s jejími daty.
       - Datum vydání bylo přidáno do changelogu a stránky s vydáními.
   is_new_feature: TRUE
@@ -403,11 +403,11 @@
     cs: Verze 5.2.2 + naše nové uživatelské fórum & znalostní báze
   text:
     en: |
-      - Celus is able to automatically fill in the SUSHI `platform` attribute for platforms which require it.
+      - CELUS is able to automatically fill in the SUSHI `platform` attribute for platforms which require it.
       - There are several bug fixes and optimizations.
       - We opened a new [User forum & knowledgebase](https://support.celus.net/support/discussions).
     cs: |
-      - Celus umí automaticky doplnit SUSHI parametr `platform` pro platformy, které ho vyžadují.
+      - CELUS umí automaticky doplnit SUSHI parametr `platform` pro platformy, které ho vyžadují.
       - Přidali jsme několik oprav a optimalizací.
       - Otevřeli jsme nové [uživatelské fórum & znalostní bázi](https://support.celus.net/support/discussions)
   is_new_feature: FALSE
@@ -438,15 +438,15 @@
   text:
     en: |
       - the [COUNTER registry](https://registry.projectcounter.org/) was integrated into our SUSHI management interface. You can thus easily identify the COUNTER-compliant platforms and get help with filling in the SUSHI credentials
-      - the IP addresses of the Celus server are now available on the `Troubleshooting` page, so that you can easily send them to providers who use IP-based authentication
+      - the IP addresses of the CELUS server are now available on the `Troubleshooting` page, so that you can easily send them to providers who use IP-based authentication
       - a list of non-COUNTER platforms for which raw data import is available was added
       - a bug in display of coverage data for the whole available time range was fixed
       - several minor bugs were fixed
 
     cs: |
       - Do správy SUSHI byla integrována podpora pro [COUNTER registry](https://registry.projectcounter.org/). Nově tak můžete snadno identifikovat COUNTER-kompatibilní platformy a zobrazit specifickou nápovědu při vyplňování jejich SUSHI credentials
-      - IP adresy Celus serveru jsou nyní dostupné na stránce `Řešení problémů`, takže je můžete snadno poslat poskytovatelům, kteří používají autentizaci na základě IP adresy
-      - byl přidán seznam non-COUNTER platforem, pro které Celus umožňuje import z původních souborů od vydavatele
+      - IP adresy CELUS serveru jsou nyní dostupné na stránce `Řešení problémů`, takže je můžete snadno poslat poskytovatelům, kteří používají autentizaci na základě IP adresy
+      - byl přidán seznam non-COUNTER platforem, pro které CELUS umožňuje import z původních souborů od vydavatele
       - byla opravena chyba v zobrazení pokrytí daty při zobrazení celé dostupné doby
       - bylo opraveno několik drobných chyb
   is_new_feature: TRUE
@@ -515,8 +515,8 @@
 
 - version: 5.0.0
   title:
-    en: Celus version 5.0.0 is up and running!
-    cs: Nová verze Celus je tady!
+    en: CELUS version 5.0.0 is up and running!
+    cs: Nová verze CELUS je tady!
   text:
     en: |
       ### New features

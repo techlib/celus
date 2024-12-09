@@ -1,12 +1,12 @@
 <i18n lang="yaml">
 en:
-  title: New Celus version available
-  text: "Celus is being updated ({oldVersion} -> {newCelusVersion})."
+  title: New CELUS version available
+  text: "CELUS is being updated ({oldVersion} -> {newCelusVersion})."
   wait: Wait a moment, please...
   button: Update now
 cs:
-  title: Je dostupná nová verze Celusu
-  text: "Celus se aktualizuje ({oldVersion} -> {newCelusVersion})."
+  title: Je dostupná nová verze CELUSu
+  text: "CELUS se aktualizuje ({oldVersion} -> {newCelusVersion})."
   wait: Mějte prosím chvilku strpení...
   button: Aktualizovat hned
 </i18n>

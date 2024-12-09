@@ -2,7 +2,7 @@
 Admin documentation
 ===================
 
-This document describes administration of the Celus application. For user documentation
+This document describes administration of the CELUS application. For user documentation
 see :doc:`user`.
 
 --------------------
@@ -12,7 +12,7 @@ System configuration
 Defining report types
 =====================
 
-Report types are not hard-coded in the Celus codebase, but rather defined in the database.
+Report types are not hard-coded in the CELUS codebase, but rather defined in the database.
 This allows flexible creation of new report types, especially in case of custom manually uploaded
 data. The following steps describe how to create a report type from scratch. You may also use
 existing report types as inspiration when creating your own data types.
@@ -44,7 +44,7 @@ When filled in, submit the form by clicking on `Save` in the lower right corner.
 
 .. image:: images/dja_add_report_type_filled.png
 
-Now we have the report type created, but this is only the beginning. We have to tell Celus how
+Now we have the report type created, but this is only the beginning. We have to tell CELUS how
 the data for this report should be saved and also presented to the user.
 
 
@@ -53,7 +53,7 @@ Adding dimensions to the report type
 
 Depending on the nature of the report type, each data point can have many dimensions, such as
 the date, title name, publisher name, name of metric, type of user accessing the e-resource, etc.
-In order for Celus to be able to properly import the data from a source file, it has to know about
+In order for CELUS to be able to properly import the data from a source file, it has to know about
 these dimensions.
 
 Some of the dimensions are implicit and do not have to be specified. These are:
@@ -75,7 +75,7 @@ created. You can do so in the Django admin in section `Logs` > `Dimensions` by u
 
 Short name
     the value as it appears in the source files - that is in COUNTER
-    report or as column headers in the tables that you upload to Celus.
+    report or as column headers in the tables that you upload to CELUS.
 
 Name
     localized name of the dimension as it appears to the user.
@@ -97,7 +97,7 @@ Creating a report data view
 ---------------------------
 
 A report type (described above) describes how data are read from a source file and how it is stored
-in the database. To make the presentation of the data more flexible, Celus uses "report data views"
+in the database. To make the presentation of the data more flexible, CELUS uses "report data views"
 which define one of more different views of the underlying report type data.
 
 In order to make a report type accessible in the user interface, at least one report data view
@@ -151,7 +151,7 @@ Position
     on platforms which only have COUNTER 4 data.
 
 Note that there may be more than one view of the same report type data. For example all the
-TR_JR1, TR_BR1 and other reports in COUNTER 5 are created in this way in Celus from the
+TR_JR1, TR_BR1 and other reports in COUNTER 5 are created in this way in CELUS from the
 underlying COUNTER 5 TR master report.
 
 When you save a report data view definition, you are ready for the last part of making the
@@ -161,7 +161,7 @@ data available to the user.
 Associating charts with report data views
 -----------------------------------------
 
-The last step in making a new report type available to users is to tell Celus which charts
+The last step in making a new report type available to users is to tell CELUS which charts
 should be presented to the user if he selects the report data view (see above) associated with
 the report type.
 
@@ -277,7 +277,7 @@ Define interest for a platform
 
 Because platforms differ in their content, there is no "one size fits all" definition of interest
 for all of them. Instead interest has to be defined for each platform individually. This means
-telling Celus which report types should be used to compute interest data for that platform - for
+telling CELUS which report types should be used to compute interest data for that platform - for
 example it might be the COUNTER 4 BR2 report for one platform and the COUNTER 4 JR1 report for
 another - depending on that kind of content is available on that platform and how it is used
 by the consortium.
@@ -299,7 +299,7 @@ desired result. For more generic information about interest please see :ref:`int
 How is interest defined
 -----------------------
 
-As a compromise between flexibility and maintainability, Celus uses a two tiered approach to
+As a compromise between flexibility and maintainability, CELUS uses a two tiered approach to
 defining interest.
 
 Each platform defines a set of reports which should be used to calculate
@@ -320,14 +320,14 @@ Platform specific interest calculation
 Even though different interest types make the interest system pretty
 flexible, it is also sometimes desired to be able to make specific adjustments to how interest
 is calculated for specific platforms. This is especially true for platform which do not offer
-COUNTER data and report types have to be tailor made for them. In such case Celus cannot
+COUNTER data and report types have to be tailor made for them. In such case CELUS cannot
 guess how to extract the interest data without explicit instructions from the user.
 
 To accomplish the above, we decided to make it possible (and necessary) to assign specific reports
 to a platform as "interest defining". There may be more than one such report type - e. g.
 COUNTER 4 BR2 and COUNTER 5 TR reports.
 
-To tell Celus which reports should be used to calculate interest, you should create corresponding
+To tell CELUS which reports should be used to calculate interest, you should create corresponding
 record under `Publications` > `Platform interest reports`. The only two required input values
 are `Report type` - the name of the report - and `Platform` - the platform you wish to associate
 the report type with.
@@ -351,7 +351,7 @@ Maintenance
 Removing unsuccessful SUSHI downloads
 =====================================
 
-Celus tries to be smart about downloading data using the SUSHI protocol. It does not re-fetch
+CELUS tries to be smart about downloading data using the SUSHI protocol. It does not re-fetch
 data for platforms and months for which data was already successfully retrieved or for which
 there were too many unsuccessful attempts.
 

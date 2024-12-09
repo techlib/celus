@@ -5,20 +5,20 @@ en:
   too_old: The link you used is either not valid or too old.
   eduid_invitation:
     bad_data: Sorry, this invitation link is not valid. @:messed_up
-    header: Accept Celus invitation
-    info: To accept your invitation into Celus, click "Register".
+    header: Accept CELUS invitation
+    info: To accept your invitation into CELUS, click "Register".
     some_error: The attempt to register was not successful. @:too_old
-    success: Registration was successful. Click {here} to enter Celus.
+    success: Registration was successful. Click {here} to enter CELUS.
   password_invitation:
     bad_data: Sorry, this invitation link is not valid. @:messed_up
-    header: Accept Celus invitation
-    info: To accept your invitation into Celus, choose a password and click "Register".
+    header: Accept CELUS invitation
+    info: To accept your invitation into CELUS, choose a password and click "Register".
     some_error: The attempt to register was not successful. @:too_old
     success: Your password was successfully set and registration completed. You can now log in {here}.
   password_reset:
     bad_data: Sorry, this password reset link is not valid. @:messed_up
-    header: Celus password reset
-    info: You are going to reset password for your Celus account. Fill in a new password and click "Reset".
+    header: CELUS password reset
+    info: You are going to reset password for your CELUS account. Fill in a new password and click "Reset".
     some_error: The attempt to change password was not successful. @:too_old
     success: Your password was successfully reset. You can now log in {here}.
   here: here
@@ -31,20 +31,20 @@ cs:
   too_old: Odkaz, který jste použili, buď není platný, nebo je příliš starý.
   eduid_invitation:
     bad_data: Je nám líto, ale tento odkaz na pozvánku není platný. @:messed_up
-    header: Přijměte pozvánku do Celusu
-    info: Pro přijetí pozvánky do Celusu klikněte na "Registrovat".
+    header: Přijměte pozvánku do CELUSu
+    info: Pro přijetí pozvánky do CELUSu klikněte na "Registrovat".
     some_error: Pokus o registraci nebyl úspěšný. @:too_old
-    success: Registrace byla úspěšná. Klikněte {here}, abyste vstoupili do Celusu.
+    success: Registrace byla úspěšná. Klikněte {here}, abyste vstoupili do CELUSu.
   password_invitation:
     bad_data: Je nám líto, ale tento odkaz na pozvánku není platný. @:messed_up
-    header: Přijměte pozvánku do Celusu
-    info: Pro přijetí pozvánky do Celusu zvolte heslo a klikněte na "Registrovat".
+    header: Přijměte pozvánku do CELUSu
+    info: Pro přijetí pozvánky do CELUSu zvolte heslo a klikněte na "Registrovat".
     some_error: Pokus o registraci nebyl úspěšný. @:too_old
     success: Vaše heslo bylo úspěšně nastaveno a registrace dokončena. Nyní se můžete přihlásit {here}.
   password_reset:
     bad_data: Omlouváme se, ale tento odkaz na obnovení hesla není platný. @:messed_up
-    header: Obnovení hesla do Celusu
-    info: Chystáte se obnovit heslo pro svůj účet v Celusu. Vyplňte nové heslo a klikněte na "Obnovit".
+    header: Obnovení hesla do CELUSu
+    info: Chystáte se obnovit heslo pro svůj účet v CELUSu. Vyplňte nové heslo a klikněte na "Obnovit".
     some_error: Pokus o změnu hesla nebyl úspěšný. @:too_old
     success: Vaše heslo bylo úspěšně změněno. Nyní se můžete přihlásit {here}.
   here: zde
@@ -61,7 +61,7 @@ cs:
           <img
             src="../assets/celus-plus-white-vertical-nobg.svg"
             height="158"
-            alt="Celus Logo"
+            alt="CELUS Logo"
           />
         </v-col>
       </v-row>

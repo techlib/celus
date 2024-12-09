@@ -19,7 +19,7 @@ project_git_path_base: https://github.com/techlib/
 # we recommend using the master branch
 project_branch: master
 
-# Most of the settings for Celus are stored in Django settings files. There are two settings
+# Most of the settings for CELUS are stored in Django settings files. There are two settings
 # files suitable for running on a server - staging and production
 # The purpose of these is to enable deployment of two different configurations from the same
 # source code.
@@ -29,8 +29,8 @@ project_branch: master
 settings_version: production
 #
 # The following is the name of the PostgreSQL database that the celus playbook will create
-# for Celus. If you change db_name here (not recommended), you need to modify the corresponding
-# settings file in Celus code as well
+# for CELUS. If you change db_name here (not recommended), you need to modify the corresponding
+# settings file in CELUS code as well
 db_name: celus
 
 

@@ -134,7 +134,7 @@ class Counter5Export(metaclass=ABCMeta):
             ["Report_Name", self.report_name],
             ["Report_ID", self.report_id],
             ["Release", "5"],
-            ["Institution_Name", "Celus"],
+            ["Institution_Name", "CELUS"],
             ["Institution_ID", "ISNI:0000000000000000"],
             ["Metric_Types", ""],
             ["Report_Filters", ""],
@@ -146,7 +146,7 @@ class Counter5Export(metaclass=ABCMeta):
                 f"End_Date={self.end_date.isoformat()}",
             ],
             ["Created", now().replace(microsecond=0).isoformat()],
-            ["Created_By", f"Celus {settings.CELUS_VERSION}"],
+            ["Created_By", f"CELUS {settings.CELUS_VERSION}"],
         ]
 
     def same_line(self, r1: AccessLogCubeRecord, r2: AccessLogCubeRecord) -> bool:

@@ -403,8 +403,8 @@ class TestAccountCreationAPI:
         assert resp.status_code == 204
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
-        assert "Celus" in mail.subject, "Celus must be mentioned in the email body"
-        assert "Celus" in mail.body, "Celus must be mentioned in the email body"
+        assert "CELUS" in mail.subject, "CELUS must be mentioned in the email body"
+        assert "CELUS" in mail.body, "CELUS must be mentioned in the email body"
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
     @pytest.mark.parametrize("logged_for_verification", [True, False])
@@ -434,8 +434,8 @@ class TestAccountCreationAPI:
         assert resp.status_code == 200
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
-        assert "Celus" in mail.subject, "Celus must be mentioned in the email body"
-        assert "Celus" in mail.body, "Celus must be mentioned in the email body"
+        assert "CELUS" in mail.subject, "CELUS must be mentioned in the email body"
+        assert "CELUS" in mail.body, "CELUS must be mentioned in the email body"
         assert "/verify-email/?key=" in mail.body, "We use custom url endpoint, it should be there"
 
         # the user may or may not be logged in when he does the verification

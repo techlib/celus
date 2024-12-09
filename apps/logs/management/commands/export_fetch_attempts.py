@@ -1,6 +1,6 @@
 """
 Exports a list of import batches to one file per IB. It uses a format that can be imported back
-into any Celus instance - it does not rely on database IDs being the same, nor the order of
+into any CELUS instance - it does not rely on database IDs being the same, nor the order of
 report type dimensions being the same.
 
 It only exports the import batches "own data" - no interest and no materialized reports.
@@ -236,7 +236,7 @@ def export_fetch_attempts(
 class Command(BaseCommand):
     help = (
         "Export selected fetch attempts including their data into a zip file "
-        "for import into another Celus instance"
+        "for import into another CELUS instance"
     )
 
     def add_arguments(self, parser):

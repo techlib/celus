@@ -208,7 +208,7 @@ ARL_REPORT = {
             "implementationNote": 'The specification states that "Metric options include '
             "“Searches_Federated”, “Total_Item_Requests for full text databases”, "
             'and “Total_Item_Investigations for non-full text databases”." '
-            "Celus cannot automatically assign the database type to decide which metric to use, "
+            "CELUS cannot automatically assign the database type to decide which metric to use, "
             'so only "Searches_Federated" is reported.',
             "stages": [{"id": "dr_stage", "name": "DR", "formula": "dr_federated"}],
         },

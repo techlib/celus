@@ -11,7 +11,7 @@ en:
   new_password: Choose a password
   password2: Repeat password
   login_error: There was an error logging you in
-  how_to_gain_access: To gain or renew access to this Celus installation, let us know at <a href="mailto:ask@celus.net">ask@celus.net</a>
+  how_to_gain_access: To gain or renew access to this CELUS installation, let us know at <a href="mailto:ask@celus.net">ask@celus.net</a>
   signup: "Don't have an account yet? {register_here}"
   register: Register here!
   just_registering: Register

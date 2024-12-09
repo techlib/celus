@@ -8,8 +8,8 @@ en:
     to reliably detect from the client side and some platform providers do not
     inform about this.
   ip_authentication_description_2: |
-    If you find that some of your SUSHI credentials are not working in Celus, it might
-    be necessary to register the IP addresses of this Celus server with your provider. These are:
+    If you find that some of your SUSHI credentials are not working in CELUS, it might
+    be necessary to register the IP addresses of this CELUS server with your provider. These are:
   ip_authentication_description_3: |
     Feel free to contact us at <a href="mailto:ask@celus.net">ask@celus.net</a>
     if you are not sure how to proceed.
@@ -21,7 +21,7 @@ cs:
     také autentizaci pomocí IP adresy. Bohužel, toto je něco, co je obtížné
     detekovat ze strany klienta a někteří poskytovatelé o tom neinformují.
   ip_authentication_description_2: |
-    Pokud zjistíte, že některé z vašich přihlašovacích údajů pro SUSHI v Celusu nefungují,
+    Pokud zjistíte, že některé z vašich přihlašovacích údajů pro SUSHI v CELUSu nefungují,
     bude možná nutné zaregistrovat IP adresy tohoto serveru u vašeho poskytovatele. Adresy jsou:
   ip_authentication_description_3: |
     Pokud nevíte, jak postupovat, neváhejte nás kontaktovat na
