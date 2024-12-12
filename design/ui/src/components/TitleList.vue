@@ -180,6 +180,14 @@ cs:
           show-class
         />
       </template>
+
+      <template #no-data v-if="!filtersApplied && !noDataText">
+        <NoDataInTableWidget
+          scope="title"
+          :platform-id="platformId"
+          @goto-sushi="$emit('goto-sushi')"
+        />
+      </template>
     </v-data-table>
   </v-card>
 </template>
@@ -198,13 +206,20 @@ import cancellation from "@/mixins/cancellation";
 import tags from "@/mixins/tags";
 import TagChip from "@/components/tags/TagChip";
 import stateTracking from "@/mixins/stateTracking";
+import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 
 export default {
   name: "TitleList",
 
   mixins: [cancellation, tags, stateTracking],
 
-  components: { TagChip, TagSelector, ShortenText, SimplePie },
+  components: {
+    TagChip,
+    TagSelector,
+    ShortenText,
+    SimplePie,
+    NoDataInTableWidget,
+  },
 
   props: {
     url: { required: true },
@@ -403,6 +418,10 @@ export default {
           };
         }),
       ];
+    },
+    filtersApplied() {
+      // boolean, whether any filters are applied
+      return this.search || this.selectedPubType || this.selectedTags.length;
     },
   },
 

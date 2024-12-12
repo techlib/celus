@@ -254,6 +254,7 @@ cs:
               :url="titleListURL"
               :platform-id="platformId"
               :order-interest="orderInterest"
+              @goto-sushi="goToSushi"
             ></TitleList>
           </section>
           <section v-if="platform && !platform.title_count">
@@ -688,6 +689,9 @@ export default {
       } finally {
         this.loadingCounterReportTypes = false;
       }
+    },
+    goToSushi() {
+      this.activeTab = "sushi";
     },
   },
   created() {

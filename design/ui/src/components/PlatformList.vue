@@ -163,6 +163,10 @@ cs:
               show-class
             />
           </template>
+
+          <template #no-data v-if="!filtersApplied">
+            <NoDataInTableWidget scope="platform" />
+          </template>
         </v-data-table>
       </v-col>
     </v-row>
@@ -188,11 +192,13 @@ import TagChip from "@/components/tags/TagChip";
 import TagSelector from "@/components/tags/TagSelector";
 import { intersection } from "lodash";
 import stateTracking from "@/mixins/stateTracking";
+import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 
 export default {
   name: "PlatformList",
 
   components: {
+    NoDataInTableWidget,
     TagSelector,
     TagChip,
     PlatformEditDialog,
@@ -306,6 +312,10 @@ export default {
         });
       }
       return base;
+    },
+    filtersApplied() {
+      // boolean, whether any filters are applied
+      return this.selectedTags.length > 0 || this.search;
     },
     visiblePlatforms() {
       // filter platforms by tag
