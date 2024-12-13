@@ -1,3 +1,24 @@
+- version: 7.0.1
+  title:
+    en: Bug fix release 7.0.1 is out with better error reporting for non-COUNTER data, more non-COUNTER platforms, and other small improvements
+    cs: Opravné vydání 7.0.1 je venku s lepším hlášením chyb pro non-COUNTER data, více non-COUNTER platformami a dalšími drobnými vylepšeními
+  text:
+    en: |
+      - Support for 18 new non-COUNTER platforms was added
+      - It is newly possible to mark several SUSHI credentials as fixed at once
+      - Error messages for non-COUNTER data were improved to provide more information about the
+        cause of the error
+      - Several other small improvements and fixes were introduced
+    cs: |
+      - Byla přidána podpora pro 18 nových non-COUNTER platforem
+      - Nově je možné označit naráz několik SUSHI přihlašovacích údajů za opravené
+      - Chybové zprávy pro non-COUNTER data byly vylepšeny tak, aby poskytovaly více informací o
+        příčině chyby
+      - Bylo provedeno několik dalších menších vylepšení a oprav
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 7.0.0
   title:
     en: Version 7.0.0 brings improvements in SUSHI harvesting, more precise overlap analysis, and much more

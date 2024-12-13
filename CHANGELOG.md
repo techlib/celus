@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.1]  - 2024-12-18
+
+### Added
+
+#### Frontend
+
+* consortium admins can newly mark several SUSHI credentials at once as fixed
+* new users without any data are newly directed to the SUSHI management page from the title and
+  platform lists
+
+
+### Changes
+
+#### Frontend
+
+* the capitalization of the name `CELUS` was unified throughout the application
+* `Platform filter` was renamed to `Platform` in the SUSHI management page
+* cleanup was performed in the frontend code (e.g. empty `class` and `color` attributes were
+  removed, html fragments were removed from translation strings)
+* unique user email addresses are now enforced regardless of the case of the email address and the
+  verification status of the email address
+
+#### Backend
+
+* user created platforms are not included when computing the generic SUSHI data arrival statistics
+  (which is used for platforms without enough data to compute the statistics from the past)
+
+
+### Fixed
+
+#### Frontend
+
+* a more useful error message is shown when an admin tries to add a user with an email address
+  already in use
+* error handling for uploading non-COUNTER data was improved to show a more useful error messages
+
+#### Backend
+
+* potential conflicts when doing platform-title cleanup are now ignored to prevent bogus errors
+* uploading non-COUNTER data with Japanese (SHIFT_JIS) encoding was fixed
+
+
+
 ## [7.0.0]  - 2024-10-16
 
 ### Added
