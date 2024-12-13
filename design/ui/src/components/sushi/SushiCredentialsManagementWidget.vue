@@ -360,11 +360,7 @@ cs:
                       </v-tooltip>
                       <v-tooltip bottom max-width="600px">
                         <template #activator="{ on }">
-                          <v-list-item
-                            @click="triggerMarkFixed"
-                            v-if="showMarkFixed"
-                            v-on="on"
-                          >
+                          <v-list-item @click="triggerMarkFixed" v-on="on">
                             <v-list-item-icon class="mr-2">
                               <v-icon small>fa fa-tools</v-icon>
                             </v-list-item-icon>
@@ -853,7 +849,6 @@ export default {
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
       selectedOrganization: "selectedOrganization",
-      showConsortialStuff: "showConsortialStuff",
     }),
     getCSRFToken() {
       let csrftoken = Cookies.get("csrftoken");
@@ -994,9 +989,6 @@ export default {
       return this.checkedCredentials.filter(
         (e) => e.broken || e.has_broken_reports
       );
-    },
-    showMarkFixed() {
-      return this.showConsortialStuff;
     },
   },
 
