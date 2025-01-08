@@ -280,7 +280,7 @@ class FlexibleDataSlicer:
                     .values("pk")
                     .annotate(**self._prepare_annotations())
                 )
-            elif self.include_all_zero_rows or self.primary_dimension in [
+            elif (self.include_all_zero_rows and not self.trend_mode) or self.primary_dimension in [
                 ob.lstrip("-").split("__")[0] for ob in self.order_by
             ]:
                 # we need to put the primary dimension model into play because zero usage is

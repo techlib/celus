@@ -423,6 +423,40 @@ class TestSlicerAPI:
         assert len(data) == 3
         assert set(data[0].keys()) == {"pk", "base", "compared", "diff", "reldiff", "_total"}
 
+    @pytest.mark.parametrize("zero_rows", [True, False])
+    def test_trend_mode_year_over_year_with_order_by_name(
+        self, flexible_slicer_test_data, clients, zero_rows
+    ):
+        metric_pk = flexible_slicer_test_data["metrics"][0].pk
+        resp = clients["su"].get(
+            reverse("flexible-slicer"),
+            {
+                "primary_dimension": "platform",
+                "trend_mode": True,
+                "base_subset_filters": b64json(
+                    {"date": {"start": "2019-01-01", "end": "2019-12-31"}}
+                ),
+                "compared_subset_filters": b64json(
+                    {"date": {"start": "2020-01-01", "end": "2020-12-31"}}
+                ),
+                "filters": b64json({"metric": [metric_pk]}),
+                "zero_rows": zero_rows,
+                "order_by": "platform",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 3
+        assert set(data[0].keys()) == {
+            "pk",
+            "base",
+            "compared",
+            "diff",
+            "reldiff",
+            "_total",
+            "sort_name",  # extra field coming from the sorting
+        }
+
     @pytest.mark.parametrize(
         ["base_subset_present", "compared_subset_present"],
         [(True, True), (True, False), (False, True), (False, False)],
