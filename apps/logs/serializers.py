@@ -345,7 +345,6 @@ class ManualDataUploadSerializer(ModelSerializer):
     import_batches = ImportBatchSerializer(read_only=True, many=True)
     report_type = ReportTypeExtendedSerializer(read_only=True)
     report_type_id = IntegerField(write_only=True, required=False)
-    can_edit = BooleanField(read_only=True)
     can_import = BooleanField(read_only=True)
     clashing_months = ClashingMonthsSerializer(many=True, read_only=True)
 
@@ -366,7 +365,6 @@ class ManualDataUploadSerializer(ModelSerializer):
             "log",
             "import_batches",
             "preflight",
-            "can_edit",
             "can_import",
             "owner_level",
             "state",

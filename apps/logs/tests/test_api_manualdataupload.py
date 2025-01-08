@@ -3,6 +3,7 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 import pytest
+from core.models import REL_MASTER_ORG, REL_ORG_ADMIN
 from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
@@ -1290,3 +1291,54 @@ class TestOrganizationManualDataUploadViewSet:
                 {"report_type_id": report_types["pr"].pk, "count": 1},
             ],
         }
+
+    def test_can_update(self, basic1, clients, users, organizations, report_types, platforms):
+        ManualDataUploadFullFactory(
+            organization=organizations["root"],
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+            owner_level=REL_ORG_ADMIN,
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["branch"],
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+            owner_level=REL_MASTER_ORG,
+        )
+        ManualDataUploadFullFactory(
+            organization=organizations["branch"],
+            report_type=report_types["tr"],
+            platform=platforms["shared"],
+            user=users["admin1"],
+            owner_level=REL_ORG_ADMIN,
+        )
+        users["admin1"].organizations.add(
+            organizations["branch"], through_defaults={"is_admin": True}
+        )
+
+        url = reverse("organization-manual-data-upload-list", args=(organizations["branch"].pk,))
+
+        resp = clients["user2"].get(url + "?order_by=pk")
+        assert resp.status_code == 404
+        resp = clients["user1"].get(url + "?order_by=pk")
+        assert resp.status_code == 200
+        assert [e["can_edit"] for e in resp.json()["results"]] == [False, False]
+
+        resp = clients["admin1"].get(url + "?order_by=pk")
+        assert resp.status_code == 200
+        assert [e["can_edit"] for e in resp.json()["results"]] == [False, True]
+
+        resp = clients["master_user"].get(url + "?order_by=pk")
+        assert resp.status_code == 200
+        assert [e["can_edit"] for e in resp.json()["results"]] == [False, False]
+
+        resp = clients["master_admin"].get(url + "?order_by=pk")
+        assert resp.status_code == 200
+        assert [e["can_edit"] for e in resp.json()["results"]] == [True, True]
+
+        resp = clients["su"].get(url + "?order_by=pk")
+        assert resp.status_code == 200
+        assert [e["can_edit"] for e in resp.json()["results"]] == [True, True]
+
+        resp = clients["admin2"].get(url + "?order_by=pk")
+        assert resp.status_code == 404

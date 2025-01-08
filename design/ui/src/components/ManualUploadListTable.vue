@@ -467,29 +467,34 @@ export default {
       }
       return res;
     },
+    urlFilters() {
+      let params = {};
+      if (this.filterReportTypes.length > 0) {
+        params.report_type_ids = `${this.filterReportTypes}`;
+      }
+      if (this.filterPlatforms.length > 0) {
+        params.platform_ids = `${this.filterPlatforms}`;
+      }
+      if (this.sortBy != null) {
+        let orderBy = this.sortBy.replace(".", "__");
+        params.order_by = `${orderBy}`;
+        params.desc = `${this.sortDesc ? "true" : "false"}`;
+      }
+      if (this.searchDebounced) {
+        params.search = `${this.searchDebounced}`;
+      }
+      if (this.pageSize) {
+        params.page_size = `${this.pageSize}`;
+      }
+
+      return params;
+    },
     url() {
       if (this.selectedOrganizationId) {
         let url = `/api/organization/${this.selectedOrganizationId}/manual-data-upload/`;
-        let params = {};
-        if (this.filterReportTypes.length > 0) {
-          params.report_type_ids = `${this.filterReportTypes}`;
-        }
-        if (this.filterPlatforms.length > 0) {
-          params.platform_ids = `${this.filterPlatforms}`;
-        }
-        if (this.sortBy != null) {
-          let orderBy = this.sortBy.replace(".", "__");
-          params.order_by = `${orderBy}`;
-          params.desc = `${this.sortDesc ? "true" : "false"}`;
-        }
-        if (this.searchDebounced) {
-          params.search = `${this.searchDebounced}`;
-        }
+        let params = this.urlFilters;
         if (this.page) {
           params.page = `${this.page}`;
-        }
-        if (this.pageSize) {
-          params.page_size = `${this.pageSize}`;
         }
         return this.$router.resolve({ path: url, query: params }).href;
       }
@@ -615,9 +620,11 @@ export default {
   },
 
   watch: {
+    urlFilters() {
+      this.page = 1; // reset page when filter changes
+    },
     url() {
       this.fetchMDUs();
-      this.page = 1; // reset page
     },
     selectedOrganizationId() {
       this.refetchFilters();

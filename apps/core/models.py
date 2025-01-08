@@ -270,7 +270,7 @@ class User(AbstractUser):
             org_id = extract_organization_id_from_request_query(request)
             return self.organization_relationship(org_id)
 
-    def organization_relationship(self, org_id: int):
+    def organization_relationship(self, org_id: int) -> int:
         from organizations.models import Organization, UserOrganization
 
         if self.is_superuser:

@@ -12,7 +12,7 @@ from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, last_month, parse_month
 from core.logic.serialization import parse_b64json
 from core.logic.type_conversion import to_bool
-from core.models import REL_ORG_ADMIN, DataSource
+from core.models import REL_ORG_ADMIN, REL_UNREL_USER, DataSource
 from core.permissions import (
     CanAccessOrganizationFromGETAttrs,
     CanAccessOrganizationRelatedObjectPermission,
@@ -25,7 +25,20 @@ from core.permissions import (
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, prefetch_related_objects
+from django.db.models import BooleanField as DbBooleanField
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    F,
+    OuterRef,
+    Prefetch,
+    Q,
+    Value,
+    When,
+    prefetch_related_objects,
+)
+from django.db.models import IntegerField as DbIntegerField
 from django.db.transaction import atomic, on_commit
 from django.http import JsonResponse, StreamingHttpResponse
 from django.urls import reverse
@@ -1216,15 +1229,20 @@ class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):
             "import_batches", "import_batches__user"
         )
         # add access level stuff
-        org_to_level = {}  # this is used to cache user access level for the same organization
-        mdu: ManualDataUpload
-        for mdu in qs:
-            if mdu.organization_id not in org_to_level:
-                org_to_level[mdu.organization_id] = self.request.user.organization_relationship(
-                    mdu.organization_id
-                )
-            user_org_level = org_to_level[mdu.organization_id]
-            mdu.can_edit = user_org_level >= mdu.owner_level
+        # calculate organization levels
+        organization_ids = qs.distinct("organization_id").values_list("organization_id", flat=True)
+        levels = {e: self.request.user.organization_relationship(e) for e in organization_ids}
+
+        whens = [When(organization_id=k, then=Value(v)) for k, v in levels.items()]
+        qs = qs.annotate(
+            user_org_level=Case(*whens, default=REL_UNREL_USER, output_field=DbIntegerField()),
+            can_edit=Case(
+                When(user_org_level__gte=F("owner_level"), then=Value(True)),
+                default=Value(False),
+                output_field=DbBooleanField(),
+            ),
+        )
+
         return qs
 
     @action(detail=False, methods=["get"], url_path="stats")
