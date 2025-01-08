@@ -688,7 +688,7 @@ export default {
       return `hsl(${hue}, 100%, 40%)`;
     },
     roundValue(value) {
-      return Math.round(value * 100);
+      return Math.floor(value * 100);
     },
     progressByCounterVersion(version) {
       let rts = this.visibleReportTypes.filter(

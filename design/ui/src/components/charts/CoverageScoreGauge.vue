@@ -41,7 +41,7 @@ export default {
       if (this.value === undefined || this.value === null) {
         return "-";
       }
-      return Math.round(this.value * 100) + " %";
+      return Math.floor(this.value * 100) + " %";
     },
   },
 };
