@@ -347,8 +347,72 @@ IPEDS_REPORT_2023 = {
     ],
 }
 
+CAUL_REPORT_2024 = {
+    "name": "CAUL (Council of Australian University Librarians) report",
+    "description": "Standardized report used in Australia to report usage of electronic resources.",
+    "dataSources": [
+        {"id": "br2", "reportType": "BR2", "metric": "Book Section Requests"},
+        {
+            "id": "tr_b3",
+            "reportType": "TR",
+            "metric": "Total_Item_Requests",
+            "filters": {"Access_Method": "Regular", "Data_Type": "Book"},
+        },
+        {"id": "jr1", "reportType": "JR1", "metric": "FT Article Requests"},
+        {
+            "id": "tr_j3",
+            "reportType": "TR",
+            "metric": "Total_Item_Requests",
+            "filters": {"Data_Type": "Journal", "Access_Method": "Regular"},
+        },
+    ],
+    "parts": [
+        # not using full names from source because they are too long for Excel tabs
+        {
+            # Books (Digital) COUNTER Release 4
+            "name": "COUNTER 4 Books",
+            "description": "This is the COUNTER Release 4 BR2 total representing all eBook section "
+            "usage across all publisher and aggregator platforms. A single total "
+            "R4 BR2 figure for all eBook section usage during the year.",
+            "stages": [{"name": "BR2", "formula": "br2"}],
+        },
+        {
+            # Books (Digital) COUNTER Release 5 (2019 - )
+            "name": "COUNTER 5 Books",  # used for Excel sheet tabs
+            "description": "This is the COUNTER Release 5 TR_B3 total representing all eBook "
+            "section usage across all publisher and aggregator platforms including GOA "
+            "(usage of gold open access titles).",
+            "explanation": "Report equivalent to TR_B3 is generated from the full Title Report (TR)"
+            " by applying the corresponding filters (Access_Method=Regular, Data_Type=Book).",
+            "stages": [{"name": "TR_B3", "formula": "tr_b3"}],
+        },
+        {
+            # Journals (Digital) COUNTER Release 4
+            "name": "COUNTER 4 Journals",  # used for Excel sheet tabs
+            "description": " This is the COUNTER Release 4 JR1 total representing all eJournal "
+            "usage across all publisher and aggregator platforms. A single total COUNTER R4 JR1 "
+            "figure for all eJournal usage during the year. The R4 JR1 total includes JR1a "
+            "(usage of backfile/archive titles) as well as JR1 GOA (usage of gold open access "
+            "titles).",
+            "explanation": "It includes only usage recorded via R4 JR1 reports for eJournals "
+            "across all publisher and aggregator platforms. Usage of any title that is not "
+            "recorded via a R4 JR1 report is excluded.",
+            "stages": [{"name": "JR1", "formula": "jr1"}],
+        },
+        {
+            # Journals (Digital) COUNTER Release 5 (2019 - )
+            "name": "COUNTER 5 Journals",  # used for Excel sheet tabs
+            "description": "This is the COUNTER Release 5 TR_J3 total representing all eJournal "
+            "usage across all publisher and aggregator platforms including GOA "
+            "(usage of gold open access titles).",
+            "explanation": "Report equivalent to TR_J3 is generated from the full Title Report (TR)"
+            " by applying the corresponding filters (Access_Method=Regular, Data_Type=Journal).",
+            "stages": [{"name": "TR_J3", "formula": "tr_j3"}],
+        },
+    ],
+}
 
-REPORTS = [IPEDS_REPORT_2023, IPEDS_REPORT_2022, ARL_REPORT, REBIUN_REPORT]
+REPORTS = [IPEDS_REPORT_2023, IPEDS_REPORT_2022, ARL_REPORT, CAUL_REPORT_2024, REBIUN_REPORT]
 
 
 def get_report_def_by_name(name):
