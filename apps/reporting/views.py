@@ -1,4 +1,4 @@
-from core.logic.dates import parse_month
+from core.logic.dates import month_end, parse_month
 from core.validators import month_validator
 from django.http import HttpResponse
 from organizations.models import Organization
@@ -47,7 +47,7 @@ class ReportDataView(APIView):
             )
         data = dict(param_ser.validated_data)
         data["start_date"] = parse_month(data["start_date"])
-        data["end_date"] = parse_month(data["end_date"])
+        data["end_date"] = month_end(parse_month(data["end_date"]))
         return data
 
     def get(self, request, report_name):

@@ -157,7 +157,7 @@ class Report:
         # computed data
         self.sources_by_id = {}
         self.stages_by_part_and_id = {}
-        self.context = None
+        self.context: Optional[ReportingContext] = None
         self._results: Dict[str, pd.DataFrame] = {}
 
     @classmethod
