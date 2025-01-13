@@ -284,8 +284,7 @@ export default {
         },
       ];
     },
-    url() {
-      let url = "/api/events/user-events/";
+    urlFilters() {
       let params = [];
       if (this.filterImportance != null) {
         params.push(`importance=${this.filterImportance}`);
@@ -306,6 +305,11 @@ export default {
       if (this.pageSize) {
         params.push(`page_size=${this.pageSize}`);
       }
+      return params;
+    },
+    url() {
+      let url = "/api/events/user-events/";
+      let params = this.urlFilters;
       if (this.page) {
         params.push(`page=${this.page}`);
       }
@@ -458,6 +462,9 @@ export default {
   watch: {
     url() {
       this.fetchEvents();
+    },
+    urlFilters() {
+      this.page = 1; // reset pagination when filter changes
     },
     storeNewestEventId() {
       console.debug("storeEventCount changed");
