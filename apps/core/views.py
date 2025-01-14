@@ -19,6 +19,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import mail_admins
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.db.models import Prefetch
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.timezone import now
@@ -356,14 +357,13 @@ class AccessibleUsersViewSet(ModelViewSet):
         if settings.ALLOW_ORG_ADMINS_TO_MANAGE_USERS:  # Organization admins can manage users
             if user_role < UL_ORG_ADMIN:
                 raise PermissionDenied(
-                    "You are not allowed to manage users as you are not an admin\
-                                        of this organization."
+                    "You are not allowed to manage users as you are not an admin of this "
+                    "organization."
                 )
         # Only consortial admins + superusers can manage users
         elif not (request.user.is_admin_of_master_organization or request.user.is_superuser):
             raise PermissionDenied(
-                "You are not allowed to manage users as you are not a \
-                                   consortial admin."
+                "You are not allowed to manage users as you are not a consortial admin."
             )
 
     @action(detail=True, methods=["post"], url_path="delete-org-relation")
@@ -394,11 +394,21 @@ class AccessibleUsersViewSet(ModelViewSet):
                     status=status.HTTP_200_OK,
                 )
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         org_pk = request.data.get("organization")
         # check whether the request.user is allowed to add to this org
         self.check_user_permissions(request, org_pk)
-        return super().create(request)
+        try:
+            return super().create(request)
+        except IntegrityError as e:
+            # the unique email problem should be covered by the serializer, but just in case
+            # we catch the exception here (a race condition could happen, for example)
+            if "unique-user-email" in str(e):
+                return Response(
+                    {"email": ["User with this email already exists"]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DifferentUserInviteView(APIView):

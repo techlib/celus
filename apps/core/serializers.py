@@ -185,7 +185,8 @@ class AccessibleUsersSerializer(ModelSerializer):
     is_admin = BooleanField(write_only=True, required=False)  # neccessary for post
     organization = PrimaryKeyRelatedField(
         write_only=True, queryset=Organization.objects.all(), required=False
-    )  # neccessary for post
+    )  # necessary for post
+    username = CharField(required=False)
 
     class Meta:
         model = User
@@ -202,9 +203,21 @@ class AccessibleUsersSerializer(ModelSerializer):
             "is_admin_of_master_organization",
         )
 
+    def validate_email(self, value):
+        users_to_consider = User.objects.filter(email__iexact=value)
+        if self.instance:
+            users_to_consider = users_to_consider.exclude(pk=self.instance.pk)
+        if users_to_consider.exists():
+            raise ValidationError("User with this email already exists")
+        return value
+
     def create(self, validated_data):
         admin_rights = validated_data.pop("is_admin")
         organization = validated_data.pop("organization")
+
+        # ensure username is filled in - it is usually not passed from the frontend
+        if not validated_data.get("username"):
+            validated_data["username"] = validated_data["email"]
 
         user = User.objects.create(**validated_data)
         UserOrganization.objects.create(user=user, organization=organization, is_admin=admin_rights)

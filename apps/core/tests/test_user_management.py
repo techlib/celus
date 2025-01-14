@@ -1,6 +1,7 @@
 import pytest
 from django.urls import reverse
 
+from core.fake_data import UserFactory
 from core.models import User
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
@@ -91,6 +92,83 @@ class TestAccessibleUsers:
             },
         )
         assert resp.status_code == 201
+
+    @pytest.mark.parametrize("uppercase", [True, False])
+    def test_add_user_with_existing_email(
+        self, basic1, organizations, platforms, clients, users, uppercase
+    ):
+        """
+        We test with different types of existing users to make sure the behaviour is consistent.
+        """
+        user = UserFactory(email="foo@bar.baz")
+        resp = clients["su"].post(
+            reverse("user-management-list"),
+            data={
+                "first_name": "name",
+                "last_name": "name",
+                "username": "name",
+                "email": user.email.upper() if uppercase else user.email,
+                "is_admin": False,
+                "organization": organizations["standalone"].pk,
+            },
+        )
+        assert resp.status_code == 400, "should not be able to add user with existing email"
+        assert resp.json() == {"email": ["User with this email already exists"]}
+
+    @pytest.mark.parametrize("uppercase", [True, False])
+    def test_cannot_change_email_to_existing_one(
+        self, basic1, organizations, platforms, clients, users, uppercase
+    ):
+        user = UserFactory(email="foo@bar.baz")
+        new_email = users["user1"].email
+        if uppercase:
+            new_email = new_email.upper()
+        resp = clients["su"].put(
+            reverse("user-management-detail", args=[user.pk]), data={"email": new_email}
+        )
+        assert resp.status_code == 400, "should not be able to change email to existing one"
+        assert resp.json() == {"email": ["User with this email already exists"]}
+
+    def test_superuser_edit_existing_user(self, basic1, organizations, platforms, clients, users):
+        user = UserFactory()
+        resp = clients["su"].put(
+            reverse("user-management-detail", args=[user.pk]),
+            data={
+                "first_name": user.first_name + "X",
+                "last_name": user.last_name + "X",
+                "username": user.username + "X",
+                "email": "x@y.com",
+            },
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert user.first_name.endswith("X")
+        assert user.last_name.endswith("X")
+        assert user.username.endswith("X")
+        assert user.email == "x@y.com"
+
+    def test_superuser_edit_existing_user_keep_email(
+        self, basic1, organizations, platforms, clients, users
+    ):
+        """
+        We do not permit changing email to an existing one, but we should allow keeping the same
+        email to the same user. Here we test that.
+        """
+        user = UserFactory()
+        resp = clients["su"].put(
+            reverse("user-management-detail", args=[user.pk]),
+            data={
+                "first_name": user.first_name + "X",
+                "last_name": user.last_name + "X",
+                "username": user.username + "X",
+                "email": user.email,
+            },
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert user.first_name.endswith("X")
+        assert user.last_name.endswith("X")
+        assert user.username.endswith("X")
 
     # superuser can remove all users from orgs
     @pytest.mark.parametrize(
@@ -212,7 +290,7 @@ class TestAccessibleUsers:
             [user["is_admin_of_master_organization"] for user in resp.json()]
         ), "non-master admin should not be able to see master admins"
 
-    # test that users are sucessfully created and added to appropriate orgs and permissions
+    # test that users are successfully created and added to appropriate orgs and permissions
     @pytest.mark.parametrize("is_admin", [True, False])
     def test_create(self, basic1, organizations, platforms, clients, users, is_admin):
         users_count = User.objects.count()

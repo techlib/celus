@@ -146,7 +146,6 @@ export default {
         first_name: this.firstname,
         last_name: this.lastname,
         email: this.email,
-        username: this.email,
       };
       if (!this.selfEdit) {
         data.is_admin = this.isAdmin;
@@ -162,7 +161,10 @@ export default {
     }),
 
     checkEmailExists(response) {
-      if (response.status == 400 && !!response.data.username) {
+      if (
+        response.status === 400 &&
+        (!!response.data.username || !!response.data.email)
+      ) {
         this.existingEmails.push(this.email.toLowerCase());
         this.showSnackbar({
           content: this.$t("user_already_exists"),
@@ -181,6 +183,7 @@ export default {
         dontShowError: true,
       });
       if (response.error) {
+        console.log(response.error);
         if (!this.checkEmailExists(response.error.response)) {
           this.showSnackbar({
             content: this.$t("error_create") + "" + response.error,
