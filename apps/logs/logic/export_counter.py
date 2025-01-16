@@ -1,8 +1,9 @@
+import codecs
 import csv
 from abc import ABCMeta, abstractmethod
 from collections import Counter, defaultdict
 from datetime import date
-from io import StringIO
+from io import BytesIO
 from itertools import islice
 from logging import getLogger
 from typing import Any, Dict, Generator, Iterable, List, Optional
@@ -227,8 +228,10 @@ class Counter5Export(metaclass=ABCMeta):
     def csv(self) -> Generator[bytes, None, None]:
         """Format the stream of lists into csv encoded bytes stream"""
         generator = self.lines()
-        buff = StringIO()
-        writer = csv.writer(buff, dialect="excel")
+        buff = BytesIO()
+        encoder = codecs.getwriter("utf-8")(buff)
+        buff.write(codecs.BOM_UTF8)  # we need to write BOM after encoder initialization
+        writer = csv.writer(encoder, dialect="excel")
         while lines := tuple(islice(generator, self.CSV_LINE_BATCH)):
             writer.writerows(lines)
             yield buff.getvalue()
