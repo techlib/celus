@@ -1,7 +1,7 @@
 import logging
 import re
 
-from isbnlib import canonical, is_isbn10, is_isbn13, to_isbn13
+from isbnlib import NotValidISBNError, canonical, is_isbn10, is_isbn13, mask, to_isbn13
 
 logger = logging.getLogger(__name__)
 # hyphen, en dash, em dash, minus, fullwidth hyphen
@@ -74,3 +74,17 @@ def normalize_author_id(value: str) -> str:
 
 def normalize_author_name(value: str) -> str:
     return value.strip()[:AUTHOR_NAME_LEN].strip()  # strip potential whitespace after truncation
+
+
+def format_isbn_for_counter(isbn: str) -> str:
+    """
+    If the value is a valid ISBN, we hyphenate (mask) it to be compatible with CoP requirements.
+    If it is not, we leave it as it is to at least preserve the original value.
+    If it is any empty value, we return an empty string.
+    """
+    if not isbn:
+        return ""
+    try:
+        return mask(isbn)
+    except NotValidISBNError:
+        return isbn

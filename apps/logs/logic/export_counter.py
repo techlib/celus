@@ -13,6 +13,7 @@ from django.utils.timezone import now
 from hcube.api.models.aggregation import Max, Min
 from hcube.api.models.transforms import StoredMap
 from organizations.models import Organization
+from publications.logic.validation import format_isbn_for_counter
 from publications.models import AuthorToItem, Platform
 
 from logs.cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
@@ -254,7 +255,7 @@ class TRCounter5Export(Counter5Export):
             record.target or "",
             record.target__doi or "",
             "",  # Proprietary_ID
-            record.target__isbn or "",
+            format_isbn_for_counter(record.target__isbn),
             record.target__issn or "",
             record.target__eissn or "",
             "",  # URI
@@ -470,7 +471,7 @@ class IRCounter5Export(BaseIRCounter5Export):
             record.target or "",
             record.target__doi or "",
             "",  # Proprietary_ID
-            record.target__isbn or "",
+            format_isbn_for_counter(record.target__isbn),
             record.target__issn or "",
             record.target__eissn or "",
             "",  # URI
@@ -483,7 +484,7 @@ class IRCounter5Export(BaseIRCounter5Export):
             record.item__publication_date or "",
             record.item__doi or "",
             "",  # Proprietary_ID
-            record.item__isbn or "",
+            format_isbn_for_counter(record.item__isbn),
             record.item__issn or "",
             record.item__eissn or "",
             "",  # URI
