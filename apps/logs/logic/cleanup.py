@@ -4,6 +4,7 @@ from random import shuffle
 from typing import List, Set
 
 from core.context_managers import needs_clickhouse_query
+from django.db.transaction import atomic
 from hcube.api.models.aggregation import ArrayAgg as HArrayAgg
 from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.aggregation import Sum as HSum
@@ -117,11 +118,17 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
 
             # update the values of the first record to the sum and delete the rest
             to_update = []
+            logger.info(
+                "Updating %d records and deleting %d", len(als_to_update), len(als_to_delete)
+            )
             for al in AccessLog.objects.filter(pk__in=als_to_update.keys()):
                 al.value = als_to_update[al.pk]
                 to_update.append(al)
-            AccessLog.objects.bulk_update(to_update, ["value"])
-            AccessLog.objects.filter(pk__in=als_to_delete).delete(i_know_what_i_am_doing=True)
+            with atomic():
+                # batch_size was set to 500 because in production, trying to update 4k records
+                # at once caused postgres to eat more than 8 GB or RAM and then crash with OOM
+                AccessLog.objects.bulk_update(to_update, ["value"], batch_size=500)
+                AccessLog.objects.filter(pk__in=als_to_delete).delete(i_know_what_i_am_doing=True)
 
             logger.info("Resyncing import batches with clickhouse")
             for i, ib in enumerate(ImportBatch.objects.filter(pk__in=ibs_to_resync)):
