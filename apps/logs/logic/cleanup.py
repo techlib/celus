@@ -129,3 +129,5 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
                 resync_import_batch_with_clickhouse(ib)
         else:
             logger.info("Nothing to fix")
+
+    return stats
