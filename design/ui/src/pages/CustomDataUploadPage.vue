@@ -131,7 +131,7 @@ cs:
   method_celus_disabled_tt: Pro tuto platformu nejsou definovány žádné non-COUNTER reporty.
   method_raw_disabled_tt: Pro tuto platformu nejsou surové reporty podporované.
   method_changed_to_counter: Metoda nahrávání byla pozměněna, protože nahraný soubor je ve standardním COUNTER formátu.
-  notes_url_description: Pokud se chcete dozvědět více o formátu nahrávaného souboru, navštivte naše {link}.
+  notes_url_description: Pro ověření správnosti nahrávaného souboru zkontrolujte prosím naše {link} pro tuto platformu.
   notes_url_href: stránky podpory
   extra_info: Extra informace
   sheet: List
@@ -265,7 +265,7 @@ cs:
               </template>
             </v-radio>
           </v-radio-group>
-          <v-btn @click="step++" :disabled="!method">
+          <v-btn @click="step++" :disabled="!method" color="primary">
             {{ $t("continue") }}
           </v-btn>
         </v-sheet>
@@ -277,13 +277,8 @@ cs:
       <v-stepper-content :step="steps.upload">
         <v-form ref="form" v-model="valid" v-if="!uploadObjectId">
           <v-container fluid class="pb-5 pt-0">
-            <v-row>
-              <v-col>
-                <CustomUploadInfoWidget :method="method" />
-              </v-col>
-            </v-row>
             <v-row v-if="notesUrl">
-              <p>
+              <v-col>
                 <v-alert type="info" text>
                   <i18n path="notes_url_description">
                     <template #link>
@@ -293,7 +288,12 @@ cs:
                     </template>
                   </i18n>
                 </v-alert>
-              </p>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <CustomUploadInfoWidget :method="method" />
+              </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" md="6" v-if="canSelectReportType">
@@ -569,6 +569,7 @@ cs:
             </v-alert>
           </v-card-text>
           <v-card-actions v-if="state === 'preflight'">
+            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
             <v-btn
               v-if="
                 preflightData &&
@@ -605,7 +606,6 @@ cs:
               <v-icon small class="pr-2">fas fa-redo</v-icon>
               {{ $t("regenerate_preflight") }}
             </v-btn>
-            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
           </v-card-actions>
           <v-card-actions v-else-if="state === 'prefailed'">
             <v-btn

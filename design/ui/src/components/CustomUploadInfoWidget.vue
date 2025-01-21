@@ -45,11 +45,12 @@ en:
       dimensions <i>Publisher</i> and <i>Success</i>.
 
   raw:
-    text1: Please upload a <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> or <strong>XLSX</strong> file with non-COUNTER data for this platform.
-    note: Please note that this function is experimental and not all formats are supported.
+    text1: Please upload a <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLSX</strong> or <strong>XLS</strong> file with non-COUNTER data for this platform.
 
   counter:
-    text1: Reports in <strong>COUNTER</strong> format can be imported from <strong>CSV</strong>, <strong>TSV</strong> or <strong>JSON</strong> files. Files in the Microsoft <strong>Excel format are not supported</strong>.
+    text1:
+      Reports in <strong>COUNTER</strong> format can be imported from <strong>CSV</strong>,
+      <strong>TSV</strong>, <strong>XLSX</strong>, <strong>XLS</strong> or <strong>JSON</strong> files.
 
 cs:
   tabs:
@@ -94,12 +95,11 @@ cs:
       Ukázka se standardními rozměry <i>Metric</i> a <i>Title</i> a specifickými
       rozměry <i>Publisher</i> a <i>Success</i>.
   raw:
-    text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLS</strong> nebo <strong>XLSX</strong> s ne-COUNTER daty pro tuto platformu.
-    note: Upozorňujeme, že tato funkce je experimentální a nejsou podporovány všechny možné formáty.
+    text1: Nahrajte prosím soubor ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLSX</strong> nebo <strong>XLS</strong> s ne-COUNTER daty pro tuto platformu.
   counter:
     text1:
       Pro platformy, které jej podporují, můžete data nahrát <strong>ve formátu COUNTER</strong> uložená do souboru
-      ve formátu <strong>CSV</strong> nebo <strong>TSV</strong>.
+      ve formátu <strong>CSV</strong>, <strong>TSV</strong>, <strong>XLSX</strong>, <strong>XLS</strong> nebo <strong>JSON</strong>.
 </i18n>
 
 <template>
@@ -130,9 +130,8 @@ cs:
     <div v-else-if="method === 'counter'">
       <p v-html="$t('counter.text1')"></p>
     </div>
-    <div v-else-if="method === 'nibbler'">
+    <div v-else-if="method === 'raw'">
       <p v-html="$t('raw.text1')"></p>
-      <v-alert type="info" outlined class="mb-0">{{ $t("raw.note") }}</v-alert>
     </div>
   </div>
 </template>
@@ -145,7 +144,7 @@ export default {
     method: {
       type: String,
       default: "counter",
-      validate: (value) => ["counter", "nibbler", "celus"].includes(value),
+      validate: (value) => ["counter", "raw", "celus"].includes(value),
     },
   },
 };
