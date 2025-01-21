@@ -59,29 +59,39 @@ class TestLastActionInterestChange:
         rt = report_type_nd(0)
         report_type_nd(0, short_name="interest")
         assert ImportBatch.objects.count() == 0
-        with patch("logs.logic.materialized_interest._find_platform_interest_changes") as mock:
+        with patch(
+            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
+        ) as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
         # try again - now it should be skipped because interest definition
         # did not change in the meantime
-        with patch("logs.logic.materialized_interest._find_platform_interest_changes") as mock:
+        with patch(
+            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
+        ) as mock:
             smart_interest_sync()
             mock.assert_not_called()
         # now create PlatformInterestReport, thus changing interest definition
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=rt)
-        with patch("logs.logic.materialized_interest._find_platform_interest_changes") as mock:
+        with patch(
+            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
+        ) as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
         # try again - now it should be skipped because interest definition
         # did not change in the meantime
-        with patch("logs.logic.materialized_interest._find_platform_interest_changes") as mock:
+        with patch(
+            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
+        ) as mock:
             smart_interest_sync()
             mock.assert_not_called()
         # delete the PlatformInterestReport - changes interest definition again
         pir.delete()
-        with patch("logs.logic.materialized_interest._find_platform_interest_changes") as mock:
+        with patch(
+            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
+        ) as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()

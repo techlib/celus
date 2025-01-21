@@ -4,7 +4,7 @@ Stuff related to the artificial (materialized) report type 'interest' and its co
 
 import logging
 from collections import Counter
-from time import time
+from time import monotonic, time
 from typing import Dict, Iterable, List, Set
 
 from core.task_support import cache_based_lock
@@ -15,6 +15,7 @@ from django.utils.timezone import now
 from publications.models import Platform, PlatformInterestReport
 
 from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
+from logs.logic.clickhouse import delete_interest_from_import_batches
 from logs.logic.interest import get_interest_type_dim_from_interest_rt
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import AccessLog, DimensionText, ImportBatch, LastAction, Metric, ReportType
@@ -298,7 +299,9 @@ def extract_interest_from_import_batch(
                     organization_id=import_batch.organization_id,
                     date__lte=max_date,
                     date__gte=min_date,
-                ).values("date")
+                )
+                .values("date")
+                .distinct()
             }
     for new_log_dict in (
         import_batch.accesslog_set.filter(
@@ -337,25 +340,26 @@ def find_superseded_import_batches(import_batch: ImportBatch) -> QuerySet[Import
     )
 
 
-def remove_interest(queryset=None) -> Counter:
-    if not queryset:
-        queryset = ImportBatch.objects.all()
-    stats = Counter()
-    interest_rt = ReportType.objects.get_interest_rt()
-    for import_batch in queryset.filter(interest_timestamp__isnull=False):
-        cur_stats = remove_interest_from_import_batch(import_batch, interest_rt)
-        stats += cur_stats
-        stats["import_batches"] += 1
-    return stats
-
-
 @atomic
-def remove_interest_from_import_batch(
-    import_batch: ImportBatch, interest_rt: ReportType
+def remove_interest_from_import_batches(
+    import_batch_ids: [int], interest_rt: ReportType
 ) -> Counter:
-    deleted = import_batch.accesslog_set.filter(report_type=interest_rt).delete()
-    import_batch.interest_timestamp = None
-    import_batch.save()
+    """
+    Very efficient way how to remove interest records from multiple import batches.
+    Deals with clickhouse as well.
+    """
+    deleted = AccessLog.objects.filter(
+        report_type=interest_rt, import_batch_id__in=import_batch_ids
+    ).delete(i_know_what_i_am_doing=True)
+    logger.info("Deleted %d access logs for import batches %d", deleted[0], len(import_batch_ids))
+
+    ImportBatch.objects.filter(pk__in=import_batch_ids).update(interest_timestamp=now())
+
+    def delete_in_clickhouse():
+        delete_interest_from_import_batches(interest_rt, import_batch_ids)
+
+    if settings.CLICKHOUSE_SYNC_ACTIVE:
+        on_commit(delete_in_clickhouse)
     return Counter({"deleted_accesslogs": deleted[0]})
 
 
@@ -417,11 +421,123 @@ def smart_interest_sync():
     processed yet or are out of sync
     """
     logger.debug("Smart syncing interest")
-    for qs in find_batches_that_need_interest_sync():
+    for qs in find_batches_that_need_interest_recompute():
         recompute_interest_by_batch(queryset=qs)
+    logger.debug("Smart interest sync done, checking platform interests")
+    stats = _check_platform_interests()
+    logger.debug("Platform interest check done, stats: %s", stats)
 
 
-def find_batches_that_need_interest_sync():
+@atomic
+def _check_platform_interests() -> Counter:
+    """
+    If the platform interest has changed, then we do not need to recompute the actual values,
+    but the interest in the batch should either be
+    # - removed altogether
+    #   (if the RT is no longer used for interest computation or superseding data exists)
+    # - kept as is with the timestamp updated
+    #   (if the RT is still used for interest computation, no superseding data found)
+    # - created (if the RT was newly added to the platform)
+    """
+    start = monotonic()
+    # platforms with updated interest
+    p2rt = set(PlatformInterestReport.objects.values_list("platform_id", "report_type_id"))
+    rt_superseding = {
+        rt.pk: rt.superseded_by_id for rt in ReportType.objects.filter(superseded_by__isnull=False)
+    }
+
+    def get_ss_list(rt):
+        ss_list = []
+        while rt := rt_superseding.get(rt):
+            ss_list.append(rt)
+        return ss_list
+
+    stats = Counter()
+    interest_rt = ReportType.objects.get_interest_rt()
+    ib_ids_to_update_timestamp = []
+    ib_ids_to_remove_interest_from = []
+    ib_ids_to_recompute_interest = []
+    for i, ib in enumerate(
+        ImportBatch.objects.all()
+        .annotate(last_interest_change=Max("platform__platforminterestreport__last_modified"))
+        .filter(Q(last_interest_change__gte=F("interest_timestamp")))
+        .annotate(
+            has_interest=Exists(
+                AccessLog.objects.filter(report_type=interest_rt, import_batch_id=OuterRef("pk"))
+            ),
+            has_al=Exists(AccessLog.objects.filter(import_batch_id=OuterRef("pk"))),
+        )
+        .iterator()
+    ):
+        # all import batches where interest definition changed after interest_timestamp
+        if (ib.platform_id, ib.report_type_id) not in p2rt:
+            # the report type is not used for interest computation
+            if ib.has_interest:
+                ib_ids_to_remove_interest_from.append(ib.pk)
+                stats["no longer interest"] += 1
+            else:
+                ib_ids_to_update_timestamp.append(ib.pk)
+                stats["updated timestamp"] += 1
+        elif (
+            (ss_list := get_ss_list(ib.report_type_id))
+            and (
+                new_ibs := ImportBatch.objects.filter(
+                    platform_id=ib.platform_id,
+                    organization_id=ib.organization_id,
+                    date=ib.date,
+                    report_type_id__in=ss_list,
+                )
+            )
+            # new_ibs must not be empty, otherwise they would not be considered superseding
+            and (AccessLog.objects.filter(import_batch_id__in=new_ibs).exists())
+        ):
+            if ib.has_interest:
+                logger.info("supersed list %s, ib.rt=%d", ss_list, ib.report_type_id)
+                # superseding data exists, so we do not want to keep the interest
+                ib_ids_to_remove_interest_from.append(ib.pk)
+                stats["superseded interest"] += 1
+            else:
+                ib_ids_to_update_timestamp.append(ib.pk)
+                stats["updated timestamp"] += 1
+        elif ib.has_interest or not ib.has_al:
+            # If the ib has data, there should be some interest here
+            # because the actual computation of interest has not changed, we can keep the original
+            # values and just update the timestamp
+            # If there is no data, we do not need to compute interest - it would be zero anyway
+            # So we just update the timestamp
+            ib_ids_to_update_timestamp.append(ib.pk)
+            stats["updated timestamp"] += 1
+        else:
+            # the IB has data but no interest, (and does not belong into the IBs which should not
+            # have interest) -> we need to recompute the interest (typical if RT was newly connected
+            # to platform)
+            # this can produce some false positives in case where there is data, but no interest
+            # represented by the data (e.g. the metrics in IB do not create interest). This does not
+            # matter as it will be handled by the recompute_interest_by_batch with no harm done
+            ib_ids_to_recompute_interest.append(ib.pk)
+            stats["new interest"] += 1
+
+        if i % 1000 == 0:
+            logger.info("Processed %d import batches, stats: %s", i, stats)
+
+    logger.info("Going to do the following interest updates: %s", stats)
+    # remove interest from the import batches
+    if ib_ids_to_remove_interest_from:
+        remove_interest_from_import_batches(ib_ids_to_remove_interest_from, interest_rt)
+    # recompute interest for the import batches
+    if ib_ids_to_recompute_interest:
+        recompute_interest_by_batch(ImportBatch.objects.filter(pk__in=ib_ids_to_recompute_interest))
+    # update the timestamps
+    if ib_ids_to_update_timestamp:
+        ImportBatch.objects.filter(pk__in=ib_ids_to_update_timestamp).update(
+            interest_timestamp=now()
+        )
+
+    logger.info("Check platform interest finished in %.2f s", monotonic() - start)
+    return stats
+
+
+def find_batches_that_need_interest_recompute():
     """
     Generator that returns querysets for different cases where ImportBatches may be out of
     sync with their interest data
@@ -429,7 +545,6 @@ def find_batches_that_need_interest_sync():
     interest_changed = LastAction.should_run(ACTION_INTEREST_SMART_SYNC, ACTION_INTEREST_CHANGE)
     for fn, only_if_interest_changed in (
         (_find_unprocessed_batches, False),
-        (_find_platform_interest_changes, True),
         (_find_metric_interest_changes, True),
         (_find_platform_report_type_disconnect, True),
         (_find_potentially_superseded_import_batches, False),
@@ -446,19 +561,6 @@ def find_batches_that_need_interest_sync():
 def _find_unprocessed_batches():
     """batches that do not have interest processed"""
     return ImportBatch.objects.filter(interest_timestamp__isnull=True)
-
-
-def _find_platform_interest_changes():
-    """
-    batches where interest definition changed after interest_timestamp - platforminterest change
-    """
-    # we only care about changes related to the import_batch.platform, those related to
-    # report_type are not relevant as they would not touch the relevant batches
-    return (
-        ImportBatch.objects.all()
-        .annotate(last_interest_change=Max("platform__platforminterestreport__last_modified"))
-        .filter(Q(last_interest_change__gte=F("interest_timestamp")))
-    )
 
 
 def _find_metric_interest_changes():

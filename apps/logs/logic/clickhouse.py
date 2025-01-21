@@ -14,7 +14,7 @@ from hcube.backends.clickhouse.data_sources import PostgresqlSource
 from publications.models import Title
 
 from ..cubes import AccessLogCube, ch_backend
-from ..models import AccessLog, ImportBatch, ImportBatchSyncLog
+from ..models import AccessLog, ImportBatch, ImportBatchSyncLog, ReportType
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +263,13 @@ def process_one_import_batch_sync_log(import_batch_id):
         resync_import_batch_with_clickhouse(ib)
     else:
         raise ValueError(f'ImportBatchSyncLog.state has unknown value "{sync_log.state}"')
+
+
+@needs_clickhouse_sync
+def delete_interest_from_import_batches(interest_rt: ReportType, ib_ids: [int]):
+    ch_backend.delete_records(
+        AccessLogCube.query().filter(report_type_id=interest_rt.pk, import_batch_id__in=ib_ids)
+    )
 
 
 @dataclass

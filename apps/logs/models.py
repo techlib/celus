@@ -507,7 +507,7 @@ class AccessLogQuerySet(QuerySet):
                 "Deleting individual AccessLogs is not permitted - they may only be deleted in "
                 "cascade from ImportBatch."
             )
-        super().delete()
+        return super().delete()
 
 
 class AccessLog(models.Model):

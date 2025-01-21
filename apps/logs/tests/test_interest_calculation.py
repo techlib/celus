@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.db.models import Sum
 from django.utils.timezone import now
@@ -5,11 +7,11 @@ from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform, PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
-from logs.fake_data import MetricFactory
+from logs.fake_data import ImportBatchFullFactory, MetricFactory
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import (
+    _check_platform_interests,
     _find_metric_interest_changes,
-    _find_platform_interest_changes,
     _find_platform_report_type_disconnect,
     _find_report_type_metric_disconnect,
     _find_superseded_import_batches,
@@ -405,13 +407,16 @@ class TestInterestRecomputationDetection:
         qs = _find_unprocessed_batches()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_platform_interest_changes(self, organizations, report_type_nd):
+    def test_check_platform_interests(self, organizations, report_type_nd):
+        """
+        Test that platform interest created after import batch is processed is detected
+        """
         organization = organizations[0]
         platform = Platform.objects.create(
             short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
-        ib1 = ImportBatch.objects.create(
+        ib1 = ImportBatchFullFactory.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -419,7 +424,7 @@ class TestInterestRecomputationDetection:
         )
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        # now create the second one - this one is newer than PlatformInterestReport, so its ok
+        # now create the second one - this one is newer than PlatformInterestReport, so it's ok
         ImportBatch.objects.create(
             organization=organization,
             platform=platform,
@@ -432,13 +437,18 @@ class TestInterestRecomputationDetection:
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
         # let's test the function
-        qs = _find_platform_interest_changes()
-        assert {obj.pk for obj in qs} == {ib1.pk}
+        with patch(
+            "logs.logic.materialized_interest.recompute_interest_by_batch"
+        ) as mock_recompute:
+            stats = _check_platform_interests()
+            assert mock_recompute.call_count == 1
+            assert mock_recompute.call_args_list[0][0][0][0] == ib1
+        assert stats["new interest"] == 1
 
-    def test_find_platform_interest_changes2(self, organizations, report_type_nd):
+    def test_check_platform_interests2(self, organizations, report_type_nd, interest_rt):
         """
         Test that when changing report type of PlatformInterestReport, import batches for that
-        platform are recomputed.
+        platform and the original report type will have interest removed.
         """
         organization = organizations[0]
         platform = Platform.objects.create(
@@ -449,12 +459,28 @@ class TestInterestRecomputationDetection:
         assert report_type.pk != report_type2.pk
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatch.objects.create(
+        hit_metric = Metric.objects.create(short_name="Hits")
+        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        ReportInterestMetric.objects.create(
+            report_type=report_type, metric=hit_metric, interest_group=ig
+        )
+        ib1 = ImportBatchFullFactory.create(
             organization=organization,
             platform=platform,
             report_type=report_type,
             interest_timestamp=now(),
         )
+        # create some mock interest logs
+        AccessLog.objects.create(
+            report_type=interest_rt,
+            platform=platform,
+            import_batch=ib1,
+            organization=organization,
+            value=10,
+            date=ib1.date,
+            metric=hit_metric,
+        )
+        assert ib1.accesslog_set.filter(report_type=interest_rt).exists()
         # update pir - it should invalidate ib1
         pir.report_type = report_type2
         pir.save()
@@ -466,40 +492,11 @@ class TestInterestRecomputationDetection:
             report_type=report_type,
             interest_timestamp=now(),
         )
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type, metric=hit_metric, interest_group=ig
-        )
-        # let's test the function
-        qs = _find_platform_interest_changes()
-        assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_platform_interest_changes3(self, organizations, report_type_nd):
-        """
-        Test that when changing platform of PlatformInterestReport, import batches for that
-        report type do not change - it would be pointless as only data for ib.platform can
-        influence the ib interest.
-        """
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        report_type: ReportType = report_type_nd(1, short_name="rt1")
-        # now define the interest
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatch.objects.create(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-        # update pir - it should invalidate ib1
-        pir.platform = Platform.objects.create(short_name="P2", name="P2", provider="P2")
-        pir.save()
-        assert pir.last_modified > ib1.interest_timestamp
-        qs = _find_platform_interest_changes()
-        assert qs.count() == 0, "nothing to recompute"
+        # let's test the function
+        stats = _check_platform_interests()
+        assert stats["no longer interest"] == 1
+        assert not ib1.accesslog_set.filter(report_type=interest_rt).exists()
 
     def test_find_metric_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
