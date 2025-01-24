@@ -99,7 +99,10 @@ cs:
                         </div>
                       </div>
                       <!-- extracted data -->
-                      <AttemptExtractedData :attempt="item.attempt" />
+                      <AttemptExtractedData
+                        :attempt="item.attempt"
+                        :counter-report-version="item.counter_report_version"
+                      />
                     </div>
                     <div class="ml-auto" v-if="!!item.attempt.used_url">
                       <a :href="item.attempt.used_url" target="_blank">

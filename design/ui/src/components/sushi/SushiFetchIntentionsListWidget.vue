@@ -203,7 +203,10 @@ cs:
                 v-text="$t('attempt_deleted')"
               ></span>
               <div v-else-if="item.attempt">
-                <AttemptExtractedData :attempt="item.attempt" />
+                <AttemptExtractedData
+                  :attempt="item.attempt"
+                  :counter-report-version="item.counter_report_version"
+                />
                 <div v-if="!!item.attempt.used_url" class="text-truncate">
                   <strong>{{ $t("used_url") }}</strong
                   >:

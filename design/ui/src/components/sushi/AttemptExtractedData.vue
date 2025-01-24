@@ -19,29 +19,29 @@ cs:
 <script>
 import isArray from "lodash/isArray";
 import isEmpty from "lodash/isEmpty";
+import { counterHeaderRepr } from "@/libs/counter_header.js";
+import { counterVersionToStr } from "@/libs/sushi.js";
 
 export default {
   name: "AttemptExtractedData",
   props: {
     attempt: { required: true, type: Object },
+    counterReportVersion: { required: true, type: Number },
   },
 
   computed: {
     headers() {
-      return Object.entries(this.attempt.extracted_data).map(([key, value]) => {
-        return [key, this.flatten(value)];
-      });
+      return Object.entries(
+        counterHeaderRepr(
+          this.attempt.extracted_data,
+          counterVersionToStr(this.counterReportVersion)
+        )
+      );
     },
   },
 
   methods: {
     isEmpty,
-    flatten(value) {
-      if (isArray(value)) {
-        return value.map((item) => (item.Value ? item.Value : item)).join(", ");
-      }
-      return value;
-    },
   },
 };
 </script>
