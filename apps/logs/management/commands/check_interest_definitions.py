@@ -68,8 +68,26 @@ class Command(BaseCommand):
                 ig = short_name_to_ig[interest]
                 for metric_name in idef["metrics"]:
                     metric = short_name_to_metric[metric_name]
+                    target_metric = None
+                    if prefix := definition.get("interest_metric_prefix"):
+                        tm_short_name = f"{prefix.replace('.','')}_{metric_name}"
+                        if not (target_metric := short_name_to_metric.get(tm_short_name)):
+                            # create the target metric
+                            verbose_name = f"{prefix}: {metric_name.replace('_', ' ')}"
+                            target_metric = Metric.objects.create(
+                                short_name=tm_short_name, name=verbose_name
+                            )
+                            stats["target_metric_created"] += 1
+                            logger.info(
+                                "Created target metric %s for %s", tm_short_name, metric_name
+                            )
+                            short_name_to_metric[target_metric.short_name] = target_metric
+
                     rim, created = ReportInterestMetric.objects.get_or_create(
-                        report_type=rt, interest_group=ig, metric=metric
+                        report_type=rt,
+                        interest_group=ig,
+                        metric=metric,
+                        defaults={"target_metric": target_metric},
                     )
                     if created:
                         logger.info("Added RIM %s", rim)

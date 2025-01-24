@@ -44,7 +44,8 @@ INTEREST_DEFAULT_REPORT_TYPES = {
                 "metrics": ["No_License", "Limit_Exceeded"],
                 "filters": [{"dimension": "Data_Type", "values": ["Multimedia"], "negate": True}],
             },
-        }
+        },
+        "interest_metric_prefix": "C5.1",
     },
     (51, "TR"): {
         "interest": {
@@ -52,12 +53,14 @@ INTEREST_DEFAULT_REPORT_TYPES = {
             "full_text_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
         },
         "superseded_by": (51, "IR"),
+        "interest_metric_prefix": "C5.1",
     },
     (51, "DR"): {
         "interest": {
             "search": {"metrics": ["Searches_Regular"]},
             "search_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
-        }
+        },
+        "interest_metric_prefix": "C5.1",
     },
     (5, "IR"): {
         "interest": {
@@ -86,7 +89,10 @@ INTEREST_DEFAULT_REPORT_TYPES = {
             "full_text": {"metrics": ["Total_Item_Requests"]},
             "full_text_denial": {"metrics": ["No_License", "Limit_Exceeded"]},
         },
-        "superseded_by": (5, "IR"),
+        # TR is superseded by both C51_TR and C5_IR, but we cannot express it right now,
+        # it will have to wait for the new interest computation
+        # for now, we use the C51_TR, because this will be used in production
+        "superseded_by": (51, "TR"),
     },
     (5, "IR_M1"): {
         "interest": {"multimedia": {"metrics": ["Total_Item_Requests"]}}

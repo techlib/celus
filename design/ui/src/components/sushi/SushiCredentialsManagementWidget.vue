@@ -53,12 +53,12 @@ en:
     set: Set
     not_set: Not set
   more_actions: More actions
-  new_counter_version: New COUNTER version is available for these credentials.
+  can_update_tt: These credentials for COUNTER 5 can be cloned into a COUNTER 5.1 copy
   potential_issues:
     label: Potential issues
     broken: Broken credentials
-    not_validated: Not validated
-    can_update: Can be cloned to C 5.1
+    not_validated: Unverified credentials
+    can_update: Can be cloned to 5.1
     duplicated: Duplicated
 
 cs:
@@ -112,12 +112,12 @@ cs:
     set: Nastaven
     not_set: Nenastaven
   more_actions: Další akce
-  new_counter_version: Nová verze COUNTERu je dostupná pro tyto přihlašovací údaje.
+  can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
   potential_issues:
     label: Potenciální problémy
     broken: Nefunkční přístupové údaje
-    not_validated: Nezvalidované
-    can_update: Lze naklonovat do C 5.1
+    not_validated: Neověřené přístupové údaje
+    can_update: Lze naklonovat do 5.1
     duplicated: Duplicitní
 </i18n>
 
@@ -428,7 +428,7 @@ cs:
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="3" :md="2" :xl="1">
+            <v-col cols="3" md="2" xl="auto">
               <v-select
                 v-model="potentialIssuesFilter"
                 :label="$t('potential_issues.label')"
@@ -457,7 +457,7 @@ cs:
               ></v-select>
             </v-col>
             <v-spacer></v-spacer>
-            <v-col cols="3" :md="2" :xl="1">
+            <v-col cols="3" md="2" xl="auto">
               <v-select
                 :items="[
                   {
@@ -477,7 +477,7 @@ cs:
                 :label="$t('title_fields.last_harvestable_month')"
               ></v-select>
             </v-col>
-            <v-col cols="3" :md="2" :xl="1">
+            <v-col cols="3" md="2" xl="auto">
               <v-select
                 :items="[
                   { text: $t('sushi.all_counter_versions'), value: null },
@@ -548,7 +548,7 @@ cs:
                 v-on="on"
               ></i>
             </template>
-            {{ $t("new_counter_version") }}
+            {{ $t("can_update_tt") }}
           </v-tooltip>
           <strong v-else>{{
             counterVersionToStr(item.counter_version)

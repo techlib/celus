@@ -10,43 +10,41 @@ cs:
   non_counter: non-COUNTER
 </i18n>
 <template>
-  <!-- TODO in vue3 there can be multiple root components so following div can be removed -->
-  <div style="display: contents">
-    <v-col :cols="cols" :md="md" :lg="lg" :xl="xl" :class="cls">
-      <v-select
-        :items="typesOfReportForSelect"
-        item-text="name"
-        v-model="selectedTypeOfReport"
-        :label="$t('type_of_report')"
-        outlined
-        dense
-        :return-object="true"
-        :loading="loading"
-      >
-      </v-select>
-    </v-col>
-    <v-col :cols="cols" :md="md" :lg="lg" :xl="xl" :class="cls">
-      <v-select
-        :items="reportViewsForSelect"
-        item-text="name"
-        v-model="selectedReportView"
-        :label="$t('report')"
-        :return-object="true"
-        outlined
-        dense
-        :loading="loading"
-      >
-        <template v-slot:item="{ item }">
-          <v-list-item-content>
-            <v-list-item-title v-html="item.name"></v-list-item-title>
-            <v-list-item-subtitle
-              v-if="item.desc"
-              v-html="item.desc"
-            ></v-list-item-subtitle>
-          </v-list-item-content>
-        </template>
-      </v-select>
-    </v-col>
+  <div style="display: flex">
+    <v-select
+      :items="typesOfReportForSelect"
+      item-text="name"
+      v-model="selectedTypeOfReport"
+      :label="$t('type_of_report')"
+      outlined
+      dense
+      :return-object="true"
+      :loading="loading"
+      class="pr-6"
+      style="flex-basis: 50%"
+    >
+    </v-select>
+    <v-select
+      :items="reportViewsForSelect"
+      item-text="name"
+      v-model="selectedReportView"
+      :label="$t('report')"
+      :return-object="true"
+      outlined
+      dense
+      :loading="loading"
+      style="flex-basis: 50%"
+    >
+      <template v-slot:item="{ item }">
+        <v-list-item-content>
+          <v-list-item-title v-html="item.name"></v-list-item-title>
+          <v-list-item-subtitle
+            v-if="item.desc"
+            v-html="item.desc"
+          ></v-list-item-subtitle>
+        </v-list-item-content>
+      </template>
+    </v-select>
   </div>
 </template>
 <script>
@@ -57,20 +55,11 @@ import { mapActions } from "vuex";
 export default {
   name: "ReportViewSelector",
 
-  // TODO Here
-
   props: {
     value: { required: false, type: Object },
     reportViewsUrl: { required: true, type: String },
     viewFilter: { required: false, type: Function },
     preferFullReport: { required: false, type: Boolean, default: false },
-
-    // For cols
-    cols: { required: false, type: Number, default: 12 },
-    md: { required: false, type: Number, default: 6 },
-    lg: { required: false, type: Number, default: 4 },
-    xl: { required: false, type: Number, default: 4 },
-    cls: { required: false, type: String, default: "pb-0" },
   },
 
   data() {

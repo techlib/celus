@@ -58,8 +58,9 @@ en:
     clone_to_newer:
       title: Clone to COUNTER 5.1
       success: Credentials were cloned to newer version of COUNTER.
-      button: Clone to C 5.1
-      tooltip: Create a copy of selected credentials with the COUNTER version upgraded to 5.1
+      button: Clone to 5.1
+      tooltip: Create a copy of selected credentials with the COUNTER version upgraded to 5.1.
+      info: Create a copy of the selected <strong>{count}</strong> credentials with the COUNTER version upgraded to 5.1.
 
 cs:
   sushi:
@@ -121,5 +122,6 @@ cs:
     clone_to_newer:
       title: Naklonuj do COUNTERu 5.1
       success: Přístopové údaje byly naklonovány s novou verzí COUNTERu.
-      button: Naklonuj do C 5.1
+      button: Naklonuj do 5.1
       tooltip: Vytvořit kopii vybraných přístupových údajů s COUNTER verzí povýšenou na 5.1
+      info: Vytvořit kopii vybraných <strong>{count}</strong> přístupových údajů s COUNTER verzí povýšenou na 5.1.

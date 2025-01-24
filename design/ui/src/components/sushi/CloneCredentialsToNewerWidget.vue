@@ -4,15 +4,11 @@
 
 <template>
   <v-card>
-    <v-card-title
-      >{{ $t("sushi.clone_to_newer.title") }} ({{
-        credentials_length
-      }})</v-card-title
-    >
-    <v-card-text>
-      {{ $t("sushi.clone_to_newer.tooltip") }}
-    </v-card-text>
-    <v-card-actions class="pb-4">
+    <v-card-title>{{ $t("sushi.clone_to_newer.title") }}</v-card-title>
+    <v-card-text
+      v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
+    />
+    <v-card-actions class="px-6 pb-4">
       <v-switch
         v-model="startHarvesting"
         :label="$t('actions.start_harvesting')"
@@ -47,7 +43,7 @@ export default {
 
   data() {
     return {
-      startHarvesting: false,
+      startHarvesting: true,
       saving: false,
     };
   },
@@ -92,7 +88,7 @@ export default {
   },
 
   computed: {
-    credentials_length() {
+    credentialsCount() {
       return this.credentials.length;
     },
   },

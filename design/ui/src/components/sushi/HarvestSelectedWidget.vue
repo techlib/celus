@@ -113,7 +113,7 @@ cs:
         ></v-btn>
       </v-col>
       <v-spacer />
-      <v-col cols="auto">
+      <v-col cols="auto" v-if="!test">
         <v-tooltip bottom max-width="600px">
           <template #activator="{ on }">
             <span v-on="on">

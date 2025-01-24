@@ -14,14 +14,15 @@ cs:
   </div>
   <v-container fluid v-else class="pb-0 px-0 px-sm-2">
     <v-row v-if="!(fixedChart && fixedReportView)">
-      <ReportViewSelector
-        v-if="!fixedReportView"
-        v-model="selectedReportView"
-        :report-views-url="reportViewsUrl"
-        :prefer-full-report="preferFullReport"
-        ref="reportViewSelector"
-      />
-      <v-col cols="12" md="6" lg="4" xl="4" class="pb-0" v-if="!fixedChart">
+      <v-col cols="12" md="8" xl="6" class="pb-0" v-if="!fixedReportView">
+        <ReportViewSelector
+          v-model="selectedReportView"
+          :report-views-url="reportViewsUrl"
+          :prefer-full-report="preferFullReport"
+          ref="reportViewSelector"
+        />
+      </v-col>
+      <v-col cols="12" md="4" xl="3" class="pb-0" v-if="!fixedChart">
         <ChartTypeSelector
           :report-type="selectedReportView"
           :scope="scope"
@@ -31,9 +32,8 @@ cs:
       </v-col>
       <v-col
         cols="12"
-        md="6"
-        lg="4"
-        xl="4"
+        md="4"
+        xl="3"
         class="pb-0"
         v-if="!fixedChart && metricFilterNeeded"
       >
