@@ -17,6 +17,7 @@ class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
     )
     list_select_related = ["source"]
     ordering = ["name"]
+    readonly_fields = ("created", "last_modified")
 
 
 @admin.register(models.UserOrganization)
