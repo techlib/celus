@@ -305,7 +305,7 @@ cs:
               v-on="on"
               small
             >
-              {{ name }}
+              <ShortenText :text="name" :length="30"> </ShortenText>
             </v-chip>
           </template>
           {{ $t("tag_stats_tt", rec) }}
@@ -319,9 +319,12 @@ cs:
       "
     >
       <th>{{ $t("labels.error") }}</th>
-      <td>
+      <td class="text-right">
         <v-icon small color="error">fa-exclamation-circle</v-icon>
-        {{ taggingBatch.preflight.error || taggingBatch.postflight.error }}
+        <ShortenText
+          :text="taggingBatch.preflight.error || taggingBatch.postflight.error"
+        >
+        </ShortenText>
       </td>
     </tr>
     <v-dialog
@@ -345,6 +348,7 @@ cs:
   </table>
 </template>
 <script>
+import ShortenText from "@/components/ShortenText";
 import TagChip from "@/components/tags/TagChip";
 import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
 import isEmpty from "lodash/isEmpty";
@@ -352,7 +356,12 @@ import TaggingAttemptList from "@/components/tagging-batches/TaggingAttemptList.
 export default {
   name: "TaggingBatchStats",
 
-  components: { TaggingAttemptList, TagChip, TaggingBatchStateWidget },
+  components: {
+    ShortenText,
+    TaggingAttemptList,
+    TagChip,
+    TaggingBatchStateWidget,
+  },
 
   props: {
     taggingBatch: { type: Object, required: true },

@@ -358,8 +358,10 @@ class TagQuerySet(models.QuerySet):
 
 
 class Tag(CreatedUpdatedMixin, models.Model):
+    MAX_TAG_NAME = 200
+
     tag_class = models.ForeignKey(TagClass, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=MAX_TAG_NAME)
     text_color = ColorField(default="#303030")
     bg_color = ColorField(default="#E2E2E2")
     desc = models.CharField(max_length=160, blank=True)
@@ -862,7 +864,11 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
                 progress_monitor(stats["row_count"], total)
             if self.needs_tag_column:
                 # stats related to explicit tags in file
-                tags = {name for name in rec.tag_names}
+                tags = set()
+                for name in rec.tag_names:
+                    if len(name) > Tag.MAX_TAG_NAME:
+                        raise ValueError(f"Too long tag name `{name}`")
+                    tags.add(name)
                 if not tags:
                     stats["rows_no_tag"] += 1
                 else:

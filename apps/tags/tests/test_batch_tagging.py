@@ -47,6 +47,10 @@ plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plai
 plain_test_file_with_tags = (
     Path(__file__).parent / "../../../test-data/tagging_batch/plain-title-list-with-tags.csv"
 )
+plain_test_file_with_tags_too_long_tag = (
+    Path(__file__).parent
+    / "../../../test-data/tagging_batch/plain-title-list-with-tags-too-long-tag.csv"
+)
 bom_test_file = (
     Path(__file__).parent / "../../../test-data/tagging_batch/simple-title-list-with-bom.csv"
 )
@@ -1272,6 +1276,25 @@ class TestTasks:
         assert tb.state == TaggingBatchState.FAILED
         assert tb.last_import is not None
         assert tb.taggingattempts.first().error.startswith("User cannot assign tag")
+
+    @pytest.mark.django_db(transaction=True)
+    def test_tagging_batch_too_long_tag_name(self, inmemory_media, users):
+        """Simulates when an error occurs during assigning the tags"""
+
+        tb = TaggingBatchFactory.build(
+            tag_class=TagClassFactory.create(scope=TagScope.TITLE),
+            source_file=plain_test_file_with_tags_too_long_tag,
+            # user which should not be able to assign a tag
+            last_updated_by=users["admin1"],
+            state=TaggingBatchState.PREPROCESSING,
+        )
+        tb.save()
+        tagging_batch_preflight_task(tb.pk, "foo")
+
+        tb.refresh_from_db()
+        assert tb.state == TaggingBatchState.PREFAILED
+        assert tb.last_preflight is not None
+        assert tb.taggingattempts.first().error.startswith("Too long tag name")
 
 
 @pytest.mark.django_db()
