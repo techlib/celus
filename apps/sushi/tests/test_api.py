@@ -277,13 +277,13 @@ def sushi_cred_with_platforms_dataframe_fixture(sushi_cred_dataframe_fixture):
 
     su_standalone = get_the_dict_of_dataframes(
         sushi_cred_dataframe_fixture["su_standalone"],
-        platforms=["root", "shared", "brain", "branch", "master", "empty"],
+        platforms=["shared", "brain", "master", "empty"],
         all_organizations=False,
     )
 
     admin1_root = get_the_dict_of_dataframes(
         sushi_cred_dataframe_fixture["admin1_root"],
-        platforms=["root", "shared", "brain", "branch", "master", "empty"],
+        platforms=["root", "shared", "brain", "master", "empty"],
         all_organizations=False,
     )
 

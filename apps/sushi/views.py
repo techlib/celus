@@ -327,6 +327,8 @@ class SushiCredentialsViewSet(ModelViewSet):
     def get_template_for_import(self, request):
         selected_organization_id = request.GET.get("organization", "-1")
         accessible_organizations = request.user.accessible_organizations()
+        if selected_organization_id != "-1":
+            accessible_organizations = accessible_organizations.filter(pk=selected_organization_id)
         admin_organizations = request.user.admin_organizations()
         qs = self.get_queryset()
         qs = qs.prefetch_related("counter_reports")
