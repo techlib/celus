@@ -928,7 +928,6 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
             self._last_preflights.insert(0, preflight)
         return preflight
 
-    @atomic
     def assign_tag(
         self,
         title_id_formatter: Callable[[int], str] = str,
@@ -942,9 +941,10 @@ class TaggingBatch(CreatedUpdatedMixin, models.Model):
         checked
         """
         try:
-            self._check_prerequisites()
-            self._preassign_checks(system_process=system_process)
-            postflight = self._do_assign_tag(title_id_formatter, progress_monitor)
+            with atomic():
+                self._check_prerequisites()
+                self._preassign_checks(system_process=system_process)
+                postflight = self._do_assign_tag(title_id_formatter, progress_monitor)
         except Exception as e:
             logger.error("Error during tagging", exc_info=True)
             postflight = TaggingAttempt.objects.create(

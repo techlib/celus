@@ -14,10 +14,14 @@ en:
   select_class: Select tag class for uploaded tags
 
 cs:
+  assign_tag_header: Po kontrole předzpracovaných výsledků můžete přiřadit vybrané štítky ke všem nalezeným titulům.
+  assign_tags_header: Po kontrole předzpracovaných výsledků můžete přiřadit nalezené štítky ke všem odpovídajícím titulům.
   select_tag: Vyberte štítek, který bude přiřazen všem nalezeným titulům.
   annotated_file_hint: Pomocí anotovaného zdrojového souboru získáte detailní přehled, jaké tituly byly nalezeny pro jednotlivé řádky v nahraném souboru.
   intro_message: Nahrajte CSV soubor s jedním titulem na řádek. Soubor by měl obsahovat sloupce, které identifikují titul. Jsou podporovány jména sloupců ISBN, ISSN, eISSN a "Proprietary ID". Pokud chcete načíst i názvy štítků ze souboru, musí obsahovat i sloupec s názvem "tag".
   preprocessing_message: Soubor se právě předzpracovává. Může to chvíli trvat.
+  tag_with_one_tag: Všechny tituly s jedním štítkem
+  get_tag_from_file: Získat jména štítků přímo ze souboru
   tag_source: Zdroj štítků
   select_class: Vyberte typ nahraných štítků
 </i18n>

@@ -1251,6 +1251,28 @@ class TestTasks:
                         assert users["su"] in involved_users
             assert TaggingBatch.objects.to_reprocess().count() == 0
 
+    @pytest.mark.django_db(transaction=True)
+    def test_tagging_batch_assign_tag_error(self, inmemory_media, users):
+        """Simulates when an error occurs during assigning the tags"""
+
+        tag = TagForTitleFactory.create(
+            owner=users["admin2"], can_see=AccessibleBy.OWNER, can_assign=AccessibleBy.OWNER
+        )
+        tb = TaggingBatchFactory.build(
+            source_file=plain_test_file,
+            # user which should not be able to assign a tag
+            last_updated_by=users["admin1"],
+            state=TaggingBatchState.IMPORTING,
+            tag=tag,
+        )
+        tb.save()
+        tagging_batch_assign_tag_task(tb.pk, "foo")
+
+        tb.refresh_from_db()
+        assert tb.state == TaggingBatchState.FAILED
+        assert tb.last_import is not None
+        assert tb.taggingattempts.first().error.startswith("User cannot assign tag")
+
 
 @pytest.mark.django_db()
 class TestTaggingManagementCommand:

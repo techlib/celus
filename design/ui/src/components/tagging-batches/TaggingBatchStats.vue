@@ -321,7 +321,7 @@ cs:
       <th>{{ $t("labels.error") }}</th>
       <td>
         <v-icon small color="error">fa-exclamation-circle</v-icon>
-        {{ taggingBatch.preflight.error }}
+        {{ taggingBatch.preflight.error || taggingBatch.postflight.error }}
       </td>
     </tr>
     <v-dialog
