@@ -11,6 +11,7 @@ from nibbler.models import ParserDefinition
 from publications.fake_data import PlatformFactory
 from publications.models import Platform, PlatformInterestReport
 from sushi.fake_data import FetchAttemptFactory
+from sushi.models import AttemptStatus
 
 from knowledgebase.models import ImportAttempt
 from test_scenarios.basic import (  # noqa - fixtures
@@ -131,6 +132,7 @@ class TestCeleryTasks:
         self, data_sources, parser_definitions, interests, settings, counter_report_types
     ):
         settings.KNOWLEDGEBASE_EXPORT_DATA = True
+        settings.FAKE_SUSHI_URLS = ["https://fake.example.com/"]
         platform = PlatformFactory(
             short_name="fake", name="fake", ext_id=8888, source=data_sources["brain"]
         )
@@ -145,6 +147,19 @@ class TestCeleryTasks:
             credentials__platform=platform,
             counter_report=counter_report_types["dr"],
             used_url="https://sushi.example.com/reports/dr/",
+        )
+        FetchAttemptFactory(
+            credentials__counter_version=5,
+            credentials__platform=platform,
+            counter_report=counter_report_types["pr"],
+            used_url="https://fake.example.com/",
+        )
+        FetchAttemptFactory(
+            credentials__counter_version=5,
+            credentials__platform=platform,
+            counter_report=counter_report_types["pr"],
+            used_url="https://sushi.example.com/reports/pr/",
+            status=AttemptStatus.PARSING_FAILED,
         )
         FetchAttemptFactory(
             credentials__counter_version=51,

@@ -5,6 +5,7 @@ import traceback
 import typing
 from collections import Counter
 from enum import Enum, auto
+from functools import reduce
 from importlib.metadata import version
 from urllib.parse import urljoin
 
@@ -28,7 +29,7 @@ from logs.models import (
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 from semantic_version import Version
-from sushi.models import SushiFetchAttempt
+from sushi.models import AttemptStatus, SushiFetchAttempt
 
 from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
 
@@ -261,9 +262,21 @@ class PlatformImportAttempt(ImportAttempt):
         return urljoin(self.source.url, "/knowledgebase/platforms/update-assigned-report-types/")
 
     def get_response(self):
+        # Exclude fake urls
+
         if settings.KNOWLEDGEBASE_EXPORT_DATA:
+            fake_cond = reduce(
+                lambda x, y: x | models.Q(used_url__icontains=y.rstrip("/")),
+                settings.FAKE_SUSHI_URLS,
+                models.Q(),
+            )
+
             input_data = (
-                SushiFetchAttempt.objects.filter(credentials__platform__source=self.source)
+                SushiFetchAttempt.objects.filter(
+                    credentials__platform__source=self.source,
+                    status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
+                )
+                .exclude(fake_cond)
                 .annotate(
                     platform_id=models.F("credentials__platform__ext_id"),
                     counter_report_code=models.F("counter_report__code"),
