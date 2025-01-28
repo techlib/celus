@@ -323,6 +323,7 @@ cs:
                     hide-details
                     class="mt-1"
                     :disabled="
+                      row.id === 'report_type' ||
                       (row.id === 'date' && filters.includes('date__year')) ||
                       (row.id === 'date__year' && filters.includes('date')) ||
                       (row.id.startsWith('date') && trendMode) ||
@@ -998,6 +999,10 @@ export default {
       if (this.trendMode) {
         base = base.filter((d) => !d.id.startsWith("date"));
       }
+      if (this.selectedReportTypes.length <= 1) {
+        // only show report type if there is more than one selected
+        base = base.filter((d) => d.id !== "report_type");
+      }
       return base;
     },
     appliedFilters() {
@@ -1120,6 +1125,23 @@ export default {
         let ret = rts[0].dimensionObjs;
         ret.forEach((item) => (item.id = item.ref));
         return ret;
+      } else if (this.selectedReportTypes.length > 1) {
+        // only show dimensions which are shared by all selected report types
+        // and have the same position (and are represented by the same db column)
+        let out = [];
+        const rt1 = this.allReportTypes.find(
+          (item) => item.pk === this.selectedReportTypes[0]
+        );
+        let others = this.allReportTypes.filter(
+          (item) => this.selectedReportTypes.indexOf(item.pk) > 0
+        );
+        rt1.dimensionObjs.forEach((dim, idx) => {
+          if (others.every((rt) => rt.dimensionObjs[idx]?.pk === dim.pk)) {
+            dim.id = dim.ref;
+            out.push(dim);
+          }
+        });
+        return out;
       }
       return [];
     },

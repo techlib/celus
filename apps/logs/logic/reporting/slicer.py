@@ -11,6 +11,7 @@ from core.logic.type_conversion import to_bool
 from django.conf import settings
 from django.core.exceptions import EmptyResultSet
 from django.db.models import (
+    Case,
     DateField,
     F,
     FilteredRelation,
@@ -21,6 +22,8 @@ from django.db.models import (
     QuerySet,
     Subquery,
     Sum,
+    Value,
+    When,
 )
 from django.db.models.functions import Coalesce, Concat, NullIf
 from django.utils.translation import gettext as _
@@ -126,7 +129,9 @@ class FlexibleDataSlicer:
         # for example Title and annotated with access log data
         # if False, the query is done against the access log model
         self._primary_dimension_query = False
-        self._used_materialized_report = None
+        # if materialized report is used, we store a mapping between the used report type id
+        # and the requested (original) report type id
+        self._mat_reports_map = {}
 
     def config(self):
         return {
@@ -201,22 +206,36 @@ class FlexibleDataSlicer:
     def add_split_by(self, dimension):
         self.split_by.append(dimension)
 
+    def _validate_dim_compatible_with_all_rts(self, dim_name: str, rts: List[ReportType]):
+        dims = {e.dimension_by_attr_name(dim_name) for e in rts}
+        if len(dims) > 1:
+            raise SlicerConfigError(
+                "It is not possible to group by explicit dimension unless that "
+                "dimension is exactly the same for all selected report types",
+                SlicerConfigErrorCode.E100,
+            )
+
     def check_params(self):
         """
         Checks that the config makes sense and data could be retrieved
         """
-        has_explicit_dim_group_by = False
-        for dim_name in self.group_by:
-            if dim_name.startswith("dim"):
-                has_explicit_dim_group_by = True
-                break
-        rt_filter = self.filters.get("report_type_id__in", [])
-        if has_explicit_dim_group_by and len(rt_filter) != 1:
-            raise SlicerConfigError(
-                "It is not possible to group by explicit dimension unless exactly one report "
-                "type is selected by a filter",
-                SlicerConfigErrorCode.E100,
-            )
+        rt_filter = []
+        for fltr in self.dimension_filters:
+            if isinstance(fltr, ForeignKeyDimensionFilter) and fltr.dimension == "report_type":
+                rt_filter = fltr.values
+        if len(rt_filter) != 1:
+            # more than one RT is selected, we need to make sure explicit dimensions are the
+            # same for all RTs
+            rts = ReportType.objects.all()
+            if rt_filter:
+                rts = rts.filter(pk__in=rt_filter)
+            for dim_name in self.group_by:
+                if dim_name.startswith("dim"):
+                    self._validate_dim_compatible_with_all_rts(dim_name, rts)
+            for fltr in self.dimension_filters:
+                if isinstance(fltr, ExplicitDimensionFilter):
+                    self._validate_dim_compatible_with_all_rts(fltr.dimension, rts)
+
         if self.trend_mode:
             if not self.base_subset_filters or not self.compared_subset_filters:
                 raise SlicerConfigError(
@@ -302,9 +321,19 @@ class FlexibleDataSlicer:
             else:
                 # zero usage is not needed - we can just aggregate the accesslogs, which can be
                 # much faster
+                # if report_type is primary dimension and we use materialized reports,
+                # we need to remap the report type id back to the original one
+                pk_def = F(self.primary_dimension)
+                if self.primary_dimension == "report_type" and self._mat_reports_map:
+                    whens = [
+                        When(then=Value(orig), **{self.primary_dimension: pk})
+                        for pk, orig in self._mat_reports_map.items()
+                    ]
+                    pk_def = Case(*whens, default=pk_def, output_field=IntegerField())
+
                 qs = (
                     AccessLog.objects.filter(**filters)
-                    .annotate(pk=F(self.primary_dimension))
+                    .annotate(pk=pk_def)
                     .values("pk")
                     .distinct()
                     .annotate(**self._prepare_annotations(accesslog_prefix=""))
@@ -407,7 +436,13 @@ class FlexibleDataSlicer:
         return annotations
 
     def _group_dict_to_group_key(self, group: dict) -> str:
-        keys = [group[dim] for dim in self.group_by]
+        keys = []
+        for dim in self.group_by:
+            key = group[dim]
+            if dim == "report_type":
+                # we want to map from a potentially materialized report type to the original one
+                key = self._mat_reports_map.get(key, key)
+            keys.append(key)
         return "grp-" + ",".join(map(str, keys))
 
     def decode_key(self, key: str) -> dict:
@@ -803,7 +838,7 @@ class FlexibleDataSlicer:
             materialized_report = find_best_materialized_view(rt, dimensions)
             if materialized_report:
                 logger.info("Using materialized report: %s instead of %s", materialized_report, rt)
-                self._used_materialized_report = materialized_report
+                self._mat_reports_map[materialized_report.pk] = rt.pk
                 for fltr in self.dimension_filters:
                     if fltr.dimension == "report_type":
                         fltr.values = [

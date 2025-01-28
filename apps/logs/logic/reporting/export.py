@@ -352,10 +352,7 @@ class FlexibleDataExporter(ABC):
             return False, True, field.remote_field.model
         elif ref.startswith("dim"):
             # we need the report types to deal with this
-            if len(self.involved_report_types) != 1:
-                raise ValueError(
-                    "Exactly one report type should be active when resolving explicit dimensions"
-                )
+            # the slicer should ensure that all `dim`s between different report types are the same
             rt: ReportType = self.involved_report_types[0]
             dim = rt.dimension_by_attr_name(ref)
             return True, True, dim

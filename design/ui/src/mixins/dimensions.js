@@ -1,4 +1,5 @@
 let implicitDimensions = [
+  { shortName: "report_type", nameKey: "labels.report_type" },
   {
     shortName: "organization",
     nameKey: "organization",

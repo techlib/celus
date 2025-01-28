@@ -284,6 +284,54 @@ class TestFlexibleDataSlicerComputations:
             {"pk": "pl3", "m1": 995544, "m2": 1006560, "m3": 1017576},
         ]
 
+    def test_platform_sum_by_rt_filter_metric(self, flexible_slicer_test_data, show_zero):
+        """
+        Primary dimension: platform
+        Group by: report type
+        DimensionFilter: metric
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("metric", flexible_slicer_test_data["metrics"][:2]),
+            add_group=False,
+        )
+        slicer.add_group_by("report_type")
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == Platform.objects.count()
+        data = [remap_row_keys_to_short_names(row, Platform, [ReportType]) for row in data]
+        data.sort(key=lambda rec: rec["pk"])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert data == [
+            {"pk": "pl1", "rt1": 80784, "rt2": 2131056},
+            {"pk": "pl2", "rt1": 104112, "rt2": 2504304},
+            {"pk": "pl3", "rt1": 127440, "rt2": 2877552},
+        ]
+
+    def test_metric_sum_by_rt_filter_platform(self, flexible_slicer_test_data, show_zero):
+        """
+        Primary dimension: metric
+        Group by: report type
+        DimensionFilter: platform
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="metric")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("platform", [flexible_slicer_test_data["platforms"][0]]),
+            add_group=False,
+        )
+        slicer.add_group_by("report_type")
+        slicer.include_all_zero_rows = show_zero
+        data = list(slicer.get_data())
+        assert len(data) == Platform.objects.count()
+        data = [remap_row_keys_to_short_names(row, Metric, [ReportType]) for row in data]
+        data.sort(key=lambda rec: rec["pk"])
+        # the following numbers were obtained by a separate calculation in a spreadsheet pivot table
+        assert data == [
+            {"pk": "m1", "rt1": 39906, "rt2": 1057752},
+            {"pk": "m2", "rt1": 40878, "rt2": 1073304},
+            {"pk": "m3", "rt1": 41850, "rt2": 1088856},
+        ]
+
     @pytest.mark.parametrize(["order_by"], (("platform",), ("-platform",)))
     def test_platform_order_by_platform(self, flexible_slicer_test_data, order_by, show_zero):
         """
@@ -363,21 +411,46 @@ class TestFlexibleDataSlicerComputations:
         data = list(slicer.get_data())
         assert len(data) == record_count
 
-    def test_platform_sum_by_metric_dim1_filter_dim1(self, flexible_slicer_test_data):
+    @pytest.mark.parametrize(["dim", "error"], [("dim1", False), ("dim2", True)])
+    def test_group_by_explicit_dim_with_two_rts(self, flexible_slicer_test_data, dim, error):
         """
         Primary dimension: platform
-        Group by: metric, dim1
-        DimensionFilter: dim1
+        Group by: metric, dim
+        DimensionFilter: None
 
-        This is not possible because dimensions have different meaning under different report types
-        so we do not allow group by explicit dimension unless report type is fixed to exactly one
+        When more than one report type is used, grouping by explicit dimension is only possible
+        if the dimension is the same for all report types and is stored in the same field.
         """
         slicer = FlexibleDataSlicer(primary_dimension="platform")
-        texts = flexible_slicer_test_data["dimension_values"][0][:2]
-        dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
-        slicer.add_filter(ExplicitDimensionFilter("dim1", dim1_ids), add_group=True)
+        slicer.add_group_by(dim)
+
+        if error:
+            with pytest.raises(SlicerConfigError):
+                slicer.get_data()
+        else:
+            slicer.get_data()
+
+    @pytest.mark.parametrize(["dim", "error"], [("dim1", False), ("dim2", True)])
+    def test_filter_by_explicit_dim_with_two_rts(self, flexible_slicer_test_data, dim, error):
+        """
+        Primary dimension: platform
+        Group by: metric, dim
+        DimensionFilter: dim1
+
+        When more than one report type is used, filtering by explicit dimension is only possible
+        if the dimension is the same for all report types and is stored in the same field.
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        dim_idx = ["dim1", "dim2"].index(dim)
+        texts = flexible_slicer_test_data["dimension_values"][dim_idx][:2]
+        dim_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
+        slicer.add_filter(ExplicitDimensionFilter(dim, dim_ids))
         slicer.add_group_by("metric")
-        with pytest.raises(SlicerConfigError):
+
+        if error:
+            with pytest.raises(SlicerConfigError):
+                slicer.get_data()
+        else:
             slicer.get_data()
 
     def test_platform_sum_by_metric_filter_dim1_rt(self, flexible_slicer_test_data, show_zero):
@@ -806,7 +879,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", rt))
         metric_data = slicer.get_possible_dimension_values(dim)
-        assert slicer._used_materialized_report is None
+        assert slicer._mat_reports_map == {}, "no materialized report should be used"
         assert metric_data["count"] == count
 
     @pytest.mark.parametrize("ignore_self", [True, False])
