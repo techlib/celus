@@ -115,10 +115,16 @@ function smartMonthRange({ start, end }) {
   return `${ymStart} - ${ymEnd}`;
 }
 
+function lastFinishedMonthDate() {
+  // the last month which is already over and therefore SUSHI data can be
+  // harvested for it
+  return addMonths(new Date(), -1).setDate(1);
+}
+
 function lastFinishedMonth() {
   // the last month which is already over and therefore SUSHI data can be
   // harvested for it
-  return ymDateFormat(addMonths(new Date(), -1));
+  return ymDateFormat(lastFinishedMonthDate());
 }
 
 function lastCoveredMonth() {
@@ -148,6 +154,10 @@ function counterGuaranteedPeriodStartDate() {
   return startOfYear(addYears(new Date(), -2));
 }
 
+function counterGuaranteedPeriodStart() {
+  return ymDateFormat(counterGuaranteedPeriodStartDate());
+}
+
 export {
   isoDateFormat,
   monthFirstDay,
@@ -164,8 +174,10 @@ export {
   smartMonthRange,
   anyDateToYm,
   lastFinishedMonth,
+  lastFinishedMonthDate,
   lastCoveredMonth,
   lastCoveredMonthDate,
   lastCoveredYearDate,
   counterGuaranteedPeriodStartDate,
+  counterGuaranteedPeriodStart,
 };

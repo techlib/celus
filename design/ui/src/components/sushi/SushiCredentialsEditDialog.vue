@@ -6,10 +6,8 @@
 en:
   add_custom_param: Add custom parameter
   add_custom_param_tooltip: Use this to add parameters for which there is no specific field elsewhere.
-  test_dialog: Test SUSHI credentials
+  test_dialog: Harvest data to verify credentials
   all_versions_used: All versions already defined for this organization and platform - to make changes, edit the corresponding record
-  save_and_verify: Save & verify
-  save_and_verify_tooltip: Saves current version of credentials and displays a dialog allowing harvesting of data for specified period using these credentials. Very useful to <strong>verify credentials and/or manually download data</strong>.
   ignore_and_save: Ignore and save
   outside: Purchased outside of consortium
   outside_tooltip: Marks if access to this resource was purchased outside the consortium.
@@ -71,12 +69,8 @@ en:
 cs:
   add_custom_param: Přidat vlastní parametr
   add_custom_param_tooltip: Použijte toto tlačítko pro data, pro která nenajdete odpovídající políčko jinde.
-  test_dialog: Test přihlašovacích údajů SUSHI
+  test_dialog: Stáhnout data pro ověření přihlašovacích údajů
   all_versions_used: Pro tuto platformu a organizaci jsou již všechny verze použity - pro změnu editujte příslušný záznam
-  save_and_verify: Uložit a ověřit
-  save_and_verify_tooltip:
-    Uloží tuto verzi přihlašovacích údajů a zobrazí dialog pro stahování dat za vybrané období. Tato funkce
-    je velmi užitečná pro <strong>ověření správnosti přihlašovacích údajů a/nebo manuální stahování dat</strong>.
   ignore_and_save: Ignoruj a ulož
   outside: Nákup mimo konzorcium
   outside_tooltip: Označuje přístupové údaje k nákupům mimo konzorcium.
@@ -714,22 +708,6 @@ cs:
                 <v-icon small class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <v-btn
-                    color="warning"
-                    @click="saveAndTest()"
-                    class="mr-2"
-                    v-on="on"
-                    :disabled="saving || disableSave"
-                    :loading="saving"
-                  >
-                    <v-icon small class="mr-1">fa fa-play</v-icon>
-                    {{ $t("save_and_verify") }}
-                  </v-btn>
-                </template>
-                <span v-html="$t('save_and_verify_tooltip')"></span>
-              </v-tooltip>
               <v-btn
                 color="primary"
                 @click="saveAndClose()"
@@ -745,7 +723,7 @@ cs:
         </v-container>
       </v-card-actions>
 
-      <v-dialog v-model="showTestDialog" max-width="1000px">
+      <v-dialog v-model="showTestDialog" max-width="1200px">
         <v-card>
           <v-card-title>{{ $t("test_dialog") }}</v-card-title>
           <v-card-text>
@@ -759,7 +737,9 @@ cs:
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn @click="stopTestDialog()">{{ $t("close") }}</v-btn>
+            <v-btn @click="stopTestDialog()" class="ma-4">{{
+              $t("close")
+            }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -1437,18 +1417,6 @@ export default {
           content: this.$t("check_input"),
           color: "warning",
         });
-      }
-    },
-    async saveAndTest() {
-      this.$refs.form.validate();
-      if (this.isValid) {
-        let data = await this.saveData();
-        if (data) {
-          if (this.$refs.testWidget) {
-            this.$refs.testWidget.clean();
-          }
-          this.showTestDialog = true;
-        }
       }
     },
     stopTestDialog() {

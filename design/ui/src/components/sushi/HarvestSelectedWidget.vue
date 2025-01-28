@@ -2,13 +2,9 @@
 <i18n lang="yaml">
 en:
   select_dates_text: "Select date range to harvest:"
-  select_dates_text_test: "Select the month for SUSHI credentials test:"
-  select_dates_text_test_note:
-    "<strong>Note</strong>: we use one month for testing to make it as fast as possible.
-    If you want to download data for a longer period, use the 'Harvest' button on the SUSHI management page."
+  select_dates_text_test_note: "It is ok to use a longer time period for verification. The harvest will run from the most recent month to the oldest and will stop immediately if an authentication error occurs."
   there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
-  test_date: Month to test on
   start_harvesting: "Nothing to harvest | Start {count} download | Start {count} downloads"
   nothing_to_harvest: Nothing to harvest
   no_problem_closing_dialog: Feel free to close this dialog. The harvesting will continue in the background and you can review the progress on the {harvest_link}
@@ -18,13 +14,9 @@ en:
 
 cs:
   select_dates_text: "Vyberte rozsah měsíců pro stažení:"
-  select_dates_text_test: "Vyberte měsíc pro otestování přihlašovacích údajů:"
-  select_dates_text_test_note: |
-    "<strong>Poznámka</strong>: pro co nejrychlejší otestování stahujeme data pouze za jeden měsíc. Pokud chcete
-    stáhnout data za delší období, použijte tlačítko 'Stáhni' na stránce správy SUSHI."
+  select_dates_text_test_note: "Pro ověření je možné použít delší časové období. Stahování bude probíhat od nejnovějšího měsíce k nejstaršímu a okamžitě se zastaví, pokud dojde k chybě autentizace."
   there_were_errors: "Nebylo možné zahájit harvesting kvůli následující chybě: | Nebylo možné zahájit harvesting kvůli následujícím chybám: | Nebylo možné zahájit harvesting kvůli následujícím chybám:"
   check_credentials: Po uzavření dialogu zkontrolujte prosím výběr přihlašovacích údajů. Označení nefunkčních bude automaticky zrušeno.
-  test_date: Testovaný měsíc
   start_harvesting: "Začít {count} stahování | Začít {count} stahování | Začít {count} stahování"
   nothing_to_harvest: Není co stahovat
   no_problem_closing_dialog: Tento dialog můžete bezpečně zavřít. Stahování bude pokračovat na pozadí. Vrátit se k němu můžete na {harvest_link}
@@ -36,11 +28,7 @@ cs:
 <template>
   <v-container fluid class="pb-0">
     <v-row v-if="!started" class="align-center">
-      <v-col
-        v-html="test ? $t('select_dates_text_test') : $t('select_dates_text')"
-        cols="12"
-        md="auto"
-      ></v-col>
+      <v-col v-html="$t('select_dates_text')" cols="12" md="auto"></v-col>
       <v-col cols="auto">
         <v-menu
           v-model="startDateMenu"
@@ -54,7 +42,7 @@ cs:
           <template v-slot:activator="{ on }">
             <v-text-field
               v-model="startDate"
-              :label="test ? $t('test_date') : $t('title_fields.start_date')"
+              :label="$t('title_fields.start_date')"
               prepend-icon="fa-calendar"
               readonly
               v-on="on"
@@ -69,7 +57,7 @@ cs:
           ></v-date-picker>
         </v-menu>
       </v-col>
-      <v-col cols="auto" v-if="!test">
+      <v-col cols="auto">
         <v-menu
           v-model="endDateMenu"
           :close-on-content-click="false"
@@ -103,9 +91,7 @@ cs:
           v-text="
             slotsFree === 0
               ? $t('nothing_to_harvest')
-              : test
-                ? $t('actions.start_test')
-                : $tc('start_harvesting', slotsFree)
+              : $tc('start_harvesting', slotsFree)
           "
           color="primary"
           width="100%"
@@ -129,7 +115,9 @@ cs:
     </v-row>
     <v-row v-if="test">
       <v-col>
-        <div v-html="$t('select_dates_text_test_note')"></div>
+        <v-alert type="info" outlined>
+          <div v-html="$t('select_dates_text_test_note')"></div>
+        </v-alert>
       </v-col>
     </v-row>
 
@@ -139,7 +127,7 @@ cs:
           <SushiHarvestedSlotsWidget
             :credentials="credentials"
             :start-date="startDate"
-            :end-date="test ? startDate : endDate"
+            :end-date="endDate"
             ref="slotWidget"
             :ready.sync="slotsReady"
             :reharvest="reharvestMode"
@@ -210,6 +198,7 @@ import { mapActions } from "vuex";
 import axios from "axios";
 import {
   lastFinishedMonth,
+  lastFinishedMonthDate,
   monthFirstDay,
   monthLastDay,
   ymDateFormat,
@@ -218,6 +207,7 @@ import {
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
 import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm.vue";
+import addMonths from "date-fns/addMonths";
 
 export default {
   name: "HarvestSelectedWidget",
@@ -374,7 +364,7 @@ export default {
           this.error = error;
         } else {
           this.showSnackbar({
-            content: "Error starting SUSHI test: " + error,
+            content: "Error starting SUSHI harvest: " + error,
             color: "error",
           });
         }
@@ -411,10 +401,10 @@ export default {
 
   mounted() {
     if (this.startDate === null) {
-      this.startDate = lastFinishedMonth();
+      this.startDate = ymDateFormat(addMonths(lastFinishedMonthDate(), -11));
     }
     if (this.endDate === null) {
-      this.endDate = this.startDate;
+      this.endDate = lastFinishedMonth();
     }
   },
 };

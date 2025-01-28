@@ -84,8 +84,12 @@ cs:
         <tr>
           <th>{{ $t("labels.credentials") }}</th>
           <th>{{ $t("labels.report_type") }}</th>
-          <th v-for="month in months" :key="month">
-            {{ month }}
+          <th v-for="month in monthDates" :key="month" class="text-center">
+            <span class="font-weight-light">{{ month.getFullYear() }}</span>
+            <br />
+            <span class="font-weight-black text-center">{{
+              month.getMonth() + 1
+            }}</span>
           </th>
         </tr>
       </thead>
@@ -222,7 +226,10 @@ export default {
       return null;
     },
     months() {
-      return monthsBetween(this.startDate, this.endDate).map(ymDateFormat);
+      return this.monthDates.map(ymDateFormat);
+    },
+    monthDates() {
+      return monthsBetween(this.startDate, this.endDate);
     },
     tableData() {
       let rows = [];
