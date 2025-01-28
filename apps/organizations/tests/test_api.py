@@ -1,6 +1,9 @@
+import json
 from unittest.mock import patch
+from urllib.parse import quote
 
 import pytest
+from core.fake_data import IdentityFactory
 from core.models import Identity, User
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,  # noqa - fixtures
@@ -19,6 +22,7 @@ from test_scenarios.basic import (  # noqa - fixtures
     clients,
     data_sources,
     identities,
+    make_client,
     organizations,
     platforms,
     users,
@@ -336,3 +340,31 @@ class TestOrganizationAltNameAPI:
             assert resp.status_code == 404
         else:
             assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+class TestAutocompletes:
+    @pytest.mark.parametrize(
+        "url_name,forward,is_staff,is_superuser,empty",
+        (
+            ("country-autocomplete", None, False, False, True),
+            ("country-autocomplete", None, True, True, False),
+            ("country-autocomplete", None, True, False, False),
+            ("country-autocomplete", None, True, True, False),
+            ("state-autocomplete", {"country": "US"}, False, False, True),
+            ("state-autocomplete", {"country": "US"}, True, True, False),
+            ("state-autocomplete", {"country": "US"}, True, False, False),
+            ("state-autocomplete", {"country": "US"}, True, True, False),
+        ),
+    )
+    def test_autocomplete_perissions(self, url_name, forward, is_staff, is_superuser, empty):
+        identity = IdentityFactory(user__is_staff=is_staff, user__is_superuser=is_superuser)
+        client = make_client(identity, True)
+        query = f"?forward={quote(json.dumps(forward))}" if forward else ""
+        resp = client.get(f"{reverse(url_name)}{query}")
+        assert resp.status_code == 200
+        data = resp.json()
+        if empty:
+            assert data["results"] == []
+        else:
+            assert len(data["results"]) > 0

@@ -1,4 +1,5 @@
 from core.models import DataSource, User
+from core.validators import ISNI_LENGTH, ROR_LENGTH, isni_validator, ror_validator
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -6,6 +7,12 @@ from django.db.models import Q, QuerySet, UniqueConstraint
 from django.utils.translation import gettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
+from publications.logic.validation import normalize_author_id
+from pycountry import countries, subdivisions
+
+COUNTRIES = [(e.alpha_2, f"({e.alpha_2}) {_(e.name)}") for e in countries]
+
+STATES = [(e.code, f"({e.country_code}) {_(e.name)}") for e in subdivisions if e.type == "State"]
 
 
 class Organization(MPTTModel):
@@ -46,6 +53,14 @@ class Organization(MPTTModel):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     raw_data_import_enabled = models.BooleanField(default=False)
+    country = models.CharField(choices=COUNTRIES, max_length=6, blank=True, default="")
+    state = models.CharField(choices=STATES, max_length=6, blank=True, default="")
+    ror = models.CharField(
+        max_length=ROR_LENGTH, validators=[ror_validator], blank=True, default=""
+    )
+    isni = models.CharField(
+        max_length=ISNI_LENGTH, validators=[isni_validator], default="", blank=True
+    )
 
     class Meta:
         ordering = ("name",)
@@ -68,6 +83,18 @@ class Organization(MPTTModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.isni = normalize_author_id(self.isni.strip())
+        self.ror = self.ror.strip()
+        if self.country:
+            if self.state not in [
+                e.code for e in subdivisions if e.type == "State" and e.country_code == self.country
+            ]:
+                self.state = ""
+        else:
+            self.state = ""
+        return super().save(*args, **kwargs)
 
     @property
     def is_raw_data_import_enabled(self) -> bool:

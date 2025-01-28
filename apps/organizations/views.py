@@ -12,6 +12,7 @@ from core.logic.util import text_hash
 from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from core.tasks import async_mail_customer_care_admins
+from dal import autocomplete
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.cache import cache
@@ -20,9 +21,11 @@ from django.db.models import Count, Exists, Max, Min, OuterRef, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from logs.logic.interest import get_interest_subdim_ids_implying_availability
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import AccessLog, DimensionText, Metric, OrganizationPlatform, ReportType
+from pycountry import subdivisions
 from recache.util import recache_queryset
 from rest_framework import status
 from rest_framework.decorators import action
@@ -35,7 +38,7 @@ from tags.models import Tag
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.tasks import erms_sync_organizations_task
 
-from .models import Organization, UserOrganization
+from .models import COUNTRIES, Organization, UserOrganization
 from .serializers import (
     OrganizationListSerializer,
     OrganizationSerializer,
@@ -612,3 +615,23 @@ class StartERMSSyncOrganizationsTask(APIView):
     def post(self, request):
         task = erms_sync_organizations_task.delay()
         return Response({"id": task.id})
+
+
+class CountryAutocompleteView(autocomplete.Select2ListView):
+    def get_list(self):
+        if not self.request.user.is_staff:
+            return []
+
+        return COUNTRIES
+
+
+class StateAutocompleteView(autocomplete.Select2ListView):
+    def get_list(self):
+        if not self.request.user.is_staff:
+            return []
+
+        return [
+            (e.code, f"({e.country_code}) {_(e.name)}")
+            for e in subdivisions
+            if e.type == "State" and self.forwarded.get("country") == e.country_code
+        ]

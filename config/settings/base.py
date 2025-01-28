@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "dal",  # must be before admin
+    "dal_select2",  # must be before admin
     "modeltranslation",  # must be before admin
     "core.apps.CelusAdminConfig",  # replaces Django's admin
     "rest_framework",
