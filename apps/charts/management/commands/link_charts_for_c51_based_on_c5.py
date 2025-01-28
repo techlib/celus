@@ -17,8 +17,21 @@ def fill_missing_charts(
         e.chart_definition: e for e in rdv_from.reportviewtocharttype_set.order_by("position")
     }
     into_mapping = {e.chart_definition: e for e in rdv_into.reportviewtocharttype_set.all()}
+    into_dimensions = set(rdv_into.base_report_type.dimensions.all().values_list("id", flat=True))
     for chart_def in from_mapping:
         if chart_def not in into_mapping:
+            # check if the chart dimensions are subset of the report dimensions
+            chart_dims = set()
+            if chart_def.primary_dimension_id:
+                chart_dims.add(chart_def.primary_dimension_id)
+            if chart_def.secondary_dimension_id:
+                chart_dims.add(chart_def.secondary_dimension_id)
+            if not chart_dims.issubset(into_dimensions):
+                logger.warning(
+                    "Not copying chart %s to %s, dimensions don't match", chart_def, rdv_into
+                )
+                continue
+
             stats["not_mapped"] += 1
             logger.warning(
                 "Missing mapping for ReportDataView '%s' to ChartDefinition '%s'",

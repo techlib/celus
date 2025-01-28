@@ -1,7 +1,7 @@
 import pytest
 from django.core.management import call_command
 from logs.fake_data import DimensionFactory
-from logs.models import ReportType
+from logs.models import Dimension, ReportType
 
 from charts.fake_data import ChartDefinitionFactory
 from charts.models import (
@@ -78,7 +78,8 @@ class TestCheckReportDataViews:
         assert not tr_jr1_rdv.dimension_filters.filter(dimension=extra_dim).exists()
         assert not dr_d1_rdv.dimension_filters.filter(dimension=extra_dim).exists()
 
-    def test_c5_to_c51_charts(self):
+    def test_c5_to_c51_charts(self, settings):
+        settings.ENABLE_ITEMS = False
         ChartDefinitionFactory(is_generic=True)
         chart1 = ChartDefinitionFactory(is_generic=False)
         chart2 = ChartDefinitionFactory(is_generic=False)
@@ -89,6 +90,12 @@ class TestCheckReportDataViews:
         # prereq
         call_command("check_report_type_dimensions", "--fix-it")
         call_command("check_report_data_views", "--fix-it")
+
+        # section type was dropped in C5.1, so we test that it is not linked from TR to TR51
+        section_type = Dimension.objects.filter(short_name="Section_Type").first()
+        chart_section_type = ChartDefinitionFactory(
+            is_generic=True, primary_dimension=section_type, primary_implicit_dimension=None
+        )
 
         assert ReportDataView.objects.count() == 38
         assert ReportViewToChartType.objects.count() == 0
@@ -105,6 +112,9 @@ class TestCheckReportDataViews:
             report_data_view=tr, chart_definition=chart1, position=0
         )
         ReportViewToChartType.objects.create(
+            report_data_view=tr, chart_definition=chart_section_type, position=1
+        )
+        ReportViewToChartType.objects.create(
             report_data_view=tr51, chart_definition=chart2, position=0
         )
         ReportViewToChartType.objects.create(
@@ -119,12 +129,12 @@ class TestCheckReportDataViews:
         ReportViewToChartType.objects.create(
             report_data_view=tr51_j1, chart_definition=chart5, position=0
         )
-        assert ReportViewToChartType.objects.count() == 6
+        assert ReportViewToChartType.objects.count() == 7
 
         call_command("link_charts_for_c51_based_on_c5", "--fix-it")
 
         assert ReportDataView.objects.count() == 38
-        assert ReportViewToChartType.objects.count() == 9
+        assert ReportViewToChartType.objects.count() == 10
 
         tr.refresh_from_db()
         tr51.refresh_from_db()
@@ -133,11 +143,12 @@ class TestCheckReportDataViews:
         jr1.refresh_from_db()
 
         assert [e.chart_definition for e in tr.reportviewtocharttype_set.order_by("position")] == [
-            chart1
+            chart1,
+            chart_section_type,
         ]
         assert [
             e.chart_definition for e in tr51.reportviewtocharttype_set.order_by("position")
-        ] == [chart2, chart1]
+        ] == [chart2, chart1], "chart_section_type should not be copied"
         assert [
             e.chart_definition for e in tr_j1.reportviewtocharttype_set.order_by("position")
         ] == [chart4, chart1]

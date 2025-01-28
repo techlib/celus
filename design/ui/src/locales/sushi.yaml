@@ -61,6 +61,8 @@ en:
       button: Clone to 5.1
       tooltip: Create a copy of selected credentials with the COUNTER version upgraded to 5.1.
       info: Create a copy of the selected <strong>{count}</strong> credentials with the COUNTER version upgraded to 5.1.
+      alert_text: For more information, see the {link}.
+      link_text: knowledge base article
 
 cs:
   sushi:
@@ -125,3 +127,5 @@ cs:
       button: Naklonuj do 5.1
       tooltip: Vytvořit kopii vybraných přístupových údajů s COUNTER verzí povýšenou na 5.1
       info: Vytvořit kopii vybraných <strong>{count}</strong> přístupových údajů s COUNTER verzí povýšenou na 5.1.
+      alert_text: Pro více informací navštivte {link}.
+      link_text: znalostní bázi

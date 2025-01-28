@@ -5,9 +5,22 @@
 <template>
   <v-card>
     <v-card-title>{{ $t("sushi.clone_to_newer.title") }}</v-card-title>
-    <v-card-text
-      v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
-    />
+    <v-card-text>
+      <div
+        v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
+      ></div>
+      <v-alert type="info" outlined class="mt-8 mb-0">
+        <i18n path="sushi.clone_to_newer.alert_text">
+          <template #link>
+            <a
+              href="https://support.celus.net/support/solutions/articles/103000331653"
+              target="_blank"
+              >{{ $t("sushi.clone_to_newer.link_text") }}</a
+            >
+          </template>
+        </i18n>
+      </v-alert>
+    </v-card-text>
     <v-card-actions class="px-6 pb-4">
       <v-switch
         v-model="startHarvesting"

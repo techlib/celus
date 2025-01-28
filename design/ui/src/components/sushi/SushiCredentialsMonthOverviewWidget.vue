@@ -144,33 +144,31 @@ cs:
               dense
             >
               <template
-                v-for="rt in usedReportTypes"
-                v-slot:[slotName(rt)]="{ item }"
+                v-for="rtCode in usedReportTypeCodes"
+                v-slot:[`item.${rtCode}`]="{ item }"
               >
                 <span
-                  :key="`${rt.code}-${item.credentials_id}`"
+                  :key="`${rtCode}-${item.credentials_id}`"
                   @click="
-                    (item[rt.code] &&
-                      item[rt.code].pk &&
-                      item[rt.code].attempt &&
-                      showIntention(item[rt.code])) ||
+                    (item[rtCode] &&
+                      item[rtCode].pk &&
+                      item[rtCode].attempt &&
+                      showIntention(item[rtCode])) ||
                       null
                   "
                   :class="{
                     clickable:
-                      item[rt.code] &&
-                      item[rt.code].pk &&
-                      item[rt.code].attempt,
+                      item[rtCode] && item[rtCode].pk && item[rtCode].attempt,
                     alpha:
                       stateFilter &&
-                      item[rt.code] &&
-                      stateFilter !== item[rt.code].state,
+                      item[rtCode] &&
+                      stateFilter !== item[rtCode].state,
                   }"
                 >
                   <SushiFetchIntentionStateIcon
-                    :intention="item[rt.code]"
+                    :intention="item[rtCode]"
                     latest
-                    :broken-report="hasBrokenReport(item[rt.code])"
+                    :broken-report="hasBrokenReport(item[rtCode])"
                     :broken-credentials="!!item.broken"
                   />
                 </span>
@@ -317,10 +315,10 @@ export default {
           align: "center",
         },
       ];
-      for (let reportType of this.usedReportTypes) {
+      for (let rtCode of this.usedReportTypeCodes) {
         allHeaders.push({
-          text: reportType.code,
-          value: reportType.code,
+          text: rtCode,
+          value: rtCode,
           sortable: false,
         });
       }
@@ -349,14 +347,23 @@ export default {
       }
       return url;
     },
-    usedReportTypes() {
-      let usedRTIds = new Set();
+    usedReportTypeCodes() {
+      let usedRTCodes = new Set();
+      // in order to enable sorting by counter version together with code,
+      // we need to store the counter version in the key
       for (let cred of this.sushiCredentialsWithIntentions) {
         for (let rt of cred.counter_reports_long) {
-          usedRTIds.add(rt.id);
+          usedRTCodes.add(`${cred.counter_version}|${rt.code}`);
         }
       }
-      return this.reportTypes.filter((item) => usedRTIds.has(item.id));
+      let out = [];
+      [...usedRTCodes].sort().forEach((item) => {
+        let code = item.split("|")[1];
+        if (!out.includes(code)) {
+          out.push(code); // only add the first occurrence of the code
+        }
+      });
+      return out;
     },
     usedPlatforms() {
       let usedPlatforms = new Set(
@@ -554,7 +561,6 @@ export default {
       let now = ymDateFormat(new Date());
       return value <= now;
     },
-    slotName: (rt) => "item." + rt.code,
     showIntention(intention) {
       this.selectedIntention = intention;
       this.showDetailsDialog = !!this.selectedIntention;

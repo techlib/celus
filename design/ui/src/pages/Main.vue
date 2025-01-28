@@ -263,4 +263,13 @@ th.auto-width {
 .small-caps {
   font-variant: small-caps;
 }
+
+.v-alert.info--text {
+  a {
+    // make links in info alerts bold and use the info color
+    // (the primary color clashes with the alert color)
+    color: var(--v-info) !important;
+    font-weight: bold;
+  }
+}
 </style>
