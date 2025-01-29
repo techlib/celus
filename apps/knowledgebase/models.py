@@ -277,6 +277,7 @@ class PlatformImportAttempt(ImportAttempt):
                     status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
                 )
                 .exclude(fake_cond)
+                .exclude(used_url__iexact="")
                 .annotate(
                     platform_id=models.F("credentials__platform__ext_id"),
                     counter_report_code=models.F("counter_report__code"),

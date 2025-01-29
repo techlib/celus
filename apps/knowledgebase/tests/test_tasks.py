@@ -167,6 +167,12 @@ class TestCeleryTasks:
             counter_report=counter_report_types["ir51"],
             used_url="https://sushi.example.com/reports/ir/",
         )
+        FetchAttemptFactory(
+            credentials__counter_version=51,
+            credentials__platform=platform,
+            counter_report=counter_report_types["tr51"],
+            used_url="",
+        )
         with requests_mock.Mocker() as m:
             m.post(
                 re.compile(
