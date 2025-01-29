@@ -125,11 +125,18 @@ class TestTitleManager:
                 True,
                 id="match based on proprietary id",
             ),
+            # proprietary IDs matching is case-insensitive
+            pytest.param(
+                {"name": "AAA", "proprietary_ids": ["XXX"]},
+                {"name": "AAA", "proprietary_ids": ["XxX"]},
+                True,
+                id="case-insensitive match based on proprietary id",
+            ),
             pytest.param(
                 {"name": "AAA", "isbn": "978-3-16-148410-0", "proprietary_ids": ["XXX"]},
                 {"name": "AAA", "proprietary_ids": ["XXX"]},
                 True,
-                id="march on proprietary id with extra id on one side",
+                id="match on proprietary id with extra id on one side",
             ),
             # mismatching proprietary IDs are no problem if other ids match
             pytest.param(

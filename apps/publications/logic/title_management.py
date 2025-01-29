@@ -315,10 +315,11 @@ class TitleManager:
                 # we only allow this if either the in-memory or in-db record does not have any
                 # other ids - if they had, we would have matched it above, if we did not, they must
                 # clash
+                rpis = {pi.lower() for pi in record.proprietary_ids}
                 for candidate in candidates:
-                    if (record.proprietary_ids & candidate.proprietary_ids) and (
-                        not rec_id_set or not candidate.id_set
-                    ):
+                    # we want to compare case-insensitive
+                    cpis = {pi.lower() for pi in candidate.proprietary_ids}
+                    if (rpis & cpis) and (not rec_id_set or not candidate.id_set):
                         return candidate
                 # another step - if the other candidate
             if not rec_id_set:
