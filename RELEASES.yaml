@@ -1,3 +1,31 @@
+- version: 8.0.0
+  title:
+    en: COUNTER 5.1 support, CAUL specialized reports and much more arrive in CELUS 8.0
+    cs: Podpora pro COUNTER 5.1, nové specializované report a další novinky přináší CELUS 8.0
+  text:
+    en: |
+      - **Support for COUNTER 5.1** was introduced throughout the application
+      - A button was added to easily clone COUNTER 5 credentials into their COUNTER 5.1 copy
+      - Reporting newly allows comparison of two reports side by side to facilitate exploration of
+        **COUNTER 5.1 vs COUNTER 5** data
+      - "Potential issues" filter was added to SUSHI credentials management page
+      - A specialized report for CAUL (Council of Australian University Librarians) was added
+      - Support for **5 new non-COUNTER platforms** was added
+      - Many small improvements and fixes were introduced
+    cs: |
+      - Podpora pro COUNTER 5.1 byla zavedena do celé aplikace
+      - Bylo přidáno tlačítko pro snadné klonování COUNTER 5 přihlašovacích údajů do jejich kopie
+        COUNTER 5.1
+      - Reporting nyní umožňuje porovnání dvou reportů vedle sebe pro usnadnění zkoumání COUNTER 5.1
+        vs COUNTER 5 dat
+      - Na stránce správy SUSHI přihlašovacích údajů byl přidán filtr "Potenciální problémy"
+      - Byl přidán specializovaný report pro CAUL (Council of Australian University Librarians)
+      - Byla přidána podpora pro 5 nových non-COUNTER platforem
+      - Bylo provedeno mnoho drobných vylepšení a oprav
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+
 - version: 7.0.1
   title:
     en: Bug fix release 7.0.1 is out with better error reporting for non-COUNTER data, more non-COUNTER platforms, and other small improvements

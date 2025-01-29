@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.0]  - 2025-01-31
+
+
+### Added
+
+#### Frontend
+
+* support for COUNTER 5.1 was added
+* a button to easily clone existing COUNTER 5 credentials to COUNTER 5.1 was added
+* reporting was extended to allow comparison of two report types side by side
+* a new specialized report for CAUL (Council of Australian University Librarians) was added
+
+#### Backend
+
+* several command line scripts were added to help with COUNTER 5.1 migration
+
+
+### Changes
+
+#### Frontend
+
+* the "problematic only" filter was replaced by a "potential issues" dropdown to show credentials
+  needing attention for different types of reasons
+* the "Save & Verify" button was removed from the SUSHI credentials dialog - the functionality
+  is now part of the "Save" function
+* report selection in charts was split to two separate dropdowns - one for type of report and one
+  for the report itself
+* reporting was extended to allow filtering and grouping by explicit dimensions when two reports
+  are used - provided the dimensions are the same in both reports and map to the same db column
+* data coverage percentage is rounded to the lower integer (floor) to prevent misleading
+  information about the completeness of the data (100% coverage is now only shown when all data is
+  present)
+* when tag names longer than 200 characters are submitted in a title list, the user is warned
+  about the limit and the tagging fails
+
+#### Backend
+
+* BOM (Byte Order Mark) is newly added to COUNTER export according to COUNTER recommendation
+* interest synchronization when new superseding reports are added was optimized to prevent
+  unnecessary recalculations
+* case-insensitive matching of proprietary IDs is used when matching titles during data import
+
+
+### Fixed
+
+#### Frontend
+
+* pagination is correctly reset to 1 when filters are changed in the event list
+* missing "delete" button was added to the list of manually uploaded reports
+* properly handle cases when a background error occurs during title list processing - the task
+  should no longer appear as "running" indefinitely
+
+#### Backend
+
+* command line script to clean up orphaned data files was fixed to clean files from directories
+  without any existing attempts
+* query used in reporting when titles are viewed in trend mode was optimized with a 10x speedup
+* specialized report export was fixed to properly show end date of the data range
+  (last instead of first day of the month)
+* ISBNs in COUNTER export are now correctly hyphenated
+* the `find_split_accesslogs_with_the_same_title_task` celery task was fixed to correctly send
+  emails when intervention is needed
+* OOM (Out Of Memory) errors in Postgres during title merging on large installations were
+  circumvented by performing updates batches
+* when consortium admin is performing download of SUSHI credentials template file for one
+  organization, do not include private platforms from other organizations
+
+
+
 ## [7.0.1]  - 2024-12-18
 
 ### Added
