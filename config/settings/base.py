@@ -822,6 +822,18 @@ HARVESTER_IPV6_ADDRESSES = config("HARVESTER_IPV6_ADDRESSES", cast=Csv(), defaul
 # but as there are not so many so large files there anyway, it probably does not make much sense
 COUNTER_RECORD_BUFFER_SIZE = config("COUNTER_RECORD_BUFFER_SIZE", cast=int, default="50_000")
 
+# When looking for import batches which contain the same title twice as a result of title merging,
+# we process data by batches of import_batches. This reduces the memory consumption in clickhouse
+# Here we define the size of the batch to be able to adjust it flexibly
+# The default value of 200 was arrived at by testing on a copy of K1 with 200k import batches
+# and minimizes the memory consumption with some speed penalty.
+# The results for info were:
+# 1000: 2.4 GB, 1m24s
+#  500: 2.1 GB, 1m40s
+#  200: 1.6 GB, 2m14s
+#  100: 1.6 GB, 3m9s
+SPLIT_LOGS_BATCH_SIZE = config("SPLIT_LOGS_BATCH_SIZE", cast=int, default=200)
+
 # Email
 ADMINS = config("ADMINS", cast=Csv(cast=Csv(post_process=tuple), delimiter=";"), default="")
 EMAIL_SUBJECT_PREFIX = config("EMAIL_SUBJECT_PREFIX", default="[Stats] ")

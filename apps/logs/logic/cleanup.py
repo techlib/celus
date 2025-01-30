@@ -4,6 +4,7 @@ from random import shuffle
 from typing import List, Set
 
 from core.context_managers import needs_clickhouse_query
+from django.conf import settings
 from django.db.transaction import atomic
 from hcube.api.models.aggregation import ArrayAgg as HArrayAgg
 from hcube.api.models.aggregation import Count as HCount
@@ -65,18 +66,18 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
     # otherwise; we also shuffle the import_batches to get a more even distribution of the
     # import_batch sizes - this is because import_batches from the same platform tend to be
     # of similar size and also near each other in the database
-    # The batch size of 1000 was determined empirically to be a good compromise between
-    # memory usage and speed
+    # The batch size can be adjusted in settings and has to be determined empirically to be a good
+    # compromise between memory usage and speed. Values between 100 and 1000 seem reasonable.
     # Please note that the memory we are talking about here is the memory of the Clickhouse
     # server, not the memory of the Django process
     ib_ids = []
     ids = list(ImportBatch.objects.all().values_list("pk", flat=True))
     total = len(ids)
     shuffle(ids)
-    logger.info("Total import batches: %d", total)
+    logger.info("Total import batches: %d, batch size: %d", total, settings.SPLIT_LOGS_BATCH_SIZE)
     for i, ib_id in enumerate(ids):
         ib_ids.append(ib_id)
-        if len(ib_ids) == 1000 or i == total - 1:
+        if len(ib_ids) == settings.SPLIT_LOGS_BATCH_SIZE or i == total - 1:
             # the query below uses ArrayAgg for `import_batch_id`, but if fact it will always
             # have length 1. But ArrayAgg is the only way how to get the import_batch_id into
             # the result set.
