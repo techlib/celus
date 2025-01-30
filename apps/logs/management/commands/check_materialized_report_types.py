@@ -1,6 +1,7 @@
 import logging
 from collections import Counter
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django.db.utils import IntegrityError
@@ -15,9 +16,7 @@ class Command(BaseCommand):
     help = "Checks that a standard set of materialized report types is present and set up correctly"
 
     mat_rts = [
-        # TODO: the following is commented because it takes quite a long time to run
-        # and items are not yet used in production
-        # {"name": "Interest without item", "base_rt": "interest", "exclude": ["item"]},
+        {"name": "Interest without item", "base_rt": "interest", "exclude": ["item"]},
         {
             "name": "Interest without title and item",
             "base_rt": "interest",
@@ -39,6 +38,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--fix-it", dest="fix_it", action="store_true")
+        parser.add_argument("--delete-extra", dest="delete_extra", action="store_true")
 
     @atomic
     def handle(self, *args, **options):
@@ -49,6 +49,9 @@ class Command(BaseCommand):
         new_mat_rts = []
 
         for mat_rt in self.mat_rts:
+            if mat_rt["name"] not in settings.ACTIVE_MATERIALIZED_REPORTS:
+                logger.warning("Skipping disable materialized rt: %s", mat_rt["name"])
+                continue
             base_rt: ReportType = ReportType.objects.get(short_name=mat_rt["base_rt"])
             # find to which dimensions the exclude list refers - if not explicit, use the name
             clean_exclude = [base_rt.dim_name_to_dim_attr(exc) or exc for exc in mat_rt["exclude"]]
@@ -98,12 +101,16 @@ class Command(BaseCommand):
         for spec in ReportMaterializationSpec.objects.exclude(pk__in=seen_spec_ids):
             logger.warning("Extra spec: %s", spec)
             stats["extra_spec"] += 1
-            logger.info("Delete stats: count: %d, details: %s", *spec.delete())
+            if options["delete_extra"]:
+                logger.info("Delete stats: count: %d, details: %s", *spec.delete())
 
         logger.info("Stats: %s", stats)
 
         if not fix_it:
             raise ValueError("Dry run. To actually fix the issues, use --fix-it")
+
+        if not options["delete_extra"] and stats["extra_spec"]:
+            logger.warning("Extra specs found, use --delete-extra to delete them")
 
         # compute data for new report types
         if new_mat_rts:

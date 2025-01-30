@@ -834,6 +834,21 @@ COUNTER_RECORD_BUFFER_SIZE = config("COUNTER_RECORD_BUFFER_SIZE", cast=int, defa
 #  100: 1.6 GB, 3m9s
 SPLIT_LOGS_BATCH_SIZE = config("SPLIT_LOGS_BATCH_SIZE", cast=int, default=200)
 
+# When running check_materialized_reports, the following materialized reports should be checked
+# This setting makes it possible to only use a subset of the reports on a specific instance
+# The default value excludes "Interest without item", which takes a long time to sync and is not
+# useful unless item support is enabled
+ACTIVE_MATERIALIZED_REPORTS = config(
+    "ACTIVE_MATERIALIZED_REPORTS",
+    cast=Csv(delimiter=";"),
+    default="Interest without title and item;"
+    "C5 TR without title;"
+    "C51 TR without title;"
+    "C5 TR without title, YOP, Publisher and COUNTER Platform;"
+    "C51 TR without title, YOP, Publisher and COUNTER Platform",
+)
+
+
 # Email
 ADMINS = config("ADMINS", cast=Csv(cast=Csv(post_process=tuple), delimiter=";"), default="")
 EMAIL_SUBJECT_PREFIX = config("EMAIL_SUBJECT_PREFIX", default="[Stats] ")
