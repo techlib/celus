@@ -16,9 +16,9 @@ class TestCheckMaterializedReportTypes:
     def test_check_materialized_report_types_empty_db(self):
         assert ReportMaterializationSpec.objects.count() == 0
         call_command("check_materialized_report_types", "--fix-it")
-        assert ReportMaterializationSpec.objects.count() == 6
+        assert ReportMaterializationSpec.objects.count() == 5
         call_command("check_materialized_report_types", "--fix-it")
-        assert ReportMaterializationSpec.objects.count() == 6, "no duplicates"
+        assert ReportMaterializationSpec.objects.count() == 5, "no duplicates"
 
     def test_check_materialized_report_types_preexisting_specs(self):
         """
@@ -40,7 +40,7 @@ class TestCheckMaterializedReportTypes:
             spec_matching, "reporttype"
         ), "convoluted way to check that reporttype is not set"
         call_command("check_materialized_report_types", "--fix-it")
-        assert ReportMaterializationSpec.objects.count() == 6
+        assert ReportMaterializationSpec.objects.count() == 5
         spec_matching.refresh_from_db()
         assert hasattr(
             spec_matching, "reporttype"
@@ -57,5 +57,5 @@ class TestCheckMaterializedReportTypes:
         rt = ReportType.objects.create(short_name="Interest without title and item")
         # the test is that the script will not raise an error
         call_command("check_materialized_report_types", "--fix-it")
-        assert ReportMaterializationSpec.objects.count() == 6
+        assert ReportMaterializationSpec.objects.count() == 5
         assert ReportType.objects.filter(pk=rt.pk).count() == 1, "rt still exists"

@@ -15,7 +15,9 @@ class Command(BaseCommand):
     help = "Checks that a standard set of materialized report types is present and set up correctly"
 
     mat_rts = [
-        {"name": "Interest without item", "base_rt": "interest", "exclude": ["item"]},
+        # TODO: the following is commented because it takes quite a long time to run
+        # and items are not yet used in production
+        # {"name": "Interest without item", "base_rt": "interest", "exclude": ["item"]},
         {
             "name": "Interest without title and item",
             "base_rt": "interest",
