@@ -12,7 +12,7 @@ cs:
 </i18n>
 
 <template>
-  <v-dialog v-model="newCelusVersion" persistent :max-width="350">
+  <v-dialog v-model="newCelusVersion" persistent :max-width="400">
     <v-card>
       <v-card-title class="headline"
         >{{ $t("title") }}<v-spacer
