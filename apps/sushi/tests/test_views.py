@@ -1080,7 +1080,11 @@ class TestSushiCredentialsViewSet:
             assert "https://c51.branch.celus.net/sushi" == creds.url == creds_dict["url"]
         else:
             # Same credentials
-            assert credentials["branch_pr"].url == creds.url == creds_dict["url"]
+            assert (
+                credentials["branch_pr"].url.replace("/r5/", "/r51")
+                == creds.url
+                == creds_dict["url"]
+            ), 'without kb_url, the url should be updated to "/r51/"'
         assert (
             credentials["branch_pr"].platform_id
             == creds.platform_id
@@ -1103,3 +1107,23 @@ class TestSushiCredentialsViewSet:
             == creds.counter_reports.first().code
             == creds_dict["counter_reports_long"][0]["code"]
         )
+
+    @pytest.mark.parametrize(
+        ["suffix", "exp_end"], [("/r5", "/r51"), ("/c5", "/c5"), ("/r5/", "/r51")]
+    )
+    def test_clone_to_newer_with_r5(
+        self, basic1, clients, counter_report_types, platforms, suffix, exp_end
+    ):
+        """
+        Test that /r5/ is replaced with /r51/ in the url when cloning credentials
+        """
+        cr = CredentialsFactory(url="https://example.com" + suffix, counter_version=5)
+        assert SushiCredentials.objects.filter(counter_version=51).count() == 0
+        url = reverse("sushi-credentials-clone-to-newer")
+        resp = clients["master_admin"].post(url, [{"credentials_id": cr.pk}], format="json")
+        assert resp.status_code == 200
+        assert len(resp.data) == 1
+        assert SushiCredentials.objects.filter(counter_version=51).count() == 1
+
+        new_cr = SushiCredentials.objects.get(counter_version=51)
+        assert new_cr.url.endswith(exp_end)

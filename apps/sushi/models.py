@@ -431,6 +431,9 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         # Otherwise use url from original credentials
         if knowledgebase_url := self.knowledgebase_url:
             self.url = knowledgebase_url
+        elif self.url.rstrip("/").endswith("/r5"):
+            # If the C5 URL ends with /r5, replace it with /r51 - this is a common pattern
+            self.url = self.url.rstrip("/") + "1"
 
         self.save()
 

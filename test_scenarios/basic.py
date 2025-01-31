@@ -347,7 +347,7 @@ def credentials(counter_report_types, organizations, platforms):
     branch_pr = CredentialsFactory(
         organization=organizations["branch"],
         platform=platforms["branch"],
-        url="https://c5.branch.example.com/",
+        url="https://c5.branch.example.com/r5/",
         counter_version=5,
         extra_params={"kibi": "oncrun", "btvtc": "ivnejen", "ygvex": 34},
     )
