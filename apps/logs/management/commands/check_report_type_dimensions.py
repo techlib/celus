@@ -71,7 +71,6 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
             except ReportType.DoesNotExist:
                 print("Missing RT:", rt_short_name)
                 stats["missing_rt"] += 1
-                rt = None
                 if fix_it:
                     rt = ReportType.objects.create(short_name=rt_short_name, name=name, source=None)
                     if version == 51:
@@ -81,13 +80,17 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                     stats["missing_crt"] += 1
                     continue
             else:
-                if rt.name != name:
-                    print(f'RT name mismatch ({rt_short_name}): "{rt.name}" != "{name}"')
-                    stats["rt_name_mismatch"] += 1
-                    if fix_it:
-                        rt.name = name
-                        rt.save()
-                        stats["fixed_rt_name"] += 1
+                for code, _lang in settings.LANGUAGES:
+                    if (orig_name := getattr(rt, f"name_{code}")) != name:
+                        print(
+                            f"RT name mismatch in lang={code} - ({rt_short_name}): "
+                            f'"{orig_name}" != "{name}"'
+                        )
+                        stats["rt_name_mismatch"] += 1
+                        if fix_it:
+                            setattr(rt, f"name_{code}", name)
+                            rt.save()
+                            stats["fixed_rt_name"] += 1
 
             # check ReportType dimensions
             dims = set(dimensions)
