@@ -105,6 +105,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     same_global = IntegerField(read_only=True)
     same_in_org = IntegerField(read_only=True)
     can_update = BooleanField(read_only=True)
+    has_51_provider = BooleanField(read_only=True)
     forced = BooleanField(write_only=True, default=False)
 
     class Meta:
@@ -140,6 +141,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             "auto_update_url",
             "forced",
             "can_update",
+            "has_51_provider",
         )
 
     def get_locked(self, obj: SushiCredentials):

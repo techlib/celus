@@ -53,13 +53,25 @@ en:
     set: Set
     not_set: Not set
   more_actions: More actions
-  can_update_tt: These credentials for COUNTER 5 can be cloned into a COUNTER 5.1 copy
+  can_update_tt: These COUNTER 5 credentials do not have a COUNTER 5.1 version and can be cloned into a COUNTER 5.1 copy
+  cannot_update_broken_tt: These COUNTER 5 credentials are broken and cannot be cloned to COUNTER 5.1
+  can_update_legend_header: "COUNTER 5 credentials which do not have a COUNTER 5.1 counterpart and can be cloned are marked with one of the following symbols:"
+  can_update_legend: The status of COUNTER 5.1 for platform is unknown
+  can_update_verified_legend: Platform is known to support COUNTER 5.1
+  cannot_update_broken_legend: Credentials are broken and cannot be cloned
   potential_issues:
     label: Potential issues
     broken: Broken credentials
     not_validated: Unverified credentials
-    can_update: Can be cloned to 5.1
+    can_update: Possible to clone to 5.1
+    can_update_verified: Safe to clone to 5.1
     duplicated: Duplicated
+  potential_issues_tt:
+    broken: Credentials marked as broken due to harvesting failures
+    not_validated: No data has been harvested yet using these credentials - manual harvesting is required to verify them
+    can_update: All COUNTER 5 credentials which can be cloned to COUNTER 5.1
+    can_update_verified: COUNTER 5 credentials which can be cloned to COUNTER 5.1 and platform is known to support COUNTER 5.1
+    duplicated: Same credentials are used multiple times
 
 cs:
   add_new: Přidat nové SUSHI
@@ -113,18 +125,30 @@ cs:
     not_set: Nenastaven
   more_actions: Další akce
   can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
+  cannot_update_broken_tt: Tyto přístupové údaje pro COUNTER 5 jsou nefunkční a nelze je naklonovat do COUNTER 5.1
+  can_update_legend_header: "Přístupové údaje pro COUNTER 5, které nemají verzi pro COUNTER 5.1 a lze je naklonovat, jsou označeny jedním z následujících symbolů:"
+  can_update_legend: Stav COUNTER 5.1 pro platformu je neznámý
+  can_update_verified_legend: Platforma podporuje COUNTER 5.1
+  cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
   potential_issues:
     label: Potenciální problémy
     broken: Nefunkční přístupové údaje
     not_validated: Neověřené přístupové údaje
     can_update: Lze naklonovat do 5.1
+    can_update_verified: Bezpečné klonování do 5.1
     duplicated: Duplicitní
+  potential_issues_tt:
+    broken: Přístupové údaje označené jako nefunkční kvůli chybám při stahování
+    not_validated: Zatím nebyla stažena žádná data pomocí těchto přístupových údajů - je třeba je ověřit ručním stažením dat
+    can_update: Všechny COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1
+    can_update_verified: COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1 a platforma má ověřenou podporu COUNTER 5.1
+    duplicated: Stejné přístupové údaje jsou použity vícekrát
 </i18n>
 
 <template>
   <v-container fluid>
     <v-card>
-      <v-card-title>
+      <v-card-text>
         <v-container fluid>
           <v-row>
             <v-col cols="auto" align-self="center">
@@ -155,21 +179,18 @@ cs:
                 {{ $t("test_checked_tooltip") }}
               </v-tooltip>
             </v-col>
-            <v-col>
+            <v-spacer></v-spacer>
+            <v-col cols="auto">
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-btn
-                    @click="triggerCloneToNewer"
-                    color="secondary"
-                    v-on="on"
-                  >
+                  <v-btn @click="triggerCloneToNewer" color="info" v-on="on">
                     <v-icon small class="mr-2"
                       >far fa-arrow-alt-circle-up</v-icon
                     >
                     {{ $t("sushi.clone_to_newer.button") }}
                     <v-badge color="white" inline>
                       <template #badge>
-                        <span class="success--text">{{
+                        <span class="info--text">{{
                           checkedUpdatableCredentials.length
                         }}</span>
                       </template>
@@ -179,8 +200,6 @@ cs:
                 {{ $t("sushi.clone_to_newer.tooltip") }}
               </v-tooltip>
             </v-col>
-            <v-spacer></v-spacer>
-            <v-col cols="auto" align-self="center"> </v-col>
             <v-col cols="auto" align-self="center">
               <v-tooltip top>
                 <template #activator="tooltip">
@@ -427,6 +446,35 @@ cs:
               </v-tooltip>
             </v-col>
           </v-row>
+
+          <v-row>
+            <v-col>
+              <div class="caption">{{ $t("can_update_legend_header") }}</div>
+              <div>
+                <v-icon small class="mr-1" color="info"
+                  >far fa-arrow-alt-circle-up</v-icon
+                >
+                <span class="caption">{{ $t("can_update_legend") }}</span>
+              </div>
+              <div>
+                <v-icon small class="mr-1" color="info"
+                  >fas fa-arrow-alt-circle-up</v-icon
+                >
+                <span class="caption">{{
+                  $t("can_update_verified_legend")
+                }}</span>
+              </div>
+              <div>
+                <v-icon small class="mr-1" color="error"
+                  >far fa-arrow-alt-circle-left</v-icon
+                >
+                <span class="caption">{{
+                  $t("cannot_update_broken_legend")
+                }}</span>
+              </div>
+            </v-col>
+          </v-row>
+
           <v-row>
             <v-col cols="3" md="2" xl="auto">
               <v-select
@@ -436,25 +484,45 @@ cs:
                   {
                     text: $t('potential_issues.broken'),
                     value: 'broken',
+                    tooltip: $t('potential_issues_tt.broken'),
                   },
                   {
                     text: $t('potential_issues.not_validated'),
                     value: 'not_validated',
+                    tooltip: $t('potential_issues_tt.not_validated'),
+                  },
+                  {
+                    text: $t('potential_issues.can_update_verified'),
+                    value: 'can_update_verified',
+                    tooltip: $t('potential_issues_tt.can_update_verified'),
                   },
                   {
                     text: $t('potential_issues.can_update'),
                     value: 'can_update',
+                    tooltip: $t('potential_issues_tt.can_update'),
                   },
                   {
                     text: $t('potential_issues.duplicated'),
                     value: 'duplicated',
+                    tooltip: $t('potential_issues_tt.duplicated'),
                   },
                 ]"
                 single-line
                 hide-details
                 clearable
                 clear-icon="fa-times"
-              ></v-select>
+              >
+                <template #item="{ item }">
+                  <v-tooltip right>
+                    <template #activator="{ on }">
+                      <v-list-item v-on="on">
+                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                      </v-list-item>
+                    </template>
+                    {{ item.tooltip }}
+                  </v-tooltip>
+                </template>
+              </v-select>
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="3" md="2" xl="auto">
@@ -509,7 +577,7 @@ cs:
             </v-col>
           </v-row>
         </v-container>
-      </v-card-title>
+      </v-card-text>
 
       <v-skeleton-loader v-if="loading" type="table" class="mt-5" />
       <v-data-table
@@ -540,20 +608,36 @@ cs:
           </v-chip>
         </template>
         <template v-slot:item.counter_version="{ item }">
-          <v-tooltip bottom v-if="item.can_update">
+          <v-tooltip bottom v-if="item.can_update && !item.broken">
             <template v-slot:activator="{ on }">
-              <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
-              <i
-                class="far fa-arrow-alt-circle-up ml-1 light-blue--text"
-                v-on="on"
-              ></i>
+              <span v-on="on">
+                <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
+                <i
+                  class="fa-arrow-alt-circle-up ml-1"
+                  :class="
+                    item.has_51_provider ? 'info--text fas' : 'info--text far'
+                  "
+                ></i>
+              </span>
             </template>
             {{ $t("can_update_tt") }}
           </v-tooltip>
+
+          <v-tooltip bottom v-else-if="item.can_update && item.broken">
+            <template v-slot:activator="{ on }">
+              <span v-on="on">
+                <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
+                <i class="far fa-arrow-alt-circle-left ml-1 error--text"></i>
+              </span>
+            </template>
+            {{ $t("cannot_update_broken_tt") }}
+          </v-tooltip>
+
           <strong v-else>{{
             counterVersionToStr(item.counter_version)
           }}</strong>
         </template>
+
         <template v-slot:item.last_harvestable_month="{ item }">
           <div
             v-for="rec in extractLastHarvestableMonth(
@@ -935,6 +1019,10 @@ export default {
           name: "platformFilter",
           type: Number,
         },
+        {
+          name: "potentialIssuesFilter",
+          type: String,
+        },
       ],
     };
   },
@@ -1029,7 +1117,9 @@ export default {
             case "not_validated":
               return !item.verified;
             case "can_update":
-              return item.can_update;
+              return item.can_update && !item.broken;
+            case "can_update_verified":
+              return item.can_update && item.has_51_provider && !item.broken;
             case "duplicated":
               return (
                 (item.same_global > 1 && this.consortialInstall) ||
@@ -1094,7 +1184,7 @@ export default {
       );
     },
     checkedUpdatableCredentials() {
-      return this.checkedCredentials.filter((e) => e.can_update);
+      return this.checkedCredentials.filter((e) => e.can_update && !e.broken);
     },
   },
 

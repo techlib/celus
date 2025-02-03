@@ -304,7 +304,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
 
     def annotate_can_update(self):
         """Annotates whether the credentials a updatable to a newer version
-        E.g. C5 -> C51 in case that matching C51 credentials doent exist
+        E.g. C5 -> C51 in case that matching C51 credentials don't exist
         """
         return self.annotate(
             max_version=SushiCredentials.objects.filter(
@@ -319,6 +319,20 @@ class SushiCredentialsQuerySet(models.QuerySet):
                 When(max_version=CounterVersionChoices.C51, then=Value(False)),
                 default=Value(True),
                 output_field=models.BooleanField(),
+            )
+        )
+
+    def annotate_has_51_provider(self):
+        """
+        This adds `has_51_provider` to the queryset, which is True if the platform has a provider
+        with counter_version 5.1
+        """
+        return self.annotate(
+            has_51_provider=Exists(
+                Platform.objects.filter(
+                    knowledgebase__providers__contains=[{"counter_version": 51}],
+                    id=OuterRef("platform_id"),
+                )
             )
         )
 
