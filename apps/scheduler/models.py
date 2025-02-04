@@ -187,12 +187,12 @@ class Scheduler(models.Model):
 
         # processing fetch intention
         with transaction.atomic(savepoint=True):
+            # lock scheduler while processing the intention
+            Scheduler.objects.select_for_update().get(pk=self.pk)
+
             # It may take so time to process the intention
             # (download the data)
             process_response = intention.process()
-
-            # lock scheduler
-            Scheduler.objects.select_for_update().get(pk=self.pk)
 
             # There is a slight chance that this scheduler
             # was unlocked using cron job at this point
@@ -248,7 +248,7 @@ class Scheduler(models.Model):
                     scheduler.current_intention.save()
 
             # unlock based on celery task id
-            for scheduler in cls.objects.select_for_update().filter(
+            for scheduler in cls.objects.select_for_update(skip_locked=True).filter(
                 Q(current_celery_task_id__isnull=False)
             ):
                 if TaskResult.objects.filter(
@@ -260,7 +260,7 @@ class Scheduler(models.Model):
                 logger.info("Scheduler %s was unlocked (task finished)", scheduler)
 
             # unlocked based on time
-            for scheduler in cls.objects.select_for_update().filter(
+            for scheduler in cls.objects.select_for_update(skip_locked=True).filter(
                 Q(current_start__lt=timezone.now() - timedelta(seconds=cls.JOB_TIME_LIMIT))
             ):
                 update_intention(scheduler)
@@ -542,8 +542,9 @@ class FetchIntention(models.Model):
         # plan data import
         if attempt.can_import_data:
             # Mark planned fetch intention with the same requirements as
-            # processed
+            # duplicate_of
             FetchIntention.objects.filter(
+                duplicate_of__isnull=True,
                 when_processed__isnull=True,
                 credentials=self.credentials,
                 counter_report=self.counter_report,
@@ -1193,12 +1194,13 @@ class Automatic(models.Model):
             if automatic:
                 # delete missing
                 existing_intentions = list(
-                    FetchIntention.objects.select_for_update()
-                    .filter(
+                    FetchIntention.objects.filter(
                         start_date=month,
                         end_date=month_last,
                         credentials__organization=organization,
+                        duplicate_of__isnull=True,  # we don't want to lock duplicates
                     )
+                    .select_for_update()
                     .select_related("credentials", "counter_report")
                 )
                 to_add, to_delete = cls._cmp_intentions(intentions, existing_intentions)

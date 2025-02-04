@@ -124,6 +124,7 @@ class AttemptInline(admin.StackedInline):
 @admin.register(models.FetchIntention)
 class FetchIntentionAdmin(admin.ModelAdmin):
     search_fields = (
+        "queue__pk",
         "harvest__pk",
         "harvest__last_updated_by__email",
         "credentials__organization__name",
