@@ -90,11 +90,14 @@ class UserSerializer(ModelSerializer):
         return obj.email_verification["email_sent"]
 
     def get_otp_required(self, obj: User) -> typing.Optional[typing.List[dict]]:
-        if not settings.OTP_ENABLED or obj.skip_2fa:
+        if not settings.OTP_ENABLED:
             # OTP disabled
             return None
 
         if request := self.context.get("request"):
+            if request.real_user.skip_2fa:
+                # Original user doesn't use 2fa => otp should not be required
+                return None
             # User needs to have device activated
             if user_has_device(request.real_user):
                 # Test whether device matches

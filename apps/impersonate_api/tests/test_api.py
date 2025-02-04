@@ -11,6 +11,7 @@ from test_scenarios.basic import (  # noqa - fixtures
     identities,
     import_batches,
     organizations,
+    otp_devices,
     platforms,
     report_types,
     schedulers,
@@ -118,3 +119,37 @@ class TestImpersonateAPI:
                         assert user["current"] is False
             else:
                 assert response.status_code == 403, "not allowed to list"
+
+    @pytest.mark.parametrize(
+        "otp_enabled,skip_2fa", ((True, True), (True, False), (False, True), (False, False))
+    )
+    def test_otp_required(
+        self, otp_enabled, skip_2fa, settings, basic1, clients, users, otp_devices
+    ):
+        settings.OTP_ENABLED = otp_enabled
+        users["master_admin"].skip_2fa = skip_2fa
+        users["master_admin"].save()
+
+        if otp_enabled and not skip_2fa:
+            # Create and verify OTP
+            resp = clients["master_admin"].post(
+                reverse("otp-generate", args=(otp_devices["master_admin"].pk,))
+            )
+            assert resp.status_code == 200
+
+            otp_devices["master_admin"].refresh_from_db()
+
+            resp = clients["master_admin"].post(
+                reverse("otp-verify", args=(otp_devices["master_admin"].pk,)),
+                {"code": otp_devices["master_admin"].token},
+            )
+
+        # impersonate to a user
+        resp = clients["master_admin"].put(
+            reverse("impersonate-detail", kwargs={"pk": users["admin1"].pk})
+        )
+        assert resp.status_code == 200
+
+        resp = clients["master_admin"].get(reverse("user_api_view"))
+        assert resp.status_code == 200
+        assert not resp.data["otp_required"], "don't require otp after impersonation"
