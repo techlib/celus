@@ -864,6 +864,13 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             attempt.extract_header_data(report.header)
             self._v5_extract_status_and_errors(report, attempt)
 
+            # we need to update used_url here
+            # because a fallback for calling sushi API with shorter date format might been triggered
+            # start_date=2022-02-01 -> start_date=2022-02 and we want to store the url which was
+            # actually used
+            if url := getattr(report, "url", None):  # only C5 and C51 reports should contain url
+                attempt.used_url = url
+
         # now generic stuff independent of success or failure
         file_data.seek(0)  # make sure that file is rewound to the start
         attempt.checksum, attempt.file_size = SourceFileMixin.checksum_fileobj(file_data)
