@@ -140,32 +140,44 @@ class TestCeleryTasks:
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["tr"],
-            used_url="https://sushi.example.com/reports/tr/",
+            used_url="https://sushi.example.com/reports/tr/?some=extras",
         )
         FetchAttemptFactory(
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["dr"],
-            used_url="https://sushi.example.com/reports/dr/",
+            used_url="https://sushi.example.com/reports/dr/?some=extras2",
         )
         FetchAttemptFactory(
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["pr"],
-            used_url="https://fake.example.com/",
+            used_url="https://fake.example.com/?some=extrass",
         )
         FetchAttemptFactory(
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["pr"],
-            used_url="https://sushi.example.com/reports/pr/",
+            used_url="https://sushi.example.com/reports/pr/?some=extras3",
             status=AttemptStatus.PARSING_FAILED,
         )
         FetchAttemptFactory(
             credentials__counter_version=51,
             credentials__platform=platform,
             counter_report=counter_report_types["ir51"],
-            used_url="https://sushi.example.com/reports/ir/",
+            used_url="https://sushi.example.com/reports/ir/?some=extras4",
+        )
+        FetchAttemptFactory(
+            credentials__counter_version=51,
+            credentials__platform=platform,
+            counter_report=counter_report_types["ir51"],
+            used_url="https://sushi.example.com/reports/ir/?some=extras5",
+        )
+        FetchAttemptFactory(
+            credentials__counter_version=51,
+            credentials__platform=platform,
+            counter_report=counter_report_types["ir51"],
+            used_url="https://alias-sushi.example.com/reports/ir/?some=extras5",
         )
         FetchAttemptFactory(
             credentials__counter_version=51,
@@ -183,22 +195,25 @@ class TestCeleryTasks:
             tasks.sync_platforms_with_knowledgebase_task()
             assert m.last_request.json() == [
                 {
-                    "counter_report_code": "TR",
-                    "platform_id": 8888,
-                    "counter_version": 5,
-                    "urls": ["https://sushi.example.com/reports/tr/"],
-                },
-                {
                     "counter_report_code": "DR",
                     "platform_id": 8888,
                     "counter_version": 5,
                     "urls": ["https://sushi.example.com/reports/dr/"],
                 },
                 {
+                    "counter_report_code": "TR",
+                    "platform_id": 8888,
+                    "counter_version": 5,
+                    "urls": ["https://sushi.example.com/reports/tr/"],
+                },
+                {
                     "counter_report_code": "IR",
                     "platform_id": 8888,
                     "counter_version": 51,
-                    "urls": ["https://sushi.example.com/reports/ir/"],
+                    "urls": [
+                        "https://alias-sushi.example.com/reports/ir/",
+                        "https://sushi.example.com/reports/ir/",
+                    ],
                 },
             ], "Post data matches"
         assert Platform.objects.filter(ext_id=328).exists(), "Platform was created"

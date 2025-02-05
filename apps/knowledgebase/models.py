@@ -16,6 +16,7 @@ from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.validators import MinLengthValidator
 from django.db import models, transaction
+from django.db.models.functions import StrIndex, Substr
 from django.db.transaction import on_commit
 from django.utils import timezone
 from logs.models import (
@@ -279,13 +280,19 @@ class PlatformImportAttempt(ImportAttempt):
                 .exclude(fake_cond)
                 .exclude(used_url__iexact="")
                 .annotate(
+                    short_url=Substr(
+                        "used_url", 1, StrIndex("used_url", models.Value("?")) - models.Value(1)
+                    ),
                     platform_id=models.F("credentials__platform__ext_id"),
                     counter_report_code=models.F("counter_report__code"),
                     counter_version=models.F("counter_report__counter_version"),
-                    urls=ArrayAgg("used_url"),
+                )
+                .values("platform_id", "counter_report_code", "counter_version")
+                .annotate(
+                    urls=ArrayAgg("short_url", distinct=True, ordering=models.F("short_url").asc())
                 )
                 .values("platform_id", "counter_report_code", "counter_version", "urls")
-                .order_by("credentials_id", "counter_report_id")
+                .order_by("platform_id", "counter_version", "counter_report_code")
                 .distinct()
             )
             return requests.post(
