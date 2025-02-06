@@ -78,6 +78,35 @@
         {{ $t("sushi.clone_to_newer.button") }}
       </v-btn>
     </v-card-actions>
+
+    <v-dialog
+      v-model="showHarvestDialog"
+      max-width="1320px"
+      content-class="top-dialog"
+    >
+      <v-card>
+        <v-card-title>{{
+          $t("sushi.update.harvest_new_credentials")
+        }}</v-card-title>
+        <v-card-text class="pb-0">
+          <HarvestSelectedWidget
+            v-if="showHarvestDialog"
+            :credentials="newCredentials"
+            :retry-interval="5000"
+            :show-platform="true"
+            :show-organization="true"
+            :show-reharvest="false"
+          >
+          </HarvestSelectedWidget>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="closeDialog()" class="mb-5 mr-5">{{
+            $t("close")
+          }}</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -85,11 +114,12 @@
 import axios from "axios";
 import { mapActions } from "vuex";
 import cancellation from "@/mixins/cancellation";
+import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget.vue";
 
 export default {
   name: "MarkCredentialsAsFixedWidget",
 
-  components: {},
+  components: { HarvestSelectedWidget },
 
   mixins: [cancellation],
 
@@ -105,6 +135,8 @@ export default {
       startHarvesting: true,
       saving: false,
       iAmSure: false,
+      showHarvestDialog: false,
+      newCredentials: [],
     };
   },
 
@@ -125,17 +157,22 @@ export default {
           "/api/sushi-credentials/clone-to-newer/",
           inputData
         );
-        let credentials = response.data;
-        this.$emit(
-          "new-credentials",
-          credentials.map((e) => e.pk),
-          this.startHarvesting
-        );
+        this.newCredentials = response.data;
+        if (this.newCredentials.length) {
+          // let the parent know that there are new credentials,
+          // but he does not need to know which ones - he will fetch all anyway
+          this.$emit("new-credentials");
+          if (this.startHarvesting) {
+            this.showHarvestDialog = true;
+          }
+        }
         this.showSnackbar({
           content: this.$t("sushi.clone_to_newer.success"),
           color: "success",
         });
-        this.closeDialog();
+        if (!this.showHarvestDialog) {
+          this.closeDialog();
+        }
       } catch (error) {
         this.showSnackbar({
           content: "Error cloning SUSHI credentials: " + error,

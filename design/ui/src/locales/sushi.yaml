@@ -72,6 +72,7 @@ en:
       can_update_verified_legend: Platform is known to support COUNTER 5.1
       cannot_update_broken_legend: Credentials are broken and cannot be cloned
       i_am_sure: I really want to clone the selected credentials to COUNTER 5.1, even though the platform may not yet support it.
+      harvest_new_credentials: Harvest data for the new credentials
 
 cs:
   sushi:
@@ -147,3 +148,4 @@ cs:
       can_update_verified_legend: Platforma podporuje COUNTER 5.1
       cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
       i_am_sure: Opravdu chci naklonovat vybrané přístupové údaje do COUNTER 5.1, i když platforma nemusí být ještě podporována.
+      harvest_new_credentials: Stáhnout data pro nové přístupové údaje

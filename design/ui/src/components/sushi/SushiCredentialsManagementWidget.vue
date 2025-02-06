@@ -1468,7 +1468,6 @@ export default {
       } else {
         return creds.same_in_org > 1;
       }
-      return false;
     },
     warnSameCredentialsText(creds) {
       if (creds.same_in_org > 1) {
@@ -1479,17 +1478,10 @@ export default {
       }
       return "";
     },
-    async credentialsClonedHandler(credentials_pks, startHarvesting) {
-      console.log(credentials_pks);
+    async credentialsClonedHandler() {
       await this.loadSushiCredentialsList();
-      if (startHarvesting) {
-        this.checkedRows = this.filteredCredentials.filter((e) =>
-          credentials_pks.includes(e.pk)
-        );
-        this.showTestDialog = true;
-      } else {
-        this.checkedRows = [];
-      }
+      // unselect any previously selected credentials
+      this.checkedRows = [];
     },
   },
 

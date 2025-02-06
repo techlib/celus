@@ -99,7 +99,7 @@ cs:
         ></v-btn>
       </v-col>
       <v-spacer />
-      <v-col cols="auto" v-if="!test">
+      <v-col cols="auto" v-if="!test && showReharvest">
         <v-tooltip bottom max-width="600px">
           <template #activator="{ on }">
             <span v-on="on">
@@ -225,6 +225,7 @@ export default {
     showPlatform: { default: false, type: Boolean },
     // is this dialog used for testing? Influences wording and the selection of months
     test: { default: false, type: Boolean },
+    showReharvest: { default: true, type: Boolean },
   },
 
   data() {
