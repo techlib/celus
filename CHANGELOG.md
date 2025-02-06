@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [8.0.1]  - 2025-02-07
+
+### Changes
+
+#### Frontend
+
+* credentials upgradable to 5.1 were split into two groups depending on the presence of C5.1
+  record in the knowledgebase
+* the cloning dialog was extended to contain more information and also discourage users from blindly
+  cloning all the credentials regardless of the knowledgebase record
+* cloning of broken credentials was disallowed
+
+
+#### Backend
+
+* when harvesting using full dates (2025-01-01) fails with 3020, CELUS will try short version
+  (2025-01) as a backup before giving up
+* heuristics was added to replace /r5 with /r51 when cloning credentials without a knowledgebase
+  record
+
+
+### Fixed
+
+#### Frontend
+
+* bug preventing newly cloned credentials from being harvested when a credentials filter is applied
+  was fixed
+
+
+#### Backend
+
+* synchronization of harvest data with the knowledgebase was fixed to properly aggregate data before
+  uploading it to the knowledgebase
+* generation of OTP tokens was fixed for cases where impersonation is used by a user with 2FA
+  disabled
+
+
 ## [8.0.0]  - 2025-01-31
 
 

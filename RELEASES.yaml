@@ -1,3 +1,21 @@
+- version: 8.0.1
+  title:
+    en: Several improvements in COUNTER 5.1 transition and a few bug fixes in CELUS 8.0.1
+    cs: Několik vylepšení v přechodu na COUNTER 5.1 a několik oprav chyb v CELUSu 8.0.1
+  text:
+    en: |
+      - COUNTER 5 credentials which can be cloned to COUNTER 5.1 newly indicate if the platform is known to support COUNTER 5.1
+      - Cloning of broken credentials to COUNTER 5.1 is now prevented
+      - Several small improvements and fixes were introduced
+    cs: |
+      - COUNTER 5 přihlašovací údaje, které lze klonovat do COUNTER 5.1, nyní indikují, zda je platforma známa podporovat COUNTER 5.1
+      - Klonování nefunkčních přihlašovacích údajů do COUNTER 5.1 je nyní zabráněno
+      - Bylo provedeno několik drobných vylepšení a oprav
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 8.0.0
   title:
     en: COUNTER 5.1 support, CAUL specialized reports and much more arrive in CELUS 8.0
