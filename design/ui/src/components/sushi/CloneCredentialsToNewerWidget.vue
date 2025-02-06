@@ -6,20 +6,61 @@
   <v-card>
     <v-card-title>{{ $t("sushi.clone_to_newer.title") }}</v-card-title>
     <v-card-text>
+      <v-alert type="info" outlined class="mt-2 mb-0">
+        <p>{{ $t("sushi.clone_to_newer.alert_text_p1") }}</p>
+        <p class="mb-0">
+          <i18n path="sushi.clone_to_newer.alert_text_p2">
+            <template #link>
+              <a
+                href="https://support.celus.net/support/solutions/articles/103000331653"
+                target="_blank"
+                >{{ $t("sushi.clone_to_newer.link_text") }}</a
+              >
+            </template>
+          </i18n>
+        </p>
+      </v-alert>
+
       <div
+        class="pt-6 text-normal"
         v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
       ></div>
-      <v-alert type="info" outlined class="mt-8 mb-0">
-        <i18n path="sushi.clone_to_newer.alert_text">
-          <template #link>
-            <a
-              href="https://support.celus.net/support/solutions/articles/103000331653"
-              target="_blank"
-              >{{ $t("sushi.clone_to_newer.link_text") }}</a
-            >
-          </template>
-        </i18n>
-      </v-alert>
+
+      <v-card elevation="0" outlined class="mt-6 mb-2">
+        <v-card-subtitle class="pb-2 font-weight-light">{{
+          $t("overview")
+        }}</v-card-subtitle>
+        <v-card-text>
+          <table class="overview">
+            <tr>
+              <th>{{ $t("sushi.update.can_update_verified_legend") }}</th>
+              <td class="text-right">{{ safeToCloneCount }}</td>
+              <td class="pl-2">
+                <v-icon v-if="safeToCloneCount" color="success" x-small
+                  >fa-check-circle</v-icon
+                >
+              </td>
+            </tr>
+            <tr>
+              <th>{{ $t("sushi.update.can_update_legend") }}</th>
+              <td class="text-right">{{ unsafeToCloneCount }}</td>
+              <td class="pl-2">
+                <v-icon v-if="unsafeToCloneCount" color="warning" x-small
+                  >fa-exclamation-triangle</v-icon
+                >
+              </td>
+            </tr>
+          </table>
+        </v-card-text>
+      </v-card>
+
+      <div class="mt-8" v-if="unsafeToCloneCount">
+        <v-checkbox
+          v-model="iAmSure"
+          :label="$t('sushi.update.i_am_sure')"
+          color="orange"
+        ></v-checkbox>
+      </div>
     </v-card-text>
     <v-card-actions class="px-6 pb-4">
       <v-switch
@@ -28,7 +69,12 @@
       ></v-switch>
       <v-spacer></v-spacer>
       <v-btn @click="closeDialog()">{{ $t("close") }}</v-btn>
-      <v-btn @click="cloneToNewer()" color="primary" :loading="saving">
+      <v-btn
+        @click="cloneToNewer()"
+        color="primary"
+        :loading="saving"
+        :disabled="!!unsafeToCloneCount && !iAmSure"
+      >
         {{ $t("sushi.clone_to_newer.button") }}
       </v-btn>
     </v-card-actions>
@@ -58,6 +104,7 @@ export default {
     return {
       startHarvesting: true,
       saving: false,
+      iAmSure: false,
     };
   },
 
@@ -103,6 +150,16 @@ export default {
   computed: {
     credentialsCount() {
       return this.credentials.length;
+    },
+    safeToCloneCount() {
+      return this.credentials.filter(
+        (item) => item.can_update && item.has_51_provider && !item.broken
+      ).length;
+    },
+    unsafeToCloneCount() {
+      return this.credentials.filter(
+        (item) => item.can_update && !item.has_51_provider && !item.broken
+      ).length;
     },
   },
 

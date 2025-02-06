@@ -84,7 +84,11 @@ cs:
         <tr>
           <th>{{ $t("labels.credentials") }}</th>
           <th>{{ $t("labels.report_type") }}</th>
-          <th v-for="month in monthDates" :key="month" class="text-center">
+          <th
+            v-for="month in monthDates"
+            :key="month.toString()"
+            class="text-center"
+          >
             <span class="font-weight-light">{{ month.getFullYear() }}</span>
             <br />
             <span class="font-weight-black text-center">{{

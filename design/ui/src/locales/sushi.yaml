@@ -61,8 +61,17 @@ en:
       button: Clone to 5.1
       tooltip: Create a copy of selected credentials with the COUNTER version upgraded to 5.1.
       info: Create a copy of the selected <strong>{count}</strong> credentials with the COUNTER version upgraded to 5.1.
-      alert_text: For more information, see the {link}.
+      alert_text_p1: Support for COUNTER 5.1 among publishers is still far from universal. While CELUS lets you clone any of your COUNTER 5 credentials to COUNTER 5.1, we at present recommend to only do so for platforms that are known to support COUNTER 5.1.
+      alert_text_p2: For more information, see the {link}.
       link_text: knowledge base article
+    update:
+      can_update_tt: These COUNTER 5 credentials do not have a COUNTER 5.1 version and can be cloned into a COUNTER 5.1 copy
+      cannot_update_broken_tt: These COUNTER 5 credentials are broken and cannot be cloned to COUNTER 5.1
+      can_update_legend_header: "COUNTER 5 credentials which do not have a COUNTER 5.1 counterpart and can be cloned are marked with one of the following symbols:"
+      can_update_legend: The status of COUNTER 5.1 for platform is unknown
+      can_update_verified_legend: Platform is known to support COUNTER 5.1
+      cannot_update_broken_legend: Credentials are broken and cannot be cloned
+      i_am_sure: I really want to clone the selected credentials to COUNTER 5.1, even though the platform may not yet support it.
 
 cs:
   sushi:
@@ -127,5 +136,14 @@ cs:
       button: Naklonuj do 5.1
       tooltip: Vytvořit kopii vybraných přístupových údajů s COUNTER verzí povýšenou na 5.1
       info: Vytvořit kopii vybraných <strong>{count}</strong> přístupových údajů s COUNTER verzí povýšenou na 5.1.
-      alert_text: Pro více informací navštivte {link}.
+      alert_text_p1: Podpora COUNTER 5.1 mezi vydavateli zatím není univerzální. I když vám CELUS umožňuje naklonovat libovolné přístupové údaje COUNTER 5 do COUNTER 5.1, doporučujeme v současné době tak učinit pouze pro platformy, které jsou známy jako podporující COUNTER 5.1.
+      alert_text_p2: Pro více informací navštivte {link}.
       link_text: znalostní bázi
+    update:
+      can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
+      cannot_update_broken_tt: Tyto přístupové údaje pro COUNTER 5 jsou nefunkční a nelze je naklonovat do COUNTER 5.1
+      can_update_legend_header: "Přístupové údaje pro COUNTER 5, které nemají verzi pro COUNTER 5.1 a lze je naklonovat, jsou označeny jedním z následujících symbolů:"
+      can_update_legend: Stav COUNTER 5.1 pro platformu je neznámý
+      can_update_verified_legend: Platforma podporuje COUNTER 5.1
+      cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
+      i_am_sure: Opravdu chci naklonovat vybrané přístupové údaje do COUNTER 5.1, i když platforma nemusí být ještě podporována.

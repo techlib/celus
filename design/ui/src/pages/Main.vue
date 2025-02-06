@@ -272,4 +272,8 @@ th.auto-width {
     font-weight: bold;
   }
 }
+
+.text-normal {
+  font-size: 1rem;
+}
 </style>

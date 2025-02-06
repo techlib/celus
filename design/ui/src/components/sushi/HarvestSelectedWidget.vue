@@ -249,7 +249,7 @@ export default {
           (cred) =>
             cred.counter_reports_long.filter((item) => !item.broken).length
         )
-        .reduce((a, b) => a + b);
+        .reduce((a, b) => a + b, 0);
     },
     errors() {
       if (this.error !== null) {

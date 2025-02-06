@@ -53,12 +53,6 @@ en:
     set: Set
     not_set: Not set
   more_actions: More actions
-  can_update_tt: These COUNTER 5 credentials do not have a COUNTER 5.1 version and can be cloned into a COUNTER 5.1 copy
-  cannot_update_broken_tt: These COUNTER 5 credentials are broken and cannot be cloned to COUNTER 5.1
-  can_update_legend_header: "COUNTER 5 credentials which do not have a COUNTER 5.1 counterpart and can be cloned are marked with one of the following symbols:"
-  can_update_legend: The status of COUNTER 5.1 for platform is unknown
-  can_update_verified_legend: Platform is known to support COUNTER 5.1
-  cannot_update_broken_legend: Credentials are broken and cannot be cloned
   potential_issues:
     label: Potential issues
     broken: Broken credentials
@@ -124,12 +118,6 @@ cs:
     set: Nastaven
     not_set: Nenastaven
   more_actions: Další akce
-  can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
-  cannot_update_broken_tt: Tyto přístupové údaje pro COUNTER 5 jsou nefunkční a nelze je naklonovat do COUNTER 5.1
-  can_update_legend_header: "Přístupové údaje pro COUNTER 5, které nemají verzi pro COUNTER 5.1 a lze je naklonovat, jsou označeny jedním z následujících symbolů:"
-  can_update_legend: Stav COUNTER 5.1 pro platformu je neznámý
-  can_update_verified_legend: Platforma podporuje COUNTER 5.1
-  cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
   potential_issues:
     label: Potenciální problémy
     broken: Nefunkční přístupové údaje
@@ -449,19 +437,23 @@ cs:
 
           <v-row>
             <v-col>
-              <div class="caption">{{ $t("can_update_legend_header") }}</div>
+              <div class="caption">
+                {{ $t("sushi.update.can_update_legend_header") }}
+              </div>
               <div>
                 <v-icon small class="mr-1" color="info"
                   >far fa-arrow-alt-circle-up</v-icon
                 >
-                <span class="caption">{{ $t("can_update_legend") }}</span>
+                <span class="caption">{{
+                  $t("sushi.update.can_update_legend")
+                }}</span>
               </div>
               <div>
                 <v-icon small class="mr-1" color="info"
                   >fas fa-arrow-alt-circle-up</v-icon
                 >
                 <span class="caption">{{
-                  $t("can_update_verified_legend")
+                  $t("sushi.update.can_update_verified_legend")
                 }}</span>
               </div>
               <div>
@@ -469,7 +461,7 @@ cs:
                   >far fa-arrow-alt-circle-left</v-icon
                 >
                 <span class="caption">{{
-                  $t("cannot_update_broken_legend")
+                  $t("sushi.update.cannot_update_broken_legend")
                 }}</span>
               </div>
             </v-col>
@@ -620,7 +612,7 @@ cs:
                 ></i>
               </span>
             </template>
-            {{ $t("can_update_tt") }}
+            {{ $t("sushi.update.can_update_tt") }}
           </v-tooltip>
 
           <v-tooltip bottom v-else-if="item.can_update && item.broken">
@@ -630,7 +622,7 @@ cs:
                 <i class="far fa-arrow-alt-circle-left ml-1 error--text"></i>
               </span>
             </template>
-            {{ $t("cannot_update_broken_tt") }}
+            {{ $t("sushi.update.cannot_update_broken_tt") }}
           </v-tooltip>
 
           <strong v-else>{{
@@ -882,7 +874,7 @@ cs:
     <v-dialog
       v-model="showCloneToNewerDialog"
       v-if="showCloneToNewerDialog"
-      max-width="600px"
+      max-width="800px"
     >
       <CloneCredentialsToNewerWidget
         :credentials="checkedUpdatableCredentials"
