@@ -18,7 +18,7 @@ from rest_framework.fields import (
     SerializerMethodField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import ModelSerializer, Serializer, SlugRelatedField
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from .models import (
     COUNTER_REPORTS,
@@ -35,17 +35,6 @@ class UpdateAssignedCounterReportsSerializer(Serializer):
     last_harvestable_month = DateField(allow_null=True, required=True)
 
 
-class UnsetBrokenSerializer(Serializer):
-    credentials_id = IntegerField(min_value=1, required=True)
-    counter_reports = SlugRelatedField(
-        queryset=CounterReportType.objects, many=True, slug_field="code", required=False
-    )
-
-    class Meta:
-        model = SushiCredentials
-        fields = ("credentials_id", "counter_reports")
-
-
 class CloneToNewerSerializer(Serializer):
     credentials_id = IntegerField(min_value=1, required=True)
 
@@ -57,6 +46,17 @@ class CounterReportTypeSerializer(ModelSerializer):
     class Meta:
         model = CounterReportType
         fields = ("id", "code", "name", "counter_version")
+
+
+class UnsetBrokenSerializer(Serializer):
+    credentials_id = IntegerField(min_value=1, required=True)
+    counter_reports = PrimaryKeyRelatedField(
+        queryset=CounterReportType.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = SushiCredentials
+        fields = ("credentials_id", "counter_reports")
 
 
 class CounterReportsToCredentialsSerializer(ModelSerializer):

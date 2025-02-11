@@ -494,7 +494,12 @@ class TestSushiCredentialsViewSet:
         url = reverse("sushi-credentials-unset-broken")
         resp = clients["master_admin"].post(
             url,
-            [{"credentials_id": credentials["standalone_br1_jr1"].pk, "counter_reports": ["JR1"]}],
+            [
+                {
+                    "credentials_id": credentials["standalone_br1_jr1"].pk,
+                    "counter_reports": [counter_report_types["jr1"].pk],
+                }
+            ],
             format="json",
         )
         assert resp.status_code == 200
@@ -514,7 +519,7 @@ class TestSushiCredentialsViewSet:
             url,
             [
                 {
-                    "counter_reports": ["WRONG_TYPE"],
+                    "counter_reports": [9999999],  # wrong type
                     "credentials_id": credentials["standalone_br1_jr1"].pk,
                 }
             ],
@@ -527,7 +532,10 @@ class TestSushiCredentialsViewSet:
             url,
             [
                 {
-                    "counter_reports": ["BR1", "DB1"],
+                    "counter_reports": [
+                        counter_report_types["br1"].pk,
+                        counter_report_types["db1"].pk,
+                    ],
                     "credentials_id": credentials["standalone_br1_jr1"].pk,
                 }
             ],
@@ -542,7 +550,9 @@ class TestSushiCredentialsViewSet:
         # Credentials not found
         url = reverse("sushi-credentials-unset-broken")
         resp = clients["master_admin"].post(
-            url, [{"credentials_id": 99999999, "counter_reports": ["JR1"]}], format="json"
+            url,
+            [{"credentials_id": 99999999, "counter_reports": [counter_report_types["jr1"].pk]}],
+            format="json",
         )
         assert resp.status_code == 200, "no credentials were updated"
         assert len(resp.json()) == 0

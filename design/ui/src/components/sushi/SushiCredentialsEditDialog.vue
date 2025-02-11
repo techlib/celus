@@ -28,7 +28,7 @@ en:
     were connection issues that have been resolved in the meantime), you can manually mark them as fixed.
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
-  broken_reports_warning: Some active reports have been marked as broken by CELUS - they are probably not supported by this platform. Fix it by deactivating them.
+  broken_reports_warning: Some active reports have been marked as broken by CELUS - they are probably not supported by this platform. Fix it by deactivating them or if you are sure you can mark them as fixed.
   url_hint_no_report: "URL should not contain the '/reports/' part and anything beyond this. For example 'https://example.com/sushi5/reports/tr?customer_id=1' should be cropped to 'https://example.com/sushi5/'"
   url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
   invalid_url: Please enter a valid URL
@@ -91,7 +91,7 @@ cs:
     který mohl způsobit jejich označení), můžete je ručně označit jako opravené.
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
-  broken_reports_warning: Některé aktivní reporty CELUS označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací.
+  broken_reports_warning: Některé aktivní reporty CELUS označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací. Případně pokud jste si jisti, můžete je označit jako opravené.
   url_hint_no_report: "URL by neměla obsahovat část s '/reports/' a cokoliv po ní. Např. 'https://example.com/sushi5/reports/tr?customer_id=1' by mělo být zkráceno na 'https://example.com/sushi5/'"
   url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
   invalid_url: Prosím zadejte platné URL
@@ -650,7 +650,10 @@ cs:
           <v-row>
             <v-col v-if="anyBrokenReports">
               <v-alert type="warning" outlined class="mb-0">
-                {{ $t("broken_reports_warning") }}
+                <p>{{ $t("broken_reports_warning") }}</p>
+                <v-btn color="warning" outlined @click="markFixed(true)">{{
+                  $t("mark_fixed")
+                }}</v-btn>
               </v-alert>
             </v-col>
           </v-row>
@@ -1048,13 +1051,17 @@ export default {
       }
       return null;
     },
-    anyBrokenReports() {
+    brokenReports() {
+      let res = [];
       if (this.credentials) {
-        return !!this.selectedReportTypes.filter((item) =>
-          this.isBroken({ id: item })
-        ).length;
+        return this.selectedReportTypeObjs.filter((item) =>
+          this.isBroken({ id: item.id })
+        );
       }
-      return false;
+      return res;
+    },
+    anyBrokenReports() {
+      return this.brokenReports.length > 0;
     },
     urlPlaceholder() {
       switch (this.counterVersion) {
@@ -1364,12 +1371,16 @@ export default {
         }
       }
     },
-    async markFixed() {
+    async markFixed(markReports) {
       if (this.credentials) {
+        let data = { credentials_id: this.credentials.pk };
+        if (this.brokenReports && markReports) {
+          data.counter_reports = this.brokenReports.map((item) => item.id);
+        }
         try {
           let response = await axios.post(
             "/api/sushi-credentials/unset-broken/",
-            [{ credentials_id: this.credentials.pk }]
+            [data]
           );
           this.showSnackbar({
             content: this.$t("mark_fixed_success"),
