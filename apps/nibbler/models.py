@@ -31,7 +31,7 @@ class ParserDefinitionQuerySet(models.QuerySet):
 
         parsers = [gen_parser(e) for e in definitions]
 
-        return eat(path, platform, parsers=[r"^dynamic\.non_counter\."], dynamic_parsers=parsers)
+        return eat(path, platform, parsers=[r"^dynamic\."], dynamic_parsers=parsers)
 
 
 class ParserDefinition(models.Model):
