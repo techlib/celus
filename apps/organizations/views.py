@@ -444,7 +444,9 @@ For more info see Django admin: {request.build_absolute_uri(
             full_text_attrs = ("name", "isbn", "issn", "eissn", "doi")
             for i, p in enumerate(q.split()):
                 title_where_parts.append(
-                    " OR ".join(f"t.{attr} ILIKE %(q{i:03})s" for attr in full_text_attrs)
+                    "("
+                    + " OR ".join(f"t.{attr} ILIKE %(q{i:03})s" for attr in full_text_attrs)
+                    + ")"
                 )
                 where_params[f"q{i:03}"] = f"%{p}%"
         if pub_type := request.query_params.get("pub_type"):

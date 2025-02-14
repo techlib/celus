@@ -1469,6 +1469,21 @@ class TestTitlesOnMultiplePlatforms:
             getattr(overlaping_data[title], "pk", None) for title in result
         }
 
+    @pytest.mark.parametrize(
+        ["pub_type", "q", "result"], [("B", "oo", ["t4"]), ("J", "oo", ["t1"])]
+    )
+    def test_filters_combined(self, admin_client, overlaping_data, pub_type, q, result):
+        org = overlaping_data["org"]
+
+        resp = admin_client.get(
+            reverse("organization-titles-on-multiple-platforms", args=[org.pk]),
+            {"pub_type": pub_type, "q": q},
+        )
+        assert resp.status_code == 200
+        names = {overlaping_data[t].name for t in result}
+        data = resp.json()["results"]
+        assert {e["name"] for e in data} == names
+
 
 @pytest.mark.django_db
 class TestPlatformInterestAPI:
