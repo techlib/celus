@@ -232,13 +232,13 @@ xls = ["xlrd (>=2.0.1,<2.1.0)"]
 
 [[package]]
 name = "celus-nigiri"
-version = "4.0.3"
+version = "4.0.4"
 description = "Library for downloading and parsing counter-like data."
 optional = false
 python-versions = "<4.0.0,>=3.8.9"
 files = [
-    {file = "celus_nigiri-4.0.3-py3-none-any.whl", hash = "sha256:bf5df4d00a649a5e94845127434ae1f3bb3b8c4ba3efea291824aeb5d648484d"},
-    {file = "celus_nigiri-4.0.3.tar.gz", hash = "sha256:523cfbb39ad8f2ed75078d6c847e2b1834db022db24db4fb76a83e9bbd47d396"},
+    {file = "celus_nigiri-4.0.4-py3-none-any.whl", hash = "sha256:0c9a5b1978598b74d6a0d2e66364887de8d0c65b3807935f49532cbdb6905887"},
+    {file = "celus_nigiri-4.0.4.tar.gz", hash = "sha256:19a129cd0c4985c63aa413a835b36bae43b9e1846177f96efce659ab7e862aa6"},
 ]
 
 [package.dependencies]
@@ -4036,4 +4036,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.9"
-content-hash = "0c9c4687abaae6173960b8e93f3d097f3327fe001b8a449cea4f59dbe3722868"
+content-hash = "10b3c0af0b662470bafe0781a201d49c3f3f93e50a39af1ffe0bec32791a9de8"
