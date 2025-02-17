@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 "report_types": [],
             }
             report_types = (
-                creds.sushifetchattempt_set.annotate(
+                creds.attempts.annotate(
                     has_access_log=Exists(
                         AccessLog.objects.filter(import_batch__sushifetchattempt__pk=OuterRef("pk"))
                     )

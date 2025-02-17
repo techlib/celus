@@ -1,6 +1,6 @@
 from django.conf import settings
 from rest_framework.fields import BooleanField, CharField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from .models import Organization, OrganizationAltName
 
@@ -45,9 +45,14 @@ class OrganizationAltNameSerializer(ModelSerializer):
         fields = ("pk", "name")
 
 
+class HarvestReportSerializer(Serializer):
+    enabled = BooleanField(required=True)
+
+
 class OrganizationListSerializer(ModelSerializer):
     is_admin = BooleanField(read_only=True)
     is_member = BooleanField(read_only=True)
+    send_harvest_reports = BooleanField(read_only=True)
     alt_names = OrganizationAltNameSerializer(
         source="organizationaltname_set", many=True, read_only=True
     )
@@ -66,4 +71,5 @@ class OrganizationListSerializer(ModelSerializer):
             "is_admin",
             "is_member",
             "is_raw_data_import_enabled",
+            "send_harvest_reports",
         ) + tuple("name_" + lang[0] for lang in settings.LANGUAGES)

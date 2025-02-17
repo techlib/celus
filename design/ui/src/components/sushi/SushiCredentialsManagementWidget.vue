@@ -1424,6 +1424,16 @@ export default {
       this.sushiCredentialsList = this.sushiCredentialsList.filter(
         (item) => item.pk !== id,
       );
+      // platform filter was based on credentials that were deleted => drop filter
+      // otherwise only a number (not platform name) will occur in the filter
+      if (
+        this.platformFilter &&
+        !this.sushiCredentialsList
+          .map((e) => e.platform.pk)
+          .includes(this.platformFilter)
+      ) {
+        this.platformFilter = null;
+      }
     },
     preprocessCredentials(item) {
       item["has_broken_reports"] = !!item.counter_reports_long.filter(
@@ -1612,11 +1622,6 @@ export default {
   },
 
   watch: {
-    platforms(newVal) {
-      if (!this.platforms.some((item) => item.pk === newVal)) {
-        this.platformFilter = null;
-      }
-    },
     showEditDialog(value) {
       if (!value) {
         this.selectedCredentials = null;

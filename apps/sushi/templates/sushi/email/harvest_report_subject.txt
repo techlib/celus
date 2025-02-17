@@ -1,0 +1,1 @@
+{% load i18n %}{% load l10n %}{% blocktranslate with month=month|date:"M" %}CELUS Harvesting Report - {{ month }}{% endblocktranslate %} {% blocktranslate count new_issues=new_issues %}({{ new_issues }} new issue){% plural %}({{ new_issues }} new issues){% endblocktranslate %} - {{ organization.name }}

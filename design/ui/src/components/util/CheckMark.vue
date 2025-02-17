@@ -12,7 +12,7 @@ cs:
   <v-tooltip location="bottom">
     <template v-slot:activator="{ props }">
       <v-icon
-        size="small"
+        :size="iconSize"
         :color="modelValue ? trueColor : falseColor"
         :class="extraClasses"
         v-bind="props"
@@ -36,6 +36,7 @@ export default {
     falseIcon: { default: "far fa-square" },
     trueTooltip: { default: null },
     falseTooltip: { default: null },
+    iconSize: { default: "small", type: String },
   },
 
   computed: {

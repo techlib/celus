@@ -1,0 +1,19 @@
+{% load i18n %}
+{% load l10n %}
+
+# {% blocktranslate with month=last_month|date:"M" %}New Issues - {{ month }} - Broken Credentials{% endblocktranslate %} ({{ newly_broken|length }})
+{% translate 'Platform' %},{% translate "Counter Version"%}
+{% for creds in newly_broken %}{{ creds.platform }},{{ creds.counter_version_repr }}
+{% empty %}{% translate 'No new issues' %}{% endfor %}
+
+
+# {% blocktranslate with month=month|date:"F" %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ harvest_report.success_rate|floatformat }} %
+{% blocktranslate with month=month|date:"F" last_month=last_month|date:"F" %}Percentage of {{ month }} usage successfully harvested in {{ last_month }}{% endblocktranslate %}
+
+# {% translate 'Potential Issues' %} ({{ issue_count }})
+{% translate 'Issue' %},{% translate 'Count' %}
+{% translate 'Broken' %},{{ broken_count }}
+{% translate 'Unverified' %},{{ unverified_count }}
+
+
+{% translate 'Made By' %}: {{ celus_url }}

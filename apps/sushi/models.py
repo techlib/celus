@@ -427,6 +427,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
             super().save(*args, **kwargs)
 
+    @property
+    def counter_version_repr(self):
+        return CounterVersionChoices(self.counter_version).short
+
     def clone_to_c51(self, report_type_mapping=None) -> Optional["SushiCredentials"]:
         if not report_type_mapping:
             report_type_mapping = CounterReportType.get_mapping()
@@ -581,7 +585,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
     @property
     def current_successful_attempts(self):
-        return self.sushifetchattempt_set.filter(
+        return self.attempts.filter(
             status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
             credentials_version_hash=self.version_hash,
         )
@@ -1043,7 +1047,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
         max_length=20, choices=AttemptStatus.choices, default=AttemptStatus.INITIAL
     )
 
-    credentials = models.ForeignKey(SushiCredentials, null=True, on_delete=models.SET_NULL)
+    credentials = models.ForeignKey(
+        SushiCredentials, null=True, on_delete=models.SET_NULL, related_name="attempts"
+    )
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)

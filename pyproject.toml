@@ -77,6 +77,7 @@ drf-nested-routers = "~0.93.4"
 hcube = "0.26.1"
 isbnlib = "^3.10.3"
 lz4 = "~4.3.2"
+mrml = "~0.2.0"
 numpy = [   # keeps numpy-2.0.0 from being installed - pandas does not pin numpy correctly
     {version = "^1.24.4", python = "3.8"},
     {version = "^1.26.4", python = ">=3.9"}

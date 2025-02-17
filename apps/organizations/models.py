@@ -217,6 +217,9 @@ class UserOrganization(models.Model):
     source = models.ForeignKey("core.DataSource", on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    send_harvest_reports = models.BooleanField(
+        help_text="If checked harvest report per oganization will be sent", default=False
+    )
 
     class Meta:
         unique_together = (("user", "organization"),)

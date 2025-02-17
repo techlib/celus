@@ -98,3 +98,11 @@ class FetchAttemptFactory(factory.django.DjangoModelFactory):
         if hasattr(x.data_file, "seek")
         else "foobar"
     )
+
+
+class CounterReportsToCredentialsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CounterReportsToCredentials
+
+    credentials = factory.SubFactory(CredentialsFactory)
+    counter_report = factory.SubFactory(CounterReportTypeFactory)

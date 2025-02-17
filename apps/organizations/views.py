@@ -29,9 +29,12 @@ from pycountry import subdivisions
 from recache.util import recache_queryset
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from sushi.logic.email import send_harvest_reports
+from sushi.logic.harvest_reports import make_harvest_reports
 from sushi.models import SushiCredentials
 from tags.models import Tag
 
@@ -40,6 +43,7 @@ from organizations.tasks import erms_sync_organizations_task
 
 from .models import COUNTRIES, Organization, UserOrganization
 from .serializers import (
+    HarvestReportSerializer,
     OrganizationListSerializer,
     OrganizationSerializer,
     OrganizationSimpleSerializer,
@@ -84,6 +88,14 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
                         organization=OuterRef("pk"), user=self.request.user
                     )
                 ),
+                send_harvest_reports=Exists(
+                    UserOrganization.objects.filter(
+                        organization=OuterRef("pk"),
+                        user=self.request.user,
+                        is_admin=True,  # only admins can receive reports
+                        send_harvest_reports=True,
+                    )
+                ),
             )
             .order_by("name")
             .prefetch_related("organizationaltname_set")
@@ -109,6 +121,41 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         for value in result.values():
             value.sort(key=lambda x: x["version"])
         return Response(result)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="harvest-reports",
+        serializer_class=HarvestReportSerializer,
+    )
+    def harvest_reports(self, request, pk):
+        serializer = HarvestReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        organization = get_object_or_404(request.user.admin_organizations(), pk=pk)
+        enabled = serializer.validated_data["enabled"]
+
+        if enabled:
+            # make sure that UserOrganization organization exists for
+            # super users and consortial admins
+            _, created = UserOrganization.objects.get_or_create(
+                user=request.user,
+                organization=organization,
+                defaults={"is_admin": True, "send_harvest_reports": enabled},
+            )
+            if created:
+                return Response()
+
+        UserOrganization.objects.filter(user=request.user, organization__pk=pk).update(
+            send_harvest_reports=enabled
+        )
+        return Response()
+
+    @action(detail=True, methods=["post"], url_path="send-harvest-report")
+    def send_harvest_report(self, request, pk):
+        organization = get_object_or_404(request.user.admin_organizations(), pk=pk)
+        harvest_reports = make_harvest_reports([organization])
+        send_harvest_reports(request.user, harvest_reports)
+        return Response()
 
     @action(detail=True, url_path="year-interest")
     def year_interest(self, request, pk):

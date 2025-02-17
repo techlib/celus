@@ -30,6 +30,13 @@ en:
     admin: Admin of organization
     manager: Manager of entire consortium
     consortial_user: User of entire consortium
+  harvest_reports:
+    send: Send the latest harvest report
+    sent: The latest harvest report was sent.
+    title: Send Harvest reports
+    tooltip: When enabled, CELUS will send you a monthly overview email of harvesting success in the previous month
+    switched_on: Sending of regular harvest reports for organization '{organization}' has been enabled.
+    switched_off: Sending of regular harvest reports for organization '{organization}' has been disabled.
 
 cs:
   is_superuser: Superuživatel
@@ -62,11 +69,18 @@ cs:
     admin: Administrátor organizace
     manager: Správce celého konzorcia
     consortial_user: Uživatel celého konzorcia
+  harvest_reports:
+    send: Odeslat nejnovější zprávu o stahování
+    sent: Nejnovější zpráva o stahování byla odeslána.
+    title: Odesílat zprávy o stahování
+    tooltip: Pokud je zapnuto, CELUS bude každý posílat email s přehledem o úspěšných stahováních z předchozího měsíce
+    switched_on: Odesílání pravidelných zpráv o stahování pro organizaci '{organization}' bylo aktivováno.
+    switched_off: Odesílání pravidelných zpráv o stahování pro organizaci '{organization}' bylo vypnuto.
 </i18n>
 
 <template>
-  <v-container v-if="loggedIn && user" class="text-center" max-width="1000px">
-    <v-row>
+  <v-container v-if="loggedIn && user" max-width="1000px">
+    <v-row class="text-center">
       <v-col>
         <!--
           please note that normal user will not see this, as he will be
@@ -93,14 +107,14 @@ cs:
         </v-alert>
       </v-col>
     </v-row>
-    <v-row no-gutters>
+    <v-row no-gutters class="text-center">
       <v-col>
         <v-avatar color="primary" class="mt-10" size="80">
           <img :src="gravatar" :alt="avatarText" />
         </v-avatar>
       </v-col>
     </v-row>
-    <v-row no-gutters>
+    <v-row no-gutters class="text-center">
       <v-col>
         <h3 v-if="user.first_name || user.last_name" class="subdued mt-3">
           {{ user.first_name ? user.first_name : "" }}
@@ -143,7 +157,7 @@ cs:
       >
       </AccountCreateModifyWidget>
     </v-dialog>
-    <v-row class="mb-5" justify="center" no-gutters>
+    <v-row class="mb-5 text-center" justify="center" no-gutters>
       <v-card elevation="0">
         <v-card-actions>
           <v-btn
@@ -176,7 +190,7 @@ cs:
       </v-card>
     </v-row>
     <v-divider thickness="4" color="secondary" opacity="0.4" class="my-12" />
-    <v-row>
+    <v-row class="text-center">
       <v-col>
         <h2>{{ $t("associated_organizations") }}</h2>
         <div
@@ -188,9 +202,52 @@ cs:
     </v-row>
     <v-row>
       <v-col class="text-left">
-        <v-data-table :items="organizationList" :headers="headers">
+        <v-data-table
+          :items="organizationList"
+          :headers="headers"
+          :items-per-page-options="[10, 25, 50, -1]"
+          :hide-default-footer="organizationList.length <= 10"
+        >
           <template #item.is_admin="{ item }">
-            <CheckMark :model-value="item.is_admin"></CheckMark>
+            <CheckMark
+              :model-value="item.is_admin"
+              icon-size="default"
+            ></CheckMark>
+          </template>
+          <template #item.send_harvest_reports="{ item }">
+            <v-btn
+              variant="text"
+              icon
+              @click="toggleSendHarvestReports(item)"
+              :disabled="!harvestReportsEnabled(item, user)"
+            >
+              <CheckMark
+                true-color="success"
+                :true-tooltip="$t('harvest_reports.tooltip')"
+                :false-tooltip="$t('harvest_reports.tooltip')"
+                :model-value="item.send_harvest_reports"
+              ></CheckMark>
+            </v-btn>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn
+                  variant="text"
+                  icon
+                  v-bind="props"
+                  @click="sendHarvestReport(item)"
+                  :disabled="!harvestReportsEnabled(item, user)"
+                >
+                  <v-icon
+                    color="info"
+                    size="small"
+                    :class="harvestReportsEnabled(item, user) ? '' : 'd-none'"
+                  >
+                    fas fa-envelope
+                  </v-icon>
+                </v-btn>
+              </template>
+              {{ $t("harvest_reports.send") }}
+            </v-tooltip>
           </template>
         </v-data-table>
       </v-col>
@@ -202,8 +259,13 @@ cs:
       class="my-12"
       v-if="showImpersonate"
     />
-    <v-row v-if="showImpersonate" class="mb-2">
-      <v-col>
+    <v-row
+      v-if="showImpersonate"
+      class="mb-2 text-center"
+      align="center"
+      justify="center"
+    >
+      <v-col cols="12" md="10">
         <h2 v-text="$t('impersonation.title')"></h2>
         <div class="font-weight-light mt-2 mb-4">
           {{ $t("impersonation.text") }}
@@ -396,11 +458,21 @@ export default {
           title: this.$t("organization"),
           value: "name",
           key: "name",
+          align: "start",
         },
         {
           title: this.$t("is_admin"),
           value: "is_admin",
           key: "is_admin",
+          align: "center",
+          sortable: false,
+        },
+        {
+          title: this.$t("harvest_reports.title"),
+          value: "send_harvest_reports",
+          key: "send_harvest_reports",
+          align: "center",
+          sortable: false,
         },
       ];
     },
@@ -546,6 +618,59 @@ export default {
 
       return false;
     },
+    async toggleSendHarvestReports(organization) {
+      let enabled = !organization.send_harvest_reports;
+      try {
+        let response = await axios.post(
+          `/api/organization/${organization.pk}/harvest-reports/`,
+          { enabled: enabled },
+        );
+        organization.send_harvest_reports = enabled;
+        if (enabled) {
+          this.showSnackbar({
+            content: this.$t("harvest_reports.switched_on", {
+              organization: organization.name,
+            }),
+            color: "success",
+          });
+        } else {
+          this.showSnackbar({
+            content: this.$t("harvest_reports.switched_off", {
+              organization: organization.name,
+            }),
+            color: "success",
+          });
+        }
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error enabling/disabling harvest reports: " + error,
+          color: "error",
+        });
+      }
+    },
+    async sendHarvestReport(organization) {
+      try {
+        let response = await axios.post(
+          `/api/organization/${organization.pk}/send-harvest-report/`,
+        );
+        this.showSnackbar({
+          content: this.$t("harvest_reports.sent"),
+          color: "success",
+        });
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error sending harvest report: " + error,
+          color: "error",
+        });
+      }
+    },
+    harvestReportsEnabled(organization, user) {
+      return (
+        organization.is_admin ||
+        user.is_superuser ||
+        user.is_admin_of_master_organization
+      );
+    },
   },
 
   async mounted() {
@@ -563,5 +688,8 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+}
+.hidden {
+  display: "hidden";
 }
 </style>

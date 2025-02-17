@@ -1,0 +1,74 @@
+{% load i18n %}
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-text align="center" color="#555" />
+      <mj-section background-color="#fff" />
+    </mj-attributes>
+  </mj-head>
+
+  <mj-body background-color="#fff">
+    <mj-section>
+      <mj-column border="1px solid #eee" border-radius="10px">
+        <mj-text>
+          <h3 style="margin-bottom: 0">{% blocktranslate with month=last_month|date:"M" %}New Issues - {{ month }} - Broken Credentials{% endblocktranslate %} ({{ newly_broken|length }})</h3>
+        </mj-text>
+{% if newly_broken|length %}
+         <mj-table color="#555" align="center">
+            <tr style="border-bottom: 1px solid #ddd">
+                <th style="width: 50%; text-align: left">{% translate 'Platform' %}</th>
+                <th style="width: 50%; text-align: center">{% translate 'Counter Version' %}</th>
+            </tr>
+  {% for creds in newly_broken %}
+            <tr>
+                <td style="text-align: left"><a href="{{ celus_url }}/admin/sushi-credentials?platformFilter={{ creds.platform.id }}&counterVersion={{ creds.counter_version }}">{{ creds.platform }}</a></td>
+                <td style="text-align: center">{{ creds.counter_version_repr }}</td>
+            </tr>
+  {% endfor %}
+         </mj-table>
+{% else %}
+         <mj-text>
+           <p>{% translate 'No new issues' %}</p>
+         </mj-text>
+{% endif %}
+      </mj-column>
+    </mj-section>
+
+    <mj-section>
+      <mj-column border="1px solid #eee" border-radius="10px">
+        <mj-text>
+          <h3 style="margin-bottom: 0">{% blocktranslate with month=month|date:"F"|title %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ harvest_report.success_rate|floatformat }} %</h3>
+          <p>
+            <i>{% blocktranslate with month=month|date:"F" last_month=last_month|date:"F" %}Percentage of {{ month }} usage successfully harvested in {{ last_month }}{% endblocktranslate %}</i>
+          </p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section>
+      <mj-column border="1px solid #eee" border-radius="10px">
+        <mj-text>
+          <h3 style="margin-bottom: 0">{% translate 'Potential Issues' %} ({{ issue_count }})</h3>
+        </mj-text>
+         <mj-table color="#555" align="center">
+            <tr style="border-bottom: 1px solid #ddd">
+                <th style="width: 50%;text-align: left">{% translate 'Issue' %}</th>
+                <th style="width: 50%;text-align: center">{% translate 'Count' %}</th>
+            </tr>
+            <tr>
+                <td style="text-align: left">{% translate 'Broken Credentials' %}</td>
+                <td style="text-align: center"><a href="{{ celus_url }}/admin/sushi-credentials?potentialIssuesFilter=broken">{{ broken_count }}</a></td>
+            </tr>
+            <tr>
+                <td style="text-align: left">{% translate 'Unverified Credentials' %}</td>
+                <td style="text-align: center"><a href="{{ celus_url }}/admin/sushi-credentials?potentialIssuesFilter=not_validated">{{ unverified_count }}</a></td>
+            </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <mj-divider border-width="1px" border-style="dashed" border-color="lightgrey" />
+
+    {% include 'sushi/email/_harvest_report_body_footer.mjml' %}
+  </mj-body>
+</mjml>

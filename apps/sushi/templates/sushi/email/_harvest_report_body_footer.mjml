@@ -1,0 +1,9 @@
+{% load i18n %}
+<mj-section>
+  <mj-column vertical-align="middle">
+    <mj-image width="200px" height="76px" alt="CELUS" src="https://spaces.celus.net/logos/celus-320.png" href="https://celus.net" />
+    <mj-text font-size="9px" color="#555">
+      {% trans 'To unsubscribe, you can change your email preferences in' %} <a href="{{ celus_url }}/user">{% translate 'your profile' %}</a>.
+    </mj-text>
+  </mj-column>
+</mj-section>

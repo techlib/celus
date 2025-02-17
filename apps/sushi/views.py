@@ -445,9 +445,9 @@ class SushiCredentialsViewSet(ModelViewSet):
                 start += relativedelta(months=1)
 
         # iterate through attempts
-        for attempt in credentials.sushifetchattempt_set.filter(
-            counter_report__in=report_types
-        ).select_related("counter_report"):
+        for attempt in credentials.attempts.filter(counter_report__in=report_types).select_related(
+            "counter_report"
+        ):
             start = attempt.start_date
             end = attempt.end_date
             report_type = attempt.counter_report.code
