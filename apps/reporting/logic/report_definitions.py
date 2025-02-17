@@ -347,6 +347,97 @@ IPEDS_REPORT_2023 = {
     ],
 }
 
+IPEDS_REPORT_2024 = {
+    "name": "ACRL IPEDS 2024",
+    "description": "ACRL IPEDS report - used in the US - 2024 version",
+    "dataSources": [
+        {
+            "id": "tr51_b1",
+            "reportType": "TR51",
+            "metric": "Unique_Item_Requests",
+            "filters": {"Access_Method": "Regular", "Data_Type": "Book"},
+        },
+        {
+            "id": "tr_b1",
+            "fallbackFor": "tr51_b1",
+            "reportType": "TR",
+            "metric": "Unique_Item_Requests",
+            "filters": {"Access_Method": "Regular", "Data_Type": "Book"},
+        },
+        {
+            "id": "ir51",
+            "reportType": "IR51",
+            "metric": "Total_Item_Requests",
+            "filters": {
+                "Data_Type": [
+                    "Multimedia",
+                    "Audiovisual",
+                    "Image",
+                    "Interactive_Resource",
+                    "Sound",
+                ],
+                "Access_Method": "Regular",
+            },
+        },
+        {
+            "id": "ir_m1",
+            "reportType": "IR_M1",
+            "metric": "Total_Item_Requests",
+            "fallbackFor": "ir51",
+        },
+        {
+            "id": "tr51_j",
+            "reportType": "TR51",
+            "metric": "Unique_Item_Requests",
+            "filters": {
+                "Access_Method": "Regular",
+                "Access_Type": ["Controlled", "Open"],
+                "Data_Type": "Journal",
+            },
+        },
+        {
+            "id": "tr_j",
+            "fallbackFor": "tr51_j",
+            "reportType": "TR",
+            "metric": "Unique_Item_Requests",
+            "filters": {
+                "Access_Method": "Regular",
+                "Access_Type": ["Controlled", "OA_Gold"],
+                "Data_Type": "Journal",
+            },
+        },
+    ],
+    "parts": [
+        {
+            "name": "61A",
+            "description": "Total E-book & E-media Usage",
+            "explanation": "Information about book usage from COUNTER 5.1 TR_B1 report is summed "
+            "up together with information about multimedia usage from COUNTER 5.1 IR report. We "
+            "assume that COUNTER 5 reports may be used as a fallback because 5.1 was not available "
+            "in 2024.",
+            "implementationNote": "The standard specifies that COUNTER 5.1 reports should be used, "
+            "but as COUNTER 5.1 was not available in 2024, we use COUNTER 5 reports as fallback. "
+            "For those we use the same configuration as in 2023.",
+            "stages": [
+                {"id": "TR_B1", "name": "TR", "formula": "tr51_b1 | tr_b1"},
+                {"name": "IR_M1", "formula": "ir51 | ir_m1"},
+                {"name": "TR + IR_M1", "formula": "TR_B1 + IR_M1"},
+            ],
+        },
+        {
+            "name": "61B",
+            "description": "E-serials Usage",
+            "explanation": "COUNTER 5.1 TR report is used to get information about journal usage. "
+            "Both Controlled and Open Access usage is reported. We assume that COUNTER 5 reports "
+            "may be used as a fallback because 5.1 was not available in 2024.",
+            "implementationNote": "The standard specifies that COUNTER 5.1 reports should be used, "
+            "but as COUNTER 5.1 was not available in 2024, we use COUNTER 5 reports as fallback. "
+            "For those we use the same configuration as in 2023.",
+            "stages": [{"name": "TR", "formula": "tr51_j | tr_j"}],
+        },
+    ],
+}
+
 CAUL_REPORT_2024 = {
     "name": "CAUL (Council of Australian University Librarians) report",
     "description": "Standardized report used in Australia to report usage of electronic resources.",
@@ -412,7 +503,14 @@ CAUL_REPORT_2024 = {
     ],
 }
 
-REPORTS = [IPEDS_REPORT_2023, IPEDS_REPORT_2022, ARL_REPORT, CAUL_REPORT_2024, REBIUN_REPORT]
+REPORTS = [
+    IPEDS_REPORT_2024,
+    IPEDS_REPORT_2023,
+    IPEDS_REPORT_2022,
+    ARL_REPORT,
+    CAUL_REPORT_2024,
+    REBIUN_REPORT,
+]
 
 
 def get_report_def_by_name(name):
