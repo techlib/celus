@@ -52,14 +52,11 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
     than once in the database. When `fix_it` is True, the records are merged together.
     """
     stats = Counter()
-    key_dims = [
-        "platform_id",
-        "metric_id",
-        "organization_id",
-        "target_id",
-        "report_type_id",
-        "date",
-    ] + [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
+    # import batch is a substitute for (organization_id, platform_id, report_type and date)
+    # and it is slightly more efficient to use it as a key
+    key_dims = ["import_batch_id", "metric_id", "target_id"] + [
+        f"dim{i + 1}" for i in range(DIMENSION_COUNT)
+    ]
     to_fix = []
 
     # we do it by batches of import_batches because the query would take too much memory
@@ -88,12 +85,7 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
                 AccessLogCube.query()
                 .filter(import_batch_id__in=ib_ids)
                 .group_by(*key_dims)
-                .aggregate(
-                    count=HCount(),
-                    ids=HArrayAgg(distinct="id"),
-                    ibs=HArrayAgg(distinct="import_batch_id"),
-                    sum=HSum("value"),
-                )
+                .aggregate(count=HCount(), ids=HArrayAgg(distinct="id"), sum=HSum("value"))
                 .group_filter(count__gt=1)
             )
             for rec in ch_backend.get_records(query):
@@ -104,7 +96,7 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
 
     ibs_to_resync = set()
     for rec in to_fix:
-        ibs_to_resync |= set(rec.ibs)
+        ibs_to_resync.add(rec.import_batch_id)
 
     logger.info("Import batches to resync: %d", len(ibs_to_resync))
 
