@@ -18,6 +18,7 @@ from logs.logic.reporting.filters import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import DimensionText
+from organizations.fake_data import OrganizationFactory
 from publications.fake_data import TitleFactory
 from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
@@ -564,3 +565,43 @@ class TestFlexibleDataExportExcel:
         else:
             # should not raise an exception
             exporter.stream_data_to_sink(out)
+
+    def test_empty_export(self, flexible_slicer_test_data):
+        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer.add_group_by("platform")
+        m = MetricFactory(name="Empty metric")
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", [m]))
+        slicer.order_by = ["organization__name"]
+        exporter = FlexibleDataExcelExporter(
+            slicer, include_tags=False, include_charts=False, include_col_totals=True
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        assert workbook.sheetnames == ["metadata", "report"]
+        sheet = workbook["report"]
+        assert [[cell.value for cell in row] for row in sheet.rows] == []
+
+    def test_empty_export_with_empty_coverage(self, flexible_slicer_test_data):
+        """
+        Check that there is no error when exporting data with empty coverage.
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer.add_group_by("platform")
+        # when using new organization, the coverage is empty
+        org = OrganizationFactory()
+        slicer.add_filter(ForeignKeyDimensionFilter("organization", [org]))
+        exporter = FlexibleDataExcelExporter(
+            slicer, include_tags=False, include_charts=False, include_col_totals=True
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        assert workbook.sheetnames == ["metadata", "report"]
+        sheet = workbook["report"]
+        assert [[cell.value for cell in row] for row in sheet.rows] == []
+        for row in workbook["metadata"].iter_rows():
+            if row[0].value == "Coverage":
+                assert row[1].value == "-"

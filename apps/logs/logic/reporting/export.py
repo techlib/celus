@@ -379,8 +379,11 @@ class FlexibleDataExporter(ABC):
                 ]
             )
         else:
-            coverage_overall = coverage["overall"]["ratio"] * 100
-            writer.writerow([_("Data coverage"), f"{coverage_overall:.1f}%"])
+            if coverage["overall"]["ratio"] is not None:
+                coverage_overall = coverage["overall"]["ratio"] * 100
+                writer.writerow([_("Data coverage"), f"{coverage_overall:.1f}%"])
+            else:
+                writer.writerow([_("Data coverage"), "-"])
 
         writer.writerow(
             [

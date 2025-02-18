@@ -13,6 +13,7 @@ from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
 from tags.models import AccessibleBy, Tag, TagScope
 
 from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import MetricFactory
 from logs.logic.materialized_reports import recompute_materialized_reports
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
@@ -1247,6 +1248,25 @@ class TestFlexibleDataSlicerOther:
 
 @pytest.mark.django_db
 class TestFlexibleDataSimpleCSVExporter:
+    @pytest.mark.parametrize("include_row_totals", [True, False])
+    def test_export_empty_data(self, flexible_slicer_test_data, include_row_totals):
+        """
+        Primary dimension: organization
+        Group by: platform
+        DimensionFilter:
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer.add_group_by("platform")
+        # filter by new unused metric
+        m = MetricFactory()
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", [m]))
+        exporter = FlexibleDataSimpleCSVExporter(
+            slicer, include_tags=False, include_row_totals=include_row_totals
+        )
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        assert out.getvalue() == ""
+
     @pytest.mark.parametrize("include_row_totals", [True, False])
     def test_org_sum_by_platform(self, flexible_slicer_test_data, include_row_totals):
         """

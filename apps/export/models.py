@@ -1,4 +1,5 @@
 import secrets
+import traceback
 from typing import Optional, Tuple, Union
 
 from core.tasks import async_mail_admins
@@ -63,6 +64,10 @@ class ExportBase(models.Model):
     def cache_key_current(self):
         return self.cache_key_base + "_current"
 
+    @property
+    def owner_info(self) -> str:
+        return ""
+
     def progress(self) -> Tuple[int, int]:
         if self.status == self.IN_PROGRESS:
             total = cache.get(self.cache_key_total, 0)
@@ -87,6 +92,47 @@ class ExportBase(models.Model):
         error_code = self.extra_info.get("error_code")
         return {"detail": error_detail, "code": error_code}
 
+    def generate_filename(self):
+        raise NotImplementedError
+
+    def write_data(self, stream, progress_monitor=None) -> int:
+        raise NotImplementedError
+
+    def create_output_file(self, progress_monitor=None, raise_exception=False):
+        self.status = self.IN_PROGRESS
+        self.save()
+        self.output_file.name = self.generate_filename()
+        try:
+            with self.output_file.open("wb") as outfile:
+                rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
+        except SlicerConfigError as e:
+            self.extra_info["error_detail"] = e.message
+            self.extra_info["error_code"] = e.code
+            self.status = self.ERROR
+            if raise_exception:
+                raise e
+        except Exception as e:
+            error_detail = str(e)
+            error_tb = traceback.format_exc()[-1000:]  # last 1000 characters of traceback
+            if len(error_detail) > 1000:
+                error_detail = error_detail[:1000] + "..."
+            self.extra_info["error_detail"] = error_detail
+            self.extra_info["error_traceback"] = error_tb
+            mail = (
+                "Export id: {}\nOwner: {}\nException cls: {}\nException details: {}\n"
+                "Traceback: {}\n"
+            ).format(self.pk, self.owner_info, e.__class__.__name__, error_detail, error_tb)
+
+            async_mail_admins.delay("Export error", mail)
+            self.status = self.ERROR
+            if raise_exception:
+                raise e
+        else:
+            self.extra_info["record_count"] = rec_count
+            self.extra_info["file_size"] = self.output_file.size
+            self.status = self.FINISHED
+        self.save()
+
 
 format_to_exporter = {
     FileFormat.XLSX: FlexibleDataExcelExporter,
@@ -109,6 +155,10 @@ class FlexibleDataExport(ExportBase):
 
     def __str__(self):
         return f"Export: {self.created}"
+
+    @property
+    def owner_info(self):
+        return str(self.owner)
 
     @classmethod
     def create_from_slicer(
@@ -150,37 +200,6 @@ class FlexibleDataExport(ExportBase):
         )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
 
-    def create_output_file(self, progress_monitor=None, raise_exception=False):
-        self.status = self.IN_PROGRESS
-        self.save()
-        self.output_file.name = self.generate_filename()
-        try:
-            with self.output_file.open("wb") as outfile:
-                rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
-        except SlicerConfigError as e:
-            self.extra_info["error_detail"] = e.message
-            self.extra_info["error_code"] = e.code
-            self.status = self.ERROR
-            if raise_exception:
-                raise e
-        except Exception as e:
-            error_detail = str(e)
-            if len(error_detail) > 1000:
-                error_detail = error_detail[:1000] + "..."
-            self.extra_info["error_detail"] = error_detail
-            mail = "Export id: {}\nOwner: {}\nException class: {}\nException details: {}\n".format(
-                self.pk, self.owner, e.__class__.__name__, error_detail
-            )
-            async_mail_admins.delay("Export error", mail)
-            self.status = self.ERROR
-            if raise_exception:
-                raise e
-        else:
-            self.extra_info["record_count"] = rec_count
-            self.extra_info["file_size"] = self.output_file.size
-            self.status = self.FINISHED
-        self.save()
-
     def generate_filename(self):
         ts = now().strftime("%Y%m%d-%H%M%S")
         ext = FileFormat.file_extension(self.file_format)
@@ -205,6 +224,10 @@ class FlexibleDataAPIExport(ExportBase):
 
     def __str__(self):
         return f"API Export from #{self.report_id}: {self.created}"
+
+    @property
+    def owner_info(self):
+        return str(self.owner_org)
 
     @classmethod
     def cleanup_format(cls, fmt: Optional[Union[str, FileFormat]]) -> FileFormat:
@@ -247,37 +270,6 @@ class FlexibleDataAPIExport(ExportBase):
             include_col_totals=params.get("col_totals", False),
         )
         return exporter.stream_data_to_sink(stream, progress_monitor=progress_monitor)
-
-    def create_output_file(self, progress_monitor=None, raise_exception=False):
-        self.status = self.IN_PROGRESS
-        self.save()
-        self.output_file.name = self.generate_filename()
-        try:
-            with self.output_file.open("wb") as outfile:
-                rec_count = self.write_data(outfile, progress_monitor=progress_monitor)
-        except SlicerConfigError as e:
-            self.extra_info["error_detail"] = e.message
-            self.extra_info["error_code"] = e.code
-            self.status = self.ERROR
-            if raise_exception:
-                raise e
-        except Exception as e:
-            error_detail = str(e)
-            if len(error_detail) > 1000:
-                error_detail = error_detail[:1000] + "..."
-            self.extra_info["error_detail"] = error_detail
-            mail = "Export id: {}\nOwner: {}\nException cls: {}\nException details: {}\n".format(
-                self.pk, self.owner_org, e.__class__.__name__, error_detail
-            )
-            async_mail_admins.delay("Export error", mail)
-            self.status = self.ERROR
-            if raise_exception:
-                raise e
-        else:
-            self.extra_info["record_count"] = rec_count
-            self.extra_info["file_size"] = self.output_file.size
-            self.status = self.FINISHED
-        self.save()
 
     def generate_filename(self):
         ts = now().strftime("%Y%m%d-%H%M%S")
