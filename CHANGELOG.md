@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [8.0.2]  - 2025-02-18
+
+### Changes
+
+#### Frontend
+
+* IPEDS special report was updated to the 2024 version
+* it is now possible to mark reports as fixed when they were marked as broken incorrectly or fixed
+
+### Fixed
+
+#### Frontend
+
+* filtering by name and publication type was fixed for the "titles on multiple platforms" view
+
+#### Backend
+
+* fallback to full date format when short date format fails was fixed to work correctly
+* import of COUNTER 5 standard views from file was fixed
+
+
+
 ## [8.0.1]  - 2025-02-07
 
 ### Changes

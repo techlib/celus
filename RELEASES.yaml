@@ -1,3 +1,21 @@
+- version: 8.0.2
+  title:
+    en: IPEDS 2024, improved SUSHI credentials management and several bug fixes in CELUS 8.0.2
+    cs: IPEDS 2024, vylepšená správa SUSHI přihlašovacích údajů a několik oprav chyb v CELUSu 8.0.2
+  text:
+    en: |
+      - Support for **IPEDS 2024** report was added. Note: we added a COUNTER 5 fallback in cases where COUNTER 5.1 data is not available.
+      - It is newly possible to mark reports marked as broken as fixed in the SUSHI edit dialog
+      - Several small improvements and fixes were introduced
+    cs: |
+        - Byla přidána podpora pro **IPEDS 2024** report. Poznámka: přidali jsme COUNTER 5 fallback v případech, kdy COUNTER 5.1 data nejsou k dispozici.
+        - Nově je možné označit reporty označené jako nefunkční jako opravené v dialogu pro editaci SUSHI
+        - Bylo provedeno několik drobných vylepšení a oprav
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 8.0.1
   title:
     en: Several improvements in COUNTER 5.1 transition and a few bug fixes in CELUS 8.0.1
