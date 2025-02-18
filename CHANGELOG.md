@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   uploading it to the knowledgebase
 * generation of OTP tokens was fixed for cases where impersonation is used by a user with 2FA
   disabled
+* error in reporting export when coverage is empty was fixed
 
 
 ## [8.0.0]  - 2025-01-31
