@@ -7,7 +7,6 @@ from collections import Counter
 from time import monotonic, time
 from typing import Dict, Iterable, List, Set
 
-from core.task_support import cache_based_lock
 from django.conf import settings
 from django.db.models import Count, Exists, F, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum
 from django.db.transaction import atomic, on_commit
@@ -369,56 +368,66 @@ def remove_interest_from_import_batches(
     return Counter({"deleted_accesslogs": deleted[0]})
 
 
+@atomic
 def recompute_interest_by_batch(queryset=None, verbose=False):
     """
     Using `verbose` reports potential discrepancies between old and recomputed interest values.
     It requires 2 extra queries for each import batch, so it should be used with caution.
     """
-    with cache_based_lock("sync_interest_task", blocking_timeout=10):
-        # we share the lock with sync_interest_task because the two could compete for the
-        # same data
-        if queryset is None:
-            queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
-        # WARNING: the following messes up the queries when they are more complex and can
-        #          lead to memory exhaustion - I leave it here as a memento against future attempts
-        # queryset = queryset.select_related('report_type__superseded_by', 'platform').\
-        #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
-        stats = Counter()
-        total_count = queryset.count()
-        logger.info("Going to recompute interest for %d batches", total_count)
-        if total_count == 0:
-            # short-circuit to save query for interest report type
-            return stats
-        interest_rt = ReportType.objects.get_interest_rt()
-        for i, import_batch in enumerate(queryset.iterator()):
-            old_sum = (
-                import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
-                    sum=Sum("value")
-                )["sum"]
-                if verbose
-                else 0
-            )
-            stats += sync_interest_for_import_batch(import_batch, interest_rt)
-            if i % 100 == 0:
-                logger.info(
-                    "Recomputed interest for %d out of %d batches, stats: %s", i, total_count, stats
-                )
-            if verbose:
-                new_sum = import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
-                    sum=Sum("value")
-                )["sum"]
-                if new_sum != old_sum:
-                    logger.warning(
-                        "Mismatched interest sum: %d vs %d (%.1f) [%s]",
-                        old_sum,
-                        new_sum,
-                        old_sum / new_sum if old_sum and new_sum else 0,
-                        import_batch,
-                    )
-                    stats["mismatch"] += 1
-                else:
-                    stats["match"] += 1
+    # this function is run from two different parts of Celus:
+    #
+    # 1. when data is imported, interest is computed and some import batches are found
+    #    where the interest may be obsoleted by the new data
+    # 2. from `smart_interest_sync` which is run periodically to check if the interest is still
+    #    up to date
+    #
+    # Because of this, we need to make sure that the recomputations from different sources do not
+    # interfere with each other. This is done by using a lock on the import batches.
+
+    if queryset is None:
+        queryset = ImportBatch.objects.filter(interest_timestamp__isnull=False)
+    # WARNING: the following messes up the queries when they are more complex and can
+    #          lead to memory exhaustion - I leave it here as a memento against future attempts
+    # queryset = queryset.select_related('report_type__superseded_by', 'platform').\
+    #     annotate(min_date=Min('accesslog__date'), max_date=Max('accesslog__date'))
+    stats = Counter()
+    # lock all the import batches that are going to be recomputed
+    queryset = queryset.select_for_update(skip_locked=True)
+    total_count = queryset.count()
+    logger.info("Going to recompute interest for %d batches", total_count)
+    if total_count == 0:
+        # short-circuit to save query for interest report type
         return stats
+    interest_rt = ReportType.objects.get_interest_rt()
+    for i, import_batch in enumerate(queryset.iterator()):
+        old_sum = (
+            import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(sum=Sum("value"))[
+                "sum"
+            ]
+            if verbose
+            else 0
+        )
+        stats += sync_interest_for_import_batch(import_batch, interest_rt)
+        if i % 100 == 0:
+            logger.info(
+                "Recomputed interest for %d out of %d batches, stats: %s", i, total_count, stats
+            )
+        if verbose:
+            new_sum = import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(
+                sum=Sum("value")
+            )["sum"]
+            if new_sum != old_sum:
+                logger.warning(
+                    "Mismatched interest sum: %d vs %d (%.1f) [%s]",
+                    old_sum,
+                    new_sum,
+                    old_sum / new_sum if old_sum and new_sum else 0,
+                    import_batch,
+                )
+                stats["mismatch"] += 1
+            else:
+                stats["match"] += 1
+    return stats
 
 
 def smart_interest_sync():
@@ -428,7 +437,10 @@ def smart_interest_sync():
     """
     logger.debug("Smart syncing interest")
     for qs in find_batches_that_need_interest_recompute():
-        recompute_interest_by_batch(queryset=qs)
+        # we need a simple query - recompute_interest_by_batch does locking and it is not
+        # compatible with GROUP BY in the query
+        ids = set(qs.values_list("pk", flat=True))
+        recompute_interest_by_batch(queryset=ImportBatch.objects.filter(id__in=ids))
     logger.debug("Smart interest sync done, checking platform interests")
     stats = _check_platform_interests()
     logger.debug("Platform interest check done, stats: %s", stats)

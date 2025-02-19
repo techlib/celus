@@ -135,7 +135,7 @@ class TestInterestCalculation:
 
     @pytest.mark.parametrize("platform_connected", [True, False])
     @pytest.mark.django_db(transaction=True)
-    def test_superseded_report_types(
+    def test_superseded_report_types_platform_connected(
         self, counter_records, organizations, report_type_nd, platform_connected, interest_rt
     ):
         """

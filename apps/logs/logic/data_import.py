@@ -300,7 +300,7 @@ def wipe_empty_or_partial_import_batches(
     report_type: ReportType, organization: Organization, platform: Platform, month: Union[str, date]
 ) -> int:
     """
-    Whipes all empty or partial_data import batches which are conlicting with function arguments
+    Wipes all empty or partial_data import batches which are conflicting with function arguments
     """
     count = 0
 
