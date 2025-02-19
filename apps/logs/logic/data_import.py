@@ -239,7 +239,7 @@ def import_counter_records(
         recompute_interest_by_batch(ImportBatch.objects.filter(pk__in=ibs_for_interest_recompute))
 
     if ibs_for_interest_recompute:
-        on_commit(sync_interest)
+        on_commit(sync_interest, robust=True)
 
     if not skip_clickhouse_sync and settings.CLICKHOUSE_SYNC_ACTIVE:
         from .clickhouse import sync_import_batch_with_clickhouse
@@ -252,7 +252,7 @@ def import_counter_records(
                     sync_import_batch_with_clickhouse(import_batch),
                 )
 
-        on_commit(sync_with_clickhouse)
+        on_commit(sync_with_clickhouse, robust=True)
     for i, cache in enumerate([tm._counter_rec_to_title_rec_cache, tm._title_rec_to_title_cache]):
         logger.info(f"Title manager: step #{i+1} {cache.stats()}")
     for i, cache in enumerate([im._counter_rec_to_item_rec_cache, im._item_rec_to_item_cache]):
