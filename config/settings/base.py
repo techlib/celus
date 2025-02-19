@@ -386,7 +386,6 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.process_outstanding_import_batch_sync_logs_task": {"queue": "celery"},
     "logs.tasks.reprocess_mdu_task": {"queue": "import"},
     "logs.tasks.smart_interest_sync_task": {"queue": "interest"},
-    "logs.tasks.sync_interest_task": {"queue": "interest"},
     "logs.tasks.sync_materialized_reports_task": {"queue": "interest"},
     "logs.tasks.sync_organizationplatform_records_task": {"queue": "celery"},
     "logs.tasks.update_report_approx_record_count_task": {"queue": "interest"},

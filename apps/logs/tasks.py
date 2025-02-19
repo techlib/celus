@@ -47,7 +47,7 @@ from logs.logic.clickhouse import (
 )
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
-from logs.logic.materialized_interest import smart_interest_sync, sync_interest_by_import_batches
+from logs.logic.materialized_interest import smart_interest_sync
 from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
@@ -55,17 +55,6 @@ from logs.logic.materialized_reports import (
 from logs.models import ImportBatchSyncLog, ManualDataUpload, MduMethod, MduState
 
 logger = logging.getLogger(__file__)
-
-
-@celery.shared_task
-@logged_task
-@email_if_fails
-def sync_interest_task():
-    """
-    Synchronizes computed interest for import batches that were not processed yet
-    """
-    with cache_based_lock("sync_interest_task", blocking_timeout=10):
-        sync_interest_by_import_batches()
 
 
 @celery.shared_task
