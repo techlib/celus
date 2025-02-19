@@ -42,6 +42,7 @@ from logs.logic.cleanup import (
 from logs.logic.clickhouse import (
     compare_db_with_clickhouse,
     compare_titles_with_clickhouse,
+    deal_with_comparison_results,
     process_one_import_batch_sync_log,
 )
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
@@ -240,15 +241,16 @@ def compare_db_with_clickhouse_task():
     for fn in (compare_db_with_clickhouse, compare_titles_with_clickhouse):
         result = fn()
         if not result.is_ok():
-            # there are some differences - we need to report it to admins
-            # (in the future we might want to fix it automatically, but not now)
+            # there are some differences - we need to fix it and report it to admins
+            deal_with_comparison_results(result)
             log = "\n".join(result.log)
             body = (
+                f"The following difference were fixed between clickhouse and db:\n\n"
                 f"**Differences found**:\n\n{log}\n\n**Stats**:\n\n{result.stats}\n\n"
                 f"Duration: {monotonic() - start:.2f} s"
             )
             async_mail_admins.delay(
-                f"Found differences between database and Clickhouse ({fn.__name__})", body
+                f"Fixed differences between database and Clickhouse ({fn.__name__})", body
             )
             logger.warning("Send email about differences between database and Clickhouse: %s", body)
 
