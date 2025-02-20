@@ -333,13 +333,6 @@ export default {
           overlap: item.overlap,
           interest: item.interest,
         });
-        if (item.platform1 !== item.platform2) {
-          // reverse mapping
-          overlapMap.set(`${item.platform2}-${item.platform1}`, {
-            overlap: item.overlap,
-            interest: item.interest,
-          });
-        }
       });
       this.overlapMap = overlapMap;
     },
