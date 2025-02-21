@@ -1,3 +1,19 @@
+- version: 8.0.3
+  title:
+    en: Bugfix release 8.0.3 brings several fixes
+    cs: Opravné vydání 8.0.3 přináší několik oprav
+  text:
+    en: |
+      - Bug in display of interest in platform-platform overlap was fixed
+      - Two other smaller bugs were fixed
+    cs: |
+      - Byla opravena chyba ve zobrazení zájmu v překryvu platforem
+      - Byly opraveny další dvě menší chyby
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 8.0.2
   title:
     en: IPEDS 2024, improved SUSHI credentials management and several bug fixes in CELUS 8.0.2

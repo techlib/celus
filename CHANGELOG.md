@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [8.0.3]  - 2025-02-22
+
+### Changes
+
+#### Backend
+
+* locking mechanism used in interest recomputation was optimized for higher throughput and more
+  reliable operation
+
+### Fixed
+
+#### Frontend
+
+* end-date used in Coverage overview and Reporting was capped to the last finished month when
+  a custom date range ending in future is selected - fixes coverage computation in such cases
+* error in display of interest in platform-platform overlap causing numbers over 100% sometimes
+  appearing was fixed
+
+#### Backend
+
+* the celus-nigiri package was updated to fix error in the short-long date format fallback
+  mechanism
+
+
 ## [8.0.2]  - 2025-02-18
 
 ### Changes
