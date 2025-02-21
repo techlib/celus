@@ -28,6 +28,7 @@ import { cs } from "date-fns/locale";
 import Worker from "@/workers/event-worker";
 import endOfMonth from "date-fns/endOfMonth";
 import router from "@/router";
+import { min } from "lodash";
 
 Vue.use(Vuex);
 
@@ -237,7 +238,12 @@ export default new Vuex.Store({
     dateRangeCoverageEndText(state, getters) {
       // if the end date is not set, it is the one before last finished month
       // during June its April because May data may still not be available
-      return getters.dateRangeEndText || lastCoveredMonth();
+      if (getters.dateRangeEndText)
+        // if the end date is set, we use it, but cap it at the last finished month
+        // (which is one month later than last covered month). This is because
+        // we want to give the user a way to see the data for the last month
+        return min([getters.dateRangeEndText, lastFinishedMonth()]);
+      return lastCoveredMonth();
     },
     lastFyStart(state) {
       let today = new Date();

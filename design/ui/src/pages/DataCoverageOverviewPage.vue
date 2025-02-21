@@ -23,9 +23,9 @@ en:
     Unfortunately there are no data yet for calculation of data coverage. Either upload some data manually
     or harvest it via SUSHI.
   implicit_end_date: |
-    When the end date is the current date, we use the month before the last finished month as the end date
+    When the end date is the current date, we use the month before the last finished month
     (for example in May we use March). This is because data for the previous month may not be completely
-    available over SUSHI yet.
+    available over SUSHI yet. Otherwise, the end date is capped at the last finished month.
   intro: |
     This page shows data coverage for all reports and all active platforms in the selected time period.
     Data coverage is calculated
@@ -64,7 +64,7 @@ cs:
   implicit_end_date: |
     Pokud je konečné datum nastavené na aktuální datum, používáme zde předposlední dokončený měsíc
     (např. v květnu je to březen). Je to proto, že data pro poslední dokončený měsíc nemusí být přes SUSHI ještě úplně k
-    dispozici.
+    dispozici. V ostatních případech je omezeno posledním dokončeným měsícem.
   intro: |
     Tato stránka zobrazuje pokrytí dat pro všechny reporty a aktivní platformy ve zvoleném časovém období.
     Pokrytí dat je vypočítáno
