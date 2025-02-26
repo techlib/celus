@@ -804,6 +804,8 @@ export default {
     showHarvestDialog() {
       if (!this.showHarvestDialog) {
         this.$refs.intentionsList.stop();
+        // we need to reload selected credentials in order to update broken state
+        this.$emit("reload-credentials");
         this.loadCredentialsData();
       }
     },

@@ -912,6 +912,7 @@ cs:
       <SushiCredentialsDataDialog
         :credentials="selectedCredentials"
         @close="closeDataDialog"
+        @reload-credentials="reloadSelectedCredentials"
       ></SushiCredentialsDataDialog>
     </v-dialog>
     <v-dialog
