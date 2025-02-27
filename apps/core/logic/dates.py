@@ -3,7 +3,6 @@ import datetime
 import re
 from typing import Generator, Optional
 
-import dateparser
 from django.utils import timezone
 
 month_matcher = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{1,2})(-\d{1,2})?$")
@@ -105,15 +104,6 @@ def parse_date(date_str: str) -> datetime.date:
     :param date_str: string in `YYYY-mm-dd` format
     """
     return datetime.datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=None).date()
-
-
-def parse_date_fuzzy(date_str: str) -> Optional[datetime.date]:
-    """
-    Uses dateparser to try to parse a date. Uses only specific locales to make dateparser
-    faster, so we extracted it as a function to use throughout the code
-    """
-    dt = dateparser.parse(date_str, languages=["en"])
-    return dt and dt.date()
 
 
 def months_in_range(
