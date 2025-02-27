@@ -11,12 +11,12 @@ from publications.models import Platform, Title
 from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
 
+from logs.fake_data import ImportBatchFactory
 from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from logs.models import (
     AccessLog,
     Dimension,
     DimensionText,
-    ImportBatch,
     Metric,
     OrganizationPlatform,
     ReportType,
@@ -234,7 +234,7 @@ def flexible_slicer_test_data(report_type_nd):
                 )
         for organization, platform, date in product(organizations, platforms, dates):
             # create one import batch per report type, organization, platform, date
-            ib = ImportBatch.objects.create(
+            ib = ImportBatchFactory(
                 report_type=rt, organization=organization, platform=platform, date=date
             )
             for metric, target, *dim_values in product(metrics, targets, *dim_options):
@@ -353,7 +353,7 @@ def flexible_slicer_test_data2(report_type_nd):
     accesslogs = []
     dimension_texts = {}
     for rt in report_types:
-        ib = ImportBatch.objects.create(report_type=rt)
+        ib = ImportBatchFactory(report_type=rt)
         dim_count = rt.dimensions.count()
         dim_options = dimension_values[:dim_count]
         for i, dim in enumerate(rt.dimensions_sorted):

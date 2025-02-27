@@ -7,7 +7,7 @@ from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Platform, PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
-from logs.fake_data import ImportBatchFullFactory, MetricFactory
+from logs.fake_data import ImportBatchFactory, ImportBatchFullFactory, MetricFactory
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_interest import (
     _check_platform_interests,
@@ -26,7 +26,6 @@ from logs.logic.materialized_reports import (
 from logs.models import (
     AccessLog,
     DimensionText,
-    ImportBatch,
     InterestGroup,
     Metric,
     ReportInterestMetric,
@@ -387,10 +386,10 @@ class TestInterestRecomputationDetection:
             short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type: ReportType = report_type_nd(1)
-        ib1 = ImportBatch.objects.create(
+        ib1 = ImportBatchFactory(
             organization=organization, platform=platform, report_type=report_type
         )
-        ImportBatch.objects.create(
+        ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -425,7 +424,7 @@ class TestInterestRecomputationDetection:
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         # now create the second one - this one is newer than PlatformInterestReport, so it's ok
-        ImportBatch.objects.create(
+        ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -486,7 +485,7 @@ class TestInterestRecomputationDetection:
         pir.save()
         assert pir.last_modified > ib1.interest_timestamp
         # now create the second one - this one is newer than PlatformInterestReport, so its ok
-        ImportBatch.objects.create(
+        ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -508,7 +507,7 @@ class TestInterestRecomputationDetection:
         assert report_type.pk != report_type2.pk
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatch.objects.create(
+        ib1 = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -519,7 +518,7 @@ class TestInterestRecomputationDetection:
         ReportInterestMetric.objects.create(
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
-        ImportBatch.objects.create(
+        ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -538,7 +537,7 @@ class TestInterestRecomputationDetection:
         interest_rt: ReportType = report_type_nd(1, short_name="interest")
         # now define the interest
         pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatch.objects.create(
+        ib1 = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -574,7 +573,7 @@ class TestInterestRecomputationDetection:
         report_type: ReportType = report_type_nd(1)
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatch.objects.create(
+        ib1 = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
@@ -612,7 +611,7 @@ class TestInterestRecomputationDetection:
         rt_old: ReportType = report_type_nd(1, short_name="old")
         # now define the interest
         PlatformInterestReport.objects.create(platform=platform, report_type=rt_old)
-        ib_old = ImportBatch.objects.create(
+        ib_old = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=rt_old,
@@ -632,7 +631,7 @@ class TestInterestRecomputationDetection:
             date="2019-01-01",
             metric=hit_metric,
         )
-        ib_old_unrel = ImportBatch.objects.create(
+        ib_old_unrel = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=rt_old,
@@ -662,7 +661,7 @@ class TestInterestRecomputationDetection:
         ReportInterestMetric.objects.create(
             report_type=rt_new, metric=hit_metric, interest_group=ig
         )
-        ib_new = ImportBatch.objects.create(
+        ib_new = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=rt_new,

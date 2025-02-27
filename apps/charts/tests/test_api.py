@@ -7,18 +7,11 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.db.models import Sum
 from django.urls import reverse
-from logs.fake_data import ManualDataUploadFullFactory
+from logs.fake_data import ImportBatchFactory, ManualDataUploadFullFactory
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports
-from logs.models import (
-    AccessLog,
-    ImportBatch,
-    MduState,
-    Metric,
-    ReportMaterializationSpec,
-    ReportType,
-)
+from logs.models import AccessLog, MduState, Metric, ReportMaterializationSpec, ReportType
 from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fixture
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Title
@@ -218,15 +211,13 @@ class TestReportViewAPI:
         ReportType.objects.create(materialization_spec=mat_spec, name="mat_rt", short_name="mat_rt")
         organization = organizations[0]
         # we need to add accesslog in order to connect platform and report-type
-        ib = ImportBatch.objects.create(
-            report_type=rt, organization=organization, platform=platform
-        )
+        ib = ImportBatchFactory(report_type=rt, organization=organization, platform=platform)
         AccessLog.objects.create(
             report_type=rt,
             organization=organization,
             platform=platform,
             value=1,
-            date="2020-01-01",
+            date=ib.date,
             metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )
@@ -265,15 +256,13 @@ class TestReportViewAPI:
         ReportDataView.objects.create(base_report_type=rt, position=2, short_name="M", name="M")
         organization = organizations[0]
         # we need to add accesslog in order to connect platform and report-type
-        ib = ImportBatch.objects.create(
-            report_type=rt, organization=organization, platform=platform
-        )
+        ib = ImportBatchFactory(report_type=rt, organization=organization, platform=platform)
         AccessLog.objects.create(
             report_type=rt,
             organization=organization,
             platform=platform,
             value=1,
-            date="2020-01-01",
+            date=ib.date,
             metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )
@@ -307,16 +296,14 @@ class TestReportViewAPI:
         organization = organizations[0]
         title = Title.objects.create(name="Journal of Foo Bar")
         # we need to add accesslog in order to connect platform and report-type
-        ib = ImportBatch.objects.create(
-            report_type=rt, organization=organization, platform=platform
-        )
+        ib = ImportBatchFactory(report_type=rt, organization=organization, platform=platform)
         AccessLog.objects.create(
             report_type=rt,
             organization=organization,
             platform=platform,
             target=title,
             value=1,
-            date="2020-01-01",
+            date=ib.date,
             metric=Metric.objects.create(short_name="metric"),
             import_batch=ib,
         )

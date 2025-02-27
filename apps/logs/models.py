@@ -460,7 +460,7 @@ class ImportBatch(models.Model):
     report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, null=True)
-    date = models.DateField(null=True)
+    date = models.DateField()
     created = models.DateTimeField(default=now)
     last_updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(

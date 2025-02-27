@@ -12,7 +12,8 @@ from core.tests.conftest import (  # noqa - fixtures
     valid_identity,
 )
 from django.urls import reverse
-from logs.models import AccessLog, ImportBatch, Metric
+from logs.fake_data import ImportBatchFactory
+from logs.models import AccessLog, Metric
 from publications.tests.conftest import interest_rt  # noqa - fixture
 
 from organizations.fake_data import OrganizationAltNameFactory
@@ -194,7 +195,7 @@ class TestOrganizationAPI:
         Test the `interest` custom action of organization ViewSet with some data
         """
         metric = Metric.objects.create(short_name="a", name="a")
-        ib = ImportBatch.objects.create(report_type=interest_rt)
+        ib = ImportBatchFactory(report_type=interest_rt)
         AccessLog.objects.create(
             report_type=interest_rt, value=5, date="2020-01-01", metric=metric, import_batch=ib
         )
@@ -215,7 +216,7 @@ class TestOrganizationAPI:
         organization
         """
         metric = Metric.objects.create(short_name="a", name="a")
-        ib = ImportBatch.objects.create(report_type=interest_rt)
+        ib = ImportBatchFactory(report_type=interest_rt)
         AccessLog.objects.create(
             report_type=interest_rt,
             value=5,

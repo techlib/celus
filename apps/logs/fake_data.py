@@ -86,7 +86,7 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
     report_type = factory.SubFactory(ReportTypeFactory)
-    date = factory.Faker("date_this_century")
+    date = factory.LazyFunction(lambda: fake.date_this_century().replace(day=1))
 
 
 class AccessLogFactory(factory.django.DjangoModelFactory):

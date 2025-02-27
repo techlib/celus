@@ -5,14 +5,13 @@ from organizations.fake_data import OrganizationFactory
 from organizations.tests.conftest import organizations  # noqa
 from publications.fake_data import PlatformFactory
 
-from logs.fake_data import ReportTypeFactory
+from logs.fake_data import ImportBatchFactory, ReportTypeFactory
 from logs.logic.reporting.filters import ExplicitDimensionFilter, ForeignKeyDimensionFilter
 from logs.logic.reporting.slicer import FlexibleDataSlicer
 from logs.models import (
     Dimension,
     DimensionText,
     FlexibleReport,
-    ImportBatch,
     OrganizationPlatform,
     ReportType,
     ReportTypeToDimension,
@@ -199,7 +198,5 @@ class TestImportBatch:
         platform = PlatformFactory.create()
         rt = ReportTypeFactory.create()
         assert not OrganizationPlatform.objects.filter(organization=org, platform=platform).exists()
-        ImportBatch.objects.create(
-            organization=org, platform=platform, report_type=rt, date="2020-01-01"
-        )
+        ImportBatchFactory(organization=org, platform=platform, report_type=rt, date="2020-01-01")
         assert OrganizationPlatform.objects.filter(organization=org, platform=platform).exists()

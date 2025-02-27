@@ -603,7 +603,7 @@ class TestPlatformTitleAPI:
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
         metric = Metric.objects.create(short_name="m1", name="Metric1")
-        import_batch = ImportBatch.objects.create(
+        import_batch = ImportBatchFactory(
             platform=platform, organization=organization, report_type=rt
         )
         al1 = AccessLog.objects.create(
@@ -660,7 +660,7 @@ class TestPlatformTitleAPI:
         metric = Metric.objects.create(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-        import_batch = ImportBatch.objects.create(
+        import_batch = ImportBatchFactory(
             platform=platform, organization=organization, report_type=rt
         )
         al1 = AccessLog.objects.create(
@@ -725,10 +725,10 @@ class TestPlatformTitleAPI:
         metric = Metric.objects.create(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-        import_batch1 = ImportBatch.objects.create(
+        import_batch1 = ImportBatchFactory(
             platform=platform, organization=organization, report_type=rt
         )
-        import_batch2 = ImportBatch.objects.create(
+        import_batch2 = ImportBatchFactory(
             platform=platform, report_type=rt, organization=other_organization
         )
         al1 = AccessLog.objects.create(
@@ -928,7 +928,7 @@ class TestPlatformTitleAPI:
         PlatformInterestReport.objects.create(
             report_type=import_batch.report_type, platform=platform2
         )
-        import_batch2 = ImportBatch.objects.create(
+        import_batch2 = ImportBatchFactory(
             platform=platform2, organization=organization, report_type=import_batch.report_type
         )
         # here we create the same accesslogs for a different platform
@@ -1840,9 +1840,7 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     metric = Metric.objects.create(short_name="m1", name="Metric1")
     ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
     PlatformInterestReport.objects.create(report_type=rt, platform=platform)
-    import_batch = ImportBatch.objects.create(
-        platform=platform, organization=organization, report_type=rt
-    )
+    import_batch = ImportBatchFactory(platform=platform, organization=organization, report_type=rt)
     accesslog_basics = {
         "report_type": rt,
         "metric": metric,

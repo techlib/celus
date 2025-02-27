@@ -1,7 +1,6 @@
 import pytest
 from django.core.management import call_command
-from logs.models import AccessLog, ImportBatch, Metric
-from organizations.tests.conftest import organization_random  # noqa - fixture
+from logs.fake_data import ImportBatchFullFactory
 
 from publications.models import Title
 
@@ -9,22 +8,9 @@ from publications.models import Title
 @pytest.mark.django_db
 class TestRemoveUnusedTitles:
     @pytest.mark.parametrize(["do_it"], [(False,), (True,)])
-    def test_command(self, titles, organization_random, platform, interest_rt, do_it):
-        ib = ImportBatch.objects.create(
-            organization=organization_random, platform=platform, report_type=interest_rt
-        )
-        metric = Metric.objects.create(short_name="m1", name="Metric 1")
-        title1, title2, title3 = titles
-        AccessLog.objects.create(
-            import_batch=ib,
-            organization=organization_random,
-            platform=platform,
-            report_type=interest_rt,
-            date="2020-01-01",
-            target=title1,
-            metric=metric,
-            value=3,
-        )
+    def test_command(self, titles, do_it):
+        title1 = titles[0]
+        ImportBatchFullFactory(create_accesslogs__titles=[title1])
         assert Title.objects.count() == 3
         args = ["--do-it"] if do_it else []
         call_command("remove_unused_titles", *args)

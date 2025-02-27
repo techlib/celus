@@ -3,7 +3,8 @@ from celus_nigiri.client import Sushi5Client
 from core.models import UL_CONS_ADMIN, UL_CONS_STAFF, UL_ORG_ADMIN, Identity
 from core.tests.conftest import master_admin_identity, valid_identity  # noqa - fixtures
 from django.utils import timezone
-from logs.models import AccessLog, ImportBatch, Metric
+from logs.fake_data import ImportBatchFactory
+from logs.models import AccessLog, Metric
 from organizations.models import UserOrganization
 from publications.fake_data import PlatformFactory
 from publications.models import Platform
@@ -351,7 +352,7 @@ class TestCredentialsQuerySet:
         FetchAttemptFactory(
             counter_report=counter_report_types["tr"],
             credentials=no_data,
-            import_batch=ImportBatch.objects.create(
+            import_batch=ImportBatchFactory(
                 report_type=report_types["tr"],
                 organization=no_data.organization,
                 platform=no_data.platform,
@@ -359,7 +360,7 @@ class TestCredentialsQuerySet:
         )
 
         has_data = CredentialsFactory()
-        ib_with_data = ImportBatch.objects.create(
+        ib_with_data = ImportBatchFactory(
             report_type=report_types["tr"],
             organization=no_data.organization,
             platform=no_data.platform,
