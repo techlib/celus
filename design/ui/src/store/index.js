@@ -747,6 +747,7 @@ export default new Vuex.Store({
               unread: data.unread,
               total: data.total,
               newest_pk: data.newest_pk,
+              counts: data.counts,
             });
           } else if (e.data.type === "wsAuthError") {
             if (state.user) {

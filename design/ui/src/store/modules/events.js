@@ -64,9 +64,12 @@ export default {
       state.unreadCount = unread;
       state.newestEventId = newest_pk;
       state.newestEvent = newest_event;
-      state.counts.read = counts.read;
-      state.counts.importance = counts.importance;
-      state.counts.category = counts.category;
+      // when a new event occured through WS counts are not provided...
+      if (counts) {
+        state.counts.read = counts.read;
+        state.counts.importance = counts.importance;
+        state.counts.category = counts.category;
+      }
     },
   },
 };
