@@ -1,15 +1,26 @@
 from django.conf import settings
 from django.contrib import admin
+from import_export.admin import ImportExportMixin
+from import_export.formats.base_formats import CSV, XLSX
+from import_export.resources import ModelResource
 from modeltranslation.admin import TranslationAdmin
 from necronomicon.admin import NecronomiconAdminMixin
 
 from . import forms, models
 
 
+class OrganizationResource(ModelResource):
+    class Meta:
+        model = models.Organization
+        fields = ("id", "name", "short_name", "ror", "isni", "country", "state")
+
+
 @admin.register(models.Organization)
-class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
+class OrganizationAdmin(NecronomiconAdminMixin, ImportExportMixin, TranslationAdmin):
+    import_formats = [CSV, XLSX]
+    export_formats = [CSV, XLSX]
     form = forms.OrganizationForm
-    list_display = ["short_name", "internal_id", "name", "ico", "source", "country"] + (
+    list_display = ["short_name", "internal_id", "name", "ico", "source", "country", "state"] + (
         ["raw_data_import_enabled"] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
     search_fields = ["internal_id", "short_name", "name", "ico"]
@@ -19,6 +30,7 @@ class OrganizationAdmin(NecronomiconAdminMixin, TranslationAdmin):
     list_select_related = ["source"]
     ordering = ["name"]
     readonly_fields = ("created", "last_modified")
+    resource_class = OrganizationResource
 
 
 @admin.register(models.UserOrganization)
