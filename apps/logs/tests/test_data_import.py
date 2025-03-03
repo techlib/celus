@@ -7,6 +7,7 @@ import pytest
 from celus_nigiri import CounterRecord
 from celus_nigiri.counter4 import Counter4BR2Report
 from celus_nigiri.counter5 import Counter5TRReport
+from core.fake_data import UserFactory
 from django.core.management import call_command
 from django.db.models import Count, Sum
 from django.urls import reverse
@@ -17,6 +18,7 @@ from publications.fake_data import PlatformFactory
 from publications.logic.title_management import find_mergeable_titles, merge_titles
 from publications.models import Item, PlatformInterestReport, PlatformTitle, Title
 from publications.tests.conftest import interest_rt  # noqa - fixture
+from tags.fake_data import TagForTitleFactory
 
 from logs.fake_data import ManualDataUploadFullFactory, MetricFactory, ReportTypeFactory
 from logs.models import (
@@ -659,6 +661,19 @@ class TestCounter5Import:
         # update t_no_issn with the issn from t_with_issn
         t_no_issn.issn = t_with_issn.issn
         t_no_issn.save()
+
+        # Assign tags
+        user = UserFactory(is_superuser=True)
+        tag1 = TagForTitleFactory(tag_class__owner=user, owner=user)
+        tag2 = TagForTitleFactory(tag_class__owner=user, owner=user)
+
+        tag1.tag(t1, user)
+        tag2.tag(t2, user)
+
+        assert tag1.titles.count() == 1
+        assert tag2.titles.count() == 1
+        assert tag1.titles.first().pk != tag2.titles.first().pk
+
         for titles in find_mergeable_titles():
             merge_titles(titles)
         assert Title.objects.filter(name="GQ Gentlemens Quarterly").count() == 1
@@ -694,6 +709,11 @@ class TestCounter5Import:
         assert (
             ch_backend.get_one_record(AccessLogCube.query().aggregate(HSum("value"))).sum == old_sum
         )
+
+        # check that tags were merged
+        assert tag1.titles.count() == 1
+        assert tag2.titles.count() == 1
+        assert tag1.titles.first().pk == tag2.titles.first().pk
 
 
 @pytest.mark.django_db

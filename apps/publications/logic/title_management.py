@@ -525,6 +525,7 @@ def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
     # these import batches should be resynced with CH after the merge because AccessLogs inside
     # have been modified
     ibs_to_resync = set()
+    dest_tags = dest.tags.values_list("pk", flat=True)
     for title in to_remove:
         for attr in ("issn", "eissn", "isbn", "doi"):
             if not getattr(dest, attr) and (update := getattr(title, attr)):
@@ -537,6 +538,14 @@ def merge_titles(titles: List[Title], skip_ch_sync=False) -> (Title, Set[int]):
             dest.uris += list(uris_extra)
             save = True
         ibs_to_resync |= replace_title(title, dest)
+
+        # update tags
+        for title2tag in title.titletag_set.all():
+            if title2tag.tag_id not in dest_tags:
+                title2tag.target = dest
+                title2tag.save()
+                logger.debug("Reassigning tag '%s' before merging titles", title2tag.tag)
+
     logger.debug(
         "Deleting merged titles: %s",
         Title.objects.filter(pk__in=[t.pk for t in to_remove]).delete(),
