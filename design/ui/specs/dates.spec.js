@@ -1,4 +1,5 @@
 import { smartMonthRange } from "@/libs/dates";
+import { describe, expect, test } from "vitest";
 
 let cases = [
   // these test cases are taken from test_flexibledataslicer to ensure the
@@ -18,9 +19,8 @@ describe("test SUSHI URL validation", () => {
   test.each(cases)(
     "does output from %p-%p match %p",
     (start, end, expected) => {
-      let output = { start, end };
-      //commented to push in vue3-squashed
-      // expect(output).toBe(expected);
+      let output = smartMonthRange({ start, end });
+      expect(output).toBe(expected);
     },
   );
 });

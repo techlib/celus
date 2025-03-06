@@ -10,7 +10,6 @@ import App from "./pages/Main.vue";
 // Composables
 import { createApp } from "vue";
 import { createI18n } from "vue-i18n";
-import Vue3Tour from "vue3-tour";
 import { Buffer } from "buffer";
 import confirm from "vuetify3-confirm";
 import vuetify from "./plugins/vuetify";
@@ -18,8 +17,6 @@ import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import "@/styles/settings.scss";
 import VueGravatar from "vue3-gravatar";
-
-import "vue3-tour/dist/vue3-tour.css";
 
 window.Buffer = Buffer;
 
@@ -55,6 +52,5 @@ app.use(confirm, {
   vuetify,
 });
 app.use(VueGravatar);
-app.use(Vue3Tour);
 app.component("VueDatePicker", VueDatePicker);
 app.mount("#app");

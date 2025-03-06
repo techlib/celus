@@ -345,7 +345,7 @@ import axios from "axios";
 import PasswordChangeDialog from "@/components/account/PasswordChangeDialog";
 import AccountCreateModifyWidget from "@/components/account/AccountCreateModifyWidget.vue";
 import md5 from "md5";
-import VGravatar from "vue-gravatar";
+import VGravatar from "vue3-gravatar";
 
 export default {
   name: "UserPage",

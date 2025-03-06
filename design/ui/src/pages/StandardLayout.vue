@@ -20,13 +20,8 @@ cs:
 
 <template>
   <v-app>
-    <SidePanel
-      v-model="showSidePanel"
-      data-tour="side-panel"
-      order="2"
-    ></SidePanel>
+    <SidePanel v-model="showSidePanel" order="2"></SidePanel>
     <v-app-bar
-      data-tour="app-bar"
       color="defaultButton"
       order="1"
       density="compact"
@@ -37,7 +32,6 @@ cs:
           @click.stop="showSidePanel = !showSidePanel"
           icon
           class="mr-2"
-          data-tour="menu-show-button"
           v-if="$vuetify.display.mobile"
         >
           <v-icon icon="fa fa-bars" color="lighterIcons"></v-icon>
@@ -166,7 +160,7 @@ cs:
           <template #activator="{ props }">
             <span v-bind="props">
               <router-link :to="{ name: 'user-page' }">
-                <v-avatar color="primary" data-tour="user-avatar">
+                <v-avatar color="primary">
                   <img
                     v-if="loggedIn && user"
                     :src="gravatar"
@@ -448,18 +442,20 @@ export default {
 
 <style lang="scss" scoped>
 #logo-image {
+  max-width: 128px;
+  height: 36px;
+
   @media only screen and (max-width: 600px) {
     width: 20vw;
   }
-  max-width: 128px;
-  height: 36px;
 }
 
 .logo {
-  @media only screen and (max-width: 600px) {
-  }
   max-width: 128px;
   height: 36px;
+
+  @media only screen and (max-width: 600px) {
+  }
 }
 
 .fixed_button {
@@ -473,12 +469,6 @@ img.logo {
 
 img.logow {
   max-height: 92px;
-}
-
-.v-navigation-drawer {
-  &.v-tour__target--relative {
-    position: fixed;
-  }
 }
 
 .fs-30 {

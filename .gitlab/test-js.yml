@@ -1,12 +1,18 @@
 tests:test_js:
     stage: tests
     needs: []
-    image: node:18.19
+    image: node:20
     script:
         - cd design/ui
+        - corepack enable
+        - corepack install
+        - yarn config set cacheFolder /builds/celus/yarn-cache
         - yarn install
         - yarn test
     tags:
         - bdd
-    rules:
-        - allow_failure: true
+    cache:
+        key: yarn
+        paths:
+          - yarn-cache
+          - design/ui/node_modules/

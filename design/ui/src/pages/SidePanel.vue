@@ -40,22 +40,6 @@
       >
       </MenuListItem>
     </v-list>
-    <!-- <template #append>
-      <div class="pb-3 text-center">
-        <v-btn
-          v-if="tourName"
-          variant="outlined"
-          color="grey"
-          @click="activateTour({ name: tourName })"
-          >{{ $t(tourToShow.title) }}</v-btn
-        >
-      </div>
-      <div class="small subdued text-center mb-2">
-        <router-link :to="{ name: 'changelog' }">
-          {{ $t("celus_version") }}: {{ celusVersion }}
-        </router-link>
-      </div>
-    </template> -->
     <template #append>
       <div class="small subdued text-center mb-2">
         <router-link :to="{ name: 'changelog' }">
@@ -67,7 +51,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { mapGetters, mapState } from "vuex";
 import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import MenuListItem from "@/components/util/MenuListItem";
@@ -79,7 +63,6 @@ export default {
   components: { MenuListItem, SelectedDateRangeWidget, OrganizationSelector },
   props: {
     modelValue: { default: true, type: Boolean },
-    tourName: { default: null, required: false, type: String },
   },
   data() {
     return {

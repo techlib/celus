@@ -53,21 +53,33 @@ export default defineConfig({
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern-compiler", // or "modern"
+      },
+      sass: {
+        api: "modern-compiler", // or "modern"
+      },
+    },
+  },
   server: {
-    port: 3000,
+    port: 8080,
     proxy: {
       "/api/": {
         target: devURLBase,
-        // changeOrigin: true,
-        ws: true,
+        changeOrigin: true,
       },
       "/static/": {
         target: devURLBase,
         changeOrigin: true,
-        ws: true,
       },
       "/media/": {
         target: devURLBase,
+        changeOrigin: true,
+      },
+      "/ws/": {
+        target: "http://localhost:8077/",
         changeOrigin: true,
         ws: true,
       },

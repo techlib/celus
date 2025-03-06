@@ -6,20 +6,28 @@ build:vue:
       optional: true
     - job: "tests:load_initial_data"
       optional: true
-  image: node:18.19
+  image: node:20
   before_script:
     - export "BUILD=yes"
-    - export "GIT_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}"
-    - export "GIT_COMMITHASH=${CI_COMMIT_SHA}"
-    - export "GIT_BRANCH=${CI_COMMIT_REF_NAME:-$CI_COMMIT_SHA}"
-      # Sentry enviroment is read based on current branch and variables defined by gitlab
+    - export "VITE_GIT_VERSION=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}"
+    - export "VITE_GIT_COMMITHASH=${CI_COMMIT_SHA}"
+    - export "VITE_GIT_BRANCH=${CI_COMMIT_REF_NAME:-$CI_COMMIT_SHA}"
+      # Sentry environment is read based on current branch and variables defined by gitlab
     - export "SENTRY_ENVIRONMENT=${CI_COMMIT_BRANCH}"
   script:
     - cd design/ui
+    - corepack enable
+    - corepack install
+    - yarn config set cacheFolder /builds/celus/yarn-cache
     - yarn install
     - yarn build
   artifacts:
     paths:
       - apps/core/static/
+  cache:
+    key: yarn
+    paths:
+      - yarn-cache
+      - design/ui/node_modules
   tags:
     - bdd
