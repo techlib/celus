@@ -16,8 +16,8 @@ cs:
     </v-row>
     <v-row>
       <v-layout column>
-        <v-flex>
-          <v-col v-if="releases === null"> <LargeSpinner /></v-col>
+        <v-card class="release_card">
+          <v-col v-if="releases === null"> <LargeSpinner></LargeSpinner></v-col>
           <v-col v-else-if="releases.length === 0">
             <p>{{ $t("releases_unavailable") }}</p></v-col
           >
@@ -26,8 +26,9 @@ cs:
               v-for="release in releases"
               :release="release"
               :key="release.version"
-          /></v-col>
-        </v-flex>
+            ></ReleaseCard
+          ></v-col>
+        </v-card>
       </v-layout>
     </v-row>
   </v-container>
@@ -75,4 +76,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.release_card {
+  box-shadow: none !important;
+  border: none !important;
+}
+</style>

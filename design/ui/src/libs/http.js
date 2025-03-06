@@ -18,7 +18,7 @@ axios.interceptors.request.use(
   },
   function (error) {
     return Promise.reject(error);
-  }
+  },
 );
 
 axios.interceptors.response.use(
@@ -59,12 +59,12 @@ axios.interceptors.response.use(
       store.dispatch("setShowLoginDialog", { show: true });
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // install concurrency manager
 let max_concurrent_requests = parseInt(
-  localStorage.getItem("max_concurrent_requests")
+  localStorage.getItem("max_concurrent_requests"),
 );
 if (!max_concurrent_requests) {
   max_concurrent_requests = MAX_CONCURRENT_REQUESTS_DEFAULT;
@@ -85,7 +85,7 @@ axios.interceptors.request.use(async (config) => {
       (state, getters) => getters.letAxiosThrough,
       (newVal) => {
         if (newVal) resolve();
-      }
+      },
     );
   });
   try {

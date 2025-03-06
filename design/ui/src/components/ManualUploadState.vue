@@ -21,9 +21,9 @@ cs:
 </i18n>
 
 <template>
-  <v-tooltip bottom>
-    <template v-slot:activator="{ on }">
-      <v-icon small :color="color" v-on="on">
+  <v-tooltip location="bottom">
+    <template v-slot:activator="{ props }">
+      <v-icon size="small" :color="color" v-bind="props">
         {{ icon }}
       </v-icon>
     </template>
@@ -63,9 +63,9 @@ export default {
           return "fas fa-search";
         case "failed":
         case "importing":
-          return "fas fa-cogs";
+          return "fa fa-cogs";
         case "imported":
-          return "fas fa-check";
+          return "fa fa-check";
         default:
           return "";
       }

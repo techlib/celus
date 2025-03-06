@@ -38,46 +38,60 @@ cs:
     :text="$t('no_overlap_data')"
     color="#33aa33"
     icon="fa fa-info-circle"
-  />
+  ></ErrorPlaceholder>
   <div v-else class="overflow-auto">
     <table class="overlap">
       <thead>
         <tr>
           <th class="pt-8 bottom">
-            <v-btn-toggle v-model="mode" mandatory dense>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-btn value="titles" small v-on="on">
-                    <v-icon x-small :color="iconColor">fa-book</v-icon>
+            <v-btn-toggle
+              v-model="mode"
+              mandatory="force"
+              density="compact"
+              variant="outlined"
+              divided
+            >
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn value="titles" v-bind="props" size="small">
+                    <v-icon size="x-small" :color="iconColor"
+                      >fa fa-book</v-icon
+                    >
                     123
                   </v-btn>
                 </template>
                 {{ $t("absolute_titles") }}
               </v-tooltip>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-btn value="rel-titles" small v-on="on">
-                    <v-icon x-small :color="iconColor">fa-book</v-icon>
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn value="rel-titles" v-bind="props" size="small">
+                    <v-icon size="x-small" :color="iconColor"
+                      >fa fa-book</v-icon
+                    >
                     %
                   </v-btn>
                 </template>
                 {{ $t("relative_titles") }}
               </v-tooltip>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-btn value="interest" small v-on="on">
-                    <v-icon x-small :color="iconColor">fa-search</v-icon>
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn value="interest" size="small" v-bind="props">
+                    <v-icon size="x-small" :color="iconColor"
+                      >fa fa-search</v-icon
+                    >
                     123
                   </v-btn>
                 </template>
                 {{ $t("absolute_interest") }}
               </v-tooltip>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-btn value="rel-interest" small v-on="on">
-                    <v-icon x-small :color="iconColor">fa-search</v-icon>
-                    %
-                  </v-btn>
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn size="small" v-bind="props" value="rel-interest">
+                    <v-icon size="x-small" :color="iconColor"
+                      >fa fa-search</v-icon
+                    >
+                    %</v-btn
+                  >
                 </template>
                 {{ $t("relative_interest") }}
               </v-tooltip>
@@ -107,13 +121,13 @@ cs:
             :style="{ backgroundColor: overlapColor(platform1, platform2) }"
           >
             <v-tooltip
-              bottom
+              location="bottom"
               v-if="
                 !disableTooltips && overlapValue(platform1, platform2, false)
               "
             >
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ overlapValue(platform1, platform2, relative) }}
                 </span>
               </template>
@@ -130,7 +144,11 @@ cs:
                   "
                 ></span>
                 <!-- tooltip about titles is more complicated as it requires pluralization -->
-                <i18n v-else path="tooltip_two_platforms_titles" tag="span">
+                <i18n-t
+                  v-else
+                  keypath="tooltip_two_platforms_titles"
+                  tag="span"
+                >
                   <template v-slot:absValue>
                     {{ overlapValue(platform1, platform2, false) }}
                   </template>
@@ -147,7 +165,7 @@ cs:
                     {{
                       $tc(
                         "is_also_available",
-                        overlapValue(platform1, platform2, false)
+                        overlapValue(platform1, platform2, false),
                       )
                     }}
                   </template>
@@ -156,7 +174,7 @@ cs:
                       $tc("titles", overlapValue(platform1, platform2, false))
                     }}
                   </template>
-                </i18n>
+                </i18n-t>
               </span>
               <span
                 v-else
@@ -167,7 +185,7 @@ cs:
                     {
                       platform: platform1.short_name,
                       value: overlapValue(platform1, platform2, false),
-                    }
+                    },
                   )
                 "
               ></span>
@@ -276,7 +294,7 @@ export default {
         }
       });
       return usedPlatforms.sort((a, b) =>
-        a.short_name.localeCompare(b.short_name)
+        a.short_name.localeCompare(b.short_name),
       );
     },
     disableTooltips() {
@@ -344,7 +362,7 @@ export default {
       }
       if (relative) {
         const platformAbs = this.overlapMap.get(
-          `${platform1.pk}-${platform1.pk}`
+          `${platform1.pk}-${platform1.pk}`,
         );
         return (
           smartFormatFloat((100 * overlapAbs[key]) / platformAbs[key], 1) + "%"
@@ -362,7 +380,7 @@ export default {
         return "#ffffff";
       }
       const platformAbs = this.overlapMap.get(
-        `${platform1.pk}-${platform1.pk}`
+        `${platform1.pk}-${platform1.pk}`,
       );
       const ratio = overlapAbs[key] / platformAbs[key];
       return Color("#00bb66").alpha(Math.sqrt(ratio)).rgb().string();
@@ -393,7 +411,7 @@ table.overlap {
   border-collapse: collapse;
 
   th {
-    font-size: 81.25%;
+    font-size: 13px;
     text-align: right;
     padding-right: 0.5rem;
 
@@ -414,7 +432,7 @@ table.overlap {
     padding: 3px;
     min-width: 3rem;
     font-weight: bold;
-    font-size: 81.25%;
+    font-size: 13px;
 
     &.self-overlap {
       color: #777777;

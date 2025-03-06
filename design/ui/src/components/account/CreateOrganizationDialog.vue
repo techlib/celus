@@ -82,7 +82,7 @@ export default {
         await axios.post(
           "/api/organization/create-user-default/",
           { name: this.name },
-          { privileged: true }
+          { privileged: true },
         );
         // we use the vuex defined action to load the organizations because it also does some
         // other magic, like updating the internal organization list, etc.

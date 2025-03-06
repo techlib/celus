@@ -14,7 +14,9 @@
     </v-card-text>
     <v-card-actions class="pb-4">
       <v-spacer></v-spacer>
-      <v-btn @click="closeDialog()">{{ $t("close") }}</v-btn>
+      <v-btn @click="closeDialog()" variant="elevated" color="defaultButton">{{
+        $t("close")
+      }}</v-btn>
       <v-btn @click="markCheckedFixed()" color="primary" :loading="saving">
         {{ $t("sushi.mark_as_fixed.button") }}
       </v-btn>
@@ -62,7 +64,7 @@ export default {
       try {
         let response = await axios.post(
           "/api/sushi-credentials/unset-broken/",
-          inputData
+          inputData,
         );
         for (const credentials of response.data) {
           this.$emit("update-credentials", credentials);

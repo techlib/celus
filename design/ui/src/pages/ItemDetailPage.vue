@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
@@ -14,7 +15,7 @@
               {{ props.item.text }}
             </router-link>
             <span v-else>
-              <ShortenText :text="props.item.text" />
+              <ShortenText :text="props.item.text"></ShortenText>
             </span>
           </template>
         </v-breadcrumbs>
@@ -51,7 +52,7 @@
           <tr v-if="item">
             <th>{{ $t("title_fields.doi") }}</th>
             <td>
-              <DoiLink :doi="item.doi" />
+              <DoiLink :doi="item.doi"></DoiLink>
             </td>
           </tr>
           <template v-if="item">
@@ -66,11 +67,11 @@
           </tr>
           <tr v-if="item">
             <th>
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <span v-on="on">
+              <v-tooltip max-width="600px" location="bottom">
+                <template #activator="{ props }">
+                  <span v-bind="props">
                     {{ $t("title_fields.proprietary_ids") }}
-                    <v-icon color="info" small>fa-info-circle</v-icon>
+                    <v-icon color="info" size="small">fa-info-circle</v-icon>
                   </span>
                 </template>
                 <span v-text="$t('title_fields.proprietary_ids_tt')"></span>
@@ -116,7 +117,6 @@
         </table>
       </v-col>
     </v-row>
-
     <section>
       <v-container>
         <v-row>
@@ -124,7 +124,6 @@
             <h3>{{ $t("overview") }}</h3>
           </v-col>
         </v-row>
-
         <CounterChartSet
           :platform-id="platformId"
           :title-id="titleId"

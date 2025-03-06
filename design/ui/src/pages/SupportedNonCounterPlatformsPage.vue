@@ -1,4 +1,5 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   header: Supported non-SUSHI platforms
@@ -14,7 +15,7 @@ en:
     If you need CELUS to process a report not listed
     <a href="https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus">here</a>
     and which does not support COUNTER, please <strong>let us know</strong>
-    at <a href="mailto:ask@celus.net">ask@celus.net</a>.
+    at <a href="mailto:ask{'@'}celus.net">ask{'@'}celus.net</a>.
 
 cs:
   header: Podporované non-SUSHI platformy
@@ -30,7 +31,7 @@ cs:
     Stále připravujeme podporu pro nové platformy a níže zobrazený seznam rozšiřujeme.
     Pokud potřebujete, aby CELUS zpracoval report, který není na
     <a href="https://support.celus.net/support/solutions/articles/103000096445-non-counter-platforms-processing-in-celus">seznamu</a>,
-    <strong>dejte nám vědět</strong> na <a href="mailto:ask@celus.net">ask@celus.net</a>.
+    <strong>dejte nám vědět</strong> na <a href="mailto:ask{'@'}celus.net">ask{'@'}celus.net</a>.
 </i18n>
 
 <template>
@@ -40,7 +41,6 @@ cs:
         <h2 class="pb-4">{{ $t("header") }}</h2>
       </v-col>
     </v-row>
-
     <v-row>
       <v-col>
         <p v-html="$t('desc0')"></p>
@@ -48,10 +48,9 @@ cs:
         <p v-html="$t('desc2')"></p>
       </v-col>
     </v-row>
-
     <v-row>
       <v-col>
-        <SupportedNonCounterPlatformsList />
+        <SupportedNonCounterPlatformsList></SupportedNonCounterPlatformsList>
       </v-col>
     </v-row>
   </v-container>

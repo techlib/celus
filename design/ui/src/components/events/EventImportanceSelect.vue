@@ -10,23 +10,25 @@
     item-value="value"
   >
     <template #selection="{ item }">
-      <EventImportanceIcon :importance="item.value" small />
-      <span class="ml-2">{{ item.text }}</span>
+      <EventImportanceIcon :importance="item.value" small></EventImportanceIcon>
+      <span class="ml-2">{{ item.raw.text }}</span>
     </template>
-
-    <template #item="{ item }">
-      <v-list-item-content>
+    <template #item="{ item, props }">
+      <v-list-item v-bind="props" title="">
         <v-list-item-title>
-          <EventImportanceIcon :importance="item.value" />
-          <span class="ml-2">{{ item.text }}</span>
-          <span v-if="item.count" class="float-right text-caption">{{
+          <EventImportanceIcon
+            :importance="item.raw.value"
+          ></EventImportanceIcon>
+          <span class="ml-2">{{ item.raw.text }}</span>
+          <span v-if="item.raw.count" class="float-right text-caption">{{
             item.count
           }}</span>
         </v-list-item-title>
-      </v-list-item-content>
+      </v-list-item>
     </template>
   </v-select>
 </template>
+
 <script>
 import EventImportanceIcon from "@/components/events/EventImportanceIcon.vue";
 

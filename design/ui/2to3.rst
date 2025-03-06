@@ -1,0 +1,48 @@
+==========================================
+How to upgrade from Vuetify 2 to Vuetify 3
+==========================================
+
+Breakpoints
+-----------
+
+* $vuetify.breakpoint.XXX is no longer supported, info is here: https://vuetifyjs.com/en/features/display-and-platform/#breakpoint-conditionals
+
+* tooltips have changed:
+
+```vue
+.. <v-tooltip bottom>
+..   <template #activator="{ on }">
+..     <span v-on="on">
+..        XXXX
+..     </span>
+..   </template>
+..   <span>{{ usernameText }}</span>
+.. </v-tooltip>
+```
+
+has changed to:
+
+```vue
+<v-tooltip location="bottom">
+  <template #activator="{ props }">
+    <span v-bind="props">
+       XXXX
+    </span>
+  </template>
+  <span>{{ usernameText }}</span>
+</v-tooltip>
+```
+
+but it is also possible to use:
+
+```vue
+<v-btn>
+  Bottom
+  <v-tooltip
+    activator="parent"
+    location="bottom"
+  >Tooltip</v-tooltip>
+</v-btn>
+```
+
+which is much more convenient.

@@ -14,15 +14,14 @@ cs:
       disableItemsPerPage: true,
       itemsPerPageOptions: [this.itemsPerPage],
     }"
-    dense
     class="chart-data-table"
   >
-    <template #body.append="{ headers }">
+    <template #[`body.append`]="{ headers }">
       <tr class="totals">
         <th v-for="(total, i) in totals" :key="i" class="text-right">
-          <span v-if="headers[i]['value'] !== primaryDimension">{{
-            formatInteger(total)
-          }}</span>
+          <span v-if="headers[0][i].value !== primaryDimension"
+            >{{ formatInteger(total) }}
+          </span>
           <span v-else>{{ $t("total") }}</span>
         </th>
       </tr>
@@ -53,7 +52,7 @@ export default {
   computed: {
     headers() {
       return this.columns.map((x) => {
-        return { text: x, value: x, align: "right" };
+        return { title: x, value: x, align: "end", key: x };
       });
     },
     totals() {
@@ -89,6 +88,12 @@ export default {
 <style lang="scss">
 tr.totals th {
   font-size: 0.875rem;
+}
+
+.chart-data-table {
+  td {
+    white-space: nowrap;
+  }
 }
 
 .chart-data-table {

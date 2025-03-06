@@ -1,25 +1,22 @@
 <template>
   <div class="d-flex flex-column full-width">
-    <div class="label">{{ label }}</div>
     <v-container class="ma-0 pa-0" fluid>
-      <v-row no-gutters>
-        <v-col class="pane">
+      <v-row no-gutters class="d-flex">
+        <v-col class="pane" cols="6">
           <!--div class="pane-title">Available</div-->
           <slot></slot>
           <div class="pane-internal">
-            <v-list dense v-if="selectable.length">
-              <template v-for="item in selectable">
-                <v-list-item
-                  :key="item[itemValue]"
-                  @click="selectItem(item)"
-                  class="pr-1"
-                >
-                  <v-list-item-content>{{
-                    item[itemText]
-                  }}</v-list-item-content>
-                  <v-list-item-icon>
-                    <v-icon small>fa fa-angle-right</v-icon>
-                  </v-list-item-icon>
+            <v-list density="compact" v-if="selectable.length">
+              <template v-for="item in selectable" :key="item[itemValue]">
+                <v-list-item @click="selectItem(item)" class="pr-1">
+                  <v-list-item-title class="d-flex align-center item_year pr-2">
+                    <span class="item_text">
+                      {{ item[itemText] }}
+                    </span>
+                    <v-icon size="x-small" color="lighterIcons"
+                      >fa fa-angle-right</v-icon
+                    >
+                  </v-list-item-title>
                 </v-list-item>
                 <!--v-divider :key="'div' + item[itemValue]" /-->
               </template>
@@ -27,27 +24,23 @@
             <div v-else class="mx-4 my-2">{{ emptyHint }}</div>
           </div>
         </v-col>
-        <v-col class="pane">
+        <v-col class="pane" cols="6">
           <div class="d-flex justify-space-between">
             <div class="pane-title">Selected</div>
             <div class="pr-1 pt-1" v-if="selected.size">
-              <v-icon @click="clearAll()">fa fa-times-circle</v-icon>
+              <v-icon @click="clearAll()" color="lighterIcons"
+                >fa fa-times-circle</v-icon
+              >
             </div>
           </div>
           <div class="pane-internal">
-            <v-list dense>
-              <template v-for="item in selectedItems">
-                <v-list-item
-                  :key="item[itemValue]"
-                  @click="deselectItem(item)"
-                  class="pr-1"
-                >
-                  <v-list-item-content>{{
-                    item[itemText]
-                  }}</v-list-item-content>
-                  <v-list-item-icon>
-                    <v-icon small>fa fa-times</v-icon>
-                  </v-list-item-icon>
+            <v-list density="compact">
+              <template v-for="item in selectedItems" :key="item[itemValue]">
+                <v-list-item @click="deselectItem(item)" class="pr-1">
+                  <v-list-item-title class="d-flex align-center item_year pr-2">
+                    <span class="item_text">{{ item[itemText] }}</span>
+                    <v-icon size="x-small">fa fa-times</v-icon>
+                  </v-list-item-title>
                 </v-list-item>
                 <!--v-divider :key="'div' + item[itemValue]" /-->
               </template>
@@ -64,7 +57,7 @@ export default {
   name: "TwoPaneSelector",
 
   props: {
-    value: { required: true, type: Array },
+    modelValue: { required: true, type: Array },
     items: { required: true, type: Array },
     itemText: { default: "text", type: String },
     itemValue: { default: "value", type: String },
@@ -74,7 +67,7 @@ export default {
 
   data() {
     let extra = new Map();
-    let selected = new Set([...this.value]);
+    let selected = new Set([...this.modelValue]);
     this.items
       .filter((item) => selected.has(item[this.itemValue]))
       .forEach((item) => extra.set(item[this.itemValue], item));
@@ -88,12 +81,12 @@ export default {
   computed: {
     selectable() {
       return this.items.filter(
-        (item) => !this.selected.has(item[this.itemValue])
+        (item) => !this.selected.has(item[this.itemValue]),
       );
     },
     selectedItems() {
       return this.allItems.filter((item) =>
-        this.selected.has(item[this.itemValue])
+        this.selected.has(item[this.itemValue]),
       );
     },
     allItems() {
@@ -126,7 +119,7 @@ export default {
       // if calls validator with a list of itemValues and expects an iterable with filtered
       // itemValues as a result. Validator should be async
       let toValidate = [];
-      this.extraItems.forEach((value, key) => {
+      this.extraItems.forEach((modelValue, key) => {
         if (this.selected.has(key)) {
           toValidate.push(key);
         }
@@ -134,9 +127,9 @@ export default {
       let validated = await validator(toValidate);
       let newSelected = new Set();
       let allowed = new Set(validated);
-      this.selected.forEach((value) => {
-        if (allowed.has(value)) {
-          newSelected.add(value);
+      this.selected.forEach((modelValue) => {
+        if (allowed.has(modelValue)) {
+          newSelected.add(modelValue);
         }
       });
       this.selected = newSelected;
@@ -146,8 +139,8 @@ export default {
   watch: {
     selected() {
       this.$emit(
-        "input",
-        this.selectedItems.map((item) => item[this.itemValue])
+        "update:modelValue",
+        this.selectedItems.map((item) => item[this.itemValue]),
       );
     },
   },
@@ -180,6 +173,15 @@ div.pane {
 
 div.label {
   font-size: 87.5%;
+}
+
+.item_text {
+  font-size: 14px;
+  text-wrap: auto;
+}
+
+.item_year {
+  justify-content: space-between;
 }
 
 .full-width {

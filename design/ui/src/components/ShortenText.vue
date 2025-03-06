@@ -1,7 +1,7 @@
 <template>
-  <v-tooltip bottom v-if="isClamped">
-    <template v-slot:activator="{ on }">
-      <span v-on="on">{{ clampedText }}&hellip;</span>
+  <v-tooltip location="bottom" v-if="isClamped">
+    <template v-slot:activator="{ props }">
+      <span v-bind="props">{{ clampedText }}…</span>
     </template>
     {{ text }}
   </v-tooltip>

@@ -1,11 +1,12 @@
-<i18n src="@/locales/common.yaml" lang="yaml" />
+<i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml"></i18n>
 
 <template>
-  <v-container fluid>
+  <v-container fluid class="pa-0">
     <v-row>
       <v-col cols="12">
-        <FlexiTableEditor :report-id="reportId" />
+        <FlexiTableEditor :report-id="reportId"></FlexiTableEditor>
       </v-col>
     </v-row>
   </v-container>

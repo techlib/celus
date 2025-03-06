@@ -1,23 +1,28 @@
 <template>
   <v-row class="pt-8">
     <v-col cols="12">
-      <v-skeleton-loader v-bind="attrs" type="heading" class="pb-4" />
+      <v-skeleton-loader
+        v-bind="attrs"
+        type="heading"
+        class="pb-4"
+      ></v-skeleton-loader>
     </v-col>
     <v-col cols="12">
-      <v-skeleton-loader v-bind="attrs" type="paragraph" />
+      <v-skeleton-loader v-bind="attrs" type="paragraph"></v-skeleton-loader>
     </v-col>
     <v-col :cols="12 / cols.length" v-for="col in cols" :key="col">
       <v-skeleton-loader
         v-bind="attrs"
-        type="card-heading, list-item-three-line, list-item-three-line"
+        type="card, list-item-three-line, list-item-three-line"
         elevation="2"
-      />
+      ></v-skeleton-loader>
     </v-col>
     <v-col cols="12">
       <v-skeleton-loader type="paragraph"></v-skeleton-loader>
     </v-col>
   </v-row>
 </template>
+
 <script>
 export default {
   name: "ReportLoadingWidget",

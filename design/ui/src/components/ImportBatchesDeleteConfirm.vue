@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   confirm_delete:
@@ -40,7 +41,7 @@ cs:
             : $t('confirm_delete.records')
         "
         :loading="loading"
-      />
+      ></ImportBatchesList>
       <p v-else>{{ $t("confirm_delete.no_data") }}</p>
     </v-card-text>
     <v-card-actions>
@@ -50,15 +51,17 @@ cs:
         :loading="deleting"
         @click="deleteAll()"
         :disabled="!canDelete"
+        variant="flat"
+        elevation="2"
       >
         <v-progress-circular
-          small
+          size="small"
           indeterminate
           v-if="deleting"
           color="error"
           class="mr-2"
-        />
-        <v-icon v-else small class="pr-2">fas fa-trash</v-icon>
+        ></v-progress-circular>
+        <v-icon v-else size="small" class="mr-2">fas fa-trash</v-icon>
 
         {{
           reharvest
@@ -66,9 +69,9 @@ cs:
             : $t("actions.delete")
         }}
       </v-btn>
-      <v-spacer />
-      <v-btn @click="cancelDialog()" class="mr-2">
-        <v-icon small class="mr-1">fa fa-times</v-icon>
+      <v-spacer></v-spacer>
+      <v-btn @click="cancelDialog()" class="mr-2" variant="flat" elevation="2">
+        <v-icon size="small" class="mr-1">fa fa-times</v-icon>
         {{ $t("actions.cancel") }}
       </v-btn>
     </v-card-actions>

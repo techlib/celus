@@ -8,6 +8,7 @@
     </li>
   </ul>
 </template>
+
 <script>
 import { mapGetters } from "vuex";
 
@@ -22,3 +23,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+ul {
+  padding-left: 24px;
+}
+</style>

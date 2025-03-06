@@ -5,23 +5,19 @@
     :items="attempts"
     item-key="pk"
     :headers="headers"
-    dense
     :loading="loading"
   >
-    <template #item.created="{ item }">
-      <span v-html="formatDate(item.created)" />
+    <template #[`item.created`]="{ item }">
+      <span v-html="formatDate(item.created)"></span>
     </template>
-
-    <template #item.unique_matched_titles="{ item }">
-      <span v-html="formatInteger(item.unique_matched_titles)" />
+    <template #[`item.unique_matched_titles`]="{ item }">
+      <span v-html="formatInteger(item.unique_matched_titles)"></span>
     </template>
-
-    <template #item.tagged_titles="{ item }">
-      <span v-html="formatInteger(item.tagged_titles)" />
+    <template #[`item.tagged_titles`]="{ item }">
+      <span v-html="formatInteger(item.tagged_titles)"></span>
     </template>
-
-    <template #item.already_tagged_titles="{ item }">
-      <span v-html="formatInteger(item.already_tagged_titles)" />
+    <template #[`item.already_tagged_titles`]="{ item }">
+      <span v-html="formatInteger(item.already_tagged_titles)"></span>
     </template>
   </v-data-table>
 </template>
@@ -51,23 +47,23 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("labels.created"),
+          title: this.$i18n.t("labels.created"),
           value: "created",
         },
         {
-          text: this.$i18n.t("tagging.matched_titles"),
+          title: this.$i18n.t("tagging.matched_titles"),
           value: "unique_matched_titles",
-          align: "right",
+          align: "end",
         },
         {
-          text: this.$i18n.t("tagging.tagged_titles"),
+          title: this.$i18n.t("tagging.tagged_titles"),
           value: "tagged_titles",
-          align: "right",
+          align: "end",
         },
         {
-          text: this.$i18n.t("tagging.already_tagged_titles"),
+          title: this.$i18n.t("tagging.already_tagged_titles"),
           value: "already_tagged_titles",
-          align: "right",
+          align: "end",
         },
       ];
     },

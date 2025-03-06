@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   hide_zero: Hide platforms with no overlap
@@ -22,7 +23,11 @@ cs:
 <template>
   <div>
     <div>
-      <v-switch v-model="hideZero" :label="$t('hide_zero')" />
+      <v-switch
+        v-model="hideZero"
+        color="primary"
+        :label="$t('hide_zero')"
+      ></v-switch>
     </div>
     <LoaderWidget
       v-if="loading || titleCountLoading || platformsLoading"
@@ -54,15 +59,14 @@ cs:
         </tr>
         <tr v-for="platform of usedPlatforms" :key="`plrow-${platform.pk}`">
           <th>{{ platform.short_name }}</th>
-
           <td class="font-weight-bold">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ overlapValue(platform, false) }}
                 </span>
               </template>
-              <i18n path="tooltip_titles_absolute" tag="span">
+              <i18n-t keypath="tooltip_titles_absolute" tag="span">
                 <template v-slot:value>
                   <strong>
                     {{ overlapValue(platform, false) }}
@@ -71,18 +75,17 @@ cs:
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
-
           <td>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ titleCountValue(platform) }}
                 </span>
               </template>
-              <i18n path="tooltip_title_count" tag="span">
+              <i18n-t keypath="tooltip_title_count" tag="span">
                 <template v-slot:value>
                   <strong>
                     {{ titleCountValue(platform) }}
@@ -91,21 +94,20 @@ cs:
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
-
           <td
             :style="{ backgroundColor: overlapColor(platform) }"
             class="font-weight-bold font-italic"
           >
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ overlapValue(platform, true) }}
                 </span>
               </template>
-              <i18n path="tooltip_titles_relative" tag="span">
+              <i18n-t keypath="tooltip_titles_relative" tag="span">
                 <template v-slot:value>
                   <strong>
                     {{ overlapValue(platform, true) }}
@@ -114,20 +116,18 @@ cs:
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
-
           <td class="spacer"></td>
-
           <td class="font-weight-bold">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip loacation="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ overlapInterestValue(platform, false) }}
                 </span>
               </template>
-              <i18n path="tooltip_interest_absolute" tag="span">
+              <i18n-t keypath="tooltip_interest_absolute" tag="span">
                 <template v-slot:value>
                   <strong>
                     {{ overlapInterestValue(platform, false) }}
@@ -136,18 +136,17 @@ cs:
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
-
           <td>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ totalInterestValue(platform) }}
                 </span>
               </template>
-              <i18n path="tooltip_total_interest" tag="span">
+              <i18n-t keypath="tooltip_total_interest" tag="span">
                 <template v-slot:value>
                   <strong>
                     {{ totalInterestValue(platform) }}
@@ -156,28 +155,27 @@ cs:
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
-
           <td
             :style="{ backgroundColor: overlapInterestColor(platform) }"
             class="font-weight-bold font-italic"
           >
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on" class="full">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props" class="full">
                   {{ overlapInterestValue(platform, true) }}
                 </span>
               </template>
-              <i18n path="tooltip_interest_relative" tag="span">
+              <i18n-t keypath="tooltip_interest_relative" tag="span">
                 <template v-slot:value>
                   <strong>{{ overlapInterestValue(platform, true) }}</strong>
                 </template>
                 <template v-slot:platformName>
                   <strong>{{ platform.short_name }}</strong>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-tooltip>
           </td>
           <!--th class="text-left pl-2">{{ platform.short_name }}</th-->
@@ -248,10 +246,10 @@ export default {
         });
       let usedPlatforms = [];
       platformIds.forEach((item) =>
-        usedPlatforms.push(this.platforms.get(item))
+        usedPlatforms.push(this.platforms.get(item)),
       );
       return usedPlatforms.sort((a, b) =>
-        a.short_name.localeCompare(b.short_name)
+        a.short_name.localeCompare(b.short_name),
       );
     },
   },
@@ -353,7 +351,7 @@ export default {
         return (
           smartFormatFloat(
             (100 * overlapAbs.overlap_interest) / overlapAbs.total_interest,
-            1
+            1,
           ) + "%"
         );
       }
@@ -417,7 +415,7 @@ table.overlap {
   border-collapse: collapse;
 
   th {
-    font-size: 81.25%;
+    font-size: 13px;
     text-align: right;
     padding-right: 0.5rem;
   }
@@ -432,7 +430,7 @@ table.overlap {
     text-align: right;
     padding: 3px;
     min-width: 5rem;
-    font-size: 81.25%;
+    font-size: 13px;
 
     &.spacer {
       border-top: none;

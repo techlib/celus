@@ -37,27 +37,26 @@ cs:
       :footer-props="{
         disableItemsPerPage: true,
       }"
-      dense
       :loading="loading"
     >
-      <template #item.created="{ item }">
+      <template #[`item.created`]="{ item }">
         <span v-html="isoDateTimeFormatSpans(item.created)"></span>
       </template>
-      <template #item.date="{ item }">
+      <template #[`item.date`]="{ item }">
         <span v-html="ymDateFormat(parseDateTime(item.date))"></span>
       </template>
-      <template #item.sushifetchattempt="{ item }">
+      <template #[`item.sushifetchattempt`]="{ item }">
         <CheckMark
-          :value="!!item.sushifetchattempt"
           true-icon="fas fa-cloud-download-alt"
           false-icon="fas fa-upload"
           true-color="primary"
           false-color="primary"
           :true-tooltip="$t('import_batches_list.tooltip.sushi')"
           :false-tooltip="$t('import_batches_list.tooltip.manual')"
-        />
+          :model-value="!!item.sushifetchattempt"
+        ></CheckMark>
       </template>
-      <template #item.accesslog_count="{ item }">
+      <template v-slot:[`item.accesslog_count`]="{ item }">
         <span class="text-right">{{
           formatInteger(item.accesslog_count)
         }}</span>
@@ -101,31 +100,31 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("import_batches_list.header.created"),
+          title: this.$i18n.t("import_batches_list.header.created"),
           value: "created",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.month"),
+          title: this.$i18n.t("import_batches_list.header.month"),
           value: "date",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.report_type"),
+          title: this.$i18n.t("import_batches_list.header.report_type"),
           value: "report_type.short_name",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.user"),
+          title: this.$i18n.t("import_batches_list.header.user"),
           value: "user.email",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.organization"),
+          title: this.$i18n.t("import_batches_list.header.organization"),
           value: "organization.short_name",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.source"),
+          title: this.$i18n.t("import_batches_list.header.source"),
           value: "sushifetchattempt",
         },
         {
-          text: this.$i18n.t("import_batches_list.header.record_count"),
+          title: this.$i18n.t("import_batches_list.header.record_count"),
           value: "accesslog_count",
           align: "right",
         },

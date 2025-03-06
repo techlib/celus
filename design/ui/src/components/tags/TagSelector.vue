@@ -4,73 +4,76 @@
   <v-autocomplete
     v-model="selectedTags"
     :items="visibleTags"
-    item-text="name"
     item-value="pk"
+    item-title="name"
     :multiple="!singleTag"
-    :deletable-chips="!singleTag"
+    :closable-chips="!singleTag"
     :label="labelToShow"
     clearable
-    clear-icon="fa-times"
-    item-disabled="disabled"
+    chips
+    :item-props="(item) => ({ disabled: item.disabled })"
     :disabled="disabled"
     :filter="filter"
     :no-data-text="$t('labels.no_tags_available')"
+    :menu-props="{ eager: true }"
+    hide-selected
   >
-    <template #item="{ item }">
-      <v-list-item-content>
+    <template #item="{ item, props }">
+      <div v-bind="props" class="option_tag">
         <v-list-item-title class="d-flex align-center justify-space-between">
-          <TagChip v-if="item.disabled" :tag="item" hide-icon disabled />
-          <TagChip v-else :tag="item" />
-          <span class="text-caption">{{ item.tag_class.name }}</span>
+          <TagChip
+            v-if="item.raw.disabled"
+            :tag="item"
+            hide-icon
+            disabled
+          ></TagChip>
+          <TagChip v-else :tag="item"></TagChip>
+          <span class="text-caption">{{ item.raw.tag_class.name }}</span>
         </v-list-item-title>
-        <v-list-item-subtitle v-if="item.disabled" class="text-caption">
+        <v-list-item-subtitle v-if="item.raw.disabled" class="text-caption">
           {{ $t("labels.tag_exclusive_already_present") }}
         </v-list-item-subtitle>
-      </v-list-item-content>
+      </div>
     </template>
-
-    <template #selection="{ item }">
+    <template v-slot:chip="{ props, item }">
       <!-- tooltips on tags work strange in autocomplete and the whole tag
       sometimes disappears, so we disable the tooltip here -->
       <TagChip
+        v-bind="props"
         :tag="item"
         small
         :hide-icon="!singleTag"
         hide-tooltip
         :removable="!singleTag && !disabled"
         :show-class="singleTag"
-        @remove="unselect(item.pk)"
-      />
+        @remove="unselect(item.raw.pk)"
+      ></TagChip>
     </template>
-
     <template #prepend v-if="tooltip">
-      <v-tooltip bottom max-width="480px">
-        <template #activator="{ on }">
-          <v-icon v-on="on">fa fa-info-circle</v-icon>
+      <v-tooltip location="bottom" max-width="480px">
+        <template #activator="{ props }">
+          <v-icon v-bind="props">fa fa-info-circle</v-icon>
         </template>
         {{ tooltip }}
       </v-tooltip>
     </template>
     <template #prepend v-else-if="showIcon">
-      <v-icon small>fa-tag fa-fw</v-icon>
+      <v-icon size="small">fa fa-tag fa-fw</v-icon>
     </template>
-
-    <template #append-item v-if="allowCreate">
-      <v-list-item-content>
-        <v-list-item-title>
-          <AddTagButton
-            small
-            class="ml-4 mb-1"
-            @saved="addNewTag"
-            :scope="scope"
-            text
-            outlined
-          />
-        </v-list-item-title>
-      </v-list-item-content>
+    <template v-slot:append-item v-if="allowCreate">
+      <v-list-item>
+        <AddTagButton
+          small
+          class="mb-1"
+          @saved="addNewTag"
+          :scope="scope"
+          outlined
+        ></AddTagButton>
+      </v-list-item>
     </template>
   </v-autocomplete>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
@@ -82,7 +85,7 @@ export default {
   mixins: [cancellation],
 
   props: {
-    value: {},
+    modelValue: {},
     disabled: { type: Boolean, default: false },
     hiddenTags: { type: Array, default: () => [] },
     usedExclusiveClasses: { type: Array, default: () => [] },
@@ -94,8 +97,8 @@ export default {
     dontCheckExclusive: { type: Boolean, default: false },
     scope: {
       type: String,
-      validator(value) {
-        return ["title", "platform", "organization"].includes(value);
+      validator(modelValue) {
+        return ["title", "platform", "organization"].includes(modelValue);
       },
       required: true,
     },
@@ -107,23 +110,26 @@ export default {
   data() {
     return {
       tags: [],
+      show: false,
     };
   },
 
   computed: {
     selectedTags: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
-      set(value) {
-        this.$emit("input", value);
+      set(modelValue) {
+        this.$emit("update:modelValue", modelValue);
       },
     },
     selectedExclusiveClasses() {
-      let value = Array.isArray(this.value) ? this.value : [this.value];
+      let modelValue = Array.isArray(this.modelValue)
+        ? this.value
+        : [this.modelValue];
       return this.tags
         .filter((tag) => tag.tag_class.exclusive)
-        .filter((tag) => value.includes(tag.pk))
+        .filter((tag) => modelValue.includes(tag.pk))
         .map((tag) => tag.tag_class.pk);
     },
     visibleTags() {
@@ -188,3 +194,16 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.option_tag {
+  padding: 5px 5px;
+  cursor: pointer;
+  &:hover {
+    background-color: #2d585421;
+  }
+}
+:deep .v-field__input {
+  padding-bottom: 5px;
+}
+</style>

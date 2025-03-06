@@ -1,4 +1,5 @@
-<i18n src="@/locales/common.yaml" lang="yaml" />
+<i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   note: Please note that this page only lists finished exports. To export new data, use either the {reports} or {adhoc} functions.
@@ -16,7 +17,7 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <i18n path="note">
+        <i18n-t keypath="note">
           <template #reports>
             <router-link :to="{ name: 'flexireports' }">{{
               $t("pages.flexi_reports")
@@ -27,12 +28,12 @@ cs:
               $t("pages.create_report")
             }}</router-link>
           </template>
-        </i18n>
+        </i18n-t>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12">
-        <ExportOverviewTable />
+        <ExportOverviewTable></ExportOverviewTable>
       </v-col>
     </v-row>
   </v-container>

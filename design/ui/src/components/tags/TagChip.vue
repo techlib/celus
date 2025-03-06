@@ -1,15 +1,15 @@
 <template>
-  <v-tooltip bottom v-if="tag.desc && !hideTooltip">
-    <template #activator="{ on }">
-      <span v-on="on">
-        <TagChipSimple v-on="$listeners" :tag="tag" v-bind="$attrs" />
+  <v-tooltip location="bottom" v-if="tag.raw?.desc && !hideTooltip">
+    <template #activator="{ props }">
+      <span v-bind="props">
+        <TagChipSimple :tag="tag" v-bind="$attrs"></TagChipSimple>
       </span>
     </template>
-    {{ tag.desc }}
+    {{ tag.raw.desc }}
   </v-tooltip>
-
-  <TagChipSimple v-else v-on="$listeners" :tag="tag" v-bind="$attrs" />
+  <TagChipSimple v-else :tag="tag" v-bind="$attrs"></TagChipSimple>
 </template>
+
 <script>
 import TagChipSimple from "@/components/tags/TagChipSimple";
 

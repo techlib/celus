@@ -1,28 +1,39 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
-  <v-tooltip bottom max-width="400">
-    <template v-slot:activator="{ on }">
-      <span v-on="on">
+  <v-tooltip location="bottom" max-width="400">
+    <template v-slot:activator="{ props }">
+      <span
+        v-bind="props"
+        :style="{ width: '100%', display: 'flex', 'align-items': 'center' }"
+      >
         <span :class="anyIcon ? 'pr-1' : ''">{{ report.code }}</span>
         <span v-if="showName && report.name" class="font-weight-light me-2"
           >: {{ report.name }}</span
         >
-        <v-icon v-if="isBroken" x-small color="error" class="pl-1"
-          >fa-exclamation</v-icon
+        <v-icon v-if="isBroken" size="x-small" color="error" class="pl-1"
+          >fas fa-exclamation</v-icon
         >
-        <v-icon v-else-if="inKnowledgebase" x-small color="success" class="pl-1"
-          >fa-user-check</v-icon
+        <v-icon
+          v-else-if="inKnowledgebase"
+          size="x-small"
+          color="success"
+          class="pl-1 w-auto"
+          >fas fa-user-check</v-icon
         >
-        <v-icon v-if="inRegistry" small color="counterRegistry" class="pl-1"
-          >fa-registered</v-icon
+        <v-icon
+          v-if="inRegistry"
+          size="small"
+          color="counterRegistry"
+          class="pl-1 w-auto"
+          >fa fa-registered</v-icon
         >
         <v-icon
           v-if="lastHarvestableMonth && showLastHarvestableMonth"
-          small
+          size="small"
           color="warning"
-          class="pl-1"
-          >far fa-calendar-alt</v-icon
+          class="pl-1 w-auto"
+          >fas fa-calendar-alt</v-icon
         >
       </span>
     </template>
@@ -30,21 +41,21 @@
       <strong v-if="report.name">{{ report.name }}</strong>
       <strong v-else>{{ report.code }}</strong>
       <div v-if="inKnowledgebase">
-        <v-icon small color="success">fa-user-check</v-icon>
+        <v-icon size="small" color="success">fas fa-user-check</v-icon>
         {{ $t("sushi.knowledgebase_report_type_desc") }}
       </div>
       <div v-if="isBroken">
-        <v-icon small color="error">fa-exclamation-triangle</v-icon>
+        <v-icon size="small" color="error">fa fa-exclamation-triangle</v-icon>
         {{ $t("sushi.broken_report_type_desc") }}
       </div>
       <div v-if="inRegistry">
-        <v-icon small v-if="inRegistry" color="counterRegistry"
-          >fa-registered</v-icon
+        <v-icon size="small" v-if="inRegistry" color="counterRegistry"
+          >fa fa-registered</v-icon
         >
         {{ $t("sushi.registry_report_type_desc") }}
       </div>
       <div v-if="lastHarvestableMonth && showLastHarvestableMonth">
-        <v-icon small color="warning">far fa-calendar-alt</v-icon>
+        <v-icon size="small" color="warning">far fa-calendar-alt</v-icon>
         {{ $t("sushi.state_desc.last_harvestable_month") }}:
         <strong>{{ lastHarvestableMonth.slice(0, 7) }}</strong>
         <br />
@@ -90,6 +101,10 @@ export default {
       type: Boolean,
     },
     showLastHarvestableMonth: {
+      default: false,
+      type: Boolean,
+    },
+    IsAutocomplete: {
       default: false,
       type: Boolean,
     },

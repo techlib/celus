@@ -12,9 +12,9 @@ cs:
 
 <template>
   <v-menu offset-y class="mb-3">
-    <template v-slot:activator="{ on }">
-      <v-btn color="primary" dark v-on="on" class="elevation-2">
-        <v-icon left>fa-download</v-icon>
+    <template v-slot:activator="{ props }">
+      <v-btn color="primary" dark v-bind="props" class="elevation-2">
+        <v-icon left class="mr-2">fa fa-download</v-icon>
         {{ $t("export") }}
       </v-btn>
     </template>

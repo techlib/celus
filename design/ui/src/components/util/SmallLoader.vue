@@ -6,6 +6,7 @@
     <slot></slot>
   </span>
 </template>
+
 <script>
 export default {
   name: "SmallLoader",

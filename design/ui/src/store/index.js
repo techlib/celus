@@ -1,4 +1,3 @@
-import Vue from "vue";
 import Vuex from "vuex";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -25,12 +24,12 @@ import siteConfig from "./modules/site-config";
 import isEqual from "lodash/isEqual";
 import sleep from "@/libs/sleep";
 import { cs } from "date-fns/locale";
-import Worker from "@/workers/event-worker";
+// import Worker from "@/workers/event-worker";
 import endOfMonth from "date-fns/endOfMonth";
 import router from "@/router";
 import { min } from "lodash";
 
-Vue.use(Vuex);
+// Vue.use(Vuex);
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
@@ -45,10 +44,38 @@ const vuexLocal = new VuexPersistence({
     if (value) {
       if (key === "vuex") {
         if (value.dateRangeEnd) {
+          // if (typeof value.dateRangeEnd === "object") {
+          //   value.dateRangeEnd = new Date(
+          //     value.dateRangeEnd.year,
+          //     value.dateRangeEnd.month - 1
+          //   );
+          // } else {
           value.dateRangeEnd = parseDateTime(value.dateRangeEnd);
+          // }
         }
         if (value.dateRangeStart) {
+          // if (typeof value.dateRangeStart === "object") {
+          //   value.dateRangeStart = new Date(
+          //     value.dateRangeStart.year,
+          //     value.dateRangeStart.month - 1
+          //   );
+
+          // } else {
           value.dateRangeStart = parseDateTime(value.dateRangeStart);
+          // }
+        }
+        if (value.dateRangeIndex && !value.dateRangeName) {
+          // old version of vuex-persist
+          const oldRanges = [
+            "date_range.current_plus_2y_back",
+            "date_range.current_plus_1y_back",
+            "date_range.previous_year",
+            "date_range.previous_2_years",
+            "date_range.last_12_mo",
+            "date_range.all_available",
+            "date_range.custom",
+          ];
+          value.dateRangeName = oldRanges[value.dateRangeIndex];
         }
         if (value.dateRangeIndex && !value.dateRangeName) {
           // old version of vuex-persist
@@ -410,7 +437,7 @@ export default new Vuex.Store({
       return ["en"];
     },
     celusVersion() {
-      return process.env.VUE_APP_VERSION;
+      return import.meta.env.VITE_APP_VERSION;
     },
     dateFnOptions(state) {
       let options = {};
@@ -530,7 +557,7 @@ export default new Vuex.Store({
         commit("setAppLanguage", { lang: response.data.language });
         commit(
           "setFiscalYearStart",
-          response.data?.extra_data?.fiscal_year_start_month || 0
+          response.data?.extra_data?.fiscal_year_start_month || 0,
         );
         commit("setOtpRequired", { required: response.data.otp_required });
       } catch (error) {
@@ -580,7 +607,7 @@ export default new Vuex.Store({
         } catch (error) {
           let warnSeen = markSeen ? " and last_seen_release" : "";
           console.warn(
-            `Could not update last_dismissed_release${warnSeen} in user.extra_data`
+            `Could not update last_dismissed_release${warnSeen} in user.extra_data`,
           );
           throw error;
         }
@@ -712,7 +739,7 @@ export default new Vuex.Store({
         await axios.put(
           "/api/user/language",
           { language: lang },
-          { headers: { "X-CSRFToken": csrftoken } }
+          { headers: { "X-CSRFToken": csrftoken } },
         );
       } catch (error) {
         // ignore this error - it is not crucial
@@ -728,7 +755,11 @@ export default new Vuex.Store({
       }
       if (typeof Worker !== "undefined") {
         // Create a new
-        const worker = new Worker();
+        // const worker = new Worker();
+        const worker = new SharedWorker(
+          new URL("../workers/event-worker.js", import.meta.url),
+          { type: "module" },
+        );
 
         worker.port.onmessage = async function (e) {
           console.log("Worker: Message received", e.data);
@@ -760,7 +791,7 @@ export default new Vuex.Store({
                 });
               } else {
                 console.error(
-                  "WS: reauthentication failed - user not logged in"
+                  "WS: reauthentication failed - user not logged in",
                 );
               }
             } else {
@@ -806,23 +837,23 @@ export default new Vuex.Store({
       state.latestPublishedRelease = release;
     },
     setSnackbarShow(state, { show, color }) {
-      Vue.set(state, "snackbarColor", color);
-      Vue.set(state, "snackbarShow", show);
+      state.snackbarColor = color;
+      state.snackbarShow = show;
     },
     setSnackbarContent(state, { content }) {
-      Vue.set(state, "snackbarContent", content);
+      state.snackbarContent = content;
     },
     setLoginError(state, { error }) {
-      Vue.set(state, "loginError", error);
+      state.loginError = error;
     },
     setAuthToken(state, { token }) {
-      Vue.set(state, "authToken", token);
+      state.authToken = token;
     },
     setUserData(state, user) {
       state.user = user;
     },
     setOrganizations(state, organizations) {
-      Vue.set(state, "organizations", organizations);
+      state.organizations = organizations;
     },
     setSelectedOrganizationId(state, { id }) {
       state.selectedOrganizationId = id;
@@ -858,10 +889,10 @@ export default new Vuex.Store({
       state.basicInfo = data;
     },
     storeUserExtraData(state, { extraData }) {
-      Vue.set(state.user, "extra_data", extraData);
+      state.user.extra_data = extraData;
     },
     modifyUserExtraData(state, { key, value }) {
-      Vue.set(state.user.extra_data, key, value);
+      state.user.extra_data[key] = value;
     },
     setBackendReady(state, ready) {
       state.backendReady = ready;
@@ -881,10 +912,12 @@ export default new Vuex.Store({
       state.ws = ws;
     },
     setForceDisableOrganizationSelector(state, { hide, route }) {
-      Vue.set(state.forceDisableOrganizationSelector, route, hide);
+      // Vue.set(state.forceDisableOrganizationSelector, route, hide);
+      state.forceDisableOrganizationSelector[route] = hide;
     },
     setForceHideDateRangeSelector(state, { hide, route }) {
-      Vue.set(state.forceHideDateRangeSelector, route, hide);
+      // Vue.set(state.forceHideDateRangeSelector, route, hide);
+      state.forceHideDateRangeSelector[route] = hide;
     },
     setOtpRequired(state, { required }) {
       state.otpRequired = required;

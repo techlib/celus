@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   admin_privileges: Grant admin privileges
@@ -39,7 +41,7 @@ cs:
                   v-model="email"
                   :rules="[rules.email, emailAlreadyExists]"
                   required
-                />
+                ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <v-text-field
@@ -47,7 +49,7 @@ cs:
                   :label="$t('labels.first_name')"
                   :rules="[rules.required]"
                   required
-                />
+                ></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <v-text-field
@@ -55,7 +57,7 @@ cs:
                   :label="$t('labels.last_name')"
                   :rules="[rules.required]"
                   required
-                />
+                ></v-text-field>
               </v-col>
             </v-row>
             <v-row>
@@ -66,7 +68,7 @@ cs:
                   :label="$t('labels.organization')"
                   :items="organizationList"
                   item-value="pk"
-                  item-text="name"
+                  item-title="name"
                   :disabled="true"
                 >
                 </v-select>
@@ -76,23 +78,28 @@ cs:
                   v-if="!selfEdit"
                   v-model="isAdmin"
                   :label="$t('admin_privileges')"
+                  color="primary"
                 ></v-checkbox>
               </v-col>
             </v-row>
             <v-row v-if="!editMode">
               <v-col>
-                <v-checkbox v-model="sendEmail" :label="$t('invite_link')">
+                <v-checkbox
+                  v-model="sendEmail"
+                  :label="$t('invite_link')"
+                  color="primary"
+                >
                 </v-checkbox>
               </v-col>
             </v-row>
             <v-row>
               <v-col class="d-flex">
-                <v-spacer />
+                <v-spacer></v-spacer>
                 <v-btn @click="cancelEdit()" class="mr-2">
                   {{ $t("actions.cancel") }}
                 </v-btn>
                 <v-btn :disabled="!valid" @click="submit()" color="primary">
-                  <v-icon small class="mr-2">fa-save</v-icon>
+                  <v-icon size="small" class="mr-2">fa fa-save</v-icon>
                   {{ $t("actions.save") }}
                 </v-btn>
               </v-col>
@@ -242,7 +249,7 @@ export default {
 
     getIsAdmin(account) {
       const orgMatch = account.organizations.find(
-        (org) => org.organization.pk === this.selectedOrganization
+        (org) => org.organization.pk === this.selectedOrganization,
       );
       return orgMatch.is_admin;
     },

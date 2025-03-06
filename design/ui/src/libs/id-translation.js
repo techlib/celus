@@ -65,12 +65,12 @@ class IdTranslation {
               // this means that pagination prevented us from getting all the data
               // so we need to do another pass
               console.info(
-                `Could not translate ${this.toTranslate.size} items; doing another pass`
+                `Could not translate ${this.toTranslate.size} items; doing another pass`,
               );
               await this.updateDictionary();
             } else {
               console.info(
-                `Could not translate ${this.toTranslate.size} items; giving up`
+                `Could not translate ${this.toTranslate.size} items; giving up`,
               );
               this.toTranslate = new Set();
             }

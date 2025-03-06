@@ -78,13 +78,13 @@ cs:
           v-if="!emailVerified"
           type="warning"
           class="ma-3 pa-5"
-          outlined
+          variant="outlined"
         >
           {{ $t("unverified_email") }}
           <div>
             <v-btn
               color="primary"
-              @click="resendVerificationEmail()"
+              @click="resendVerificationEmail"
               class="my-5"
             >
               {{ $t("resend_verification_email") }}
@@ -93,16 +93,13 @@ cs:
         </v-alert>
       </v-col>
     </v-row>
-
     <v-row no-gutters>
       <v-col>
         <v-avatar color="primary" class="mt-10" size="80">
-          <v-gravatar :email="user.email" :alt="avatarText" default-img="mp">
-          </v-gravatar>
+          <img :src="gravatar" :alt="avatarText" />
         </v-avatar>
       </v-col>
     </v-row>
-
     <v-row no-gutters>
       <v-col>
         <h3 v-if="user.first_name || user.last_name" class="subdued mt-3">
@@ -114,8 +111,9 @@ cs:
           <v-icon
             v-if="allowUserManagement"
             @click="showUserEditDialog = true"
-            x-small
+            size="x-small"
             class="mb-1 ml-1"
+            color="lighterIcons"
             >fas fa-edit</v-icon
           >
         </h4>
@@ -132,7 +130,6 @@ cs:
         </div>
       </v-col>
     </v-row>
-
     <v-dialog
       v-model="showUserEditDialog"
       v-if="showUserEditDialog"
@@ -140,37 +137,47 @@ cs:
     >
       <AccountCreateModifyWidget
         :account="user"
-        :editMode="true"
         @cancel="cancelUserEditDialog"
         @success="successUserEdit"
+        :editMode="true"
       >
       </AccountCreateModifyWidget>
     </v-dialog>
-
     <v-row class="mb-5" justify="center" no-gutters>
       <v-card elevation="0">
         <v-card-actions>
           <v-btn
+            variant="elevated"
             color="purple"
             v-if="impersonated"
-            v-text="$t('impersonation.stop')"
             @click="stopImpersonate"
             dark
-          ></v-btn>
-          <v-btn v-if="canLogout" @click="logout" v-text="$t('logout')"></v-btn>
+          >
+            {{ $t("impersonation.stop") }}
+          </v-btn>
+          <v-btn
+            v-if="canLogout"
+            @click="logout"
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("logout") }}</v-btn
+          >
           <v-btn
             v-if="usesPasswordLogin"
             @click="showPasswordChangeDialog = true"
-            v-text="$t('change_password')"
-          ></v-btn>
-          <PasswordChangeDialog v-model="showPasswordChangeDialog" />
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("change_password") }}</v-btn
+          >
+          <PasswordChangeDialog
+            v-model="showPasswordChangeDialog"
+          ></PasswordChangeDialog>
         </v-card-actions>
       </v-card>
     </v-row>
-
     <v-row>
       <v-col>
-        <h2 v-text="$t('associated_organizations')"></h2>
+        <h2>{{ $t("associated_organizations") }}</h2>
         <div
           class="font-weight-light mt-2 mb-4"
           v-if="user.is_superuser || user.is_user_of_master_organization"
@@ -178,17 +185,15 @@ cs:
         ></div>
       </v-col>
     </v-row>
-
     <v-row>
       <v-col>
         <v-data-table :items="organizationList" :headers="headers">
-          <template v-slot:item.is_admin="{ item }">
-            <CheckMark :value="item.is_admin" />
+          <template v-slot:[`item.is_admin`]="{ item }">
+            <CheckMark :model-value="item.is_admin"></CheckMark>
           </template>
         </v-data-table>
       </v-col>
     </v-row>
-
     <v-row v-if="showImpersonate" class="mb-2" align="center" justify="center">
       <v-col cols="12" md="10">
         <h2 v-text="$t('impersonation.title')"></h2>
@@ -199,104 +204,133 @@ cs:
           :headers="impersonateHeaders"
           :items="impersonateData"
           item-key="pk"
+          item-value="pk"
           :loading="!impersonateLoaded"
           :search="impersonateSearch"
           :item-class="(item) => (item.current ? 'bold' : '')"
+          density="comfortable"
           fixed-header
-          sort-by="email"
+          v-model:sort-by="orderBy"
           :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
           :custom-filter="searchImpersonateFilter"
         >
-          <template v-slot:top>
+          <template #top>
             <v-container>
               <v-row>
                 <v-col cols="0" md="1">
-                  <v-spacer />
+                  <v-spacer></v-spacer>
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-text-field
                     v-model="impersonateSearch"
                     :label="$t('impersonation.search')"
-                    class=""
                   ></v-text-field>
                 </v-col>
               </v-row>
             </v-container>
           </template>
-          <template v-slot:item.current="{ item }">
+          <template v-slot:[`item.current`]="{ item }">
             <v-btn
               icon
-              outlined
+              size="x-small"
+              variant="outlined"
               :disabled="item.current"
               :color="item.current ? '' : 'purple'"
               @click="() => impersonateUser(item.pk)"
             >
-              <v-icon small :class="item.real_user ? 'text-primary' : ''">
+              <v-icon
+                size="small"
+                :class="item.real_user ? 'text-primary' : ''"
+              >
                 fa fa-arrow-right
               </v-icon>
             </v-btn>
           </template>
-          <template v-slot:item.email="{ item }">
-            <v-tooltip
-              bottom
-              v-if="item.is_superuser || item.is_admin_of_master_organization"
-            >
-              <template #activator="{ on }">
-                <v-icon v-on="on" small color="amber" class="mr-1">
-                  fas fa-crown
-                </v-icon>
-              </template>
-              {{ $t("impersonation.manager") }}
-            </v-tooltip>
-            <v-tooltip bottom v-else-if="item.is_user_of_master_organization">
-              <template #activator="{ on }">
-                <v-icon
-                  v-on="on"
-                  small
-                  color="blue-grey lighten-2"
-                  class="mr-1"
-                >
-                  fas fa-crown
-                </v-icon>
-              </template>
-              {{ $t("impersonation.consortial_user") }}
-            </v-tooltip>
-            <v-badge
-              v-if="item.real_user"
-              color="error"
-              :content="$t('impersonation.real_user')"
-            >
-              <span>{{ item.email }}</span>
-            </v-badge>
-            <span v-else>{{ item.email }}</span>
-          </template>
-          <template v-slot:item.organizations="{ item }">
-            <span
-              :key="organization.pk"
-              v-for="organization in processOrganizations(item.organizations)"
-            >
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-chip outlined label v-on="on">
-                    <v-icon
-                      v-if="organization.is_admin"
-                      color="yellow"
-                      class="mr-2"
-                      x-small
-                    >
-                      fas fa-star
-                    </v-icon>
-                    {{ organization.short_name }}
-                  </v-chip>
+          <template v-slot:[`item.email`]="{ item }">
+            <div class="email_cell">
+              <v-tooltip
+                location="bottom"
+                v-if="item.is_superuser || item.is_admin_of_master_organization"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    v-bind="props"
+                    size="small"
+                    color="amber"
+                    class="mr-1"
+                  >
+                    fas fa-crown
+                  </v-icon>
                 </template>
-                <span
-                  v-if="organization.is_admin"
-                  v-html="$t('impersonation.admin')"
-                />
-                <span v-else v-html="$t('impersonation.member')" />
-                <strong class="ml-1">{{ organization.name }}</strong>
+                {{ $t("impersonation.manager") }}
               </v-tooltip>
-            </span>
+              <v-tooltip
+                location="bottom"
+                v-else-if="item.is_user_of_master_organization"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    v-bind="props"
+                    size="small"
+                    color="blue-grey lighten-2"
+                    class="mr-1"
+                  >
+                    fas fa-crown
+                  </v-icon>
+                </template>
+                {{ $t("impersonation.consortial_user") }}
+              </v-tooltip>
+              <v-badge
+                v-if="item.real_user"
+                color="error"
+                :content="$t('impersonation.real_user')"
+                floating
+                location="top end"
+              >
+                <span>{{ item.email }}</span>
+              </v-badge>
+              <span v-else>{{ item.email }}</span>
+            </div>
+          </template>
+          <template v-slot:[`item.first_name`]="{ item }">
+            <div class="email_cell">
+              {{ item.first_name }}
+            </div>
+          </template>
+          <template v-slot:[`item.last_name`]="{ item }">
+            <div class="email_cell">
+              {{ item.last_name }}
+            </div>
+          </template>
+          <template v-slot:[`item.organizations`]="{ item }">
+            <div class="email_cell">
+              <span
+                :key="organization.pk"
+                v-for="organization in processOrganizations(item.organizations)"
+              >
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <v-chip variant="outlined" label v-bind="props">
+                      <v-icon
+                        v-if="organization.is_admin"
+                        color="yellow"
+                        class="mr-2"
+                        size="x-small"
+                      >
+                        fas fa-star
+                      </v-icon>
+                      {{ organization.short_name }}
+                    </v-chip>
+                  </template>
+                  <span
+                    v-if="organization.is_admin"
+                    v-html="$t('impersonation.admin')"
+                  ></span>
+                  <span v-else v-html="$t('impersonation.member')"></span>
+                  <strong class="ml-1">{{ organization.name }}</strong>
+                </v-tooltip>
+              </span>
+            </div>
           </template>
         </v-data-table>
       </v-col>
@@ -306,11 +340,12 @@ cs:
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import VGravatar from "vue-gravatar";
 import CheckMark from "@/components/util/CheckMark";
 import axios from "axios";
 import PasswordChangeDialog from "@/components/account/PasswordChangeDialog";
 import AccountCreateModifyWidget from "@/components/account/AccountCreateModifyWidget.vue";
+import md5 from "md5";
+import VGravatar from "vue-gravatar";
 
 export default {
   name: "UserPage",
@@ -322,12 +357,14 @@ export default {
   },
   data() {
     return {
+      orderBy: [{ key: "email", order: "asc" }],
       showPasswordChangeDialog: false,
       impersonateData: [],
       impersonateLoaded: false,
       impersonateRequested: false,
-      impersonateSearch: "",
       showUserEditDialog: false,
+      impersonateSearch: "",
+      defaultImg: "mp",
     };
   },
   computed: {
@@ -348,16 +385,21 @@ export default {
     headers() {
       return [
         {
-          text: this.$t("organization"),
+          title: this.$t("organization"),
           value: "name",
+          key: "name",
         },
         {
-          text: this.$t("is_admin"),
+          title: this.$t("is_admin"),
           value: "is_admin",
+          key: "is_admin",
         },
       ];
     },
     organizationList() {
+      if (!this.organizations) {
+        return [];
+      }
       return Object.values(this.organizations).filter((item) => item.is_member);
     },
     showImpersonate() {
@@ -370,28 +412,32 @@ export default {
     impersonateHeaders() {
       return [
         {
-          text: "",
+          title: "",
           value: "current",
           sortable: false,
-          align: "right",
+          align: "end",
         },
         {
-          text: this.$t("impersonation.email"),
+          title: this.$t("impersonation.email"),
           value: "email",
+          key: "email",
           sortable: true,
+          align: "start",
         },
         {
-          text: this.$t("impersonation.first_name"),
+          title: this.$t("impersonation.first_name"),
           value: "first_name",
+          key: "first_name",
           sortable: true,
         },
         {
-          text: this.$t("impersonation.last_name"),
+          title: this.$t("impersonation.last_name"),
           value: "last_name",
+          key: "last_name",
           sortable: true,
         },
         {
-          text: this.$t("impersonation.organizations"),
+          title: this.$t("impersonation.organizations"),
           value: "organizations",
           sortable: false,
         },
@@ -399,6 +445,10 @@ export default {
     },
     impersonated() {
       return !!this.impersonator;
+    },
+    gravatar() {
+      const hash = md5(this.user.email.trim().toLowerCase());
+      return `https://www.gravatar.com/avatar/${hash}?d=mp&s=80`;
     },
   },
 
@@ -408,6 +458,14 @@ export default {
       loadUserData: "loadUserData",
       showSnackbar: "showSnackbar",
     }),
+    cancelUserEditDialog() {
+      this.showUserEditDialog = false;
+    },
+
+    successUserEdit() {
+      this.cancelUserEditDialog();
+      this.loadUserData();
+    },
     async resendVerificationEmail() {
       try {
         await axios.post("/api/user/verify-email");
@@ -438,15 +496,6 @@ export default {
       if (this.impersonator) {
         await this.impersonateUser(this.impersonator);
       }
-    },
-
-    cancelUserEditDialog() {
-      this.showUserEditDialog = false;
-    },
-
-    successUserEdit() {
-      this.cancelUserEditDialog();
-      this.loadUserData();
     },
 
     async impersonateUser(pk) {
@@ -483,7 +532,7 @@ export default {
         return value.some(
           (rec) =>
             match(rec.organization.short_name, search) ||
-            match(rec.organization.name, search)
+            match(rec.organization.name, search),
         );
       }
 
@@ -501,4 +550,10 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.email_cell {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+</style>

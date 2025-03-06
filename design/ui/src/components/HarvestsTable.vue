@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   table_header:
@@ -15,7 +16,7 @@ en:
     manual: Manually planned harvesting.
     date_not_set: Date is not set.
     harvest_details: Show harvest details
-    broken_credentials: "|There is {n} record which can't be downloaded due to broken credentials.|There are {n} records which can't be downloaded due to broken credentials."
+    broken_credentials: "There is {n} record which can't be downloaded due to broken credentials. | There are {n} records which can't be downloaded due to broken credentials."
   filter:
     finished:
       title: Finished
@@ -51,7 +52,7 @@ cs:
     manual: Manuálně naplánované stahování.
     date_not_set: Datum není určeno.
     harvest_details: Zobraz detail stahování
-    broken_credentials: "|Obsahuje {n} záznam, který nemůže být stažen, kvůli rozbitým přístupovým údajům.|Obsahuje {n} záznamy, které nemohou být stažen, kvůli rozbitým přístupovým údajům.|Obsahuje {n} záznamů, které nemohou být stažen, kvůli rozbitým přístupovým údajům."
+    broken_credentials: "Obsahuje {n} záznam, který nemůže být stažen, kvůli rozbitým přístupovým údajům. | Obsahuje {n} záznamy, které nemohou být stažen, kvůli rozbitým přístupovým údajům. | Obsahuje {n} záznamů, které nemohou být stažen, kvůli rozbitým přístupovým údajům."
   filter:
     finished:
       title: Dokončeno
@@ -78,6 +79,7 @@ cs:
     <v-row class="px-3">
       <v-col cols="auto">
         <v-select
+          style="min-width: 220px"
           :items="filterFinishedList"
           v-model="filterFinished"
           :label="$t('filter.finished.title')"
@@ -85,6 +87,7 @@ cs:
       </v-col>
       <v-col cols="auto">
         <v-select
+          style="min-width: 220px"
           :items="filterManualList"
           v-model="filterManual"
           :label="$t('filter.manual.title')"
@@ -92,29 +95,33 @@ cs:
       </v-col>
       <v-col cols="auto">
         <v-select
+          style="min-width: 220px"
           :items="filterBrokenList"
           v-model="filterBroken"
           :label="$t('filter.broken.title')"
         ></v-select>
       </v-col>
-      <v-col cols="auto">
+      <v-col cols="2" class="month_input">
         <MonthEntry
           v-model="filterMonth"
           :label="$t('filter.month')"
+          clearable
+          :max-month="`${new Date()}`"
         ></MonthEntry>
       </v-col>
       <v-col cols="auto">
         <v-autocomplete
+          style="min-width: 220px"
           :items="platformList"
           v-model="filterPlatforms"
           :label="$t('filter.platforms')"
           :loading="loadingPlatforms"
           return-object
           multiple
-          deletable-chips
+          closable-chips
           chips
           small-chips
-          :item-text="(item) => item.short_name || item.name"
+          :item-title="(item) => item.short_name || item.name"
           item-value="pk"
           height="2.0rem"
         ></v-autocomplete>
@@ -122,36 +129,42 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <v-data-table
+        <v-data-table-server
           :items="tableData"
           :headers="headers"
-          :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
           :loading="loading"
-          dense
-          :options.sync="tableOptions"
-          :server-items-length="totalCount"
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :options="tableOptions"
+          :items-length="totalCount"
           :must-sort="true"
+          v-model:sort-by="tableOptions.sortBy"
         >
-          <template v-slot:footer.prepend>
-            <v-btn x-small plain elevation="2" @click="fetchHarvestsData()">
-              <v-icon x-small class="pr-2">fas fa-sync-alt</v-icon>
+          <template v-slot:[`footer.prepend`]="">
+            <v-btn
+              size="x-small"
+              variant="plain"
+              elevation="2"
+              @click="fetchHarvestsData()"
+            >
+              <v-icon size="x-small" class="pr-4">fas fa-sync-alt</v-icon>
               {{ $t("actions.refresh") }}
             </v-btn>
           </template>
-          <template v-slot:item.pk="{ item }">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
+          <template v-slot:[`item.pk`]="{ item }">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
                 <v-btn
-                  text
-                  small
+                  variant="text"
+                  size="small"
                   color="secondary"
                   @click.stop="
                     selectHarvest(item.pk);
                     showHarvestDialog = true;
                   "
-                  v-on="on"
+                  v-bind="props"
                 >
-                  <v-icon left small>fa-external-link-alt</v-icon>
+                  <v-icon left size="small">fas fa-external-link-alt</v-icon>
                   <span v-if="item.broken">
                     <v-badge :content="item.broken" color="error">
                       {{ item.pk }}
@@ -171,39 +184,48 @@ cs:
               }}</span>
             </v-tooltip>
           </template>
-          <template v-slot:item.manual="{ item }">
+          <template v-slot:[`item.manual`]="{ item }">
             <CheckMark
-              :value="item.manual"
               :true-tooltip="$t('tooltip.manual')"
               :false-tooltip="$t('tooltip.automatic')"
-            />
+              :model-value="item.manual"
+            ></CheckMark>
           </template>
-          <template v-slot:item.created="{ item }">
-            <span v-html="formatDateTime(item.created)"></span>
+          <template v-slot:[`item.created`]="{ item }">
+            <div
+              class="date_format"
+              v-html="formatDateTime(item.created)"
+            ></div>
           </template>
-          <template v-slot:item.last_processed="{ item }">
-            <span
+          <template v-slot:[`item.last_processed`]="{ item }">
+            <div
+              class="date_format"
               v-html="
                 item.last_processed ? formatDateTime(item.last_processed) : '-'
               "
-            ></span>
+            ></div>
           </template>
-          <template v-slot:item.month="{ item }">
+          <template v-slot:[`item.month`]="{ item }">
             <span v-html="formatYM(item.start_date)"></span>
             <div v-if="formatYM(item.start_date) != formatYM(item.end_date)">
               <span v-html="' ' + formatYM(item.end_date)"></span>
             </div>
           </template>
-          <template #item.lastAttempt="{ item }">
+          <template #[`item.lastAttempt`]="{ item }">
             <span v-if="item.finished || !item.lastAttempt">-</span>
-            <span v-else v-html="formatDateTime(item.lastAttempt)"></span>
+            <div
+              v-else
+              class="date_format"
+              v-html="formatDateTime(item.lastAttempt)"
+            ></div>
           </template>
-          <template #item.finishedRatio="{ item }">
-            <v-icon x-small v-if="item.working">fa fa-cog fa-spin</v-icon>
+          <template #[`item.finishedRatio`]="{ item }">
+            <v-icon size="x-small" v-if="item.working"
+              >fa fa-cog fa-spin</v-icon
+            >
             {{ item.finishedRatio }}
           </template>
-        </v-data-table>
-
+        </v-data-table-server>
         <v-dialog
           v-model="showHarvestDialog"
           v-if="currentHarvestId"
@@ -221,12 +243,14 @@ cs:
                 <SushiFetchIntentionsListWidget
                   :harvest-id="currentHarvestId"
                   ref="intentionsList"
-                />
+                ></SushiFetchIntentionsListWidget>
               </div>
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn
+                variant="elevated"
+                color="defaultButton"
                 @click="
                   showHarvestDialog = false;
                   currentHarvestId = null;
@@ -285,9 +309,10 @@ export default {
       filterPlatforms: [],
       totalCount: 0,
       tableOptions: {
-        sortBy: ["pk"],
-        sortDesc: [true],
+        sortBy: [{ key: "pk", order: "desc" }],
       },
+      page: 1,
+      itemsPerPage: 10,
     };
   },
 
@@ -332,38 +357,62 @@ export default {
           broken = "0";
           break;
       }
-      let month = this.filterMonth || undefined;
+      // let month =
+      //   typeof this.startDate === "object" &&
+      //   this.startDate !== null &&
+      //   "month" in this.startDate
+      //     ? `${this.filterMonth.year}-${
+      //         this.filterMonth.month <= 8
+      //           ? `0${this.filterMonth.month + 1}`
+      //           : this.filterMonth.month + 1
+      //       }`
+      //     : this.filterMonth || undefined;
+      let month = null;
+      if (
+        typeof this.filterMonth === "object" &&
+        this.filterMonth !== null &&
+        "month" in this.filterMonth
+      ) {
+        month = `${this.filterMonth.year}-${
+          this.filterMonth.month <= 8
+            ? `0${this.filterMonth.month + 1}`
+            : this.filterMonth.month + 1
+        }`;
+      } else if (
+        typeof this.filterMonth === "string" &&
+        this.filterMonth !== null
+      ) {
+        month = this.filterMonth;
+      } else {
+        month = this.filterMonth.year || undefined;
+      }
       let sortBy = this.tableOptions.sortBy.length
         ? this.tableOptions.sortBy[0]
         : "";
-      let sortDesc = this.tableOptions.sortDesc.length
-        ? this.tableOptions.sortDesc[0]
-        : false;
-      switch (sortBy) {
+      switch (sortBy.key) {
         case "finishedRatio":
-          sortBy = "finished";
+          sortBy = [{ key: "finished", order: "desc" }];
           break;
         case "manual":
-          sortBy = "automatic";
-          sortDesc = !sortDesc;
+          sortBy = [{ key: "automatic", order: "desc" }];
           break;
         case "lastAttempt":
-          sortBy = "last_attempt_date";
+          sortBy = [{ key: "last_attempt_date", order: "desc" }];
           break;
         case "attempts":
-          sortBy = "attempt_count";
+          sortBy = [{ key: "attempt_count", order: "desc" }];
           break;
         case "month":
-          sortBy = "start_date";
+          sortBy = [{ key: "start_date", order: "desc" }];
           break;
       }
       return this.$router.resolve({
         path: "/api/scheduler/harvest/",
         query: {
-          page: this.tableOptions.page,
-          page_size: this.tableOptions.itemsPerPage,
-          order_by: sortBy,
-          desc: sortDesc,
+          page: this.page,
+          page_size: this.itemsPerPage,
+          order_by: sortBy.key,
+          desc: sortBy.order === "desc" ? true : false,
           finished,
           automatic,
           month,
@@ -375,53 +424,66 @@ export default {
     headers() {
       const headersHead = [
         {
-          text: "#",
+          title: "#",
           value: "pk",
+          key: "pk",
           class: "wrap",
+          sortable: true,
         },
       ];
       const headersTail = [
         {
-          text: this.$t("title_fields.platforms"),
+          title: this.$t("title_fields.platforms"),
           value: "platforms",
           sortable: false,
         },
         {
-          text: this.$t("table_header.created"),
+          title: this.$t("table_header.created"),
           value: "created",
+          key: "created",
           class: "wrap",
+          sortable: true,
         },
         {
-          text: this.$t("table_header.last_processed"),
+          title: this.$t("table_header.last_processed"),
           value: "last_processed",
+          key: "last_processed",
           class: "wrap",
         },
         {
-          text: this.$t("table_header.manual"),
+          title: this.$t("table_header.manual"),
           value: "manual",
+          key: "manual",
           class: "wrap",
         },
         {
-          text: this.$t("table_header.month"),
+          title: this.$t("table_header.month"),
           value: "month",
+          key: "start_date",
           class: "wrap",
         },
         {
-          text: this.$t("table_header.finished"),
+          title: this.$t("table_header.finished"),
           value: "finishedRatio",
+          key: "finishedRatio",
           align: "end",
         },
         {
-          text: this.$t("table_header.attempts"),
+          title: this.$t("table_header.attempts"),
           value: "attempts",
+          key: "attempts",
           align: "end",
         },
-        { text: this.$t("table_header.last_attempt"), value: "lastAttempt" },
+        {
+          title: this.$t("table_header.last_attempt"),
+          value: "lastAttempt",
+          key: "lastAttempt",
+        },
       ];
       let headersMiddle = [];
       if (this.showOrganization) {
         headersMiddle.push({
-          text: this.$t("title_fields.organizations"),
+          title: this.$t("title_fields.organizations"),
           value: "organizations",
           sortable: false,
         });
@@ -432,19 +494,19 @@ export default {
       return [
         {
           value: "",
-          text: this.$t("filter.finished.all"),
+          title: this.$t("filter.finished.all"),
         },
         {
           value: "ready",
-          text: this.$t("filter.finished.ready"),
+          title: this.$t("filter.finished.ready"),
         },
         {
           value: "unfinished",
-          text: this.$t("filter.finished.unfinished"),
+          title: this.$t("filter.finished.unfinished"),
         },
         {
           value: "working",
-          text: this.$t("filter.finished.working"),
+          title: this.$t("filter.finished.working"),
         },
       ];
     },
@@ -452,15 +514,15 @@ export default {
       return [
         {
           value: "",
-          text: this.$t("filter.broken.all"),
+          title: this.$t("filter.broken.all"),
         },
         {
           value: "yes",
-          text: this.$t("filter.broken.yes"),
+          title: this.$t("filter.broken.yes"),
         },
         {
           value: "no",
-          text: this.$t("filter.broken.no"),
+          title: this.$t("filter.broken.no"),
         },
       ];
     },
@@ -468,15 +530,15 @@ export default {
       return [
         {
           value: "",
-          text: this.$t("filter.manual.all"),
+          title: this.$t("filter.manual.all"),
         },
         {
           value: "automatic",
-          text: this.$t("filter.manual.automatic"),
+          title: this.$t("filter.manual.automatic"),
         },
         {
           value: "manual",
-          text: this.$t("filter.manual.manual"),
+          title: this.$t("filter.manual.manual"),
         },
       ];
     },
@@ -582,3 +644,16 @@ export default {
   },
 };
 </script>
+
+<style>
+.v-data-table-footer__items-per-page {
+  margin-left: auto;
+}
+.month_input {
+  min-width: 170px;
+}
+
+.date_format {
+  min-width: 71px;
+}
+</style>

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   aliases: Aliases
@@ -16,19 +17,17 @@ cs:
 </i18n>
 
 <template>
-  <v-skeleton-loader v-if="loading" type="table" />
+  <v-skeleton-loader v-if="loading" type="table"></v-skeleton-loader>
   <v-data-table
     v-else
     :items="visibleOrganizations"
     item-key="pk"
+    item-value="pk"
     :headers="headers"
-    :page.sync="page"
-    :items-per-page.sync="itemsPerPage"
-    :sort-by.sync="orderBy"
-    :sort-desc.sync="orderDesc"
-    :expanded="expanded"
-    show-expand
-    expand-icon="fa fa-caret-down"
+    v-model:page="page"
+    v-model:items-per-page="itemsPerPage"
+    v-model:sort-by="orderBy"
+    v-model:expanded="expanded"
     :search="search"
     class="auto-table"
   >
@@ -39,7 +38,7 @@ cs:
             v-model="selectedTags"
             scope="organization"
             dont-check-exclusive
-          />
+          ></TagSelector>
         </v-col>
         <v-spacer></v-spacer>
         <v-col>
@@ -47,107 +46,116 @@ cs:
             v-model="search"
             :label="$t('labels.search')"
             clearable
-            clear-icon="fa-times"
+            clear-icon="fa fa-times"
           ></v-text-field>
         </v-col>
       </v-row>
     </template>
-    <template #expanded-item="{ item, headers }">
-      <td></td>
-      <td :colspan="headers.length">
-        <v-row class="py-2">
-          <v-col>
-            <div class="d-inline-block">
-              <TagCard
-                scope="organization"
-                :item-id="item.pk"
-                @update="fetchTags"
-                :elevation="0"
-              />
-            </div>
-          </v-col>
-          <v-col>
-            <v-list>
-              <v-subheader class="sc caption font-weight-bold">
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
-                    <span v-on="on"
-                      >{{ $t("aliases") }}
-                      <v-icon small color="info">fa-info-circle</v-icon></span
-                    >
-                  </template>
-                  <span>{{ $t("aliases_tooltip") }}</span>
-                </v-tooltip>
-              </v-subheader>
-              <template v-for="(e, index) in item.alt_names">
-                <v-list-item
-                  :value="e.name"
-                  :key="e.pk"
-                  style="min-height: 32px"
-                >
-                  <v-list-item-content>
-                    <v-list-item-title v-text="e.name"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-action v-if="showManagementStuff" class="my-0">
-                    <v-btn
-                      x-small
-                      outlined
-                      icon
-                      color="error"
-                      @click="deleteAlias(item.pk, e.pk)"
-                      :loading="loadingDelete[item.pk]?.[e.pk]"
-                    >
-                      <v-icon x-small>fa-times</v-icon>
-                    </v-btn>
-                  </v-list-item-action>
-                </v-list-item>
-                <v-divider :key="'divider-' + index"></v-divider>
-              </template>
-              <v-list-item v-if="showManagementStuff">
-                <v-list-item-content>
-                  <v-text-field
-                    v-model="aliasAddInputs[item.pk]"
-                    class="pt-0 mt-0"
-                    :rules="[validateEmpty, validateExisting]"
-                    :placeholder="$t('add_new_alias')"
-                    @keydown.enter="createAlias(item.pk)"
-                    :ref="'new-alias-' + item.pk"
-                  ></v-text-field>
-                </v-list-item-content>
-                <v-list-item-action class="my-0">
-                  <v-btn
-                    x-small
-                    outlined
-                    fab
-                    color="success"
-                    @click="createAlias(item.pk)"
-                    :loading="loadingCreate[item.pk]"
-                    :disabled="
-                      !aliasAddInputs[item.pk] ||
-                      validateExisting(aliasAddInputs[item.pk]) != true ||
-                      validateEmpty(aliasAddInputs[item.pk]) != true
-                    "
+    <template v-slot:expanded-row="{ item, columns }">
+      <tr class="item_expanded_space">
+        <td></td>
+        <td :colspan="columns.length + 1">
+          <v-row class="py-2">
+            <v-col>
+              <div class="d-inline-block">
+                <TagCard
+                  scope="organization"
+                  :item-id="item.pk"
+                  @update="getTags"
+                  :elevation="0"
+                ></TagCard>
+              </div>
+            </v-col>
+            <v-col>
+              <v-list>
+                <v-list-subheader class="sc caption font-weight-bold">
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <span v-bind="props"
+                        >{{ $t("aliases") }}
+                        <v-icon size="small" color="info"
+                          >fas fa-info-circle</v-icon
+                        ></span
+                      >
+                    </template>
+                    <span>{{ $t("aliases_tooltip") }}</span>
+                  </v-tooltip>
+                </v-list-subheader>
+                <template v-for="(e, index) in item.alt_names" :key="e.pk">
+                  <v-list-item
+                    style="min-height: 32px"
+                    :isActive="showManagementStuff"
+                    :model-value="e.name"
                   >
-                    <v-icon>fa-plus</v-icon>
-                  </v-btn>
-                </v-list-item-action>
-              </v-list-item>
-            </v-list>
-          </v-col>
-        </v-row>
-      </td>
+                    <div class="d-flex align-center justify-space-between">
+                      <v-list-item-title>{{ e.name }}</v-list-item-title>
+                      <v-btn
+                        size="x-small"
+                        density="comfortable"
+                        variant="outlined"
+                        icon
+                        color="error"
+                        @click="deleteAlias(item.pk, e.pk)"
+                        :loading="loadingDelete[item.pk]?.[e.pk]"
+                      >
+                        <v-icon size="x-small">fa fa-times</v-icon>
+                      </v-btn>
+                    </div>
+                  </v-list-item>
+                  <v-divider></v-divider>
+                </template>
+                <v-list-item v-if="showManagementStuff" isActive>
+                  <div class="d-flex align-center">
+                    <v-text-field
+                      v-model="aliasAddInputs[item.pk]"
+                      class="pt-0 mt-0"
+                      :rules="[validateEmpty, validateExisting]"
+                      :placeholder="$t('add_new_alias')"
+                      @keydown.enter="createAlias(item.pk)"
+                      :ref="'new-alias-' + item.pk"
+                    ></v-text-field>
+                    <v-btn
+                      class="ml-3"
+                      variant="outlined"
+                      size="x-small"
+                      icon
+                      fab
+                      color="success"
+                      @click.stop="createAlias(item.pk)"
+                      :loading="loadingCreate[item.pk]"
+                      :disabled="
+                        !aliasAddInputs[item.pk] ||
+                        validateExisting(aliasAddInputs[item.pk]) != true ||
+                        validateEmpty(aliasAddInputs[item.pk]) != true
+                      "
+                    >
+                      <v-icon>fas fa-plus</v-icon>
+                    </v-btn>
+                  </div>
+                </v-list-item>
+              </v-list>
+            </v-col>
+          </v-row>
+        </td>
+      </tr>
     </template>
-    <template #item.tags="{ item }">
+    <template #[`item.tags`]="{ item }">
       <TagChip
         v-for="tag in objIdToTags.get(item.pk)"
         :key="tag.pk"
         :tag="tag"
         small
         show-class
-      />
+      ></TagChip>
     </template>
   </v-data-table>
 </template>
+
+<v-icon
+  color="warning"
+  icon="fa-solid fa-triangle-exclamation"
+  size="x-small"
+></v-icon>
 
 <script>
 import cancellation from "@/mixins/cancellation";
@@ -170,7 +178,7 @@ export default {
       search: "",
       loading: true,
       // table state
-      orderBy: "name",
+      orderBy: [{ key: "name", order: "asc" }],
       orderDesc: false,
       page: 1,
       itemsPerPage: -1,
@@ -178,7 +186,7 @@ export default {
       watchedAttrs: [
         {
           name: "orderBy",
-          type: String,
+          type: Object,
         },
         {
           name: "orderDesc",
@@ -235,17 +243,29 @@ export default {
     headers() {
       let base = [
         {
-          text: this.$t("title_fields.short_name"),
+          title: this.$t("title_fields.short_name"),
           value: "short_name",
+          key: "short_name",
+          width: "10%",
         },
         {
-          text: this.$t("title_fields.name"),
+          title: this.$t("title_fields.name"),
           value: "name",
+          key: "name",
+          width: "20%",
         },
       ];
       base.push({
-        text: this.$i18n.t("labels.tags"),
+        title: this.$i18n.t("labels.tags"),
         value: "tags",
+        key: "tags",
+      });
+      base.unshift({
+        title: "",
+        value: "data-table-expand",
+        sortable: false,
+        align: "start",
+        width: "5%",
       });
       return base;
     },
@@ -267,21 +287,25 @@ export default {
       loadOrganizations: "loadOrganizations",
       showSnackbar: "showSnackbar",
     }),
+    getTags(tags, itemId) {
+      this.objIdToTags.set(itemId, tags);
+    },
     fetchTags() {
       if (this.organizations.length) {
         this.getTagsForObjectsById(
           "organization",
-          this.organizations.map((item) => item.pk)
+          this.organizations.map((item) => item.pk),
         );
       }
     },
     async deleteAlias(organization_pk, alias_pk) {
       // Don't validate empty create field when other alias is being deleted
+      this.loadingDelete[organization_pk] =
+        this.loadingDelete[organization_pk] || {};
       if (!this.aliasAddInputs[organization_pk]) {
         this.$refs[`new-alias-${organization_pk}`].resetValidation();
       }
-
-      this.loadingDelete[organization_pk] ||= {};
+      this.loadingDelete[organization_pk] || {};
       this.loadingDelete[organization_pk][alias_pk] = true;
       let result = await this.http({
         url: `/api/organization/${organization_pk}/alt-names/${alias_pk}`,
@@ -324,7 +348,7 @@ export default {
     },
     init() {
       this.aliasAddInputs = Object.fromEntries(
-        this.organizations.map((e) => [e.pk, ""])
+        this.organizations.map((e) => [e.pk, ""]),
       );
       this.loadingCreate = {};
       this.loadingDelete = {};

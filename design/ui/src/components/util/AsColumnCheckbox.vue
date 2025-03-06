@@ -10,12 +10,17 @@ cs:
 </i18n>
 
 <template>
-  <v-tooltip bottom max-width="300px" class="d-inline-block">
-    <template #activator="{ on }">
-      <span v-on="on">
-        <v-checkbox v-model="val" :disabled="inputDisabled" class="pr-4 pl-2">
+  <v-tooltip location="bottom" max-width="300px" class="d-inline-block">
+    <template #activator="{ props }">
+      <span v-bind="props">
+        <v-checkbox
+          v-model="val"
+          :disabled="inputDisabled"
+          class="pr-4 pl-2"
+          color="primary"
+        >
           <template #label>
-            <v-icon small>fa fa-expand-arrows-alt</v-icon>
+            <v-icon size="small">fa fa-expand-arrows-alt</v-icon>
           </template>
         </v-checkbox>
       </span>
@@ -25,19 +30,20 @@ cs:
     <div v-else>{{ $t("as_column_tt") }}</div>
   </v-tooltip>
 </template>
+
 <script>
 export default {
   name: "AsColumnCheckbox",
 
   props: {
-    value: { required: true, type: Boolean },
+    modelValue: { required: true, type: Boolean },
     disabled: { required: false, default: false, type: Boolean },
     selectedValues: { required: false, default: () => [] },
   },
 
   data() {
     return {
-      val: this.value,
+      val: this.modelValue,
     };
   },
 
@@ -49,10 +55,10 @@ export default {
 
   watch: {
     val() {
-      this.$emit("input", this.val);
+      this.$emit("update:modelValue", this.val);
     },
-    value() {
-      this.val = this.value;
+    modelValue() {
+      this.val = this.modelValue;
     },
   },
 };

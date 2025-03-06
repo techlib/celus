@@ -24,7 +24,7 @@ export default {
         const namer = localizedNamer(this.$i18n.locale);
         this.allReportTypes.forEach((rt) => (rt.name = namer(rt)));
         this.allReportTypes = resp.data.sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         );
         this.allReportTypes.forEach((rt) => {
           rt.dimensions_sorted.forEach((dim, idx) => {

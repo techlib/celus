@@ -37,7 +37,7 @@ export default {
         await axios.post(
           "/api/rest-auth/login/",
           { email: email, password: password },
-          { headers: { "X-CSRFToken": csrftoken }, privileged: true }
+          { headers: { "X-CSRFToken": csrftoken }, privileged: true },
         );
 
         commit("setAuthenticated", true);
@@ -56,7 +56,7 @@ export default {
         await axios.post(
           "/api/rest-auth/logout/",
           {},
-          { headers: { "X-CSRFToken": csrftoken }, privileged: true }
+          { headers: { "X-CSRFToken": csrftoken }, privileged: true },
         );
       } catch (error) {
         dispatch("showSnackbar", {
@@ -76,7 +76,7 @@ export default {
           password1: password1,
           password2: password2,
         },
-        { privileged: true }
+        { privileged: true },
       );
       commit("setAuthenticated", true);
       dispatch("setShowLoginDialog", false);
@@ -87,7 +87,7 @@ export default {
       await axios.post(
         "/api/rest-auth/password/reset/",
         { email: email },
-        { headers: { "X-CSRFToken": csrftoken }, privileged: true }
+        { headers: { "X-CSRFToken": csrftoken }, privileged: true },
       );
     },
     async changePassword({ commit, dispatch }, { password }) {
@@ -95,7 +95,7 @@ export default {
       await axios.post(
         "/api/rest-auth/password/change/",
         { new_password1: password, new_password2: password },
-        { headers: { "X-CSRFToken": csrftoken } }
+        { headers: { "X-CSRFToken": csrftoken } },
       );
     },
     async finishAuthentication({ commit, dispatch }) {

@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <span>
@@ -13,7 +13,7 @@
     ></v-progress-circular>
     <span v-else-if="valueType === 'text'" class="caption">{{ desc }}</span>
     <span v-else-if="valueType === 'tag'">
-      <TagChip v-for="tag in values" :tag="tag" :key="tag.pk" small />
+      <TagChip v-for="tag in values" :tag="tag" :key="tag.pk" small></TagChip>
     </span>
     <span v-else-if="valueType === 'tagClass'">
       <TagChip
@@ -22,10 +22,11 @@
         :key="tagClass.pk"
         small
         :show-class="false"
-      />
+      ></TagChip>
     </span>
   </span>
 </template>
+
 <script>
 import { smartMonthRange } from "@/libs/dates";
 import translators from "@/mixins/translators";
@@ -79,7 +80,7 @@ export default {
       if (translator) {
         await translator.prepareTranslation(toTranslate);
         this.values = toTranslate.map((item) =>
-          translator.translateKeyToString(item, this.$i18n.locale)
+          translator.translateKeyToString(item, this.$i18n.locale),
         );
         this.values.sort((a, b) => a.localeCompare(b));
       }
@@ -92,7 +93,7 @@ export default {
       this.valueType = this.fltr.tag_ids ? "tag" : "tagClass";
       await translator.prepareTranslation(toTranslate);
       this.values = toTranslate.map((item) =>
-        translator.translateKey(item, this.$i18n.locale)
+        translator.translateKey(item, this.$i18n.locale),
       );
     }
 

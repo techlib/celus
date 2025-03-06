@@ -68,7 +68,7 @@ function isoDateTimeFormatSpans(date) {
   }
   return `<span class="date">${format(
     date,
-    "yyyy-MM-dd"
+    "yyyy-MM-dd",
   )}</span> <span class="time">${format(date, "HH:mm:ss")}</span>`;
 }
 

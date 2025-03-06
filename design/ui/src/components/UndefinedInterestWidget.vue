@@ -13,21 +13,19 @@ cs:
     :headers="headers"
     :items="platforms"
     :loading="loading"
-    dense
     :items-per-page="-1"
-    sort-by="has_data"
-    :sort-desc="true"
     :hide-default-footer="true"
+    v-model:sort-by="orderBy"
   >
-    <template v-slot:item.name="{ item }">
+    <template v-slot:[`item.name`]="{ item }">
       <span v-text="item.name" :class="{ bold: item.has_data }"></span>
     </template>
-    <template v-slot:item.has_data="{ item }">
+    <template v-slot:[`item.has_data`]="{ item }">
       <CheckMark
-        :value="item.has_data"
         true-color="warning"
         false-color="grey"
-      />
+        :model-value="item.has_data"
+      ></CheckMark>
     </template>
   </v-data-table>
 </template>
@@ -45,6 +43,7 @@ export default {
     return {
       platforms: [],
       loading: false,
+      orderBy: [{ key: "has_data", order: "desc" }],
     };
   },
   computed: {
@@ -54,12 +53,14 @@ export default {
     headers() {
       return [
         {
-          text: this.$t("platform"),
+          title: this.$t("platform"),
           value: "name",
+          key: "name",
         },
         {
-          text: this.$t("has_data"),
+          title: this.$t("has_data"),
           value: "has_data",
+          key: "has_data",
         },
       ];
     },

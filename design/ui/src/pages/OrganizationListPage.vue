@@ -11,7 +11,7 @@
       <v-col>
         <v-card>
           <v-card-text>
-            <OrganizationList />
+            <OrganizationList></OrganizationList>
           </v-card-text>
         </v-card>
       </v-col>
@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import OrganizationList from "@/components/OrganizationList";
+import OrganizationList from "@/components/OrganizationList.vue";
 
 export default {
   name: "OrganizationListPage",

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   default: Platform overview - default view
@@ -20,15 +21,12 @@ cs:
           v-model="viewId"
           :items="views"
           :label="$t('view')"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
+          item-title="text"
         >
-          <template #item="{ item }">
-            <v-list-item-content>
-              <v-list-item-title :class="item.value < 0 ? 'font-italic' : ''">{{
-                item.text
-              }}</v-list-item-title>
-            </v-list-item-content>
+          <template #item="{ props }">
+            <v-list-item v-bind="props"> </v-list-item>
           </template>
         </v-select>
       </v-col>
@@ -41,10 +39,13 @@ cs:
         <v-container fluid class="py-0 pr-0">
           <v-row>
             <v-col cols="auto">
-              <ManualUploadButton />
+              <ManualUploadButton color="defaultButton"></ManualUploadButton>
             </v-col>
             <v-col cols="auto">
-              <AddAnnotationButton @update="refreshAnnotations()" />
+              <AddAnnotationButton
+                color="defaultButton"
+                @update="refreshAnnotations()"
+              ></AddAnnotationButton>
             </v-col>
           </v-row>
         </v-container>
@@ -56,7 +57,7 @@ cs:
           :allow-add="showAdminStuff"
           ref="annotWidget"
           class="pt-4"
-        />
+        ></AnnotationsWidget>
       </v-col>
     </v-row>
     <v-row>
@@ -65,10 +66,13 @@ cs:
           ref="overviewWidget"
           v-show="viewId === 0"
           @loaded="overviewLoaded"
-        />
-        <v-card v-show="viewId > 0">
-          <v-card-text>
-            <FlexiTableOutput ref="flexiTableWidget" context-override />
+        ></PlatformOverviewWidget>
+        <v-card v-show="viewId > 0" class="full_screen">
+          <v-card-text class="full_screen">
+            <FlexiTableOutput
+              ref="flexiTableWidget"
+              context-override
+            ></FlexiTableOutput>
           </v-card-text>
         </v-card>
       </v-col>
@@ -180,7 +184,7 @@ export default {
       if (this.viewId > 0 && this.selectedReport) {
         let report = await FlexiReport.fromAPIObject(
           this.selectedReport,
-          this.reportTypeMap
+          this.reportTypeMap,
         );
         await this.$refs.flexiTableWidget.updateOutput(report);
       }
@@ -188,3 +192,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.full_screen {
+  z-index: 1001;
+}
+</style>

@@ -1,0 +1,194 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://vuetifyjs.com/features/sass-variables/`
+// @use 'vuetify/settings' with (
+//   $color-pack: false
+// );
+
+@use "vuetify/settings" with (
+  $input-control-height: 48px,
+  $selection-control-size: 44px
+);
+
+a {
+  color: #35827b;
+}
+.report_type {
+  .v-autocomplete__selection {
+    height: 30px;
+    .v-chip {
+      height: 28px;
+      font-size: 14px;
+    }
+  }
+}
+
+.text-disabled {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.v-field__input {
+  min-height: 43px !important;
+}
+
+@media screen and (min-width: 1280px) {
+  .v-navigation-drawer {
+    z-index: 999 !important;
+  }
+}
+@media screen and (max-width: 1279px) {
+  .v-navigation-drawer {
+    z-index: 1010 !important;
+    top: 0 !important;
+    height: 100% !important;
+  }
+}
+
+.v-app-bar {
+  z-index: 1000 !important;
+}
+
+.v-field__input {
+  padding-bottom: 5px !important;
+}
+
+.chip_in_filter {
+  .v-chip__content {
+    font-weight: 600;
+    color: black;
+  }
+}
+
+.active_report {
+  .v-autocomplete__selection {
+    margin-top: 7px !important;
+  }
+}
+
+.v-data-table-header__content {
+  font-weight: 600;
+}
+
+.v-chip__content {
+  overflow: visible !important;
+}
+
+.v-autocomplete__selection {
+  .v-chip__content {
+    overflow: hidden !important;
+  }
+}
+
+.v-field--disabled {
+  opacity: 0.6 !important;
+  .v-field__outline {
+    --v-field-border-opacity: 1 !important;
+    --v-field-border-width: 1.4px;
+  }
+}
+
+.v-input__append {
+  padding-top: 8px !important;
+}
+
+.v-data-table .v-icon.fas.fa-sort-up,
+.v-data-table .v-icon.fas.fa-sort-down {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.v-card-title {
+  font-size: 20px;
+  font-weight: 500;
+  padding-bottom: 0 !important;
+  padding-top: 18px;
+}
+
+.dp__calendar_header {
+  font-weight: normal;
+  color: rgba(0, 0, 0, 0.38);
+}
+
+.dp__month_year_select {
+  font-weight: bold;
+}
+
+.v-data-table__th--sortable {
+  &:hover {
+    span {
+      color: black !important;
+      transition: 0.1s;
+    }
+  }
+}
+
+.v-data-table__th--sorted {
+  span {
+    color: black !important;
+  }
+}
+
+.item_expanded_space {
+  box-shadow:
+    inset 0 4px 8px -5px rgba(50, 50, 50, 0.75),
+    inset 0 -4px 8px -5px rgba(50, 50, 50, 0.75);
+}
+
+.v-btn--disabled {
+  opacity: 0.56 !important;
+}
+
+.v-card-text {
+  padding-top: 16px !important;
+  ul {
+    margin-left: 30px;
+    margin-top: 10px;
+  }
+}
+
+.text-body-1 {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.v-data-table-header__content {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.dp__overlay_cell_active {
+  background-color: #ffb74d !important;
+}
+
+.dp__active_date {
+  background-color: #ffb74d !important;
+  border-radius: 50%;
+}
+
+.dp__date_hover {
+  border-radius: 50%;
+}
+
+.dp__today {
+  border: 1px solid #ffb74d;
+  border-radius: 50%;
+}
+
+.v-tooltip > .v-overlay__content {
+  background-color: rgba(0, 0, 0, 0.54);
+}
+
+.v-stepper-vertical-actions.v-stepper-actions {
+  padding: 0 !important;
+}
+
+.caption {
+  font-size: 0.75rem !important;
+  font-weight: 400;
+  letter-spacing: 0.0333333333em !important;
+  line-height: 1.25rem;
+  font-family: "Roboto", sans-serif !important;
+}

@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   mark_my_org: Highlight my organization
@@ -20,7 +22,7 @@ cs:
           :report-views-url="reportViewsUrl"
           :prefer-full-report="preferFullReport"
           ref="reportViewSelector"
-        />
+        ></ReportViewSelector>
       </v-col>
       <v-col cols="12" md="4" xl="3" class="pb-0" v-if="!fixedChart">
         <ChartTypeSelector
@@ -28,7 +30,7 @@ cs:
           :scope="scope"
           v-model="selectedChartType"
           widget="select"
-        />
+        ></ChartTypeSelector>
       </v-col>
       <v-col
         cols="12"
@@ -40,32 +42,33 @@ cs:
         <v-select
           :items="availableMetrics"
           v-model="selectedMetric"
-          item-text="short_name"
+          item-title="short_name"
           item-value="pk"
           :label="$t('labels.metric')"
           :loading="loadingMetrics"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
         ></v-select>
       </v-col>
       <v-col
         cols="auto"
-        class="pb-0"
+        class="py-0"
         v-if="primaryDimension === 'organization' && this.organizationSelected"
       >
         <v-switch
           v-model="showMarkLine"
           :label="$t('mark_my_org')"
-          dense
+          density="default"
           hide-details
           class="mt-2"
+          color="primary"
         ></v-switch>
       </v-col>
     </v-row>
     <v-row>
       <v-col class="px-0 px-sm-2">
         <APIChart
-          v-if="selectedReportView && selectedChartType"
+          v-if="selectedReportView && selectedChartType && primaryDimension"
           :type="typeOfChart"
           :report-type-id="selectedReportView.pk"
           :primary-dimension="primaryDimension"
@@ -94,25 +97,20 @@ cs:
         <v-alert
           v-else-if="selectedReportView"
           type="warning"
-          border="right"
-          colored-border
+          border="end"
+          border-color
           elevation="2"
         >
           {{ $t("no_chart_types_available") }}
         </v-alert>
-        <v-alert
-          v-else
-          type="warning"
-          border="right"
-          colored-border
-          elevation="2"
-        >
+        <v-alert v-else type="warning" border="end" border-color elevation="2">
           {{ $t("no_reports_available_for_title") }}
         </v-alert>
       </v-col>
     </v-row>
   </v-container>
 </template>
+
 <script>
 import APIChart from "./APIChart";
 import { mapActions, mapGetters, mapState } from "vuex";
@@ -237,6 +235,9 @@ export default {
       }
     },
     async loadAvailableMetrics() {
+      if (!this.primaryDimension) {
+        return null;
+      }
       this.availableMetrics = [];
       this.selectedMetric = null;
       this.loadingMetrics = true;
@@ -277,7 +278,7 @@ export default {
               b.pk,
             ]
               ? 1
-              : -1
+              : -1,
           );
           this.selectedMetric = metrics[0].pk;
         } else {
@@ -292,6 +293,7 @@ export default {
   },
 
   watch: {
+    primaryDimension() {},
     fixedReportView() {
       this.selectedReportView = this.fixedReportView;
     },

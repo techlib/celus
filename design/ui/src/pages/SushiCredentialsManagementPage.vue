@@ -25,8 +25,12 @@
       </v-row>
       <v-row>
         <v-col class="text-center pt-12">
-          <v-btn @click="showCreateDialog = true" color="primary" x-large>
-            <v-icon small class="pe-2">fa-plus</v-icon>
+          <v-btn
+            @click="showCreateDialog = true"
+            color="primary"
+            size="x-large"
+          >
+            <v-icon class="pe-2" size="small">fa-plus</v-icon>
             Add SUSHI credentials
           </v-btn>
         </v-col>
@@ -45,15 +49,13 @@
         </v-col>
       </v-row>
     </v-container>
-
     <SushiCredentialsManagementWidget
       v-else
       :organization-id="organizationId"
       :potential-issues="brokenOnly ? 'broken' : null"
       show-platform-filter
       ref="sushiCredentialsWidget"
-    />
-
+    ></SushiCredentialsManagementWidget>
     <v-dialog
       v-model="showCreateDialog"
       v-if="showCreateDialog"

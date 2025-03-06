@@ -1,9 +1,10 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   select_dates_text: "Select date range to harvest:"
   select_dates_text_test_note: "It is ok to use a longer time period for verification. The harvest will run from the most recent month to the oldest and will stop immediately if an authentication error occurs."
-  there_were_errors: " | It was not possible to start harvesting due to the following error: | It was not possible to start harvesting due to the following errors:"
+  there_were_errors: "It was not possible to start harvesting due to the following error:| It was not possible to start harvesting due to the following errors:"
   check_credentials: Please check selection of credentials after closing this dialog. Broken credentials will be automatically unselected.
   start_harvesting: "Nothing to harvest | Start {count} download | Start {count} downloads"
   nothing_to_harvest: Nothing to harvest
@@ -28,119 +29,100 @@ cs:
 <template>
   <v-container fluid class="pb-0">
     <v-row v-if="!started" class="align-center">
-      <v-col v-html="$t('select_dates_text')" cols="12" md="auto"></v-col>
-      <v-col cols="auto">
-        <v-menu
-          v-model="startDateMenu"
-          :close-on-content-click="false"
-          :nudge-right="40"
-          transition="scale-transition"
-          offset-y
-          min-width="290px"
+      <v-col cols="12" md="auto">{{ $t("select_dates_text") }}</v-col>
+      <v-col cols="2">
+        <DatePicker
           :disabled="started"
+          v-model="startDate"
+          :max-date="EndDateText"
         >
-          <template v-slot:activator="{ on }">
+          <template v-slot:activator="{ props }">
             <v-text-field
-              v-model="startDate"
+              hide-details="auto"
+              v-model="StartTextField"
               :label="$t('title_fields.start_date')"
-              prepend-icon="fa-calendar"
+              prepend-icon="fa fa-calendar"
               readonly
-              v-on="on"
+              v-bind="props"
             ></v-text-field>
           </template>
-          <v-date-picker
-            v-model="startDate"
-            type="month"
-            no-title
-            :locale="$i18n.locale"
-            :allowed-dates="allowedStartMonths"
-          ></v-date-picker>
-        </v-menu>
+        </DatePicker>
       </v-col>
-      <v-col cols="auto">
-        <v-menu
-          v-model="endDateMenu"
-          :close-on-content-click="false"
-          :nudge-right="40"
-          transition="scale-transition"
-          offset-y
-          min-width="290px"
+      <v-col cols="2">
+        <DatePicker
           :disabled="started"
+          v-model="endDate"
+          :min-date="StartDateText"
+          :max-date="new Date()"
         >
-          <template v-slot:activator="{ on }">
+          <template v-slot:activator="{ props }">
             <v-text-field
-              v-model="endDate"
+              hide-details="auto"
+              v-model="EndTextField"
               :label="$t('title_fields.end_date')"
-              prepend-icon="fa-calendar"
+              prepend-icon="fa fa-calendar"
               readonly
-              v-on="on"
+              v-bind="props"
             ></v-text-field>
           </template>
-          <v-date-picker
-            v-model="endDate"
-            type="month"
-            no-title
-            :locale="$i18n.locale"
-            :allowed-dates="allowedEndMonths"
-          ></v-date-picker>
-        </v-menu>
+        </DatePicker>
       </v-col>
       <v-col cols="auto">
         <v-btn
           @click="startHarvest()"
-          v-text="
-            slotsFree === 0
-              ? $t('nothing_to_harvest')
-              : $tc('start_harvesting', slotsFree)
-          "
           color="primary"
           width="100%"
           :disabled="!totalReportCount || !slotsReady || slotsFree === 0"
-        ></v-btn>
+        >
+          {{
+            slotsFree === 0
+              ? $t("nothing_to_harvest")
+              : $tc("start_harvesting", slotsFree)
+          }}
+        </v-btn>
       </v-col>
       <v-spacer />
       <v-col cols="auto" v-if="!test && showReharvest">
-        <v-tooltip bottom max-width="600px">
-          <template #activator="{ on }">
-            <span v-on="on">
-              <v-switch
-                v-model="reharvestMode"
-                :label="$t('reharvest_mode')"
-              ></v-switch>
-            </span>
+        <v-tooltip location="bottom" max-width="600px">
+          <template #activator="{ props }">
+            <v-switch
+              hide-details="auto"
+              v-bind="props"
+              v-model="reharvestMode"
+              color="primary"
+              density="compact"
+              :label="$t('reharvest_mode')"
+            ></v-switch>
           </template>
-          <span>{{ $t("reharvest_mode_tt") }}</span>
+          {{ $t("reharvest_mode_tt") }}
         </v-tooltip>
       </v-col>
     </v-row>
     <v-row v-if="test">
       <v-col>
-        <v-alert type="info" outlined>
+        <v-alert type="info" variant="outlined">
           <div v-html="$t('select_dates_text_test_note')"></div>
         </v-alert>
       </v-col>
     </v-row>
-
     <v-row v-if="!started">
       <v-col>
         <div v-if="startDate && endDate">
           <SushiHarvestedSlotsWidget
             :credentials="credentials"
-            :start-date="startDate"
-            :end-date="endDate"
+            :start-date="PickerTextStart(startDate)"
+            :end-date="PickerTextStart(endDate)"
             ref="slotWidget"
-            :ready.sync="slotsReady"
+            v-model="slotsReady"
             :reharvest="reharvestMode"
-          />
+          ></SushiHarvestedSlotsWidget>
         </div>
       </v-col>
     </v-row>
-
     <v-row v-else-if="error">
       <v-col>
-        <v-alert type="error" outlined>
+        <v-alert type="error" variant="outlined">
           <p>{{ $tc("there_were_errors", errors.length) }}</p>
-
           <ul>
             <li v-for="(error, index) in errors" :key="index">
               <strong>
@@ -150,29 +132,27 @@ cs:
               {{ error.errorMessage }}
             </li>
           </ul>
-
           <p class="pt-6">{{ $t("check_credentials") }}</p>
         </v-alert>
       </v-col>
     </v-row>
-
     <template v-else>
       <v-row>
         <SushiFetchIntentionsListWidget
           :harvest-id="harvestId"
           ref="intentionsList"
-        />
+        ></SushiFetchIntentionsListWidget>
       </v-row>
       <v-row>
         <v-col>
-          <v-alert type="info" text dense class="me-3">
-            <i18n path="no_problem_closing_dialog">
+          <v-alert type="info" variant="tonal" density="compact" class="me-3">
+            <i18n-t keypath="no_problem_closing_dialog">
               <template #harvest_link>
                 <router-link :to="{ name: 'harvests' }">
                   {{ $t("harvest_page") }}
                 </router-link>
               </template>
-            </i18n>
+            </i18n-t>
           </v-alert>
         </v-col>
       </v-row>
@@ -188,7 +168,7 @@ cs:
         @cancel="showDeleteDialog = false"
         @deleted="dataDeleted"
         reharvest
-      />
+      ></ImportBatchesDeleteConfirm>
     </v-dialog>
   </v-container>
 </template>
@@ -208,7 +188,8 @@ import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntenti
 import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm.vue";
 import addMonths from "date-fns/addMonths";
-
+import DatePicker from "@/components/DatePicker.vue";
+import { mapState } from "vuex";
 export default {
   name: "HarvestSelectedWidget",
 
@@ -216,6 +197,7 @@ export default {
     ImportBatchesDeleteConfirm,
     SushiHarvestedSlotsWidget,
     SushiFetchIntentionsListWidget,
+    DatePicker,
   },
 
   props: {
@@ -231,24 +213,113 @@ export default {
   data() {
     return {
       harvestId: null,
-      startDate: null,
-      endDate: null,
       started: false,
       startDateMenu: null,
+      reharvestMode: false,
       endDateMenu: null,
       error: null,
       slotsReady: false,
-      reharvestMode: false,
       showDeleteDialog: false,
     };
   },
 
   computed: {
+    ...mapState({
+      dateRangeName: "dateRangeName",
+      startRaw: "dateRangeStart",
+      endRaw: "dateRangeEnd",
+    }),
+
+    startDate: {
+      get() {
+        return {
+          month: this.startRaw.getMonth(),
+          year: this.startRaw.getFullYear(),
+        };
+      },
+      set(value) {
+        if (value && typeof value === "object" && "month" in value) {
+          const day = value.day || 1;
+          this.setDateRangeStart(new Date(value.year, value.month, day));
+        } else if (typeof value === "string") {
+          let date = ymDateParse(value);
+          this.setDateRangeStart(date);
+        } else {
+          this.setDateRangeStart(value);
+        }
+      },
+    },
+    endDate: {
+      get() {
+        if (this.endRaw) {
+          return {
+            month: this.endRaw.getMonth(),
+            year: this.endRaw.getFullYear(),
+          };
+        } else {
+          return {
+            month: new Date().getMonth(),
+            year: new Date().getFullYear(),
+          };
+        }
+      },
+      set(value) {
+        if ("month" in value) {
+          this.setDateRangeEnd(new Date(value.year, value.month));
+        } else {
+          this.setDateRangeEnd(value);
+        }
+      },
+    },
+    StartDateText() {
+      if (typeof this.startDate === "string" || this.startDate === null) {
+        return new Date(this.startDate);
+      } else {
+        return new Date(this.startDate.year, this.startDate.month);
+      }
+    },
+    StartTextField() {
+      if (
+        typeof this.startDate === "object" &&
+        this.startDate !== null &&
+        "month" in this.startDate
+      ) {
+        return `${this.startDate.year}-${
+          this.startDate.month <= 8
+            ? `0${this.startDate.month + 1}`
+            : this.startDate.month + 1
+        }`;
+      } else {
+        return this.startDate;
+      }
+    },
+    EndDateText() {
+      if (typeof this.endDate === "string" || this.endDate === null) {
+        return new Date(this.endDate);
+      } else {
+        return new Date(this.endDate.year, this.endDate.month);
+      }
+    },
+    EndTextField() {
+      if (
+        typeof this.endDate === "object" &&
+        this.startDate !== null &&
+        "month" in this.endDate
+      ) {
+        return `${this.endDate.year}-${
+          this.endDate.month <= 8
+            ? `0${this.endDate.month + 1}`
+            : this.endDate.month + 1
+        }`;
+      } else {
+        return this.endDate;
+      }
+    },
     totalReportCount() {
       return this.credentials
         .map(
           (cred) =>
-            cred.counter_reports_long.filter((item) => !item.broken).length
+            cred.counter_reports_long.filter((item) => !item.broken).length,
         )
         .reduce((a, b) => a + b, 0);
     },
@@ -259,7 +330,7 @@ export default {
           brokenCredentialIds.add(Number.parseInt(key));
         }
         let brokenCredentials = this.credentials.filter((item) =>
-          brokenCredentialIds.has(item.pk)
+          brokenCredentialIds.has(item.pk),
         );
         brokenCredentials.forEach((item) => {
           item.errorMessage = this.error.response.data[item.pk];
@@ -267,6 +338,34 @@ export default {
         return brokenCredentials;
       }
       return [];
+    },
+    monthsToCover() {
+      let start = null;
+      if ("month" in this.startDate && typeof this.startDate === "object") {
+        start = ymDateParse(
+          new Date(this.startDate.year, this.startDate.month),
+        );
+      } else {
+        start = ymDateParse(new Date(this.startDate));
+      }
+      let months = [start];
+      if (this.test) {
+        return months;
+      }
+      let endMonth = null;
+      if ("month" in this.endDate && typeof this.endDate === "object") {
+        endMonth = ymDateParse(new Date(this.endDate.year, this.endDate.month));
+      } else {
+        endMonth = ymDateParse(new Date(this.endDate));
+      }
+      while (start < endMonth) {
+        start = addMonths(start, 1);
+        months.push(start);
+      }
+      return months;
+    },
+    monthsToCoverCount() {
+      return this.monthsToCover.length;
     },
     slotsFree() {
       if (this.slotsReady && this.$refs.slotWidget) {
@@ -320,7 +419,20 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      setDateRangeStart: "changeDateRangeStart",
+      setDateRangeEnd: "changeDateRangeEnd",
     }),
+    PickerTextStart(value) {
+      if (value) {
+        if (typeof value === "object" && "month" in value) {
+          return `${value.year}-${
+            value.month <= 8 ? `0${value.month + 1}` : value.month + 1
+          }`;
+        } else {
+          return value;
+        }
+      }
+    },
     async startHarvest() {
       // if in reharvest mode, delete existing data first
       if (
@@ -411,4 +523,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.text_date {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+</style>

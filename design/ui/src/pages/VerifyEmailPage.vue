@@ -24,13 +24,12 @@ cs:
           />
         </v-col>
       </v-row>
-
       <v-row>
         <v-col v-if="!attemptFinished && key">
-          Verifying your email <v-icon class="ml-4">fa-spinner fa-spin</v-icon>
+          Verifying your email
+          <v-icon class="ml-4">fa fa-spinner fa-spin</v-icon>
         </v-col>
       </v-row>
-
       <v-row>
         <v-col>
           <v-alert v-if="!key" type="error">
@@ -77,7 +76,7 @@ export default {
         await axios.post(
           "/api/user/verify-email-code",
           { key: this.key },
-          { privileged: true }
+          { privileged: true },
         );
         this.attemptFinished = true;
         this.emailVerified = true;

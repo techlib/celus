@@ -5,6 +5,7 @@ en:
 cs:
   headers: Hlavičky
 </i18n>
+
 <template>
   <div v-if="attempt && !isEmpty(attempt.extracted_data)">
     <span class="font-weight-bold pr-4"
@@ -16,6 +17,7 @@ cs:
     </span>
   </div>
 </template>
+
 <script>
 import isArray from "lodash/isArray";
 import isEmpty from "lodash/isEmpty";
@@ -34,8 +36,8 @@ export default {
       return Object.entries(
         counterHeaderRepr(
           this.attempt.extracted_data,
-          counterVersionToStr(this.counterReportVersion)
-        )
+          counterVersionToStr(this.counterReportVersion),
+        ),
       );
     },
   },

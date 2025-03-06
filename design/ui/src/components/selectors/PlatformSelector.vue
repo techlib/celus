@@ -1,39 +1,40 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <v-autocomplete
-    autofocus
     :items="platforms"
     item-value="pk"
-    item-text="name"
+    item-title="name"
     :label="shownLabel"
     v-model="selectedPlatform"
     :loading="loading"
     clearable
     :filter="filter"
     :return-object="returnObject"
-    :dense="dense"
     :height="height"
     ref="platformSelector"
-    clear-icon="fa-times"
+    clear-icon="fas fa-times"
+    density="default"
+    :menu-props="{ eager: true }"
   >
-    <template v-slot:item="{ item }">
-      <v-list-item-content>
-        <v-list-item-title>
-          <ItemBadge :item="item" tag="span" />
-        </v-list-item-title>
-        <v-list-item-subtitle>
-          {{ item.short_name }}
-        </v-list-item-subtitle>
-      </v-list-item-content>
+    <template v-slot:item="{ props, item }">
+      <v-list-item v-bind="props" title="">
+        <div class="d-flex flex-column justify-lg-start">
+          <ItemBadge :item="item.raw" tag="span"></ItemBadge>
+          <span class="subtitle">
+            {{ item.raw.short_name }}
+          </span>
+        </div>
+      </v-list-item>
     </template>
-
     <template #prepend-item>
       <slot name="prepend"></slot>
     </template>
   </v-autocomplete>
 </template>
+
 <script>
 import ItemBadge from "@/components/util/ItemBadge";
 import AddPlatformButton from "@/components/AddPlatformButton.vue";
@@ -50,17 +51,17 @@ export default {
   props: {
     platforms: { type: Array, required: true },
     loading: { default: false, type: Boolean },
-    value: { default: null, type: Number | Object },
+    modelValue: { default: null, type: [Number, Object] },
     label: { default: null, type: String },
     returnObject: { default: false, type: Boolean },
     dense: { default: false, type: Boolean },
-    height: { default: null, type: Number | String },
+    height: { default: null, type: [Number, String] },
     allowCreate: { default: false, type: Boolean },
   },
 
   data() {
     return {
-      selectedPlatform: this.value,
+      selectedPlatform: this.modelValue,
     };
   },
 
@@ -87,11 +88,22 @@ export default {
 
   watch: {
     selectedPlatform() {
-      this.$emit("input", this.selectedPlatform);
+      this.$emit("update:modelValue", this.selectedPlatform);
     },
-    value() {
-      this.selectedPlatform = this.value;
+    modelValue() {
+      this.selectedPlatform = this.modelValue;
     },
   },
 };
 </script>
+
+<style scoped>
+.margin-right-negative {
+  margin-left: -30px;
+}
+
+.subtitle {
+  font-size: 80%;
+  color: rgba(0, 0, 0, 0.5);
+}
+</style>

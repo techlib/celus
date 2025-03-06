@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   sushi_fetch_attempts: Sushi fetch attempts
@@ -40,14 +42,16 @@ cs:
               :counter-version="counterVersion"
               :month="month"
               :from-date="fromDate"
-            />
+            ></SushiCredentialsOverviewHeaderWidget>
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="12" md="6">
             <v-container fluid class="pa-0">
               <v-row justify="end">
                 <v-col cols="auto" class="py-0">
-                  <FetchAttemptModeFilter v-model="historyMode" />
+                  <FetchAttemptModeFilter
+                    v-model="historyMode"
+                  ></FetchAttemptModeFilter>
                 </v-col>
               </v-row>
             </v-container>
@@ -58,115 +62,137 @@ cs:
             <v-data-table
               :items="filteredIntentions"
               :headers="headers"
-              show-expand
-              :expanded.sync="expandedRows"
+              v-model:expanded="expandedRows"
               item-key="pk"
-              :sort-by.sync="orderBy"
-              :sort-desc.sync="orderDesc"
-              :items-per-page.sync="pageSize"
+              item-value="pk"
+              v-model:sort-by="orderBy"
+              @sort-desc="orderDesc"
+              v-model:items-per-page="pageSize"
               :loading="loading"
               :footer-props="{ itemsPerPageOptions: [5, 10, 25] }"
               :server-items-length="intentionCount"
-              :page.sync="page"
+              v-model:page="page"
+              density="default"
             >
-              <template #item.counter_report_verbose.counter_version="{ item }">
+              <template v-slot:[`item.data-table-expand`]="{ item }">
+                <v-btn
+                  icon
+                  variant="text"
+                  size="small"
+                  @click="toggleExpand(item)"
+                >
+                  <v-icon>
+                    {{
+                      expandedRows.includes(item.pk)
+                        ? "fas fa-caret-down"
+                        : "fas fa-caret-right"
+                    }}
+                  </v-icon>
+                </v-btn>
+              </template>
+              <template
+                v-slot:[`item.counter_report_verbose.counter_version`]="{
+                  item,
+                }"
+              >
                 <strong>{{
                   counterVersionToStr(
-                    item.counter_report_verbose.counter_version
+                    item.counter_report_verbose.counter_version,
                   )
                 }}</strong>
               </template>
-              <template #item.status="{ item }">
-                <SushiFetchIntentionStateIcon :intention="item" />
+              <template #[`item.status`]="{ item }">
+                <SushiFetchIntentionStateIcon
+                  :intention="item"
+                ></SushiFetchIntentionStateIcon>
               </template>
-              <template #item.timestamp="{ item }">
+              <template #[`item.timestamp`]="{ item }">
                 <span
                   v-html="
                     item.attempt && formatDateTime(item.attempt.timestamp)
                   "
                 ></span>
               </template>
-              <template #expanded-item="{ item, headers }">
-                <td :colspan="headers.length">
-                  <div class="d-flex justify-space-between">
-                    <div>
-                      <div class="d-flex" v-if="item.attempt.log">
-                        <div class="font-weight-bold pr-2">
-                          {{ $t("title_fields.log") }}
+              <template #expanded-row="{ item, columns }">
+                <tr class="item_expanded_space">
+                  <td :colspan="columns.length">
+                    <div class="d-flex justify-space-between py-4">
+                      <div>
+                        <div class="d-flex" v-if="item.attempt.log">
+                          <div class="font-weight-bold pr-2">
+                            {{ $t("title_fields.log") }}
+                          </div>
+                          <div class="pre">
+                            {{ item.attempt.log }}
+                          </div>
                         </div>
-                        <div class="pre">
-                          {{ item.attempt.log }}
-                        </div>
+                        <!-- extracted data -->
+                        <AttemptExtractedData
+                          :attempt="item.attempt"
+                          :counter-report-version="item.counter_report_version"
+                        />
                       </div>
-                      <!-- extracted data -->
-                      <AttemptExtractedData
-                        :attempt="item.attempt"
-                        :counter-report-version="item.counter_report_version"
-                      />
+                      <div class="ml-auto" v-if="!!item.attempt.used_url">
+                        <a :href="item.attempt.used_url" target="_blank">
+                          {{ $t("used_url") }}
+                        </a>
+                      </div>
+                      <div class="ml-auto">
+                        <a
+                          v-if="item.attempt && item.attempt.data_file"
+                          :href="item.attempt.data_file"
+                          target="_blank"
+                        >
+                          {{ $t("data_file") }}</a
+                        ><span class="caption">
+                          ({{ filesize(item.attempt.file_size) }})</span
+                        >
+                      </div>
                     </div>
-                    <div class="ml-auto" v-if="!!item.attempt.used_url">
-                      <a :href="item.attempt.used_url" target="_blank">
-                        {{ $t("used_url") }}
-                      </a>
-                    </div>
-                    <div class="ml-auto">
-                      <a
-                        v-if="item.attempt && item.attempt.data_file"
-                        :href="item.attempt.data_file"
-                        target="_blank"
-                      >
-                        {{ $t("data_file") }}</a
-                      ><span class="caption">
-                        ({{ filesize(item.attempt.file_size) }})</span
-                      >
-                    </div>
-                  </div>
-                </td>
+                  </td>
+                </tr>
               </template>
-              <template #item.data-table-expand="{ isExpanded, expand }">
-                <v-icon @click="expand(!isExpanded)" small>{{
-                  isExpanded ? "fa-angle-down" : "fa-angle-right"
-                }}</v-icon>
-              </template>
-              <template #item.actions="{ item }">
+              <template #[`item.actions`]="{ item }">
                 <v-tooltip
-                  bottom
+                  location="bottom"
                   v-if="item.attempt && item.attempt.import_batch"
                 >
-                  <template v-slot:activator="{ on }">
+                  <template v-slot:activator="{ props }">
                     <v-btn
                       icon
-                      small
+                      size="small"
                       color="secondary"
                       @click.stop="
                         selectedBatch = item.attempt.import_batch;
                         dialogType = 'data';
                         showBatchDialog = true;
                       "
-                      v-on="on"
+                      v-bind="props"
+                      variant="text"
                     >
-                      <v-icon small>fa-microscope</v-icon>
+                      <v-icon size="small">fa fa-microscope</v-icon>
                     </v-btn>
                   </template>
                   <span>{{ $t("show_raw_data") }}</span>
                 </v-tooltip>
                 <v-tooltip
-                  bottom
+                  location="bottom"
                   v-if="item.attempt && item.attempt.import_batch"
                 >
-                  <template v-slot:activator="{ on }">
+                  <template v-slot:activator="{ props }">
                     <v-btn
                       icon
-                      small
+                      variant="text"
+                      size="small"
                       color="secondary"
                       @click.stop="
                         selectedBatch = item.attempt.import_batch;
                         dialogType = 'chart';
                         showBatchDialog = true;
                       "
-                      v-on="on"
+                      v-bind="props"
                     >
-                      <v-icon small>fa-chart-bar</v-icon>
+                      <v-icon size="small">fas fa-chart-bar</v-icon>
                     </v-btn>
                   </template>
                   <span>{{ $t("show_chart") }}</span>
@@ -179,9 +205,15 @@ cs:
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn @click="$emit('close')" class="mb-3 mr-4">{{ $t("close") }}</v-btn>
+      <v-btn
+        @click="$emit('close')"
+        variant="flat"
+        color="defaultButton"
+        elevation="2"
+        class="mb-3 mr-4"
+        >{{ $t("close") }}</v-btn
+      >
     </v-card-actions>
-
     <v-dialog v-model="showBatchDialog" v-if="showBatchDialog">
       <v-card>
         <v-card-text class="pb-0">
@@ -189,18 +221,23 @@ cs:
             <AccessLogList
               v-if="dialogType === 'data'"
               :import-batch="selectedBatch"
-            />
+            ></AccessLogList>
             <ImportBatchChart
               v-else-if="dialogType === 'chart'"
               :import-batch-id="selectedBatch"
-            />
+            ></ImportBatchChart>
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showBatchDialog = false" class="mb-3 mr-4">{{
-            $t("actions.close")
-          }}</v-btn>
+          <v-btn
+            @click="showBatchDialog = false"
+            class="mb-3 mr-4"
+            variant="flat"
+            elevation="2"
+            color="defaultButton"
+            >{{ $t("actions.close") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -217,7 +254,7 @@ import SushiFetchIntentionStateIcon from "@/components/sushi/SushiFetchIntention
 import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCredentialsOverviewHeaderWidget";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
-import filesize from "filesize";
+import { filesize } from "filesize";
 import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
@@ -248,7 +285,7 @@ export default {
       intentionCount: 0,
       showSuccess: true,
       showFailure: true,
-      orderBy: ["timestamp"],
+      orderBy: [{ key: "timestamp", order: "asc" }],
       orderDesc: [true],
       pageSize: 5,
       page: 1,
@@ -302,7 +339,8 @@ export default {
       if (this.orderBy.length) {
         // some order_by's have to be remapped for the backend to understand it
         let order_by_param =
-          typeof this.orderBy === "object" ? this.orderBy[0] : this.orderBy;
+          typeof this.orderBy === "object" ? this.orderBy[0].key : this.orderBy;
+        console.debug(order_by_param, this.orderingRemap.has(order_by_param));
         if (this.orderingRemap.has(order_by_param))
           order_by_param = this.orderingRemap.get(order_by_param);
         base += `&order_by=${order_by_param}`;
@@ -315,46 +353,62 @@ export default {
     headers() {
       let ret = [
         {
-          text: this.$t("title_fields.status"),
+          title: "",
+          value: "data-table-expand",
+          align: "start",
+          sortable: false,
+        },
+        {
+          title: this.$t("title_fields.status"),
           value: "status",
           sortable: false,
         },
         {
-          text: this.$t("timestamp"),
+          title: this.$t("timestamp"),
           value: "timestamp",
+          key: "timestamp",
         },
         {
-          text: this.$t("title_fields.start_date"),
+          title: this.$t("title_fields.start_date"),
           value: "start_date",
+          key: "start_date",
         },
         {
-          text: this.$t("title_fields.end_date"),
+          title: this.$t("title_fields.end_date"),
           value: "end_date",
+          key: "end_date",
         },
         {
-          text: this.$t("title_fields.error_code"),
+          title: this.$t("title_fields.error_code"),
           value: "error_code",
+          key: "error_code",
         },
       ];
       if (!this.organization) {
-        ret.push({ text: this.$t("organization"), value: "organization.name" });
+        ret.push({
+          title: this.$t("organization"),
+          value: "organization.name",
+          key: "organization.name",
+        });
       }
       if (!this.report) {
         ret.push({
-          text: this.$t("report"),
+          title: this.$t("report"),
           value: "counter_report_verbose.code",
+          key: "counter_report_verbose.code",
         });
       }
       if (!this.counterVersion) {
         ret.push({
-          text: this.$t("title_fields.counter_version"),
+          title: this.$t("title_fields.counter_version"),
           value: "counter_report_verbose.counter_version",
           align: "center",
         });
       }
       ret.push({
-        text: this.$t("title_fields.actions"),
+        title: this.$t("title_fields.actions"),
         value: "actions",
+        key: "actions",
         sortable: false,
       });
 
@@ -378,6 +432,14 @@ export default {
     }),
     counterVersionToStr(value) {
       return counterVersionToStr(value);
+    },
+    toggleExpand(item) {
+      const index = this.expandedRows.indexOf(item.pk);
+      if (index > -1) {
+        this.expandedRows.splice(index, 1);
+      } else {
+        this.expandedRows.push(item.pk);
+      }
     },
     async loadIntentions() {
       if (!this.listUrl) {

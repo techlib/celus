@@ -2,18 +2,20 @@
 en:
   number_of_platforms: Number of platforms using this report in the selected period.
   number_of_organizations: Number of organizations using this report in the selected period.
+  date_range: Date range
 
 cs:
   number_of_platforms: Počet platforem používajících tento report ve zvoleném období.
   number_of_organizations: Počet organizací používajících tento report ve zvoleném období.
+  date_range: Rozmezí dat
 </i18n>
 
 <template>
   <v-card
     class="pt-4 d-flex flex-column justify-space-between"
     :class="selected ? 'selected' : ''"
-    @[clickHandler]="$emit('click', { reportType })"
     :elevation="el"
+    @[clickHandler]="$emit('click', { reportType })"
   >
     <div
       v-if="selected"
@@ -23,14 +25,23 @@ cs:
         >fa fa-sync-alt {{ refreshingComputed ? "fa-spin" : "" }}</v-icon
       >
     </div>
-    <CoverageScoreGauge
-      :value="data ? data.ratio : null"
-      :loading="!data || refreshingComputed"
-    />
+    <v-tooltip location="top">
+      <template #activator="{ props }">
+        <CoverageScoreGauge
+          :loading="!data || refreshingComputed"
+          :model-value="data ? data.ratio : null"
+          v-bind="props"
+        ></CoverageScoreGauge>
+      </template>
+      <span v-if="selectedDateRange"
+        >{{ $t("date_range") }}: {{ selectedDateRange.start }} -
+        {{ selectedDateRange.end }}</span
+      >
+    </v-tooltip>
     <v-card-text class="text-center">
-      <v-tooltip bottom>
-        <template #activator="{ on }">
-          <div class="font-weight-bold" v-on="on">
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
+          <div class="font-weight-bold" v-bind="props">
             <span v-if="label">{{ label }}</span>
             <span v-else-if="reportType">
               <span class="font-weight-light"
@@ -52,19 +63,19 @@ cs:
       class="font-weight-light text-caption d-flex justify-space-between"
       v-if="data"
     >
-      <v-tooltip bottom v-if="showPlatformCount">
-        <template #activator="{ on }">
-          <div class="mx-1" v-on="on">
-            <v-icon x-small class="pb-1">fa fa-list-alt</v-icon>
+      <v-tooltip location="bottom" v-if="showPlatformCount">
+        <template #activator="{ props }">
+          <div class="mx-1" v-bind="props">
+            <v-icon size="x-small" class="pb-1">fa fa-list-alt</v-icon>
             {{ data.platform_count }}
           </div>
         </template>
         <span>{{ $t("number_of_platforms") }}</span>
       </v-tooltip>
-      <v-tooltip bottom v-if="showOrganizationCount">
-        <template #activator="{ on }">
-          <div class="mx-1" v-on="on">
-            <v-icon x-small class="pb-1">fa fa-university</v-icon>
+      <v-tooltip location="bottom" v-if="showOrganizationCount">
+        <template #activator="{ props }">
+          <div class="mx-1" v-bind="props">
+            <v-icon size="x-small" class="pb-1">fa fa-university</v-icon>
             {{ data.org_count }}
           </div>
         </template>
@@ -110,6 +121,10 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    selectedDateRange: {
+      type: Object,
+      default: null,
+    },
     selected: {
       type: Boolean,
       default: false,
@@ -147,7 +162,13 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    elevation: {
+      type: Number,
+      default: null,
+    },
   },
+
+  emits: ["click"],
 
   data() {
     return {

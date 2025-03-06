@@ -1,10 +1,11 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <component :is="tag">
-    <v-tooltip bottom max-width="600px" v-if="badgeInfo">
-      <template #activator="{ on }">
+    <v-tooltip max-width="600px" v-if="badgeInfo" location="bottom">
+      <template #activator="{ props }">
         <span :class="innerClass">{{ item.name }}</span>
         <v-badge
           :inline="badgeInline"
@@ -13,7 +14,7 @@
           :class="badgeClass"
         >
           <template v-slot:badge>
-            <span v-on="on">{{ $t(badgeInfo.content) }}</span>
+            <span v-bind="props">{{ $t(badgeInfo.content) }}</span>
           </template>
         </v-badge>
       </template>
@@ -44,3 +45,9 @@ export default {
   },
 };
 </script>
+
+<style>
+.badge_manual {
+  height: 30px;
+}
+</style>

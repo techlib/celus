@@ -1,15 +1,19 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
 
 <template>
   <v-dialog v-model="show" max-width="640px">
     <ReportNamingWidget
       :loading="justCopying"
       :name="newTitle"
-      :ownership-type="ownershipType"
+      v-model:ownership-type="ownershipType"
       @cancel="show = false"
       @update="copyReport"
+      :copyReport="true"
+      :reportAccess="this.report.accessLevel"
     >
       <template #top>
         <span v-text="$t('original_title')"></span>:
@@ -18,6 +22,7 @@
     </ReportNamingWidget>
   </v-dialog>
 </template>
+
 <script>
 import cloneDeep from "lodash/cloneDeep";
 import { mapState } from "vuex";
@@ -32,13 +37,13 @@ export default {
   components: { ReportNamingWidget },
 
   props: {
-    value: { required: true, type: Boolean },
+    modelValue: { required: true, type: Boolean },
     report: { required: true, type: Object },
   },
 
   data() {
     return {
-      show: this.value,
+      show: this.modelValue,
       newTitle: this.report.name,
       ownershipType: "user",
       justCopying: false,
@@ -49,7 +54,6 @@ export default {
   computed: {
     ...mapState(["user"]),
   },
-
   methods: {
     async copyReport(title, access) {
       this.justCopying = true;
@@ -59,7 +63,7 @@ export default {
       newReport.owner = access.owner;
       newReport.ownerOrganization = access.owner_organization;
       try {
-        newReport.save();
+        await newReport.save();
         this.$emit("copySuccess", newReport);
       } catch (error) {
         this.$emit("error", error);
@@ -70,11 +74,11 @@ export default {
   },
 
   watch: {
-    value() {
-      this.show = this.value;
+    modelValue() {
+      this.show = this.modelValue;
     },
     show() {
-      this.$emit("input", this.show);
+      this.$emit("update:modelValue", this.show);
     },
     report() {
       this.newTitle = this.report.name;

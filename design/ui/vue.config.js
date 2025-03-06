@@ -55,7 +55,7 @@ module.exports = {
   configureWebpack: {
     plugins: [
       new BundleAnalyzerPlugin(
-        process.env.BUILD == "yes" ? { analyzerMode: "disabled" } : {}
+        process.env.BUILD == "yes" ? { analyzerMode: "disabled" } : {},
       ),
       new webpack.DefinePlugin({
         GIT_VERSION: JSON.stringify(`${process.env.GIT_VERSION || ""}`),
@@ -63,7 +63,7 @@ module.exports = {
         GIT_BRANCH: JSON.stringify(`${process.env.GIT_BRANCH || ""}`),
         SENTRY_URL: JSON.stringify(`${process.env.SENTRY_URL_JS || ""}`),
         SENTRY_ENVIRONMENT: JSON.stringify(
-          `${process.env.SENTRY_ENVIRONMENT || ""}`
+          `${process.env.SENTRY_ENVIRONMENT || ""}`,
         ),
       }),
     ],

@@ -1,13 +1,9 @@
 <template>
-  <v-icon
-    class="button-icon px-1"
-    :disabled="disabled"
-    v-on="$listeners"
-    v-ripple
-  >
+  <v-icon class="button-icon px-1" :disabled="disabled" v-ripple>
     <slot> </slot>
   </v-icon>
 </template>
+
 <script>
 export default {
   name: "IconButton",
@@ -17,6 +13,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss" scoped>
 .button-icon {
   cursor: pointer;

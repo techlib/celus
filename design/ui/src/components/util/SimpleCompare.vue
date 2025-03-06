@@ -3,17 +3,20 @@
     <span v-if="value == null">-</span>
     <div v-else>
       <span>{{ formatInteger(value) }}</span>
-      <v-tooltip bottom v-if="otherValueTooltip && otherValue && diff">
-        <template v-slot:activator="{ on }">
-          <span v-on="on" class="font-weight-light">
-            (<v-icon x-small :color="diffColor">{{ diffIcon }}</v-icon>
+      <v-tooltip
+        location="bottom"
+        v-if="otherValueTooltip && otherValue && diff"
+      >
+        <template v-slot:activator="{ props }">
+          <span v-bind="props" class="font-weight-light">
+            (<v-icon size="x-small" :color="diffColor">{{ diffIcon }}</v-icon>
             {{ formatInteger(diff) }})
           </span>
         </template>
         <span>{{ otherValueTooltip }}</span>
       </v-tooltip>
       <span v-else-if="diff">
-        (<v-icon x-small :color="diffColor">{{ diffIcon }}</v-icon>
+        (<v-icon size="x-small" :color="diffColor">{{ diffIcon }}</v-icon>
         {{ formatInteger(diff) }})
       </span>
     </div>

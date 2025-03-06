@@ -45,7 +45,6 @@
         </th>
       </tr>
     </table>
-
     <v-dialog v-model="showEditDialog" max-width="1000px">
       <v-card>
         <v-card-title>Edit setting</v-card-title>
@@ -60,35 +59,39 @@
               <td>{{ editedChart ? editedChart.name : "" }}</td>
             </tr>
           </table>
-
           <v-text-field
             type="number"
             v-model="editedPosition"
             :label="$t('labels.position')"
             class="pt-8"
           ></v-text-field>
-
           <CounterChartSet
             :fixed-chart="editedChart"
             :fixed-report-view="editedReportView"
-          />
+          ></CounterChartSet>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showEditDialog = false">{{
-            $t("actions.close")
-          }}</v-btn>
+          <v-btn
+            @click="showEditDialog = false"
+            variant="flat"
+            elevation="2"
+            color="defaultButton"
+            >{{ $t("actions.close") }}</v-btn
+          >
           <v-btn
             @click="
               storeReportViewToChart(
                 editedReportView.pk,
                 editedChart.pk,
-                editedPosition
+                editedPosition,
               );
               showEditDialog = false;
             "
             :disabled="forbiddenPositions.has(Number.parseInt(editedPosition))"
             color="success"
+            variant="flat"
+            elevation="2"
             >{{ $t("actions.save") }}</v-btn
           >
           <v-btn
@@ -97,6 +100,8 @@
               showEditDialog = false;
             "
             color="error"
+            variant="flat"
+            elevation="2"
           >
             {{ $t("actions.delete") }}
           </v-btn>
@@ -139,7 +144,7 @@ export default {
         for (let rec of result.data) {
           this.reportViewToChart.set(
             `${rec.report_data_view}-${rec.chart_definition}`,
-            rec
+            rec,
           );
         }
       } catch (error) {
@@ -209,8 +214,8 @@ export default {
           this.reportViewToChart = new Map(
             this.reportViewToChart.set(
               `${resp.data.report_data_view}-${resp.data.chart_definition}`,
-              resp.data
-            )
+              resp.data,
+            ),
           );
         } catch (error) {
           this.showSnackbar({
@@ -245,7 +250,7 @@ export default {
       let maxPosition = Math.max(
         ...Array.from(this.reportViewToChart.values())
           .filter((item) => item.report_data_view == viewId)
-          .map((item) => item.position)
+          .map((item) => item.position),
       );
       if (maxPosition < 0) {
         // in case of empty array Math.max returns -Infinity, we convert it to -1 here
@@ -257,16 +262,16 @@ export default {
       this.editedReportView = this.reportViews.get(viewId);
       this.editedChart = this.charts.get(chartId);
       this.editedPosition = this.reportViewToChart.get(
-        `${viewId}-${chartId}`
+        `${viewId}-${chartId}`,
       ).position;
       this.forbiddenPositions = new Set(
         Array.from(this.reportViewToChart.values())
           .filter(
             (item) =>
               item.report_data_view == viewId &&
-              item.position != this.editedPosition
+              item.position != this.editedPosition,
           )
-          .map((item) => item.position)
+          .map((item) => item.position),
       );
       this.showEditDialog = true;
     },

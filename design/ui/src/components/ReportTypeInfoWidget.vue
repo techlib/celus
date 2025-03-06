@@ -31,16 +31,15 @@ cs:
           $t("report_definition")
         }}</span>
       </v-card-title>
-
       <v-card-text>
         <table class="overview">
           <tr v-if="!hideImplicitDimensions" class="mb-2">
             <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <strong v-on="on">
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <strong v-bind="props">
                     {{ $t("standard_dimensions") }}
-                    <v-icon small>fa fa-info-circle</v-icon>
+                    <v-icon size="small">fa fa-info-circle</v-icon>
                   </strong>
                 </template>
                 {{ $t("standard_dimensions_info") }}
@@ -50,20 +49,20 @@ cs:
               <v-chip
                 v-for="dim in standardDimensions"
                 :key="reportType.pk + '-' + dim"
-                v-text="dim"
                 class="mr-1"
                 label
               >
+                {{ dim }}
               </v-chip>
             </td>
           </tr>
           <tr>
             <th>
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <strong v-on="on">
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <strong v-bind="props">
                     {{ $t("specific_dimensions") }}
-                    <v-icon small>fa fa-info-circle</v-icon>
+                    <v-icon size="small">fa fa-info-circle</v-icon>
                   </strong>
                 </template>
                 {{
@@ -77,10 +76,10 @@ cs:
               <v-chip
                 v-for="dim in specificDimensions"
                 :key="reportType.pk + '-' + dim"
-                v-text="dim"
                 class="mr-1"
                 label
               >
+                {{ dim }}
               </v-chip>
             </td>
             <td v-else>
@@ -93,10 +92,10 @@ cs:
               <v-chip
                 v-for="dim in interestMetrics"
                 :key="reportType.pk + '-' + dim"
-                v-text="dim"
                 class="mr-1"
                 label
               >
+                {{ dim }}
               </v-chip>
             </td>
             <td v-else>
@@ -129,7 +128,7 @@ export default {
   computed: {
     interestMetrics() {
       return this.reportType.interest_metric_set.map(
-        (item) => item.metric.name || item.metric.short_name
+        (item) => item.metric.name || item.metric.short_name,
       );
     },
 

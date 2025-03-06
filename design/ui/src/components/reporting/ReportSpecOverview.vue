@@ -1,9 +1,10 @@
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <div class="d-flex align-start">
-    <table class="overview text--secondary">
+    <table class="overview text-disabled">
       <tr>
         <th>{{ $t("labels.report_type") }}:</th>
         <td>
@@ -51,7 +52,7 @@
         <td>
           <ul class="unobtrusive-bullets">
             <li v-for="fltr in report.filters" :key="fltr.dimension.ref">
-              <FilterSpec :fltr="fltr" />
+              <FilterSpec :fltr="fltr"></FilterSpec>
             </li>
           </ul>
         </td>
@@ -76,9 +77,9 @@
             </li>
             <li v-if="report.tagRollUp">{{ $t("tag_roll_up_tt") }}</li>
             <li v-if="report.showUntaggedRemainder">
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <span v-on="on">{{ $t("tags_show_remainder") }}</span>
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <span v-bind="props">{{ $t("tags_show_remainder") }}</span>
                 </template>
                 {{ $t("tags_show_remainder_tt") }}
               </v-tooltip>
@@ -89,16 +90,17 @@
       <slot name="append"></slot>
     </table>
     <!-- second pane with filters -->
-    <div v-if="twoPanes" class="overview text--secondary ml-12">
+    <div v-if="twoPanes" class="overview text-disabled ml-12">
       <div class="font-weight-bold">{{ $t("labels.filters") }}:</div>
       <ul class="unobtrusive-bullets">
         <li v-for="fltr in report.filters" :key="fltr.dimension.ref">
-          <FilterSpec :fltr="fltr" />
+          <FilterSpec :fltr="fltr"></FilterSpec>
         </li>
       </ul>
     </div>
   </div>
 </template>
+
 <script>
 import { smartMonthRange } from "@/libs/dates";
 import FilterSpec from "@/components/reporting/FilterSpec.vue";

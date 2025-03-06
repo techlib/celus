@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   not_older_than: Not older than
@@ -12,32 +13,42 @@ cs:
 <template>
   <table class="overview">
     <tr v-if="credentialsName">
-      <th class="text-left">{{ $t("credentials_name") }}:</th>
-      <td>{{ credentialsName }}</td>
+      <th class="text-left text-medium-emphasis">
+        {{ $t("credentials_name") }}:
+      </th>
+      <td class="text-medium-emphasis">{{ credentialsName }}</td>
     </tr>
     <tr v-if="organization">
-      <th class="text-left">{{ $t("organization") }}:</th>
-      <td>{{ organization.name }}</td>
+      <th class="text-left text-medium-emphasis">{{ $t("organization") }}:</th>
+      <td class="text-medium-emphasis">{{ organization.name }}</td>
     </tr>
     <tr v-if="platform">
-      <th class="text-left">{{ $t("platform") }}:</th>
-      <td>{{ platform.name }}</td>
+      <th class="text-left text-medium-emphasis">{{ $t("platform") }}:</th>
+      <td class="text-medium-emphasis">{{ platform.name }}</td>
     </tr>
     <tr v-if="report">
-      <th class="text-left">{{ $t("labels.report_type") }}:</th>
-      <td>{{ report.name }}</td>
+      <th class="text-left text-medium-emphasis">
+        {{ $t("labels.report_type") }}:
+      </th>
+      <td class="text-medium-emphasis">{{ report.name }}</td>
     </tr>
     <tr v-if="counterVersion">
-      <th class="text-left">{{ $t("labels.counter_version") }}:</th>
-      <td>{{ counterVersionToStr(counterVersion) }}</td>
+      <th class="text-left text-medium-emphasis">
+        {{ $t("labels.counter_version") }}:
+      </th>
+      <td class="text-medium-emphasis">
+        {{ counterVersionToStr(counterVersion) }}
+      </td>
     </tr>
     <tr v-if="month">
-      <th class="text-left">{{ $t("month") }}:</th>
-      <td>{{ month.name }}</td>
+      <th class="text-left text-medium-emphasis">{{ $t("month") }}:</th>
+      <td class="text-medium-emphasis">{{ month.name }}</td>
     </tr>
     <tr v-if="fromDate">
-      <th class="text-left">{{ $t("not_older_than") }}:</th>
-      <td>{{ fromDate }}</td>
+      <th class="text-left text-medium-emphasis">
+        {{ $t("not_older_than") }}:
+      </th>
+      <td class="text-medium-emphasis">{{ fromDate }}</td>
     </tr>
   </table>
 </template>

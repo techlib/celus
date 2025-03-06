@@ -38,7 +38,7 @@ function startWs(token) {
         JSON.stringify({
           command: "subscribe",
           data: token,
-        })
+        }),
       );
     };
 
@@ -49,12 +49,12 @@ function startWs(token) {
       if (data.event) {
         console.log(`WS: New event received. Pushing to ${ports.length} ports`);
         ports.forEach((port) =>
-          port.postMessage({ type: "event", data: data })
+          port.postMessage({ type: "event", data: data }),
         );
         notify(data.event);
       } else if (data.type) {
         console.log(
-          `WS: New ${data.type} received. Pushing to ${ports.length} ports`
+          `WS: New ${data.type} received. Pushing to ${ports.length} ports`,
         );
         ports.forEach((port) => port.postMessage(data));
       }

@@ -1,41 +1,50 @@
 <template>
   <v-card>
     <v-card-text>
-      <v-btn-toggle v-model="viewType" class="float-sm-right">
-        <v-btn value="interest" small>
-          <v-icon small>fa fa-list</v-icon>
+      <v-btn-toggle
+        v-model="viewType"
+        class="float-sm-right"
+        density="compact"
+        variant="outlined"
+        divided
+      >
+        <v-btn value="interest" size="small">
+          <v-icon size="small" icon="fa fa-list"></v-icon>
         </v-btn>
-        <v-btn value="chart" small>
-          <v-icon small>fa fa-chart-bar</v-icon>
+        <v-btn value="chart" size="small">
+          <v-icon size="small" icon="fas fa-chart-bar"></v-icon>
         </v-btn>
-        <v-btn value="cost" small>
-          <v-icon small>fa fa-dollar-sign</v-icon>
+        <v-btn value="cost" size="small">
+          <v-icon size="small" icon="fa fa-dollar-sign"></v-icon>
         </v-btn>
       </v-btn-toggle>
-
       <div v-if="viewType === 'chart'" class="pt-10" style="min-height: 70vh">
         <PlatformInterestChart :platforms="platforms">
           <v-btn :href="platformInterestURL + '&format=csv'" color="secondary">
-            <v-icon left small>fas fa-file-export</v-icon>
+            <v-icon left size="small" class="mr-2">fas fa-file-export</v-icon>
             Export
           </v-btn>
         </PlatformInterestChart>
       </div>
       <div v-else-if="viewType === 'cost'">
-        <InterestGroupSelector />
-        <PlatformCostList :loading="loading" :platforms="platforms" />
+        <InterestGroupSelector></InterestGroupSelector>
+        <PlatformCostList
+          :loading="loading"
+          :platforms="platforms"
+        ></PlatformCostList>
       </div>
       <div v-else>
-        <InterestGroupSelector />
+        <InterestGroupSelector></InterestGroupSelector>
         <PlatformList
           :loading="loading"
           :platforms="platforms"
           @update-platforms="loadPlatforms"
-        />
+        ></PlatformList>
       </div>
     </v-card-text>
   </v-card>
 </template>
+
 <script>
 import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 import PlatformCostList from "@/components/PlatformCostList";
@@ -148,7 +157,7 @@ export default {
         for (let platform of this.platforms) {
           let newData = pkToRow[platform.pk];
           if (newData) {
-            this.$set(platform, "interests", newData);
+            platform["interests"] = newData;
           } else {
             platform.interests = createEmptyInterestRecord();
           }
@@ -193,13 +202,9 @@ export default {
           for (let platform of this.platforms) {
             let key = platform.pk.toString();
             if (key in response.data) {
-              this.$set(
-                platform,
-                "sushi_credentials_versions",
-                response.data[key]
-              );
+              platform["sushi_credentials_versions"] = response.data[key];
             } else {
-              this.$set(platform, "sushi_credentials_versions", {});
+              platform["sushi_credentials_versions"] = {};
             }
           }
         } else {
@@ -217,7 +222,7 @@ export default {
         this.annotations = {};
         // populate the this.annotations object
         for (let annot of response.data.filter(
-          (item) => item.platform != null
+          (item) => item.platform != null,
         )) {
           if (!(annot.platform.pk in this.annotations)) {
             this.annotations[annot.platform.pk] = [];
@@ -227,7 +232,7 @@ export default {
         // assign annotations to individual platform
         for (let platform of this.platforms) {
           if (platform.pk in this.annotations) {
-            this.$set(platform, "annotations", this.annotations[platform.pk]);
+            platform["annotations"] = this.annotations[platform.pk];
           }
         }
       } else {

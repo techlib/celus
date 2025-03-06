@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   no_report_defined: No report is assigned as defining interest for this platform. No interest will be extracted from this platform's data.
@@ -22,17 +23,19 @@ cs:
 <template>
   <v-data-table
     :items="visibleItems"
+    density="default"
     :headers="headers"
+    item-value="pk"
     :loading="loading"
     :search="search"
-    :expanded.sync="expanded"
-    show-expand
+    v-model:expanded="expanded"
     item-key="pk"
-    expand-icon="fa fa-caret-down"
+    expand-icon="fas fa-caret-down"
     :items-per-page="50"
     :footer-props="{ itemsPerPageOptions: [50, 100, -1] }"
-    :custom-filter="searchFilter"
+    @custom-filter="searchFilter"
     class="auto-table"
+    hover
   >
     <template #top>
       <v-row>
@@ -42,13 +45,23 @@ cs:
             :items="usedReports"
             :label="$t('report_filter')"
             item-value="pk"
-            item-text="short_name"
+            item-title="short_name"
+            style="min-width: 200px"
           >
-            <template #item="{ item }">
-              <v-list-item-content :class="item.special ? 'font-italic' : ''">
-                <span>{{ item.short_name }}</span>
-                <span class="text-caption">{{ item.name }}</span>
-              </v-list-item-content>
+            <template #item="{ item, props }">
+              <v-list-item v-bind="props" title="">
+                <div
+                  :class="item.raw.special ? 'font-italic' : ''"
+                  class="d-flex flex-column px-1 py-2"
+                >
+                  <span>
+                    {{ item.raw.short_name }}
+                  </span>
+                  <span style="font-size: 8px" class="text-caption">{{
+                    item.raw.name
+                  }}</span>
+                </div>
+              </v-list-item>
             </template>
           </v-select>
         </v-col>
@@ -56,21 +69,26 @@ cs:
         <v-col cols="4">
           <v-text-field
             v-model="search"
-            append-icon="fa-search"
             :label="$t('labels.search')"
             single-line
+            style="min-width: 85px"
             hide-details
             clearable
+            append-inner-icon="fa fa-search"
           >
           </v-text-field>
         </v-col>
       </v-row>
     </template>
-    <template v-slot:expanded-item="{ headers, item }">
-      <td :colspan="headers.length">
-        <div v-if="item.interest_reports.length > 0">
-          <v-list-item v-for="report in item.interest_reports" :key="report.pk">
-            <v-list-item-content>
+    <template v-slot:expanded-row="{ item, columns }">
+      <tr class="item_expanded_space">
+        <td :colspan="columns.length">
+          <div v-if="item.interest_reports.length > 0">
+            <v-list-item
+              v-for="report in item.interest_reports"
+              :key="report.pk"
+              class="py-3"
+            >
               <v-list-item-title>
                 {{ report.short_name }}:
                 <span class="font-weight-light">
@@ -83,15 +101,24 @@ cs:
                   v-for="im in report.interest_metric_set"
                   :key="im.metric.pk"
                   :metric="im.metric"
-                />
+                ></MetricChip>
               </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </div>
-        <div v-else class="pl-4 text--secondary">
-          {{ $t("no_report_defined") }}
-        </div>
-      </td>
+            </v-list-item>
+          </div>
+          <div v-else class="pl-4 text--secondary">
+            {{ $t("no_report_defined") }}
+          </div>
+        </td>
+      </tr>
+    </template>
+    <template v-slot:[`item.data-table-expand`]="{ item }">
+      <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
+        <v-icon>
+          {{
+            expanded.includes(item.pk) ? "fas fa-caret-up" : "fas fa-caret-down"
+          }}
+        </v-icon>
+      </v-btn>
     </template>
     <template v-slot:[`item.reports`]="{ item }">
       <ReportChip
@@ -103,7 +130,12 @@ cs:
       </ReportChip>
     </template>
     <template v-slot:[`item.actions`]="{ item }">
-      <v-icon small class="mr-2" @click="editItem(item)">fas fa-pen</v-icon>
+      <v-icon
+        size="small"
+        class="mr-2"
+        @click="editItem(item)"
+        icon="fas fa-pen"
+      ></v-icon>
     </template>
   </v-data-table>
 </template>
@@ -139,11 +171,18 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("platform"),
+          title: "",
+          value: "data-table-expand",
+          sortable: false,
+          align: "start",
+        },
+        {
+          title: this.$i18n.t("platform"),
+          sortable: true,
           value: "name",
         },
         {
-          text: this.$i18n.t("labels.report_type"),
+          title: this.$i18n.t("labels.report_type"),
           value: "reports",
           sortable: false,
         },
@@ -154,7 +193,7 @@ export default {
         return this.items.filter((item) => item.interest_reports.length === 0);
       if (this.selectedReport) {
         return this.items.filter((item) =>
-          item.interest_reports.find((ir) => ir.pk === this.selectedReport)
+          item.interest_reports.find((ir) => ir.pk === this.selectedReport),
         );
       }
       return this.items;
@@ -172,7 +211,7 @@ export default {
         let seenReports = new Map();
         this.items.forEach((item) => {
           item.interest_reports.sort((a, b) =>
-            a.short_name.localeCompare(b.short_name)
+            a.short_name.localeCompare(b.short_name),
           );
           item.interest_reports.forEach((ir) => {
             if (!seenReports.has(ir.short_name))
@@ -196,6 +235,14 @@ export default {
           },
           ...reportsSorted,
         ];
+      }
+    },
+    toggleExpand(item) {
+      const index = this.expanded.indexOf(item.pk);
+      if (index > -1) {
+        this.expanded.splice(index, 1);
+      } else {
+        this.expanded.push(item.pk);
       }
     },
     searchFilter(value, search, item) {

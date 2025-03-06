@@ -1,5 +1,7 @@
 <template>
-  <SushiCredentialsMonthOverviewWidget :organization-id="organizationId" />
+  <SushiCredentialsMonthOverviewWidget
+    :organization-id="organizationId"
+  ></SushiCredentialsMonthOverviewWidget>
 </template>
 
 <script>

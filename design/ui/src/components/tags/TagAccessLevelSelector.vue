@@ -4,24 +4,25 @@
   <v-select
     v-model="accessLevel"
     :items="assignableTagAccessLevels"
+    item-title="text"
     :label="label"
     :disabled="assignableTagAccessLevels.length <= 0"
   >
-    <template #item="{ item }">
-      <v-list-item-content>
-        <v-list-item-title>{{ item.text }}</v-list-item-title>
+    <template #item="{ props, item }">
+      <v-list-item v-bind="props">
         <v-list-item-subtitle
           v-if="
-            item.value === accessLevels.ORG_USERS ||
-            item.value === accessLevels.ORG_ADMINS
+            item.raw.value === accessLevels.ORG_USERS ||
+            item.raw.value === accessLevels.ORG_ADMINS
           "
         >
           {{ selectedOrganization.name }}
         </v-list-item-subtitle>
-      </v-list-item-content>
+      </v-list-item>
     </template>
   </v-select>
 </template>
+
 <script>
 import tagAccessLevels from "@/mixins/tagAccessLevels";
 import { mapGetters } from "vuex";
@@ -33,7 +34,7 @@ export default {
   mixins: [tagAccessLevels],
 
   props: {
-    value: { type: Number, default: accessLevels.OWNER },
+    modelValue: { type: Number, default: accessLevels.OWNER },
     label: { type: String, default: "" },
   },
 
@@ -49,10 +50,10 @@ export default {
     }),
     accessLevel: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
-      set(value) {
-        this.$emit("input", value);
+      set(modelValue) {
+        this.$emit("update:modelValue", modelValue);
       },
     },
   },

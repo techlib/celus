@@ -9,18 +9,18 @@ cs:
 </i18n>
 
 <template>
-  <v-tooltip bottom>
-    <template v-slot:activator="{ on }">
+  <v-tooltip location="bottom">
+    <template v-slot:activator="{ props }">
       <v-icon
-        small
-        :color="value ? trueColor : falseColor"
+        size="small"
+        :color="modelValue ? trueColor : falseColor"
         :class="extraClasses"
-        v-on="on"
+        v-bind="props"
       >
-        {{ value ? trueIcon : falseIcon }}
+        {{ modelValue ? trueIcon : falseIcon }}
       </v-icon>
     </template>
-    <span>{{ value ? trueTooltipFinal : falseTooltipFinal }}</span>
+    <span>{{ modelValue ? trueTooltipFinal : falseTooltipFinal }}</span>
   </v-tooltip>
 </template>
 
@@ -28,7 +28,7 @@ cs:
 export default {
   name: "CheckMark",
   props: {
-    value: { required: true, type: Boolean },
+    modelValue: { required: true, type: Boolean },
     extraClasses: { required: false, type: String },
     trueColor: { default: "grey darken-2" },
     falseColor: { default: "grey" },

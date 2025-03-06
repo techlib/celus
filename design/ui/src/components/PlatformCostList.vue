@@ -31,47 +31,57 @@ cs:
     váhy k nastavení relativní ceny jednotek jednotlivých druhů zájmu.
   without_vat: Bez DPH
 </i18n>
+
 <template>
   <v-container fluid class="pt-0">
     <v-row>
       <v-col cols="auto">
         <span v-text="$t('year') + ':'" class="mr-2"></span>
-        <v-btn-toggle v-model="selectedYear" mandatory dense>
-          <v-btn
-            v-for="year in availableYears"
-            :key="year"
-            :value="year"
-            v-text="year"
-          ></v-btn>
+        <v-btn-toggle
+          v-model="selectedYear"
+          mandatory="force"
+          density="compact"
+          variant="outlined"
+          divided
+        >
+          <v-btn v-for="year in availableYears" :key="year" :value="year">{{
+            year
+          }}</v-btn>
         </v-btn-toggle>
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="auto">
         <!--v-text-field
                         v-model="search"
-                        append-icon="fa-search"
+                        append-icon="fa fa-search"
                         :label="$t('labels.search')"
                         class="pt-0"
                 ></v-text-field-->
         <v-switch
           v-model="onlyWithPrice"
           :label="$t('only_with_price')"
-          dense
+          density="default"
           class="mt-0"
+          color="primary"
         >
         </v-switch>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="auto">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <span v-on="on">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
+            <span v-bind="props">
               {{ $t("weights") }}
-              <v-icon small color="blue">fa fa-info-circle</v-icon>:
+              <v-icon
+                size="small"
+                color="blue"
+                icon="fa fa-info-circle"
+              ></v-icon
+              >:
             </span>
           </template>
-          <span v-text="$t('weights_tooltip')"></span>
+          <span>{{ $t("weights_tooltip") }}</span>
         </v-tooltip>
       </v-col>
       <v-col
@@ -85,7 +95,7 @@ cs:
           v-model="interestWeights[group.short_name]"
           :label="group.name"
           type="number"
-          dense
+          density="compact"
         >
         </v-text-field>
       </v-col>
@@ -98,10 +108,10 @@ cs:
           :hide-default-footer="true"
           :items-per-page="-1"
           :search="search"
-          sort-by="name"
           :loading="loading"
+          v-model:sort-by="sortBy"
         >
-          <template v-slot:item.name="props">
+          <template v-slot:[`item.name`]="props">
             <router-link
               :to="{
                 name: 'platform-detail',
@@ -112,82 +122,84 @@ cs:
           </template>
           <template
             v-for="ig in activeInterestGroups"
+            :key="ig.pk"
             v-slot:[slotName(ig)]="{ item }"
           >
-            <v-fade-transition :key="ig.pk" leave-absolute>
+            <v-fade-transition leave-absolute>
               <span
                 v-if="item.interests.loading"
                 class="fas fa-spinner fa-spin subdued"
                 :key="ig.pk + '-' + selectedYear"
               ></span>
-              <span
-                v-else-if="item.yearInterest"
-                :key="ig.pk + '-' + selectedYear"
-              >
+              <span v-else-if="item.yearInterest">
                 {{ formatInteger(item.yearInterest[ig.short_name]) }}
               </span>
-              <span v-else :key="ig.pk + '-' + selectedYear">-</span>
+              <span v-else>-</span>
             </v-fade-transition>
           </template>
           <template
             v-for="ig in activeInterestGroups"
+            :key="ig.pk"
             v-slot:[slotName2(ig)]="{ item }"
           >
-            <v-fade-transition :key="ig.pk" leave-absolute>
+            <v-fade-transition leave-absolute>
               <span
                 v-if="
                   item.price &&
                   item.yearInterest &&
                   item.yearInterest[ig.short_name]
                 "
-                :key="ig.pk + '-' + selectedYear"
+                :key="ig.pk + '-' + selectedYear + 'price'"
               >
-                {{
-                  item.pricePerUnitInterest[ig.short_name] | smartFormatFloat
-                }}
+                {{ smartFormatFloat(item.pricePerUnitInterest[ig.short_name]) }}
               </span>
               <span v-else :key="ig.pk + '-' + selectedYear">-</span>
             </v-fade-transition>
           </template>
           <template
             v-for="ig in activeInterestGroups"
+            :key="ig.pk"
             v-slot:[slotName3(ig)]="{ item }"
           >
-            <v-fade-transition :key="ig.pk" leave-absolute>
+            <v-fade-transition leave-absolute>
               <span
                 v-if="
                   item.price &&
                   item.yearInterest &&
                   item.yearInterest[ig.short_name]
                 "
-                :key="ig.pk + '-' + selectedYear"
+                :key="ig.pk + '-' + selectedYear + 'price'"
               >
                 {{
                   formatInteger(
                     item.pricePerUnitInterest[ig.short_name] *
-                      item.yearInterest[ig.short_name]
+                      item.yearInterest[ig.short_name],
                   )
                 }}
               </span>
               <span v-else :key="ig.pk + '-' + selectedYear">-</span>
             </v-fade-transition>
           </template>
-          <template v-slot:item.price="{ item }">
+          <template v-slot:[`item.price`]="{ item }">
             <span @click="editPrice(item)">
               <v-fade-transition leave-absolute>
                 <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
               </v-fade-transition>
               <span v-if="canEdit" class="align-top ml-1">
-                <v-icon x-small color="grey">fa fa-edit</v-icon>
+                <v-icon size="x-small" color="grey">fas fa-edit</v-icon>
               </span>
             </span>
           </template>
-          <template v-slot:header.price="{ header }">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <span v-on="on">
-                  {{ header.text }}
-                  <v-icon small color="grey">fa fa-info-circle</v-icon>
+          <template v-slot:[`header.price`]="{ column }">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props }">
+                <span v-bind="props">
+                  {{ column.title }}
+                  <v-icon
+                    size="small"
+                    color="grey"
+                    icon="fa fa-info-circle"
+                  ></v-icon>
                 </span>
               </template>
               {{ $t("without_vat") }}
@@ -204,10 +216,11 @@ cs:
         :year="selectedYear"
         @close="closeDialog"
         @save="savePrice"
-      />
+      ></EditPriceDialog>
     </v-dialog>
   </v-container>
 </template>
+
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import { formatInteger, smartFormatFloat } from "../libs/numbers";
@@ -232,6 +245,7 @@ export default {
       onlyWithPrice: false,
       showEditDialog: false,
       editedItem: null,
+      sortBy: [{ key: "name", order: "asc" }],
     };
   },
   computed: {
@@ -251,38 +265,43 @@ export default {
     headers() {
       let base = [
         {
-          text: this.$i18n.t("columns.name"),
+          title: this.$i18n.t("columns.name"),
           value: "name",
+          key: "name",
         },
       ];
       for (let ig of this.activeInterestGroups) {
         base.push({
-          text: ig.name,
+          title: ig.name,
           value: "interests." + ig.short_name,
           class: "wrap text-xs-right",
-          align: "right",
+          align: "end",
+          key: "interests." + ig.short_name,
         });
       }
       base.push({
-        text: this.$t("columns.price") + ` [${this.currency}]`,
+        title: this.$t("columns.price") + ` [${this.currency}]`,
         value: "price",
-        align: "right",
+        align: "end",
+        key: "price",
       });
       for (let ig of this.activeInterestGroups) {
         base.push({
-          text: this.$t("columns.price_per_unit") + ": " + ig.name,
+          title: this.$t("columns.price_per_unit") + ": " + ig.name,
           value: "pricePerUnitInterest." + ig.short_name,
           class: "wrap text-xs-right",
-          align: "right",
+          align: "end",
+          key: "pricePerUnitInterest." + ig.short_name,
         });
       }
       for (let ig of this.activeInterestGroups) {
         base.push({
-          text: this.$t("columns.price_for_interest") + ": " + ig.name,
+          title: this.$t("columns.price_for_interest") + ": " + ig.name,
           value: "pricePerInterest." + ig.short_name,
           class: "wrap text-xs-right",
-          align: "right",
-          // sortable: false,
+          align: "end",
+          key: "pricePerInterest." + ig.short_name,
+          sortable: false,
         });
       }
       return base;
@@ -374,6 +393,7 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    smartFormatFloat,
     formatInteger: formatInteger,
     slotName(ig) {
       return "item.interests." + ig.short_name;
@@ -420,7 +440,7 @@ export default {
     syncInterestWeights() {
       this.activeInterestGroups.forEach((item) => {
         if (!(item.short_name in this.interestWeights)) {
-          this.$set(this.interestWeights, item.short_name, "1");
+          this.interestWeights[item.short_name] = "1";
         }
       });
     },
@@ -478,9 +498,6 @@ export default {
       this.showEditDialog = false;
     },
   },
-  filters: {
-    smartFormatFloat,
-  },
   mounted() {
     this.fetchInterest();
     this.fetchPayments();
@@ -499,8 +516,13 @@ export default {
   },
 };
 </script>
-<style lang="scss">
+
+<style lang="scss" scoped>
 span.align-top .v-icon {
   vertical-align: baseline;
+}
+
+:deep(.v-table > .v-table__wrapper > table > thead > tr > th) {
+  font-size: 12px;
 }
 </style>

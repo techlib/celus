@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   preparing_data: Preparing data. Please wait, it may take a while.
@@ -29,59 +30,62 @@ cs:
 
 <template>
   <div>
-    <TitleTypeFilterWidget class="mb-6" v-model="selectedPubTypes" />
-
-    <v-alert v-if="selectedPubTypes.length === 0" type="info" outlined>
+    <TitleTypeFilterWidget
+      class="mb-6"
+      v-model="selectedPubTypes"
+    ></TitleTypeFilterWidget>
+    <v-alert
+      v-if="selectedPubTypes.length === 0"
+      type="info"
+      variant="outlined"
+      icon="fa fa-exclamation-circle"
+    >
       {{ $t("warnings.select_one_title_type") }}
     </v-alert>
-
     <div v-else>
       <LoaderWidget
         v-if="loading || preparingData"
         :text="$t('preparing_data')"
         show-progress
         :progress="loadingProgress"
-      />
-
+      ></LoaderWidget>
       <div v-else>
         <div class="pb-3">
           <span class="font-weight-bold">Total interest</span>:
           {{ formatInteger(this.totalInterest) }}
         </div>
-
         <table v-if="pyramid" class="pyramid">
           <thead>
             <tr>
               <th></th>
               <th>
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
-                    <span v-on="on">{{ $t("new_interest") }}</span>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ $t("new_interest") }}</span>
                   </template>
                   {{ $t("new_interest_tt") }}
                 </v-tooltip>
               </th>
               <th>
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
-                    <span v-on="on">{{ $t("new_titles") }}</span>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ $t("new_titles") }}</span>
                   </template>
                   {{ $t("new_titles_tt") }}
                 </v-tooltip>
               </th>
               <th>
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
-                    <span v-on="on">{{ $t("new_interest_perc") }}</span>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ $t("new_interest_perc") }}</span>
                   </template>
                   {{ $t("new_interest_perc_tt") }}
                 </v-tooltip>
               </th>
-
               <th>
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
-                    <span v-on="on">{{ $t("cum_interest") }}</span>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ $t("cum_interest") }}</span>
                   </template>
                   {{ $t("cum_interest_tt") }}
                 </v-tooltip>
@@ -92,12 +96,12 @@ cs:
             <tr v-for="(level, index) in pyramid" :key="level.platform.pk">
               <th>{{ level.platform.short_name }}</th>
               <td class="text-right">
-                <v-tooltip bottom max-width="360px">
-                  <template #activator="{ on }">
-                    <span v-on="on">{{ formatInteger(level.score) }}</span>
+                <v-tooltip location="bottom" max-width="360px">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ formatInteger(level.score) }}</span>
                   </template>
-                  <i18n
-                    :path="
+                  <i18n-t
+                    :keypath="
                       index === 0
                         ? 'new_interest_value_tt_first'
                         : 'new_interest_value_tt'
@@ -110,17 +114,19 @@ cs:
                     <template #value>
                       {{ formatInteger(level.score) }}
                     </template>
-                  </i18n>
+                  </i18n-t>
                 </v-tooltip>
               </td>
               <td class="text-right">{{ formatInteger(level.newTitles) }}</td>
               <td class="text-right">{{ level.relativeScoreStr }}</td>
               <td class="borderless pl-2" style="min-width: 100px">
                 <v-progress-linear
-                  color="orange darken-1"
+                  color="orange-darken-1"
                   height="16"
                   :buffer-value="100 * level.relativeScoreCum"
-                  :value="100 * (level.relativeScoreCum - level.relativeScore)"
+                  :model-value="
+                    100 * (level.relativeScoreCum - level.relativeScore)
+                  "
                   dark
                 >
                   <span class="small contrast">
@@ -284,7 +290,7 @@ export default {
         let result = await axios.get(this.platformsUrl);
         this.platformsList = result.data;
         this.platformsList.sort((a, b) =>
-          a.short_name.localeCompare(b.short_name)
+          a.short_name.localeCompare(b.short_name),
         );
       } catch (error) {
         this.showSnackbar({
@@ -399,7 +405,7 @@ export default {
   thead {
     th {
       padding: 0 1rem;
-      font-size: 81.25%;
+      font-size: 13px;
     }
   }
 
@@ -407,14 +413,14 @@ export default {
     th {
       text-align: right;
       padding-right: 0.5rem;
-      font-size: 81.25%;
+      font-size: 13px;
     }
   }
 
   td {
     border: solid 1px #999999;
     margin-left: 1rem;
-    font-size: 81.25%;
+    font-size: 13px;
     padding: 3px;
 
     &.borderless {

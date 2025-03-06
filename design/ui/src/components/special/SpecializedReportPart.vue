@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   main_report: Main Report
@@ -13,26 +14,32 @@ cs:
 
 <template>
   <v-expansion-panel>
-    <v-expansion-panel-header class="justify-space-between">
+    <v-expansion-panel-title class="justify-space-between">
       <h3 class="name flex-grow-0">
         {{ name }}
-        <v-tooltip bottom v-if="implementationNote" max-width="640px">
-          <template #activator="{ on }">
-            <v-icon color="info" small v-on="on">fa fa-info-circle</v-icon>
+        <v-tooltip
+          location="bottom"
+          v-if="implementationNote"
+          max-width="640px"
+        >
+          <template #activator="{ props }">
+            <v-icon color="info" size="small" v-bind="props"
+              >fa fa-info-circle</v-icon
+            >
           </template>
           <span>{{ implementationNote }}</span>
         </v-tooltip>
       </h3>
       <h4 class="description">{{ description }}</h4>
-      <h2 class="total-value flex-grow-0 me-4">
-        <v-progress-circular v-if="loading" indeterminate />
+      <h2 class="total-value flex-grow-0 me-4 text-right">
+        <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
         <span v-else-if="allReady">{{ formatInteger(total) }}</span>
         <span v-else>-</span>
       </h2>
-    </v-expansion-panel-header>
-    <v-expansion-panel-content>
+    </v-expansion-panel-title>
+    <v-expansion-panel-text>
       <v-sheet>
-        <p v-if="explanation" class="explanation font-weight-light">
+        <p v-if="explanation" class="explanation font-weight-light mb-4">
           {{ explanation }}
         </p>
         <table class="overview" v-if="lastStage">
@@ -48,7 +55,9 @@ cs:
               {{ reportDataSources[sourceId].name }}
             </td>
             <td>
-              <ReportPartParams :definition="reportDataSources[sourceId]" />
+              <ReportPartParams
+                :definition="reportDataSources[sourceId]"
+              ></ReportPartParams>
             </td>
           </tr>
         </table>
@@ -56,13 +65,18 @@ cs:
           v-model="nonZeroOnly"
           label="Non-zero rows only"
           v-if="allReady"
-        />
+          color="primary"
+        ></v-checkbox>
       </v-sheet>
-      <v-tabs v-model="selectedStage" v-if="stages.length > 1 && allReady">
+      <v-tabs
+        v-model="selectedStage"
+        v-if="stages.length > 1 && allReady"
+        color="#2d5854"
+      >
         <v-tab
           v-for="(stage, index) in stages"
           :key="stage.name"
-          :value="index"
+          :model-value="index"
         >
           {{ stage.name }}
         </v-tab>
@@ -77,21 +91,26 @@ cs:
         :items="formattedData"
         item-key="pk"
         :headers="tableColumns"
-        sort-by="total"
+        v-model:sort-by="orderBy"
         sort-desc
+        class="main_table"
+        density="default"
       >
-        <template #item.total="{ item }">
-          {{ formatInteger(item.total) }}
+        <template #[`item.total`]="{ item }">
+          <span class="item_total">
+            {{ formatInteger(item.total) }}
+          </span>
         </template>
-        <template #item.source_name="{ item }">
+        <template #[`item.source_name`]="{ item }">
           <span :style="{ color: sourceColor(item.source_name) }">{{
             item.source_name
           }}</span>
         </template>
       </v-data-table>
-    </v-expansion-panel-content>
+    </v-expansion-panel-text>
   </v-expansion-panel>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import { mapGetters } from "vuex";
@@ -145,6 +164,7 @@ export default {
       nonZeroOnly: true,
       selectedStage: this.stages.length - 1,
       palette: ["#000000", "#9C27B0", "#4CAF50", "#3F51B5", "#E91E63"],
+      orderBy: [{ key: "total", order: "asc" }],
     };
   },
 
@@ -169,27 +189,27 @@ export default {
     tableColumns() {
       return [
         {
-          text: this.$t("labels.platform"),
+          title: this.$t("labels.platform"),
           value: "primary_obj",
-          align: "left",
+          align: "start",
           sortable: true,
         },
         {
-          text: this.$t("labels.source"),
+          title: this.$t("labels.source"),
           value: "source_name",
           sortable: true,
         },
         {
-          text: this.$t("labels.total"),
+          title: this.$t("labels.total"),
           value: "total",
-          align: "right",
+          align: "end",
           sortable: true,
         },
         ...this.dateRange.map((date) => {
           return {
-            text: date,
+            title: date,
             value: `monthly_data.${date}`,
-            align: "right",
+            align: "end",
             sortable: true,
             cellClass: "font-weight-light",
           };
@@ -257,6 +277,7 @@ export default {
 <style lang="scss" scoped>
 .description {
   font-weight: normal;
+  flex: 1;
 }
 .name {
   min-width: 16rem;
@@ -267,6 +288,20 @@ export default {
     font-size: 1rem;
     font-weight: normal;
     font-style: italic;
+  }
+}
+
+.main_table {
+  color: grey;
+  &:deep(th:nth-child(3)) {
+    color: black;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .item_total {
+    color: black;
+    font-weight: 600;
+    letter-spacing: 0.2px;
   }
 }
 .note {

@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   possible_values: no possible value | {count} possible value | {count} possible values
@@ -16,43 +17,46 @@ cs:
       :items="items"
       v-model="selectedValues"
       @blur="blur()"
-      :search-input.sync="searchDebounced"
+      :search-input="searchDebounced"
       multiple
-      :label="label"
-      item-text="text"
+      item-title="text"
       :item-value="dimension"
       :rules="rules"
       :hint="hint"
       persistent-hint
       chips
-      deletable-chips
-      :disabled="disabled || loading || readOnly"
+      closable-chips
+      :disabled="disabled || readOnly"
       clearable
-      clear-icon="fa-times"
+      clear-icon="fa fa-times"
       :loading="loading"
-      small-chips
-    ></v-autocomplete>
+      hide-selected
+    >
+      <template v-slot:item="{ props, item }">
+        <v-list-item v-bind="props" :title="item.raw.text"></v-list-item>
+      </template>
+    </v-autocomplete>
     <div v-else class="full-width">
       <TwoPaneSelector
         :items="items"
         v-model="selectedValues"
         :item-value="dimension"
-        @input="blur()"
         ref="twoPanes"
         :empty-hint="hint"
         :label="label"
+        @update:modelValue="blur()"
       >
         <v-text-field
           v-model="searchDebounced"
           :loading="loading"
           :label="$t('labels.search')"
           class="mx-3 mt-3"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
           clearable
         >
           <template #prepend-inner>
-            <v-icon small class="mt-1">fa fa-search</v-icon>
+            <v-icon size="small" class="mt-1" icon="fa fa-search"></v-icon>
           </template>
         </v-text-field>
       </TwoPaneSelector>
@@ -71,7 +75,7 @@ export default {
   components: { TwoPaneSelector },
   props: {
     queryUrl: { required: true, type: String },
-    value: { required: true, type: Array },
+    modelValue: { required: true, type: Array },
     dimension: { required: true, type: String },
     rules: { required: false, type: Array },
     translator: { required: false },
@@ -80,12 +84,14 @@ export default {
     disabledHint: { required: false, type: String, default: "" },
     readOnly: { required: false, type: Boolean, default: false }, // not exactly disabled, but almost :)
   },
+  emits: ["update:modelValue"],
 
   data() {
     return {
       possibleValues: [],
       possibleValueCount: 0,
-      selectedValues: this.value,
+      try: null,
+      // selectedValues: this.modelValue,
       loading: false,
       search: "",
       useTwoPanes: false,
@@ -100,7 +106,7 @@ export default {
       return this.queryUrl + `&dimension=${this.dimension}`;
     },
     items() {
-      return this.possibleValues;
+      return Array.from(this.possibleValues);
     },
     label() {
       return `${this.name ?? this.dimension}`;
@@ -118,12 +124,20 @@ export default {
         });
       }
     },
+    selectedValues: {
+      get() {
+        return this.modelValue;
+      },
+      set(newValue) {
+        this.$emit("update:modelValue", newValue);
+      },
+    },
     searchDebounced: {
       get() {
         return this.search;
       },
-      set: debounce(function (value) {
-        this.search = value;
+      set: debounce(function (modelValue) {
+        this.search = modelValue;
       }, 500),
     },
   },
@@ -140,7 +154,7 @@ export default {
       if (url && !this.disabled) {
         if (this.fetchPossibleValuesCancelTokenSource) {
           this.fetchPossibleValuesCancelTokenSource.cancel(
-            "new data requested"
+            "new data requested",
           );
         }
         this.fetchPossibleValuesCancelTokenSource = axios.CancelToken.source();
@@ -159,9 +173,11 @@ export default {
           // if we have .values and it contains stuff that is not in possibleValues, we have to
           // refetch it - it can happen when loading truncated data
           let possiblePks = new Set(
-            possibleValues.map((item) => item[this.dimension])
+            possibleValues.map((item) => item[this.dimension]),
           );
-          let extraValues = this.value.filter((item) => !possiblePks.has(item));
+          let extraValues = this.modelValue.filter(
+            (item) => !possiblePks.has(item),
+          );
           if (extraValues.length) {
             let pks = extraValues.join(",");
             result = await axios.get(url + `&pks=${pks}`);
@@ -182,10 +198,10 @@ export default {
 
           // make sure that values no longer present are not amongst selected
           let pvs = new Set(
-            this.possibleValues.map((item) => item[this.dimension])
+            this.possibleValues.map((item) => item[this.dimension]),
           );
           this.selectedValues = this.selectedValues.filter((item) =>
-            pvs.has(item)
+            pvs.has(item),
           );
         } catch (error) {
           if (axios.isCancel(error)) {
@@ -203,29 +219,26 @@ export default {
       }
     },
     blur() {
-      this.$emit("input", this.selectedValues);
+      this.$emit("update:modelValue", this.selectedValues);
       this.search = ""; // reset search so that it does not hang around
     },
     async updateTranslator() {
       if (this.translator) {
         await this.translator.prepareTranslation(
-          this.possibleValues.map((item) => item[this.dimension])
+          this.possibleValues.map((item) => item[this.dimension]),
         );
         this.possibleValues.forEach((item) => {
-          this.$set(
-            item,
-            "text",
+          item.text =
             "" +
-              (this.translator.translateKeyToString(
-                item[this.dimension],
-                this.$i18n.locale
-              ) ?? this.$t("blank_value")) // convert to string
-          );
+            (this.translator.translateKeyToString(
+              item[this.dimension],
+              this.$i18n.locale,
+            ) ?? this.$t("blank_value"));
         });
         this.possibleValues.sort((a, b) => a.text.localeCompare(b.text));
       } else {
         this.possibleValues.forEach(
-          (item) => (item["text"] = item[this.dimension])
+          (item) => (item["text"] = item[this.dimension]),
         );
         this.possibleValues.sort((a, b) => a.text > b.text);
       }
@@ -266,7 +279,7 @@ export default {
       }
     },
     selectedValues() {
-      // this.$emit("input", this.selectedValues);
+      this.$emit("update:modelValue", this.selectedValues);
     },
     disabled() {
       if (!this.disabled) {

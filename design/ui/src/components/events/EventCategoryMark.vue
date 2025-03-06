@@ -1,9 +1,9 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-tooltip bottom max-width="600px">
-    <template #activator="{ on }">
-      <span v-on="on" :class="bold ? 'font-weight-bold' : ''">{{
+  <v-tooltip max-width="600px" location="bottom">
+    <template #activator="{ props }">
+      <span :class="bold ? 'font-weight-bold' : ''" v-bind="props">{{
         $t(`event_category.${item.category}`)
       }}</span>
     </template>

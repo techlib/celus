@@ -4,43 +4,42 @@
   <v-btn-toggle
     v-if="widget === 'buttons'"
     v-model="chartTypeIndex"
-    mandatory
+    mandatory="force"
     class="flex-wrap"
-    dense
+    density="default"
+    variant="outlined"
   >
     <v-btn
       v-for="(chartType, index) in chartTypes"
       text
-      :value="index"
       :key="chartType.pk"
+      :value="index"
     >
-      <v-tooltip bottom v-if="chartType.desc">
-        <template v-slot:activator="{ on }">
-          <span v-on="on" v-text="chartType.name"></span>
+      <v-tooltip location="bottom" v-if="chartType.desc">
+        <template v-slot:activator="{ props }">
+          <span v-bind="props">{{ chartType.name }}</span>
         </template>
         <span>{{ chartType.desc }}</span>
       </v-tooltip>
-      <span v-else v-text="chartType.name"></span>
+      <span v-else>{{ chartType.name }}</span>
     </v-btn>
   </v-btn-toggle>
   <v-select
     v-else
     :items="chartTypesFinal"
-    item-text="name"
+    item-title="name"
     v-model="chartTypeIndex"
     :label="$t('available_charts')"
     item-value="index"
-    outlined
-    dense
+    variant="outlined"
+    density="compact"
   >
-    <template v-slot:item="{ item }">
-      <v-list-item-content>
-        <v-list-item-title v-html="item.name"></v-list-item-title>
-        <v-list-item-subtitle
-          v-if="item.desc"
-          v-html="item.desc"
-        ></v-list-item-subtitle>
-      </v-list-item-content>
+    <template v-slot:item="{ item, props }">
+      <v-list-item v-bind="props">
+        <v-list-item-subtitle v-if="item.raw.desc">
+          {{ item.raw.desc }}
+        </v-list-item-subtitle>
+      </v-list-item>
     </template>
   </v-select>
 </template>
@@ -53,7 +52,7 @@ export default {
   name: "ChartTypeSelector",
   props: {
     reportType: { required: true },
-    value: { required: false, default: null }, // the selected chart type
+    modelValue: { required: false, default: null }, // the selected chart type
     scope: { required: false, default: "" },
     widget: { default: "select" },
   },
@@ -94,7 +93,7 @@ export default {
         try {
           let response = await axios.get(this.chartsUrl);
           this.chartTypes = response.data.filter(
-            (item) => item.scope === "" || item.scope === this.scope
+            (item) => item.scope === "" || item.scope === this.scope,
           );
           if (this.chartTypes.length > 0) {
             this.chartTypeIndex = 0;
@@ -115,7 +114,7 @@ export default {
   },
   watch: {
     chartTypeIndex() {
-      this.$emit("input", this.selectedChartType);
+      this.$emit("update:modelValue", this.selectedChartType);
     },
     reportType() {
       this.chartTypes = [];

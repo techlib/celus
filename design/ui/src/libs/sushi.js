@@ -6,7 +6,7 @@
 // /report/ir_m1
 // /report/ir_m1/
 const reportRegexp = new RegExp(
-  "/reports(/*$|/[Tt][Rr]|/[Dd][Rr]|/[Pp][Rr]|/[Ii][Rr])(|_[^/]+){0,1}/{0,1}$"
+  "/reports(/*$|/[Tt][Rr]|/[Dd][Rr]|/[Pp][Rr]|/[Ii][Rr])(|_[^/]+){0,1}/{0,1}$",
 );
 
 function testSushiUrlReport(url) {

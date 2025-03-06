@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   full_reports: Full reports
@@ -9,15 +10,17 @@ cs:
   standard_views: Standardní pohledy
   non_counter: non-COUNTER
 </i18n>
+
 <template>
   <div style="display: flex">
     <v-select
       :items="typesOfReportForSelect"
-      item-text="name"
+      item-title="name"
+      item-value="pk"
       v-model="selectedTypeOfReport"
       :label="$t('type_of_report')"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       :return-object="true"
       :loading="loading"
       class="pr-6"
@@ -26,27 +29,34 @@ cs:
     </v-select>
     <v-select
       :items="reportViewsForSelect"
-      item-text="name"
+      item-title="name"
+      item-value="pk"
       v-model="selectedReportView"
       :label="$t('report')"
       :return-object="true"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       :loading="loading"
       style="flex-basis: 50%"
     >
-      <template v-slot:item="{ item }">
-        <v-list-item-content>
-          <v-list-item-title v-html="item.name"></v-list-item-title>
-          <v-list-item-subtitle
-            v-if="item.desc"
-            v-html="item.desc"
-          ></v-list-item-subtitle>
-        </v-list-item-content>
+      <template v-slot:item="{ item, props }">
+        <v-list-item class="active_item" v-if="item.raw.name" v-bind="props">
+          <div class="d-flex flex-column">
+            <div
+              class="v-list-item-subtitle"
+              v-if="item.raw.desc"
+              v-html="item.raw.desc"
+            ></div>
+          </div>
+        </v-list-item>
+        <v-list-item class="disabled_item" v-else>
+          {{ item.raw.header }}
+        </v-list-item>
       </template>
     </v-select>
   </div>
 </template>
+
 <script>
 import axios from "axios";
 import { isEqual } from "lodash";
@@ -56,7 +66,7 @@ export default {
   name: "ReportViewSelector",
 
   props: {
-    value: { required: false, type: Object },
+    modelValue: { required: false, type: Object },
     reportViewsUrl: { required: true, type: String },
     viewFilter: { required: false, type: Function },
     preferFullReport: { required: false, type: Boolean, default: false },
@@ -114,7 +124,7 @@ export default {
         allViews = allViews.filter(this.viewFilter);
       }
       allViews = allViews.filter(
-        (e) => e.type == this.selectedTypeOfReport?.value
+        (e) => e.type == this.selectedTypeOfReport?.value,
       );
       let standard = allViews.filter((item) => item.is_standard_view);
       let other = allViews.filter((item) => !item.is_standard_view);
@@ -188,7 +198,7 @@ export default {
           if (this.preferFullReport) {
             // we need strict comparison to false because `is_standard_view` may be missing
             toSelect = this.reportViewsForSelect.find(
-              (item) => item.is_standard_view === false
+              (item) => item.is_standard_view === false,
             );
           }
           // if there is something, [0] is header, [1] is actual reportView
@@ -207,13 +217,13 @@ export default {
   },
 
   watch: {
-    value(val) {
+    modelValue(val) {
       if (!isEqual(val, this.selectedReportView)) {
         this.selectedReportView = val;
       }
     },
     selectedReportView(val) {
-      this.$emit("input", val);
+      this.$emit("update:modelValue", val);
     },
     reportViewsUrl() {
       this.loadReportViews();
@@ -230,7 +240,7 @@ export default {
           if (this.preferFullReport) {
             // we need strict comparison to false because `is_standard_view` may be missing
             toSelect = this.reportViewsForSelect.find(
-              (item) => item.is_standard_view === false
+              (item) => item.is_standard_view === false,
             );
           }
           // if there is something, [0] is header, [1] is actual reportView
@@ -245,3 +255,16 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.disabled_item {
+  font-size: 80%;
+  background-color: #ededed;
+  min-height: 35px !important;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.active_item {
+  padding-left: 25px !important;
+}
+</style>

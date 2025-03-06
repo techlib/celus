@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   mark_all_read_error: There was an error marking all events as read.
@@ -10,48 +11,53 @@ cs:
 </i18n>
 
 <template>
-  <v-data-table
+  <v-data-table-server
     v-model="selectedEvents"
     :items="events"
     item-key="pk"
     :headers="headers"
-    :expanded.sync="expanded"
-    show-expand
+    v-model:expanded="expanded"
     expand-icon="fa fa-caret-down"
     :loading="loading"
-    :sort-by.sync="sortBy"
-    :sort-desc.sync="sortDesc"
+    v-model:sort-by="sortBy"
     :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
-    :server-items-length="eventCount"
-    :page.sync="page"
-    :items-per-page.sync="pageSize"
+    :items-length="eventCount"
+    v-model:page="page"
+    v-model:items-per-page="pageSize"
     :search="searchDebounced"
-    show-select
-    @item-expanded="markRead"
+    return-object
+    density="default"
   >
-    <template #item.read="{ item }">
+    <template v-slot:[`item.data-table-expand`]="{ item }">
+      <v-icon
+        @click="toggleExpanded(item)"
+        :class="{ rotated: expanded.includes(item) }"
+        class="expand_icon"
+      >
+        fa fa-caret-down
+      </v-icon>
+    </template>
+    <template v-slot:[`item.read`]="{ item }">
       <v-icon
         v-if="item.read"
-        small
-        @click="markRead({ item, read: false, refresh: true })"
+        @click="markRead({ item, read: false, refresh: false })"
+        size="small"
         >far fa-envelope-open</v-icon
       >
       <v-icon
         v-else
-        small
         @click="markRead({ item, read: true, refresh: true })"
+        size="small"
         >far fa-envelope</v-icon
       >
     </template>
-
-    <template #item.created="{ item }">
+    <template v-slot:[`item.created`]="{ item }">
       <span
         :class="item.read ? '' : 'font-weight-bold'"
         v-html="isoDateTimeFormatSpans(item.created)"
       ></span>
     </template>
-
-    <template #item.title="{ item }">
+    <template v-slot:[`item.title`]="{ item }">
       <a
         @click="toggleExpanded(item)"
         class="text-decoration-underline"
@@ -59,45 +65,49 @@ cs:
         >{{ item.title }}</a
       >
     </template>
-
-    <template #item.category="{ item }">
-      <EventCategoryMark :item="item" :bold="!item.read" />
+    <template v-slot:[`item.category`]="{ item }">
+      <EventCategoryMark :item="item" :bold="!item.read"></EventCategoryMark>
     </template>
-
-    <template #item.importance="{ item }">
-      <EventImportanceIcon :importance="item.importance" small />
+    <template v-slot:[`item.importance`]="{ item }">
+      <EventImportanceIcon
+        :importance="item.importance"
+        small
+      ></EventImportanceIcon>
       <span class="ml-2">{{ $t("event_importance." + item.importance) }}</span>
     </template>
-
-    <template #item.expiration_date="{ item }">
+    <template v-slot:[`item.expiration_date`]="{ item }">
       <span v-if="item.expiration_date">{{
         isoDateFormat(parseDateTime(item.expiration_date))
       }}</span>
     </template>
-
-    <template #expanded-item="{ item, headers }">
-      <td :colspan="headers.length" class="px-2 py-2">
-        <v-sheet class="pa-3">
-          <v-tooltip bottom max-width="600px" v-if="item.expiration_date">
-            <template #activator="{ on }">
-              <div class="caption float-right" v-on="on">
-                {{ $t("events.expires") }}:
-                <span
-                  v-html="isoDateTimeFormatSpans(item.expiration_date)"
-                ></span>
-              </div>
-            </template>
-            {{ $t("events.expires_tt") }}
-          </v-tooltip>
-          <div class="caption pb-3">{{ $t("labels.description") }}</div>
-          <div
-            class="event-text"
-            v-html="markdownToHtml(item.description)"
-          ></div>
-        </v-sheet>
-      </td>
+    <template v-slot:expanded-row="{ columns, item }">
+      <tr class="item_expanded_space">
+        <td :colspan="columns.length" class="px-2 py-2">
+          <v-sheet class="pa-3">
+            <v-tooltip
+              max-width="600px"
+              v-if="item.expiration_date"
+              location="bottom"
+            >
+              <template #activator="{ props }">
+                <div class="caption float-right" v-bind="props">
+                  {{ $t("events.expires") }}:
+                  <span
+                    v-html="isoDateTimeFormatSpans(item.expiration_date)"
+                  ></span>
+                </div>
+              </template>
+              {{ $t("events.expires_tt") }}
+            </v-tooltip>
+            <div class="caption pb-3">{{ $t("labels.description") }}</div>
+            <div
+              class="event-text"
+              v-html="markdownToHtml(item.description)"
+            ></div>
+          </v-sheet>
+        </td>
+      </tr>
     </template>
-
     <template #top>
       <v-row>
         <v-col cols="12" md="4" lg="3" xl="2">
@@ -105,14 +115,14 @@ cs:
             v-model="filterCategory"
             show-all
             :categories="availableCategoriesAndCounts"
-          />
+          ></EventCategorySelect>
         </v-col>
         <v-col cols="6" md="2" lg="2" xl="1">
           <EventImportanceSelect
             v-model="filterImportance"
             show-all
             :importancies="availableImportanciesAndCounts"
-          />
+          ></EventImportanceSelect>
         </v-col>
         <v-col cols="6" md="2" lg="2" xl="1">
           <v-select
@@ -131,24 +141,27 @@ cs:
               },
             ]"
             :label="$t('events.read')"
+            item-title="text"
           >
-            <template #item="{ item }">
-              <v-list-item-content>
+            <template #item="{ item, props }">
+              <v-list-item v-bind="props" title="">
                 <v-list-item-title>
-                  {{ item.text }}
-                  <span v-if="item.count" class="float-right text-caption">{{
-                    item.count
-                  }}</span>
+                  {{ item.raw.text }}
+                  <span
+                    v-if="item.raw.count"
+                    class="float-right text-caption"
+                    >{{ item.raw.count }}</span
+                  >
                 </v-list-item-title>
-              </v-list-item-content>
+              </v-list-item>
             </template>
           </v-select>
         </v-col>
-        <v-spacer />
+        <v-spacer></v-spacer>
         <v-col cols="12" md="4" lg="3" xl="2">
           <v-text-field
             v-model="searchDebounced"
-            append-icon="fa-search"
+            append-inner-icon="fa fa-search"
             :label="$t('labels.search')"
             single-line
             hide-details
@@ -163,13 +176,13 @@ cs:
             @click="markSelectedRead(true)"
             :disabled="selectedEvents.length === 0"
           >
-            <v-icon small class="mr-2">far fa-envelope-open</v-icon>
+            <v-icon class="mr-2" size="small">far fa-envelope-open</v-icon>
             {{ $t("events.mark_as_read") }}
           </v-btn>
         </v-col>
       </v-row>
     </template>
-  </v-data-table>
+  </v-data-table-server>
 </template>
 
 <script>
@@ -210,8 +223,7 @@ export default {
       filterCategory: null,
       filterImportance: null,
       filterRead: null,
-      sortBy: "created",
-      sortDesc: true,
+      sortBy: [{ key: "created", order: "desc" }],
       page: 1,
       pageSize: 10,
       watchedAttrs: [
@@ -234,13 +246,13 @@ export default {
         },
         {
           name: "sortBy",
-          type: String,
+          type: Object,
         },
-        {
-          name: "sortDesc",
-          type: Boolean,
-          alwaysTrack: true,
-        },
+        // {
+        //   name: "sortDesc",
+        //   type: Boolean,
+        //   alwaysTrack: true,
+        // },
       ],
     };
   },
@@ -254,33 +266,54 @@ export default {
     headers() {
       return [
         {
-          text: this.$t("events.read"),
+          title: "",
+          value: "data-table-expand",
+          sortable: false,
+          align: "start",
+        },
+        {
+          title: "",
+          value: "data-table-select",
+          sortable: false,
+          align: "start",
+        },
+        {
+          title: this.$t("events.read"),
           value: "read",
           width: "5rem",
+          key: "read",
+          sortable: true,
         },
         {
-          text: this.$t("events.date"),
+          title: this.$t("events.date"),
           value: "created",
           width: "10rem",
+          sortable: true,
         },
         {
-          text: this.$t("events.title"),
+          title: this.$t("events.title"),
           value: "title",
+          key: "title",
+          sortable: true,
         },
         {
-          text: this.$t("events.category"),
+          title: this.$t("events.category"),
           value: "category",
           sortable: false,
           width: "8rem",
         },
         {
-          text: this.$t("events.importance"),
+          title: this.$t("events.importance"),
           value: "importance",
           width: "8rem",
+          key: "importance",
+          sortable: true,
         },
         {
-          text: this.$t("events.expires"),
+          title: this.$t("events.expires"),
           value: "expiration_date",
+          key: "expiration_date",
+          sortable: true,
         },
       ];
     },
@@ -295,9 +328,11 @@ export default {
       if (this.filterRead != null) {
         params.push(`read=${this.filterRead}`);
       }
-      if (this.sortBy != null) {
-        params.push(`order_by=${this.sortBy}`);
-        params.push(`desc=${this.sortDesc ? "true" : "false"}`);
+      if (this.sortBy != null && Array.isArray(this.sortBy) && this.sortBy[0]) {
+        params.push(`order_by=${this.sortBy[0].key}`);
+        params.push(
+          `desc=${this.sortBy[0].order === "desc" ? "true" : "false"}`,
+        );
       }
       if (this.searchDebounced) {
         params.push(`search=${this.searchDebounced}`);
@@ -329,18 +364,20 @@ export default {
       // in sync with this.events - most importantly, their read status
       // may be different.
       // Here we return the selected events from this.events
-      return this.events.filter((item) =>
-        this.selectedEvents.find((rec) => rec.pk === item.pk)
-      );
+      return this.events.filter((item) => {
+        this.selectedEvents.some((rec) => {
+          rec.pk === item.pk;
+        });
+      });
     },
     availableCategoriesAndCounts() {
       return new Map(
-        this.storeCounts.category.map((e) => [e.category, e.count])
+        this.storeCounts.category.map((e) => [e.category, e.count]),
       );
     },
     availableImportanciesAndCounts() {
       return new Map(
-        this.storeCounts.importance.map((e) => [e.importance, e.count])
+        this.storeCounts.importance.map((e) => [e.importance, e.count]),
       );
     },
     availableReadAndCounts() {
@@ -408,7 +445,7 @@ export default {
       }
     },
     async markSelectedRead(read) {
-      const eventIds = this.selectedEventsLive
+      const eventIds = this.selectedEvents
         .filter((item) => item.read != read)
         .map((item) => item.pk);
       const reply = await this.http({
@@ -425,7 +462,7 @@ export default {
         await this.showSnackbar({
           content: this.$tc(
             "mark_all_read_success",
-            reply.response.data.updated
+            reply.response.data.updated,
           ),
           color: "success",
         });
@@ -483,5 +520,14 @@ div.event-text {
   p {
     margin-bottom: 0.25rem;
   }
+}
+
+.expand_icon {
+  color: rgba(0, 0, 0, 0.6);
+  transition: transform 0.3s;
+}
+
+.rotated {
+  transform: rotate(180deg);
 }
 </style>

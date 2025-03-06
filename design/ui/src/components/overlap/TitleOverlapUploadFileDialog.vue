@@ -1,4 +1,5 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   upload_csv_file: Upload CSV file with titles
@@ -33,9 +34,11 @@ cs:
           <v-col>
             <v-file-input
               :label="$t('upload_csv_file')"
-              prepend-icon="fa-list-alt"
+              prepend-icon="fa fa-list-alt"
               v-model="dataFile"
               show-size
+              variant="underlined"
+              accept=".csv"
             ></v-file-input>
           </v-col>
           <v-col cols="auto" class="align-self-center">
@@ -47,7 +50,12 @@ cs:
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" @click="show = false">
+        <v-btn
+          color="secondary"
+          variant="flat"
+          elevation="2"
+          @click="show = false"
+        >
           {{ $t("actions.cancel") }}
         </v-btn>
       </v-card-actions>
@@ -60,12 +68,12 @@ export default {
   name: "TitleOverlapUploadFileDialog",
 
   props: {
-    value: { type: Boolean, default: false },
+    modelValue: { type: Boolean, default: false },
   },
 
   data() {
     return {
-      show: this.value,
+      show: this.modelValue,
       dataFile: null,
     };
   },
@@ -77,11 +85,11 @@ export default {
   },
 
   watch: {
-    value() {
-      this.show = this.value;
+    modelValue() {
+      this.show = this.modelValue;
     },
     show() {
-      this.$emit("input", this.show);
+      this.$emit("update:modelValue", this.show);
     },
   },
 };

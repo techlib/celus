@@ -4,18 +4,23 @@ en:
 cs:
   overlapping_years: Koncový rok by neměl být před počátečním rokem
 </i18n>
+
 <template>
   <v-select
     class="shrink"
     v-model="year"
     :items="years"
     :label="label"
+    item-title="text"
+    item-value="modelValue"
+    :item-props="isDisabled"
     :disabled="disabled"
     clearable
+    density="default"
     :rules="[switchedMonths]"
     clear-icon="fa fa-times"
-    prepend-icon="fa-calendar-alt"
-    @change="$emit('input', year)"
+    prepend-icon="far fa-calendar-alt"
+    @update:modelValue="updateYear"
   >
   </v-select>
 </template>
@@ -24,7 +29,7 @@ cs:
 export default {
   name: "YearEntry",
   props: {
-    value: { required: true },
+    modelValue: { required: true, type: [Number, null], default: null },
     label: { required: false, default: "", type: String },
     disabled: { required: false, type: Boolean, default: false },
     overlappingYears: { required: false },
@@ -32,12 +37,23 @@ export default {
   },
   data() {
     return {
-      year: this.value,
+      year: this.modelValue,
     };
   },
   methods: {
     switchedMonths() {
       return !this.overlappingYears || this.$t("overlapping_years");
+    },
+    updateYear(value) {
+      this.$emit("update:modelValue", value);
+    },
+    isDisabled(item) {
+      return { disabled: item.disabled };
+    },
+  },
+  watch: {
+    modelValue(newValue) {
+      this.year = newValue;
     },
   },
 };

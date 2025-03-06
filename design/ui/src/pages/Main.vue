@@ -1,12 +1,9 @@
 <template>
   <v-app v-if="newCelusVersion">
-    <NewCelusVersionDialog />
+    <NewCelusVersionDialog></NewCelusVersionDialog>
   </v-app>
-
   <router-view v-else-if="$route.meta.outsideNormalLayout"> </router-view>
-
-  <InvalidUserPage v-else-if="invalidUser" />
-
+  <InvalidUserPage v-else-if="invalidUser"></InvalidUserPage>
   <EmailNotVerified
     v-else-if="
       user &&
@@ -14,14 +11,13 @@
       !emailVerified &&
       (!user.is_superuser || otpRequired)
     "
-  />
-  <StandardLayout v-else-if="bootUpFinished" />
-
+  ></EmailNotVerified>
+  <StandardLayout v-else-if="bootUpFinished"></StandardLayout>
   <div v-else>
     <v-app>
-      <BootUpWidget />
-      <LoginDialog v-if="showLoginDialog" />
-      <OtpDialog v-else-if="otpRequired" />
+      <BootUpWidget></BootUpWidget>
+      <LoginDialog v-if="showLoginDialog"></LoginDialog>
+      <OtpDialog v-else-if="otpRequired"></OtpDialog>
     </v-app>
   </div>
 </template>
@@ -135,12 +131,13 @@ div.v-input {
 
 table.overview-card {
   padding: 1rem;
-
+  th {
+    font-size: 16px;
+  }
   tr.header {
     th {
       font-variant: small-caps;
       font-weight: 500;
-      font-size: 82.5%;
       border-bottom: solid 1px #dddddd;
       padding-top: 0.5rem;
     }
@@ -149,6 +146,9 @@ table.overview-card {
         padding-top: 0;
       }
     }
+  }
+  td {
+    font-size: 16px;
   }
 
   th {
@@ -253,6 +253,9 @@ th.auto-width {
   th.text-right {
     // only tds in right aligned columns should be right aligned, not the ths
     text-align: left !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
   }
 }
 

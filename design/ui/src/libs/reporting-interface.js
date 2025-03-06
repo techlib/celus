@@ -10,7 +10,7 @@ class Report {
     filters = null,
     dateRangeStart = null,
     dateRangeEnd = null,
-    organizationId = null
+    organizationId = null,
   ) {
     this.$router = $router;
     this.http = http;
@@ -70,7 +70,7 @@ class Report {
   get dateRange() {
     // returns the months between the first and last date as set in the app preferences
     return monthsBetween(this.dateRangeStart, this.dateRangeEnd).map(
-      ymDateFormat
+      ymDateFormat,
     );
   }
 
@@ -114,7 +114,7 @@ class Report {
     });
     if (!result.error) {
       const metric = result.response.data.find(
-        (metric) => metric.short_name === this.metric
+        (metric) => metric.short_name === this.metric,
       );
       if (metric) {
         this.metricId = metric.pk;
@@ -128,7 +128,7 @@ class Report {
     for (let [name, value] of Object.entries(this.filters)) {
       // find the dimension in the report type
       const idx = this.reportType.dimensions_sorted.findIndex(
-        (dimension) => dimension.short_name === name
+        (dimension) => dimension.short_name === name,
       );
       if (idx === -1) {
         console.error("Dimension not found", name);
@@ -142,7 +142,7 @@ class Report {
       if (!result.error) {
         function translate(val) {
           const dimensionValue = result.response.data.results.find(
-            (dimensionValue) => dimensionValue.text === val
+            (dimensionValue) => dimensionValue.text === val,
           );
           if (dimensionValue) {
             return dimensionValue.pk;

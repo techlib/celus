@@ -8,7 +8,7 @@
     multiple-credentials
     @close="closeDialog(false)"
     @apply="trigger"
-  />
+  ></LastHarvestableMonthEntryWidget>
 </template>
 
 <script>
@@ -93,7 +93,7 @@ export default {
     counterReportsOrdered() {
       return Object.values(this.counterReports).sort(
         (a, b) =>
-          a.counter_version - b.counter_version || a.name.localeCompare(b.name)
+          a.counter_version - b.counter_version || a.name.localeCompare(b.name),
       );
     },
     dataForTrigger() {
@@ -108,7 +108,7 @@ export default {
               counter_report_id: cr.id,
               last_harvestable_month: lhm === null ? null : `${lhm}-01`,
             };
-          })
+          }),
         )
         .flat();
     },

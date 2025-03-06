@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <StoredReportsTable />
+        <StoredReportsTable></StoredReportsTable>
       </v-col>
     </v-row>
   </v-container>

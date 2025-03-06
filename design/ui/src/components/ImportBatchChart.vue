@@ -9,7 +9,7 @@
           :report-views-url="reportViewsUrl"
           prefer-full-report
           ignore-organization
-        />
+        ></CounterChartSet>
       </v-col>
     </v-row>
   </v-container>
@@ -46,7 +46,7 @@ export default {
     async loadImportBatch() {
       try {
         let response = await axios.get(
-          `/api/import-batch/${this.importBatchId}/`
+          `/api/import-batch/${this.importBatchId}/`,
         );
         this.importBatch = response.data;
       } catch (error) {

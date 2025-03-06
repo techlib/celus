@@ -1,9 +1,9 @@
-<i18n lang="yaml" src="@/locales/sushi.yaml" />
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
-  <v-tooltip bottom>
-    <template #activator="{ on }">
-      <span v-on="on">
+  <v-tooltip location="bottom">
+    <template #activator="{ props }">
+      <span v-bind="props">
         <v-icon :color="icon.color">{{ icon.icon }} fa-fw</v-icon>
       </span>
     </template>

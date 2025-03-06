@@ -35,6 +35,7 @@ cs:
     Pro tuto platformu a vybrané časové období byly uloženy poznámky.
     Na stránce platformy zjistíte detaily.
 </i18n>
+
 <template>
   <v-container fluid class="pt-0 px-0 px-sm-2">
     <v-row>
@@ -43,33 +44,34 @@ cs:
           v-model="selectedTags"
           scope="platform"
           dont-check-exclusive
-        />
+        ></TagSelector>
       </v-col>
       <v-spacer></v-spacer>
       <v-col class="pt-0">
         <v-text-field
           v-model="search"
-          append-icon="fa-search"
+          append-inner-icon="fa fa-search"
           :label="$t('labels.search')"
           single-line
           hide-details
-        ></v-text-field>
+        >
+        </v-text-field>
       </v-col>
     </v-row>
     <v-row>
       <v-col class="px-0 px-sm-2">
-        <v-skeleton-loader v-if="loading" type="table" />
+        <v-skeleton-loader v-if="loading" type="table"></v-skeleton-loader>
         <v-data-table
           v-else
           :items="visiblePlatforms"
           :headers="headers"
           :search="search"
-          :page.sync="page"
-          :items-per-page.sync="itemsPerPage"
-          :sort-by.sync="orderBy"
-          :sort-desc.sync="orderDesc"
+          :page="page"
+          :items-per-page="itemsPerPage"
+          v-model:sort-by="orderBy"
+          class="custom-header"
         >
-          <template v-slot:item.name="{ item }">
+          <template v-slot:[`item.name`]="{ item }">
             <router-link
               :to="{
                 name: 'platform-detail',
@@ -78,7 +80,7 @@ cs:
               >{{ item.name || item.short_name }}
             </router-link>
           </template>
-          <template v-slot:item.title_count="{ item }">
+          <template v-slot:[`item.title_count`]="{ item }">
             <span
               v-if="item.title_count === 'loading'"
               class="fas fa-spinner fa-spin subdued"
@@ -87,81 +89,83 @@ cs:
               {{ formatInteger(item.title_count) }}
             </span>
           </template>
-          <template v-slot:item.actions="{ item }">
+          <template v-slot:[`item.actions`]="{ item }">
             <v-btn
               v-if="item.source && item.source.organization"
-              text
-              small
+              variant="text"
+              size="small"
               color="secondary"
               @click.stop="
                 selectedPlatform = item;
                 showEditDialog = true;
               "
             >
-              <v-icon left x-small>fa-edit</v-icon>
+              <v-icon left size="x-small" icon="fas fa-edit"></v-icon>
               {{ $t("actions.edit") }}
             </v-btn>
           </template>
           <template
             v-for="ig in activeInterestGroups"
+            :key="ig.pk"
             v-slot:[slotName(ig)]="{ item }"
           >
             <span
               v-if="item.interests.loading"
               class="fas fa-spinner fa-spin subdued"
-              :key="ig.pk"
-            ></span>
-            <span v-else :key="ig.pk">
+            >
+            </span>
+            <span v-else>
               {{ formatInteger(item.interests[ig.short_name]) }}
             </span>
           </template>
-          <template v-slot:item.sushi_credentials_versions="{ item }">
+          <template v-slot:[`item.sushi_credentials_versions`]="{ item }">
             <v-tooltip
-              bottom
+              location="bottom"
               v-for="record in item.sushi_credentials_versions"
               :key="10 * record.version + record.outside_consortium"
             >
-              <template v-slot:activator="{ on }">
-                <span v-on="on" class="mr-3 subdued"
+              <template v-slot:activator="{ props }">
+                <span v-bind="props" class="mr-3 subdued"
                   >{{ counterVersionToStr(record.version)
                   }}{{ record.outside_consortium ? "*" : "" }}</span
                 >
               </template>
               <template v-if="record.outside_consortium">
-                <i18n path="sushi_for_version_outside" tag="span">
+                <i18n-t keypath="sushi_for_version_outside" tag="span">
                   <template v-slot:version>
                     {{ counterVersionToStr(record.version) }}
                   </template>
-                </i18n>
+                </i18n-t>
               </template>
               <template v-else>
-                <i18n path="sushi_for_version" tag="span">
+                <i18n-t keypath="sushi_for_version" tag="span">
                   <template v-slot:version>
                     {{ counterVersionToStr(record.version) }}
                   </template>
-                </i18n>
+                </i18n-t>
               </template>
             </v-tooltip>
           </template>
-          <template v-slot:item.annotations="{ item }">
-            <v-tooltip bottom v-if="item.annotations">
-              <template v-slot:activator="{ on }">
-                <v-icon x-small v-on="on">fa-exclamation-triangle</v-icon>
+          <template v-slot:[`item.annotations`]="{ item }">
+            <v-tooltip location="bottom" v-if="item.annotations">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  size="x-small"
+                  v-bind="props"
+                  icon="fa fa-exclamation-triangle"
+                ></v-icon>
               </template>
-              <template>
-                {{ $t("annotations_available") }}
-              </template>
+              {{ $t("annotations_available") }}
             </v-tooltip>
           </template>
-
-          <template #item.tags="{ item }">
+          <template #[`item.tags`]="{ item }">
             <TagChip
               v-for="tag in objIdToTags.get(item.pk)"
               :key="tag.pk"
               :tag="tag"
               small
               show-class
-            />
+            ></TagChip>
           </template>
 
           <template #no-data v-if="!filtersApplied">
@@ -182,6 +186,7 @@ cs:
     </v-dialog>
   </v-container>
 </template>
+
 <script>
 import { mapGetters } from "vuex";
 import { formatInteger } from "../libs/numbers";
@@ -212,7 +217,7 @@ export default {
       required: false,
       default: "1200px",
     },
-    loading: {},
+    loading: Boolean,
     platforms: {},
   },
 
@@ -225,7 +230,7 @@ export default {
       // table options
       page: 1,
       itemsPerPage: -1,
-      orderBy: "name",
+      orderBy: [{ key: "name", order: this.orderDesc ? "desc" : "asc" }],
       orderDesc: false,
       // state tracking support
       watchedAttrs: [
@@ -244,7 +249,7 @@ export default {
         },
         {
           name: "orderBy",
-          type: String,
+          type: Object,
         },
         {
           name: "orderDesc",
@@ -269,49 +274,61 @@ export default {
     headers() {
       let base = [
         {
-          text: this.$i18n.t("columns.name"),
+          title: this.$i18n.t("columns.name"),
           value: "name",
+          key: "name",
         },
         {
-          text: this.$t("columns.notes"),
+          title: this.$t("columns.notes"),
           value: "annotations",
           sortable: false,
+          key: "annotations",
         },
         {
-          text: this.$i18n.t("columns.provider"),
+          title: this.$i18n.t("columns.provider"),
           value: "provider",
+          key: "provider",
         },
         {
-          text: this.$i18n.t("labels.tags"),
+          title: this.$i18n.t("labels.tags"),
           value: "tags",
         },
         {
-          text: this.$i18n.t("columns.title_count"),
+          title: this.$i18n.t("columns.title_count"),
           value: "title_count",
           class: "wrap",
-          align: "right",
+          align: "end",
+          key: "title_count",
         },
       ];
       for (let ig of this.activeInterestGroups) {
         base.push({
-          text: ig.name,
+          title: ig.name,
           value: "interests." + ig.short_name,
           class: "wrap text-xs-right",
-          align: "right",
+          align: "end",
+          key: "interests." + ig.short_name,
         });
       }
       base.push({
-        text: this.$i18n.t("columns.sushi_available"),
+        title: this.$i18n.t("columns.sushi_available"),
         value: "sushi_credentials_versions",
         sortable: false,
       });
       if (this.allowUserCreatePlatforms) {
         base.push({
-          text: this.$i18n.t("columns.actions"),
+          title: this.$i18n.t("columns.actions"),
           value: "actions",
           sortable: false,
         });
       }
+      // if (this.enableTags) {
+      //   base.splice(3, 0, {
+      //     title: this.$i18n.t("labels.tags"),
+      //     value: "tags",
+      //     key: "tags",
+      //   });
+      // }
       return base;
     },
     filtersApplied() {
@@ -395,3 +412,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+:deep(.v-table > .v-table__wrapper > table > thead > tr > th) {
+  font-size: 12px;
+}
+</style>

@@ -115,7 +115,6 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col cols="auto" v-if="!wrongOrganizationPresent">
         <v-card hover>
           <v-card-text>
@@ -136,17 +135,19 @@ cs:
                 <tr class="text-center">
                   <th class="pl-1 pr-1"></th>
                   <th class="pl-1 pr-1">
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on }">
-                        <span v-on="on">{{ $t("month_table.hits_sum") }}</span>
+                    <v-tooltip location="bottom">
+                      <template v-slot:activator="{ props }">
+                        <span v-bind="props">{{
+                          $t("month_table.hits_sum")
+                        }}</span>
                       </template>
                       <span>{{ $t("month_table.sum_count_tooltip") }}</span>
                     </v-tooltip>
                   </th>
                   <th class="pl-1 pr-1" v-if="clashingMonths.length == 0">
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on }">
-                        <span v-on="on">
+                    <v-tooltip location="bottom">
+                      <template v-slot:activator="{ props }">
+                        <span v-bind="props">
                           {{ $t("month_table.prev_year_average") }}
                         </span>
                       </template>
@@ -156,9 +157,9 @@ cs:
                     </v-tooltip>
                   </th>
                   <th class="pl-1 pr-1" v-if="clashingMonths.length == 0">
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on }">
-                        <span v-on="on">
+                    <v-tooltip location="bottom">
+                      <template v-slot:activator="{ props }">
+                        <span v-bind="props">
                           {{ $t("month_table.prev_year_month") }}
                         </span>
                       </template>
@@ -172,9 +173,17 @@ cs:
                   <td class="text-left pr-4">
                     {{ rec.name.substring(0, 7) }}
 
-                    <v-tooltip bottom v-if="clashingMonths.includes(rec.name)">
-                      <template v-slot:activator="{ on }">
-                        <v-icon class="ml-1" x-small color="error" v-on="on">
+                    <v-tooltip
+                      location="bottom"
+                      v-if="clashingMonths.includes(rec.name)"
+                    >
+                      <template v-slot:activator="{ props }">
+                        <v-icon
+                          class="ml-1"
+                          size="x-small"
+                          color="error"
+                          v-bind="props"
+                        >
                           fa fa-exclamation-triangle
                         </v-icon>
                       </template>
@@ -183,38 +192,38 @@ cs:
                   </td>
                   <td class="text-center">
                     <SimpleCompare
-                      :value="rec.value.new && rec.value.new.sum"
                       :other-value="
                         rec.value.this_month && rec.value.this_month.sum
                       "
                       :other-value-tooltip="$t('comparison_with_existing_sum')"
                       :negate="false"
-                    />
+                      :model-value="rec.value.new && rec.value.new.sum"
+                    ></SimpleCompare>
                   </td>
                   <td v-if="clashingMonths.length == 0" class="text-center">
                     <SimpleCompare
-                      :value="
-                        rec.value.prev_year_avg && rec.value.prev_year_avg.sum
-                      "
                       :other-value="rec.value.new && rec.value.new.sum"
                       :other-value-tooltip="
                         $t('comparison_with_last_year_average_sum')
                       "
                       :negate="true"
-                    />
+                      :model-value="
+                        rec.value.prev_year_avg && rec.value.prev_year_avg.sum
+                      "
+                    ></SimpleCompare>
                   </td>
                   <td v-if="clashingMonths.length == 0" class="text-center">
                     <SimpleCompare
-                      :value="
-                        rec.value.prev_year_month &&
-                        rec.value.prev_year_month.sum
-                      "
                       :other-value="rec.value.new && rec.value.new.sum"
                       :other-value-tooltip="
                         $t('comparison_with_last_year_month_sum')
                       "
                       :negate="true"
-                    />
+                      :model-value="
+                        rec.value.prev_year_month &&
+                        rec.value.prev_year_month.sum
+                      "
+                    ></SimpleCompare>
                   </td>
                 </tr>
               </table>
@@ -222,7 +231,6 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col
         cols="auto"
         v-if="!wrongOrganizationPresent && metricsSorted.length > 0"
@@ -233,12 +241,13 @@ cs:
             <div class="text-right">
               <table>
                 <tr v-for="rec in metricsSorted" :key="rec.name">
-                  <v-tooltip bottom>
-                    <template #activator="{ on }">
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
                       <td class="text-left">
                         <v-icon
-                          v-on="on"
-                          small
+                          v-bind="props"
+                          size="small"
+                          class="mr-2"
                           left
                           :color="metricState(rec.name).color"
                         >
@@ -249,11 +258,19 @@ cs:
                     {{ $t(metricState(rec.name).tooltip) }}
                   </v-tooltip>
                   <td class="text-left pr-4">
-                    <v-tooltip v-if="isInterestMetric(rec.name)" bottom>
-                      <template #activator="{ on }">
-                        <span v-on="on">
+                    <v-tooltip
+                      v-if="isInterestMetric(rec.name)"
+                      location="bottom"
+                    >
+                      <template #activator="{ props }">
+                        <span v-bind="props">
                           {{ rec.name }}
-                          <v-icon class="ml-2" x-small>fa fa-star</v-icon>
+                          <v-icon
+                            class="ml-2"
+                            size="x-small"
+                            color="rgba(0, 0, 0, 0.54)"
+                            >fa fa-star</v-icon
+                          >
                         </span>
                       </template>
                       {{ $t("is_interest_metric") }}
@@ -267,7 +284,6 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col
         cols="auto"
         v-if="!wrongOrganizationPresent && foundDimensions.length > 0"
@@ -285,7 +301,6 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col cols="auto">
         <v-card hover v-if="organizationsSorted">
           <v-card-text>
@@ -294,11 +309,16 @@ cs:
               <table>
                 <tr v-for="rec in organizationsSorted" :key="rec.name">
                   <td class="text-left pr-4">
-                    <v-tooltip v-if="!rec.value.pk" bottom>
-                      <template #activator="{ on }">
-                        <span v-on="on">
+                    <v-tooltip v-if="!rec.value.pk" location="bottom">
+                      <template #activator="{ props }">
+                        <span v-bind="props">
                           {{ rec.name }}
-                          <v-icon class="ml-1" x-small color="error" v-on="on">
+                          <v-icon
+                            class="ml-1"
+                            size="x-small"
+                            color="error"
+                            v-bind="props"
+                          >
                             fa fa-exclamation-triangle
                           </v-icon>
                         </span>
@@ -306,12 +326,17 @@ cs:
                       {{ $t("organization_not_found") }}
                     </v-tooltip>
                     <v-tooltip
-                      bottom
                       v-else-if="clashingOrgs.includes(rec.value.pk)"
+                      location="bottom"
                     >
-                      <template v-slot:activator="{ on }">
+                      <template v-slot:activator="{ props }">
                         {{ rec.name }}
-                        <v-icon class="ml-1" x-small color="error" v-on="on">
+                        <v-icon
+                          class="ml-1"
+                          color="error"
+                          size="x-small"
+                          v-bind="props"
+                        >
                           fa fa-exclamation-triangle
                         </v-icon>
                       </template>
@@ -321,11 +346,17 @@ cs:
                       v-else-if="
                         method == 'raw' && rawDisabledPk.includes(rec.value.pk)
                       "
-                      bottom
+                      location="bottom"
                     >
-                      <template #activator="{ on }">
-                        <span v-on="on">
-                          <v-icon class="ml-1" x-small color="error" v-on="on">
+                      <template #activator="{ props }">
+                        <span v-bind="props">
+                          {{ rec.name }}
+                          <v-icon
+                            class="ml-1"
+                            size="x-small"
+                            color="error"
+                            v-bind="on"
+                          >
                             fa fa-exclamation-triangle
                           </v-icon>
                           {{ rec.name }}
@@ -345,7 +376,7 @@ cs:
     </v-row>
     <v-row v-if="wrongOrganizationPresent">
       <v-col>
-        <v-alert type="error" outlined>
+        <v-alert type="error" variant="outlined">
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
           <div class="mb-2" v-if="notFoundOrg.length > 0">
             {{ $t("organizations_were_not_found") }}:
@@ -377,7 +408,7 @@ cs:
     </v-row>
     <v-row v-else-if="clashingMonths.length > 0 || failedMetrics.length > 0">
       <v-col>
-        <v-alert type="error" outlined>
+        <v-alert type="error" variant="tonal">
           <h4 class="mb-2 text-h6">{{ $t("import_not_allowed") }}</h4>
           <v-container>
             <v-row>
@@ -429,7 +460,7 @@ cs:
       </v-col>
     </v-row>
     <v-row v-else-if="emptyPreflight">
-      <v-alert type="warning" outlined>
+      <v-alert type="warning" variant="tonal">
         <h4 class="mb-2 text-h6">{{ $t("no_data_title") }}</h4>
         <p class="mt-2" v-if="hasMonths">
           {{ $t("empty_months_text") }}
@@ -441,6 +472,7 @@ cs:
     </v-row>
   </v-container>
 </template>
+
 <script>
 import SimpleCompare from "@/components/util/SimpleCompare";
 import { formatInteger } from "@/libs/numbers";
@@ -497,7 +529,7 @@ export default {
         return [];
       }
       return this.organizationsSorted.filter((e) =>
-        this.clashingOrgs.includes(e.value.pk)
+        this.clashingOrgs.includes(e.value.pk),
       );
     },
     titleCount() {
@@ -511,7 +543,7 @@ export default {
         return [];
       }
       return this.metricsSorted.filter(
-        (e) => !this.usableMetrics.includes(e.name)
+        (e) => !this.usableMetrics.includes(e.name),
       );
     },
     clashingMonths() {
@@ -519,7 +551,7 @@ export default {
         ...new Set(
           Object.values(this.preflightData.clashing_months)
             .flat()
-            .map((e) => e.month)
+            .map((e) => e.month),
         ),
       ];
       result.sort();
@@ -530,7 +562,7 @@ export default {
         ...new Set(
           Object.values(this.preflightData.clashing_months)
             .flat()
-            .map((e) => e.org_id)
+            .map((e) => e.org_id),
         ),
       ];
       return result;
@@ -544,7 +576,7 @@ export default {
     rawDisabledOrg() {
       if (this.organizationsSorted && this.method == "raw") {
         return this.organizationsSorted.filter(
-          (e) => !!e.value.pk && this.rawDisabledPk.includes(e.value.pk)
+          (e) => !!e.value.pk && this.rawDisabledPk.includes(e.value.pk),
         );
       } else {
         return [];
@@ -584,7 +616,7 @@ export default {
         if (!this.usableMetrics.includes(metricName)) {
           // Metric check failed
           return {
-            icon: "fas fa-exclamation-circle",
+            icon: "fa fa-exclamation-circle",
             color: "error",
             tooltip: "metric_check_failed",
           };
@@ -601,7 +633,7 @@ export default {
       } else {
         if (!this.existingMetricsNames.includes(metricName)) {
           return {
-            icon: "fas fa-exclamation-circle",
+            icon: "fa fa-exclamation-circle",
             color: "error",
             tooltip: "metric_unknown",
           };
@@ -617,7 +649,7 @@ export default {
         };
       }
       return {
-        icon: "fas fa-check-circle",
+        icon: "fa fa-check-circle",
         color: "success",
         tooltip: "metric_ready",
       };
@@ -625,6 +657,7 @@ export default {
   },
 };
 </script>
+
 <style scoped lang="scss">
 ul.no-decoration {
   list-style: none;

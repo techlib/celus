@@ -1,5 +1,7 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   loading_harvest_slots: Checking existing data
@@ -38,8 +40,8 @@ cs:
       <table class="pb-4">
         <tr v-for="type in slots" :key="type">
           <td>
-            <v-icon :color="iconColor(type)" small>
-              fa-fw {{ icon(type) }}
+            <v-icon :color="iconColor(type)" size="small">
+              fa fa-fw {{ icon(type) }}
             </v-icon>
           </td>
           <td class="text-right font-weight-bold caption px-2">
@@ -54,18 +56,20 @@ cs:
         <v-btn-toggle
           v-model="selectedReportTypes"
           multiple
-          dense
+          variant="outlined"
+          divided
+          density="compact"
           class="mb-2"
           color="secondary"
         >
           <v-tooltip
             v-for="rt in availableReportTypes"
-            bottom
+            location="bottom"
             max-width="600px"
             :key="rt.id"
           >
-            <template #activator="{ on }">
-              <v-btn v-on="on" :value="rt.id">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" :value="rt.id">
                 {{ rt.code }}
               </v-btn>
             </template>
@@ -75,11 +79,16 @@ cs:
       </div>
     </div>
 
-    <v-alert v-if="reharvestCount" type="warning" outlined class="mb-4">
+    <v-alert
+      v-if="reharvestCount"
+      type="warning"
+      variant="outlined"
+      class="mb-4"
+    >
       <span v-html="$t('reharvest_warning')"></span>
     </v-alert>
 
-    <v-simple-table dense>
+    <v-data-table hide-default-footer>
       <thead>
         <tr>
           <th>{{ $t("labels.credentials") }}</th>
@@ -109,7 +118,7 @@ cs:
             <v-chip
               class="mr-1 px-2"
               :color="row.rt.broken ? '#888888' : 'teal'"
-              outlined
+              variant="outlined"
               label
             >
               <SushiReportIndicator
@@ -126,20 +135,24 @@ cs:
             <!-- reharvest with data present -->
             <v-tooltip
               v-if="reharvest && dataPresent(row.months[month])"
-              bottom
+              location="bottom"
               max-width="600px"
               :key="`tt-${index}-${index2}`"
             >
-              <template #activator="{ on }">
-                <span v-on="on">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-icon
                     v-if="dataHarvestable(row.cred, row.rt, month)"
                     color="warning lighten-1"
-                    small
+                    size="small"
                     class="ml-1"
                     >fa fa-sync-alt</v-icon
                   >
-                  <v-icon v-else color="error lighten-1" small class="ml-1"
+                  <v-icon
+                    v-else
+                    color="error lighten-1"
+                    size="small"
+                    class="ml-1"
                     >fa fa-exclamation-triangle</v-icon
                   >
                 </span>
@@ -151,9 +164,12 @@ cs:
               }}
             </v-tooltip>
             <!-- new harvest or no data present -->
-            <v-tooltip bottom v-else>
-              <template #activator="{ on }">
-                <v-icon v-on="on" :color="iconColor(row.months[month])" small
+            <v-tooltip location="bottom" v-else>
+              <template #activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  :color="iconColor(row.months[month])"
+                  size="small"
                   >fa {{ icon(row.months[month]) }}
                 </v-icon>
               </template>
@@ -181,7 +197,7 @@ cs:
           </td>
         </tr>
       </tbody>
-    </v-simple-table>
+    </v-data-table>
   </div>
 </template>
 
@@ -203,20 +219,20 @@ export default {
     credentials: { type: Array, required: true },
     startDate: { type: String, required: true },
     endDate: { type: String, required: true },
-    ready: { type: Boolean },
+    modelValue: { type: Boolean },
     reharvest: { type: Boolean, default: false },
   },
 
   data() {
     let rts = new Set();
     this.credentials.forEach((cr) =>
-      cr.counter_reports_long.forEach((rt) => rts.add(rt.id))
+      cr.counter_reports_long.forEach((rt) => rts.add(rt.id)),
     );
     return {
       presenceData: [],
       presenceMap: new Map(),
       loading: false,
-      dataReady: this.ready,
+      dataReady: this.modelValue,
       selectedReportTypes: Array.from(rts),
     };
   },
@@ -279,7 +295,7 @@ export default {
       rows.sort(
         (a, b) =>
           a.cred.organization.name.localeCompare(b.cred.organization.name) ||
-          a.cred.platform.name.localeCompare(b.cred.platform.name)
+          a.cred.platform.name.localeCompare(b.cred.platform.name),
       );
       return rows;
     },
@@ -292,7 +308,7 @@ export default {
         Object.values(row.months).forEach((value) => {
           out[value] ??= 0;
           out[value]++;
-        })
+        }),
       );
       return out;
     },
@@ -305,7 +321,7 @@ export default {
     availableReportTypes() {
       let out = new Map();
       this.credentials.forEach((cr) =>
-        cr.counter_reports_long.forEach((rt) => out.set(rt.id, rt))
+        cr.counter_reports_long.forEach((rt) => out.set(rt.id, rt)),
       );
       let array = Array.from(out.values());
       array.sort((a, b) => a.code.localeCompare(b.code));
@@ -332,8 +348,8 @@ export default {
             `${rec.report_type_id}#${rec.platform_id}#${
               rec.organization_id
             }#${ymDateFormat(parseDateTime(rec.date))}`,
-            rec.source
-          )
+            rec.source,
+          ),
         );
         this.presenceMap = map;
         this.dataReady = true;
@@ -398,10 +414,15 @@ export default {
       },
     },
     dataReady() {
-      this.$emit("update:ready", this.dataReady);
+      this.$emit("update:modelValue", this.dataReady);
     },
   },
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+th {
+  font-size: 12px;
+  color: #00000099;
+}
+</style>

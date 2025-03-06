@@ -1,35 +1,51 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
 
 <template>
   <v-form v-model="valid" @submit.prevent="update()">
     <v-card class="pa-4">
       <v-card-title>{{ titleTextComputed }}</v-card-title>
       <v-card-text>
-        <slot name="top" />
+        <slot name="top"></slot>
         <v-text-field
           v-model="newTitle"
           :label="inputLabelComputed"
           class="mt-6"
           :rules="[rules.required]"
           ref="title"
-        />
-        <AccessLevelSelector :value="ownershipType" ref="accessLevel" />
+        ></v-text-field>
+        <AccessLevelSelector
+          ref="accessLevel"
+          :model-value="ownershipType"
+          :copyReport="copyReport"
+          :reportAccess="reportAccess"
+          :createNew="createNew"
+        ></AccessLevelSelector>
       </v-card-text>
       <v-card-actions>
-        <v-spacer />
-        <v-btn @click="cancel()">{{ $t("cancel") }}</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          @click="cancel()"
+          variant="flat"
+          elevation="2"
+          color="defaultButton"
+          >{{ $t("cancel") }}</v-btn
+        >
         <v-btn
           type="submit"
           color="primary"
           :disabled="!valid || loading"
           :loading="loading"
+          variant="flat"
+          elevation="2"
           >{{ submitButtonText }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-form>
 </template>
+
 <script>
 import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -48,8 +64,14 @@ export default {
     submitText: { type: String, required: false },
     title: { type: String, required: false },
     inputLabel: { type: String, required: false },
+    copyReport: {
+      type: Boolean,
+      default: false,
+    },
+    reportAccess: { type: String, required: false },
+    createNew: { type: Boolean, default: false },
   },
-
+  emits: ["update"],
   data() {
     return {
       newTitle: this.name,

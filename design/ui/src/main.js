@@ -1,46 +1,47 @@
-// the following two imports are here to provide polyfills and replace @babel/polyfill
-import "core-js/stable";
-import "regenerator-runtime/runtime";
-import Vue from "vue";
-import App from "./pages/Main";
-import store from "./store";
-import router from "./router";
-import i18n from "./i18n";
+/**
+ * main.js
+ *
+ * Bootstraps Vuetify and other plugins then mounts the App`
+ */
+
+// Components
+import App from "./pages/Main.vue";
+
+// Composables
+import { createApp } from "vue";
+import { createI18n } from "vue-i18n";
+import Vue3Tour from "vue3-tour";
+import { Buffer } from "buffer";
+import confirm from "vuetify3-confirm";
 import vuetify from "./plugins/vuetify";
-import * as Sentry from "@sentry/browser";
-import { Vue as VueIntegration } from "@sentry/integrations";
-import VuetifyConfirm from "vuetify-confirm";
+import VueDatePicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
+import "@/styles/settings.scss";
+import VueGravatar from "vue3-gravatar";
 
-Sentry.init({
-  dsn: SENTRY_URL,
-  integrations: [
-    new VueIntegration({ Vue, attachProps: true, logErrors: true }),
-  ],
-  release: GIT_COMMITHASH ? `celus-${GIT_COMMITHASH}` : "",
-  environment: SENTRY_ENVIRONMENT ? SENTRY_ENVIRONMENT : "",
+import "vue3-tour/dist/vue3-tour.css";
+
+window.Buffer = Buffer;
+
+const i18n = createI18n({
+  locale: "en",
+  fallbackLocale: "en",
+  silentTranslationWarn: true,
+  silentFallbackWarn: true,
 });
 
-// This should be the same as server_name from python part of sentry
-Sentry.setTag("server_name", location.hostname.replace(/\./g, "-"));
+// Plugins
+import { registerPlugins } from "@/plugins";
 
-Vue.use(VuetifyConfirm, {
-  vuetify,
-  buttonTrueText: "Accept",
-  buttonFalseText: "Cancel",
-  color: "warning",
-  icon: "fa fa-exclamation-triangle",
-  title: "Warning",
-  width: 350,
-  property: "$confirm",
-});
+const app = createApp(App);
 
-Vue.config.productionTip = false;
+registerPlugins(app);
 
-new Vue({
-  el: "#app",
-  render: (h) => h(App),
-  store,
-  i18n,
-  router,
+app.use(i18n);
+app.use(confirm, {
   vuetify,
 });
+app.use(VueGravatar);
+app.use(Vue3Tour);
+app.component("VueDatePicker", VueDatePicker);
+app.mount("#app");

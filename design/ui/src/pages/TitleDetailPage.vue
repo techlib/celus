@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <i18n lang="yaml">
@@ -66,11 +67,11 @@ cs:
           </template>
           <tr v-if="title">
             <th>
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <span v-on="on">
+              <v-tooltip max-width="600px" location="bottom">
+                <template #activator="{ props }">
+                  <span v-bind="props">
                     {{ $t("title_fields.proprietary_ids") }}
-                    <v-icon color="info" small>fa-info-circle</v-icon>
+                    <v-icon color="info" size="small">fa fa-info-circle</v-icon>
                   </span>
                 </template>
                 <span v-text="$t('title_fields.proprietary_ids_tt')"></span>
@@ -127,8 +128,8 @@ cs:
               @mouseleave="changeDateSelectorHighlight({ highlight: false })"
             >
               <div>
-                <v-icon x-small color="warning" class="mb-1"
-                  >fa-exclamation-triangle</v-icon
+                <v-icon size="x-small" color="warning" class="mb-1"
+                  >fa fa-exclamation-triangle</v-icon
                 >
                 {{ $t("not_available_from_any_platform") }}
               </div>
@@ -149,28 +150,35 @@ cs:
               </router-link>
             </td>
             <td class="text-right">
-              <v-tooltip bottom v-if="platform.pk !== platformId">
-                <template v-slot:activator="{ on }">
+              <v-tooltip location="bottom" v-if="platform.pk !== platformId">
+                <template v-slot:activator="{ props }">
                   <v-btn
-                    small
+                    size="small"
                     icon
-                    v-on="on"
+                    variant="text"
+                    v-bind="props"
                     color="secondary"
                     :to="{
                       name: 'platform-title-detail',
                       params: { platformId: platform.pk, titleId: titleId },
                     }"
                   >
-                    <v-icon small>fa-external-link-alt</v-icon>
+                    <v-icon size="small">fas fa-external-link-alt</v-icon>
                   </v-btn>
                 </template>
                 <span v-text="$t('this_title_on_platform')"></span>
               </v-tooltip>
-              <v-tooltip bottom v-else>
-                <template v-slot:activator="{ on }">
-                  <span v-on="on">
-                    <v-btn small icon color="secondary" disabled>
-                      <v-icon small>fa-arrow-left</v-icon>
+              <v-tooltip location="bottom" v-else>
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props">
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      icon
+                      color="secondary"
+                      disabled
+                    >
+                      <v-icon size="small">fas fa-arrow-left</v-icon>
                     </v-btn>
                   </span>
                 </template>
@@ -178,7 +186,6 @@ cs:
               </v-tooltip>
             </td>
           </tr>
-
           <tr
             v-if="
               platformId &&
@@ -190,19 +197,20 @@ cs:
             <!-- if platform is specified, we provide a link to this title without platform specified -->
             <td v-text="$t('no_platform')" class="pt-4 font-weight-light"></td>
             <td class="text-right pt-4">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props }">
                   <v-btn
-                    small
+                    size="small"
                     icon
-                    v-on="on"
+                    variant="text"
+                    v-bind="props"
                     color="secondary"
                     :to="{
                       name: 'title-detail',
                       params: { platformId: null, titleId: titleId },
                     }"
                   >
-                    <v-icon small>fa-external-link-alt</v-icon>
+                    <v-icon size="small">fas fa-external-link-alt</v-icon>
                   </v-btn>
                 </template>
                 <span v-text="$t('this_title_no_platform')"></span>
@@ -212,11 +220,15 @@ cs:
         </table>
       </v-col>
       <v-spacer></v-spacer>
-      <v-col cols="12" sm="6" md="4" lg="3">
-        <TagCard v-if="titleId" scope="title" :item-id="titleId" show-class />
+      <v-col cols="14" sm="9" md="6" lg="3">
+        <TagCard
+          v-if="titleId"
+          scope="title"
+          :item-id="titleId"
+          show-class
+        ></TagCard>
       </v-col>
     </v-row>
-
     <section class="my-4" id="annotations">
       <AnnotationsWidget
         v-if="platformData"
@@ -224,50 +236,47 @@ cs:
         @loaded="annotationsLoaded"
       ></AnnotationsWidget>
     </section>
-
     <v-tabs
       v-if="isReady"
       v-model="tab"
-      background-color="#f5f5f5"
+      color="#2d5854"
       centered
+      bg-color="rgb(45 88 84 / 5%)"
       grow
       class="mt-1"
     >
-      <v-tab href="#charts">{{ $t("charts") }}</v-tab>
-      <v-tab href="#items" v-if="enableItems">{{ $t("labels.items") }}</v-tab>
-
-      <v-tabs-items v-model="tab" class="platform-page">
-        <v-tab-item value="charts">
-          <v-container>
-            <v-row>
-              <v-col>
-                <h3>{{ $t("overview") }}</h3>
-              </v-col>
-              <v-col cols="auto">
-                <data-export-widget :title="titleId" :platform="platformId">
-                </data-export-widget>
-              </v-col>
-            </v-row>
-
-            <CounterChartSet
-              :platform-id="platformId"
-              :title-id="titleId"
-              :report-views-url="reportViewsUrl"
-              scope="title"
-            >
-            </CounterChartSet>
-          </v-container>
-        </v-tab-item>
-
-        <v-tab-item value="items" v-if="enableItems">
-          <ItemList
-            :organization-id="selectedOrganization.pk"
+      <v-tab value="charts">{{ $t("charts") }}</v-tab>
+      <v-tab value="items" v-if="enableItems">{{ $t("labels.items") }}</v-tab>
+    </v-tabs>
+    <v-tabs-window v-model="tab" class="platform-page">
+      <v-tabs-window-item value="charts">
+        <v-container>
+          <v-row>
+            <v-col>
+              <h3>{{ $t("overview") }}</h3>
+            </v-col>
+            <v-col cols="auto">
+              <data-export-widget :title="titleId" :platform="platformId">
+              </data-export-widget>
+            </v-col>
+          </v-row>
+          <CounterChartSet
             :platform-id="platformId"
             :title-id="titleId"
-          />
-        </v-tab-item>
-      </v-tabs-items>
-    </v-tabs>
+            :report-views-url="reportViewsUrl"
+            scope="title"
+          >
+          </CounterChartSet>
+        </v-container>
+      </v-tabs-window-item>
+      <v-tabs-window-item value="items" v-if="enableItems">
+        <ItemList
+          :organization-id="selectedOrganization.pk"
+          :platform-id="platformId"
+          :title-id="titleId"
+        ></ItemList>
+      </v-tabs-window-item>
+    </v-tabs-window>
   </v-container>
 </template>
 
@@ -276,7 +285,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import CounterChartSet from "@/components/charts/CounterChartSet";
 import DataExportWidget from "@/components/DataExportWidget";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
-import goTo from "vuetify/es5/services/goto";
+import { useGoTo } from "vuetify";
 import { formatInteger } from "@/libs/numbers";
 import cancellation from "@/mixins/cancellation";
 import TagCard from "@/components/tags/TagCard";
@@ -296,6 +305,12 @@ export default {
     platformId: { required: false, type: Number },
     titleId: { required: true, type: Number },
   },
+
+  setup() {
+    const goTo = useGoTo();
+    return { goTo };
+  },
+
   data() {
     return {
       title: null,
@@ -411,7 +426,6 @@ export default {
       showSnackbar: "showSnackbar",
       changeDateSelectorHighlight: "changeDateSelectorHighlight",
     }),
-    goTo: goTo,
     formatInteger: formatInteger,
     async loadTitle() {
       if (this.titleUrl) {

@@ -22,13 +22,14 @@ cs:
         v-for="metric in group.metrics"
         :key="`${group.pk}-${metric.pk}`"
         :metric="metric"
-      />
+      ></MetricChip>
       <span v-if="group.extra" class="text-caption">
         +{{ group.extra }} {{ $tc("more", group.extra) }}
       </span>
     </div>
   </div>
 </template>
+
 <script>
 import MetricChip from "@/components/reporting/MetricChip";
 
@@ -47,7 +48,7 @@ export default {
     groups() {
       let groupSet = new Map();
       this.report.interest_metric_set.forEach((im) =>
-        groupSet.set(im.interest_group.pk, im.interest_group)
+        groupSet.set(im.interest_group.pk, im.interest_group),
       );
       let groups = [...groupSet.values()];
       groups.forEach((group) => {

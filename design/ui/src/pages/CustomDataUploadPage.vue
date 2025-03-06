@@ -1,6 +1,9 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   description: |
@@ -39,15 +42,15 @@ en:
   errors:
     requires_utf8: It seems that the provided file uses unsupported encoding. Please check that the file is encoded using UTF-8.
     unsupported_file_format: File format .{format} is not supported, please convert it to .csv or .xlsx.
-    no_parser_found: Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
-    unknown_report_type: We were able to process the file, but we could not determine the report type for storage. Please let us know at ask@celus.net to fix the problem.
+    no_parser_found: "Sorry, but we cannot detect the format of the uploaded file. If you send us the report to ask{'@'}celus.net, we will check it and try to teach CELUS to process it correctly."
+    unknown_report_type: "We were able to process the file, but we could not determine the report type for storage. Please let us know at ask{'@'}celus.net to fix the problem."
     no_organization_selected: No organization found in data. You need to select organization manually.
     counter_header_not_found: Counter header was not found in data.
     unrecognized_report_name: Unrecognized counter report name found in data '{crn}'.
     unrecognized_report_id: Unrecognized counter report ID found in data '{crid}'.
-    unknown_counter_error: Something went wrong and CELUS was not able to process the data. CELUS is pretty good at processing COUNTER reports, but some publishers extend them in a way that CELUS does not understand. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
-    unknown_raw_error: Something went wrong and CELUS was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
-    unknown_error: An unknown error has occurred during data processing. If you send us the report to ask@celus.net, we will check it and try to teach CELUS to process it correctly.
+    unknown_counter_error: "Something went wrong and CELUS was not able to process the data. CELUS is pretty good at processing COUNTER reports, but some publishers extend them in a way that CELUS does not understand. If you send us the report to ask{'@'}celus.net, we will check it and try to teach CELUS to process it correctly."
+    unknown_raw_error: "Something went wrong and CELUS was not able to process the data. Parsing non-COUNTER data is tough because there is no standard and even reports from one publisher may change from year to year. If you send us the report to ask{'@'}celus.net, we will check it and try to teach CELUS to process it correctly."
+    unknown_error: "An unknown error has occurred during data processing. If you send us the report to ask{'@'}celus.net, we will check it and try to teach CELUS to process it correctly."
     xls_error: Unable to parse .xls file. Please try to convert the file to .xlsx
     unsupported_report_type: Detected report type "{rt}" is not currently supported.
   unauthorized_multiple_org_title: Unauthorized to import
@@ -108,15 +111,15 @@ cs:
   errors:
     requires_utf8: Zdá se, že nahraný soubor obsahuje nepodorované kódování. Prosím ověřte, že je soubor zakódován pomocí UTF-8.
     unsupported_file_format: Typ souboru .{format} není podporovaný, prosím konvertujte jej do .csv nebo .xlsx.
-    no_parser_found: Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
-    unknown_report_type: Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask@celus.net a my problém vyřešíme.
+    no_parser_found: "Omlouváme se, ale nepodařilo se rozpoznat formát nahraného souboru. Pokud nám soubor pošlete na ask{'@'}celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat."
+    unknown_report_type: "Soubor se podařilo načíst, ale nemůžeme určit typ reportu pro uložení. Napište nám na ask{'@'}celus.net a my problém vyřešíme."
     no_organization_selected: Organizace nelze vyčíst z dat. Vyberte prosím organizaci manuálně.
     counter_header_not_found: Nebyla nalezena hlavička counter dat.
     unrecognized_report_name: V datech se nachází neznámé jméno typu reportu '{crn}'.
     unrecognized_report_id: V datech se nachází neznámé ID typu reportu '{crid}'.
-    unknown_counter_error: Něco se pokazilo a CELUS nebyl schopen data zpracovat. CELUS je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému CELUS nerozumí. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
-    unknown_raw_error: Něco se pokazilo a CELUS nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
-    unknown_error: Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask@celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat.
+    unknown_counter_error: "Něco se pokazilo a CELUS nebyl schopen data zpracovat. CELUS je poměrně dobrý v zpracování COUNTER reportů, ale někteří vydavatelé je rozšiřují způsobem, kterému CELUS nerozumí. Pokud nám report pošlete na ask{'@'}celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat."
+    unknown_raw_error: "Něco se pokazilo a CELUS nebyl schopen data zpracovat. Zpracování ne-COUNTER dat je složité, protože neexistuje žádný standard a dokonce i reporty od jednoho vydavatele se mohou z roku na rok měnit. Pokud nám report pošlete na ask{'@'}celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat."
+    unknown_error: "Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask{'@'}celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat."
     xls_error: Nedaří se zpracovat .xls soubor. Prosím zkuste soubor zkonvertovat na .xlsx
     unsupported_report_type: Zjištěný typ reportu "{rt}" není v současné době podporován.
   unauthorized_multiple_org_title: Neautorizovaný import
@@ -164,9 +167,10 @@ cs:
           <ItemBadge
             :item="platform"
             tag="h2"
-            badge-class="ml-2"
-            :badge-inline="false"
-          />
+            class="d-flex align-center"
+            :badge-class="'badge_manual'"
+            :badge-inline="true"
+          ></ItemBadge>
         </v-col>
       </v-row>
       <v-row>
@@ -183,257 +187,274 @@ cs:
     >
       <v-skeleton-loader
         type="list-item-avatar-three-line, list-item-avatar-three-line, list-item-avatar-three-line"
-      />
+      ></v-skeleton-loader>
     </v-sheet>
-    <v-stepper v-model="step" v-else vertical>
-      <v-stepper-step
-        :step="steps.method"
-        :complete="method && step > steps.method"
-      >
-        {{ $t("step_method") }}
-        <span v-if="method && step > steps.method"
-          >(<span
-            class="font-weight-light"
-            :style="highlightStyle(methodChanged)"
-            >{{ $t("method_" + method + "_label_name") }}</span
-          >)</span
+    <v-stepper-vertical hide-actions v-model="step" v-else>
+      <template v-slot:default="{ step }">
+        <v-stepper-vertical-item
+          :complete="step > steps.method"
+          :title="
+            method && step > steps.method
+              ? $t('step_method') +
+                '(' +
+                $t('method_' + method + '_label_name') +
+                ')'
+              : $t('step_method')
+          "
+          :value="steps.method"
         >
-      </v-stepper-step>
-      <v-stepper-content :step="steps.method">
-        <v-sheet class="pa-2 pt-0">
-          <v-radio-group v-model="method" class="">
-            <v-radio value="counter">
-              <template #label>
-                <strong class="font-weight-black">{{
-                  $t("method_counter_label_name")
-                }}</strong
-                >:
-                <span class="pl-1">{{ $t("method_counter_label_text") }}</span>
-              </template>
-            </v-radio>
-            <v-radio
-              value="raw"
-              :readonly="!canImportRawData"
-              v-if="isRawImportEnabled"
+          <v-sheet class="pa-2 pt-0">
+            <v-radio-group
+              v-model="method"
+              :hide-details="true"
+              color="primary"
             >
-              <template #label>
-                <span>
-                  <span :class="canImportRawData ? '' : 'text--disabled'">
-                    <strong class="font-weight-black">{{
-                      $t("method_raw_label_name")
-                    }}</strong
-                    >:
-                    <span class="pl-1">{{ $t("method_raw_label_text") }}</span>
-                  </span>
-                  <v-tooltip bottom v-if="!canImportRawData">
-                    <template #activator="{ on }">
-                      <v-icon class="pl-1" v-on="on" small color="info"
-                        >fa-info-circle</v-icon
-                      >
-                    </template>
-                    <span>{{ $t("method_raw_disabled_tt") }}</span>
-                  </v-tooltip>
-                </span>
-              </template>
-            </v-radio>
-            <v-radio
-              value="celus"
-              v-if="allowCelusFormatImport"
-              :readonly="!canImportCelusFormat"
-            >
-              <!-- cannot use disabled because it disables the tooltip -->
-              <template #label>
-                <span>
-                  <span :class="canImportCelusFormat ? '' : 'text--disabled'">
-                    <strong class="font-weight-black">{{
-                      $t("method_celus_label_name")
-                    }}</strong
-                    >:
-                    <span class="pl-1">{{
-                      $t("method_celus_label_text")
-                    }}</span>
-                    <v-tooltip bottom v-if="!canImportCelusFormat">
-                      <template #activator="{ on }">
-                        <v-icon class="pl-1" v-on="on" small color="info"
-                          >fa-info-circle</v-icon
+              <v-radio value="counter">
+                <template #label>
+                  <strong class="font-weight-black">{{
+                    $t("method_counter_label_name")
+                  }}</strong
+                  >:
+                  <span class="pl-1">{{
+                    $t("method_counter_label_text")
+                  }}</span>
+                </template>
+              </v-radio>
+              <v-radio
+                value="raw"
+                :readonly="!canImportRawData"
+                v-if="isRawImportEnabled"
+              >
+                <template #label>
+                  <span>
+                    <span :class="canImportRawData ? '' : 'text-disabled'">
+                      <strong class="font-weight-black">{{
+                        $t("method_raw_label_name")
+                      }}</strong
+                      >:
+                      <span class="pl-1">{{
+                        $t("method_raw_label_text")
+                      }}</span>
+                    </span>
+                    <v-tooltip location="bottom" v-if="!canImportRawData">
+                      <template #activator="{ props }">
+                        <v-icon v-bind="props" size="x-small" color="info"
+                          >fa fa-info-circle</v-icon
                         >
                       </template>
-                      <span>{{ $t("method_celus_disabled_tt") }}</span>
+                      <span>{{ $t("method_raw_disabled_tt") }}</span>
                     </v-tooltip>
                   </span>
-                </span>
-              </template>
-            </v-radio>
-          </v-radio-group>
-          <v-btn @click="step++" :disabled="!method" color="primary">
-            {{ $t("continue") }}
-          </v-btn>
-        </v-sheet>
-      </v-stepper-content>
-
-      <v-stepper-step :step="steps.upload" :complete="step > steps.upload">
-        {{ $t("step_upload") }}
-      </v-stepper-step>
-      <v-stepper-content :step="steps.upload">
-        <v-form ref="form" v-model="valid" v-if="!uploadObjectId">
-          <v-container fluid class="pb-5 pt-0">
-            <v-row v-if="notesUrl">
-              <v-col>
-                <v-alert type="info" text>
-                  <i18n path="notes_url_description">
-                    <template #link>
-                      <a :href="notesUrl" target="_blank">{{
-                        $t("notes_url_href")
-                      }}</a>
-                    </template>
-                  </i18n>
-                </v-alert>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>
-                <CustomUploadInfoWidget :method="method" />
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" md="6" v-if="canSelectReportType">
-                <v-select
-                  v-model="selectedReportType"
-                  :items="reportTypesToSelect"
-                  item-text="name"
-                  item-value="pk"
-                  required
-                  return-object
-                  :label="$t('labels.report_type')"
-                  :rules="[filledIn]"
-                  :loading="!reportTypesFetched"
-                >
-                  <template v-slot:item="{ item }">
-                    <ItemBadge tag="span" :item="item" />
-                  </template>
-                </v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-file-input
-                  v-model="dataFile"
-                  prepend-icon="fa-table"
-                  show-size
-                  :label="$t('data_file')"
-                  :placeholder="$t('data_file_placeholder')"
-                  required
-                  :rules="[filledIn]"
-                >
-                </v-file-input>
-              </v-col>
-            </v-row>
-            <v-row no-gutters class="pt-2">
-              <v-col cols="12">
-                <ReportTypeInfoWidget
-                  v-if="
-                    method === 'celus' &&
-                    selectedReportType &&
-                    selectedReportType.pk &&
-                    canSelectReportType
-                  "
-                  :report-type="selectedReportType"
-                  outlined
-                />
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="auto">
-                <v-btn @click="step--">{{ $t("back") }}</v-btn>
-              </v-col>
-              <v-col class="d-flex align-center">
-                <v-btn
-                  @click="postData"
-                  :disabled="!canUpload"
-                  :loading="uploading"
-                  color="primary"
-                  >{{ $t("upload") }}</v-btn
-                >
-                <v-progress-linear
-                  class="ma-3"
-                  v-model="uploadProgress"
-                  round
-                  v-if="uploading"
-                />
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-alert
-                type="warning"
-                class="d-inline-block"
-                v-if="!$store.getters.organizationSelected"
+                </template>
+              </v-radio>
+              <v-radio
+                value="celus"
+                :readonly="!canImportCelusFormat"
+                v-if="allowCelusFormatImport"
               >
-                {{ $t("organization_from_data") }}
-              </v-alert>
-            </v-row>
-          </v-container>
-        </v-form>
-        <v-form v-else-if="uploadObject" class="pb-2">
-          <v-row>
-            <v-col class="font-weight-light">{{
-              $t("before_preflight_text")
-            }}</v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <table class="overview">
-                <tr>
-                  <th class="pb-6">{{ $t("labels.report_type") }}</th>
-                  <td class="pb-6">{{ uploadObject.report_type.name }}</td>
-                </tr>
-                <tr v-if="method === 'raw'">
-                  <th class="align-top">
-                    {{ $t("report_type_info") }}
-                    <div class="caption pt-3" style="max-width: 10rem">
-                      {{ $t("report_type_info_desc") }}
-                    </div>
-                  </th>
-                  <td>
-                    <ReportTypeInfoWidget
-                      :report-type="uploadObject.report_type"
-                      hide-implicit-dimensions
-                      hide-title
-                      is-raw
-                    />
-                  </td>
-                </tr>
-                <tr v-if="perSheetExtras && perSheetExtras.length > 0">
-                  <th class="align-top">
-                    {{ $t("labels.metadata") }}
-                    <div class="caption pt-3" style="max-width: 10rem">
-                      {{ $t("metadata_info") }}
-                    </div>
-                  </th>
-                  <td>
-                    <v-card class="pa-2">
-                      <v-tabs
-                        v-model="extraTab"
-                        v-show="perSheetExtras.length > 1"
+                <template #label>
+                  <span>
+                    <span :class="canImportCelusFormat ? '' : 'text-disabled'">
+                      <strong class="font-weight-black">{{
+                        $t("method_celus_label_name")
+                      }}</strong
+                      >:
+                      <span class="pl-1">{{
+                        $t("method_celus_label_text")
+                      }}</span>
+                      <v-tooltip location="bottom" v-if="!canImportCelusFormat">
+                        <template #activator="{ props }">
+                          <v-icon v-bind="props" size="small" color="info"
+                            >fa fa-info-circle</v-icon
+                          >
+                        </template>
+                        <span>{{ $t("method_celus_disabled_tt") }}</span>
+                      </v-tooltip>
+                    </span>
+                  </span>
+                </template>
+              </v-radio>
+            </v-radio-group>
+          </v-sheet>
+          <template v-slot:actions="{ next }">
+            <v-btn
+              @click="next"
+              :disabled="!method"
+              variant="elevated"
+              class="ml-4"
+              color="primary"
+            >
+              {{ $t("continue") }}
+            </v-btn>
+          </template>
+          <template v-slot:prev> </template>
+        </v-stepper-vertical-item>
+        <v-stepper-vertical-item
+          :complete="step > steps.upload"
+          :title="$t('step_upload')"
+          :value="steps.upload"
+        >
+          <v-form ref="form" v-model="valid" v-if="!uploadObjectId">
+            <v-container fluid class="pb-5 pt-0">
+              <v-row v-if="notesUrl">
+                <v-col>
+                  <v-alert type="info" variant="tonal" text>
+                    <i18n-t keypath="notes_url_description">
+                      <template #link>
+                        <a :href="notesUrl" target="_blank">{{
+                          $t("notes_url_href")
+                        }}</a>
+                      </template>
+                    </i18n-t>
+                  </v-alert>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <CustomUploadInfoWidget :method="method" />
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="12" md="6" v-if="canSelectReportType">
+                  <v-select
+                    v-model="selectedReportType"
+                    :items="reportTypesToSelect"
+                    item-title="name"
+                    item-value="pk"
+                    required
+                    return-object
+                    :label="$t('labels.report_type')"
+                    :rules="[filledIn]"
+                    :loading="!reportTypesFetched"
+                  >
+                    <template v-slot:item="{ props, item }">
+                      <v-tooltip
+                        v-bind="props"
+                        location="bottom"
+                        max-width="600px"
+                        v-if="badge(item)"
                       >
-                        <v-tab
-                          v-for="(data, sheet_idx) in perSheetExtras"
-                          :value="sheet_idx"
-                          :key="`extra-${sheet_idx}`"
-                          >{{ `${$t("sheet")} ${sheet_idx + 1}` }}
-                        </v-tab>
-                      </v-tabs>
-                      <v-card-text class="pa-0">
-                        <v-window v-model="extraTab">
-                          <v-window-item
+                        <template #activator="{ props }">
+                          <v-badge
+                            inline
+                            :content="$t(badge(item).content)"
+                            :color="badge(item).color"
+                          >
+                            <template v-slot:badge>
+                              <span v-bind="props">{{
+                                $t(badge(item).content)
+                              }}</span>
+                            </template>
+                          </v-badge>
+                        </template>
+                        <span>{{ $t(badge(item).tooltip) }}</span>
+                      </v-tooltip>
+                    </template>
+                  </v-select>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-file-input
+                    v-model="dataFile"
+                    :rules="[filledIn]"
+                    prepend-icon="fa fa-table"
+                    variant="underlined"
+                    show-size
+                    :label="$t('data_file')"
+                    :placeholder="$t('data_file_placeholder')"
+                    required
+                    accept=".csv, .json, .tsv"
+                  >
+                  </v-file-input>
+                </v-col>
+              </v-row>
+              <v-row no-gutters class="pt-2">
+                <v-col cols="12">
+                  <ReportTypeInfoWidget
+                    v-if="
+                      method === 'celus' &&
+                      selectedReportType &&
+                      selectedReportType.pk &&
+                      canSelectReportType
+                    "
+                    :report-type="selectedReportType"
+                    outlined
+                  ></ReportTypeInfoWidget>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-alert
+                  type="warning"
+                  class="d-flex"
+                  v-if="!$store.getters.organizationSelected"
+                >
+                  {{ $t("organization_from_data") }}
+                </v-alert>
+              </v-row>
+            </v-container>
+          </v-form>
+          <v-form v-else-if="uploadObject" class="pb-2">
+            <v-row>
+              <v-col class="font-weight-light">{{
+                $t("before_preflight_text")
+              }}</v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <table class="overview">
+                  <tr>
+                    <th class="pb-6">{{ $t("labels.report_type") }}</th>
+                    <td class="pb-6">{{ uploadObject.report_type.name }}</td>
+                  </tr>
+                  <tr v-if="method === 'raw'">
+                    <th class="align-top">
+                      {{ $t("report_type_info") }}
+                      <div class="caption pt-3" style="max-width: 10rem">
+                        {{ $t("report_type_info_desc") }}
+                      </div>
+                    </th>
+                    <td>
+                      <ReportTypeInfoWidget
+                        :report-type="uploadObject.report_type"
+                        hide-implicit-dimensions
+                        hide-title
+                        is-raw
+                      ></ReportTypeInfoWidget>
+                    </td>
+                  </tr>
+                  <tr v-if="perSheetExtras && perSheetExtras.length > 0">
+                    <th class="align-top">
+                      {{ $t("labels.metadata") }}
+                      <div class="caption pt-3" style="max-width: 10rem">
+                        {{ $t("metadata_info") }}
+                      </div>
+                    </th>
+                    <td>
+                      <v-card class="pa-2">
+                        <v-tabs
+                          v-model="extraTab"
+                          v-show="perSheetExtras.length > 1"
+                        >
+                          <v-tab
+                            v-for="(data, sheet_idx) in perSheetExtras"
+                            :key="`extra-${sheet_idx}`"
+                            :model-value="sheet_idx"
+                            >{{ `${$t("sheet")} ${sheet_idx + 1}` }}
+                          </v-tab>
+                        </v-tabs>
+                        <v-tabs-window v-model="extraTab">
+                          <v-tabs-window-item
                             v-for="[sheet_idx, data] in perSheetExtras"
                             :key="`extra-${sheet_idx}`"
+                            :model-value="sheet_idx"
                           >
-                            <v-simple-table dense>
+                            <v-table density="compact">
                               <template v-slot:default>
                                 <tbody>
                                   <tr
                                     v-for="(value, key) in data"
                                     :key="`extra-${sheet_idx}-${key}`"
                                   >
-                                    <th>{{ key }}</th>
+                                    <th class="th_table">{{ key }}</th>
                                     <v-list v-if="Array.isArray(value)">
                                       <v-list-item
                                         v-for="(line, idx) in value"
@@ -442,74 +463,106 @@ cs:
                                         {{ line }}
                                       </v-list-item>
                                     </v-list>
-                                    <td v-else>{{ value }}</td>
+                                    <td v-else class="td_table">{{ value }}</td>
                                   </tr>
                                 </tbody>
                               </template>
-                            </v-simple-table>
-                          </v-window-item>
-                        </v-window>
-                      </v-card-text>
-                    </v-card>
-                  </td>
-                </tr>
-              </table>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-btn
-                class="mr-2"
-                @click="backToStart()"
-                v-text="$t('back_to_start')"
-              ></v-btn>
-              <v-btn
-                v-if="canConfirm"
-                @click="confirmReportType()"
-                color="primary"
-                :loading="confirming"
-              >
-                <v-icon small class="pr-2">fa-caret-right</v-icon>
-                {{ $t("continue") }}
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-stepper-content>
-
-      <v-stepper-step
-        :step="steps.preflight"
-        :complete="step > steps.preflight"
-      >
-        {{ $t("step_preflight") }}
-      </v-stepper-step>
-      <v-stepper-content :step="steps.preflight">
-        <v-card>
-          <v-card-title>{{ $t("overview") }}</v-card-title>
-          <v-card-text>
-            <LargeSpinner v-if="state === 'confirmed' || spinnerOn || !state" />
-            <v-alert
-              v-else-if="state === 'preflight' && !preflightDataFormatValid"
-              type="warning"
+                            </v-table>
+                          </v-tabs-window-item>
+                        </v-tabs-window>
+                      </v-card>
+                    </td>
+                  </tr>
+                </table>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col> </v-col>
+            </v-row>
+          </v-form>
+          <template v-slot:actions="{ next, prev }">
+            <v-btn
+              v-if="!uploadObjectId"
+              @click="prev"
+              color="defaultButton"
+              variant="elevated"
+              >{{ $t("back") }}</v-btn
             >
-              <span v-text="$t('preflight_data_outdated')"></span>
-            </v-alert>
-            <ImportPreflightDataWidget
-              v-else-if="state === 'preflight'"
-              :preflight-data="preflightData"
-              :interest-metrics="selectedInterestMetrics"
-              :usable-metrics="usableMetrics"
-              :check-metrics="checkMetrics"
-              :raw-disabled-per-organization="rawDisabledPerOrganization"
-              :auto-create-metrics="automaticallyCreateMetrics"
-              :metrics="metrics"
-              :method="method"
-            />
-            <v-alert v-else-if="state === 'prefailed'" type="error">
-              <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
-              <v-expansion-panels flat>
-                <v-expansion-panel>
-                  <v-expansion-panel-header color="error">
+            <v-btn
+              v-else-if="uploadObject"
+              class="mr-2"
+              variant="elevated"
+              @click="backToStart(), prev"
+            >
+              {{ $t("back_to_start") }}
+            </v-btn>
+            <v-btn
+              @click="postData"
+              :disabled="!canUpload || !dataFile"
+              :loading="uploading"
+              variant="elevated"
+              color="primary"
+              v-if="!uploadObjectId"
+              class="ml-4"
+              >{{ $t("upload") }}</v-btn
+            >
+            <v-progress-linear
+              class="ma-3"
+              v-model="uploadProgress"
+              round
+              v-if="uploading"
+            ></v-progress-linear>
+            <v-btn
+              v-else-if="canConfirm && uploadObject"
+              @click="confirmReportType(), next"
+              color="primary"
+              :loading="confirming"
+              class="ml-4"
+            >
+              <v-icon size="small" class="pr-2">fas fa-caret-right</v-icon>
+              {{ $t("continue") }}
+            </v-btn>
+          </template>
+        </v-stepper-vertical-item>
+        <v-stepper-vertical-item
+          :complete="step > steps.preflight"
+          :title="$t('step_preflight')"
+          :value="steps.preflight"
+        >
+          <template v-slot:header>
+            {{ $t("step_preflight") }}
+          </template>
+          <v-card>
+            <v-card-title>{{ $t("overview") }}</v-card-title>
+            <v-card-text>
+              <LargeSpinner
+                v-if="state === 'confirmed' || spinnerOn || !state"
+              ></LargeSpinner>
+              <v-alert
+                v-else-if="state === 'preflight' && !preflightDataFormatValid"
+                type="warning"
+              >
+                <span v-text="$t('preflight_data_outdated')"></span>
+              </v-alert>
+              <ImportPreflightDataWidget
+                v-else-if="state === 'preflight'"
+                :preflight-data="preflightData"
+                :interest-metrics="selectedInterestMetrics"
+                :usable-metrics="usableMetrics"
+                :check-metrics="checkMetrics"
+                :raw-disabled-per-organization="rawDisabledPerOrganization"
+                :auto-create-metrics="automaticallyCreateMetrics"
+                :metrics="metrics"
+                :method="method"
+              ></ImportPreflightDataWidget>
+              <v-alert v-else-if="state === 'prefailed'" type="error">
+                <h3 v-text="$t('preflight_error_found')" class="pb-2"></h3>
+                <div
+                  bg-color="error"
+                  @click="expand = !expand"
+                  class="expand_trans"
+                >
+                  <div class="expand_trans_sub">
                     <strong v-if="error === 'unicode-decode'">
                       {{ $t("errors.requires_utf8") }}
                     </strong>
@@ -530,178 +583,216 @@ cs:
                     <strong v-else>
                       {{ unknownErrorMessage }}
                     </strong>
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content color="error">
-                    <pre
-                      v-text="errorDetails.exception"
-                      v-if="errorDetails && errorDetails.exception"
-                      class="pt-2"
-                    ></pre>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-expansion-panels>
-            </v-alert>
-            <v-alert
-              v-else-if="preflightData && preflightData.clashing_months.length"
-              type="warning"
-              class="mt-2 mb-1"
-            >
-              <strong v-text="$t('clashing_import_batches_title')"></strong>:
-              <span v-text="$t('clashing_import_batches_text')"></span>
-            </v-alert>
-            <v-alert
-              v-if="!hasImportPermission"
-              type="warning"
-              class="mt-2 mb-1"
-            >
-              <strong v-text="$t('unauthorized_multiple_org_title')"></strong>:
-              <span v-text="$t('unauthorized_multiple_org_text')"></span>
-            </v-alert>
-            <v-alert
-              type="warning"
-              class="d-inline-block"
-              v-if="missingOrgInData && state === 'preflight'"
-            >
-              {{ $t("missing_organization_in_data") }}
-            </v-alert>
-            <v-alert type="info" class="d-inline-block" v-if="needToUnsetOrg">
-              {{ $t("need_to_unset_organization") }}
-            </v-alert>
-          </v-card-text>
-          <v-card-actions v-if="state === 'preflight'">
-            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
-            <v-btn
-              v-if="
-                preflightData &&
-                preflightDataFormatValid &&
-                preflightData.clashing_months.length &&
-                !this.wrongOrganizations.length > 0 &&
-                !this.rawDisabledPerOrganization.length > 0
-              "
-              color="warning"
-              @click="showConfirmDeleteDialog = true"
-            >
-              <v-icon small class="pr-2">fa fa-trash-alt</v-icon>
-              {{ $t("delete_existing") }}
-            </v-btn>
-            <v-btn
-              v-if="canImport"
-              @click="triggerImportData()"
-              color="primary"
-              :loading="state === 'importing' || importing"
-              :disabled="
-                (preflightData && !!preflightData.clashing_months.length) ||
-                preflighting
-              "
-            >
-              <v-icon small class="pr-2">fas fa-cogs</v-icon>
-              {{ $t("import") }}
-            </v-btn>
-            <v-btn
-              v-else
-              color="primary"
-              @click="regeneratePreflight"
-              :disabled="importing"
-            >
-              <v-icon small class="pr-2">fas fa-redo</v-icon>
-              {{ $t("regenerate_preflight") }}
-            </v-btn>
-          </v-card-actions>
-          <v-card-actions v-else-if="state === 'prefailed'">
-            <v-btn
-              color="primary"
-              @click="regeneratePreflight"
-              :disabled="importing"
-            >
-              <v-icon small class="pr-2">fas fa-redo</v-icon>
-              {{ $t("regenerate_preflight") }}
-            </v-btn>
-            <v-btn @click="backToStart()" v-text="$t('back_to_start')"></v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-stepper-content>
-
-      <v-stepper-step :step="steps.done" :complete="step > steps.done">
-        {{ $t("step_done") }}
-      </v-stepper-step>
-      <v-stepper-content :step="steps.done">
-        <v-card>
-          <v-card-text v-if="state === 'imported'">
-            <v-tabs v-model="tab" dark background-color="primary" fixed-tabs>
-              <v-tab href="#chart">{{ $t("tab_chart") }}</v-tab>
-              <v-tab href="#data">{{ $t("tab_data") }}</v-tab>
-            </v-tabs>
-            <v-tabs-items v-model="tab">
-              <v-tab-item value="chart">
-                <MDUChart :mdu-id="uploadObject.pk" />
-              </v-tab-item>
-              <v-tab-item value="data">
-                <AccessLogList
-                  :mdu-id="uploadObject.pk"
-                  :show-organization="multipleOrganizations"
-                />
-              </v-tab-item>
-            </v-tabs-items>
-            <v-container fluid>
-              <v-row>
-                <v-col cols="auto" class="align-self-center">
-                  <v-icon color="success" small>fa fa-check-circle</v-icon>
-                  {{ $t("thats_all") }}
-                </v-col>
-                <v-spacer></v-spacer>
-                <v-col cols="auto">
-                  <v-btn
-                    :to="{
-                      name: 'platform-detail',
-                      params: { platformId: platformId },
-                    }"
-                    color="secondary"
-                  >
-                    {{ $t("return_to_platform") }}
-                  </v-btn>
-                </v-col>
-                <v-col cols="auto">
-                  <v-btn
-                    @click="backToStart()"
-                    v-text="$t('upload_more_files')"
-                    color="primary"
-                  ></v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-text v-else-if="state === 'failed'">
-            <v-container>
-              <v-row>
-                <v-col cols="auto">
-                  <v-alert type="error">
-                    <h3 v-text="$t('import_error_found')" class="pb-2"></h3>
-                    <strong>{{ unknownErrorMessage }}</strong>
-                    <pre
-                      v-text="errorDetails.exception"
-                      v-if="errorDetails && errorDetails.exception"
-                      class="pt-2"
-                    ></pre>
-                  </v-alert>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="auto">
-                  <v-btn
-                    @click="backToStart()"
-                    v-text="$t('upload_more_files')"
-                    color="primary"
-                  ></v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-card-text v-else>
-            <LargeSpinner />
-          </v-card-text>
-        </v-card>
-      </v-stepper-content>
-    </v-stepper>
+                  </div>
+                  <v-icon>{{
+                    expand ? "fa fa-chevron-up" : "fa fa-chevron-down"
+                  }}</v-icon>
+                </div>
+                <v-expand-transition>
+                  <pre
+                    v-text="errorDetails.exception"
+                    v-if="errorDetails && errorDetails.exception"
+                    class="pt-2 expand_panel"
+                    v-show="expand"
+                  ></pre>
+                </v-expand-transition>
+              </v-alert>
+              <v-alert
+                v-else-if="
+                  preflightData && preflightData.clashing_months.length
+                "
+                type="warning"
+                class="mt-2 mb-1"
+              >
+                <strong v-text="$t('clashing_import_batches_title')"></strong>:
+                <span v-text="$t('clashing_import_batches_text')"></span>
+              </v-alert>
+              <v-alert
+                v-if="!hasImportPermission"
+                type="warning"
+                class="mt-2 mb-1"
+              >
+                <strong v-text="$t('unauthorized_multiple_org_title')"></strong
+                >:
+                <span v-text="$t('unauthorized_multiple_org_text')"></span>
+              </v-alert>
+              <v-alert
+                type="warning"
+                class="ma-4"
+                v-if="missingOrgInData && state === 'preflight'"
+              >
+                {{ $t("missing_organization_in_data") }}
+              </v-alert>
+              <v-alert
+                type="info"
+                variant="tonal"
+                class="ma-4"
+                v-if="needToUnsetOrg"
+              >
+                {{ $t("need_to_unset_organization") }}
+              </v-alert>
+            </v-card-text>
+            <v-card-actions v-if="state === 'preflight'">
+              <v-btn
+                v-if="
+                  preflightData &&
+                  preflightDataFormatValid &&
+                  preflightData.clashing_months.length &&
+                  !this.wrongOrganizations.length > 0 &&
+                  !this.rawDisabledPerOrganization.length > 0
+                "
+                variant="elevated"
+                color="warning"
+                @click="showConfirmDeleteDialog = true"
+              >
+                <v-icon size="small" class="pr-2">fa fa-trash-alt</v-icon>
+                {{ $t("delete_existing") }}
+              </v-btn>
+              <v-btn
+                @click="backToStart()"
+                variant="elevated"
+                color="defaultButton"
+                >{{ $t("back_to_start") }}</v-btn
+              >
+              <v-btn
+                v-if="canImport"
+                variant="elevated"
+                @click="triggerImportData()"
+                color="primary"
+                :loading="state === 'importing' || importing"
+                :disabled="
+                  (preflightData && !!preflightData.clashing_months.length) ||
+                  preflighting
+                "
+              >
+                <v-icon size="small" class="pr-6">fa fa-cogs</v-icon>
+                {{ $t("import") }}
+              </v-btn>
+              <v-btn
+                v-else
+                color="primary"
+                variant="elevated"
+                @click="regeneratePreflight"
+                :disabled="importing"
+              >
+                <v-icon size="small" class="pr-6">fas fa-redo</v-icon>
+                {{ $t("regenerate_preflight") }}
+              </v-btn>
+            </v-card-actions>
+            <v-card-actions v-else-if="state === 'prefailed'">
+              <v-btn
+                color="primary"
+                @click="regeneratePreflight"
+                :disabled="importing"
+                variant="elevated"
+              >
+                <v-icon size="small" class="pr-6">fas fa-redo</v-icon>
+                {{ $t("regenerate_preflight") }}
+              </v-btn>
+              <v-btn
+                @click="backToStart()"
+                variant="elevated"
+                color="defaultButton"
+                >{{ $t("back_to_start") }}</v-btn
+              >
+            </v-card-actions>
+          </v-card>
+        </v-stepper-vertical-item>
+        <v-stepper-vertical-item
+          :complete="step > steps.done"
+          :title="$t('step_done')"
+          :value="steps.done"
+        >
+          <v-card>
+            <v-card-text v-if="state === 'imported'">
+              <v-tabs v-model="tab" dark bg-color="primary" fixed-tabs>
+                <v-tab
+                  :class="{
+                    'tab-active': tab === 'chart',
+                    'tab-inactive': tab !== 'chart',
+                  }"
+                  value="chart"
+                  >{{ $t("tab_chart") }}</v-tab
+                >
+                <v-tab
+                  :class="{
+                    'tab-active': tab === 'data',
+                    'tab-inactive': tab !== 'data',
+                  }"
+                  value="data"
+                  >{{ $t("tab_data") }}</v-tab
+                >
+              </v-tabs>
+              <v-tabs-window v-model="tab">
+                <v-tabs-window-item value="chart">
+                  <MDUChart :mdu-id="uploadObject.pk"></MDUChart>
+                </v-tabs-window-item>
+                <v-tabs-window-item value="data">
+                  <AccessLogList
+                    :mdu-id="uploadObject.pk"
+                    :show-organization="multipleOrganizations"
+                  ></AccessLogList>
+                </v-tabs-window-item>
+              </v-tabs-window>
+              <v-container fluid>
+                <v-row>
+                  <v-col cols="auto" class="align-self-center">
+                    <v-icon color="success" size="small"
+                      >fa fa-check-circle</v-icon
+                    >
+                    {{ $t("thats_all") }}
+                  </v-col>
+                  <v-spacer></v-spacer>
+                  <v-col cols="auto">
+                    <v-btn
+                      :to="{
+                        name: 'platform-detail',
+                        params: { platformId: platformId },
+                      }"
+                      color="secondary"
+                    >
+                      {{ $t("return_to_platform") }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="auto">
+                    <v-btn @click="backToStart()" color="primary">{{
+                      $t("upload_more_files")
+                    }}</v-btn>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+            <v-card-text v-else-if="state === 'failed'">
+              <v-container>
+                <v-row>
+                  <v-col cols="auto">
+                    <v-alert type="error">
+                      <h3 v-text="$t('import_error_found')" class="pb-2"></h3>
+                      <strong>{{ unknownErrorMessage }}</strong>
+                      <pre
+                        v-text="errorDetails.exception"
+                        v-if="errorDetails && errorDetails.exception"
+                        class="pt-2"
+                      ></pre>
+                    </v-alert>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="auto">
+                    <v-btn @click="backToStart()" color="primary">{{
+                      $t("upload_more_files")
+                    }}</v-btn>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+            <v-card-text v-else>
+              <LargeSpinner></LargeSpinner>
+            </v-card-text>
+          </v-card>
+        </v-stepper-vertical-item>
+      </template>
+    </v-stepper-vertical>
     <v-dialog max-width="1100px" v-model="showConfirmDeleteDialog">
       <ImportBatchesDeleteConfirm
         v-model="showConfirmDeleteDialog"
@@ -709,13 +800,13 @@ cs:
         :import-batch-slices="slicesToDelete"
         @cancel="showConfirmDeleteDialog = false"
         @deleted="deletePerformed()"
-      />
+      ></ImportBatchesDeleteConfirm>
     </v-dialog>
     <ErrorDialog
       v-if="showErrorDialog"
       v-model="showErrorDialog"
       :errors="errors"
-    />
+    ></ErrorDialog>
   </div>
 </template>
 
@@ -733,6 +824,10 @@ import MDUChart from "@/components/MDUChart";
 import ErrorDialog from "@/components/util/ErrorDialog";
 import isEmpty from "lodash/isEmpty";
 import ItemBadge from "@/components/util/ItemBadge";
+import {
+  VStepperVertical,
+  VStepperVerticalItem,
+} from "vuetify/labs/VStepperVertical";
 
 export default {
   name: "CustomDataUploadPage",
@@ -746,6 +841,8 @@ export default {
     CustomUploadInfoWidget,
     ReportTypeInfoWidget,
     ItemBadge,
+    VStepperVertical,
+    VStepperVerticalItem,
   },
   props: {
     platformId: { required: true },
@@ -756,6 +853,7 @@ export default {
       dataFile: null,
       valid: false,
       platform: null,
+      panel: null,
       reportTypes: [],
       reportTypesFetched: false,
       metrics: [],
@@ -766,6 +864,8 @@ export default {
       showErrorDialog: false,
       showConfirmDeleteDialog: false,
       errors: [],
+      expand: false,
+      // filledIn: [(value) => !!value || "File must be filled in"],
       step: 1,
       uploadObject: null,
       tab: "chart",
@@ -808,7 +908,7 @@ export default {
         .map(([idx, extras]) =>
           this.method === "counter"
             ? [idx, counterHeaderRepr(extras)]
-            : [idx, extras]
+            : [idx, extras],
         );
     },
     breadcrumbs() {
@@ -832,7 +932,7 @@ export default {
     selectedInterestMetrics() {
       if (this.uploadObject && this.uploadObject.report_type) {
         return this.uploadObject.report_type.interest_metric_set.map(
-          (item) => item.metric.short_name
+          (item) => item.metric.short_name,
         );
       }
       return [];
@@ -843,8 +943,8 @@ export default {
           return this.metrics
             .filter((metric) =>
               this.uploadObject.report_type.controlled_metrics.includes(
-                metric.pk
-              )
+                metric.pk,
+              ),
             )
             .map((item) => item.short_name);
         } else {
@@ -878,7 +978,7 @@ export default {
             organization: org_id,
             report_type: this.uploadObject.report_type.pk,
             months: months,
-          })
+          }),
         );
       }
       return [];
@@ -940,7 +1040,7 @@ export default {
     wrongOrganizations() {
       if (this.preflightData?.organizations) {
         return Object.keys(this.preflightData.organizations).filter(
-          (name) => !this.preflightData.organizations[name].pk
+          (name) => !this.preflightData.organizations[name].pk,
         );
       } else {
         return [];
@@ -952,7 +1052,7 @@ export default {
           .filter((o) => !!o.pk)
           .map((e) => e.pk);
         return this.organizations.filter(
-          (o) => ids.includes(o.pk) && !o.is_raw_data_import_enabled
+          (o) => ids.includes(o.pk) && !o.is_raw_data_import_enabled,
         );
       } else {
         return [];
@@ -1032,7 +1132,7 @@ export default {
     currentOrganization() {
       if ((this.organizationId || -1) > 0) {
         const organizations = this.organizations.filter(
-          (e) => e.pk === this.organizationId
+          (e) => e.pk === this.organizationId,
         );
         return organizations.length > 0 ? organizations[0] : null;
       } else {
@@ -1078,6 +1178,11 @@ export default {
         ? { "background-color": "rgba(255, 255, 0, .15)" }
         : {};
     },
+    filledIn(v) {
+      if (v === null) return "File must be filled in";
+      return true;
+    },
+
     setProgress(total, current) {
       if (total) {
         this.uploadProgress = (100 * current) / total;
@@ -1136,7 +1241,7 @@ export default {
           } else if ("nibbler_errors" in info) {
             this.showErrorDialog = true;
             this.errors = info.nibbler_errors.map((e) =>
-              this.nibblerErrorText(e)
+              this.nibblerErrorText(e),
             );
           } else if ("encoding_error" in info) {
             this.showErrorDialog = true;
@@ -1175,7 +1280,7 @@ export default {
       if (this.organizationId) {
         try {
           let response = await axios.get(
-            `/api/organization/${this.organizationId}/all-platform/${this.platformId}/`
+            `/api/organization/${this.organizationId}/all-platform/${this.platformId}/`,
           );
           this.platform = response.data;
         } catch (error) {
@@ -1191,21 +1296,21 @@ export default {
         const response = await axios.get(url);
 
         this.reportTypes = response.data.sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         );
-
-        if (this.$router.currentRoute.query?.report_type_id) {
-          let rt_id = parseInt(this.$router.currentRoute.query.report_type_id);
+        if (this.$route.query?.report_type_id) {
+          let rt_id = parseInt(this.$route.query.report_type_id);
           if (rt_id) {
             this.selectedReportType = this.reportTypesToSelect.find(
-              (rt) => rt.pk === rt_id
+              (rt) => rt.pk === rt_id,
             );
           }
         }
 
         // Select default report type
-        this.selectedReportType ??=
-          this.reportTypes.length > 0 ? this.reportTypesToSelect[0] : null;
+        this.selectedReportType ?? this.reportTypes.length > 0
+          ? this.reportTypesToSelect[0]
+          : null;
 
         this.reportTypesFetched = true;
       } catch (error) {
@@ -1303,7 +1408,7 @@ export default {
       if (this.uploadObjectId) {
         try {
           let response = await axios.get(
-            `/api/manual-data-upload/${this.uploadObjectId}/`
+            `/api/manual-data-upload/${this.uploadObjectId}/`,
           );
           this.uploadObject = response.data;
 
@@ -1344,10 +1449,6 @@ export default {
         clearTimeout(this.refreshTimeout);
         this.refreshTimeout = null;
       }
-    },
-    filledIn(v) {
-      if (v === null) return "File must be filled in";
-      return true;
     },
     async backToStart() {
       let reportTypeId = this.uploadObject?.report_type?.pk;
@@ -1393,8 +1494,8 @@ export default {
               [
                 "no-header-data-extracted",
                 "report-name-not-in-header",
-              ].includes(ee.code)
-            )
+              ].includes(ee.code),
+            ),
           )
         ) {
           return prefix + this.$t("errors.counter_header_not_found");
@@ -1447,10 +1548,10 @@ export default {
   },
   async mounted() {
     await this.loadRequiredData();
-    if (this.$router.currentRoute.query.method) {
+    if (this.$route.query.method) {
       // Check whether this method can be set
       if (
-        this.$router.currentRoute.query.method === "raw" &&
+        this.$route.query.method === "raw" &&
         this.currentOrganization &&
         !this.currentOrganization.is_raw_data_import_enabled
       ) {
@@ -1458,7 +1559,7 @@ export default {
         this.method = "counter";
         this.step = this.steps.method;
       } else {
-        this.method = this.$router.currentRoute.query.method;
+        this.method = this.$route.query.method;
         this.step = this.steps.upload;
       }
     }
@@ -1471,7 +1572,7 @@ export default {
       this.method = this.uploadObject.method;
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.cancelRefreshTimeout();
   },
   watch: {
@@ -1514,5 +1615,44 @@ export default {
 strong {
   line-height: 1.25rem;
   font-weight: 500;
+}
+.th_table {
+  font-size: 12px;
+  font-weight: 700 !important;
+}
+
+.tab-active {
+  color: #ffffffff !important;
+}
+
+.tab-inactive {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.expand_trans {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  cursor: pointer;
+}
+
+.expand_trans_sub {
+  margin-right: 25px;
+}
+
+.expand_panel {
+  padding: 0 24px;
+}
+
+.text-disabled {
+  opacity: 0.9;
+}
+
+.td_table {
+  word-break: break-word;
+}
+
+:deep(.v-stepper-vertical-item__avatar.v-avatar) {
+  background-color: #2d5854 !important;
 }
 </style>

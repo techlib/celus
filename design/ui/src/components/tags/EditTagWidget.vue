@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   tag_created: Tag was successfully created.
@@ -11,62 +13,84 @@ cs:
 </i18n>
 
 <template>
-  <v-form v-model="valid">
-    <v-card>
-      <v-card-title class="px-7">{{ $t("labels.new_tag") }}</v-card-title>
-      <v-card-text>
-        <v-container fluid>
-          <v-row>
-            <v-col>
-              <TagClassSelector
-                v-model="tagClass"
-                :disabled="tag !== null || fixedTagClass !== null"
-                allow-create
-                ref="classSelector"
-                :scope="scope"
-              />
-            </v-col>
-            <v-col>
-              <v-text-field
-                v-model="name"
-                :label="$t('labels.tag_name')"
-                :rules="[rules.required]"
-              />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-text-field v-model="desc" :label="$t('labels.description')" />
-            </v-col>
-          </v-row>
-          <!-- here would be access selectors, but we use the defaults from class instead -->
-          <v-row>
-            <v-col>
-              <ColorEntry v-model="bgColor" :label="$t('labels.tag_color')" />
-            </v-col>
-            <v-col cols="3" class="align-self-center">
-              <TagChip v-if="tagClass" :tag="tagPreview" />
-            </v-col>
-            <v-col cols="3" class="align-self-center">
-              <TagChip v-if="tagClass" :tag="tagPreviewFull" show-class />
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn @click="$emit('close')">{{ $t("actions.close") }}</v-btn>
-        <v-btn
-          color="primary"
-          :disabled="!valid"
-          @click="saveTag"
-          class="ma-3"
-          >{{ tag === null ? $t("actions.create") : $t("actions.save") }}</v-btn
-        >
-      </v-card-actions>
-    </v-card>
-  </v-form>
+  <v-sheet>
+    <v-form v-model="valid">
+      <v-card>
+        <v-card-title class="px-7">{{ $t("labels.new_tag") }}</v-card-title>
+        <v-card-text>
+          <v-container fluid>
+            <v-row>
+              <v-col>
+                <TagClassSelector
+                  v-model="tagClass"
+                  :disabled="tag !== null || fixedTagClass !== null"
+                  allow-create
+                  ref="classSelector"
+                  :scope="scope"
+                ></TagClassSelector>
+              </v-col>
+              <v-col>
+                <v-text-field
+                  v-model="name"
+                  :label="$t('labels.tag_name')"
+                  :rules="[rules.required]"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-text-field
+                  v-model="desc"
+                  :label="$t('labels.description')"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <!-- here would be access selectors, but we use the defaults from class instead -->
+            <v-row>
+              <v-col>
+                <ColorEntry
+                  v-model="bgColor"
+                  :label="$t('labels.tag_color')"
+                ></ColorEntry>
+              </v-col>
+              <v-col cols="3" class="align-self-center">
+                <TagChip v-if="tagClass" :tag="tagPreview"></TagChip>
+              </v-col>
+              <v-col cols="3" class="align-self-center">
+                <TagChip
+                  v-if="tagClass"
+                  :tag="tagPreviewFull"
+                  show-class
+                ></TagChip>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            @click.stop="$emit('close', false)"
+            variant="flat"
+            elevation="2"
+            >{{ $t("actions.close") }}</v-btn
+          >
+          <v-btn
+            color="primary"
+            :disabled="!valid"
+            @click="saveTag"
+            class="ma-3"
+            variant="flat"
+            elevation="2"
+            >{{
+              tag === null ? $t("actions.create") : $t("actions.save")
+            }}</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-form>
+  </v-sheet>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -130,7 +154,7 @@ export default {
       };
       if (
         [accessLevels.ORG_USERS, accessLevels.ORG_ADMINS].includes(
-          this.canAssign
+          this.canAssign,
         ) ||
         [accessLevels.ORG_USERS, accessLevels.ORG_ADMINS].includes(this.canSee)
       ) {

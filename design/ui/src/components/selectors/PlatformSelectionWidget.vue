@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <template>
@@ -14,7 +16,7 @@
         :allow-create="allowCreate"
       >
         <template #prepend v-if="allowCreate">
-          <v-list-item-content>
+          <v-list-item>
             <v-list-item-title>
               <AddPlatformButton
                 @update-platforms="platformCreated"
@@ -22,9 +24,9 @@
                 small
                 color="success"
                 class="pl-1"
-              />
+              ></AddPlatformButton>
             </v-list-item-title>
-          </v-list-item-content>
+          </v-list-item>
         </template>
       </PlatformSelector>
     </v-card-text>
@@ -40,6 +42,8 @@
             : {}
         "
         :disabled="platformId === null"
+        variant="flat"
+        elevation="2"
         color="primary"
         >{{ $t("continue") }}</v-btn
       >
@@ -47,6 +51,7 @@
     </v-card-actions>
   </v-card>
 </template>
+
 <script>
 import axios from "axios";
 import { mapActions, mapState } from "vuex";
@@ -75,8 +80,8 @@ export default {
       selectedOrganizationId: "selectedOrganizationId",
     }),
     availablePlatforms() {
-      return this.platforms.sort((a, b) =>
-        a.name ? a.name.localeCompare(b.name) : -1
+      return [...this.platforms].sort((a, b) =>
+        a.name ? a.name.localeCompare(b.name) : -1,
       );
     },
   },
@@ -89,7 +94,7 @@ export default {
       try {
         this.loading = true;
         let response = await axios.get(
-          `/api/organization/${this.selectedOrganizationId}/all-platform/`
+          `/api/organization/${this.selectedOrganizationId}/all-platform/`,
         );
         this.platforms = response.data;
         // make sure platform name is not blank - use short_name if needed

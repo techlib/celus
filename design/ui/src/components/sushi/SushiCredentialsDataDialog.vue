@@ -1,6 +1,9 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   title: Yearly overview
@@ -71,17 +74,17 @@ cs:
               :organization="credentials.organization"
               :platform="credentials.platform"
               :counter-version="credentials.counter_version"
-            />
+            ></SushiCredentialsOverviewHeaderWidget>
           </v-col>
           <v-col cols="auto" class="align-self-start text-right">
             <v-switch
               :label="$t('delete_mode')"
               v-model="deleteMode"
               color="error"
-              dense
+              density="compact"
               :hint="$t('delete_mode_info')"
               persistent-hint
-            />
+            ></v-switch>
           </v-col>
         </v-row>
         <v-row>
@@ -91,10 +94,12 @@ cs:
               :headers="headers"
               :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
               :loading="loadingDownloads"
-              dense
-              :options.sync="tableOptions"
-              :items-per-page="itemsPerPage"
+              update:options="tableOptions"
+              v-model:items-per-page="itemsPerPage"
               :calculate-widths="true"
+              v-model="checkedItem"
+              v-model:page="page"
+              v-model:sort-by="tableOptions.sortBy"
             >
               <template v-slot:item="row">
                 <tr>
@@ -108,51 +113,65 @@ cs:
                     <v-chip
                       class="mr-1 px-2"
                       :color="row.item['01'].broken ? '#888888' : 'teal'"
-                      outlined
+                      variant="outlined"
                       label
                     >
                       <SushiReportIndicator
                         :report="row.item.counterReport"
                         :broken-fn="() => row.item['01'].broken"
-                      />
+                      ></SushiReportIndicator>
                     </v-chip>
                   </td>
                   <td v-for="month in months" class="pa-0" :key="month">
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on, attrs }">
-                        <div v-bind="attrs" v-on="on" class="text-center">
+                    <v-tooltip location="bottom">
+                      <template v-slot:activator="{ props }">
+                        <div v-bind="props" class="text-center">
                           <v-btn-toggle
                             v-if="dataReady(row.item, month)"
                             multiple
-                            v-model="
+                            :modelValue="
                               buttonsSelected[row.item.year + '-' + month]
                             "
-                            @change="
+                            density="comfortable"
+                            class="d-block px-1"
+                            variant="outlined"
+                            color="defaultButton"
+                            @update:modelValue="
                               filterBroken(
                                 buttonsSelected,
                                 credentials,
-                                counterReports
-                              )
+                                counterReports,
+                              ),
+                                updateButtonSelection(
+                                  $event,
+                                  row.item.year + '-' + month,
+                                  row.item.counterReport.id,
+                                )
                             "
-                            dense
-                            class="pa-0 d-block"
                           >
                             <v-btn
-                              :value="row.item.counterReport.id"
                               :key="`${row.item.year}-${month}-${row.item.counterReport.code}`"
                               :color="buttonColor(row.item[month])"
+                              min-height="40px"
+                              :value="row.item.counterReport.id"
+                              size="small"
                             >
                               <SushiMonthStatusIcon
                                 :planned="row.item[month].planned"
                                 :status="row.item[month].status"
-                              />
+                              ></SushiMonthStatusIcon>
                             </v-btn>
                           </v-btn-toggle>
-                          <span v-else class="text-center d-inline-block">
+                          <span
+                            v-else
+                            class="text-center d-inline-block pt-3"
+                            style="min-height: 40px"
+                          >
                             <SushiMonthStatusIcon
                               :planned="row.item[month].planned"
                               :status="row.item[month].status"
-                            />
+                              small
+                            ></SushiMonthStatusIcon>
                           </span>
                         </div>
                       </template>
@@ -174,7 +193,9 @@ cs:
                       >
                       <span v-if="row.item[month].broken"
                         ><br />
-                        <v-icon small color="error">fa fa-exclamation</v-icon>
+                        <v-icon size="small" color="error"
+                          >fa fa-exclamation</v-icon
+                        >
                         {{ $t("broken") }}</span
                       >
                       <span
@@ -191,13 +212,21 @@ cs:
                   </td>
                 </tr>
               </template>
-              <template #footer.prepend>
-                <v-btn small color="success" @click="selectAll" class="me-2">{{
-                  $t("actions.select_all")
-                }}</v-btn>
-                <v-btn small color="secondary" @click="unselectAll">{{
-                  $t("actions.clear_selection")
-                }}</v-btn>
+              <template v-slot:[`footer.prepend`]="">
+                <v-btn
+                  size="small"
+                  color="success"
+                  @click="selectAll"
+                  class="me-2"
+                  >{{ $t("actions.select_all") }}</v-btn
+                >
+                <v-btn
+                  style="margin-right: auto"
+                  size="small"
+                  color="secondary"
+                  @click="unselectAll"
+                  >{{ $t("actions.clear_selection") }}</v-btn
+                >
               </template>
             </v-data-table>
             <v-dialog max-width="1100px" v-model="showConfirmDeleteDialog">
@@ -208,7 +237,7 @@ cs:
                 :intention-slices="intentionSlicesToDelete"
                 @cancel="showConfirmDeleteDialog = false"
                 @deleted="deletePerformed()"
-              />
+              ></ImportBatchesDeleteConfirm>
             </v-dialog>
             <v-dialog
               v-model="showHarvestDialog"
@@ -230,14 +259,14 @@ cs:
                         :organization="credentials.organization"
                         :platform="credentials.platform"
                         :counter-version="credentials.counter_version"
-                      />
+                      ></SushiCredentialsOverviewHeaderWidget>
                     </v-col>
                   </v-row>
                   <div>
                     <SushiFetchIntentionsListWidget
                       :harvest-id="currentHarvest.pk"
                       ref="intentionsList"
-                    />
+                    ></SushiFetchIntentionsListWidget>
                   </div>
                 </v-card-text>
                 <v-card-actions>
@@ -248,6 +277,8 @@ cs:
                       currentHarvest = null;
                     "
                     class="mb-3 mr-4"
+                    variant="elevated"
+                    color="defaultButton"
                     >{{ $t("close") }}</v-btn
                   >
                 </v-card-actions>
@@ -264,7 +295,7 @@ cs:
                   @finished="finishMarkAsEmpty()"
                   @cancel="showMarkEmptyDialog = false"
                   class="pa-3"
-                />
+                ></SushiMarkAsEmptyWidget>
               </div>
             </v-dialog>
           </v-col>
@@ -302,10 +333,12 @@ cs:
           <v-col cols="auto" v-if="deleteMode">
             <v-btn
               color="error"
+              variant="flat"
+              elevation="2"
               :disabled="selectedItems.length == 0"
               @click="showConfirmDeleteDialog = true"
             >
-              <v-icon small class="pr-2">fas fa-trash</v-icon>
+              <v-icon size="small" class="mr-2">fas fa-trash</v-icon>
               {{ $t("delete_button") }}
             </v-btn>
           </v-col>
@@ -315,20 +348,22 @@ cs:
               :disabled="selectedItems.length == 0"
               color="primary"
               class="mr-4"
+              variant="flat"
+              elevation="2"
             >
-              <v-icon small class="pr-2">fa fa-download</v-icon>
+              <v-icon size="small" class="mr-2">fa fa-download</v-icon>
               {{ $t("harvest_button") }}
             </v-btn>
-
-            <v-tooltip bottom max-width="600px">
-              <template #activator="{ on }">
+            <v-tooltip max-width="600px" location="bottom">
+              <template #activator="{ props }">
                 <v-btn
                   color="secondary"
-                  v-on="on"
                   :disabled="selectedItemsMarkableAsEmpty.length === 0"
                   @click="showMarkEmptyDialog = true"
+                  v-bind="props"
+                  variant="flat"
                 >
-                  <v-icon small class="pr-2">fa-adjust</v-icon>
+                  <v-icon class="mr-2" size="small">fa fa-adjust</v-icon>
                   {{ $t("mark_failed_as_empty") }}
                 </v-btn>
               </template>
@@ -338,9 +373,15 @@ cs:
         </v-row>
       </v-container>
       <v-spacer></v-spacer>
-      <v-btn @click="closeDialog()" class="mr-4" :right="true">{{
-        $t("close")
-      }}</v-btn>
+      <v-btn
+        @click="closeDialog()"
+        class="mr-4"
+        :right="true"
+        variant="flat"
+        elevation="2"
+        color="defaultButton"
+        >{{ $t("close") }}</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>
@@ -381,10 +422,12 @@ export default {
       buttonsSelected: {},
       fetchedData: [],
       loadingDownloads: false,
+      page: 1,
       tableOptions: {
-        sortBy: ["year"],
+        sortBy: [{ key: "year", order: "desc" }],
         sortDesc: [true],
       },
+      checkedItem: [],
       currentHarvest: null,
       showHarvestDialog: false,
       showConfirmDeleteDialog: false,
@@ -395,7 +438,7 @@ export default {
   computed: {
     itemsPerPageOptions() {
       return [...Array(5).keys()].map(
-        (i) => (i + 1) * this.counterReports.length
+        (i) => (i + 1) * this.counterReports.length,
       );
     },
     itemsPerPage() {
@@ -469,7 +512,7 @@ export default {
     counterReportsToReportType() {
       return this.counterReports.reduce(
         (obj, cur) => ({ ...obj, [cur.id]: cur.report_type }),
-        {}
+        {},
       );
     },
     selectedItems() {
@@ -507,9 +550,21 @@ export default {
     },
     headers() {
       let res = [
-        { text: this.$t("year"), value: "year", class: "wrap" },
+        // {
+        //   title: "",
+        //   value: "data-table-select",
+        //   width: "0",
+        //   align: "start",
+        // },
         {
-          text: this.$t("labels.report_type"),
+          title: this.$t("year"),
+          value: "year",
+          key: "year",
+          class: "wrap",
+          align: "start",
+        },
+        {
+          title: this.$t("labels.report_type"),
           value: "counter_report",
           class: "wrap",
           align: "center",
@@ -520,14 +575,14 @@ export default {
         let padded = `${i}`.padStart(2, "0");
         let shortMonthName = new Date(2020, i - 1, 1).toLocaleString(
           this.$i18n.locale,
-          { month: "short" }
+          { month: "short" },
         );
         res.push({
-          text: shortMonthName,
+          title: shortMonthName,
           value: `${padded}`,
           sortable: false,
           align: "center",
-          width: 50,
+          width: 58,
         });
       }
       return res;
@@ -539,7 +594,7 @@ export default {
       return Object.fromEntries(
         this.credentials.counter_reports_long
           .filter((e) => !!e.last_harvestable_month)
-          .map((e) => [e.code, e.last_harvestable_month])
+          .map((e) => [e.code, e.last_harvestable_month]),
       );
     },
     selectedItemsMarkableAsEmpty() {
@@ -552,7 +607,8 @@ export default {
           let year = Number.parseInt(item.start_date.split("-")[0]);
           let month = item.start_date.split("-")[1];
           let cell = this.processedData.find(
-            (e) => e.year === year && e.counterReport.id === item.counter_report
+            (e) =>
+              e.year === year && e.counterReport.id === item.counter_report,
           );
           if (cell) return cell[month].status === "failed";
           return false;
@@ -564,6 +620,21 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    updateButtonSelection(newValues, key, value) {
+      if (!this.buttonsSelected[key]) {
+        this.buttonsSelected[key] = [];
+      }
+      const existingValues = this.buttonsSelected[key];
+      if (newValues.length > 0) {
+        this.buttonsSelected[key] = [
+          ...new Set([...existingValues, ...newValues]),
+        ];
+      } else {
+        this.buttonsSelected[key] = existingValues.filter(
+          (item) => item !== value,
+        );
+      }
+    },
     async loadCredentialsData() {
       if (this.credentialsDataUrl) {
         this.platforms = [];
@@ -650,7 +721,7 @@ export default {
       Object.keys(selected).forEach((key) => {
         let orig_len = selected[key].length;
         selected[key] = selected[key].filter(
-          (rt_id) => !brokenIds.includes(rt_id)
+          (rt_id) => !brokenIds.includes(rt_id),
         );
         broken_counter_report =
           broken_counter_report || orig_len !== selected[key].length;
@@ -685,9 +756,10 @@ export default {
       this.loadCredentialsData();
     },
     selectAll() {
-      let pageIdx = this.tableOptions.page - 1;
-      let itemsPerPage = this.tableOptions.itemsPerPage;
-      if (this.tableOptions.sortDesc[0]) {
+      let pageIdx = this.page - 1;
+      let itemsPerPage = this.itemsPerPage;
+
+      if (this.tableOptions.sortBy[0].order === "desc") {
         pageIdx = this.processedData.length - (pageIdx + 1) * itemsPerPage;
         if (pageIdx < 0) pageIdx = 0;
       }

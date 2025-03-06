@@ -8,6 +8,7 @@
           v-model="logScale"
           :label="$t('chart.log_scale')"
           class="mt-1 ml-4"
+          color="primary"
         ></v-checkbox>
       </v-col>
       <v-spacer></v-spacer>
@@ -17,7 +18,7 @@
     </v-row>
     <v-row no-gutters>
       <v-col :style="{ height: height }">
-        <v-chart :option="option" autoresize />
+        <v-chart :option="option" autoresize></v-chart>
       </v-col>
     </v-row>
   </v-container>
@@ -99,6 +100,9 @@ export default {
         toolbox: this.toolbox,
         dataZoom: {},
         legend: {
+          type: "scroll",
+          orient: "horizontal",
+          width: "85%",
           // checkmarks as icons for the series
           icon: "path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z",
           itemWidth: 16,

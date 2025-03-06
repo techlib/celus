@@ -108,10 +108,10 @@ cs:
       <p v-html="$t('non_counter.part1')"></p>
       <v-expansion-panels>
         <v-expansion-panel>
-          <v-expansion-panel-header>
+          <v-expansion-panel-title>
             <h4 v-text="$t('non_counter.non_counter_data_h')"></h4>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             <p v-html="$t('non_counter.non_counter_data')"></p>
             <h4 v-text="$t('non_counter.ncd_file_format_h')"></h4>
             <p v-html="$t('non_counter.ncd_file_format')"></p>
@@ -123,7 +123,7 @@ cs:
               alt="example"
             />
             <div v-html="$t('non_counter.example_img_desc')"></div>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
     </div>

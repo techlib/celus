@@ -3,19 +3,28 @@
 <template>
   <v-card :elevation="elevation">
     <v-card-title
-      class="py-2"
+      class="py-2 d-flex align-center"
       style="font-variant: small-caps; font-size: 82.5%"
     >
       {{ $t("labels.tags") }}
       <v-spacer></v-spacer>
       <span>
-        <v-btn icon @click="editing = !editing">
-          <v-icon small>fa {{ editing ? "fa-check" : "fa-edit" }}</v-icon>
+        <v-btn
+          icon
+          @click="
+            editing = !editing;
+            sendTag();
+          "
+          variant="plain"
+        >
+          <v-icon size="x-small"
+            >fa {{ editing ? "fa fa-check" : "fas fa-edit" }}</v-icon
+          >
         </v-btn>
       </span>
     </v-card-title>
     <v-card-text>
-      <v-skeleton-loader v-if="loading" type="paragraph" />
+      <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
       <div v-else-if="tags.length" class="d-flex flex-wrap">
         <span v-for="tag in tags" :key="tag.pk" class="pr-1 pb-1">
           <TagChip
@@ -23,13 +32,12 @@
             :show-class="showClass"
             :removable="editing && tag.user_can_assign"
             @remove="removeTag"
-          />
+          ></TagChip>
         </span>
       </div>
       <div v-else-if="!editing">
         {{ $t("labels.no_tags") }}
       </div>
-
       <div v-if="editing">
         <TagSelector
           v-model="tagToAdd"
@@ -39,11 +47,12 @@
           :scope="scope"
           single-tag
           allow-create
-        />
+        ></TagSelector>
       </div>
     </v-card-text>
   </v-card>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import TagChip from "@/components/tags/TagChip";
@@ -106,6 +115,9 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    sendTag() {
+      this.$emit("update", this.tags, this.itemId);
+    },
     async loadTags(triggerLoading = true) {
       if (this.tagsUrl) {
         if (triggerLoading) this.loading = true;

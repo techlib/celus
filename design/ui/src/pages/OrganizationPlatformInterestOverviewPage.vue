@@ -9,9 +9,11 @@ cs:
   <v-container fluid>
     <v-row>
       <v-col :cols="12">
-        <OrganizationPlatformInterestHeatmap>
-          <h2 v-text="$t('heatmap')"></h2>
-        </OrganizationPlatformInterestHeatmap>
+        <keep-alive>
+          <OrganizationPlatformInterestHeatmap>
+            <h2>{{ $t("heatmap") }}</h2>
+          </OrganizationPlatformInterestHeatmap>
+        </keep-alive>
       </v-col>
     </v-row>
   </v-container>

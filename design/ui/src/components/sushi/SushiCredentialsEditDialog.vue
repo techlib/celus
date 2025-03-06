@@ -1,7 +1,11 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sources.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   add_custom_param: Add custom parameter
@@ -60,6 +64,7 @@ en:
   last_harvestable_month_tt: |
     If you know that data is not available before a certain date, you can set this date here. CELUS will use this information
     and not try to harvest data before this date.
+  last_harvestable_month_tt_disabled: To select the last harvestable month, please choose at least one report type.
   last_harvestable_month_updated: Information about last harvestable month was successfully updated
   last_harvestable_month_error: It was not possible to update information about last harvestable month
   auto_update_url_text_off: Set URL manually
@@ -123,6 +128,7 @@ cs:
   last_harvestable_month_tt: |
     Pokud víte, že data nejsou dostupná před určitým datem, můžete toto datum nastavit zde. CELUS bude tuto informaci používat a
     nebude se snažit data stáhnout před tímto datem.
+  last_harvestable_month_tt_disabled: Pro výběr posledního stáhnutelného měsíce vyberte alespoň jeden typ reportu.
   last_harvestable_month_updated: Informace o posledním stáhnutelném měsíci byla úspěšně aktualizována
   last_harvestable_month_error: Informace o posledním stáhnutelném měsíci nebylo možné aktualizovat
   auto_update_url_text_off: Nastavit URL ručně
@@ -131,632 +137,670 @@ cs:
 </i18n>
 
 <template>
-  <v-form v-model="valid" ref="form">
-    <v-card>
-      <v-card-title class="headline"
-        >{{ $t("title.edit_sushi_credentials") }}
-        <v-spacer />
-        <v-tooltip bottom max-width="600px" v-if="canShowDebugLinks">
-          <template #activator="{ on }">
-            <v-icon
-              small
-              color="grey"
-              class="mr-2"
-              @click="toggleDebug"
-              v-on="on"
+  <v-sheet>
+    <v-form v-model="valid" ref="form">
+      <v-card>
+        <v-card-title class="headline d-flex"
+          >{{ $t("title.edit_sushi_credentials") }}
+          <v-spacer></v-spacer>
+          <v-tooltip location="bottom" max-width="600px">
+            <template #activator="{ props }">
+              <v-icon
+                size="x-small"
+                color="grey"
+                class="mr-2"
+                @click="toggleDebug"
+                v-bind="props"
+              >
+                {{ showDebug ? "fa fa-angle-up" : "fa fa-angle-down" }}
+              </v-icon>
+            </template>
+            <span>{{ $t("show_debug") }}</span>
+          </v-tooltip>
+        </v-card-title>
+        <v-card-text>
+          <!-- debug info -->
+          <v-sheet v-if="showDebug" class="text-right mx-2 mb-2">
+            <span>{{ $t("sushi_debug_links") }}:</span>
+            <v-chip
+              v-for="rt in selectedReportTypeObjs"
+              :key="rt.id"
+              :href="sushiUrl(rt)"
+              target="_blank"
+              color="info"
+              class="ml-2"
+              label
             >
-              {{ showDebug ? "fa-angle-up" : "fa-angle-down" }}
-            </v-icon>
-          </template>
-          <span>{{ $t("show_debug") }}</span>
-        </v-tooltip>
-      </v-card-title>
-      <v-card-text>
-        <!-- debug info -->
-        <v-sheet v-if="showDebug && canShowDebugLinks" class="text-right mx-2">
-          <span>{{ $t("sushi_debug_links") }}:</span>
-          <v-chip
-            v-for="rt in selectedReportTypeObjs"
-            :key="rt.id"
-            :href="sushiUrl(rt)"
-            target="_blank"
-            color="info"
-            class="ml-2"
-            label
+              {{ rt.code }}
+              <v-icon
+                size="x-small"
+                class="ml-2"
+                icon="fas fa-external-link-alt"
+              ></v-icon>
+            </v-chip>
+            <span v-if="selectedReportTypes.length === 0" class="pl-1">{{
+              $t("no_report_selected")
+            }}</span>
+          </v-sheet>
+          <!-- alert about conflicting credentials -->
+          <v-alert
+            v-if="conflictingCredentials"
+            type="error"
+            variant="outlined"
           >
-            {{ rt.code }}
-            <v-icon x-small class="ml-2">fa-external-link-alt</v-icon>
-          </v-chip>
-          <span v-if="selectedReportTypes.length === 0" class="pl-1">{{
-            $t("no_report_selected")
-          }}</span>
-        </v-sheet>
-
-        <!-- alert about conflicting credentials -->
-        <v-alert v-if="conflictingCredentials" type="error" outlined>
-          <p v-if="credentials">{{ $t("cannot_edit_duplicated") }}</p>
-          <p v-else>{{ $t("cannot_create_duplicated") }}</p>
-
-          <p>
-            <i18n path="multiple_credentials_info_link">
-              <template v-slot:link>
-                <a
-                  href="https://support.celus.net/support/solutions/articles/103000063863"
-                  target="_blank"
-                  >{{ $t("this_article") }}</a
-                >
-              </template>
-            </i18n>
-          </p>
-        </v-alert>
-        <v-alert
-          v-else-if="credentials && credentials.broken"
-          type="error"
-          outlined
-        >
-          <p class="bold">{{ $t("broken") }}</p>
-          <p>{{ $t("broken_unbreak_manually") }}</p>
-          <div>
-            <v-btn color="error" outlined @click="markFixed()">{{
-              $t("mark_fixed")
-            }}</v-btn>
-          </div>
-        </v-alert>
-        <v-alert
-          v-else-if="credentials && !credentials.verified"
-          type="warning"
-          outlined
-        >
-          <p class="bold">{{ $t("unverified_title") }}</p>
-          <p>{{ $t("unverified_details") }}</p>
-          <p>{{ $t("unverified_note") }}</p>
-          <div>
-            <v-btn color="warning" outlined @click="showTestDialog = true">{{
-              $t("plan_harvest")
-            }}</v-btn>
-          </div>
-        </v-alert>
-
-        <v-container fluid class="pb-0">
-          <v-row>
-            <v-col cols="12" :md="4">
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <v-text-field
-                    v-model="title"
-                    :label="$t('title_label')"
-                    v-on="on"
-                    dense
-                    height="2.75rem"
-                  ></v-text-field>
+            <p v-if="credentials">{{ $t("cannot_edit_duplicated") }}</p>
+            <p v-else>{{ $t("cannot_create_duplicated") }}</p>
+            <p>
+              <i18n-t keypath="multiple_credentials_info_link">
+                <template v-slot:link>
+                  <a
+                    href="https://support.celus.net/support/solutions/articles/103000063863"
+                    target="_blank"
+                    >{{ $t("this_article") }}</a
+                  >
                 </template>
-                {{ $t("title_tooltip") }}
-              </v-tooltip>
-            </v-col>
-            <v-col cols="12" :md="4">
-              <v-text-field
-                v-if="credentials"
-                :value="organization.name"
-                :label="$t('organization')"
-                disabled
-                dense
-                height="2.75rem"
+              </i18n-t>
+            </p>
+          </v-alert>
+          <v-alert
+            v-else-if="credentials && credentials.broken"
+            type="error"
+            variant="outlined"
+          >
+            <p class="bold">{{ $t("broken") }}</p>
+            <p>{{ $t("broken_unbreak_manually") }}</p>
+            <div>
+              <v-btn color="error" variant="outlined" @click="markFixed()">{{
+                $t("mark_fixed")
+              }}</v-btn>
+            </div>
+          </v-alert>
+          <v-alert
+            v-else-if="credentials && !credentials.verified"
+            type="warning"
+            variant="outlined"
+          >
+            <p class="bold top_alert">{{ $t("unverified_title") }}</p>
+            <p class="top_alert">{{ $t("unverified_details") }}</p>
+            <p class="top_alert">{{ $t("unverified_note") }}</p>
+            <div>
+              <v-btn
+                color="warning"
+                variant="outlined"
+                @click="showTestDialog = true"
+                >{{ $t("plan_harvest") }}</v-btn
               >
-              </v-text-field>
-              <v-select
-                v-else
-                v-model="organization"
-                :items="organizations"
-                item-text="name"
-                :label="$t('organization')"
-                return-object
-                :disabled="organizationSelected"
-                :rules="[ruleRequired]"
-                dense
-                height="2.75rem"
-                :menu-props="{ maxHeight: 480 }"
-              >
-              </v-select>
-            </v-col>
-            <v-col cols="12" :md="4">
-              <span class="d-flex">
+            </div>
+          </v-alert>
+          <v-container fluid class="pb-0">
+            <v-row>
+              <v-col cols="12" :md="4">
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props }">
+                    <v-text-field
+                      v-model="title"
+                      v-bind="props"
+                      :label="$t('title_label')"
+                      density="compact"
+                      height="2.75rem"
+                    ></v-text-field>
+                  </template>
+
+                  {{ $t("title_tooltip") }}
+                </v-tooltip>
+              </v-col>
+              <v-col cols="12" :md="4">
                 <v-text-field
-                  v-if="credentials || fixedPlatform"
-                  :value="activePlatformName"
-                  :label="$t('platform')"
+                  v-if="credentials"
+                  :label="$t('organization')"
                   disabled
-                  dense
+                  density="compact"
                   height="2.75rem"
+                  :model-value="organization.name"
                 >
                 </v-text-field>
-                <PlatformSelector
+                <v-select
                   v-else
-                  :platforms="allowedPlatforms"
-                  v-model="platform"
-                  :label="$t('platform')"
+                  v-model="organization"
+                  :items="organizations"
+                  item-title="name"
+                  :label="$t('organization')"
                   return-object
-                  :loading="loadingPlatforms"
-                  dense
+                  :disabled="organizationSelected"
+                  :rules="[ruleRequired]"
+                  density="compact"
                   height="2.75rem"
-                  ref="platformField"
+                  :menu-props="{ maxHeight: 480 }"
                 >
-                  <template
-                    #prepend
-                    v-if="
-                      allowUserCreatePlatforms &&
-                      (!credentials || !credentials.pk)
-                    "
+                </v-select>
+              </v-col>
+              <v-col cols="12" :md="4">
+                <span class="d-flex">
+                  <v-text-field
+                    v-if="credentials || fixedPlatform"
+                    :label="$t('platform')"
+                    disabled
+                    density="compact"
+                    height="2.75rem"
+                    :model-value="activePlatformName"
                   >
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        <AddPlatformButton
-                          @update-platforms="preselectCreatedPlatform"
-                          :text="true"
-                          small
-                          color="success"
-                          class="pl-1"
-                        />
-                      </v-list-item-title>
-                    </v-list-item-content>
-                  </template>
-                </PlatformSelector>
-                <v-tooltip bottom v-if="platformRegistryLink">
-                  <template #activator="{ on }">
-                    <span v-on="on" class="align-self-end mb-3 ms-1">
-                      <a
-                        target="_blank"
-                        :href="`${registryUrlBase}platform/${activePlatform.counter_registry_id}/`"
-                        style="line-height: 2rem"
-                      >
-                        <v-icon small color="counterRegistry"
-                          >fa-external-link-alt
-                        </v-icon>
-                      </a>
-                    </span>
-                  </template>
-                  <span>{{ $t("registry_link") }}</span>
-                </v-tooltip>
-              </span>
-            </v-col>
-          </v-row>
-
-          <v-row>
-            <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
-              <v-text-field
-                v-model="requestorId"
-                :label="$t('labels.requestor_id')"
-                :disabled="!activePlatform"
-                persistent-hint
-                :hint="requestorIdInfo ? $t('see_registry_hint') : ''"
-              >
-                <template #append v-if="requestorIdInfo">
-                  <RegistryIcon :text="requestorIdInfo" />
-                </template>
-              </v-text-field>
-            </v-col>
-            <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
-              <v-text-field
-                v-model="customerId"
-                :label="$t('labels.customer_id')"
-                :rules="[ruleRequired]"
-                :disabled="!activePlatform"
-                persistent-hint
-                :hint="customerIdInfo ? $t('see_registry_hint') : ''"
-              >
-                <template #append v-if="customerIdInfo">
-                  <RegistryIcon :text="customerIdInfo" />
-                </template>
-              </v-text-field>
-            </v-col>
-
-            <v-col v-if="counterVersion5X" cols="12" :sm="4">
-              <v-text-field
-                v-model="apiKey"
-                :label="$t('labels.api_key')"
-                :disabled="!activePlatform"
-                :rules="[ruleAPIkey]"
-                persistent-hint
-                :hint="apiKeyInfo ? $t('see_registry_hint') : ''"
-              >
-                <template #append>
-                  <RegistryIcon v-if="apiKeyInfo" :text="apiKeyInfo" />
-                </template>
-              </v-text-field>
-            </v-col>
-          </v-row>
-
-          <v-row>
-            <v-col cols="6" sm="3" md="2">
-              <v-select
-                v-model="counterVersion"
-                :label="$t('labels.counter_version')"
-                :items="allowedCounterVersions"
-                :disabled="!!credentials || !activePlatform"
-                :no-data-text="$t('all_versions_used')"
-                :rules="[ruleNoConflictingCredentials]"
-                ref="counterVersionField"
-              >
-              </v-select>
-            </v-col>
-            <v-col cols="12" sm="9" md="5">
-              <v-text-field
-                v-model="url"
-                :label="$t('labels.url')"
-                :placeholder="this.urlPlaceholder"
-                :rules="[
-                  ruleRequired,
-                  ruleUrlValid,
-                  ruleUrlC5NoReport,
-                  ruleUrlC5NoQueryParams,
-                ]"
-                validate-on-blur
-                :error-messages="errors.url"
-                :disabled="
-                  !activePlatform ||
-                  (autoUpdateUrl && !!currentKnowledgebaseUrl)
-                "
-                @change="urlManuallyEdited = true"
-                ref="urlField"
-                :hint="
-                  currentKnowledgebaseUrl && autoUpdateUrl
-                    ? $t('auto_update_url_hint')
-                    : ''
-                "
-                :persistent-hint="currentKnowledgebaseUrl && autoUpdateUrl"
-              >
-                <template #append-outer v-if="currentKnowledgebaseUrl">
-                  <v-tooltip bottom max-width="400">
-                    <template v-slot:activator="{ on }">
-                      <v-btn
-                        v-on="on"
-                        color="primary"
-                        icon
-                        x-small
-                        class="mb-1"
-                        @click="toggleAutoUpdateUrl"
-                      >
-                        <v-icon small v-on="on"
-                          >fa
-                          {{ autoUpdateUrl ? "fa-edit" : "fa-book" }}</v-icon
-                        >
-                      </v-btn>
-                    </template>
-                    <span
-                      >{{
-                        autoUpdateUrl
-                          ? $t("auto_update_url_text_off")
-                          : $t("auto_update_url_text_on")
-                      }}
-                    </span>
-                  </v-tooltip>
-                </template>
-              </v-text-field>
-            </v-col>
-            <v-col cols="12" md="5">
-              <v-autocomplete
-                v-model="selectedReportTypes"
-                :items="reportTypes"
-                :label="$t('active_report_types')"
-                chips
-                small-chips
-                multiple
-                item-text="code"
-                item-value="id"
-                :rules="[ruleAtLeastOne]"
-                :loading="loadingReportTypes"
-                :disabled="!activePlatform"
-                ref="selectedReportTypesField"
-              >
-                <template #item="{ item }">
-                  <v-list-item-content>
-                    <SushiReportIndicator
-                      :report="item"
-                      :broken-fn="isBroken"
-                      :knowledgebase-fn="inKnowledgebase"
-                      :registry-fn="inRegistry"
-                      show-name
-                      show-last-harvestable-month
-                    />
-                  </v-list-item-content>
-                </template>
-                <template #selection="{ item, attrs, selected }">
-                  <v-chip
-                    v-bind="attrs"
-                    :input-value="selected"
-                    small
-                    label
-                    :color="isBroken(item) ? 'secondary' : 'primary'"
+                  </v-text-field>
+                  <PlatformSelector
+                    v-else
+                    :platforms="allowedPlatforms"
+                    v-model="platform"
+                    :label="$t('platform')"
+                    return-object
+                    :loading="loadingPlatforms"
+                    class="platform_select"
+                    ref="platformField"
                   >
-                    <SushiReportIndicator
-                      :report="item"
-                      :broken-fn="isBroken"
-                      :knowledgebase-fn="inKnowledgebase"
-                      :registry-fn="inRegistry"
-                      show-last-harvestable-month
-                    />
-                  </v-chip>
-                </template>
-                <template v-slot:append-outer>
-                  <v-tooltip bottom max-width="600px">
-                    <template #activator="{ on }">
-                      <v-btn
-                        v-on="on"
-                        color="primary"
-                        @click="showLastHarvestableMonthDialog = true"
-                        icon
-                        x-small
-                        class="mb-1"
-                      >
-                        <v-icon>far fa-calendar-alt</v-icon>
-                      </v-btn>
-                    </template>
-                    {{ $t("last_harvestable_month_tt") }}
-                  </v-tooltip>
-                </template>
-              </v-autocomplete>
-            </v-col>
-          </v-row>
-          <v-row class="pb-3 mx-0 pt-2">
-            <v-col class="pb-4 subdued-section">
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <h4
-                    v-on="!counterVersion5X ? on : null"
-                    class="font-weight-light pl-2"
-                    v-text="$t('extra_attributes')"
-                  ></h4>
-                </template>
-                {{ $t("extra_attributes_tooltip") }}
-              </v-tooltip>
-              <v-container fluid class="pa-0 pl-md-8">
-                <v-row v-if="counterVersion5X">
-                  <v-col md="5" class="pt-0">
-                    <v-text-field
-                      v-model="platformFilter"
-                      :label="$t('labels.platform_filter')"
-                      :disabled="!activePlatform"
-                      :rules="[rulePlatform]"
-                      persistent-hint
-                      class="mb-3 pb-3"
-                      @change="platformFilterManuallyEdited = true"
-                      :hint="
-                        platformAttrRequired
-                          ? $t('registry_platform_required')
-                          : ''
+                    <template
+                      #prepend
+                      v-if="
+                        allowUserCreatePlatforms &&
+                        (!credentials || !credentials.pk)
                       "
                     >
-                      <template v-slot:append>
-                        <v-tooltip right max-width="400px">
-                          <template #activator="{ on }">
-                            <v-icon
-                              v-on="on"
-                              small
-                              :color="
-                                platformAttrRequired
-                                  ? 'counterRegistry'
-                                  : 'secondary'
-                              "
-                              >{{
-                                platformAttrRequired
-                                  ? "fa-registered"
-                                  : "fa-info-circle"
-                              }}</v-icon
-                            >
-                          </template>
-                          <div>
-                            <div v-if="platformAttrRequired" class="bold">
-                              {{ $t("registry_info") }}
-                            </div>
-                            <div
-                              v-html="
-                                platformAttrRequired
-                                  ? platformAttrInfo ||
-                                    $t('registry_platform_required')
-                                  : $t('platform_filter_tooltip')
-                              "
-                            ></div>
-                          </div>
-                        </v-tooltip>
-                      </template>
-                    </v-text-field>
-                  </v-col>
-                </v-row>
-                <div v-if="!counterVersion5X">
-                  <v-row>
-                    <v-col cols="auto" class="mt-6 py-0">
-                      <span class="font-weight-light">{{
-                        $t("labels.http_authentication")
-                      }}</span>
-                    </v-col>
-                    <v-col md="3" class="py-0">
-                      <v-text-field
-                        v-model="httpUsername"
-                        :label="$t('labels.http_username')"
-                        :disabled="!activePlatform"
-                      >
-                      </v-text-field>
-                    </v-col>
-                    <v-col md="4" class="py-0">
-                      <v-text-field
-                        v-model="httpPassword"
-                        :label="$t('labels.http_password')"
-                        :disabled="!activePlatform"
-                      >
-                      </v-text-field>
-                    </v-col>
-                  </v-row>
-                  <v-row v-for="(param, index) in extraParams" :key="index">
-                    <v-col cols="10" sm="4" md="3" class="py-0">
-                      <v-text-field
-                        v-model="param.key"
-                        :label="$t('labels.variable')"
-                        :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
-                        :disabled="!activePlatform"
-                      >
-                      </v-text-field>
-                    </v-col>
-                    <v-col cols="10" sm="6" md="5" class="py-0">
-                      <v-text-field
-                        v-model="param.value"
-                        :label="$t('labels.variable_value')"
-                        :rules="[ruleRequired]"
-                        :disabled="!activePlatform"
-                      >
-                      </v-text-field>
-                    </v-col>
-                    <v-col cols="auto">
-                      <v-btn
-                        @click="removeExtraParam(index)"
-                        icon
-                        color="error"
-                      >
-                        <v-icon>fa-times</v-icon>
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-                  <v-row>
-                    <v-col cols="12" class="py-0">
-                      <v-tooltip bottom>
-                        <template #activator="{ on }">
-                          <v-btn
-                            v-on="on"
-                            @click="addExtraParam()"
-                            outlined
-                            text
-                            color="secondary"
-                            :disabled="!activePlatform"
-                          >
-                            <v-icon left x-small>fa-plus</v-icon>
-                            {{ $t("add_custom_param") }}
-                          </v-btn>
-                        </template>
-                        {{ $t("add_custom_param_tooltip") }}
-                      </v-tooltip>
-                    </v-col>
-                  </v-row>
-                </div>
-              </v-container>
-            </v-col>
-          </v-row>
-          <v-row v-if="ipAuthorizationRequired">
-            <v-col cols="12" class="py-0">
-              <v-alert type="warning" outlined>
-                {{ $t("ip_authorization_required") }}
+                      <v-list-item>
+                        <v-list-item-title>
+                          <AddPlatformButton
+                            @update-platforms="preselectCreatedPlatform"
+                            :text="true"
+                            small
+                            color="success"
+                            class="pl-1"
+                          />
+                        </v-list-item-title>
+                      </v-list-item>
+                    </template>
+                  </PlatformSelector>
 
-                <HarvesterIPAddressList />
-              </v-alert>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col v-if="anyBrokenReports">
-              <v-alert type="warning" outlined class="mb-0">
-                <p>{{ $t("broken_reports_warning") }}</p>
-                <v-btn color="warning" outlined @click="markFixed(true)">{{
-                  $t("mark_fixed")
-                }}</v-btn>
-              </v-alert>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-container fluid mx-2>
-          <v-row no-gutters>
-            <v-col cols="auto">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <span v-on="on">
-                    <v-switch
-                      v-model="enabled"
-                      :label="$t('sushi.enabled')"
-                      class="pl-2 my-0"
-                      :disabled="!activePlatform"
-                    ></v-switch>
-                  </span>
-                </template>
-                <span>{{ $t("sushi.enabled_tooltip") }}</span>
-              </v-tooltip>
-            </v-col>
-            <v-col cols="auto" class="ml-6" v-if="consortialInstall">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <span v-on="on">
-                    <v-switch
-                      v-model="outsideConsortium"
-                      :label="$t('outside')"
-                      class="pl-2 my-0"
-                      :disabled="!userIsManager || !activePlatform"
-                    ></v-switch>
-                  </span>
-                </template>
-                <span>
-                  {{ $t("outside_tooltip") }}
-                  {{ userIsManager ? "" : $t("only_managers_can_change") }}
+                  <v-tooltip location="bottom" v-if="platformRegistryLink">
+                    <template #activator="{ props }">
+                      <span v-bind="props" class="align-self-end mb-5 ms-1">
+                        <a
+                          target="_blank"
+                          :href="`${registryUrlBase}platform/${activePlatform.counter_registry_id}/`"
+                          style="line-height: 2rem"
+                        >
+                          <v-icon size="small" color="counterRegistry"
+                            >fas fa-external-link-alt
+                          </v-icon>
+                        </a>
+                      </span>
+                    </template>
+                    <span>{{ $t("registry_link") }}</span>
+                  </v-tooltip>
                 </span>
-              </v-tooltip>
-            </v-col>
-            <v-spacer></v-spacer>
-            <v-col cols="auto">
-              <DeleteSushiCredentialsDataWidget
-                v-if="credentials"
-                class="mr-8"
-                :credentials="credentials"
-                :platform="activePlatform"
-                @deleted="
-                  $emit('deleted', { id: credentials.pk });
-                  $emit('input', false);
-                "
-              />
-              <v-btn @click="closeDialog()" class="mr-2">
-                <v-icon small class="mr-1">fa fa-times</v-icon>
-                {{ $t("close") }}
-              </v-btn>
-              <v-btn
-                color="primary"
-                @click="saveAndClose()"
-                class="mr-2"
-                :disabled="saving || disableSave"
-                :loading="saving"
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
+                <v-text-field
+                  v-model="requestorId"
+                  :label="$t('labels.requestor_id')"
+                  :disabled="!activePlatform"
+                  persistent-hint
+                  :hint="requestorIdInfo ? $t('see_registry_hint') : ''"
+                >
+                  <template #append-inner v-if="requestorIdInfo">
+                    <RegistryIcon :text="requestorIdInfo"></RegistryIcon>
+                  </template>
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" :sm="counterVersion5X ? 4 : 6">
+                <v-text-field
+                  v-model="customerId"
+                  :label="$t('labels.customer_id')"
+                  :rules="[ruleRequired]"
+                  :disabled="!activePlatform"
+                  persistent-hint
+                  :hint="customerIdInfo ? $t('see_registry_hint') : ''"
+                >
+                  <template #append-inner v-if="customerIdInfo">
+                    <RegistryIcon :text="customerIdInfo"></RegistryIcon>
+                  </template>
+                </v-text-field>
+              </v-col>
+
+              <v-col v-if="counterVersion5X" cols="12" :sm="4">
+                <v-text-field
+                  v-model="apiKey"
+                  :label="$t('labels.api_key')"
+                  :disabled="!activePlatform"
+                  :rules="[ruleAPIkey]"
+                  persistent-hint
+                  :hint="apiKeyInfo ? $t('see_registry_hint') : ''"
+                >
+                  <template #append-inner>
+                    <RegistryIcon
+                      v-if="apiKeyInfo"
+                      :text="apiKeyInfo"
+                    ></RegistryIcon>
+                  </template>
+                </v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="6" sm="3" md="2">
+                <v-select
+                  v-model="counterVersion"
+                  :label="$t('labels.counter_version')"
+                  :items="allowedCounterVersions"
+                  :disabled="!!credentials || !activePlatform"
+                  :no-data-text="$t('all_versions_used')"
+                  :rules="[ruleNoConflictingCredentials]"
+                  ref="counterVersionField"
+                >
+                </v-select>
+              </v-col>
+              <v-col cols="12" sm="9" md="5">
+                <v-text-field
+                  v-model="url"
+                  :label="$t('labels.url')"
+                  :placeholder="this.urlPlaceholder"
+                  :rules="[
+                    ruleRequired,
+                    ruleUrlValid,
+                    ruleUrlC5NoReport,
+                    ruleUrlC5NoQueryParams,
+                  ]"
+                  validate-on-blur
+                  :error-messages="errors.url"
+                  :disabled="
+                    !activePlatform ||
+                    (autoUpdateUrl && !!currentKnowledgebaseUrl)
+                  "
+                  ref="urlField"
+                  :hint="
+                    currentKnowledgebaseUrl && autoUpdateUrl
+                      ? $t('auto_update_url_hint')
+                      : ''
+                  "
+                  :persistent-hint="currentKnowledgebaseUrl && autoUpdateUrl"
+                  @update:modelValue="urlManuallyEdited = true"
+                >
+                  <template #append v-if="currentKnowledgebaseUrl">
+                    <v-tooltip location="bottom" max-width="400">
+                      <template v-slot:activator="{ props }">
+                        <v-btn
+                          color="primary"
+                          variant="plain"
+                          icon
+                          @click="toggleAutoUpdateUrl"
+                          size="small"
+                          v-bind="props"
+                        >
+                          <v-icon size="small"
+                            >fa
+                            {{ autoUpdateUrl ? "fa-edit" : "fa-book" }}</v-icon
+                          >
+                        </v-btn>
+                      </template>
+                      <span
+                        >{{
+                          autoUpdateUrl
+                            ? $t("auto_update_url_text_off")
+                            : $t("auto_update_url_text_on")
+                        }}
+                      </span>
+                    </v-tooltip>
+                  </template>
+                </v-text-field>
+              </v-col>
+              <v-col cols="12" md="5" class="active_report">
+                <v-autocomplete
+                  density="comfortable"
+                  v-model="selectedReportTypes"
+                  :items="reportTypes"
+                  :label="$t('active_report_types')"
+                  multiple
+                  item-title="code"
+                  item-value="id"
+                  :rules="[ruleAtLeastOne]"
+                  :loading="loadingReportTypes"
+                  :disabled="!activePlatform"
+                  ref="selectedReportTypesField"
+                >
+                  <template #item="{ props, item }">
+                    <v-list-item v-bind="props" title>
+                      <template v-slot:default>
+                        <SushiReportIndicator
+                          :report="item.raw"
+                          :broken-fn="isBroken"
+                          :knowledgebase-fn="inKnowledgebase"
+                          :registry-fn="inRegistry"
+                          show-name
+                          show-last-harvestable-month
+                        ></SushiReportIndicator>
+                      </template>
+                    </v-list-item>
+                  </template>
+                  <template #selection="{ item, props, selected }">
+                    <v-chip
+                      v-bind="props"
+                      :model-value="selected"
+                      size="small"
+                      label
+                      variant="flat"
+                      :color="isBroken(item.raw) ? 'secondary' : 'primary'"
+                    >
+                      <SushiReportIndicator
+                        :report="item.raw"
+                        :broken-fn="isBroken"
+                        :knowledgebase-fn="inKnowledgebase"
+                        :registry-fn="inRegistry"
+                        show-last-harvestable-month
+                        is-autocomplete
+                      ></SushiReportIndicator>
+                    </v-chip>
+                  </template>
+                  <template v-slot:append>
+                    <v-tooltip location="bottom" max-width="600px">
+                      <template #activator="{ props }">
+                        <div class="calendar_button" v-bind="props">
+                          <v-btn
+                            color="primary"
+                            @click="showLastHarvestableMonthDialog = true"
+                            size="small"
+                            icon="fas fa-calendar-alt"
+                            variant="plain"
+                            class="button_append"
+                            :disabled="selectedReportTypes.length === 0"
+                          >
+                          </v-btn>
+                        </div>
+                      </template>
+                      {{
+                        selectedReportTypes.length === 0
+                          ? $t("last_harvestable_month_tt_disabled")
+                          : $t("last_harvestable_month_tt")
+                      }}
+                    </v-tooltip>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+            <v-row class="pb-3 mx-0 pt-2">
+              <v-col class="pb-4 subdued-section">
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props }">
+                    <h4
+                      v-bind="!counterVersion5X ? props : null"
+                      class="font-weight-light pl-2"
+                      v-text="$t('extra_attributes')"
+                    ></h4>
+                  </template>
+                  {{ $t("extra_attributes_tooltip") }}
+                </v-tooltip>
+                <v-container fluid class="pa-0 pl-md-8 mt-3">
+                  <v-row v-if="counterVersion5X">
+                    <v-col md="6" class="pt-0">
+                      <v-text-field
+                        v-model="platformFilter"
+                        :label="$t('labels.platform_filter')"
+                        :disabled="!activePlatform"
+                        :rules="[rulePlatform]"
+                        persistent-hint
+                        class="mb-3 pb-3"
+                        :hint="
+                          platformAttrRequired
+                            ? $t('registry_platform_required')
+                            : ''
+                        "
+                        @update:modelValue="platformFilterManuallyEdited = true"
+                      >
+                        <template v-slot:append-inner>
+                          <v-tooltip location="right" max-width="400px">
+                            <template #activator="{ props }">
+                              <v-icon
+                                v-bind="props"
+                                size="small"
+                                :color="
+                                  platformAttrRequired
+                                    ? 'counterRegistry'
+                                    : 'secondary'
+                                "
+                                >{{
+                                  platformAttrRequired
+                                    ? "fa fa-registered"
+                                    : "fa fa-info-circle"
+                                }}</v-icon
+                              >
+                            </template>
+                            <div>
+                              <div v-if="platformAttrRequired" class="bold">
+                                {{ $t("registry_info") }}
+                              </div>
+                              <div
+                                v-html="
+                                  platformAttrRequired
+                                    ? platformAttrInfo ||
+                                      $t('registry_platform_required')
+                                    : $t('platform_filter_tooltip')
+                                "
+                              ></div>
+                            </div>
+                          </v-tooltip>
+                        </template>
+                      </v-text-field>
+                    </v-col>
+                  </v-row>
+                  <div v-if="!counterVersion5X">
+                    <v-row>
+                      <v-col cols="auto" class="mt-6 py-0">
+                        <span class="font-weight-light">{{
+                          $t("labels.http_authentication")
+                        }}</span>
+                      </v-col>
+                      <v-col md="3" class="py-0">
+                        <v-text-field
+                          v-model="httpUsername"
+                          :label="$t('labels.http_username')"
+                          :disabled="!activePlatform"
+                        >
+                        </v-text-field>
+                      </v-col>
+                      <v-col md="4" class="py-0">
+                        <v-text-field
+                          v-model="httpPassword"
+                          :label="$t('labels.http_password')"
+                          :disabled="!activePlatform"
+                        >
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row v-for="(param, index) in extraParams" :key="index">
+                      <v-col cols="10" sm="4" md="3" class="py-0">
+                        <v-text-field
+                          v-model="param.key"
+                          :label="$t('labels.variable')"
+                          :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
+                          :disabled="!activePlatform"
+                        >
+                        </v-text-field>
+                      </v-col>
+                      <v-col cols="10" sm="6" md="5" class="py-0">
+                        <v-text-field
+                          v-model="param.value"
+                          :label="$t('labels.variable_value')"
+                          :rules="[ruleRequired]"
+                          :disabled="!activePlatform"
+                        >
+                        </v-text-field>
+                      </v-col>
+                      <v-col cols="auto">
+                        <v-btn
+                          @click="removeExtraParam(index)"
+                          variant="text"
+                          icon
+                          color="error"
+                        >
+                          <v-icon>fa fa-times</v-icon>
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col cols="12" class="py-0">
+                        <v-tooltip location="bottom">
+                          <template #activator="{ props }">
+                            <v-btn
+                              v-bind="props"
+                              @click="addExtraParam()"
+                              variant="outlined"
+                              text
+                              color="secondary"
+                              :disabled="!activePlatform"
+                            >
+                              <v-icon left size="x-small">fa fa-plus</v-icon>
+                              {{ $t("add_custom_param") }}
+                            </v-btn>
+                          </template>
+                          {{ $t("add_custom_param_tooltip") }}
+                        </v-tooltip>
+                      </v-col>
+                    </v-row>
+                  </div>
+                </v-container>
+              </v-col>
+            </v-row>
+            <v-row v-if="ipAuthorizationRequired">
+              <v-col cols="12" class="py-0">
+                <v-alert type="warning" variant="outlined">
+                  {{ $t("ip_authorization_required") }}
+
+                  <HarvesterIPAddressList></HarvesterIPAddressList>
+                </v-alert>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col v-if="anyBrokenReports">
+                <v-alert type="warning" variant="outlined" class="mb-0">
+                  <p>{{ $t("broken_reports_warning") }}</p>
+                  <v-btn
+                    color="warning"
+                    variant="outlined"
+                    @click="markFixed(true)"
+                    >{{ $t("mark_fixed") }}</v-btn
+                  >
+                </v-alert>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-container fluid mx-2>
+            <v-row no-gutters>
+              <v-col cols="auto">
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <span v-bind="props">
+                      <v-switch
+                        v-model="enabled"
+                        :label="$t('sushi.enabled')"
+                        class="pl-2 my-0"
+                        color="primary"
+                        :disabled="!activePlatform"
+                      ></v-switch>
+                    </span>
+                  </template>
+                  <span>{{ $t("sushi.enabled_tooltip") }}</span>
+                </v-tooltip>
+              </v-col>
+              <v-col cols="auto" class="ml-6" v-if="consortialInstall">
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <span v-bind="props">
+                      <v-switch
+                        v-model="outsideConsortium"
+                        :label="$t('outside')"
+                        color="primary"
+                        class="pl-2 my-0"
+                        :disabled="!userIsManager || !activePlatform"
+                      ></v-switch>
+                    </span>
+                  </template>
+                  <span>
+                    {{ $t("outside_tooltip") }}
+                    {{ userIsManager ? "" : $t("only_managers_can_change") }}
+                  </span>
+                </v-tooltip>
+              </v-col>
+              <v-spacer></v-spacer>
+              <v-col cols="auto">
+                <DeleteSushiCredentialsDataWidget
+                  v-if="credentials"
+                  :class="!$vuetify.display.xs ? 'mr-8' : 'mr-2'"
+                  :credentials="credentials"
+                  :platform="activePlatform"
+                  @deleted="
+                    $emit('deleted', { id: credentials.pk });
+                    $emit('update:modelValue', false);
+                  "
+                ></DeleteSushiCredentialsDataWidget>
+                <v-btn
+                  @click="closeDialog"
+                  class="mr-2"
+                  variant="flat"
+                  color="defaultButton"
+                  elevation="2"
+                >
+                  <v-icon size="small" class="mr-1">fa fa-times</v-icon>
+                  {{ $t("close") }}
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  @click="saveAndClose()"
+                  class="mr-2"
+                  :style="$vuetify.display.xs ? 'margin-left: 0;' : ''"
+                  variant="elevated"
+                  :disabled="saving || disableSave"
+                  :loading="saving"
+                >
+                  <v-icon size="small" class="mr-1">fa fa-save</v-icon>
+                  {{ $t("save") }}
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-actions>
+
+        <v-dialog v-model="showTestDialog" max-width="1200px">
+          <v-card>
+            <v-card-title>{{ $t("test_dialog") }}</v-card-title>
+            <v-card-text>
+              <HarvestSelectedWidget
+                v-if="showTestDialog"
+                :credentials="[credentials]"
+                ref="testWidget"
+                test
               >
-                <v-icon small class="mr-1">fa fa-save</v-icon>
-                {{ $t("save") }}
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-actions>
-
-      <v-dialog v-model="showTestDialog" max-width="1200px">
-        <v-card>
-          <v-card-title>{{ $t("test_dialog") }}</v-card-title>
-          <v-card-text>
-            <HarvestSelectedWidget
-              v-if="showTestDialog"
-              :credentials="[credentials]"
-              ref="testWidget"
-              test
-            >
-            </HarvestSelectedWidget>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="stopTestDialog()" class="ma-4">{{
-              $t("close")
-            }}</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-dialog v-model="showLastHarvestableMonthDialog" max-width="500px">
-        <LastHarvestableMonthEntryWidget
-          v-model="reportToLastHarvestableMonth"
-          :counter-reports-ordered="selectedReportTypeObjs"
-          @close="closeLastHarvestableMonthDialog"
-          @apply="updateLastHarvestableMonth"
-        />
-      </v-dialog>
-    </v-card>
-  </v-form>
+              </HarvestSelectedWidget>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                @click="stopTestDialog()"
+                variant="elevated"
+                color="defaultButton"
+                class="ma-4"
+                >{{ $t("close") }}</v-btn
+              >
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="showLastHarvestableMonthDialog" max-width="500px">
+          <LastHarvestableMonthEntryWidget
+            v-model="reportToLastHarvestableMonth"
+            :counter-reports-ordered="selectedReportTypeObjs"
+            @close="closeLastHarvestableMonthDialog"
+            @apply="updateLastHarvestableMonth"
+          ></LastHarvestableMonthEntryWidget>
+        </v-dialog>
+      </v-card>
+    </v-form>
+  </v-sheet>
 </template>
 
 <script>
@@ -789,7 +833,7 @@ export default {
   },
   props: {
     credentialsObject: {},
-    value: { default: false },
+    modelValue: { default: false, type: Boolean },
     existingCredentials: { required: false, type: Array },
     fixedPlatform: { required: false, type: Number },
   },
@@ -871,7 +915,7 @@ export default {
         return this.credentials.platform;
       } else if (this.fixedPlatform) {
         const found = this.platforms.find(
-          (item) => item.pk === this.fixedPlatform
+          (item) => item.pk === this.fixedPlatform,
         );
         if (found) {
           return found;
@@ -924,7 +968,7 @@ export default {
     },
     reportTypes() {
       return this.allReportTypes.filter(
-        (item) => item.counter_version === this.counterVersion
+        (item) => item.counter_version === this.counterVersion,
       );
     },
     currentKnowledgebase() {
@@ -936,7 +980,7 @@ export default {
     },
     currentKnowledgebaseUrl() {
       const providers = (this.currentKnowledgebase?.providers || []).filter(
-        (provider) => provider.counter_version === this.counterVersion
+        (provider) => provider.counter_version === this.counterVersion,
       );
       // Note that knowledgebase should contain only a single provider
       // per counter version
@@ -947,7 +991,7 @@ export default {
         return this.useCasesData.filter(
           (e) =>
             e.platform === this.activePlatform.pk &&
-            e.counter_version === this.counterVersion
+            e.counter_version === this.counterVersion,
         );
       } else {
         return [];
@@ -958,7 +1002,7 @@ export default {
       // or use all if no such usecases exists
       if (this.organization?.pk) {
         let res = this.currentUseCases.filter(
-          (e) => e.organization === this.organization.pk
+          (e) => e.organization === this.organization.pk,
         );
         if (res.length > 0) {
           return res;
@@ -987,7 +1031,7 @@ export default {
       if (this.pickedUseCases.length > 0) {
         let records = [...this.pickedUseCases];
         records.sort((a, b) =>
-          a.latest < b.latest ? 1 : a.latest > b.latest ? -1 : 0
+          a.latest < b.latest ? 1 : a.latest > b.latest ? -1 : 0,
         );
         return records[0].url;
       }
@@ -996,7 +1040,7 @@ export default {
     knowledgebaseReportTypes() {
       if (this.currentKnowledgebase) {
         let providers = this.activePlatform.knowledgebase.providers.filter(
-          (provider) => provider.counter_version == this.counterVersion
+          (provider) => provider.counter_version == this.counterVersion,
         );
         if (providers.length > 0) {
           return providers[0].assigned_report_types.map((e) => e.report_type);
@@ -1013,7 +1057,7 @@ export default {
     },
     allowedCounterVersions() {
       return [51, 5, 4].map((e) => {
-        return { text: counterVersionToStr(e), value: e };
+        return { title: counterVersionToStr(e), value: e };
       });
     },
     conflictingCredentials() {
@@ -1034,7 +1078,7 @@ export default {
             this.platform &&
             cred.platform.pk === this.platform?.pk &&
             cred.counter_version === this.counterVersion &&
-            (!this.credentials || cred.pk !== this.credentials?.pk)
+            (!this.credentials || cred.pk !== this.credentials?.pk),
         );
       }
       return [];
@@ -1054,9 +1098,9 @@ export default {
     brokenReports() {
       let res = [];
       if (this.credentials) {
-        return this.selectedReportTypeObjs.filter((item) =>
-          this.isBroken({ id: item.id })
-        );
+        return !!this.selectedReportTypes.filter((item) =>
+          this.isBroken({ id: item }),
+        ).length;
       }
       return res;
     },
@@ -1083,11 +1127,12 @@ export default {
       if (this.activePlatform && this.activePlatform.counter_registry_id) {
         return `${this.registryUrlBase}api/v1/platform/${this.activePlatform.counter_registry_id}/`;
       }
+      return null;
     },
     registrySushiService() {
       if (this.activePlatform && this.activePlatform.registry_data) {
         return this.activePlatform.registry_data.sushi_services.find(
-          (service) => service.counter_release == this.counterVersionStr
+          (service) => service.counter_release == this.counterVersionStr,
         );
       }
       return null;
@@ -1124,7 +1169,7 @@ export default {
     },
     selectedReportTypeObjs() {
       return this.allReportTypes.filter((item) =>
-        this.selectedReportTypes.includes(item.id)
+        this.selectedReportTypes.includes(item.id),
       );
     },
     canShowDebugLinks() {
@@ -1160,25 +1205,16 @@ export default {
         item.long_name = item.name ? `${item.code}: ${item.name}` : item.code;
         if (this.credentials) {
           const reportRec = this.credentials.counter_reports_long.find(
-            (e) => e.id === item.id
+            (e) => e.id === item.id,
           );
-          this.$set(
-            item,
-            "last_harvestable_month",
-            reportRec?.last_harvestable_month
-              ? reportRec.last_harvestable_month.slice(0, 7)
-              : null
-          );
-          this.$set(
-            item,
-            "last_harvestable_month_user_id",
-            reportRec?.last_harvestable_month_user_id || null
-          );
-          this.$set(
-            item,
-            "last_harvestable_month_attempt_id",
-            reportRec?.last_harvestable_month_attempt_id || null
-          );
+
+          item.last_harvestable_month = reportRec?.last_harvestable_month
+            ? reportRec.last_harvestable_month.slice(0, 7)
+            : null;
+          item.last_harvestable_month_user_id =
+            reportRec?.last_harvestable_month_user_id || null;
+          item.last_harvestable_month_attempt_id =
+            reportRec?.last_harvestable_month_attempt_id || null;
         }
       });
     },
@@ -1207,7 +1243,7 @@ export default {
         if (this.fixedPlatform) {
           try {
             let result = await axios.get(
-              this.platformsBaseUrl + this.fixedPlatform + "/"
+              this.platformsBaseUrl + this.fixedPlatform + "/",
             );
             this.platform = result.data;
             this.platforms = [this.platform];
@@ -1224,11 +1260,11 @@ export default {
             let result = await axios.get(this.platformsBaseUrl);
             this.platforms = result.data;
             this.platforms.sort((a, b) =>
-              a.name ? a.name.localeCompare(b.name) : -1
+              a.name ? a.name.localeCompare(b.name) : -1,
             );
             if (this.platform) {
               const machingPlatform = this.platforms.find(
-                (item) => item.pk === this.platform.pk
+                (item) => item.pk === this.platform.pk,
               );
               if (machingPlatform) {
                 this.platform = machingPlatform;
@@ -1260,7 +1296,8 @@ export default {
       this.platform = platform;
     },
     closeDialog() {
-      this.$emit("input", false);
+      this.$emit("update:modelValue", false);
+      // this.$emit("close-dialog");
     },
     async saveData(forced) {
       forced |= false;
@@ -1268,7 +1305,8 @@ export default {
       this.saving = true;
       try {
         let response = null;
-        let data = structuredClone(this.apiData);
+        const cleanData = JSON.parse(JSON.stringify(this.apiData));
+        let data = structuredClone(cleanData);
         if (forced) {
           data.forced = true;
         }
@@ -1276,7 +1314,7 @@ export default {
           // we have existing credentials - we patch it
           response = await axios.patch(
             `/api/sushi-credentials/${this.credentials.pk}/`,
-            data
+            data,
           );
         } else {
           // we create new credentials
@@ -1334,7 +1372,7 @@ export default {
       try {
         await axios.post(
           "/api/sushi-credentials/update-assigned-counter-reports/",
-          data
+          data,
         );
       } catch (error) {
         await this.showSnackbar({
@@ -1354,10 +1392,10 @@ export default {
         if (res) {
           try {
             await axios.delete(
-              `/api/sushi-credentials/${this.credentials.pk}/`
+              `/api/sushi-credentials/${this.credentials.pk}/`,
             );
             this.$emit("deleted", { id: this.credentials.pk });
-            this.$emit("input", false);
+            this.$emit("update:modelValue", false);
             this.showSnackbar({
               content: this.$t("delete_success"),
               color: "success",
@@ -1380,7 +1418,7 @@ export default {
         try {
           let response = await axios.post(
             "/api/sushi-credentials/unset-broken/",
-            [data]
+            [{ credentials_id: this.credentials.pk }],
           );
           this.showSnackbar({
             content: this.$t("mark_fixed_success"),
@@ -1405,21 +1443,23 @@ export default {
         let data = await this.saveData();
         if (data) {
           if (data.verified) {
-            this.$emit("input", false);
+            this.$emit("update:modelValue", false);
           } else {
             let text = `${this.$t("unverified_details")}<br /><br />${this.$t(
-              "unverified_note"
+              "unverified_note",
             )}`;
             const res = await this.$confirm(text, {
               title: this.$t("unverified_title"),
               buttonTrueText: this.$t("plan_harvest"),
               buttonFalseText: this.$t("close"),
               width: 450,
+              icon: "fa fa-warning",
+              color: "warning",
             });
             if (res) {
               this.showTestDialog = true;
             } else {
-              this.$emit("input", false);
+              this.$emit("update:modelValue", false);
             }
           }
         }
@@ -1455,7 +1495,7 @@ export default {
         return !!reports.find(
           (item) =>
             item.counter_release == this.counterVersion &&
-            item.report_id == report.code
+            item.report_id == report.code,
         );
       }
       return false;
@@ -1474,6 +1514,14 @@ export default {
       this.url = "";
       if (this.currentKnowledgebase) {
         this.url = this.currentKnowledgebaseUrl;
+        let providers = this.currentKnowledgebase.providers.filter(
+          (provider) => provider.counter_version === this.counterVersion,
+        );
+        if (providers.length > 0) {
+          // provider found lets perform update
+          this.url = providers[0].provider.url;
+          return;
+        }
       } else if (this.pickedCaseUrl) {
         this.url = this.pickedCaseUrl;
       }
@@ -1500,11 +1548,11 @@ export default {
     removeExtraParam(index) {
       this.extraParams.splice(index, 1);
     },
-    ruleAPIkey(value) {
+    ruleAPIkey(modelValue) {
       let pattern = /api_?key[:=]/i;
-      let isMatch = pattern.test(value);
+      let isMatch = pattern.test(modelValue);
       if (isMatch) {
-        this.prefixApiKey = pattern.exec(value)[0];
+        this.prefixApiKey = pattern.exec(modelValue)[0];
       } else {
         this.prefixApiKey = "";
       }
@@ -1513,11 +1561,11 @@ export default {
         `Please remove the "${this.prefixApiKey}" part of your input.`
       );
     },
-    rulePlatform(value) {
+    rulePlatform(modelValue) {
       let pattern = /platform[:=]/i;
-      let isMatch = pattern.test(value);
+      let isMatch = pattern.test(modelValue);
       if (isMatch) {
-        this.prefixPlatform = pattern.exec(value)[0];
+        this.prefixPlatform = pattern.exec(modelValue)[0];
       } else {
         this.prefixPlatform = "";
       }
@@ -1526,15 +1574,15 @@ export default {
         `Please remove the "${this.prefixPlatform}" part of your input.`
       );
     },
-    ruleRequired(value) {
-      return !!value || this.$t("required");
+    ruleRequired(modelValue) {
+      return !!modelValue || this.$t("required");
     },
-    ruleAtLeastOne(value) {
-      return value.length > 0 || this.$t("required");
+    ruleAtLeastOne(modelValue) {
+      return modelValue.length > 0 || this.$t("required");
     },
-    ruleExtraNoDuplicateKey(value) {
+    ruleExtraNoDuplicateKey(modelValue) {
       return (
-        this.extraParams.filter((item) => item.key.trim() === value.trim())
+        this.extraParams.filter((item) => item.key.trim() === modelValue.trim())
           .length <= 1 || this.$t("duplicate")
       );
     },
@@ -1563,7 +1611,7 @@ export default {
     ruleUrlValid() {
       const result = validate(
         { website: this.url },
-        { website: { url: { allowLocal: true } } }
+        { website: { url: { allowLocal: true } } },
       );
       if (result && result.website) {
         return this.$t("invalid_url");
@@ -1573,7 +1621,7 @@ export default {
     async reloadCredentials() {
       try {
         let response = await axios.get(
-          `/api/sushi-credentials/${this.credentials.pk}/`
+          `/api/sushi-credentials/${this.credentials.pk}/`,
         );
         this.savedCredentials = response.data;
         this.$emit("update-credentials", this.savedCredentials);
@@ -1591,7 +1639,7 @@ export default {
           let resp = await axios.get(this.platformRegistryLink);
           if (resp.data.id === platformId) {
             // check that the ID did not change during the request
-            this.$set(this.activePlatform, "registry_data", resp.data);
+            this.activePlatform.registry_data = resp.data;
           }
         } catch (error) {
           this.showSnackbar({
@@ -1633,7 +1681,7 @@ export default {
         // we want == here because key may be a string and id is an int
         const report = this.allReportTypes.find((e) => e.id == key);
         if (report) {
-          this.$set(report, "last_harvestable_month", value);
+          report.last_harvestable_month = value;
         }
       });
       this.showLastHarvestableMonthDialog = false;
@@ -1650,6 +1698,13 @@ export default {
         this.url = this.currentKnowledgebaseUrl;
         // lose focus
         this.$refs.selectedReportTypesField.focus();
+      }
+    },
+    ToolTipContent() {
+      if (this.counterVersion === 4) {
+        return this.$t("extra_attributes_tooltip");
+      } else {
+        return "";
       }
     },
   },
@@ -1691,7 +1746,7 @@ export default {
         .filter((item) => item.counter_version === this.counterVersion)
         .map((item) => item.id);
       this.selectedReportTypes = this.selectedReportTypes.filter((item) =>
-        currentReportTypes.includes(item)
+        currentReportTypes.includes(item),
       );
       if (this.$refs.platformField)
         // sometimes platform is fixed and the field is not there
@@ -1712,9 +1767,9 @@ export default {
       });
       delete this.errors.url;
     },
-    async showTestDialog(value) {
+    async showTestDialog(modelValue) {
       // on dialog close, we reload the credentials
-      if (!value) {
+      if (!modelValue) {
         await this.reloadCredentials();
       }
     },
@@ -1727,5 +1782,40 @@ export default {
   //border: solid 1px #eeeeee;
   border-radius: 5px;
   background-color: #f5f5f5;
+}
+
+:deep(.v-messages__message) {
+  line-height: 1.2;
+}
+
+.margin-right-negative {
+  margin-left: -30px;
+}
+
+:deep(.v-field__append-inner > .v-icon) {
+  opacity: 1;
+}
+
+.v-chip__content {
+  width: 100% !important;
+}
+
+.top_alert {
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.platform_select {
+  height: 2.75rem;
+  margin-top: -11px;
+}
+
+:deep(.v-input__append) {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.calendar_button {
+  margin-left: -10px;
 }
 </style>

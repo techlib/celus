@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <v-container fluid>
@@ -8,23 +8,22 @@
           v-model="command"
           :items="commands"
           :label="$t('labels.select_command')"
-          item-text="name"
+          item-title="name"
           return-object
         >
-          <template #item="{ item }">
-            <v-list-item-content>
-              <v-list-item-title>{{ item.name }}</v-list-item-title>
+          <template #item="{ item, props }">
+            <v-list-item v-bind="props">
               <v-list-item-subtitle>
-                {{ item.help }}
+                {{ item.raw.help }}
               </v-list-item-subtitle>
-            </v-list-item-content>
+            </v-list-item>
           </template>
         </v-select>
       </v-col>
     </v-row>
     <v-row v-if="command">
       <v-col>
-        <ManagementCommand :command="command" />
+        <ManagementCommand :command="command"></ManagementCommand>
       </v-col>
     </v-row>
   </v-container>

@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/pub-types.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   pub_type_filter: Publication type filter
@@ -20,16 +22,23 @@ cs:
             v-model="selectedPubType"
           >
             <template v-slot:item="{ item }">
-              <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
+              <v-icon
+                v-text="item.icon + ' fa-fw'"
+                class="mr-2"
+                size="small"
+              ></v-icon>
               {{ item.text }}
             </template>
             <template v-slot:selection="{ item }">
-              <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
+              <v-icon
+                v-text="item.icon + ' fa-fw'"
+                class="mr-2"
+                size="small"
+              ></v-icon>
               {{ item.text }}
             </template>
           </v-select>
         </v-col>
-
         <v-spacer></v-spacer>
         <v-col cols="auto">
           <v-text-field
@@ -44,7 +53,10 @@ cs:
         </v-col>
       </v-row>
     </v-card-title>
-    <v-skeleton-loader v-if="loading && items.length === 0" type="table" />
+    <v-skeleton-loader
+      v-if="loading && items.length === 0"
+      type="table"
+    ></v-skeleton-loader>
     <v-data-table
       v-else
       :items="filteredItems"
@@ -53,13 +65,14 @@ cs:
       :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
       :server-items-length="totalItemCount"
       :must-sort="true"
-      :items-per-page.sync="itemsPerPage"
-      :sort-by.sync="orderBy"
-      :page.sync="page"
-      :sort-desc.sync="orderDesc"
+      :items-per-page="itemsPerPage"
+      :sort-by="orderBy"
+      :page="page"
+      :sort-desc="orderDesc"
       :no-data-text="$t('no_records')"
+      density="default"
     >
-      <template v-slot:item.name="{ item }">
+      <template v-slot:[`item.name`]="{ item }">
         <router-link
           v-if="platformId"
           :to="{
@@ -71,7 +84,7 @@ cs:
             },
           }"
         >
-          <ShortenText :text="item.name" :length="50" />
+          <ShortenText :text="item.name" :length="50"></ShortenText>
         </router-link>
         <router-link
           v-else
@@ -80,23 +93,22 @@ cs:
             params: { titleId: titleId, itemId: item.pk },
           }"
         >
-          <ShortenText :text="item.name" />
+          <ShortenText :text="item.name"></ShortenText>
         </router-link>
       </template>
-      <template v-slot:item.pub_type="{ item }">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-icon small v-on="on">{{ iconForPubType(item.pub_type) }}</v-icon>
+      <template v-slot:[`item.pub_type`]="{ item }">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-icon size="small" v-bind="props">{{
+              iconForPubType(item.pub_type)
+            }}</v-icon>
           </template>
-
           <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
         </v-tooltip>
       </template>
-
-      <template #item.doi="{ item }">
-        <DoiLink :doi="item.doi" small />
+      <template v-slot:[`item.doi`]="{ item }">
+        <DoiLink :doi="item.doi" small></DoiLink>
       </template>
-
       <template
         v-for="ig in activeInterestGroups"
         v-slot:[slotName(ig)]="{ item }"

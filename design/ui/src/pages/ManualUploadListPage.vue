@@ -12,22 +12,22 @@ cs:
   <v-container fluid>
     <v-row>
       <v-col>
-        <h2 v-text="$t('manual_uploads')"></h2>
+        <h2>{{ $t("manual_uploads") }}</h2>
       </v-col>
       <v-col cols="auto">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <span v-on="on">
-              <ManualUploadButton color="primary" />
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">
+              <ManualUploadButton color="primary"></ManualUploadButton>
             </span>
           </template>
-          <span v-text="$t('upload_data_tooltip')"></span>
+          <span>{{ $t("upload_data_tooltip") }}</span>
         </v-tooltip>
       </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <ManualUploadListTable />
+        <ManualUploadListTable></ManualUploadListTable>
       </v-col>
     </v-row>
   </v-container>

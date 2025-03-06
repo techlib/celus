@@ -1,4 +1,6 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+<i18n src="@/locales/dialog.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   matched_rows: Matched rows
@@ -30,38 +32,42 @@ cs:
       :loading="loading"
       item-key="pk"
       :headers="headers"
-      sort-by="created"
-      sort-desc
+      v-model:sort-by="orderBy"
+      density="comfortable"
     >
       <template #top>
-        <v-btn color="primary" @click="showUploadDialog = true">
-          <v-icon small class="me-2">fa-upload</v-icon>
+        <v-btn color="primary" width="290px" @click="showUploadDialog = true">
+          <v-icon size="small" class="me-2">fa fa-upload</v-icon>
           {{ $t("actions.upload_file_for_annotation") }}
         </v-btn>
       </template>
-
-      <template #item.created="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <span v-on="on">{{ relativeDate(item.created) }}</span>
+      <template #[`item.created`]="{ item }">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">{{ relativeDate(item.created) }}</span>
           </template>
           <span>{{ isoDateTimeFormat(item.created) }}</span>
         </v-tooltip>
       </template>
-
-      <template #item.state="{ item }">
+      <template #[`item.state`]="{ item }">
         <!-- processing -->
         <ServerTaskMonitor
           v-if="item.state === 'processing' && item.task"
-          :value="item.task"
           dense
           @finished="refetchBatch(item.pk)"
-        />
+          :model-value="item.task"
+        ></ServerTaskMonitor>
         <!-- failed -->
-        <v-tooltip bottom v-else-if="item.state === 'failed'" max-width="600">
-          <template #activator="{ on }">
-            <span v-on="on">
-              <v-icon color="error" small>fa-exclamation-circle</v-icon>
+        <v-tooltip
+          location="bottom"
+          v-else-if="item.state === 'failed'"
+          max-width="600"
+        >
+          <template #activator="{ props }">
+            <span v-bind="props">
+              <v-icon color="error" size="small"
+                >fa fa-exclamation-circle</v-icon
+              >
               <a
                 v-if="isUnicodeError(item.processing_info.error)"
                 class="ms-1 text-caption font-weight-bold"
@@ -81,35 +87,36 @@ cs:
             }}
           </span>
         </v-tooltip>
-
         <!-- other states -->
-        <v-tooltip bottom v-else>
-          <template #activator="{ on }">
-            <v-icon :color="stateToColor(item.state)" small v-on="on">
+        <v-tooltip location="bottom" v-else>
+          <template #activator="{ props }">
+            <v-icon
+              :color="stateToColor(item.state)"
+              size="small"
+              v-bind="props"
+            >
               {{ stateToIcon(item.state) }}
             </v-icon>
           </template>
           {{ item.state }}
         </v-tooltip>
       </template>
-
-      <template #item.source_file="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <a :href="item.source_file" target="_blank" v-on="on">
-              <v-icon small>fa fa-file</v-icon>
+      <template #[`item.source_file`]="{ item }">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <a :href="item.source_file" target="_blank" v-bind="props">
+              <v-icon size="small">fa fa-file</v-icon>
             </a>
           </template>
           <span>{{ $t("source_file_tt") }}</span>
         </v-tooltip>
       </template>
-
-      <template #item.annotated_file="{ item }">
-        <v-tooltip bottom v-if="item.annotated_file">
-          <template #activator="{ on }">
-            <a :href="item.annotated_file" target="_blank" v-on="on">
+      <template #[`item.annotated_file`]="{ item }">
+        <v-tooltip location="bottom" v-if="item.annotated_file">
+          <template #activator="{ props }">
+            <a :href="item.annotated_file" target="_blank" v-bind="props">
               <v-icon
-                small
+                size="small"
                 color="primary"
                 :class="item.just_finished ? 'pulse' : ''"
                 >fa fa-download</v-icon
@@ -120,8 +127,7 @@ cs:
         </v-tooltip>
         <span v-else>-</span>
       </template>
-
-      <template #item.matched_rows="{ item }">
+      <template #[`item.matched_rows`]="{ item }">
         <span
           v-if="
             item.processing_info.stats && item.processing_info.stats.row_count
@@ -135,23 +141,29 @@ cs:
         </span>
         <span v-else>-</span>
       </template>
-      <template #item.actions="{ item }">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <v-btn icon @click="deleteBatch(item.pk)" color="error" v-on="on">
-              <v-icon small>fa fa-trash</v-icon>
+      <template #[`item.actions`]="{ item }">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+              icon="fa fa-trash"
+              density="comfortable"
+              variant="text"
+              @click="deleteBatch(item.pk)"
+              color="error"
+              v-bind="props"
+              class="delete_btn"
+            >
             </v-btn>
           </template>
           <span>{{ $t("delete_batch_tt") }}</span>
         </v-tooltip>
       </template>
     </v-data-table>
-
     <TitleOverlapUploadFileDialog
       v-if="showUploadDialog"
       v-model="showUploadDialog"
       @upload-file="uploadFile"
-    />
+    ></TitleOverlapUploadFileDialog>
   </div>
 </template>
 
@@ -186,6 +198,7 @@ export default {
       dataFile: null,
       now: null,
       timer: null,
+      orderBy: [{ key: "created", order: "desc" }],
     };
   },
 
@@ -198,26 +211,30 @@ export default {
     }),
     headers() {
       return [
-        { text: this.$t("labels.created"), value: "created" },
-        { text: this.$t("labels.organization"), value: "organization.name" },
-        { text: this.$t("labels.status"), value: "state" },
+        { title: this.$t("labels.created"), value: "created", key: "created" },
         {
-          text: this.$t("matched_rows"),
+          title: this.$t("labels.organization"),
+          value: "organization.name",
+          key: "organization.name",
+        },
+        { title: this.$t("labels.status"), value: "state", key: "state" },
+        {
+          title: this.$t("matched_rows"),
           value: "matched_rows",
           sortable: false,
         },
         {
-          text: this.$t("labels.source_file"),
+          title: this.$t("labels.source_file"),
           value: "source_file",
           sortable: false,
         },
         {
-          text: this.$t("labels.annotated_file"),
+          title: this.$t("labels.annotated_file"),
           value: "annotated_file",
           sortable: false,
         },
         {
-          text: this.$t("title_fields.actions"),
+          title: this.$t("title_fields.actions"),
           value: "actions",
           sortable: false,
         },
@@ -303,6 +320,8 @@ export default {
         title: this.$t("confirm_delete"),
         buttonTrueText: this.$t("actions.delete"),
         buttonFalseText: this.$t("actions.cancel"),
+        color: "warning",
+        icon: "fa fa-warning",
       });
       if (goOn) {
         await this.deleteBatchConfirmed(pk);
@@ -338,13 +357,13 @@ export default {
     stateToIcon(state) {
       switch (state) {
         case "processing":
-          return "fa-clock";
+          return "fas fa-clock";
         case "done":
-          return "fa-check-circle";
+          return "fa fa-check-circle";
         case "failed":
-          return "fa-exclamation-circle";
+          return "fa fa-exclamation-circle";
         default:
-          return "fa-question-circle";
+          return "fa fa-question-circle";
       }
     },
     relativeDate(date) {
@@ -373,7 +392,7 @@ export default {
     update();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     clearTimeout(this.timer);
   },
 };
@@ -382,6 +401,12 @@ export default {
 <style scoped lang="scss">
 .pulse {
   animation: pulse-animation 750ms 20;
+}
+
+.delete_btn {
+  :deep(.v-icon) {
+    font-size: 18px;
+  }
 }
 
 @keyframes pulse-animation {

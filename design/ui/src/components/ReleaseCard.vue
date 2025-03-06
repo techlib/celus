@@ -1,25 +1,27 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-card class="mb-6 pa-4" elevation="5" max-width="900">
-    <v-card-title>
+  <v-card class="mb-6 pa-4" elevation="5" min-width="300px" max-width="900">
+    <v-card-title class="d-flex pa-4">
       {{ $t("release.version", { number: release.version }) }}
       <span v-if="release.date" class="align-self-end">
-        <DateWithTooltip :date="release.date" />
+        <DateWithTooltip :date="release.date"></DateWithTooltip>
       </span>
-      <v-spacer />
+      <v-spacer></v-spacer>
       <span class="ps-6">
-        <template v-for="attr in releaseAttrs">
-          <v-tooltip bottom v-if="release[`is_${attr.name}`]">
-            <template #activator="{ on }">
+        <template v-for="attr in releaseAttrs" :key="attr.name">
+          <v-tooltip location="bottom" v-if="release[`is_${attr.name}`]">
+            <template #activator="{ props }">
               <v-chip
-                small
-                outlined
+                size="small"
+                variant="outlined"
                 class="ps-2 me-1"
                 :color="attr.color"
-                v-on="on"
+                v-bind="props"
               >
-                <v-icon class="pe-2 ps-0" small>{{ attr.icon }}</v-icon>
+                <v-icon class="pe-2 ps-0 me-1" size="small">{{
+                  attr.icon
+                }}</v-icon>
                 {{ $t(`release.${attr.name}`) }}
               </v-chip>
             </template>
@@ -28,16 +30,18 @@
         </template>
       </span>
     </v-card-title>
-    <v-card-text class="pb-0">
-      <p v-html="textHtml" class="markdown"></p>
+    <v-card-text class="pb-0 pl-10">
+      <p v-html="textHtml" class="markdown text-medium-emphasis"></p>
     </v-card-text>
     <v-card-actions>
-      <v-spacer />
+      <v-spacer></v-spacer>
       <v-btn
         :to="`/changelog#${versionToAnchor(release.version)}`"
         color="secondary"
-        v-text="$t('release.changelog')"
+        variant="flat"
+        elevation="1"
       >
+        {{ $t("release.changelog") }}
       </v-btn>
       <v-btn
         v-for="(link, i) in release.links"
@@ -45,8 +49,10 @@
         color="primary"
         :href="link.link"
         target="_blank"
-        v-text="getTheRightContent(link.title)"
+        variant="flat"
+        elevation="1"
       >
+        {{ getTheRightContent(link.title) }}
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -65,9 +71,9 @@ export default {
   data() {
     return {
       releaseAttrs: [
-        { name: "new_feature", color: "success", icon: "fa-plus" },
-        { name: "update", color: "info", icon: "fa-arrow-up" },
-        { name: "bug_fix", color: "warning", icon: "fa-bug" },
+        { name: "new_feature", color: "success", icon: "fa fa-plus" },
+        { name: "update", color: "info", icon: "fa fa-arrow-up" },
+        { name: "bug_fix", color: "warning", icon: "fa fa-bug" },
       ],
     };
   },

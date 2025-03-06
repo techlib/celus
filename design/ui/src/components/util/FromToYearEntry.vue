@@ -10,7 +10,7 @@ cs:
 <template>
   <div class="d-flex">
     <YearEntry
-      class="pr-4"
+      class="pr-2"
       v-model="startYear"
       :label="textStart"
       :disabled="disabled"
@@ -37,7 +37,7 @@ export default {
   components: { YearEntry },
 
   props: {
-    value: { required: true, type: Object },
+    modelValue: { required: true, type: Object, default: () => ({}) },
     startLabel: { required: false, type: String, default: null },
     endLabel: { required: false, type: String, default: null },
     disabled: { required: false, type: Boolean, default: false },
@@ -46,8 +46,8 @@ export default {
 
   data() {
     return {
-      startYear: this.value.start?.year ?? null,
-      endYear: this.value.end?.year ?? null,
+      startYear: this.modelValue.start?.year ?? null,
+      endYear: this.modelValue.end?.year ?? null,
     };
   },
 
@@ -56,7 +56,7 @@ export default {
       let year = new Date().getFullYear();
       let result = [...Array(this.yearsBack).keys()].map((i) => ({
         text: year - i,
-        value: year - i,
+        modelValue: year - i,
         disabled: this.endYear && this.endYear < year - i,
       }));
       return result;
@@ -65,7 +65,7 @@ export default {
       let year = new Date().getFullYear();
       let result = [...Array(this.yearsBack).keys()].map((i) => ({
         text: year - i,
-        value: year - i,
+        modelValue: year - i,
         disabled: this.startYear && this.startYear > year - i,
       }));
       return result;
@@ -79,6 +79,7 @@ export default {
     overlappingYears() {
       return this.startYear && this.endYear && this.startYear > this.endYear;
     },
+
     dateRange() {
       return {
         start: this.startYear ? `${this.startYear}-01` : null,
@@ -89,16 +90,10 @@ export default {
 
   watch: {
     startYear() {
-      this.$emit("input", this.dateRange);
+      this.$emit("update:modelValue", this.dateRange);
     },
     endYear() {
-      this.$emit("input", this.dateRange);
-    },
-    value() {
-      if (!isEqual(this.value, this.dateRange)) {
-        this.startYear = this.value.start?.year ?? null;
-        this.endYear = this.value.end?.year ?? null;
-      }
+      this.$emit("update:modelValue", this.dateRange);
     },
   },
 };

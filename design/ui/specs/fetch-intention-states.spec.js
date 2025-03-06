@@ -96,7 +96,7 @@ describe("test Fetch Intention states without credentials", () => {
     (intention, state) => {
       let output = intentionState(intention);
       expect(output).toBe(state);
-    }
+    },
   );
 });
 
@@ -121,6 +121,6 @@ describe("test Fetch Intention states with credentials", () => {
     (intention, credentials, state) => {
       let output = intentionState(intention, credentials);
       expect(output).toBe(state);
-    }
+    },
   );
 });

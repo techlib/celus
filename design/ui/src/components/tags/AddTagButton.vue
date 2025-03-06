@@ -3,22 +3,31 @@
 <template>
   <v-btn
     :color="color"
-    :small="small"
-    @click="showDialog = true"
+    :size="small ? 'small' : undefined"
+    @click.stop="showDialog = true"
     :icon="icon"
-    v-on="$listeners"
+    :density="comfortable ? 'comfortable' : 'default'"
+    :variant="variantOfButton"
+    :elevation="
+      variantOfButton === 'outlined' || variantOfButton === 'text' ? 0 : 2
+    "
     v-bind="$attrs"
   >
-    <v-icon small>fa fa-plus</v-icon>
+    <v-icon size="small">fa fa-plus</v-icon>
     <span v-if="!icon" class="pl-2">{{ $t("labels.new_tag") }}</span>
-    <v-dialog v-model="showDialog" max-width="720px">
+    <v-dialog
+      v-if="showDialog"
+      v-model="showDialog"
+      max-width="720"
+      :persistent="true"
+    >
       <EditTagWidget
         @saved="created"
         @close="showDialog = false"
         ref="widget"
         :fixed-tag-class="tagClass"
         :scope="scope"
-      />
+      ></EditTagWidget>
     </v-dialog>
   </v-btn>
 </template>
@@ -32,6 +41,10 @@ export default {
   components: { EditTagWidget },
 
   props: {
+    outlined: { type: Boolean, default: false },
+    text: { type: Boolean, default: false },
+    comfortable: { type: Boolean },
+    flat: { type: Boolean, default: false },
     small: { type: Boolean, default: false },
     color: { type: String, default: "" },
     tagClass: { type: Object, default: null },
@@ -49,6 +62,15 @@ export default {
     return {
       showDialog: false,
     };
+  },
+
+  computed: {
+    variantOfButton() {
+      if (this.text) return "text";
+      if (this.outlined) return "outlined";
+      if (this.flat) return "flat";
+      return "undefined";
+    },
   },
 
   methods: {
@@ -71,4 +93,7 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.button-border-color {
+}
+</style>

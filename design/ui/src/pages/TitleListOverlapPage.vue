@@ -1,4 +1,5 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   intro: |
@@ -35,7 +36,7 @@ cs:
     </v-row>
     <v-row>
       <v-col cols="auto" class="pe-0">
-        <v-icon color="warning" class="ps-1">fa-lightbulb</v-icon>
+        <v-icon color="warning" class="ps-1">fa fa-lightbulb</v-icon>
       </v-col>
       <v-col>
         <div v-html="$t('intro2')"></div>
@@ -43,7 +44,7 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <TitleOverlapBatchList />
+        <TitleOverlapBatchList></TitleOverlapBatchList>
       </v-col>
     </v-row>
   </v-container>

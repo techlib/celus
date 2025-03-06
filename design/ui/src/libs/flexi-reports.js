@@ -89,9 +89,9 @@ function dateRangeFromFilters(filters) {
 
 class FlexiReport {
   static accessLeveLToIcon = {
-    sys: "fa-globe",
-    org: "fa-university",
-    user: "fa-user",
+    sys: "fa fa-globe",
+    org: "fa fa-university",
+    user: "fa fa-user",
   };
 
   constructor() {
@@ -169,12 +169,12 @@ class FlexiReport {
     // when `allReportTypes` is given, it has to be a Map of id->reportType
     // report types first as we need them later on to remap dimensions
     let rtFilter = config.filters.find(
-      (item) => item.dimension === "report_type"
+      (item) => item.dimension === "report_type",
     );
     if (rtFilter) {
       for (let rtId of rtFilter.values) {
         this.reportTypes.push(
-          await this.resolveReportType(rtId, allReportTypes)
+          await this.resolveReportType(rtId, allReportTypes),
         );
       }
     }
@@ -216,7 +216,7 @@ class FlexiReport {
     this.trendMode = config.trend_mode ?? false;
     this.baseSubsetDateRange = dateRangeFromFilters(config.base_subset_filters);
     this.comparedSubsetDateRange = dateRangeFromFilters(
-      config.compared_subset_filters
+      config.compared_subset_filters,
     );
   }
 
@@ -239,7 +239,7 @@ class FlexiReport {
       if (this.reportTypes.length === 1) {
         return Dimension.fromObject(
           ref,
-          this.reportTypes[0].dimensions_sorted[idx]
+          this.reportTypes[0].dimensions_sorted[idx],
         );
       }
     }
@@ -353,14 +353,22 @@ class FlexiExport {
     this.filters = [];
     this.groupBy = [];
     this.orderBy = [];
+    this.includeZeroRows = false;
+    this.includeTotals = false;
     this.trendMode = false;
     this.baseSubsetDateRange = null;
     this.comparedSubsetDateRange = null;
+    this._tagDimension = new Dimension("tag");
+    this._tagDimension.shortName = "tag";
+    this._tagDimension.name = "labels.tag";
     this.outputFile = null;
     this.fileFormat = null;
+    this.splitBy = null;
     this.fileSize = 0;
     this.status = 0;
     this.errorInfo = {};
+    this.lastUpdated = null;
+    this.lastUpdatedBy = null;
   }
 
   static async fromAPIObject(data, allReportTypes = null) {
@@ -371,7 +379,11 @@ class FlexiExport {
     flexiExport.fileSize = data.file_size;
     flexiExport.fileFormat = this.formatToText[data.file_format];
     flexiExport.status = data.status;
+    flexiExport.lastUpdated = data.last_updated;
+    flexiExport.lastUpdatedBy = data.last_updated_by;
     flexiExport.errorInfo = data.error_info;
+    flexiExport.includeZeroRows = data.export_params.zero_rows ?? false;
+    flexiExport.includeTotals = data.export_params.row_totals ?? false;
     flexiExport.name = data.name;
     await flexiExport.readConfig(data.export_params, allReportTypes);
     return flexiExport;
@@ -385,26 +397,34 @@ class FlexiExport {
     // when `allReportTypes` is given, it has to be a Map of id->reportType
     // report types first as we need them later on to remap dimensions
     let rtFilter = config.filters.find(
-      (item) => item.dimension === "report_type"
+      (item) => item.dimension === "report_type",
     );
     if (rtFilter) {
       for (let rtId of rtFilter.values) {
         this.reportTypes.push(
-          await this.resolveReportType(rtId, allReportTypes)
+          await this.resolveReportType(rtId, allReportTypes),
         );
       }
     }
     // primary dimension
     this.primaryDimension = this.resolveDim(config.primary_dimension);
-    // filters
     this.filters = config.filters
       .filter((item) => item.dimension !== "report_type")
       .map((item) => {
-        return {
-          values: item.values,
+        let res = {
           dimension: this.resolveDim(item.dimension),
         };
+        if (item.values) res["values"] = item.values;
+        if (item.start) res["start"] = item.start;
+        if (item.end) res["end"] = item.end;
+        if (item.tag_ids) res["tag_ids"] = item.tag_ids;
+        if (item.tag_class_ids) res["tag_class_ids"] = item.tag_class_ids;
+        return res;
       });
+    this.splitBy =
+      config.split_by && config.split_by.length
+        ? this.resolveDim(config.split_by[0])
+        : null;
     // group by
     this.groupBy = config.group_by.map((item) => this.resolveDim(item));
     // order by
@@ -413,7 +433,7 @@ class FlexiExport {
     this.trendMode = config.trend_mode;
     this.baseSubsetDateRange = dateRangeFromFilters(config.base_subset_filters);
     this.comparedSubsetDateRange = dateRangeFromFilters(
-      config.compared_subset_filters
+      config.compared_subset_filters,
     );
   }
 
@@ -436,7 +456,7 @@ class FlexiExport {
       if (this.reportTypes.length === 1) {
         return Dimension.fromObject(
           ref,
-          this.reportTypes[0].dimensions_sorted[idx]
+          this.reportTypes[0].dimensions_sorted[idx],
         );
       }
     }

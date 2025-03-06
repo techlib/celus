@@ -10,17 +10,18 @@ cs:
 
 <template>
   <span>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
+    <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
         <v-btn
-          @click="showDialog = true"
-          v-on="on"
-          :text="text"
-          :small="small"
+          @click.stop="showDialog = true"
+          v-bind="props"
+          :variant="text ? 'text' : 'flat'"
+          :size="small ? 'small' : 'default'"
           :color="color"
+          :elevation="text ? 0 : 2"
         >
           <slot>
-            <v-icon small class="mr-2">fas fa-plus</v-icon>
+            <v-icon size="small" class="mr-2">fas fa-plus</v-icon>
             {{ $t("add") }}
           </slot>
         </v-btn>
@@ -33,10 +34,11 @@ cs:
         @close="cancelEdit()"
         @saved="platformSaved"
         key="add"
-      />
+      ></PlatformEditDialog>
     </v-dialog>
   </span>
 </template>
+
 <script>
 import PlatformEditDialog from "./PlatformEditDialog";
 
@@ -45,7 +47,7 @@ export default {
   components: { PlatformEditDialog },
   props: {
     dialogMaxWidth: { type: String, default: "1240px" },
-    text: { type: Boolean, default: false },
+    text: { type: Boolean },
     small: { type: Boolean, default: false },
     color: { type: String, default: "" },
   },

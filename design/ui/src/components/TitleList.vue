@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/pub-types.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   columns:
@@ -24,64 +26,96 @@ cs:
 <template>
   <v-card>
     <v-card-title>
-      <v-row>
+      <v-row fluid>
         <v-col cols="auto">
-          <v-select
-            :label="$t('pub_type_filter')"
-            :items="pubTypes"
-            v-model="selectedPubType"
-          >
-            <template v-slot:item="{ item }">
-              <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
-              {{ item.text }}
-            </template>
-            <template v-slot:selection="{ item }">
-              <v-icon small v-text="item.icon + ' fa-fw'" class="mr-2"></v-icon>
-              {{ item.text }}
-            </template>
-          </v-select>
+          <v-sheet>
+            <v-select
+              :label="$t('pub_type_filter')"
+              :items="pubTypes"
+              v-model="selectedPubType"
+              :search="selectedTags"
+              style="min-width: 245px"
+              density="comfortable"
+            >
+              <template v-slot:item="{ item, props }">
+                <v-list-item v-bind="props">
+                  <template v-slot:prepend>
+                    <v-icon size="x-small" class="mr-0"
+                      >{{ item.raw.icon }} "fa-fw"</v-icon
+                    >
+                  </template>
+                </v-list-item>
+              </template>
+              <template v-slot:selection="{ item }">
+                <v-icon size="small" class="mr-2"
+                  >{{ item.raw.icon }} "fa-fw"</v-icon
+                >
+                {{ item.raw.title }}
+              </template>
+            </v-select>
+          </v-sheet>
         </v-col>
         <v-col cols="auto">
-          <TagSelector
-            v-model="selectedTags"
-            scope="title"
-            dont-check-exclusive
-          />
+          <v-sheet>
+            <TagSelector
+              v-model="selectedTags"
+              scope="title"
+              dont-check-exclusive
+              density="comfortable"
+              color="primary"
+              min-width="200px"
+            ></TagSelector>
+          </v-sheet>
         </v-col>
-        <v-col cols="auto">
-          <v-switch v-model="showDOI" :label="$t('show_doi')"></v-switch>
+        <v-col>
+          <v-sheet>
+            <v-switch
+              style="min-width: 115px"
+              v-model="showDOI"
+              hide-details="auto"
+              color="primary"
+              density="comfortable"
+              :label="$t('show_doi')"
+            ></v-switch>
+          </v-sheet>
         </v-col>
-
         <v-spacer></v-spacer>
-        <v-col cols="auto">
-          <v-text-field
-            v-model="searchDebounced"
-            append-icon="fa-search"
-            :label="$t('labels.search')"
-            single-line
-            hide-details
-            clearable
-            clear-icon="fa-times"
-          ></v-text-field>
+        <v-col>
+          <v-sheet>
+            <v-text-field
+              style="min-width: 200px"
+              v-model="searchDebounced"
+              append-inner-icon="fa fa-search"
+              :label="$t('labels.search')"
+              single-line
+              hide-details
+              clearable
+              density="comfortable"
+              clear-icon="fa fa-times"
+            ></v-text-field>
+          </v-sheet>
         </v-col>
       </v-row>
     </v-card-title>
-    <v-skeleton-loader v-if="loading && titles.length === 0" type="table" />
-    <v-data-table
+    <v-skeleton-loader
+      v-if="loading && titles.length === 0"
+      type="table"
+    ></v-skeleton-loader>
+    <v-data-table-server
       v-else
-      :items="filteredTitles"
-      :loading="loading"
+      v-model:items-per-page="itemsPerPage"
       :headers="headers"
-      :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
-      :server-items-length="totalTitleCount"
+      :items="filteredTitles"
+      :items-length="totalTitleCount"
+      :loading="loading"
       :must-sort="true"
-      :items-per-page.sync="itemsPerPage"
-      :sort-by.sync="orderBy"
-      :page.sync="page"
-      :sort-desc.sync="orderDesc"
+      v-model:sort-by="orderBy"
+      v-model:page="page"
       :no-data-text="emptyDataText"
+      class="auto-table"
+      variant="comfortable"
     >
-      <template v-slot:item.name="{ item }">
+      <template v-slot:[`item.name`]="{ item }">
         <router-link
           v-if="platformId"
           :to="{
@@ -89,7 +123,7 @@ cs:
             params: { platformId: platformId, titleId: item.pk },
           }"
         >
-          <ShortenText :text="item.name" :length="50" />
+          <ShortenText :text="item.name" :length="50"></ShortenText>
         </router-link>
         <router-link
           v-else
@@ -98,32 +132,33 @@ cs:
             params: { platformId: null, titleId: item.pk },
           }"
         >
-          <ShortenText :text="item.name" />
+          <ShortenText :text="item.name"></ShortenText>
         </router-link>
       </template>
-      <template v-slot:item.pub_type="{ item }">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-icon small v-on="on">{{ iconForPubType(item.pub_type) }}</v-icon>
+      <template v-slot:[`item.pub_type`]="{ item }">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-icon size="small" v-bind="props" color="lighterIcons">{{
+              iconForPubType(item.pub_type)
+            }}</v-icon>
           </template>
-
           <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
         </v-tooltip>
       </template>
       <template
         v-for="ig in activeInterestGroups"
+        :key="ig.pk"
         v-slot:[slotName(ig)]="{ item }"
       >
         <span
           v-if="item.interests.loading"
           class="fas fa-spinner fa-spin subdued"
-          :key="ig.pk"
         ></span>
-        <span v-else :key="ig.pk">
+        <span v-else>
           {{ formatInteger(item.interests[ig.short_name]) }}
         </span>
       </template>
-      <template v-slot:item.ratios="{ item }">
+      <template v-slot:[`item.ratios`]="{ item }">
         <SimplePie
           size="32"
           :parts="
@@ -131,19 +166,19 @@ cs:
               return { size: item, color: color(index) };
             })
           "
-        />
+        ></SimplePie>
       </template>
-      <template v-slot:item.platforms="{ item }">
+      <template v-slot:[`item.platforms`]="{ item }">
         <v-tooltip
           v-for="([platform_id, interest], index) of Object.entries(
-            item.interests
+            item.interests,
           )"
           :key="index"
-          bottom
+          location="bottom"
           max-width="600px"
         >
-          <template #activator="{ on }">
-            <div v-on="on">
+          <template #activator="{ props }">
+            <div v-bind="props">
               <span :style="{ color: color(index) }">{{
                 translatePlatformId(platform_id)
               }}</span>
@@ -170,15 +205,15 @@ cs:
           </div>
         </v-tooltip>
       </template>
-
-      <template #item.tags="{ item }">
+      <template #[`item.tags`]="{ props, item }">
         <TagChip
+          v-bind="props"
           v-for="tag in objIdToTags.get(item.pk)"
           :key="tag.pk"
           :tag="tag"
-          small
+          size="small"
           show-class
-        />
+        ></TagChip>
       </template>
 
       <template #no-data v-if="!filtersApplied && !noDataText">
@@ -188,7 +223,7 @@ cs:
           @goto-sushi="$emit('goto-sushi')"
         />
       </template>
-    </v-data-table>
+    </v-data-table-server>
   </v-card>
 </template>
 
@@ -241,8 +276,12 @@ export default {
       cancelTokenSource: null,
       platforms: {},
       // table state
-      orderBy: this.orderInterest ? this.orderInterest : "name",
-      orderDesc: !!this.orderInterest,
+      orderBy: [
+        {
+          key: this.orderInterest ? this.orderInterest : "name",
+          order: !this.orderInterest ? "asc" : "desc",
+        },
+      ],
       page: 1,
       itemsPerPage: 25,
       // state tracking support
@@ -262,7 +301,7 @@ export default {
         },
         {
           name: "orderBy",
-          type: String,
+          type: Object,
         },
         {
           name: "orderDesc",
@@ -299,77 +338,86 @@ export default {
     headers() {
       let base = [
         {
-          text: this.$i18n.t("title_fields.name"),
+          title: this.$i18n.t("title_fields.name"),
           value: "name",
+          key: "name",
           // class: "auto-width",
           // cellClass: "auto-width",
         },
         {
-          text: this.$i18n.t("title_fields.type"),
+          title: this.$i18n.t("title_fields.type"),
           value: "pub_type",
+          key: "pub_type",
           // class: "auto-width",
           // cellClass: "auto-width",
         },
         {
-          text: this.$i18n.t("title_fields.isbn"),
+          title: this.$i18n.t("title_fields.isbn"),
           value: "isbn",
+          key: "isbn",
           // class: "auto-width",
           // cellClass: "auto-width",
         },
         {
-          text: this.$i18n.t("title_fields.issn"),
+          title: this.$i18n.t("title_fields.issn"),
           value: "issn",
+          key: "issn",
           // class: "auto-width",
           // cellClass: "auto-width",
         },
         {
-          text: this.$i18n.t("title_fields.eissn"),
+          title: this.$i18n.t("title_fields.eissn"),
           value: "eissn",
+          key: "eissn",
           // class: "auto-width",
           // cellClass: "auto-width",
         },
       ];
       if (this.showDOI) {
         base.push({
-          text: this.$i18n.t("title_fields.doi"),
+          title: this.$i18n.t("title_fields.doi"),
           value: "doi",
+          key: "doi",
           // class: "auto-width",
           // cellClass: "auto-width",
         });
       }
       if (this.titlesOnMultiplePlatforms) {
         base.push({
-          text: this.$i18n.t("title_fields.ratios"),
+          title: this.$i18n.t("title_fields.ratios"),
           value: "ratios",
           sortable: false,
           // class: "auto-width",
           // cellClass: "auto-width",
         });
         base.push({
-          text: this.$i18n.t("title_fields.platforms"),
+          title: this.$i18n.t("title_fields.platforms"),
           value: "platforms",
           sortable: false,
         });
         base.push({
-          text: this.$i18n.t("title_fields.platform_count"),
+          title: this.$i18n.t("title_fields.platform_count"),
           value: "platform_count",
+          key: "platform_count",
         });
         base.push({
-          text: this.$i18n.t("title_fields.total_interest"),
+          title: this.$i18n.t("title_fields.total_interest"),
           value: "total_interest",
-          align: "right",
+          align: "end",
+          key: "total_interest",
         });
       } else {
         for (let ig of this.activeInterestGroups) {
           base.push({
-            text: ig.name,
+            title: ig.name,
             value: "interests." + ig.short_name,
             class: "wrap text-xs-right",
-            align: "right",
+            align: "end",
+            key: "interests." + ig.short_name,
           });
         }
         base.push({
-          text: this.$t("labels.tags"),
+          title: this.$t("labels.tags"),
           value: "tags",
           sortable: false,
         });
@@ -381,7 +429,8 @@ export default {
     },
     fullUrl() {
       if (this.url) {
-        let sortBy = this.orderBy;
+        let sortBy = this.orderBy[0].key;
+        let orderBy = this.orderBy[0].order;
         if (sortBy) {
           if (sortBy.startsWith("interests.")) {
             sortBy = sortBy.replace("interests.", "");
@@ -394,7 +443,7 @@ export default {
         return (
           this.url +
           `&page_size=${this.itemsPerPage}&order_by=${sortBy}&desc=${
-            this.orderDesc
+            orderBy === "desc" ? true : false
           }&page=${this.page}&q=${this.search ?? ""}&pub_type=${
             this.selectedPubType || ""
           }${tags}`
@@ -404,15 +453,15 @@ export default {
     },
     pubTypes() {
       let all = {
-        text: this.$t("pub_type.all"),
+        title: this.$t("pub_type.all"),
         value: null,
-        icon: "fa-expand",
+        icon: "fas fa-expand",
       };
       return [
         all,
         ...pubTypes.map((item) => {
           return {
-            text: this.$t(item.title),
+            title: this.$t(item.title),
             icon: item.icon,
             value: item.code,
           };
@@ -469,11 +518,28 @@ export default {
         if (this.titles.length) {
           await this.getTagsForObjectsById(
             "title",
-            this.titles.map((item) => item.pk)
+            this.titles.map((item) => item.pk),
           );
         }
         this.loading = false;
       }
+    },
+    extractPubTypes(i18n) {
+      let all = {
+        title: i18n.t("pub_type.all"),
+        value: null,
+        icon: "fas fa-expand",
+      };
+      return [
+        all,
+        ...pubTypes.map((item) => {
+          return {
+            title: i18n.t(item.title),
+            icon: item.icon,
+            value: item.code,
+          };
+        }),
+      ];
     },
     async loadPlatforms() {
       const reply = await this.http({
@@ -542,6 +608,7 @@ span.interest {
   color: #555555;
   font-size: 85%;
 }
+
 span.yops {
   font-weight: 300;
   color: #777777;

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   desc1: |
@@ -43,7 +44,7 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <TaggingBatchList />
+        <TaggingBatchList></TaggingBatchList>
       </v-col>
     </v-row>
   </v-container>
@@ -57,4 +58,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+p {
+  margin-bottom: 16px;
+}
+</style>

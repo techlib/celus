@@ -1,5 +1,7 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
-<i18n lang="yaml" src="@/locales/errors.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/errors.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   detail: Detail
@@ -36,31 +38,40 @@ cs:
   <div ref="base" v-resize="updateSize">
     <div v-if="loadingParts">
       <v-progress-linear indeterminate :height="24" class="mb-4">
-        <span class="text-caption" v-text="$t('loading_parts')"></span>
+        <span class="text-caption">{{ $t("loading_parts") }}</span>
       </v-progress-linear>
     </div>
-
     <div
       v-else-if="
         dataToShow.length ||
         (loading && !errorCode) ||
-        (report && report.splitBy && splitParts.length && currentPart)
+        (report &&
+          report.splitBy &&
+          splitParts.length &&
+          currentPart &&
+          formattedData.length !== 0)
       "
     >
       <!-- part selector -->
       <div class="d-flex py-4 justify-space-between">
         <div v-if="report.splitBy && splitParts.length">
           <v-slide-group v-if="partsSideBySide" v-model="currentPart">
-            <v-slide-item
+            <v-slide-group-item
               v-for="item in splitParts"
               :key="item.id"
-              v-slot="{ active, toggle }"
+              v-slot="{ isSelected, toggle }"
               :value="item.id"
             >
-              <v-btn @click="toggle" :input-value="active" text outlined tile
-                >{{ item.text }}
+              <v-btn
+                @click="toggle"
+                :value="isSelected"
+                variant="outlined"
+                class="years_report"
+                tile
+                :class="[isSelected ? 'active-button' : '']"
+                >{{ item.title }}
               </v-btn>
-            </v-slide-item>
+            </v-slide-group-item>
           </v-slide-group>
           <!-- if there are too many parts, use a select -->
           <v-autocomplete
@@ -69,10 +80,11 @@ cs:
             v-model="currentPart"
             :label="$tc('available_parts', splitParts.length)"
             item-value="id"
-            outlined
-            dense
-          />
-          <v-alert v-if="partsCropped" type="warning" outlined>
+            variant="outlined"
+            density="compact"
+            width="250px"
+          ></v-autocomplete>
+          <v-alert v-if="partsCropped" type="warning" variant="outlined">
             {{
               $t("parts_cropped", {
                 count: formatInteger(totalParts),
@@ -82,30 +94,28 @@ cs:
           </v-alert>
         </div>
         <div v-else></div>
-
         <div class="ps-4">
-          <v-btn-toggle v-model="view" dense>
+          <v-btn-toggle v-model="view" density="compact" variant="outlined">
             <v-btn value="table">
-              <v-icon small>fa-table</v-icon>
+              <v-icon size="small">fa fa-table</v-icon>
             </v-btn>
             <v-btn value="chart">
-              <v-icon small>fa-chart-bar</v-icon>
+              <v-icon size="small">fas fa-chart-bar</v-icon>
             </v-btn>
           </v-btn-toggle>
         </div>
       </div>
-
       <v-data-table
         v-if="view === 'table'"
         :items="formattedData"
         :headers="tableHeaders"
         item-key="pk"
         :loading="loading"
-        dense
         :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
-        :options.sync="options"
+        :options="options"
         :server-items-length="totalRowCount"
         :fixed-header="popped"
+        :sort-by="[{ key: '_total', order: 'desc' }]"
         :height="popped ? 'calc(100vh - 72px)' : null"
         :style="
           popped
@@ -114,46 +124,47 @@ cs:
                 top: '8px',
                 left: '8px',
                 width: 'calc(100vw - 16px)',
-                zIndex: 1000,
+                'padding-right': '10px',
+                zIndex: 1007,
                 boxShadow: '0 0 0 20px rgba(0, 0, 0, 0.7)',
               }
             : {}
         "
       >
         <template #loading>
-          <v-skeleton-loader type="paragraph@10" loading class="py-10 px-5" />
+          <v-skeleton-loader
+            type="paragraph@10"
+            loading
+            class="py-10 px-5"
+          ></v-skeleton-loader>
         </template>
-
-        <template #item.tag="{ item }">
-          <TagChip :tag="item.tag" show-class small v-if="item.pk" />
+        <template #[`item.tag`]="{ item }">
+          <TagChip :tag="item.tag" show-class small v-if="item.pk"></TagChip>
           <span v-else class="text--secondary">{{ item.tag }}</span>
         </template>
-
-        <template #item.assignedTags="{ item }">
+        <template #[`item.assignedTags`]="{ item }">
           <TagChip
             v-for="tag in objIdToTags.get(item.pk)"
             :key="tag.pk"
             :tag="tag"
             small
             show-class
-          />
+          ></TagChip>
         </template>
-
-        <template #item.reldiff="{ item }">
+        <template #[`item.reldiff`]="{ item }">
           <span>
             {{ formatPercentage(item.reldiff) }}
-            <TrendArrow :diff="item.reldiff" />
+            <TrendArrow :diff="item.reldiff"></TrendArrow>
           </span>
         </template>
-
         <template
-          #body.append="{ headers }"
+          v-slot:[`body.append`]="{ columns }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
         >
           <tr>
             <td
-              v-for="header in headers"
-              :key="header.text"
+              v-for="header in columns"
+              :key="header.title"
               style="background-color: #e7e7e7"
               :class="header.value === 'tag' ? 'text--secondary' : 'text-end'"
             >
@@ -161,7 +172,7 @@ cs:
                 {{ $t("remainder") }}
               </span>
               <span v-else-if="loadingRemainder">
-                <v-icon small>fas fa-spinner fa-spin</v-icon>
+                <v-icon size="small">fas fa-spinner fa-spin</v-icon>
               </span>
               <span v-else-if="remainder">
                 {{
@@ -172,41 +183,39 @@ cs:
                 <TrendArrow
                   v-if="header.value === 'reldiff'"
                   :diff="remainder.reldiff"
-                />
+                ></TrendArrow>
               </span>
             </td>
           </tr>
         </template>
-
-        <template #footer.prepend>
+        <template #[`footer.prepend`]="">
           <v-btn
             @click="togglePopOut"
-            text
-            small
+            variant="text"
+            size="small"
             color="secondary"
             id="popOutButton"
+            class="expand_full_button"
           >
-            <v-icon small class="pr-2">{{
-              popped ? "fa-times" : "fa-external-link-alt"
+            <v-icon size="small" class="pr-2">{{
+              popped ? "fa fa-times" : "fas fa-external-link-alt"
             }}</v-icon>
             {{ popped ? $t("close") : $t("pop_out") }}
           </v-btn>
         </template>
       </v-data-table>
-
       <ReportingChart
         v-else
         :data="dataWithRemainder"
         :primary-dimension="row"
-        :secondary-dimension="report.groupBy[0].ref"
+        :secondary-dimension="report.groupBy[0]?.ref"
         :series="chartSeries"
         :type="row.startsWith('date') ? 'histogram' : 'bar'"
         :height="
           (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
         "
-      />
+      ></ReportingChart>
     </div>
-
     <div v-else-if="errorCode">
       <v-card>
         <v-card-title>
@@ -226,12 +235,12 @@ cs:
         </v-card-text>
       </v-card>
     </div>
-
     <div v-else-if="report">
-      <v-alert type="info" outlined>{{ $t("no_data") }}</v-alert>
+      <v-alert type="info" variant="outlined">{{ $t("no_data") }}</v-alert>
     </div>
   </div>
 </template>
+
 <script>
 import axios from "axios";
 import { splitGroup } from "@/libs/group-ids";
@@ -247,6 +256,7 @@ import ReportingChart from "@/components/reporting/ReportingChart";
 import tags from "@/mixins/tags";
 import TrendArrow from "@/components/reporting/TrendArrow.vue";
 import { smartMonthRange } from "@/libs/dates";
+import { useGoTo } from "vuetify";
 
 export default {
   name: "FlexiTableOutput",
@@ -259,6 +269,11 @@ export default {
     // if the organization and selected dates should be used from the UI,
     // and not from the report, set this to true
     contextOverride: { default: false, type: Boolean },
+  },
+
+  setup() {
+    const goTo = useGoTo();
+    return { goTo };
   },
 
   data() {
@@ -324,20 +339,20 @@ export default {
       if (this.report.trendMode) {
         const baseHeader = smartMonthRange(this.report.baseSubsetDateRange);
         const comparedHeader = smartMonthRange(
-          this.report.comparedSubsetDateRange
+          this.report.comparedSubsetDateRange,
         );
         return [
-          { text: baseHeader, value: "base", align: "right" },
+          { title: baseHeader, value: "base", align: "end" },
           {
-            text: comparedHeader,
+            title: comparedHeader,
             value: "compared",
-            align: "right",
+            align: "end",
           },
-          { text: this.$t("change"), value: "diff", align: "right" },
+          { title: this.$t("change"), value: "diff", align: "end" },
           {
-            text: this.$t("change_percent"),
+            title: this.$t("change_percent"),
             value: "reldiff",
-            align: "right",
+            align: "end",
             type: "float",
           },
         ];
@@ -352,28 +367,56 @@ export default {
           !this.report.trendMode
         ) {
           headers.push({
-            text: this.$t("row_total"),
+            title: this.$t("row_total"),
             value: "_total",
             sortable: true,
-            align: "right",
+            align: "end",
+            sortRaw(a, b) {
+              if (
+                Number(a._total.replace(/\s/g, "")) <
+                Number(b._total.replace(/\s/g, ""))
+              )
+                return -1;
+              if (
+                Number(a._total.replace(/\s/g, "")) >
+                Number(b._total.replace(/\s/g, ""))
+              )
+                return 1;
+            },
           });
         }
         this.headersFromData.forEach((item) =>
           headers.push({
             ...item,
             sortable: !this.readonly,
-            class: "data-col",
-            cellClass: "data-col",
-          })
+            headerProps: {
+              class: "data-col",
+            },
+            cellProps: {
+              class: "data-col",
+            },
+            sortRaw(a, b) {
+              if (
+                Number(a[item.value].replace(/\s/g, "")) <
+                Number(b[item.value].replace(/\s/g, ""))
+              )
+                return -1;
+              if (
+                Number(a[item.value].replace(/\s/g, "")) >
+                Number(b[item.value].replace(/\s/g, ""))
+              )
+                return 1;
+            },
+          }),
         );
         let titleHeaders = this.activeTitleColumns.map((key) => ({
-          text: this.$t("title_fields." + key),
+          title: this.$t("title_fields." + key),
           value: "target__" + key,
         }));
         let tagHeaders = this.taggableRow
           ? [
               {
-                text: this.$t("labels.tags"),
+                title: this.$t("labels.tags"),
                 value: "assignedTags",
                 sortable: this.report.tagRollUp,
               },
@@ -381,7 +424,7 @@ export default {
           : [];
         let ret = [
           {
-            text: this.report.effectivePrimaryDimension.getName(this.$i18n),
+            title: this.report.effectivePrimaryDimension.getName(this.$i18n),
             value: this.report.effectivePrimaryDimension.ref,
             sortable: !this.readonly,
           },
@@ -403,7 +446,7 @@ export default {
       return "/api/flexible-slicer/";
     },
     orderByParam() {
-      let prefix = this.options.sortDesc && this.options.sortDesc[0] ? "-" : "";
+      let prefix = this.options.sortBy && this.options.sortBy[0] ? "-" : "";
       if (this.options.sortBy && this.options.sortBy.length) {
         return { order_by: prefix + this.options.sortBy[0] };
       }
@@ -419,17 +462,19 @@ export default {
       let headers = this.headersFromData;
       if (this.report.trendMode) {
         headers = headers.filter(
-          (item) => item.value !== "diff" && item.value !== "reldiff"
+          (item) => item.value !== "diff" && item.value !== "reldiff",
         );
       }
-      return Object.fromEntries(headers.map((item) => [item.value, item.text]));
+      return Object.fromEntries(
+        headers.map((item) => [item.value, item.title]),
+      );
     },
     formattedData() {
       return this.dataToShow.map((item) => {
         let newItem = { ...item };
         for (let key of Object.keys(newItem)) {
           const header = this.tableHeaders.find((item) => item.value === key);
-          if (header?.align === "right" && header?.type !== "float") {
+          if (header?.align === "end" && header?.type !== "float") {
             newItem[key] = formatInteger(newItem[key]);
           }
         }
@@ -451,10 +496,10 @@ export default {
     partsSideBySide() {
       if (this.baseWidth && this.splitParts.length) {
         const textWidth = this.splitParts.reduce(
-          (acc, item) => acc + item.text.length,
-          0
+          (acc, item) => acc + item.title.length,
+          0,
         );
-        return this.baseWidth / textWidth > 12;
+        return this.baseWidth / textWidth > 14;
       }
       return false;
     },
@@ -519,23 +564,41 @@ export default {
       if (resp.response) {
         this.totalParts = resp.response.data.count;
         let splitParts = resp.response.data.values.map(
-          (item) => item[this.report.splitBy.ref]
+          (item) => item[this.report.splitBy.ref],
         );
         const translator = this.getTranslator(this.report.splitBy);
         if (translator) {
           await translator.prepareTranslation(splitParts);
-          this.splitParts = splitParts.map((item) => {
-            return {
-              id: item,
-              text: translator.translateKeyToString(item, this.$i18n.locale),
-            };
-          });
+          this.splitParts = splitParts
+            .map((item) => {
+              return {
+                id: item,
+                title: translator.translateKeyToString(item, this.$i18n.locale),
+              };
+            })
+            .sort((a, b) => {
+              if (a.id === null) {
+                a.title = this.$t("labels.empty_value");
+              }
+              if (b.id === null) {
+                b.title = this.$t("labels.empty_value");
+              }
+              return a.title.localeCompare(b.title);
+            });
         } else {
           this.splitParts = splitParts.map((item) => {
-            return { id: item, text: item.toString() };
+            return { id: item, title: item.toString() };
           });
         }
-        this.splitParts.sort((a, b) => a.text.localeCompare(b.text));
+        this.splitParts.sort((a, b) => {
+          if (a.id === null) {
+            a.title = this.$t("labels.empty_value");
+          }
+          if (b.id === null) {
+            b.title = this.$t("labels.empty_value");
+          }
+          return a.title.localeCompare(b.title);
+        });
         if (
           this.splitParts.length &&
           (!this.currentPart ||
@@ -554,7 +617,7 @@ export default {
       this.remainder = null;
       // prepare the request params
       let filterOverride = null;
-      if (this.contextOverride) {
+      if (this.contextOverride && !this.report.trendMode) {
         filterOverride = {
           date: { start: this.dateRangeStart, end: this.dateRangeEnd },
         };
@@ -635,7 +698,7 @@ export default {
         this.cleanTagCache(); // clear the cache because taggings may have changed
         await this.getTagsForObjectsById(
           this.rowToTagScope[this.row],
-          this.data.map((item) => item.pk)
+          this.data.map((item) => item.pk),
         );
       }
       this.recomputeData();
@@ -693,13 +756,13 @@ export default {
             // to display the tag chip
             newItem[this.row] =
               this.translators[this.row].translateKey(
-                newItem.pk ?? newItem[this.row]
+                newItem.pk ?? newItem[this.row],
               ) ?? null;
           } else {
             newItem[this.row] =
               this.translators[this.row].translateKeyToString(
                 newItem.pk ?? newItem[this.row],
-                this.$i18n.locale
+                this.$i18n.locale,
               ) ?? this.$t("blank_value");
             if (this.row === "target") {
               // extra data for titles
@@ -720,7 +783,7 @@ export default {
       let extractedHeaders = [];
       if (this.data.length > 0) {
         for (let key of Object.keys(this.data[0]).filter(
-          (item) => item.substr(0, 4) === "grp-"
+          (item) => item.substr(0, 4) === "grp-",
         )) {
           let pks = splitGroup(key);
           let texts = [];
@@ -730,8 +793,8 @@ export default {
               texts.push(
                 this.translators[group.ref].translateKeyToString(
                   pks[i],
-                  this.$i18n.locale
-                ) ?? "-"
+                  this.$i18n.locale,
+                ) ?? "-",
               );
             } else {
               texts.push(pks[i]);
@@ -739,11 +802,11 @@ export default {
             i++;
           }
           let text = texts.join(" / ");
-          extractedHeaders.push({ text: text, value: key, align: "right" });
+          extractedHeaders.push({ title: text, value: key, align: "end" });
         }
       }
       this.extractedHeaders = extractedHeaders.sort((a, b) =>
-        a.text.localeCompare(b.text)
+        a.title.localeCompare(b.title),
       );
     },
     showError(code, details) {
@@ -752,7 +815,7 @@ export default {
     },
     setOrdering(report) {
       let ob = djangoToDataTableOrderBy(report.orderBy);
-      this.options.sortBy = ob.sortBy;
+      this.options.sortBy = [{ key: "_total", type: "desc" }];
       this.options.sortDesc = ob.sortDesc;
     },
     updateSize() {
@@ -776,13 +839,22 @@ export default {
           // this returns the user to where he popped out from which seems
           // to be the most intuitive - by default he would end up on top
           // of the page which is confusing
-          this.$vuetify.goTo("#popOutButton", { duration: 0 })
+          this.goTo("#popOutButton", { duration: 0 }),
         );
       }
     },
   },
 
   watch: {
+    showRowTotals(newVal) {
+      if (this.report) {
+        if (newVal) {
+          this.report.includeTotals = true;
+        } else {
+          this.report.includeTotals = false;
+        }
+      }
+    },
     options: {
       deep: true,
       handler(oldVal, newVal) {
@@ -813,12 +885,30 @@ export default {
 };
 </script>
 
-<style lang="scss">
-.data-col {
+<style lang="scss" scoped>
+:deep(.data-col) {
   background-color: #f5f5f5;
+  color: rgba(0, 0, 0, 0.6);
 }
 
-tr:hover td.data-col {
+:deep(tr:hover td.data-col) {
   background-color: #e0e0e0;
+}
+
+:deep(.v-data-table__tr) {
+  height: 32px;
+}
+
+.expand_full_button {
+  margin-right: auto;
+}
+
+.years_report {
+  border: 1px solid #00000020;
+}
+
+.active-button {
+  background-color: #00000020;
+  border: 1px solid #2b2b2b10;
 }
 </style>

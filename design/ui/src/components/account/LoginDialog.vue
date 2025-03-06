@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -11,7 +11,7 @@ en:
   new_password: Choose a password
   password2: Repeat password
   login_error: There was an error logging you in
-  how_to_gain_access: To gain or renew access to this CELUS installation, let us know at <a href="mailto:ask@celus.net">ask@celus.net</a>
+  how_to_gain_access: "To gain or renew access to this CELUS installation, let us know at <a href='mailto:ask{'@'}celus.net'>ask{'@'}celus.net</a>"
   signup: "Don't have an account yet? {register_here}"
   register: Register here!
   just_registering: Register
@@ -43,7 +43,7 @@ cs:
   new_password: Zvolte si heslo
   password2: Potvrzení hesla
   login_error: Při přihlášování došlo k chybě
-  how_to_gain_access: Pokud chcete získat nebo obnovit přístup k tomuto systému, napište nám na <a href="mailto:ask@celus.net">ask@celus.net</a>
+  # how_to_gain_access: Pokud chcete získat nebo obnovit přístup k tomuto systému, napište nám na <a href="mailto:ask@celus.net">ask@celus.net</a>
   signup: "Ještě nemáte účet? {register_here}"
   register: Zaregistrujte se!
   just_registering: Registrace
@@ -82,16 +82,25 @@ cs:
         <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
         <v-card-text>
           <div>{{ $t("not_logged_in_internal_text") }}</div>
-
-          <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
+          <v-alert
+            v-if="allowSignUp"
+            color="primary"
+            variant="outlined"
+            class="mt-3"
+          >
             <v-icon class="pr-3">far fa-hand-point-right</v-icon>
-            <i18n path="signup" tag="span" class="text--secondary">
+            <i18n-t keypath="signup" tag="span" class="text--secondary">
               <template #register_here>
                 <a @click="currentTab = 'register'" v-text="$t('register')"></a>
               </template>
-            </i18n>
+            </i18n-t>
+            <!-- <span class="text--secundary">
+              {{ $t("signup.register_here") }}
+              <a href="#" @click="currentTab = 'register'">{{
+                $t("register")
+              }}</a>
+            </span> -->
           </v-alert>
-
           <v-divider class="my-3"></v-divider>
           <v-text-field
             v-model="email"
@@ -104,15 +113,27 @@ cs:
             :label="$t('password')"
             :rules="[passwordError, rules.required, rules.min]"
             :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
-            @click:append="showPassword = !showPassword"
-          ></v-text-field>
-
+          >
+            <template #append-inner>
+              <v-icon
+                @click="showPassword = !showPassword"
+                v-if="showPassword"
+                size="x-small"
+                icon="fa fa-eye"
+              ></v-icon>
+              <v-icon
+                @click="showPassword = !showPassword"
+                v-else
+                size="x-small"
+                icon="fa fa-eye-slash"
+              ></v-icon>
+            </template>
+          </v-text-field>
           <v-alert
             v-if="loginError"
             type="error"
-            outlined
-            icon="fas fa-exclamation-circle"
+            variant="outlined"
+            icon="fa fa-exclamation-circle"
           >
             {{ $t("login_error") }}: "<em>{{ loginErrorText }}</em
             >"
@@ -128,11 +149,10 @@ cs:
             <v-icon color="warning" class="mr-2" v-if="loginError">
               fa fa-caret-right
             </v-icon>
-
-            <i18n
-              path="password_reset.switch"
+            <i18n-t
+              keypath="password_reset.switch"
               tag="span"
-              :class="loginError ? 'warning--text' : 'secondary--text'"
+              :class="loginError ? 'text-warning' : 'text-secondary'"
             >
               <template #reset_here>
                 <a
@@ -140,8 +160,13 @@ cs:
                   v-text="$t('password_reset.link')"
                 ></a>
               </template>
-            </i18n>
-
+            </i18n-t>
+            <!-- <span :class="loginError ? 'warning--text' : 'secondary--text'">
+              {{ $t("password_reset.switch") }}
+              <a @click="changeCurrentTabForReset">
+                {{ $t("password_reset.link") }}
+              </a>
+            </span> -->
             <v-icon color="warning" class="ml-2" v-if="loginError">
               fa fa-caret-left
             </v-icon>
@@ -151,9 +176,11 @@ cs:
             color="primary"
             class="ma-3"
             :disabled="!valid || requestInProgress"
-            v-text="$t('login')"
             type="submit"
-          ></v-btn>
+            variant="flat"
+            elevation="2"
+            >{{ $t("login") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-form>
@@ -175,16 +202,27 @@ cs:
                 : $t('just_registering_text')
             "
           ></div>
-
-          <v-alert v-if="allowSignUp" color="primary" outlined class="mt-3">
+          <v-alert
+            v-if="allowSignUp"
+            color="primary"
+            variant="outlined"
+            class="mt-3"
+          >
             <v-icon class="pr-3">far fa-hand-point-right</v-icon>
-            <i18n path="login_from_register" tag="span" class="text--secondary">
+            <i18n-t
+              keypath="login_from_register"
+              tag="span"
+              class="text--secondary"
+            >
               <template #login_here>
                 <a @click="currentTab = 'login'" v-text="$t('login_link')"></a>
               </template>
-            </i18n>
+            </i18n-t>
+            <!-- <span class="text--secondary">
+              {{ $t("login_from_register") }}
+              <a @click="changeTabToLogin">{{ $t("login_link") }}</a>
+            </span> -->
           </v-alert>
-
           <v-divider class="my-3"></v-divider>
           <v-text-field
             v-model="email"
@@ -197,12 +235,11 @@ cs:
             :label="$t('new_password')"
             :rules="[passwordError, rules.required, rules.min]"
             :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
+            :append-icon="showPassword ? 'fa fa-eye' : 'fa fa-eye-slash'"
             @click:append="showPassword = !showPassword"
             counter
           ></v-text-field>
           <!--v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field-->
-
           <v-alert
             v-if="
               signupError &&
@@ -212,8 +249,8 @@ cs:
               !passwordEdited
             "
             type="error"
-            outlined
-            icon="fas fa-exclamation-circle"
+            variant="outlined"
+            icon="fa fa-exclamation-circle"
           >
             {{ $t("signup_error") }}: "<em>{{ signupError }}</em
             >"
@@ -224,9 +261,9 @@ cs:
           <v-btn
             color="primary"
             :disabled="!valid || requestInProgress"
-            v-text="$t('create_account')"
             type="submit"
-          ></v-btn>
+            >{{ $t("create_account") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-form>
@@ -241,8 +278,7 @@ cs:
           $t("password_reset.title")
         }}</v-card-title>
         <v-card-text>
-          <div>{{ $t("password_reset.text") }}</div>
-
+          <div class="pass_text">{{ $t("password_reset.text") }}</div>
           <v-text-field
             v-model="email"
             :label="$t('email')"
@@ -252,28 +288,31 @@ cs:
           <v-alert
             v-if="resetError"
             type="error"
-            outlined
-            icon="fas fa-exclamation-circle"
+            variant="outlined"
+            icon="fa fa-exclamation-circle"
           >
             {{ $t("password_reset.error") }}: "<em>{{ resetError }}</em
             >"
           </v-alert>
-          <v-alert v-if="resetSuccess" type="success" outlined>
-            <i18n
-              path="password_reset.success"
+          <v-alert v-if="resetSuccess" type="success" variant="outlined">
+            <i18n-t
+              keypath="password_reset.success"
               tag="span"
               class="text--secondary"
             >
               <template #reset_email>
                 <a :href="'mailto:' + email" v-text="email"></a>
               </template>
-            </i18n>
+            </i18n-t>
+            <!-- <template #reset_email>
+              <a :href="'mailto:' + email">{{ email }}</a>
+            </template> -->
           </v-alert>
         </v-card-text>
         <v-card-actions>
           <div class="ml-4 small">
-            <i18n
-              path="password_reset.back_to_login"
+            <i18n-t
+              keypath="password_reset.back_to_login"
               tag="span"
               class="text--secondary"
             >
@@ -286,27 +325,38 @@ cs:
                   v-text="$t('login')"
                 ></a>
               </template>
-            </i18n>
+            </i18n-t>
+            <!-- <a
+              @click="
+                currentTab = 'login';
+                resetForm();
+              "
+              >{{ $t("login") }}</a
+            > -->
           </div>
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
+            variant="flat"
+            elevation="2"
             class="ma-3"
             :disabled="!valid || requestInProgress"
             v-if="!resetSuccess"
-            v-text="$t('password_reset.button')"
             type="submit"
-          ></v-btn>
+          >
+            {{ $t("password_reset.button") }}
+          </v-btn>
           <v-btn
             v-else
             @click="
               currentTab = 'login';
               resetForm();
             "
-            v-text="$t('password_reset.back_to_login_full')"
             class="mr-4 mb-3"
             color="primary"
-          ></v-btn>
+          >
+            {{ $t("password_reset.back_to_login_full") }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
@@ -326,6 +376,7 @@ cs:
     </v-card>
   </v-dialog>
 </template>
+
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -415,6 +466,16 @@ export default {
       resetPassword: "resetPassword",
       showSnackbar: "showSnackbar",
     }),
+    changeTabToRegister() {
+      this.currentTab = "register";
+    },
+    changeCurrentTabForReset() {
+      this.currentTab = "reset-password";
+    },
+    changeTabToLogin() {
+      this.currentTab = "login";
+    },
+    //new
     resetForm() {
       this.resetError = null;
       this.resetSuccess = false;
@@ -480,6 +541,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
 .v-select.v-text-field.short input {
   max-width: 0;
@@ -487,5 +549,28 @@ export default {
 
 div.small {
   font-size: 80%;
+}
+
+a {
+  cursor: pointer;
+}
+
+.v-card-title {
+  font-size: 1.5rem;
+  padding: 16px;
+  font-weight: 400;
+}
+
+.v-card-text {
+  padding: 16px !important;
+  padding-top: 0 !important;
+}
+
+.pass_text {
+  color: rgba($color: #000000, $alpha: 0.6);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.375rem;
+  letter-spacing: 0.0071428571em;
 }
 </style>

@@ -1,63 +1,49 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
 
 <template>
-  <div :class="disabled ? 'pt-6' : ''">
+  <div>
     <v-select
       v-model="ownershipType"
       :items="ownershipTypes"
       :label="$t('title_fields.access_level')"
       :rules="[rules.required]"
-      v-if="!disabled"
+      :disabled="disabled"
+      return-object
     >
-      <template #item="{ item }">
-        <v-list-item-icon>
-          <v-icon color="#999999" class="mr-1 fa-fw" small
-            >fa {{ item.icon }}
-          </v-icon>
-        </v-list-item-icon>
-
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ item.text }}
-          </v-list-item-title>
+      <template #item="{ item, props }">
+        <v-list-item v-bind="props">
+          <template #prepend>
+            <v-icon color="#999999" class="mr-1 fa-fw" size="small"
+              >fa {{ item.raw.icon }}
+            </v-icon>
+          </template>
           <v-list-item-subtitle v-if="!short">
-            {{ $t("access_level_tt." + item.value) }}
+            {{ $t("access_level_tt." + item.raw.value) }}
           </v-list-item-subtitle>
-        </v-list-item-content>
+        </v-list-item>
       </template>
-      <template #selection="{ item }">
-        <v-icon color="#999999" class="mr-1 fa-fw" small
-          >fa {{ item.icon }}
+      <template #selection="{ item, props }">
+        <v-icon v-bind="props" color="#999999" class="mr-1 fa-fw" size="small"
+          >fa {{ item.raw.icon }}
         </v-icon>
-        {{ item.text }}
+        {{ item.raw.title }}
       </template>
     </v-select>
-
-    <v-tooltip bottom v-else>
-      <template #activator="{ on }">
-        <span v-on="on">
-          <v-icon color="#999999" class="mr-1 fa-fw" small
-            >fa {{ icon }}</v-icon
-          >
-          {{ $t("access_level." + ownershipType) }}
-        </span>
-      </template>
-      {{ $t("access_level_tt." + ownershipType) }}
-    </v-tooltip>
-
     <v-select
       v-model="selectedOrganization"
       :items="availableOrganizations"
       :label="$t('organization')"
-      v-if="ownershipType === 'org' && !disabled"
+      v-if="ownershipType.value === 'org'"
       :rules="[rules.required]"
       :disabled="disabled"
     ></v-select>
-    <span v-else-if="disabled && organization">/ {{ organization.name }} </span>
   </div>
 </template>
+
 <script>
 import { mapGetters, mapState } from "vuex";
 import { FlexiReport } from "@/libs/flexi-reports";
@@ -69,15 +55,21 @@ export default {
   mixins: [formRulesMixin],
 
   props: {
-    value: { required: true, type: String },
+    modelValue: { required: true, type: String },
     ownerOrganization: { required: false, type: Number },
     short: { default: false, type: Boolean },
     disabled: { default: false, type: Boolean },
+    copyReport: {
+      type: Boolean,
+      default: false,
+    },
+    reportAccess: { type: String, required: false },
+    createNew: { type: Boolean, default: false },
   },
 
   data() {
     return {
-      ownershipType: this.value,
+      ownershipType: this.modelValue,
       selectedOrganization: this.ownerOrganization,
     };
   },
@@ -103,21 +95,21 @@ export default {
       let ret = [
         {
           value: "user",
-          text: this.$t("access_level.user"),
+          title: this.$t("access_level.user"),
           icon: FlexiReport.accessLeveLToIcon["user"],
         },
       ];
       if (this.canCreateOrganizationReport) {
         ret.push({
           value: "org",
-          text: this.$t("access_level.org"),
+          title: this.$t("access_level.org"),
           icon: FlexiReport.accessLeveLToIcon["org"],
         });
       }
       if (this.canCreateConsortialReport) {
         ret.push({
           value: "sys",
-          text: this.$t("access_level.sys"),
+          title: this.$t("access_level.sys"),
           icon: FlexiReport.accessLeveLToIcon["sys"],
         });
       }
@@ -130,15 +122,15 @@ export default {
             item.is_admin ||
             ((this.user.is_superuser ||
               this.user.is_user_of_master_organization) &&
-              item.pk !== -1)
+              item.pk !== -1),
         )
-        .map((item) => ({ value: item.pk, text: item.name }));
+        .map((item) => ({ value: item.pk, title: item.name }));
     },
     valueFromData() {
       let ret = { owner: null, owner_organization: null };
-      if (this.ownershipType === "user") {
+      if (this.ownershipType.value === "user") {
         ret["owner"] = this.user.pk;
-      } else if (this.ownershipType === "org") {
+      } else if (this.ownershipType.value === "org") {
         ret["owner_organization"] = this.selectedOrganization;
       }
       return ret;
@@ -154,31 +146,117 @@ export default {
     },
   },
 
+  methods: {
+    defaultOwnerShip() {
+      if (this.copyReport && this.reportAccess && !this.createNew) {
+        switch (this.reportAccess) {
+          case "org":
+            this.ownershipType = {
+              value: "org",
+              title: this.$t("access_level.org"),
+              icon: FlexiReport.accessLeveLToIcon["org"],
+            };
+            break;
+          case "user":
+            this.ownershipType = {
+              value: "user",
+              title: this.$t("access_level.user"),
+              icon: FlexiReport.accessLeveLToIcon["user"],
+            };
+            break;
+          case "sys":
+            this.ownershipType = {
+              value: "sys",
+              title: this.$t("access_level.sys"),
+              icon: FlexiReport.accessLeveLToIcon["sys"],
+            };
+            break;
+        }
+      } else if (!this.copyReport && this.modelValue && !this.createNew) {
+        switch (this.modelValue) {
+          case "org":
+            this.ownershipType = {
+              value: "org",
+              title: this.$t("access_level.org"),
+              icon: FlexiReport.accessLeveLToIcon["org"],
+            };
+            break;
+          case "user":
+            this.ownershipType = {
+              value: "user",
+              title: this.$t("access_level.user"),
+              icon: FlexiReport.accessLeveLToIcon["user"],
+            };
+            break;
+          case "sys":
+            this.ownershipType = {
+              value: "sys",
+              title: this.$t("access_level.sys"),
+              icon: FlexiReport.accessLeveLToIcon["sys"],
+            };
+            break;
+        }
+      } else if (this.createNew) {
+        if (this.canCreateConsortialReport) {
+          this.ownershipType = {
+            value: "sys",
+            title: this.$t("access_level.sys"),
+            icon: FlexiReport.accessLeveLToIcon["sys"],
+          };
+        } else if (this.canCreateOrganizationReport) {
+          this.ownershipType = {
+            value: "org",
+            title: this.$t("access_level.org"),
+            icon: FlexiReport.accessLeveLToIcon["org"],
+          };
+        } else {
+          this.ownershipType = {
+            value: "user",
+            title: this.$t("access_level.user"),
+            icon: FlexiReport.accessLeveLToIcon["user"],
+          };
+        }
+      }
+    },
+  },
+
+  created() {
+    this.defaultOwnerShip();
+  },
+
   mounted() {
     // Reset value if user doesn't have permissions
-    if (!this.ownershipTypes.map((e) => e.value).includes(this.value)) {
+    if (!this.ownershipTypes.map((e) => e.value).includes(this.modelValue)) {
       this.ownershipType = this.ownershipTypes[0].value;
     }
   },
 
   watch: {
-    value() {
-      this.ownershipType = this.value;
+    disabled() {
+      if (!this.disabled) {
+        this.defaultOwnerShip();
+      }
     },
     ownerOrganization() {
       this.selectedOrganization = this.ownerOrganization;
     },
-    ownershipType() {
+    ownershipType(newValue) {
+      this.ownershipType = newValue;
       if (this.ownershipType === "org") {
-        // find and select the first organization that the user is admin of
-        this.selectedOrganization = this.organizationItems.find(
-          (item) => item.is_admin
-        ).pk;
+        const firstAdminOrg = this.organizationItems.find(
+          (item) => item.is_admin,
+        );
+
+        if (firstAdminOrg) {
+          this.selectedOrganization = firstAdminOrg.pk;
+        } else {
+          this.selectedOrganization = null;
+        }
       }
-      this.$emit("change", this.valueFromData);
+      this.$emit("update:modelValue", this.valueFromData);
     },
     selectedOrganization() {
-      this.$emit("change", this.valueFromData);
+      this.$emit("update:modelValue", this.valueFromData);
     },
   },
 };

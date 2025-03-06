@@ -18,25 +18,34 @@ cs:
           :min="minHeight"
           v-model="height"
           :label="$t('chart_height')"
-          dense
+          density="compact"
           hide-details
+          thumb-label
+          color="primary"
         >
-          <template v-slot:thumb-label="{ value }">
-            <span v-text="Math.round((100 * value) / autoHeight) + '%'"></span>
+          <template v-slot:thumb-label="{ modelValue }">
+            <span
+              v-text="Math.round((100 * modelValue) / autoHeight) + '%'"
+            ></span>
           </template>
         </v-slider>
       </v-col>
       <v-col cols="auto">
         <v-btn @click="height = autoHeight" dark color="primary">
-          <v-icon small>fa fa-redo-alt</v-icon>
+          <v-icon size="small">fa fa-redo-alt</v-icon>
         </v-btn>
       </v-col>
     </v-row>
     <v-row no-gutters>
       <v-col :cols="12">
-        <LoaderWidget v-if="loading" />
+        <LoaderWidget v-if="loading"></LoaderWidget>
         <div v-else :style="{ height: height + 'px' }">
-          <v-chart :option="option" autoresize />
+          <v-chart
+            ref="chart"
+            :key="height"
+            :option="option"
+            autoresize
+          ></v-chart>
         </div>
       </v-col>
     </v-row>
@@ -48,6 +57,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
 import cancellation from "@/mixins/cancellation";
 import percentile from "percentile";
+import * as echarts from "echarts";
 
 /* vue-echarts */
 import { use } from "echarts/core";
@@ -158,7 +168,7 @@ export default {
             data: this.dataRaw.map((item) => [
               item[this.primaryDim],
               item[this.secondaryDim],
-              item.count,
+              item.count || 0,
             ]),
           },
         ],
@@ -174,14 +184,14 @@ export default {
         tooltip: {
           formatter: (item) =>
             `${item.value[0]} ~ ${item.value[1]}<br><strong>${formatInteger(
-              item.value[2]
+              item.value[2],
             )}</strong>`,
         },
       };
     },
     autoHeight() {
       const primDimUniqueValues = new Set(
-        this.dataRaw.map((item) => item[this.secondaryDim])
+        this.dataRaw.map((item) => item[this.secondaryDim]),
       );
       return this.dataRaw.length > 0
         ? primDimUniqueValues.size * 20 + 350
@@ -197,14 +207,12 @@ export default {
       // don't use max, as there are typically outliers which make the rest
       // of the values too small. Rather use a high percentile which gives better
       // visual output
-      return percentile(
-        97,
-        this.dataRaw.map((item) => item.count)
-      );
+      const counts = this.dataRaw.map((item) => item.count);
+      return counts.length > 0 ? percentile(97, counts) : 0;
     },
     yValuesWidth() {
       const maxLen = Math.max(
-        ...this.yValues.map((item) => item.toString().length)
+        ...this.yValues.map((item) => item.toString().length),
       );
       return maxLen * 5 + 20;
     },
@@ -212,7 +220,9 @@ export default {
   methods: {
     ...mapActions("interest", ["fetchInterestReportType"]),
     async fetchData() {
-      if (!this.request) return;
+      if (!this.request) {
+        return;
+      }
 
       this.loading = true;
       const { response } = await this.http(this.request);
@@ -226,6 +236,9 @@ export default {
   },
   mounted() {
     this.fetchInterestReportType(this._cid);
+  },
+  activated() {
+    this.fetchData();
   },
   watch: {
     request: "fetchData",

@@ -18,9 +18,9 @@ cs:
     </v-row>
     <v-row>
       <v-layout column alig-center>
-        <v-flex>
+        <v-row>
           <v-col>
-            <LargeSpinner v-if="changelog === null" />
+            <LargeSpinner v-if="changelog === null"></LargeSpinner>
             <p v-else-if="changelog.length === 0">
               {{ $t("changelog_unavailable") }}
             </p>
@@ -35,7 +35,10 @@ cs:
                       ? entry.version
                       : $t("version") + " " + entry.version
                   }}
-                  <DateWithTooltip v-if="entry.date" :date="entry.date" />
+                  <DateWithTooltip
+                    v-if="entry.date"
+                    :date="entry.date"
+                  ></DateWithTooltip>
                 </h2>
                 <div
                   v-html="markdownToHtml(entry.markdown)"
@@ -44,7 +47,7 @@ cs:
               </div>
             </div>
           </v-col>
-        </v-flex>
+        </v-row>
       </v-layout>
     </v-row>
   </v-container>

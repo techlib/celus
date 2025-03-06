@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -33,7 +33,7 @@ cs:
         }}</v-card-title>
         <v-card-text>
           <div>
-            <i18n path="verification_code_text">
+            <i18n-t keypath="verification_code_text">
               <template #email>
                 <span class="font-weight-medium">{{ email.email }}</span>
               </template>
@@ -42,9 +42,8 @@ cs:
                   $t("code_id", { codeId: codeRequestId })
                 }}</span>
               </template>
-            </i18n>
+            </i18n-t>
           </div>
-
           <div v-if="codeRequestId">
             <div class="d-flex pt-6">
               <v-otp-input
@@ -55,28 +54,27 @@ cs:
               <v-btn
                 color="primary"
                 class="ma-3"
-                v-text="$t('verify_code')"
                 type="submit"
                 :disabled="working || !codeRequestId || code.length != 6"
                 @click="verifyCode"
-              ></v-btn>
+              >
+                {{ $t("verify_code") }}
+              </v-btn>
             </div>
           </div>
-
           <v-alert
             v-if="genError"
             type="error"
-            outlined
             icon="fas fa-exclamation-circle"
+            variant="outlined"
           >
             {{ $t("failed_to_generate") }}
           </v-alert>
-
           <v-alert
             v-if="codeError"
             type="error"
-            outlined
             icon="fas fa-exclamation-circle"
+            variant="outlined"
           >
             {{ $t("wrong_code") }}
           </v-alert>
@@ -87,13 +85,22 @@ cs:
             class="ma-3"
             :disabled="working || !codeRequestId"
             @click="sendCodeViaEmail()"
+            variant="flat"
+            elevation="2"
           >
-            <v-icon small class="me-2">fas fa-envelope</v-icon>
+            <v-icon class="me-2" size="small">fas fa-envelope</v-icon>
             {{ $t("resend_verification_code") }}
           </v-btn>
           <v-spacer></v-spacer>
-          <v-btn class="ma-3" type="submit" @click="logout" :disabled="working">
-            <v-icon small class="me-2">fa fa-user</v-icon>
+          <v-btn
+            class="ma-3"
+            type="submit"
+            @click="logout"
+            :disabled="working"
+            variant="flat"
+            elevation="2"
+          >
+            <v-icon class="me-2" size="small">fa fa-user</v-icon>
             {{ $t("login_another_user") }}
           </v-btn>
         </v-card-actions>
@@ -105,6 +112,7 @@ cs:
     </v-snackbar>
   </v-dialog>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import { mapActions, mapState } from "vuex";
@@ -211,6 +219,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
 .v-select.v-text-field.short input {
   max-width: 0;

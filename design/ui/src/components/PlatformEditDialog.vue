@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   title:
@@ -15,7 +16,7 @@ en:
     organization: Organization
     hint:
       short_name: Platform short name (e.g. CUP)
-      name: Full platform name (e.g. Cambridge University Presss)
+      name: Full platform name (e.g. Cambridge University)
       provider: Platfrom provider (vendor) - who manages the platform
       url: "Website of the platform (e.g. https://www.cambridge.org/core/). Note that this URL is not SUSHI URL."
     similar_platform_name: A platform with similar name already exists
@@ -39,7 +40,7 @@ cs:
     organization: Organizace
     hint:
       short_name: Krátké jméno platformy (např. CUP)
-      name: Celé jméno platformy (např. Cambridge University Presss)
+      name: Celé jméno platformy (např. Cambridge University)
       provider: Poskytovatel (provozovatel) - kdo zajišťuje chod platformy
       url: "Webová stránka platformy (např. https://www.cambridge.org/core/). Pozn: tato URL není URL pro SUSHI."
     similar_platform_name: Platforma s podobným jménem už existuje
@@ -73,18 +74,12 @@ cs:
               <v-select
                 v-model="organization"
                 :items="organizations"
-                item-text="name"
+                item-title="name"
                 :label="$t('form.organization')"
                 return-object
                 :disabled="fixedOrganization"
                 :rules="[rules.required]"
               >
-                <template v-slot:item="{ item }">
-                  <span
-                    :class="{ bold: item.extra, org: true }"
-                    v-text="item.name"
-                  ></span>
-                </template>
               </v-select>
             </v-col>
           </v-row>
@@ -112,7 +107,7 @@ cs:
           </v-row>
           <v-row>
             <v-col cols="12" :sm="6" v-if="similarPlatforms.length > 0">
-              <v-alert type="warning" dense outlined>
+              <v-alert type="warning" density="compact" variant="outlined">
                 {{ $t("form.similar_platform_name") }}:
                 <ul>
                   <li v-for="name in similarPlatforms" :key="name">
@@ -155,17 +150,25 @@ cs:
               <v-spacer></v-spacer>
             </v-col>
             <v-col cols="auto">
-              <v-btn @click="closeDialog()" class="mr-2">
-                <v-icon small class="mr-1">fa fa-times</v-icon>
+              <v-btn
+                @click="closeDialog()"
+                class="mr-2"
+                color="defaultButton"
+                variant="flat"
+                elevation="2"
+              >
+                <v-icon size="small" class="mr-1">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>
               <v-btn
                 color="primary"
                 @click="saveAndClose()"
                 class="mr-2"
+                variant="flat"
+                elevation="2"
                 :disabled="!isValid"
               >
-                <v-icon small class="mr-1">fa fa-save</v-icon>
+                <v-icon size="small" class="mr-1">fa fa-save</v-icon>
                 {{ $t("save") }}
               </v-btn>
             </v-col>
@@ -258,11 +261,11 @@ export default {
         if (
           stringSimilarity.compareTwoStrings(
             this.platform.short_name.toLowerCase(),
-            platform.name.toLowerCase()
+            platform.name.toLowerCase(),
           ) >= SIMILAR_CONST ||
           stringSimilarity.compareTwoStrings(
             this.platform.name.toLowerCase(),
-            platform.name.toLowerCase()
+            platform.name.toLowerCase(),
           ) >= SIMILAR_CONST
         ) {
           res.push(platform.name);
@@ -270,11 +273,11 @@ export default {
         if (
           stringSimilarity.compareTwoStrings(
             this.platform.short_name.toLowerCase(),
-            platform.short_name.toLowerCase()
+            platform.short_name.toLowerCase(),
           ) >= SIMILAR_CONST ||
           stringSimilarity.compareTwoStrings(
             this.platform.name.toLowerCase(),
-            platform.short_name.toLowerCase()
+            platform.short_name.toLowerCase(),
           ) >= SIMILAR_CONST
         ) {
           res.push(platform.short_name);
@@ -319,7 +322,7 @@ export default {
       if (this.isEdit && this.platformsBaseUrl) {
         try {
           let result = await axios.get(
-            this.platformsBaseUrl + this.platformId + "/"
+            this.platformsBaseUrl + this.platformId + "/",
           );
           this.platform = result.data;
         } catch (error) {
@@ -354,13 +357,13 @@ export default {
           // we have existing platform
           response = await axios.put(
             `/api/organization/${this.organization.pk}/platform/${this.platform.pk}/`,
-            this.apiData
+            this.apiData,
           );
         } else {
           // we create new platform
           response = await axios.post(
             `/api/organization/${this.organization.pk}/platform/`,
-            this.apiData
+            this.apiData,
           );
         }
         this.showSnackbar({
@@ -427,7 +430,7 @@ export default {
       }
       const result = validate(
         { website: this.platform.url },
-        { website: { url: true } }
+        { website: { url: true } },
       );
       if (result && result.website) {
         return this.$t("errors.invalid_url");
@@ -448,3 +451,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+p {
+  color: rgba(0, 0, 0, 0.6);
+}
+</style>

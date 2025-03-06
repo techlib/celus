@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   dialog_text1: |
@@ -6,7 +7,7 @@ en:
     All the harvested and/or manually uploaded usage data will be removed.
   delete_credentials: I want to delete SUSHI credentials as well.
   delete_credentials_info: |
-    If selected, all existing SUSHI credentials for this platform will be deleted as well. <br/>
+    If selected, all existing SUSHI credentials for this platform will be deleted as well. <br>
     Otherwise they will be preserved to allow you subsequent reharvesting of the data.
     Also any harvests planned for the future will be preserved and run at their assigned time.
   delete_platform: I want to delete the entire platform including all related data.
@@ -39,7 +40,7 @@ cs:
   delete_credentials: Smazat také SUSHI přístupové údaje.
   delete_credentials_info: |
     Pokud je zaškrtnuto, všechny existující SUSHI přístupové údaje pro tuto platformu budou smazány
-    spolu s daty. <br/>
+    spolu s daty. <br>
     Jinak budou zachovány a budete moci je znovu použít pro stažení dat. Zachovávy budou také naplánovaná budoucí stažení dat.
   delete_platform: Smazat celou platformu včetně všech souvisejících dat.
   delete_platform_info: |
@@ -69,7 +70,7 @@ cs:
 <template>
   <span>
     <v-btn color="error" @click="showDialog = true">
-      <v-icon small class="pr-1">fa fa-trash</v-icon>
+      <v-icon size="small" class="pr-1">fa fa-trash</v-icon>
       {{ $t("labels.delete_all_platform_data") }}
     </v-btn>
     <v-dialog v-model="showDialog" max-width="800px">
@@ -77,23 +78,23 @@ cs:
         <v-card-title>
           {{ $t("labels.delete_all_platform_data") }}
         </v-card-title>
-
         <v-card-text class="pt-4" v-if="task === null">
           <p v-html="$t('dialog_text1', { platform: platform.name })"></p>
-
           <div
             :class="isCustomPlatform && organizationSelected ? 'pb-2' : 'pb-6'"
+            class="mt-4"
           >
-            <v-tooltip bottom max-width="640px">
-              <template #activator="{ on }">
-                <span v-on="on">
+            <v-tooltip location="bottom" max-width="640px">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-checkbox
                     v-model="deleteCredentials"
-                    dense
+                    density="compact"
                     hide-details
                     :disabled="deletePlatform"
+                    color="primary"
                   >
-                    <template #label="">
+                    <template #label>
                       <span v-html="$t('delete_credentials')"></span>
                     </template>
                   </v-checkbox>
@@ -108,18 +109,18 @@ cs:
               ></div>
             </v-tooltip>
           </div>
-
           <div class="pb-6" v-if="isCustomPlatform && organizationSelected">
-            <v-tooltip bottom max-width="640px">
-              <template #activator="{ on }">
-                <span v-on="on">
+            <v-tooltip location="bottom" max-width="640px">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-checkbox
                     v-model="deletePlatform"
-                    dense
+                    density="default"
                     hide-details
                     class="mt-0"
+                    color="primary"
                   >
-                    <template #label="">
+                    <template #label>
                       <span v-html="$t('delete_platform')"></span>
                     </template>
                   </v-checkbox>
@@ -128,13 +129,11 @@ cs:
               <div v-html="$t('delete_platform_info')"></div>
             </v-tooltip>
           </div>
-
           <p v-html="$t('dialog_text3')"></p>
-
-          <div class="d-flex px-4 align-stretch" style="min-height: 9rem">
-            <v-col class="text-caption pt-4 ps-0 error--text">
+          <div class="d-flex px-4 align-stretch mt-4" style="min-height: 9rem">
+            <v-col class="text-caption pt-4 ps-0 text-error">
               <v-card class="fill-height">
-                <v-card-text class="text-caption error--text">
+                <v-card-text class="text-caption text-error">
                   <strong>{{ $t("what_will_be_deleted") }}</strong
                   >:
                   <ul>
@@ -148,10 +147,9 @@ cs:
                 </v-card-text>
               </v-card>
             </v-col>
-
-            <v-col class="text-caption pt-4 success--text">
+            <v-col class="text-caption pt-4 text-success">
               <v-card class="fill-height">
-                <v-card-text class="text-caption success--text">
+                <v-card-text class="text-caption text-success">
                   <strong>{{ $t("what_will_be_preserved") }}</strong
                   >: <span v-if="preservedChunks.length === 0">-</span>
                   <ul>
@@ -168,17 +166,20 @@ cs:
               </v-card>
             </v-col>
           </div>
-
           <div>
-            <v-checkbox v-model="confirmed">
-              <template #label="">
+            <v-checkbox v-model="confirmed" color="primary">
+              <template #label>
                 <span
                   v-html="$t('confirmation', { platform: platform.name })"
                 ></span>
               </template>
             </v-checkbox>
           </div>
-          <v-alert :type="confirmed ? 'error' : 'warning'" outlined>
+          <v-alert
+            :type="confirmed ? 'error' : 'warning'"
+            variant="outlined"
+            class="mb-4"
+          >
             <span v-html="$t('delete_text')"></span>
           </v-alert>
           <v-alert
@@ -188,7 +189,6 @@ cs:
             <span v-html="$t('all_organizations_selected')"></span>
           </v-alert>
         </v-card-text>
-
         <v-card-text v-else>
           <div v-if="task.isFinished">
             <p v-html="$t('task_finished')"></p>
@@ -197,31 +197,43 @@ cs:
             <p v-html="$t('in_progress')"></p>
             <v-progress-linear
               :indeterminate="task.progressPercentage === null"
-              :value="task.progressPercentage"
               height="32px"
+              color="primary"
+              :value="task.progressPercentage"
               >{{ progressText }}</v-progress-linear
             >
           </div>
         </v-card-text>
-
         <v-card-actions v-if="task === null" class="pb-4 mx-2">
-          <v-spacer />
-          <v-btn @click="showDialog = false">{{ $t("actions.cancel") }}</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="showDialog = false"
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("actions.cancel") }}</v-btn
+          >
           <v-btn
             @click="performDelete()"
             :disabled="!confirmed"
             color="error"
+            variant="elevated"
             >{{ $t("actions.delete") }}</v-btn
           >
         </v-card-actions>
         <v-card-actions v-else class="pb-4 mx-2">
-          <v-spacer />
-          <v-btn @click="showDialog = false">{{ $t("actions.close") }}</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="showDialog = false"
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("actions.close") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
   </span>
 </template>
+
 <script>
 import ServerTask from "@/libs/server-task";
 import axios from "axios";
@@ -282,7 +294,7 @@ export default {
     },
     preservedChunks() {
       return ["chunk_credentials", "chunk_platform"].filter(
-        (chunk) => !this.deletedChunks.includes(chunk)
+        (chunk) => !this.deletedChunks.includes(chunk),
       );
     },
   },
@@ -299,7 +311,7 @@ export default {
           {
             delete_platform: this.deletePlatform,
             delete_credentials: this.deleteCredentials,
-          }
+          },
         );
         this.task = new ServerTask(resp.data.task_id);
         this.checkProgress();
@@ -348,3 +360,9 @@ export default {
   },
 };
 </script>
+<style lang="scss" scoped>
+p {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+</style>

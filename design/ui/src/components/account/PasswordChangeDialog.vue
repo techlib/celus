@@ -1,4 +1,4 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -16,7 +16,7 @@ cs:
 
 <template>
   <v-dialog v-model="show" max-width="400px">
-    <v-form :value="valid" ref="form" @submit.prevent="doChange()">
+    <v-form ref="form" @submit.prevent="doChange()" :model-value="valid">
       <v-card>
         <v-card-title class="headline">{{
           $t("password_change")
@@ -27,25 +27,48 @@ cs:
             :label="$t('new_password')"
             :rules="[error, rules.required, rules.min]"
             :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
-            @click:append="showPassword = !showPassword"
             counter
-          ></v-text-field>
+          >
+            <template #append-inner>
+              <v-icon
+                v-if="showPassword"
+                @click="showPassword = !showPassword"
+                size="x-small"
+                icon="fa fa-eye"
+              ></v-icon>
+              <v-icon
+                v-else
+                @click="showPassword = !showPassword"
+                size="x-small"
+                icon="fa fa-eye-slash"
+              ></v-icon>
+            </template>
+          </v-text-field>
         </v-card-text>
         <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
-          <v-btn @click="show = false" v-text="$t('cancel')"> </v-btn>
+          <v-btn
+            @click="show = false"
+            variant="flat"
+            elevation="2"
+            color="defaultButton"
+            >{{ $t("cancel") }}
+          </v-btn>
           <v-btn
             color="primary"
             :disabled="!valid || requestInProgress"
-            v-text="$t('change_password')"
             type="submit"
-          ></v-btn>
+            variant="flat"
+            elevation="2"
+          >
+            {{ $t("change_password") }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
   </v-dialog>
 </template>
+
 <script>
 import { mapActions } from "vuex";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -56,7 +79,7 @@ export default {
   mixins: [formRulesMixin],
 
   props: {
-    value: {},
+    modelValue: {},
   },
 
   data() {
@@ -66,7 +89,7 @@ export default {
       passwordEdited: false,
       requestInProgress: false, // if a request was just sent to the backend and is processed
       changeError: null,
-      show: this.value,
+      show: this.modelValue,
     };
   },
 
@@ -114,7 +137,7 @@ export default {
           content: this.$t("change_success"),
           color: "success",
         });
-        this.$emit("input", false);
+        this.$emit("update:modelValue", false);
       } catch (error) {
         this.changeError = error;
       } finally {
@@ -129,18 +152,19 @@ export default {
     },
 
     show() {
-      this.$emit("input", this.show);
+      this.$emit("update:modelValue", this.show);
       if (this.show) {
         this.resetForm();
       }
     },
 
-    value() {
-      this.show = this.value;
+    modelValue() {
+      this.show = this.modelValue;
     },
   },
 };
 </script>
+
 <style lang="scss">
 .v-select.v-text-field.short input {
   max-width: 0;

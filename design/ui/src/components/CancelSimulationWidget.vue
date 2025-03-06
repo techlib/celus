@@ -1,4 +1,5 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   selected_unique_title_count: Number of unique titles in selected platforms
@@ -24,19 +25,22 @@ cs:
 <template>
   <div>
     <div class="mb-4">
-      <TitleTypeFilterWidget v-model="selectedPubTypes" />
+      <TitleTypeFilterWidget v-model="selectedPubTypes"></TitleTypeFilterWidget>
     </div>
-    <v-alert v-if="selectedPubTypes.length === 0" type="info" outlined>
+    <v-alert
+      v-if="selectedPubTypes.length === 0"
+      type="info"
+      variant="outlined"
+    >
       {{ $t("warnings.select_one_title_type") }}
     </v-alert>
-
     <div v-else>
       <div v-if="loading || preparingData">
         <LoaderWidget
           :text="$t('preparing_data')"
           show-progress
           :progress="loadingProgress"
-        />
+        ></LoaderWidget>
       </div>
       <v-container fluid v-else>
         <v-row no-gutters>
@@ -61,65 +65,63 @@ cs:
             lg="4"
             offset-lg="2"
           >
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span class="font-weight-black" v-on="on">{{
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span class="font-weight-black" v-bind="props">{{
                   formatInteger(selectedTitleCount)
                 }}</span>
               </template>
               {{ $t("selected_unique_title_count") }}
             </v-tooltip>
             /
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on">{{ formatInteger(totalTitleCount) }}</span>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props">{{ formatInteger(totalTitleCount) }}</span>
               </template>
               {{ $t("total_unique_title_count") }}
             </v-tooltip>
           </v-col>
           <v-col class="text-center small" cols="12" md="6" lg="4">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span class="font-weight-black" v-on="on">{{
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span class="font-weight-black" v-bind="props">{{
                   formatInteger(selectedInterest)
                 }}</span>
               </template>
               {{ $t("selected_titles_interest") }}
             </v-tooltip>
             /
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on">{{ formatInteger(totalInterest) }}</span>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props">{{ formatInteger(totalInterest) }}</span>
               </template>
               {{ $t("total_interest") }}
             </v-tooltip>
           </v-col>
         </v-row>
       </v-container>
-
       <v-data-table
-        :headers="headers"
-        :items="tableData"
-        dense
-        disable-pagination
-        hide-default-footer
-        show-select
         v-model="selectedPlatforms"
-        item-key="pk"
+        :items="tableData"
+        item-value="pk"
+        :headers="headers"
+        show-select
         v-if="!(loading || preparingData)"
+        items-per-page="-1"
       >
-        <template #item.titleCount="{ item }">
+        <template #[`item.titleCount`]="{ item }">
           {{ formatInteger(item.titleCount) }}
         </template>
-        <template #item.titleInterest="{ item }">
+        <template #[`item.titleInterest`]="{ item }">
           {{ formatInteger(item.titleInterest) }}
         </template>
-        <template #item.uniqueInterest="{ item }">
+        <template #[`item.uniqueInterest`]="{ item }">
           {{ formatInteger(item.uniqueInterest) }}
         </template>
-        <template #item.uniqueTitleCount="{ item }">
+        <template #[`item.uniqueTitleCount`]="{ item }">
           {{ formatInteger(item.uniqueTitleCount) }}
         </template>
+        <template #bottom></template>
       </v-data-table>
     </div>
   </div>
@@ -205,28 +207,33 @@ export default {
     headers() {
       return [
         {
-          text: this.$t("labels.platform"),
+          title: this.$t("labels.platform"),
           value: "platform",
+          key: "platform",
         },
         {
-          text: this.$t("labels.title_count"),
+          title: this.$t("labels.title_count"),
           value: "titleCount",
-          align: "right",
+          key: "titleCount",
+          align: "end",
         },
         {
-          text: this.$t("unique_title_count"),
+          title: this.$t("unique_title_count"),
           value: "uniqueTitleCount",
-          align: "right",
+          key: "uniqueTitleCount",
+          align: "end",
         },
         {
-          text: this.$t("title_interest"),
+          title: this.$t("title_interest"),
           value: "titleInterest",
-          align: "right",
+          key: "titleInterest",
+          align: "end",
         },
         {
-          text: this.$t("unique_title_interest"),
+          title: this.$t("unique_title_interest"),
           value: "uniqueInterest",
-          align: "right",
+          key: "uniqueInterest",
+          align: "end",
         },
       ];
     },
@@ -247,9 +254,7 @@ export default {
       return out;
     },
     selectedTitles() {
-      const selectedPks = new Set(
-        this.selectedPlatforms.map((item) => item.pk)
-      );
+      const selectedPks = new Set(this.selectedPlatforms.map((item) => item));
       let selectedTitles = new Set();
       this.platformTitles.forEach((titles, pk) => {
         const pkint = parseInt(pk);
@@ -266,22 +271,22 @@ export default {
       });
       let distinctInterests = new Map();
       this.platformsList.forEach((platform) =>
-        distinctInterests.set(platform.pk, platform.distinctTitleInterest)
+        distinctInterests.set(platform.pk, platform.distinctTitleInterest),
       );
       interest += this.selectedPlatforms
-        .map((item) => distinctInterests.get(item.pk) ?? 0)
+        .map((item) => distinctInterests.get(item) ?? 0)
         .reduce((x, y) => x + y, 0);
       return interest;
     },
     selectedTitleCount() {
       let distinctCounts = new Map();
       this.platformsList.forEach((platform) =>
-        distinctCounts.set(platform.pk, platform.distinctTitleCount)
+        distinctCounts.set(platform.pk, platform.distinctTitleCount),
       );
       return (
         this.selectedTitles.size +
         this.selectedPlatforms
-          .map((item) => distinctCounts.get(item.pk) ?? 0)
+          .map((item) => distinctCounts.get(item) ?? 0)
           .reduce((x, y) => x + y, 0)
       );
     },
@@ -346,7 +351,7 @@ export default {
         },
         pointer: {
           itemStyle: {
-            color: "auto",
+            color: "inherit",
           },
         },
         axisLabel: { show: false },
@@ -361,7 +366,7 @@ export default {
           formatter: function (value) {
             return Math.round(value * 1000) / 10 + " %";
           },
-          color: "auto",
+          color: "inherit",
         },
         axisTick: {
           distance: -20,
@@ -470,17 +475,15 @@ export default {
       this.platformsList = []; // zero-out the current data
       try {
         let result = await axios.get(this.platformsUrl);
-        this.platformsList = result.data;
-        this.platformsList
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .forEach((platform) => {
-            this.$set(platform, "distinctTitleCount", 0);
-            this.$set(platform, "distinctTitleInterest", 0);
-          });
-        this.selectedPlatforms = this.platformsList.map((item) => {
-          return {
-            pk: item.pk,
-          };
+        this.platformsList = result.data
+          .map((platform) => ({
+            ...platform,
+            distinctTitleCount: 0,
+            distinctTitleInterest: 0,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        this.selectedPlatforms = this.tableData.map((item) => {
+          return item.pk;
         });
         this.loadingPlatform = false;
         await this.prepareData();
@@ -513,7 +516,7 @@ export default {
           if (allTitles) {
             this.platformTitles.set(
               platform.pk,
-              allTitles.filter((item) => !uniqueTitleSet.has(item))
+              allTitles.filter((item) => !uniqueTitleSet.has(item)),
             );
           }
         }
@@ -542,9 +545,7 @@ export default {
       // if selectedOnly is true, the calculation is performed only for selected platforms. This is what we want
       // during normal computation. But when preparing data after load, we need to use all platforms,
       // regardless if they are selected
-      const selectedPks = new Set(
-        this.selectedPlatforms.map((item) => item.pk)
-      );
+      const selectedPks = new Set(this.selectedPlatforms.map((item) => item));
       if (selectedOnly === false || selectedPks.has(platform.pk)) {
         const myTitles = this.platformTitles.get(platform.pk);
         if (!myTitles) {

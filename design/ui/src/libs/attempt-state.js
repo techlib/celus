@@ -54,11 +54,11 @@ function attemptStateToIcon(state) {
     case ATTEMPT_EMPTY_DATA:
       return { color: "success", icon: "far fa-circle" };
     case ATTEMPT_ERROR:
-      return { color: "red lighten-2", icon: "fa-exclamation-circle" };
+      return { color: "red lighten-2", icon: "fa fa-exclamation-circle" };
     case ATTEMPT_AWAITING_IMPORT:
-      return { color: "blue", icon: "fa-cog fa-spin" };
+      return { color: "blue", icon: "fa fa-cog fa-spin" };
     case ATTEMPT_IMPORT_FAILED:
-      return { color: "error", icon: "fa-cog" };
+      return { color: "error", icon: "fa fa-cog" };
     case ATTEMPT_PARTIAL_DATA:
       return { color: "warning", icon: "fas fa-exclamation-triangle" };
     case ATTEMPT_NOT_USED:

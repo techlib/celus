@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   add: Add annotation
@@ -13,24 +14,28 @@ cs:
 
 <template>
   <div v-if="annotations.length">
-    <v-expansion-panels v-model="panel" multiple accordion>
+    <v-expansion-panels v-model="panel" multiple variant="accordion">
       <v-expansion-panel v-for="annot in annotations" :key="annot.pk">
-        <v-expansion-panel-header>
+        <v-expansion-panel-title>
           <span>
             <v-icon
               v-if="annot.level === 'important'"
               color="warning"
               class="mr-3"
-              small
-              >fa-exclamation-triangle</v-icon
-            >
-            <v-icon v-else color="info" class="mr-3" small
-              >fa-info-circle</v-icon
-            >
+              size="small"
+              icon="fa fa-exclamation-triangle"
+            ></v-icon>
+            <v-icon
+              v-else
+              color="info"
+              class="mr-3"
+              size="small"
+              icon="fa fa-info-circle"
+            ></v-icon>
             <span>{{ annot.subject }}</span>
           </span>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
+        </v-expansion-panel-title>
+        <v-expansion-panel-text>
           <v-row>
             <v-col>
               <table class="overview">
@@ -63,25 +68,26 @@ cs:
               <p v-text="annot.message" v-if="annot.message"></p>
             </v-col>
             <v-col cols="auto" v-if="allowAdd">
-              <v-tooltip bottom v-if="annot.can_edit">
-                <template v-slot:activator="{ on }">
+              <v-tooltip location="bottom" v-if="annot.can_edit">
+                <template v-slot:activator="{ props }">
                   <v-btn
                     color="blue"
                     fab
                     dark
-                    small
-                    v-on="on"
+                    size="small"
+                    v-bind="props"
+                    icon="fas fa-edit"
                     @click="startEditAnnotation(annot)"
-                    ><v-icon small>fa-edit</v-icon></v-btn
-                  >
+                    ><v-icon size="small"></v-icon
+                  ></v-btn>
                 </template>
                 {{ $t("edit") }}
               </v-tooltip>
-              <v-tooltip bottom v-else>
-                <template v-slot:activator="{ on }">
-                  <span v-on="on">
-                    <v-btn disabled fab small
-                      ><v-icon small>fa-edit</v-icon></v-btn
+              <v-tooltip v-else location="bottom">
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props">
+                    <v-btn disabled fab size="small"
+                      ><v-icon size="small">fa-edit</v-icon></v-btn
                     >
                   </span>
                 </template>
@@ -89,13 +95,13 @@ cs:
               </v-tooltip>
             </v-col>
           </v-row>
-        </v-expansion-panel-content>
+        </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
     <div v-if="allowAdd">
       <v-dialog v-model="showAddDialog" max-width="1240px">
         <v-card>
-          <v-card-title v-text="$t('edit')"></v-card-title>
+          <v-card-title>{{ $t("edit") }}</v-card-title>
           <v-card-text>
             <AnnotationCreateModifyWidget
               :platform="platform"
@@ -104,7 +110,7 @@ cs:
               @saved="annotationSaved()"
               @cancel="cancelEdit()"
               @deleted="annotationSaved()"
-            />
+            ></AnnotationCreateModifyWidget>
           </v-card-text>
         </v-card>
       </v-dialog>

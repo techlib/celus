@@ -21,10 +21,11 @@ cs:
   checked: Váš email stále není ověřen
   close: Zavřít
 </i18n>
+
 <template>
   <v-app>
     <v-row justify="center">
-      <v-dialog :value="true" persistent max-width="600">
+      <v-dialog persistent max-width="600" :model-value="true">
         <v-card class="py-2">
           <v-card-title class="text-h5 mb-2">
             {{ $t("heading") }}
@@ -32,13 +33,11 @@ cs:
           <v-card-text>
             {{ $t("info_text") }}
           </v-card-text>
-
           <v-card-text class="text-caption">
             <span>{{ $t("ask_for_help") }}</span
-            >&nbsp;<a :href="emailLink">{{ contactEmail }}</a>
+            > <a :href="emailLink">{{ contactEmail }}</a>
             <span>.</span>
           </v-card-text>
-
           <v-card-actions class="mt-2">
             <v-btn
               class="secondary"
@@ -61,7 +60,7 @@ cs:
       <v-snackbar v-model="snackbarShow" :color="snackbarColor">
         {{ snackbarText }}
         <template #action="{ attrs }">
-          <v-btn dark text @click="snackbarHide" v-bind="attrs">{{
+          <v-btn dark variant="text" @click="snackbarHide" v-bind="attrs">{{
             $t("close")
           }}</v-btn>
         </template>
@@ -156,7 +155,7 @@ export default {
       }
     }, 5000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this.loadUserDataInterval);
   },
 };

@@ -1,6 +1,9 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/annotations.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   all: All
@@ -16,12 +19,13 @@ cs:
           <v-autocomplete
             v-model="organizationId"
             :items="organizations"
-            item-text="name"
+            item-title="name"
             item-value="pk"
             :label="$t('organization')"
           >
-            <template v-slot:item="{ item }">
-              <span :class="{ bold: item.extra }">{{ item.name }}</span>
+            <template v-slot:item="{ item, props }">
+              <v-list-item v-bind="props" :class="{ bold: item.raw.extra }">
+              </v-list-item>
             </template>
           </v-autocomplete>
         </v-col>
@@ -29,67 +33,78 @@ cs:
           <v-autocomplete
             v-model="platformId"
             :items="availablePlatforms"
-            item-text="name"
             item-value="pk"
+            item-title="name"
             :loading="loadingPlatforms"
             :disabled="fixPlatform && platform !== null"
             :label="$t('platform')"
           >
-            <template v-slot:item="{ item }">
-              <span :class="{ bold: item.extra }">{{ item.name }}</span>
+            <template v-slot:item="{ item, props }">
+              <v-list-item v-bind="props" :class="{ bold: item.raw.extra }">
+              </v-list-item>
             </template>
           </v-autocomplete>
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="auto">
+        <v-col>
           <v-menu
             v-model="startDateMenu"
             :close-on-content-click="false"
             :nudge-right="40"
             transition="scale-transition"
             offset-y
-            min-width="290px"
+            min-width="auto"
+            color="primary"
           >
-            <template v-slot:activator="{ on }">
+            <template v-slot:activator="{ props }">
               <v-text-field
-                v-model="startDate"
+                style="min-width: 200px"
+                v-model="formattedStartDateComputed"
                 :label="$t('title_fields.start_date')"
-                prepend-icon="fa-calendar"
+                prepend-icon="fa fa-calendar"
                 readonly
-                v-on="on"
+                v-bind="props"
               ></v-text-field>
             </template>
-            <v-date-picker
+            <VueDatePicker
               v-model="startDate"
-              no-title
               :locale="$i18n.locale"
-            ></v-date-picker>
+              :enable-time-picker="false"
+              :max-date="endDate"
+              inline
+              auto-apply
+            ></VueDatePicker>
           </v-menu>
         </v-col>
-        <v-col cols="auto">
+        <v-col>
           <v-menu
             v-model="endDateMenu"
             :close-on-content-click="false"
             :nudge-right="40"
             transition="scale-transition"
             offset-y
-            min-width="290px"
+            min-width="auto"
+            color="primary"
           >
-            <template v-slot:activator="{ on }">
+            <template v-slot:activator="{ props }">
               <v-text-field
-                v-model="endDate"
+                style="min-width: 200px"
+                v-model="formattedEndDateComputed"
                 :label="$t('title_fields.end_date')"
-                prepend-icon="fa-calendar"
+                prepend-icon="fa fa-calendar"
                 readonly
-                v-on="on"
+                v-bind="props"
               ></v-text-field>
             </template>
-            <v-date-picker
+            <VueDatePicker
               v-model="endDate"
-              no-title
+              :enable-time-picker="false"
               :locale="$i18n.locale"
-            ></v-date-picker>
+              :min-date="startDate"
+              inline
+              auto-apply
+            ></VueDatePicker>
           </v-menu>
         </v-col>
         <v-spacer></v-spacer>
@@ -98,18 +113,27 @@ cs:
             :items="importanceLevels"
             :label="$t('annotations.labels.level')"
             v-model="level"
+            item-title="text"
+            style="min-width: 245px"
           >
-            <template v-slot:item="{ item }">
-              <v-icon small class="mr-2" :color="item.color">{{
-                item.icon
-              }}</v-icon>
-              {{ item.text }}
+            <template v-slot:item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon size="small" class="mr-2" :color="item.raw.color">{{
+                    item.raw.icon
+                  }}</v-icon>
+                </template>
+              </v-list-item>
             </template>
-            <template v-slot:selection="{ item }">
-              <v-icon small class="mr-2" :color="item.color">{{
-                item.icon
-              }}</v-icon>
-              {{ item.text }}
+            <template v-slot:selection="{ props, item }">
+              <v-icon
+                size="small"
+                class="mr-2"
+                :color="item.raw.color"
+                v-bind="props"
+                >{{ item.raw.icon }}</v-icon
+              >
+              {{ item.raw.text }}
             </template>
           </v-select>
         </v-col>
@@ -142,7 +166,6 @@ cs:
             v-model="shortMessageCs"
             :label="$t('annotations.labels.short_message') + inCs"
             rows="2"
-            outlined
             auto-grow
           >
           </v-textarea>
@@ -152,8 +175,8 @@ cs:
             v-model="shortMessageEn"
             :label="$t('annotations.labels.short_message') + inEn"
             rows="2"
-            outlined
             auto-grow
+            color="primary"
           >
           </v-textarea>
         </v-col>
@@ -164,8 +187,8 @@ cs:
             v-model="messageCs"
             :label="$t('annotations.labels.message') + inCs"
             rows="4"
-            outlined
             auto-grow
+            color="primary"
           >
           </v-textarea>
         </v-col>
@@ -174,8 +197,8 @@ cs:
             v-model="messageEn"
             :label="$t('annotations.labels.message') + inEn"
             rows="4"
-            outlined
             auto-grow
+            color="primary"
           >
           </v-textarea>
         </v-col>
@@ -183,17 +206,19 @@ cs:
       <v-row>
         <v-spacer></v-spacer>
         <v-col cols="auto">
-          <v-btn @click="$emit('cancel')" v-text="$t('cancel')"></v-btn>
+          <v-btn @click="$emit('cancel')" color="defaultButton">{{
+            $t("cancel")
+          }}</v-btn>
         </v-col>
         <v-col cols="auto" v-if="showDeleteButton && annotationId">
           <v-btn @click="deleteAnnotation()" color="error">
-            <v-icon small class="mr-2">fa-trash</v-icon>
+            <v-icon size="small" class="mr-2">fa fa-trash</v-icon>
             {{ $t("delete") }}
           </v-btn>
         </v-col>
         <v-col cols="auto">
           <v-btn :disabled="saving || !valid" color="primary" type="submit">
-            <v-icon small class="mr-2">fa-save</v-icon>
+            <v-icon size="small" class="mr-2">fas fa-save</v-icon>
             {{ $t("save") }}
           </v-btn>
         </v-col>
@@ -251,21 +276,21 @@ export default {
         {
           value: "info",
           text: this.$t("annotations.labels.level_info"),
-          icon: "fa-info-circle",
+          icon: "fa fa-info-circle",
           color: "info",
         },
         {
           value: "important",
           text: this.$t("annotations.labels.level_important"),
-          icon: "fa-exclamation-triangle",
+          icon: "fa fa-exclamation-triangle",
           color: "warning",
         },
       ];
     },
     annotationData() {
       let data = {
-        start_date: this.startDate,
-        end_date: this.endDate,
+        start_date: this.formattedStartDateComputed || null,
+        end_date: this.formattedEndDateComputed || null,
         subject_cs: this.subjectCs,
         subject_en: this.subjectEn,
         short_message_cs: this.shortMessageCs,
@@ -289,8 +314,8 @@ export default {
       return null;
     },
     availablePlatforms() {
-      let result = this.platforms.sort((a, b) =>
-        a.name ? a.name.localeCompare(b.name) : -1
+      let result = [...this.platforms].sort((a, b) =>
+        a.name ? a.name.localeCompare(b.name) : -1,
       );
       result.unshift({ name: this.$t("all"), pk: null, extra: true });
       return result;
@@ -303,6 +328,12 @@ export default {
     },
     inCs() {
       return this.showCs ? ` (${this.$t("in_czech")})` : "";
+    },
+    formattedStartDateComputed() {
+      return this.formatDateToDDMMYYYY(this.startDate);
+    },
+    formattedEndDateComputed() {
+      return this.formatDateToDDMMYYYY(this.endDate);
     },
   },
 
@@ -317,12 +348,23 @@ export default {
         this.postData();
       }
     },
+    formatDateToDDMMYYYY(date) {
+      if (!date) return "";
+      if (typeof date === "object") {
+        const Day = String(date.getDate()).padStart(2, "0");
+        const Month = String(date.getMonth() + 1).padStart(2, "0");
+        const Year = String(date.getFullYear());
+        return `${Year}-${Month}-${Day}`;
+      } else {
+        return date;
+      }
+    },
     async postData() {
       this.saving = true;
       try {
         let response = await axios.post(
           "/api/annotations/",
-          this.annotationData
+          this.annotationData,
         );
         this.annotationId = response.data.pk;
         this.$emit("saved", { annotation: response.data });
@@ -344,7 +386,7 @@ export default {
       try {
         let response = await axios.put(
           `/api/annotations/${this.annotationId}/`,
-          this.annotationData
+          this.annotationData,
         );
         this.annotationId = response.data.pk;
         this.$emit("saved", { annotation: response.data });
@@ -403,7 +445,7 @@ export default {
       if (this.annotationId) {
         try {
           let response = await axios.delete(
-            `/api/annotations/${this.annotationId}/`
+            `/api/annotations/${this.annotationId}/`,
           );
           this.showSnackbar({
             content: this.$t("annotations.messages.annotation_deleted"),
@@ -446,6 +488,12 @@ export default {
       if (this.availablePlatformsUrl) {
         this.fetchPlatforms();
       }
+    },
+    startDate(newDate) {
+      this.formattedStartDate = this.formatDateToDDMMYYYY(newDate);
+    },
+    endDate(newDate) {
+      this.formattedEndDate = this.formatDateToDDMMYYYY(newDate);
     },
   },
 

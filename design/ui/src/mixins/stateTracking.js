@@ -67,7 +67,7 @@ export default {
               default:
                 this[attr.name] = value;
                 console.warn(
-                  `the attribute \`type\` of item \`${attr.name}\` in \`watchedAttrs\` has not been recognized, thus the \`trackedState\` might not be working properly.`
+                  `the attribute \`type\` of item \`${attr.name}\` in \`watchedAttrs\` has not been recognized, thus the \`trackedState\` might not be working properly.`,
                 );
             }
           }
@@ -99,7 +99,7 @@ export default {
             this.$router.resolve({
               path: this.$route.path,
               query: toBase64Object(newVal),
-            }).href
+            }).href,
           );
         }
       },

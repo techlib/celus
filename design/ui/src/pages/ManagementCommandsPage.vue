@@ -1,15 +1,15 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
   <v-container fluid>
     <v-row>
       <v-col>
-        <h2 v-text="$t('pages.management_commands')"></h2>
+        <h2>{{ $t("pages.management_commands") }}</h2>
       </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <ManagementCommandList />
+        <ManagementCommandList></ManagementCommandList>
       </v-col>
     </v-row>
   </v-container>

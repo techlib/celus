@@ -94,11 +94,11 @@ function intentionState(intention) {
 function intentionStateToIcon(state) {
   switch (state) {
     case INTENTION_RUNNING:
-      return { icon: "fa-spinner fa-spin", color: "blue" };
+      return { icon: "fa fa-spinner fa-spin", color: "blue" };
     case INTENTION_DELETED:
-      return { icon: "fa-trash", color: "grey" };
+      return { icon: "fa fa-trash", color: "grey" };
     case INTENTION_BROKEN:
-      return { icon: "fa-bug", color: "error" };
+      return { icon: "fa fa-bug", color: "error" };
     case INTENTION_QUEUED:
       return { icon: "far fa-pause-circle", color: "grey" };
     case INTENTION_WAITING:

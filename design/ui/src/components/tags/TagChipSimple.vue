@@ -1,16 +1,15 @@
 <template>
   <v-chip
-    :small="small"
-    :key="tag.pk"
-    :color="color"
-    :text-color="tag.text_color"
-    :outlined="outlined"
+    :size="small ? 'small' : 'default'"
+    :key="'raw' in tag ? tag.raw.pk : tag.pk"
+    :color="'raw' in tag ? tag.raw.bg_color : tag.bg_color"
+    variant="flat"
     class="pt-0"
-    :close="removable"
+    :closable="removable"
     :to="to"
     @click:close="close"
   >
-    <v-icon x-small class="pr-2" v-if="!hideIcon && !showClass"
+    <v-icon size="x-small" class="mr-2" v-if="!hideIcon && !showClass"
       >fa fa-tag</v-icon
     >
     <span
@@ -21,11 +20,12 @@
       }"
       class="chip-class"
       :class="{ small: small }"
-      >{{ tag.tag_class.name }}</span
+      >{{ "raw" in tag ? tag.raw.tag_class.name : tag.tag_class.name }}</span
     >
     {{ text }}
   </v-chip>
 </template>
+
 <script>
 import color from "color";
 
@@ -66,7 +66,11 @@ export default {
 
   computed: {
     text() {
-      return this.tag.name;
+      if ("raw" in this.tag) {
+        return this.tag.raw.name;
+      } else {
+        return this.tag.name;
+      }
     },
     color() {
       if (this.tag.bg_color === "#FFFFFF") {
@@ -79,36 +83,69 @@ export default {
     },
     classBgColor() {
       // class colors are reversed from normal colors
-      const bgc = color(this.tag.text_color);
-      const txc = color(this.tag.bg_color);
+      let bgc = null;
+      let txc = null;
+      if ("raw" in this.tag) {
+        bgc = color(this.tag.raw.text_color);
+        txc = color(this.tag.raw.bg_color);
+      } else {
+        bgc = color(this.tag.text_color);
+        txc = color(this.tag.bg_color);
+      }
       if (
         txc.contrast(bgc) < 8 &&
         txc.contrast(bgc) < txc.contrast(color("#FFFFFF"))
       ) {
         return "#FFFFFF";
       }
-      return this.tag.text_color;
+      return "raw" in this.tag ? this.tag.raw.text_color : this.tag.text_color;
     },
     classTextColor() {
       const bgc = color(this.classBgColor);
-      const txc = color(this.tag.bg_color);
+      const txc = color(
+        "raw" in this.tag ? this.tag.raw.bg_color : this.tag.bg_color,
+      );
       if (
         txc.contrast(bgc) < 8 &&
         bgc.contrast(txc) < bgc.contrast(color("#FFFFFF"))
       ) {
         return "#FFFFFF";
+      } else {
+        if ("raw" in this.tag) {
+          return this.tag.raw.bg_color;
+        } else {
+          return this.tag.bg_color;
+        }
       }
-      return this.tag.bg_color;
     },
     to() {
       if (this.link) {
-        switch (this.tag.tag_class.scope) {
+        switch (
+          "raw" in this.tag
+            ? this.tag.raw.tag_class.scope
+            : this.tag.tag_class.scope
+        ) {
           case "title":
-            return { name: "title-list", query: { tags: this.tag.pk } };
+            return {
+              name: "title-list",
+              query: {
+                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+              },
+            };
           case "organization":
-            return { name: "organization-list", query: { tags: this.tag.pk } };
+            return {
+              name: "organization-list",
+              query: {
+                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+              },
+            };
           case "platform":
-            return { name: "platform-list", query: { tags: this.tag.pk } };
+            return {
+              name: "platform-list",
+              query: {
+                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+              },
+            };
         }
       }
       return null;
@@ -117,7 +154,9 @@ export default {
 
   methods: {
     close() {
-      this.$emit("remove", { tagId: this.tag.pk });
+      this.$emit("remove", {
+        tagId: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+      });
     },
   },
 };
@@ -134,6 +173,7 @@ export default {
 
   &.small {
     line-height: 20px;
+    margin: 0 8px 0 -7px !important;
   }
 }
 </style>

@@ -2,10 +2,13 @@
 
 <template>
   <span>
-    <v-icon x-small :color="iconColor" class="pb-1">{{ iconName }}</v-icon>
+    <v-icon size="x-small" :color="iconColor" class="pb-1">{{
+      iconName
+    }}</v-icon>
     {{ $t(scope) }}
   </span>
 </template>
+
 <script>
 export default {
   name: "TagClassScopeWidget",
@@ -23,10 +26,10 @@ export default {
   computed: {
     iconName() {
       return this.scope === "title"
-        ? "fa-copy"
+        ? "far fa-copy"
         : this.scope === "platform"
-          ? "fa-list-alt"
-          : "fa-university";
+          ? "fa fa-list-alt"
+          : "fa fa-university";
     },
   },
 };

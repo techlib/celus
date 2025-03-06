@@ -1,6 +1,9 @@
-<i18n lang="yaml" src="@/locales/common.yaml" />
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   run_report: Run report
@@ -95,31 +98,28 @@ cs:
 
 <template>
   <v-container fluid>
-    <ReportLoadingWidget v-if="loading" />
+    <ReportLoadingWidget v-if="loading"></ReportLoadingWidget>
     <div v-else>
-      <v-form v-model="headerFormValid">
+      <v-form>
         <v-row v-if="wantsSave">
           <v-col cols="12" md="8">
-            <h2 class="font-weight-light text-h5 pt-4" v-if="readOnly">
-              {{ reportName }}
-            </h2>
             <v-text-field
-              v-else
+              :disabled="readOnly"
               v-model="reportName"
               class="font-weight-light text-h5"
               :label="$t('report_title')"
               :rules="wantsSave ? [rules.required] : []"
               ref="titleField"
-            />
+            ></v-text-field>
           </v-col>
           <v-col>
             <AccessLevelSelector
-              :value="accessLevel"
               ref="accessLevel"
               :owner-organization="ownerOrganization"
               :disabled="readOnly"
-              @change="updateAccessLevel"
-            />
+              :model-value="accessLevel"
+              @update:modelValue="updateAccessLevel"
+            ></AccessLevelSelector>
           </v-col>
         </v-row>
       </v-form>
@@ -132,12 +132,14 @@ cs:
               :rules="[ruleNotEmpty]"
               :label="$t('labels.report_type')"
               item-value="pk"
-              item-text="name"
+              item-title="name"
               multiple
               chips
-              deletable-chips
+              style="min-width: 265px"
+              closable-chips
+              class="report_type"
               :disabled="readOnly"
-            />
+            ></v-autocomplete>
           </v-col>
           <v-col
             class="align-self-center"
@@ -155,7 +157,8 @@ cs:
               v-model="splitBy"
               :label="$t('split_to_parts')"
               :items="[{ id: null, name: $t('dont_split') }, ...possibleRows]"
-              item-text="name"
+              item-title="name"
+              style="min-width: 265px"
               item-value="id"
               :disabled="readOnly"
             ></v-select>
@@ -165,40 +168,40 @@ cs:
             cols="auto"
             class="align-self-center"
           >
-            <v-tooltip bottom>
-              <template #activator="{ on }">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
                 <v-btn
                   elevation="2"
                   fab
-                  small
+                  size="small"
                   color="primary"
                   @click="edit = true"
-                  v-on="on"
+                  v-bind="props"
                 >
-                  <v-icon small>fa fa-edit</v-icon>
+                  <v-icon size="small">fa fa-edit</v-icon>
                 </v-btn>
               </template>
               {{ $t("unlock_tt") }}
             </v-tooltip>
           </v-col>
         </v-row>
-
         <v-row v-if="reportViews.length">
           <v-col>
             {{ $t("apply_standard_filters") }}:
             <v-tooltip
-              bottom
               max-width="600px"
               v-for="view in reportViews"
               :key="view.pk"
+              location="bottom"
             >
-              <template #activator="{ on }">
+              <template #activator="{ props }">
                 <v-btn
-                  v-on="on"
                   @click="applyView(view)"
                   class="ms-2"
                   color="primary"
-                  small
+                  size="small"
+                  :disabled="readOnly"
+                  v-bind="props"
                 >
                   {{ view.short_name }}
                 </v-btn>
@@ -219,56 +222,60 @@ cs:
                   v-model="watchedRow"
                   hide-details
                   class="mt-1"
+                  density="compact"
                   :disabled="!reportTypeSelected || readOnly"
                 >
                   <v-radio
                     v-for="row in possibleRows"
                     :label="row.name"
-                    :value="row.id"
                     :key="row.id"
+                    color="primary"
                     :disabled="
                       row.id === splitBy ||
                       (row.id.startsWith('date') && trendMode)
                     "
+                    :value="row.id"
                   ></v-radio>
                 </v-radio-group>
               </v-card-text>
             </v-card>
           </v-col>
-
           <v-col>
             <v-card class="pa-2 fill-height">
-              <v-card-title class="pt-2"
+              <v-card-title
+                class="d-flex pt-2 justify-space-between align-start mb-1"
                 >{{ $t("labels.columns") }}
                 <v-switch
                   v-model="trendMode"
                   :label="$t('trend_mode.trend_mode')"
-                  class="text-caption float-right ms-auto pb-1 pt-0 mt-1"
-                  dense
+                  class="text-caption align-end ml-4 pt-0 d-flex justify-end"
+                  density="compact"
+                  style="min-width: 100px"
+                  color="primary"
                   hide-details
-                />
+                ></v-switch>
               </v-card-title>
               <v-card-text>
                 <div v-if="trendMode">
-                  <div class="pt-4">
+                  <div class="pt-4" style="min-width: 260px">
                     <h4>{{ $t("trend_mode.base_period") }}</h4>
                     <FromToMonthEntry
                       v-model="tmBaseDateRange"
                       :clearable="false"
-                    />
+                    ></FromToMonthEntry>
                   </div>
                   <div class="pt-6">
                     <h4>{{ $t("trend_mode.compared_period") }}</h4>
                     <FromToMonthEntry
                       v-model="tmComparedDateRange"
                       :clearable="false"
-                    />
+                    ></FromToMonthEntry>
                   </div>
                   <v-alert
                     v-if="baseSubsetPeriodLength !== comparedSubsetPeriodLength"
                     type="warning"
                     class="mt-4"
-                    outlined
+                    variant="outlined"
                   >
                     {{ $t("trend_mode.period_length_warning") }}
                   </v-alert>
@@ -278,10 +285,10 @@ cs:
                     v-for="item in possibleRows"
                     v-model="columns"
                     :label="item.name"
-                    :value="item.id"
-                    dense
+                    density="compact"
                     hide-details
-                    class="mt-1"
+                    color="primary"
+                    class="mt-0"
                     :disabled="
                       item.id === row ||
                       item.id === splitBy ||
@@ -291,11 +298,16 @@ cs:
                       (item.id === 'date__year' && columns.includes('date'))
                     "
                     :key="item.id"
+                    :value="item.id"
                   >
                     <template #append v-if="columns.includes(item.id)">
-                      <v-tooltip bottom max-width="320px">
-                        <template #activator="{ on }">
-                          <v-chip small outlined color="secondary" v-on="on"
+                      <v-tooltip location="bottom" max-width="320px">
+                        <template #activator="{ props }">
+                          <v-chip
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            v-bind="props"
                             >{{ columns.indexOf(item.id) + 1 }}
                           </v-chip>
                         </template>
@@ -307,10 +319,9 @@ cs:
               </v-card-text>
             </v-card>
           </v-col>
-
           <v-col>
             <v-card class="pa-2">
-              <v-card-title class="pt-2"
+              <v-card-title class="pt-2 mb-1"
                 >{{ $t("labels.filters") }}
               </v-card-title>
               <v-card-text>
@@ -318,10 +329,10 @@ cs:
                   <v-checkbox
                     v-model="filters"
                     :label="row.name"
-                    :value="row.id"
-                    dense
+                    color="primary"
+                    density="compact"
                     hide-details
-                    class="mt-1"
+                    class="mt-0"
                     :disabled="
                       row.id === 'report_type' ||
                       (row.id === 'date' && filters.includes('date__year')) ||
@@ -330,18 +341,28 @@ cs:
                       !reportTypeSelected ||
                       readOnly
                     "
+                    :value="row.id"
                   >
                     <template #label>
                       {{ row.name }}
-                      {{ row.id === "target" ? "(" + $t("tags") + ")" : null }}
+                      {{
+                        row.id === "target" ||
+                        row.id === "platform" ||
+                        row.id === "organization"
+                          ? "(" + $t("tags") + ")"
+                          : null
+                      }}
                       <v-tooltip
-                        bottom
+                        location="bottom"
                         v-if="
                           row.id === 'organization' && organizationCount > 1
                         "
                       >
-                        <template #activator="{ on }">
-                          <v-chip small class="ms-2" v-on="on"
+                        <template #activator="{ props }">
+                          <v-chip
+                            size="small"
+                            class="ms-2 chip_in_filter"
+                            v-bind="props"
                             >{{ organizationCount }}
                           </v-chip>
                         </template>
@@ -354,7 +375,6 @@ cs:
             </v-card>
           </v-col>
         </v-row>
-
         <v-row v-if="tagRollUpPossible">
           <v-col>
             <v-card class="pa-2">
@@ -367,8 +387,9 @@ cs:
                     <v-checkbox
                       v-model="tagRollUp"
                       :label="$t('labels.tag_roll_up')"
-                      dense
+                      density="compact"
                       class="mt-1"
+                      color="primary"
                       :disabled="
                         !reportTypeSelected || readOnly || !anyAccessibleTag
                       "
@@ -378,7 +399,7 @@ cs:
                     >
                     </v-checkbox>
                   </v-col>
-                  <v-col md="6" lg="4" sm="7">
+                  <v-col md="6" lg="4" sm="12">
                     <TagClassSelector
                       v-if="tagRollUp"
                       :scope="tagScope"
@@ -386,23 +407,25 @@ cs:
                       :label="$t('tag_class_filter')"
                       :placeholder="$t('no_tag_class_filter')"
                       clearable
+                      style="min-width: 115px"
                       class="ps-8 pt-4 pe-8"
                       :disabled="readOnly"
                       with-visible-tags
-                    />
+                    ></TagClassSelector>
                   </v-col>
                   <v-col cols="auto" md="3" lg="auto">
-                    <v-tooltip bottom v-if="tagRollUp">
-                      <template #activator="{ on }">
-                        <span v-on="on">
+                    <v-tooltip location="bottom" v-if="tagRollUp">
+                      <template #activator="{ props }">
+                        <span v-bind="props">
                           <v-checkbox
                             v-model="showRemainder"
                             :label="$t('tags_show_remainder')"
                             :disabled="readOnly"
-                            dense
+                            density="default"
                             hide-details
+                            color="primary"
                             class="mt-1"
-                          />
+                          ></v-checkbox>
                         </span>
                       </template>
                       {{ $t("tags_show_remainder_tt") }}
@@ -413,7 +436,6 @@ cs:
             </v-card>
           </v-col>
         </v-row>
-
         <v-row v-if="filters.length || coverageData">
           <v-col v-if="filters.length" cols="12" :md="''">
             <v-card class="fill-height">
@@ -440,8 +462,7 @@ cs:
                           :translator="translators.organization"
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
-                        />
-
+                        ></DimensionKeySelector>
                         <template #alt_content>
                           <TagSelector
                             scope="organization"
@@ -449,11 +470,10 @@ cs:
                             :disabled="disableDimValuesSelectors || readOnly"
                             :label="$t('organization_tags')"
                             dont-check-exclusive
-                          />
+                          ></TagSelector>
                         </template>
                       </FilterCard>
                     </v-col>
-
                     <!-- platform -->
                     <v-col
                       cols="12"
@@ -474,8 +494,7 @@ cs:
                           :translator="translators.platform"
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
-                        />
-
+                        ></DimensionKeySelector>
                         <template #alt_content>
                           <TagSelector
                             scope="platform"
@@ -483,11 +502,10 @@ cs:
                             :disabled="disableDimValuesSelectors || readOnly"
                             :label="$t('platform_tags')"
                             dont-check-exclusive
-                          />
+                          ></TagSelector>
                         </template>
                       </FilterCard>
                     </v-col>
-
                     <!-- title -->
                     <v-col
                       cols="12"
@@ -508,8 +526,8 @@ cs:
                           :disabled="disableDimValuesSelectors || readOnly"
                           :label="$t('title_tags')"
                           :tooltip="$t('title_tags_tt')"
-                          dont-check-exclusive />
-
+                          dont-check-exclusive
+                        ></TagSelector>
                         <template #alt_content>
                           <TagClassSelector
                             scope="title"
@@ -519,10 +537,9 @@ cs:
                             :tooltip="$t('title_tag_class_tt')"
                             with-visible-tags
                             clearable
-                          /> </template
+                          ></TagClassSelector> </template
                       ></FilterCard>
                     </v-col>
-
                     <!-- metric -->
                     <v-col
                       cols="12"
@@ -539,10 +556,9 @@ cs:
                           :translator="translators.metric"
                           :disabled="disableDimValuesSelectors"
                           :read-only="readOnly"
-                        />
+                        ></DimensionKeySelector>
                       </FilterCard>
                     </v-col>
-
                     <!-- explicit dimension -->
                     <template v-for="(ed, index) in explicitDims">
                       <v-col
@@ -561,22 +577,21 @@ cs:
                             :translator="translators.explicitDimension"
                             :disabled="disableDimValuesSelectors"
                             :read-only="readOnly"
-                          />
+                          ></DimensionKeySelector>
                         </FilterCard>
                       </v-col>
                     </template>
-
                     <v-col
                       v-if="filters.includes('date')"
                       cols="12"
-                      md="6"
+                      md="7"
                       xl="4"
                     >
                       <FilterCard :title="$t('labels.date')">
                         <FromToMonthEntry
                           v-model="selectedDateRange"
                           :disabled="readOnly"
-                        />
+                        ></FromToMonthEntry>
                       </FilterCard>
                     </v-col>
                     <v-col
@@ -589,7 +604,7 @@ cs:
                         <FromToYearEntry
                           v-model="selectedDateRange"
                           :disabled="readOnly"
-                        />
+                        ></FromToYearEntry>
                       </FilterCard>
                     </v-col>
                   </v-row>
@@ -606,11 +621,11 @@ cs:
           >
             <v-card v-if="coverageData" class="fill-height">
               <v-card-title>
-                <v-tooltip bottom max-width="600px">
-                  <template #activator="{ on }">
-                    <span v-on="on">
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props }">
+                    <span v-bind="props">
                       {{ $t("title_fields.data_coverage") }}
-                      <v-icon color="info" class="pl-2"
+                      <v-icon color="info" class="pl-2" size="small"
                         >fa fa-info-circle</v-icon
                       >
                     </span>
@@ -626,9 +641,12 @@ cs:
                       :tooltip="$t('coverage_base_tt')"
                       :coverage-data="coverageData.base"
                       :elevation="0"
+                      :selectedDateRange="
+                        trendMode ? tmBaseDateRange : selectedDateRange
+                      "
                       clickable
                       @click="goToCoverageOverview"
-                    />
+                    ></CoverageCard>
                   </v-col>
                   <v-col>
                     <CoverageCard
@@ -636,28 +654,31 @@ cs:
                       :tooltip="$t('coverage_compared_tt')"
                       :coverage-data="coverageData.compared"
                       :elevation="0"
+                      :selectedDateRange="
+                        trendMode ? tmComparedDateRange : selectedDateRange
+                      "
                       clickable
                       @click="goToCoverageOverview"
-                    />
+                    ></CoverageCard>
                   </v-col>
                 </v-row>
                 <v-row v-else>
                   <v-col>
                     <CoverageCard
                       :label="$t('labels.total_coverage')"
+                      :selectedDateRange="selectedDateRange"
                       :tooltip="$t('coverage_tt')"
                       :coverage-data="coverageData.overall"
                       :elevation="0"
                       clickable
                       @click="goToCoverageOverview"
-                    />
+                    ></CoverageCard>
                   </v-col>
                 </v-row>
               </v-card-text>
             </v-card>
           </v-col>
         </v-row>
-
         <v-row v-if="warnAgainstMetricSummation">
           <v-col>
             <v-alert type="warning" elevation="2">
@@ -668,18 +689,18 @@ cs:
             </v-alert>
           </v-col>
         </v-row>
-
         <v-row>
           <v-col v-if="!reportRunning" cols="auto">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
                 <v-btn
                   @click="runReport"
                   :disabled="!(formValid && hasGroupBy) || reportRunning"
-                  v-on="on"
+                  v-bind="props"
                   min-width="12rem"
+                  color="defaultButton"
                 >
-                  <v-icon small color="green lighten-2" class="mr-1"
+                  <v-icon size="small" color="green lighten-2" class="mr-1"
                     >fa fa-play
                   </v-icon>
                   {{ $t("run_report") }}
@@ -689,16 +710,16 @@ cs:
             </v-tooltip>
           </v-col>
           <v-col v-if="reportRunning" cols="auto">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
                 <v-btn
                   @click="cancelReport"
                   :disabled="!(hasGroupBy && reportRunning)"
-                  v-on="on"
+                  v-bind="props"
                   min-width="12rem"
                 >
-                  <v-icon small color="red lighten-2" class="mr-1"
-                    >fa-stop
+                  <v-icon size="small" color="red lighten-2" class="mr-1"
+                    >fa fa-stop
                   </v-icon>
                   {{ $t("cancel_report") }}
                 </v-btn>
@@ -708,9 +729,13 @@ cs:
           </v-col>
           <v-col cols="auto">
             <v-menu offset-y class="mb-3">
-              <template v-slot:activator="{ on }">
-                <v-btn v-on="on" :disabled="!(formValid && hasGroupBy)">
-                  <v-icon small color="blue lighten-2" class="mr-1"
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  :disabled="!(formValid && hasGroupBy)"
+                  color="defaultButton"
+                >
+                  <v-icon size="small" color="blue lighten-2" class="mr-1"
                     >fas fa-file-export
                   </v-icon>
                   {{ $t("run_export") }}
@@ -737,35 +762,41 @@ cs:
             <ExportMonitorWidget
               v-if="exportHandle"
               :export-id="exportHandle.pk"
-            />
-            <v-alert v-else-if="exportHint" type="info" outlined dismissible>
-              <i18n path="download_on_separate_page">
+            ></ExportMonitorWidget>
+            <v-alert
+              v-else-if="exportHint"
+              type="info"
+              variant="outlined"
+              dismissible
+            >
+              <i18n-t keypath="download_on_separate_page">
                 <template #exports_page>
                   <router-link :to="{ name: 'exports' }"
                     >{{ $t("pages.exports") }}
                   </router-link>
                 </template>
-              </i18n>
+              </i18n-t>
             </v-alert>
           </v-col>
           <v-col cols="auto">
             <v-alert
               type="warning"
               v-if="!hasGroupBy && selectedReportTypes.length"
-              outlined
+              variant="outlined"
               >{{ $t("select_at_least_one_column_dim") }}
             </v-alert>
           </v-col>
-          <v-col cols="auto">
-            <v-tooltip top max-width="600px">
-              <template #activator="{ on }">
-                <span v-on="on">
+          <v-col cols="auto" class="pt-0">
+            <v-tooltip location="top" max-width="600px">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-switch
                     :label="
                       trendMode
                         ? $t('show_zero_rows_trend_mode')
                         : $t('show_zero_rows')
                     "
+                    color="primary"
                     v-model="showZeroRows"
                     class="mt-0"
                     :disabled="cannotShowZeroRows"
@@ -783,22 +814,23 @@ cs:
               </span>
             </v-tooltip>
           </v-col>
-          <v-col cols="auto" v-if="!trendMode">
+          <v-col cols="auto" class="pt-0" v-if="!trendMode">
             <!-- row totals do not make sense in trend mode -->
             <v-switch
+              color="primary"
               v-model="showTotals"
               :label="$t('show_totals')"
               class="mt-0"
-            />
+            ></v-switch>
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto" v-if="!readOnly">
             <v-btn
               @click="wantsSave ? saveReport() : (showNameEditDialog = true)"
               color="primary"
-              :disabled="!(formValid && headerFormValid && hasGroupBy)"
+              :disabled="!(formValid && hasGroupBy)"
             >
-              <v-icon class="mr-1" small>far fa-hdd</v-icon>
+              <v-icon class="mr-1" size="small">far fa-hdd</v-icon>
               {{
                 reportPk
                   ? $t("actions.save_changes")
@@ -812,19 +844,19 @@ cs:
         <ReportNamingWidget
           :title="$t('name_the_report')"
           :input-label="$t('labels.report_name')"
+          :createNew="true"
           @cancel="showNameEditDialog = false"
           @update="firstSave"
-        />
+        ></ReportNamingWidget>
       </v-dialog>
     </div>
-
     <v-row>
       <v-col>
         <FlexiTableOutput
           v-show="displayReport"
           :show-row-totals="showTotals"
           ref="outputTable"
-        />
+        ></FlexiTableOutput>
       </v-col>
     </v-row>
   </v-container>
@@ -864,7 +896,8 @@ import differenceInCalendarMonths from "date-fns/differenceInCalendarMonths";
 import lastDayOfYear from "date-fns/lastDayOfYear";
 import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
-import goTo from "vuetify/lib/services/goto";
+import { useGoTo } from "vuetify";
+
 import FilterCard from "@/components/reporting/FilterCard.vue";
 import { explicitDimensions } from "@/libs/dimensions";
 
@@ -896,6 +929,11 @@ export default {
 
   props: {
     reportId: { required: false, type: Number, default: null },
+  },
+
+  setup() {
+    const goTo = useGoTo();
+    return { goTo };
   },
 
   data() {
@@ -936,7 +974,6 @@ export default {
       },
       tagRollUp: false,
       formValid: false,
-      headerFormValid: false,
       dateModifier: "__year",
       exportHandle: null,
       exportHint: false,
@@ -960,6 +997,7 @@ export default {
       setupInProgress: false, // when true, some watchers are disabled to prevent many updates
       showNameEditDialog: false,
       coverageData: null,
+      initialLoad: true,
       reportViews: [], // list of standard views associated with selected rt
     };
   },
@@ -1120,7 +1158,7 @@ export default {
     explicitDims() {
       if (this.selectedReportTypes.length === 1) {
         let rts = this.allReportTypes.filter(
-          (item) => item.pk === this.selectedReportTypes[0]
+          (item) => item.pk === this.selectedReportTypes[0],
         );
         let ret = rts[0].dimensionObjs;
         ret.forEach((item) => (item.id = item.ref));
@@ -1130,10 +1168,10 @@ export default {
         // and have the same position (and are represented by the same db column)
         let out = [];
         const rt1 = this.allReportTypes.find(
-          (item) => item.pk === this.selectedReportTypes[0]
+          (item) => item.pk === this.selectedReportTypes[0],
         );
         let others = this.allReportTypes.filter(
-          (item) => this.selectedReportTypes.indexOf(item.pk) > 0
+          (item) => this.selectedReportTypes.indexOf(item.pk) > 0,
         );
         rt1.dimensionObjs.forEach((dim, idx) => {
           if (others.every((rt) => rt.dimensionObjs[idx]?.pk === dim.pk)) {
@@ -1147,7 +1185,7 @@ export default {
     },
     selectedReportTypeObjs() {
       return this.allReportTypes.filter(
-        (item) => this.selectedReportTypes.indexOf(item.pk) >= 0
+        (item) => this.selectedReportTypes.indexOf(item.pk) >= 0,
       );
     },
     reportObject() {
@@ -1261,17 +1299,17 @@ export default {
   },
 
   methods: {
-    goTo() {
-      return goTo;
-    },
+    // goTo() {
+    //   return goTo;
+    // },
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
     ruleRequired(value) {
       return !!value || this.$t("required");
     },
-    ruleNotEmpty(value) {
-      return value.length > 0 || this.$t("not_empty");
+    ruleNotEmpty(modelValue) {
+      return modelValue.length > 0 || this.$t("not_empty");
     },
     cancelReport() {
       this.displayReport = false;
@@ -1327,7 +1365,7 @@ export default {
         this.$refs.outputTable.$data.options.sortBy
       ) {
         this.orderBy = dataTableToDjangoOrderBy(
-          this.$refs.outputTable.$data.options
+          this.$refs.outputTable.$data.options,
         );
       }
     },
@@ -1399,7 +1437,7 @@ export default {
       if (config.filters) {
         // deal with report_type first as it influences much more later
         let rt_filter = config.filters.find(
-          (item) => item.dimension === "report_type"
+          (item) => item.dimension === "report_type",
         );
         if (rt_filter) {
           this.reportTypeSetOnLoad = true;
@@ -1407,11 +1445,11 @@ export default {
           this.selectedDimValues = [];
           if (this.selectedReportTypes.length === 1) {
             let rt = this.allReportTypes.find(
-              (item) => item.pk === this.selectedReportTypes[0]
+              (item) => item.pk === this.selectedReportTypes[0],
             );
             if (rt) {
               rt.dimensions_sorted.forEach(() =>
-                this.selectedDimValues.push([])
+                this.selectedDimValues.push([]),
               );
             }
           }
@@ -1424,7 +1462,7 @@ export default {
           ["platform", "selectedPlatforms"],
         ]);
         for (let filter of config.filters.filter(
-          (item) => item.dimension !== "report_type"
+          (item) => item.dimension !== "report_type",
         )) {
           if (filter.tag_ids) {
             // deal with tag based filtering
@@ -1451,7 +1489,7 @@ export default {
               console.warn("unsupported tag class filter: ", filter);
             }
           } else if (configToAttr.has(filter.dimension)) {
-            this.$set(this, configToAttr.get(filter.dimension), filter.values);
+            this[configToAttr.get(filter.dimension)] = filter.values;
             this.filters.push(filter.dimension);
           } else if (filter.dimension.substring(0, 3) === "dim") {
             this.selectedDimValues[
@@ -1495,7 +1533,7 @@ export default {
       this.trendMode = config.trend_mode ?? false;
       if (config.base_subset_filters) {
         const fltr = config.base_subset_filters.find(
-          (fltr) => fltr.start && fltr.end
+          (fltr) => fltr.start && fltr.end,
         );
         if (fltr) {
           this.tmBaseDateRange = {
@@ -1506,7 +1544,7 @@ export default {
       }
       if (config.compared_subset_filters) {
         const fltr = config.compared_subset_filters.find(
-          (fltr) => fltr.start && fltr.end
+          (fltr) => fltr.start && fltr.end,
         );
         if (fltr) {
           this.tmComparedDateRange = {
@@ -1566,7 +1604,7 @@ export default {
         });
         if (!reply.error) {
           this.reportViews = reply.response.data.filter(
-            (item) => item.is_standard_view
+            (item) => item.is_standard_view,
           );
         }
       }
@@ -1583,7 +1621,6 @@ export default {
         }
         this.selectedMetrics = view.metric_allowed_value_ids;
         filteredDims.push("Metric");
-        console.log("selectedMetrics", this.selectedMetrics);
       }
       // empty all explicit dimension filters
       explicitDimensions.forEach((dim, index) => {
@@ -1595,7 +1632,7 @@ export default {
       // apply filters to explicit dimensions
       for (let df of view.dimension_filters) {
         let expDim = this.explicitDims.findIndex(
-          (dim) => dim.shortName === df.dimension.short_name
+          (dim) => dim.shortName === df.dimension.short_name,
         );
         if (expDim >= 0) {
           const ref = this.explicitDims[expDim].ref;
@@ -1632,10 +1669,13 @@ export default {
       //   * columns = interest type
       if (this.selectedReportTypes.length === 0) {
         const defaultReport = this.allReportTypes.find(
-          (rt) => rt.short_name === "TR"
+          (rt) => rt.short_name === "TR",
         );
         if (defaultReport) {
-          this.selectedReportTypes.push(defaultReport.pk);
+          this.selectedReportTypes = [
+            ...this.selectedReportTypes,
+            defaultReport.pk,
+          ];
           this.row = "platform";
           if (this.organizationSelected) {
             this.filters.push("organization");
@@ -1661,6 +1701,11 @@ export default {
   },
 
   watch: {
+    // possibleRows(newVal) {
+    //   if (this.splitBy && !newVal.includes(this.splitBy)) {
+    //     this.splitBy = null;
+    //   }
+    // },
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
       if (!this.setupInProgress) {
@@ -1677,7 +1722,7 @@ export default {
       this.columns = this.columns.filter((dim) => dim !== this.splitBy);
       if (this.row === this.splitBy) {
         this.row = this.possibleRows.find(
-          (item) => item.id !== this.splitBy
+          (item) => item.id !== this.splitBy,
         ).id;
       }
     },
@@ -1791,6 +1836,17 @@ export default {
   }
 }
 
+.v-selection-control--density-comfortable {
+  --v-selection-control-size: 40px;
+}
+
+.v-chip.v-chip--size-small {
+  padding: 0 12px;
+}
+
+.v-card-title {
+  line-height: 2.5rem;
+}
 .extra-info {
   font-size: 0.75rem;
   font-weight: 300;

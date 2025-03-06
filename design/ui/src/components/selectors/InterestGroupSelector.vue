@@ -2,20 +2,22 @@
 
 <template>
   <v-container fluid>
-    <v-row dense>
+    <v-row density="compact">
       <v-col cols="12">
         <span :class="titleClass">{{ $t("interest_types") }}</span
         >:
       </v-col>
     </v-row>
-    <v-row dense>
+    <v-row density="compact">
       <v-col cols="auto" v-for="ig in interestGroups" :key="ig.pk">
         <v-checkbox
           v-model="selectedGroups"
           class="small-checkbox"
           :label="ig.name"
+          density="compact"
+          hide-details="auto"
+          color="primary"
           :value="ig.short_name"
-          dense
         ></v-checkbox>
       </v-col>
     </v-row>

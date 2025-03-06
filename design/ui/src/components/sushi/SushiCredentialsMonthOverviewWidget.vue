@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   hide_successful: Hide successful rows
@@ -30,49 +32,40 @@ cs:
       <v-container fluid>
         <v-row>
           <v-col cols="6" sm="4" md="3" lg="2">
-            <v-menu
-              v-model="showMonthMenu"
-              transition="scale-transition"
-              offset-y
-            >
-              <template v-slot:activator="{ on }">
+            <DatePicker v-model="selectedDatePicker" :max-date="lastMonth + 1">
+              <template v-slot:activator="{ props }">
                 <v-text-field
-                  v-model="selectedMonth"
+                  v-model="SelectedDateText"
                   :label="$t('month')"
-                  prepend-icon="fa-calendar"
+                  prepend-icon="fa fa-calendar"
                   readonly
-                  v-on="on"
+                  v-bind="props"
+                  style="min-width: 170px"
                 >
                   <template #prepend-inner>
-                    <IconButton @click="shiftMonth(-1)"
-                      >fa-caret-left
+                    <IconButton @click.stop="shiftMonth(-1)"
+                      >fa fa-caret-left
                     </IconButton>
                   </template>
-                  <template #append>
+                  <template #append-inner>
                     <IconButton
-                      @click="shiftMonth(1)"
-                      :disabled="selectedMonth >= lastMonth"
-                      >fa-caret-right
+                      @click.stop="shiftMonth(1)"
+                      :disabled="SelectedDateText >= lastMonth"
+                    >
+                      fa fa-caret-right
                     </IconButton>
                   </template>
                 </v-text-field>
               </template>
-              <v-date-picker
-                v-model="selectedMonth"
-                type="month"
-                no-title
-                :locale="$i18n.locale"
-                :allowed-dates="allowedMonths"
-              ></v-date-picker>
-            </v-menu>
+            </DatePicker>
           </v-col>
-          <v-col cols="6" sm="4" md="3" lg="2" xl="1">
+          <v-col cols="8" sm="4" md="3" lg="2" xl="1">
             <v-select
               :items="[
-                { text: $t('sushi.all_counter_versions'), value: null },
-                { text: '4', value: 4 },
-                { text: '5', value: 5 },
-                { text: '5.1', value: 51 },
+                { title: $t('sushi.all_counter_versions'), value: null },
+                { title: '4', value: 4 },
+                { title: '5', value: 5 },
+                { title: '5.1', value: 51 },
               ]"
               v-model="counterVersion"
               :label="$t('labels.counter_version')"
@@ -84,17 +77,26 @@ cs:
               :platforms="usedPlatforms"
               v-model="selectedPlatform"
               :label="$t('platform')"
-            />
+            ></PlatformSelector>
           </v-col>
           <v-col cols="6" md="auto">
-            <v-switch v-model="hideSuccessful" :label="$t('hide_successful')">
+            <v-switch
+              color="primary"
+              v-model="hideSuccessful"
+              :label="$t('hide_successful')"
+              style="min-width: 130px"
+            >
             </v-switch>
           </v-col>
           <v-col cols="6" md="auto">
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <span v-on="on">
-                  <v-switch v-model="showInactive" :label="$t('show_inactive')">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <span v-bind="props">
+                  <v-switch
+                    v-model="showInactive"
+                    color="primary"
+                    :label="$t('show_inactive')"
+                  >
                   </v-switch>
                 </span>
               </template>
@@ -102,7 +104,6 @@ cs:
             </v-tooltip>
           </v-col>
         </v-row>
-
         <v-row>
           <v-col>
             <div class="stats">
@@ -117,38 +118,39 @@ cs:
                     stateFilter !== null && stateFilter !== state ? 'alpha' : ''
                   "
                 >
-                  <SushiFetchIntentionStateIcon :force-state="state" />
+                  <SushiFetchIntentionStateIcon
+                    :force-state="state"
+                  ></SushiFetchIntentionStateIcon>
                   {{ count }}
                 </span>
               </span>
-              <span v-else v-text="$t('no_data_yet')"></span>
+              <span v-else>{{ $t("no_data_yet") }}</span>
             </div>
           </v-col>
           <v-col class="hidden-md-and-down mt-2 font-weight-light">
-            <v-icon small>fa fa-angle-double-left</v-icon>
+            <v-icon size="small">fa fa-angle-double-left</v-icon>
             {{ $t("stats_tip") }}
           </v-col>
         </v-row>
-
         <v-row>
           <v-col>
             <v-data-table
               :items="sushiCredentialsWithIntentions"
               :headers="headers"
               :search="search"
-              :items-per-page.sync="itemsPerPage"
-              :sort-by="orderBy"
+              :items-per-page="itemsPerPage"
+              v-model:sort-by="orderBy"
               multi-sort
               :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
               :loading="loading"
-              dense
+              class="custom_table"
             >
               <template
                 v-for="rtCode in usedReportTypeCodes"
                 v-slot:[`item.${rtCode}`]="{ item }"
+                :key="`${rtCode}-${item.credentials_id}`"
               >
                 <span
-                  :key="`${rtCode}-${item.credentials_id}`"
                   @click="
                     (item[rtCode] &&
                       item[rtCode].pk &&
@@ -170,33 +172,35 @@ cs:
                     latest
                     :broken-report="hasBrokenReport(item[rtCode])"
                     :broken-credentials="!!item.broken"
-                  />
+                  ></SushiFetchIntentionStateIcon>
                 </span>
               </template>
-              <template #item.counter_version="{ item }">
-                <v-tooltip bottom>
-                  <template #activator="{ on }">
+              <template #[`item.counter_version`]="{ item }">
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
                     <span
                       class="pl-5"
                       :class="!item.enabled || item.broken ? 'red--text' : ''"
-                      v-on="on"
+                      v-bind="props"
                     >
-                      <v-icon v-if="item.broken" small color="warning"
+                      <v-icon v-if="item.broken" size="small" color="warning"
                         >fa fa-exclamation-triangle</v-icon
                       >
-                      <v-icon v-if="!item.enabled" x-small>fa fa-unlink</v-icon>
+                      <v-icon v-if="!item.enabled" size="x-small"
+                        >fa fa-unlink</v-icon
+                      >
                       <strong>{{
                         counterVersionToStr(item.counter_version)
                       }}</strong>
                     </span>
                   </template>
                   <span v-if="item.broken">
-                    <strong v-text="$t('sushi.broken')"></strong>
+                    <strong>{{ $t("sushi.broken") }}</strong>
                     <br />
-                    <span v-text="$t('sushi.state_desc.broken')"></span>
+                    <span>{{ $t("sushi.state_desc.broken") }}</span>
                   </span>
-                  <span v-else-if="item.enabled" v-text="$t('enabled')"></span>
-                  <span v-else v-text="$t('not_enabled')"></span>
+                  <span v-else-if="item.enabled">{{ $t("enabled") }}</span>
+                  <span v-else>{{ $t("not_enabled") }}</span>
                 </v-tooltip>
               </template>
             </v-data-table>
@@ -204,7 +208,6 @@ cs:
         </v-row>
       </v-container>
     </v-card-text>
-
     <v-dialog v-model="showDetailsDialog">
       <SushiAttemptListWidget
         v-if="selectedIntention"
@@ -239,6 +242,7 @@ import { counterVersionToStr } from "@/libs/sushi";
 import cancellation from "@/mixins/cancellation";
 import IconButton from "@/components/sushi/IconButton";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import DatePicker from "@/components/DatePicker.vue";
 
 export default {
   name: "SushiCredentialsMonthOverviewWidget",
@@ -250,6 +254,7 @@ export default {
     IconButton,
     SushiFetchIntentionStateIcon,
     SushiAttemptListWidget,
+    DatePicker,
   },
 
   props: {
@@ -274,7 +279,10 @@ export default {
       itemsPerPage: 25,
       selectedIntention: null,
       showDetailsDialog: false,
-      orderBy: ["platform.name", "organization.name"],
+      orderBy: [
+        { key: "platform.name", order: "asc" },
+        { key: "organization.name", order: "asc" },
+      ],
       loadingReportTypes: false,
       loadingCredentials: false,
       loadingIntentions: false,
@@ -293,37 +301,73 @@ export default {
     ...mapGetters({
       consortialInstall: "consortialInstall",
     }),
+    // selectedDatePicker(){
+    //   const [year, month] = this.selectedMonth.split('-');
+    //   return {'month': month - 1, 'year': year}
+    // },
+    selectedDatePicker: {
+      get() {
+        const [year, month] = this.selectedMonth.split("-");
+        return { month: month - 1, year: year };
+      },
+      set(value) {
+        this.selectedMonth = `${value.year}-${String(value.month + 1).padStart(
+          2,
+          "0",
+        )}`;
+      },
+    },
+    SelectedDateText() {
+      if (
+        typeof this.selectedMonth === "object" &&
+        this.selectedMonth !== null &&
+        "month" in this.selectedMonth
+      ) {
+        return `${this.selectedMonth.year}-${
+          this.selectedMonth.month <= 8
+            ? `0${this.selectedMonth.month + 1}`
+            : this.selectedMonth.month + 1
+        }`;
+      } else {
+        return this.selectedMonth;
+      }
+    },
     headers() {
       let allHeaders = [
         {
-          text: this.$i18n.t("title"),
+          title: this.$i18n.t("title"),
           value: "title",
           class: "wrap",
+          key: "title",
         },
         {
-          text: this.$i18n.t("platform"),
+          title: this.$i18n.t("platform"),
           value: "platform.name",
+          key: "platform.name",
         },
         {
-          text: this.$i18n.t("organization"),
+          title: this.$i18n.t("organization"),
           value: "organization.name",
           class: "wrap",
+          key: "organization.name",
         },
         {
-          text: this.$i18n.t("title_fields.counter_version"),
+          title: this.$i18n.t("title_fields.counter_version"),
           value: "counter_version",
           align: "center",
+          key: "counter_version",
         },
       ];
       for (let rtCode of this.usedReportTypeCodes) {
         allHeaders.push({
-          text: rtCode,
+          title: rtCode,
           value: rtCode,
           sortable: false,
+          width: "76px",
         });
       }
       return allHeaders.filter(
-        (row) => row.value !== "outside_consortium" || this.consortialInstall
+        (row) => row.value !== "outside_consortium" || this.consortialInstall,
       );
     },
     searchDebounced: {
@@ -338,10 +382,10 @@ export default {
       return `/api/sushi-credentials/?organization=${this.organizationId}`;
     },
     intentionsUrl() {
-      if (!this.selectedMonth) {
+      if (!this.SelectedDateText) {
         return null;
       }
-      let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`;
+      let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.SelectedDateText}`;
       if (this.showInactive) {
         url += "&disabled=true";
       }
@@ -366,16 +410,21 @@ export default {
       return out;
     },
     usedPlatforms() {
-      let usedPlatforms = new Set(
-        this.sushiCredentialsList
-          .filter(
-            (item) =>
-              this.counterVersion === null ||
-              item.counter_version === this.counterVersion
-          )
-          .map((item) => item.platform)
+      const platformsMap = this.sushiCredentialsList
+        .filter(
+          (item) =>
+            this.counterVersion === null ||
+            item.counter_version === this.counterVersion,
+        )
+        .reduce((acc, item) => {
+          acc[item.platform.name] = item.platform;
+          return acc;
+        }, {});
+      let usedPlatforms = Object.values(platformsMap).sort((a, b) =>
+        a.name.localeCompare(b.name),
       );
-      return [...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name));
+
+      return [{ name: this.$t("all_platforms"), pk: null }, ...usedPlatforms];
     },
     activeIntentions() {
       let intentions = [];
@@ -399,7 +448,7 @@ export default {
           }
           if (
             ![ATTEMPT_SUCCESS, ATTEMPT_EMPTY_DATA].includes(
-              item[reportType.code].status
+              item[reportType.code].status,
             )
           ) {
             // Update status
@@ -421,19 +470,19 @@ export default {
         .filter(
           (item) =>
             this.counterVersion === null ||
-            item.counter_version === this.counterVersion
+            item.counter_version === this.counterVersion,
         )
         .filter(
           (item) =>
             this.selectedPlatform === null ||
-            item.platform.pk === this.selectedPlatform
+            item.platform.pk === this.selectedPlatform,
         );
       if (this.hideSuccessful) {
         list = list.filter(
           (item) =>
             item.counter_reports_long.filter(
-              (rt) => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS
-            ).length !== item.counter_reports_long.length
+              (rt) => item[rt.code] && item[rt.code].state === ATTEMPT_SUCCESS,
+            ).length !== item.counter_reports_long.length,
         );
       }
       return list;
@@ -444,8 +493,8 @@ export default {
         list = list.filter(
           (item) =>
             item.counter_reports_long.filter(
-              (rt) => item[rt.code] && item[rt.code].state === this.stateFilter
-            ).length > 0
+              (rt) => item[rt.code] && item[rt.code].state === this.stateFilter,
+            ).length > 0,
         );
       }
       return list;
@@ -453,7 +502,7 @@ export default {
     stateStats() {
       let stats = new Map();
       for (let state of this.activeIntentions.map(
-        (intention) => intention.state
+        (intention) => intention.state,
       )) {
         if (stats.has(state)) {
           stats.set(state, stats.get(state) + 1);
@@ -472,8 +521,8 @@ export default {
         cred.counter_reports_long
           .filter((report) => !!report.broken)
           .forEach((report) =>
-            brokenReports.set(`${cred.pk}-${report.id}`, true)
-          )
+            brokenReports.set(`${cred.pk}-${report.id}`, true),
+          ),
       );
       return brokenReports;
     },
@@ -527,13 +576,13 @@ export default {
       // create a map to easily find the intention data
       let intentionsMap = new Map();
       this.intentionsData.forEach(
-        (item) => (item.state = intentionState(item))
+        (item) => (item.state = intentionState(item)),
       );
       this.intentionsData.forEach((item) =>
         intentionsMap.set(
           `${item.credentials_id}-${item.counter_report_id}`,
-          item
-        )
+          item,
+        ),
       );
       this.intentionsMap = intentionsMap;
     },
@@ -566,7 +615,7 @@ export default {
       this.showDetailsDialog = !!this.selectedIntention;
     },
     shiftMonth(months) {
-      let date = parseDateTime(this.selectedMonth);
+      let date = parseDateTime(this.SelectedDateText);
       const shifted = ymDateFormat(addMonths(date, months));
       if (this.allowedMonths(shifted)) {
         this.selectedMonth = shifted;
@@ -577,7 +626,7 @@ export default {
         return false;
       }
       return this.brokenReports.has(
-        `${intention.credentials_id}-${intention.counter_report_id}`
+        `${intention.credentials_id}-${intention.counter_report_id}`,
       );
     },
     switchStateFilter(state) {
@@ -590,11 +639,11 @@ export default {
   },
 
   watch: {
-    selectedMonth() {
+    SelectedDateText() {
       history.pushState(
         {},
         null,
-        this.$route.path + `?month=${this.selectedMonth}`
+        this.$route.path + `?month=${this.SelectedDateText}`,
       );
     },
     dataUrl() {
@@ -637,5 +686,9 @@ div.stats {
 
 .alpha {
   opacity: 0.3;
+}
+
+:deep(.v-data-table-column--align-start) {
+  min-width: 76px;
 }
 </style>

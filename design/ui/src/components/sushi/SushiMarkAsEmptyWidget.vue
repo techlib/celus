@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   mark_as_empty_confirmation_text: Are you sure you want to mark the selected record as empty data?|Are you sure you want to mark the selected {count} records as empty data?
@@ -37,20 +38,28 @@ cs:
         </v-col>
         <v-col v-else>
           <span>{{ $t("processing") }}:</span>
-          <v-progress-linear :value="progress" height="30">
+          <v-progress-linear height="30" :value="progress" color="primary">
             <span>{{ processedCount }} / {{ totalCount }}</span>
           </v-progress-linear>
         </v-col>
       </v-row>
     </v-card-text>
     <v-card-actions>
-      <v-spacer />
-      <v-btn @click="$emit('cancel')" class="mr-2">{{
-        $t("actions.cancel")
-      }}</v-btn>
-      <v-btn @click="markAsEmpty" color="primary">{{
-        $t("actions.proceed")
-      }}</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn
+        @click="$emit('cancel')"
+        class="mr-2"
+        variant="flat"
+        elevation="2"
+        >{{ $t("actions.cancel") }}</v-btn
+      >
+      <v-btn
+        @click="markAsEmpty"
+        color="primary"
+        variant="flat"
+        elevation="2"
+        >{{ $t("actions.proceed") }}</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>

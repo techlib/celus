@@ -14,7 +14,7 @@ cs:
 
 <template>
   <div :style="{ height: height }">
-    <v-chart :option="option" autoresize />
+    <v-chart :option="option" autoresize></v-chart>
   </div>
 </template>
 
@@ -159,7 +159,7 @@ export default {
                       "this_month_so_far",
 
                       Math.round(1000 * getProba(this.stats, this.dayOfMonth)) /
-                        10
+                        10,
                     ),
                     xAxis: 0,
                   },

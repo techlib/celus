@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   state: State
@@ -34,7 +36,7 @@ cs:
               :label="$t('title_fields.platforms')"
               :items="filteredPlatforms"
               item-value="pk"
-              item-text="name"
+              item-title="name"
               multiple
               clearable
               clear-icon="fas fa-times"
@@ -46,7 +48,7 @@ cs:
               :label="$t('title_fields.report_types')"
               :items="filteredReportTypes"
               item-value="pk"
-              :item-text="(item) => item.name"
+              :item-title="(item) => item.name"
               multiple
               clearable
               clear-icon="fas fa-times"
@@ -55,7 +57,7 @@ cs:
           <v-col md="4" cols="12">
             <v-text-field
               v-model="searchDebounced"
-              append-icon="fa-search"
+              append-inner-icon="fa fa-search"
               :label="$t('labels.search')"
               single-line
               hide-details
@@ -66,110 +68,109 @@ cs:
           </v-col>
         </v-row>
       </v-container>
-      <v-data-table
+      <v-data-table-server
         :items="mdusProcessed"
         :headers="headers"
         :no-data-text="$t('no_data')"
         :loading="loading"
-        :sort-by.sync="sortBy"
-        :sort-desc.sync="sortDesc"
-        :server-items-length="mduCount"
-        :page.sync="page"
-        :items-per-page.sync="pageSize"
+        v-model:sort-by="orderByCr"
+        :items-length="mduCount"
+        v-model:page="page"
+        v-model:items-per-page="pageSize"
         :search="searchDebounced"
         :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
       >
-        <template #item.user.last_name="{ item }">
+        <!-- v-model:sort-by="orderByCr" -->
+        <template #[`item.user.last_name`]="{ item }">
           {{ userToString(item.user) }}
         </template>
-
-        <template #item.created="{ item }">
+        <template #[`item.created`]="{ item }">
           <span v-html="isoDateTimeFormatSpans(item.created)"></span>
         </template>
-
-        <template #item.report_type.short_name="{ item }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <span
-                v-if="!!item.report_type"
-                v-on="on"
-                v-text="item.report_type.short_name"
-              ></span>
+        <template #[`item.report_type.short_name`]="{ item }">
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <span v-if="!!item.report_type" v-bind="props">{{
+                item.report_type.short_name
+              }}</span>
             </template>
-            <span
-              v-if="!!item.report_type"
-              v-text="item.report_type.name"
-            ></span>
+            <span v-if="!!item.report_type">{{ item.report_type.name }}</span>
           </v-tooltip>
         </template>
-
-        <template #item.orgs="{ item }">
+        <template #[`item.orgs`]="{ item }">
           <div v-for="org_name in item.orgs" v-bind:key="org_name">
             {{ org_name }}
           </div>
         </template>
-
-        <template #item.actions="{ item }">
-          <v-tooltip bottom v-if="item.can_edit">
-            <template v-slot:activator="{ on }">
+        <template #[`item.actions`]="{ item }">
+          <v-tooltip location="bottom" v-if="item.can_edit">
+            <template v-slot:activator="{ props }">
               <v-btn
                 icon
-                small
+                variant="text"
+                size="small"
+                density="comfortable"
                 color="error"
                 @click.stop="
                   selectedMDU = item;
                   showDeleteDialog = true;
                 "
-                v-on="on"
+                v-bind="props"
               >
-                <v-icon small>fa fa-trash-alt</v-icon>
+                <v-icon size="small">fa fa-trash-alt</v-icon>
               </v-btn>
             </template>
             <span>{{ $t("actions.delete") }}</span>
           </v-tooltip>
-          <v-tooltip bottom v-if="item.is_processed">
-            <template v-slot:activator="{ on }">
+          <v-tooltip location="bottom" v-if="item.is_processed">
+            <template v-slot:activator="{ props }">
               <v-btn
                 icon
-                small
+                size="small"
+                density="comfortable"
+                variant="text"
                 color="secondary"
                 @click.stop="
                   selectedMDU = item;
                   dialogType = 'data';
                   showBatchDialog = true;
                 "
-                v-on="on"
+                v-bind="props"
               >
-                <v-icon small>fa-microscope</v-icon>
+                <v-icon size="small">fa fa-microscope</v-icon>
               </v-btn>
             </template>
             <span>{{ $t("actions.show_raw_data") }}</span>
           </v-tooltip>
-          <v-tooltip bottom v-if="item.is_processed">
-            <template v-slot:activator="{ on }">
+          <v-tooltip location="bottom" v-if="item.is_processed">
+            <template v-slot:activator="{ props }">
               <v-btn
                 icon
-                small
+                density="comfortable"
+                variant="text"
+                size="small"
                 color="secondary"
                 @click.stop="
                   selectedMDU = item;
                   dialogType = 'chart';
                   showBatchDialog = true;
                 "
-                v-on="on"
+                v-bind="props"
               >
-                <v-icon small>fa-chart-bar</v-icon>
+                <v-icon size="small">fas fa-chart-bar</v-icon>
               </v-btn>
             </template>
             <span>{{ $t("actions.show_chart") }}</span>
           </v-tooltip>
-          <v-tooltip bottom v-if="!item.import_batch">
-            <template v-slot:activator="{ on }">
+          <v-tooltip location="bottom" v-if="!item.import_batch">
+            <template v-slot:activator="{ props }">
               <v-btn
                 icon
-                small
+                variant="text"
+                density="comfortable"
+                size="small"
                 color="secondary"
-                v-on="on"
+                v-bind="props"
                 :to="{
                   name: 'platform-upload-data-step-preflight',
                   params: {
@@ -178,36 +179,35 @@ cs:
                   },
                 }"
               >
-                <v-icon small>fa-external-link-alt</v-icon>
+                <v-icon size="small">fa fa-external-link-alt</v-icon>
               </v-btn>
             </template>
             <span>{{ $t("mdu_page") }}</span>
           </v-tooltip>
         </template>
-
-        <template #item.data_file="{ item }">
-          <v-tooltip bottom v-if="item.data_file">
-            <template v-slot:activator="{ on }">
+        <template #[`item.data_file`]="{ item }">
+          <v-tooltip location="bottom" v-if="item.data_file">
+            <template v-slot:activator="{ props }">
               <v-btn
+                variant="text"
                 icon
-                small
+                size="small"
+                density="comfortable"
                 color="secondary"
-                v-on="on"
+                v-bind="props"
                 :href="item.data_file"
                 target="_blank"
               >
-                <v-icon small>fa-download</v-icon>
+                <v-icon size="small">fa fa-download</v-icon>
               </v-btn>
             </template>
             <span>{{ $t("data_file_tt") }}</span>
           </v-tooltip>
         </template>
-
-        <template #item.state="{ item }">
-          <ManualUploadState :state="item.state" />
+        <template #[`item.state`]="{ item }">
+          <ManualUploadState :state="item.state"></ManualUploadState>
         </template>
-      </v-data-table>
-
+      </v-data-table-server>
       <v-dialog v-model="showBatchDialog" v-if="showBatchDialog">
         <v-card class="pt-6">
           <v-card-text>
@@ -217,31 +217,36 @@ cs:
                   <AccessLogList
                     :mdu-id="selectedMDU.pk"
                     :show-organization="selectedMDUwithMultipleOrg"
-                  />
+                  ></AccessLogList>
                 </v-col>
               </v-row>
             </v-container>
             <MDUChart
               v-else-if="dialogType === 'chart' && selectedMDU"
               :mdu-id="selectedMDU.pk"
-            />
+            ></MDUChart>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn @click="showBatchDialog = false" class="mr-2 mb-2">
+            <v-btn
+              @click="showBatchDialog = false"
+              variant="flat"
+              elevation="2"
+              color="defaultButton"
+              class="mr-2 mb-2"
+            >
               {{ $t("actions.close") }}
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-
       <v-dialog
         v-model="showDeleteDialog"
         v-if="showDeleteDialog"
         max-width="720px"
       >
         <v-card>
-          <v-card-title v-text="$t('confirm_delete')"></v-card-title>
+          <v-card-title>{{ $t("confirm_delete") }}</v-card-title>
           <v-card-text>
             <v-container fluid class="pb-0">
               <v-row>
@@ -267,7 +272,7 @@ cs:
                         selectedMDU.preflight.organizations
                       "
                       v-for="(org_name, idx) in Object.keys(
-                        selectedMDU.preflight.organizations
+                        selectedMDU.preflight.organizations,
                       )"
                       v-bind:key="org_name"
                     >
@@ -279,7 +284,7 @@ cs:
                     <tr v-if="!!selectedMDU.report_type">
                       <th v-text="$t('labels.report_type')"></th>
                       <td>
-                        {{ selectedMDU.report_type.short_name }} &ndash;
+                        {{ selectedMDU.report_type.short_name }} –
                         {{ selectedMDU.report_type.name }}
                       </td>
                     </tr>
@@ -302,11 +307,19 @@ cs:
               @click="showDeleteDialog = false"
               class="mr-2 mb-2"
               color="secondary"
+              variant="flat"
+              elevation="2"
             >
               {{ $t("actions.cancel") }}
             </v-btn>
-            <v-btn @click="performDelete()" class="mr-2 mb-2" color="error">
-              <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
+            <v-btn
+              @click="performDelete()"
+              variant="flat"
+              elevation="2"
+              class="mr-2 mb-2"
+              color="error"
+            >
+              <v-icon size="small" class="mr-1">fa fa-trash-alt</v-icon>
               {{ $t("actions.delete") }}
             </v-btn>
           </v-card-actions>
@@ -350,6 +363,7 @@ export default {
       filterReportTypes: [],
       reportTypes: [],
       filterPlatforms: [],
+      orderByCr: [{ key: "created", order: "desc" }],
       platforms: [],
       counts: null,
       mduCount: 0,
@@ -397,39 +411,44 @@ export default {
     headers() {
       const out = [
         {
-          text: this.$t("title_fields.uploaded"),
+          title: this.$t("title_fields.uploaded"),
           value: "created",
+          key: "created",
         },
         {
-          text: this.$t("platform"),
+          title: this.$t("platform"),
           value: "platform.name",
+          key: "platform.name",
         },
         {
-          text: this.$t("labels.report_type"),
+          title: this.$t("labels.report_type"),
           value: "report_type.short_name",
+          key: "report_type.short_name",
         },
         {
-          text: this.$t("labels.user"),
+          title: this.$t("labels.user"),
           value: "user.last_name",
+          key: "user.last_name",
         },
         {
-          text: this.$t("state"),
+          title: this.$t("state"),
           value: "state",
+          key: "state",
         },
         {
-          text: this.$t("data_file"),
+          title: this.$t("data_file"),
           value: "data_file",
           sortable: false,
         },
         {
-          text: this.$t("title_fields.actions"),
+          title: this.$t("title_fields.actions"),
           value: "actions",
           sortable: false,
         },
       ];
       if (!this.organizationSelected) {
         out.splice(1, 0, {
-          text: this.$t("organization"),
+          title: this.$t("organization"),
           value: "organization.name",
         });
       }
@@ -438,12 +457,26 @@ export default {
     organizationMap() {
       return Object.values(this.organizations).reduce(
         (acc, o) => ({ ...acc, [o.pk]: o }),
-        {}
+        {},
       );
     },
     mdusProcessed() {
       let res = [];
       for (const record of this.mdus) {
+        // apply filters
+        if (
+          this.filterReportTypes.length > 0 &&
+          !this.filterReportTypes.includes(record.report_type?.pk)
+        ) {
+          continue;
+        }
+        if (
+          this.filterPlatforms.length > 0 &&
+          !this.filterPlatforms.includes(record.platform.pk)
+        ) {
+          continue;
+        }
+
         let updated = { ...record };
         if (record.organization) {
           updated.orgs = [record.organization.name];
@@ -457,7 +490,7 @@ export default {
                   }
                 }
                 return raw_name;
-              }
+              },
             );
           } else {
             updated.orgs = [];
@@ -476,9 +509,13 @@ export default {
         params.platform_ids = `${this.filterPlatforms}`;
       }
       if (this.sortBy != null) {
-        let orderBy = this.sortBy.replace(".", "__");
+        let orderBy = this.orderByCr[0]
+          ? this.orderByCr[0].key.replace(".", "__")
+          : "created";
         params.order_by = `${orderBy}`;
-        params.desc = `${this.sortDesc ? "true" : "false"}`;
+        params.desc = this.orderByCr[0]
+          ? `${this.orderByCr[0].order === "desc" ? true : false}`
+          : null;
       }
       if (this.searchDebounced) {
         params.search = `${this.searchDebounced}`;
@@ -532,7 +569,7 @@ export default {
       let res = [];
       if (this.counts) {
         const reportTypeIds = this.counts.report_types.map(
-          (e) => e.report_type_id
+          (e) => e.report_type_id,
         );
         res = this.reportTypes.filter((e) => reportTypeIds.includes(e.pk));
       } else {

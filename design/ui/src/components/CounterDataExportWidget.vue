@@ -6,7 +6,7 @@
     color="primary"
     :disabled="organization.pk < 0 || counterReportType.used === 0"
   >
-    <v-icon left small>fa-download</v-icon>
+    <v-icon left size="small" class="mr-2">fa fa-download</v-icon>
     {{ this.counterReportType.code }}
   </v-btn>
 </template>

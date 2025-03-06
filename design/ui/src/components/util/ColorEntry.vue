@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <template>
   <v-menu
     v-model="menu"
@@ -7,18 +9,17 @@
     max-width="290"
     nudge-bottom="48"
   >
-    <template v-slot:activator="{ on, attrs }">
+    <template v-slot:activator="{ props }">
       <v-text-field
-        :value="color"
         clearable
         :label="label"
         readonly
-        v-bind="attrs"
-        v-on="on"
+        v-bind="props"
         @click:clear="color = defaultColor"
+        :model-value="color"
       >
         <template #prepend-inner>
-          <v-icon :color="color">fa-square</v-icon>
+          <v-icon :color="color">fas fa-square</v-icon>
         </template>
       </v-text-field>
     </template>
@@ -27,23 +28,29 @@
         <v-color-picker
           v-if="!hideSwatches"
           v-model="color"
-          @change="menu = false"
           show-swatches
           :swatches="swatches"
           hide-canvas
+          width="100%"
           hide-inputs
           hide-sliders
           class="pb-0 mb-0"
-        />
+          @update:modelValue="menu = false"
+        ></v-color-picker>
         <div>
           <v-expansion-panels v-model="showCustom" flat>
             <v-expansion-panel>
-              <v-expansion-panel-header>
+              <v-expansion-panel-title>
                 {{ $t("labels.custom") }}
-              </v-expansion-panel-header>
-              <v-expansion-panel-content>
-                <v-color-picker v-model="color" @change="menu = false" />
-              </v-expansion-panel-content>
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-color-picker
+                  v-model="color"
+                  class="pb-0 mb-0"
+                  width="100%"
+                  @update:modelValue="menu = false"
+                ></v-color-picker>
+              </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
         </div>
@@ -51,11 +58,12 @@
     </v-card>
   </v-menu>
 </template>
+
 <script>
 export default {
   name: "ColorEntry",
   props: {
-    value: { type: String, default: "#e2e2e2" },
+    modelValue: { type: String, default: "#e2e2e2" },
     label: { type: String, default: "Color" },
     hideSwatches: {
       type: Boolean,
@@ -81,10 +89,10 @@ export default {
   computed: {
     color: {
       get() {
-        return this.value;
+        return this.modelValue;
       },
       set(value) {
-        this.$emit("input", value);
+        this.$emit("update:modelValue", value);
       },
     },
   },

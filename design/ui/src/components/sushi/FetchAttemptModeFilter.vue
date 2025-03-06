@@ -31,28 +31,29 @@ cs:
     return-object
   ></v-select>
 </template>
+
 <script>
 export default {
   name: "FetchAttemptModeFilter",
   props: {
-    value: { required: true },
+    modelValue: { required: true, type: String },
   },
 
   data() {
     let modeList = [
       {
         value: "current",
-        text: this.$t("modes.current"),
+        title: this.$t("modes.current"),
         tooltip: this.$t("tooltips.current"),
       },
       {
         value: "success_and_current",
-        text: this.$t("modes.success_and_current"),
+        title: this.$t("modes.success_and_current"),
         tooltip: this.$t("tooltips.success_and_current"),
       },
       {
         value: "all",
-        text: this.$t("modes.all"),
+        title: this.$t("modes.all"),
         tooltip: this.$t("tooltips.all"),
       },
     ];
@@ -64,7 +65,7 @@ export default {
 
   watch: {
     mode() {
-      this.$emit("input", this.mode.value);
+      this.$emit("update:modelValue", this.modelValue);
     },
   },
 };

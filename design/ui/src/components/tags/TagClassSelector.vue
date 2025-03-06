@@ -4,7 +4,7 @@
   <v-autocomplete
     v-model="tagClass"
     :items="tagClasses"
-    item-text="name"
+    item-title="name"
     item-value="pk"
     return-object
     :loading="tagClassesLoading"
@@ -12,30 +12,31 @@
     :rules="clearable ? [] : [rules.required]"
     :disabled="disabled"
     :clearable="clearable"
-    clear-icon="fa-times"
+    clear-icon="fa fa-times"
     :placeholder="placeholder"
     :persistent-placeholder="!!placeholder"
+    :menu-props="{ eager: true }"
   >
-    <template #item="{ item }">
-      <v-list-item-content>
-        <v-list-item-title>
-          {{ item.name }}
-          <span class="float-right text-caption">{{ $t(item.scope) }}</span>
-        </v-list-item-title>
-      </v-list-item-content>
+    <template v-slot:item="{ props, item }">
+      <v-list-item
+        v-bind="props"
+        class="d-flex align-center justify-space-between"
+      >
+        <template v-slot:append>
+          <span class="text-caption">{{ $t(item.raw.scope) }}</span>
+        </template>
+      </v-list-item>
     </template>
-
     <template #prepend v-if="tooltip">
-      <v-tooltip bottom>
-        <template #activator="{ on }">
-          <v-icon v-on="on">fa fa-info-circle</v-icon>
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
+          <v-icon v-bind="props">fa fa-info-circle</v-icon>
         </template>
         {{ tooltip }}
       </v-tooltip>
     </template>
-
     <template #append-item v-if="allowCreate">
-      <v-list-item-content>
+      <v-list-item>
         <v-list-item-title>
           <AddTagClassButton
             small
@@ -44,16 +45,16 @@
             :scope="scope"
             text
             outlined
-          />
+          ></AddTagClassButton>
         </v-list-item-title>
-      </v-list-item-content>
+      </v-list-item>
     </template>
-
     <template #prepend v-if="showIcon">
-      <v-icon small>fa-tags fa-fw</v-icon>
+      <v-icon size="small">fa fa-tags fa-fw</v-icon>
     </template>
   </v-autocomplete>
 </template>
+
 <script>
 import AddTagClassButton from "@/components/tags/AddTagClassButton";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -67,13 +68,13 @@ export default {
   mixins: [cancellation, formRulesMixin],
 
   props: {
-    value: { type: [Object, Number], required: false },
+    modelValue: { type: [Object, Number, String], required: false },
     disabled: { type: Boolean, default: false },
     scope: {
       type: String,
       required: false,
-      validator: (value) =>
-        ["title", "platform", "organization"].includes(value),
+      validator: (modelValue) =>
+        ["title", "platform", "organization"].includes(modelValue),
     },
     clearable: { type: Boolean, default: false },
     label: { type: String, default: "" },
@@ -120,10 +121,10 @@ export default {
       this.tagClassesLoading = false;
       if (!reply.error) {
         this.tagClasses = reply.response.data;
-        if (typeof this.value === "number") {
+        if (typeof this.modelValue === "number") {
           // if tag-class was given as a number, translate it to the object
           this.tagClass = this.tagClasses.find(
-            (tagClass) => tagClass.pk === this.value
+            (tagClass) => tagClass.pk === this.modelValue,
           );
         }
       }
@@ -144,11 +145,11 @@ export default {
 
   watch: {
     tagClass() {
-      this.$emit("input", this.tagClass);
+      this.$emit("update:modelValue", this.tagClass);
     },
-    value: {
+    modelValue: {
       handler() {
-        this.tagClass = this.value;
+        this.tagClass = this.modelValue;
       },
       immediate: true,
     },

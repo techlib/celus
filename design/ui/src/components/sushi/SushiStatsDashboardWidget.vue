@@ -24,19 +24,24 @@ cs:
 
 <template>
   <div class="text-center">
-    <div v-text="$t('credentials_count')"></div>
+    <div
+      v-text="$t('credentials_count')"
+      style="color: rgba(0, 0, 0, 0.6)"
+    ></div>
     <div class="text-h4">
-      <router-link :to="link" class="text-decoration-none default--text">{{
-        credentialsCount
-      }}</router-link>
+      <router-link
+        :to="link"
+        class="text-decoration-none"
+        style="color: rgba(0, 0, 0, 0.6)"
+        >{{ credentialsCount }}</router-link
+      >
     </div>
-
     <div class="text-h5 mt-1 mb-10">
-      <v-tooltip bottom v-if="brokenCredentialsCount">
-        <template #activator="{ on }">
-          <span v-on="on">
+      <v-tooltip location="bottom" v-if="brokenCredentialsCount">
+        <template #activator="{ props }">
+          <span v-bind="props">
             <router-link
-              class="error--text text-decoration-none"
+              class="text-error text-decoration-none mr-1"
               :to="linkBroken"
             >
               <span class="fa fa-bug small"></span>{{ brokenCredentialsCount }}
@@ -45,19 +50,17 @@ cs:
         </template>
         {{ $t("broken_count") }}
       </v-tooltip>
-
-      <v-tooltip bottom v-if="inactiveCredentialsCount">
-        <template #activator="{ on }">
-          <span v-on="on" class="warning--text">
+      <v-tooltip location="bottom" v-if="inactiveCredentialsCount">
+        <template #activator="{ props }">
+          <span v-bind="props" class="text-warning mr-1">
             <span class="fa fa-ban small"></span>{{ inactiveCredentialsCount }}
           </span>
         </template>
         {{ $t("inactive_count") }}
       </v-tooltip>
-
-      <v-tooltip bottom>
-        <template #activator="{ on }">
-          <span v-on="on" class="success--text">
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
+          <span v-bind="props" class="text-success">
             <span class="fa fa-download small"></span
             >{{ autoDownloadedCredentials }}
           </span>
@@ -65,21 +68,22 @@ cs:
         {{ $t("automatic_count") }}
       </v-tooltip>
     </div>
-
-    <div v-text="$t('report_count')"></div>
+    <div v-text="$t('report_count')" style="color: rgba(0, 0, 0, 0.6)"></div>
     <div class="text-h4">
-      <router-link :to="link" class="default--text text-decoration-none">{{
-        reportCount
-      }}</router-link>
+      <router-link
+        :to="link"
+        class="text-decoration-none"
+        style="color: rgba(0, 0, 0, 0.6)"
+        >{{ reportCount }}</router-link
+      >
     </div>
-
     <div class="text-h5 mt-1">
-      <v-tooltip bottom v-if="brokenReportsCount">
-        <template #activator="{ on }">
-          <span v-on="on">
+      <v-tooltip location="bottom" v-if="brokenReportsCount">
+        <template #activator="{ props }">
+          <span v-bind="props">
             <router-link
               :to="linkBroken"
-              class="orange--text text--darken-4 text-decoration-none"
+              class="text-orange-darken-4 text-decoration-none mr-1"
             >
               <span class="fa fa-exclamation-triangle small"></span
               >{{ brokenReportsCount }}
@@ -88,13 +92,12 @@ cs:
         </template>
         {{ $t("broken_report_count") }}
       </v-tooltip>
-
-      <v-tooltip bottom v-if="reportsFromBrokenCredentialsCount">
-        <template #activator="{ on }">
-          <span v-on="on">
+      <v-tooltip location="bottom" v-if="reportsFromBrokenCredentialsCount">
+        <template #activator="{ props }">
+          <span v-bind="props">
             <router-link
               :to="linkBroken"
-              class="error--text text-decoration-none"
+              class="text-error text-decoration-none mr-1"
             >
               <span class="fa fa-bug small"></span
               >{{ reportsFromBrokenCredentialsCount }}
@@ -103,19 +106,17 @@ cs:
         </template>
         {{ $t("report_from_broken_credentials_count") }}
       </v-tooltip>
-
-      <v-tooltip bottom v-if="inactiveReportsCount">
-        <template #activator="{ on }">
-          <span v-on="on" class="warning--text">
+      <v-tooltip location="bottom" v-if="inactiveReportsCount">
+        <template #activator="{ props }">
+          <span v-bind="props" class="text-warning mr-1">
             <span class="fa fa-ban small"></span>{{ inactiveReportsCount }}
           </span>
         </template>
         {{ $t("inactive_report_count") }}
       </v-tooltip>
-
-      <v-tooltip bottom>
-        <template #activator="{ on }">
-          <span v-on="on" class="success--text">
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
+          <span v-bind="props" class="text-success">
             <span class="fa fa-download small"></span
             >{{ autoDownloadedReportsCount }}
           </span>
@@ -162,7 +163,7 @@ export default {
     reportCount() {
       let count = 0;
       this.sushiCredentials.forEach(
-        (item) => (count += item.counter_reports_long.length)
+        (item) => (count += item.counter_reports_long.length),
       );
       return count;
     },
@@ -178,8 +179,8 @@ export default {
       this.sushiCredentials.forEach(
         (item) =>
           (count += item.counter_reports_long.filter(
-            (report) => !!report.broken
-          ).length)
+            (report) => !!report.broken,
+          ).length),
       );
       return count;
     },
@@ -232,8 +233,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@use "sass:math";
 span.small {
-  font-size: (9/16) * 100%;
+  font-size: math.div(9, 16) * 100%;
   padding-right: 4px;
   vertical-align: middle;
 }

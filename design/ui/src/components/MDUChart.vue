@@ -10,7 +10,7 @@
           prefer-full-report
           ignore-organization
           no-coverage
-        />
+        ></CounterChartSet>
       </v-col>
     </v-row>
   </v-container>
@@ -47,7 +47,7 @@ export default {
     async loadDetails() {
       try {
         let response = await axios.get(
-          `/api/manual-data-upload/${this.mduId}/`
+          `/api/manual-data-upload/${this.mduId}/`,
         );
         this.mdu = response.data;
       } catch (error) {

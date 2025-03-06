@@ -12,9 +12,11 @@ cs:
 
 <template>
   <div>
-    <CoverageScoreGauge :value="ratio" :loading="loading" />
-
-    <div v-if="data" class="mt-6 text-center">
+    <CoverageScoreGauge
+      :loading="loading"
+      :model-value="ratio"
+    ></CoverageScoreGauge>
+    <div v-if="data" class="mt-6 text-center" style="color: rgba(0, 0, 0, 0.6)">
       <div class="text-h5">{{ formatInteger(data.ib_count) }}</div>
       <div class="my-2">{{ $t("out_of") }}</div>
       <div class="text-h5">{{ formatInteger(data.ib_max) }}</div>
@@ -22,12 +24,15 @@ cs:
       <div>
         <router-link :to="{ name: 'data-coverage-overview' }">
           {{ $t("details") }}
-          <v-icon x-small color="primary">fa fa-external-link-alt</v-icon>
+          <v-icon size="x-small" color="primary"
+            >fa fa-external-link-alt</v-icon
+          >
         </router-link>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 import CoverageScoreGauge from "@/components/charts/CoverageScoreGauge.vue";
 import cancellation from "@/mixins/cancellation";

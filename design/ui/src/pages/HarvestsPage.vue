@@ -1,36 +1,36 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
   harvests_view: Harvest Overview
-  harvest_intro_1: |
+  harvest_intro: |
     'Harvests' group together related data downloads. They are either created automatically
     by CELUS when it downloads new data, or are created by the user when he manually requests
     harvesting of data for selected credentials.
-
-  harvest_intro_2: |
+  harvest_intro_sec: |
     You can use the table below to get an overview of currently running harvests as well
     as past ones. By clicking on the <span class="fa fa-external-link-alt"></span> symbol,
     you can see the individual downloads comprising each harvest and their status.
 
 cs:
   harvests_view: Přehled sklizní
-  harvest_intro_1: |
+  harvest_intro: |
     'Sklizně' sdružují dohromady příbuzná stahování. CELUS je buď vytváří automaticky, když
-    stahuje nová data, nebo jsou vytvořeny uživatelem ve chvíli, kdy zadá požadavek na stažení
-    dat pro vybrané přihlašovací údaje.
-  harvest_intro_2: |
+      stahuje nová data, nebo jsou vytvořeny uživatelem ve chvíli, kdy zadá požadavek na stažení
+      dat pro vybrané přihlašovací údaje.
+  harvest_intro_sec: |
     Následující tabulka poskytuje přehled aktuálně probíhajících sklizní i těch, které již
-    skončily. Kliknutím na symbol <span class="fa fa-external-link-alt"></span> získáte
-    detaily jednotlivých stahování pro každou sklizeň včetně jejich stavu.
+      skončily. Kliknutím na symbol <span class="fa fa-external-link-alt"></span> získáte
+      detaily jednotlivých stahování pro každou sklizeň včetně jejich stavu.
 </i18n>
 
 <template>
   <v-container fluid>
     <v-row>
       <v-col>
-        <h2 v-text="$t('harvests_view')"></h2>
+        <h2>{{ $t("harvests_view") }}</h2>
       </v-col>
     </v-row>
     <v-row>
@@ -39,8 +39,8 @@ cs:
           <v-container fluid>
             <v-row>
               <v-col class="mx-3">
-                <p v-text="$t('harvest_intro_1')" />
-                <p v-html="$t('harvest_intro_2')" />
+                <p v-html="$t('harvest_intro')"></p>
+                <p v-html="$t('harvest_intro_sec')"></p>
               </v-col>
             </v-row>
             <v-row>
@@ -49,7 +49,7 @@ cs:
                   :show-organization="showManagementStuff"
                   :open-harvest-id="openHarvestId"
                   show-platform
-                />
+                ></HarvestsTable>
               </v-col>
             </v-row>
           </v-container>
@@ -88,4 +88,8 @@ export default {
 };
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+p {
+  margin-bottom: 16px !important;
+}
+</style>

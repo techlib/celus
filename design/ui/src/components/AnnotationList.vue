@@ -1,6 +1,9 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/annotations.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   columns:
@@ -18,17 +21,18 @@ cs:
     <v-col>
       <v-data-table
         :items="annotations"
+        density="default"
         :headers="headers"
-        sort-by="pk"
+        :sort-by="[{ key: 'pk', order: 'asc' }]"
         item-key="pk"
+        item-value="pk"
         :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
-        :options.sync="options"
+        :options="options"
         :loading="loading"
         :page="page"
         :items-per-page="10"
         :server-items-length="serverItemsLength"
-        show-expand
-        :expanded.sync="expandedRows"
+        v-model:expanded="expandedRows"
         class="auto-table"
       >
         <template v-slot:top>
@@ -38,103 +42,113 @@ cs:
             @click:outside="cancelEdit"
           >
             <v-card>
-              <v-card-title v-text="$t('actions.edit')"></v-card-title>
+              <v-card-title>{{ $t("actions.edit") }}</v-card-title>
               <v-card-text>
                 <AnnotationCreateModifyWidget
                   ref="widget"
                   :annotation="selectedAnnotation"
-                  :showDeleteButton="false"
                   @saved="annotationSaved"
                   @cancel="cancelEdit"
-                />
+                  :showDeleteButton="false"
+                ></AnnotationCreateModifyWidget>
               </v-card-text>
             </v-card>
           </v-dialog>
           <v-dialog v-model="showDeleteDialog" max-width="620px">
             <v-card>
-              <v-card-title v-text="$t('actions.delete')"></v-card-title>
+              <v-card-title>{{ $t("actions.delete") }}</v-card-title>
               <v-card-text>
-                <i18n path="are_you_sure" tag="p">
+                <i18n-t keypath="are_you_sure" tag="p">
                   <span class="font-weight-bold"
                     >{{ selectedAnnotation[`subject_${lang}`] }}
                   </span>
-                </i18n>
+                </i18n-t>
               </v-card-text>
               <v-card-actions>
-                <v-spacer />
-                <v-btn @click="cancelDelete()">{{ $t("cancel") }}</v-btn>
-                <v-btn @click="deleteAnnotation()" color="error">
-                  <v-icon small class="mr-2">fa-trash</v-icon>
+                <v-spacer></v-spacer>
+                <v-btn
+                  @click="cancelDelete()"
+                  variant="flat"
+                  elevation="2"
+                  color="defaultButton"
+                  >{{ $t("cancel") }}</v-btn
+                >
+                <v-btn
+                  variant="flat"
+                  elevation="2"
+                  @click="deleteAnnotation()"
+                  color="error"
+                >
+                  <v-icon size="small" class="mr-2">fa fa-trash</v-icon>
                   {{ $t("actions.delete") }}
                 </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
         </template>
-
         <template v-slot:[`item.level`]="{ item }">
-          <v-tooltip bottom v-if="item.level == 'info'">
-            <template v-slot:activator="{ on }">
-              <v-icon small class="mr-2" color="blue" v-on="on">
+          <v-tooltip location="bottom" v-if="item.level == 'info'">
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" class="mr-2" color="blue" v-bind="props">
                 fas fa-info-circle
               </v-icon>
             </template>
             <span v-text="$t('annotations.labels.level_info')"></span>
           </v-tooltip>
-          <v-tooltip bottom v-if="item.level == 'important'">
-            <template v-slot:activator="{ on }">
-              <v-icon small class="mr-2" color="orange" v-on="on">
+          <v-tooltip location="bottom" v-if="item.level == 'important'">
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" class="mr-2" color="orange" v-bind="props">
                 fas fa-exclamation-triangle
               </v-icon>
             </template>
             <span v-text="$t('annotations.labels.level_important')"></span>
           </v-tooltip>
         </template>
-
         <template v-slot:[`item.actions`]="{ item }">
           <v-icon
             v-if="item.can_edit"
-            small
+            size="small"
             class="mr-2"
             @click="editItem(item)"
+            color="lighterIcons"
           >
             fas fa-pen
           </v-icon>
           <v-icon
             v-if="item.can_edit"
-            small
+            size="small"
             class="mr-2"
             @click="deleteItem(item)"
+            color="lighterIcons"
           >
             fas fa-trash-alt
           </v-icon>
         </template>
-
-        <template #expanded-item="{ item, headers }">
-          <td :colspan="headers.length" class="py-3">
-            <div class="caption">
-              {{ $t("annotations.labels.date_range") }}
-            </div>
-            <div class="pb-2">
-              {{ item.start_date }}&ndash;{{ item.end_date }}
-            </div>
-            <div class="caption">
-              {{ $t("annotations.labels.short_message") }}
-            </div>
-            <div class="pb-2">
-              {{ item.short_message || $t("annotations.messages.empty") }}
-            </div>
-            <div class="caption">
-              {{ $t("annotations.labels.message") }}
-            </div>
-            <div>
-              {{
-                item.message.length
-                  ? item.message
-                  : $t("annotations.messages.empty")
-              }}
-            </div>
-          </td>
+        <template v-slot:expanded-row="{ item, columns }">
+          <tr class="item_expanded_space">
+            <td :colspan="columns.length" class="py-3">
+              <div class="caption">
+                {{ $t("annotations.labels.date_range") }}
+              </div>
+              <div class="pb-2">{{ item.start_date }}–{{ item.end_date }}</div>
+              <div class="caption">
+                {{ $t("annotations.labels.short_message") }}
+              </div>
+              <div class="pb-2">
+                {{ item.short_message || $t("annotations.messages.empty") }}
+              </div>
+              <div class="caption">
+                {{ $t("annotations.labels.message") }}
+              </div>
+              <div>
+                {{
+                  item.message.length
+                    ? item.message
+                    : $t("annotations.messages.empty")
+                }}
+              </div>
+            </td>
+          </tr>
         </template>
       </v-data-table>
     </v-col>
@@ -192,28 +206,40 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("annotations.labels.subject"),
+          title: "",
+          value: "data-table-expand",
+          sortable: false,
+          align: "start",
+          width: "3%",
+        },
+        {
+          title: this.$i18n.t("annotations.labels.subject"),
           value: `subject_${this.lang}`,
+          key: `subject_${this.lang}`,
         },
         {
-          text: this.$i18n.t("organization"),
+          title: this.$i18n.t("organization"),
           value: `organization.name_${this.lang}`,
+          key: `organization.name_${this.lang}`,
         },
         {
-          text: this.$i18n.t("platform"),
+          title: this.$i18n.t("platform"),
           value: "platform.name",
+          key: "platform.name",
         },
         {
-          text: this.$i18n.t("annotations.labels.level"),
+          title: this.$i18n.t("annotations.labels.level"),
           value: "level",
           align: "center",
+          key: "level",
         },
         {
-          text: this.$i18n.t("annotations.labels.author"),
+          title: this.$i18n.t("annotations.labels.author"),
           value: "author",
+          key: "author",
         },
         {
-          text: this.$i18n.t("title_fields.actions"),
+          title: this.$i18n.t("title_fields.actions"),
           value: "actions",
           sortable: false,
         },
@@ -263,3 +289,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.caption {
+  font-size: 12px;
+}
+</style>

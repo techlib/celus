@@ -20,11 +20,13 @@ cs:
     </v-card>
   </div>
 </template>
+
 <script>
 export default {
   name: "InvalidUserPage",
 };
 </script>
+
 <style lang="scss" scoped>
 div.container {
   display: flex;

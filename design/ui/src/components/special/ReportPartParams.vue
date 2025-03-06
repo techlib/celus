@@ -1,9 +1,9 @@
 <template>
-  <span>
+  <span class="d-flex">
     <span class="px-2 font-weight-light"
       >metric={{ definition.metric || "*" }}</span
     >
-    <span class="px-2 font-weight-light">
+    <span class="px-2 font-weight-light d-flex">
       <span
         v-for="(value, name, index) in definition.filters"
         class="me-2"
@@ -15,6 +15,7 @@
     </span>
   </span>
 </template>
+
 <script>
 export default {
   name: "ReportPartParams",

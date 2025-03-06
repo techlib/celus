@@ -1,41 +1,41 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <template>
   <v-container align-baseline fluid>
     <v-row align="baseline">
-      <v-col v-if="!internalLabel" cols="auto" class="sc px-0" shrink
+      <v-col v-if="!internalLabel" class="sc px-0" shrink
         >{{ $t("organization") }}:</v-col
       >
-      <v-col
-        cols="auto"
-        :class="{ 'py-0': !internalLabel, 'mt-3': internalLabel }"
-      >
+      <v-col :class="{ 'py-0': !internalLabel, 'mt-0': internalLabel }">
         <v-autocomplete
           v-model="orgId"
           :items="items"
-          item-text="name"
+          item-title="name"
           item-value="pk"
-          clearable
           clear-icon="fa fa-times"
           eager
+          density="comfortable"
+          hide-details
           :menu-props="{ width: '800px' }"
           :filter="filter"
           :label="label"
           :rules="[required]"
           :disabled="disabled"
         >
-          <template v-slot:item="{ item }">
-            <span
+          <template v-slot:item="{ item, props }">
+            <v-list-item
+              v-bind="props"
               :class="{ bold: item.extra, org: true }"
-              v-text="item.name"
-            ></span>
+            ></v-list-item>
           </template>
         </v-autocomplete>
       </v-col>
     </v-row>
   </v-container>
 </template>
+
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 
@@ -84,6 +84,7 @@ export default {
   watch: {},
 };
 </script>
+
 <style lang="scss">
 .sc {
   font-variant: small-caps;

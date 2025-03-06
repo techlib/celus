@@ -9,7 +9,7 @@
     </v-row>
     <v-row>
       <v-col>
-        <TagListWidget />
+        <TagListWidget></TagListWidget>
       </v-col>
     </v-row>
   </v-container>

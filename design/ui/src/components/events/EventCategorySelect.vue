@@ -5,21 +5,23 @@
     v-model="filterCategory"
     :items="items"
     :label="$t('events.category')"
+    item-title="text"
     :clearable="!showAll"
     clear-icon="fas fa-times"
   >
-    <template #item="{ item }">
-      <v-list-item-content>
+    <template #item="{ item, props }">
+      <v-list-item v-bind="props" title="">
         <v-list-item-title>
-          {{ item.text }}
+          {{ item.raw.text }}
           <span v-if="item.count" class="float-right text-caption">{{
             item.count
           }}</span>
         </v-list-item-title>
-      </v-list-item-content>
+      </v-list-item>
     </template>
   </v-select>
 </template>
+
 <script>
 export default {
   name: "EventCategorySelect",
@@ -52,7 +54,7 @@ export default {
           text: this.$t(`event_category.${category}`),
           value: category,
           count,
-        })
+        }),
       );
       if (this.showAll) {
         out.unshift({ text: this.$t("options.all"), value: null, count: null });

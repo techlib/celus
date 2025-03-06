@@ -1,5 +1,4 @@
 import axios from "axios";
-import Vue from "vue";
 import sleep from "@/libs/sleep";
 
 export default {
@@ -42,7 +41,7 @@ export default {
       state.siteLogo = siteLogo;
     },
     setFooterImages(state, { images }) {
-      Vue.set(state, "footerImages", images);
+      state.footerImages = images;
     },
   },
 };

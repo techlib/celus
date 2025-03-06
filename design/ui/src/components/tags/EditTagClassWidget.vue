@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   tag_class_created: Tag class was successfully created.
@@ -19,35 +21,43 @@ cs:
       <v-card-text>
         <v-container fluid>
           <v-row>
-            <v-col>
+            <v-col cols="auto">
               <v-select
                 v-model="scope"
                 :items="scopes"
+                item-title="title"
+                item-value="value"
                 :rules="[rules.required]"
                 :label="$t('labels.tag_scope')"
                 :hint="$t('labels.tag_scope_hint')"
                 persistent-hint
                 :disabled="!!tagClass || !!fixedScope"
-              />
+              ></v-select>
             </v-col>
-            <v-col>
+            <v-col cols="auto">
               <v-text-field
+                style="min-width: 160px"
                 v-model="name"
                 :label="$t('labels.tag_class_name')"
                 :rules="[rules.required]"
-              />
+              ></v-text-field>
             </v-col>
             <v-col cols="auto">
               <v-checkbox
+                color="primary"
+                hide-details="auto"
                 v-model="exclusive"
                 :label="$t('labels.tag_is_exclusive')"
                 :disabled="tagClass && !tagClass.exclusive"
-              />
+              ></v-checkbox>
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-              <v-text-field v-model="desc" :label="$t('labels.description')" />
+              <v-text-field
+                v-model="desc"
+                :label="$t('labels.description')"
+              ></v-text-field>
             </v-col>
           </v-row>
           <v-row>
@@ -55,13 +65,13 @@ cs:
               <TagAccessLevelSelector
                 v-model="canModify"
                 :label="$t('labels.tag_class_can_modify')"
-              />
+              ></TagAccessLevelSelector>
             </v-col>
             <v-col>
               <TagAccessLevelSelector
                 v-model="canCreateTags"
                 :label="$t('labels.tag_class_can_create_tags')"
-              />
+              ></TagAccessLevelSelector>
             </v-col>
           </v-row>
           <v-row>
@@ -69,21 +79,24 @@ cs:
               <TagAccessLevelSelector
                 v-model="defaultTagCanSee"
                 :label="$t('labels.tag_can_see')"
-              />
+              ></TagAccessLevelSelector>
             </v-col>
             <v-col>
               <TagAccessLevelSelector
                 v-model="defaultTagCanAssign"
                 :label="$t('labels.tag_can_assign')"
-              />
+              ></TagAccessLevelSelector>
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-              <ColorEntry v-model="bgColor" :label="$t('labels.tag_color')" />
+              <ColorEntry
+                v-model="bgColor"
+                :label="$t('labels.tag_color')"
+              ></ColorEntry>
             </v-col>
             <v-col cols="6" class="align-self-center">
-              <TagChip :tag="tagClassPreview" />
+              <TagChip :tag="tagClassPreview"></TagChip>
             </v-col>
           </v-row>
           <v-row v-if="missingOrganization">
@@ -97,11 +110,15 @@ cs:
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="$emit('close')">{{ $t("actions.close") }}</v-btn>
+        <v-btn @click="$emit('close')" variant="flat" elevation="2">{{
+          $t("actions.close")
+        }}</v-btn>
         <v-btn
           color="primary"
           :disabled="!valid || missingOrganization"
           @click="save"
+          variant="flat"
+          elevation="2"
           class="ma-3"
           >{{
             tagClass === null ? $t("actions.create") : $t("actions.save")
@@ -111,6 +128,7 @@ cs:
     </v-card>
   </v-form>
 </template>
+
 <script>
 import cancellation from "@/mixins/cancellation";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -193,10 +211,10 @@ export default {
     },
     scopes() {
       return [
-        { value: "title", text: this.$t("title") },
-        { value: "platform", text: this.$t("platform") },
+        { value: "title", title: this.$t("title") },
+        { value: "platform", title: this.$t("platform") },
         ...(this.consortialInstall || this.showConsortialStuff
-          ? [{ value: "organization", text: this.$t("organization") }]
+          ? [{ value: "organization", title: this.$t("organization") }]
           : []),
       ];
     },

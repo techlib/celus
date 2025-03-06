@@ -11,39 +11,42 @@
             :key="index"
             class="px-0"
           >
-            <v-list-item-avatar>
-              <v-icon color="error">fa-exclamation-circle</v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content>{{ error }}</v-list-item-content>
+            <v-list-item :avatar="true">
+              <v-icon color="error">fa fa-exclamation-circle</v-icon>
+            </v-list-item>
+            <v-list-item class="error_text">{{ error }}</v-list-item>
           </v-list-item>
         </v-list>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="close()">{{ $t("dismiss") }}</v-btn>
+        <v-btn variant="flat" elevation="2" @click="close()">{{
+          $t("dismiss")
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
+
 <script>
 export default {
   name: "ErrorDialog",
 
   props: {
     errors: { type: Array, required: true },
-    value: { type: Boolean, required: false, default: true },
+    modelValue: { type: Boolean, required: false, default: true },
   },
 
   data() {
     return {
-      show: this.value,
+      show: this.modelValue,
     };
   },
 
   methods: {
     close() {
       this.show = false;
-      this.$emit("update", false);
+      this.$emit("update:modelValue", false);
     },
   },
 
@@ -54,3 +57,13 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+:deep(.v-list-item__content) {
+  display: flex;
+  align-items: center;
+}
+.error_text {
+  font-size: 14px;
+}
+</style>

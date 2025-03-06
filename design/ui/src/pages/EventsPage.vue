@@ -10,38 +10,40 @@
       <v-col cols="auto">
         <v-tooltip
           v-if="notifyPermission === 'default'"
-          bottom
           max-width="600px"
           key="default"
+          location="bottom"
         >
-          <template #activator="{ on }">
-            <v-btn v-on="on" @click="askForPermission" color="primary">
-              <v-icon small class="mr-1">fa-bell</v-icon>
+          <template #activator="{ props }">
+            <v-btn @click="askForPermission" color="primary" v-bind="props">
+              <v-icon class="mr-1" size="small">fa fa-bell</v-icon>
               {{ $t("notifications.enable_notifications") }}
             </v-btn>
           </template>
           <span>{{ $t("notifications.enable_notifications_tt") }}</span>
         </v-tooltip>
-
         <v-tooltip
           v-else-if="notifyPermission === 'granted'"
-          bottom
           max-width="600px"
           key="granted"
+          location="bottom"
         >
-          <template #activator="{ on }">
-            <span v-on="on" class="text-button text--disabled">
-              <v-icon small class="mr-1 text--disabled">fa-bell</v-icon>
+          <template #activator="{ props }">
+            <span class="text-button text--disabled disabled" v-bind="props">
+              <v-icon class="mr-1 text--disabled" size="small"
+                >fa fa-bell</v-icon
+              >
               {{ $t("notifications.notifications_enabled") }}
             </span>
           </template>
           <span>{{ $t("notifications.notifications_enabled_tt") }}</span>
         </v-tooltip>
-
-        <v-tooltip v-else bottom max-width="600px" key="denied">
-          <template #activator="{ on }">
-            <span v-on="on" class="text-button text--disabled">
-              <v-icon small class="mr-1 text--disabled">fa-bell-slash</v-icon>
+        <v-tooltip v-else max-width="600px" key="denied" location="bottom">
+          <template #activator="{ props }">
+            <span class="text-button text--disabled" v-bind="props">
+              <v-icon class="mr-1 text--disabled" size="small"
+                >fa fa-bell-slash</v-icon
+              >
               {{ $t("notifications.notifications_disabled") }}
             </span>
           </template>
@@ -57,7 +59,7 @@
     </v-row>
     <v-row>
       <v-col>
-        <EventList />
+        <EventList></EventList>
       </v-col>
     </v-row>
   </v-container>
@@ -85,4 +87,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.disabled {
+  color: #00000060;
+}
+</style>

@@ -3,61 +3,109 @@
     v-model="menuOpen"
     transition="scale-transition"
     offset-y
-    min-width="290px"
+    style="min-width: 290px"
     :disabled="disabled"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props }">
       <v-text-field
-        v-model="month"
+        v-model="monthText"
         :label="label"
         readonly
-        v-on="on"
+        v-bind="props"
         :clearable="clearable"
         clear-icon="fa fa-times"
         :disabled="disabled"
+        hide-details
       >
         <template #prepend>
-          <v-icon color="#aaaaaa">fa-calendar-alt</v-icon>
+          <v-icon color="#aaaaaa">far fa-calendar-alt</v-icon>
         </template>
       </v-text-field>
     </template>
-    <v-date-picker
-      v-model="month"
-      type="month"
-      no-title
-      scrollable
+    <VueDatePicker
+      v-model="date"
       :locale="$i18n.locale"
-      :allowed-dates="allowedMonths"
-    >
-    </v-date-picker>
+      month-picker
+      inline
+      auto-apply
+      :min-date="minMonthDate"
+      :max-date="maxMonthDate"
+    ></VueDatePicker>
   </v-menu>
 </template>
 
 <script>
+import { ymDateFormat, ymDateParse } from "@/libs/dates";
+
 export default {
   name: "MonthEntry",
 
+  emits: ["update:modelValue"],
+
   props: {
-    value: { required: true },
+    modelValue: { required: true, type: [String, null], default: null },
     label: { required: false, default: "", type: String },
-    allowedMonths: { required: false, type: Function },
     disabled: { required: false, type: Boolean, default: false },
     clearable: { required: false, type: Boolean, default: true },
+    minMonth: { required: false, type: String, default: null },
+    maxMonth: { required: false, type: String, default: null },
   },
 
   data() {
     return {
       menuOpen: false,
-      month: this.value,
+      date: null,
     };
   },
 
-  watch: {
-    month() {
-      this.$emit("input", this.month);
+  computed: {
+    monthText: {
+      get() {
+        if (this.date)
+          return ymDateFormat(new Date(this.date.year, this.date.month));
+        return "";
+      },
+      set(value) {
+        if (value) {
+          let date = ymDateParse(value);
+          this.date = {
+            year: date.getFullYear(),
+            month: date.getMonth(),
+          };
+        } else {
+          this.date = null;
+        }
+      },
     },
-    value() {
-      this.month = this.value;
+    minMonthDate() {
+      if (this.minMonth) {
+        return ymDateParse(this.minMonth);
+      }
+      return null;
+    },
+    maxMonthDate() {
+      if (this.maxMonth) {
+        return ymDateParse(this.maxMonth);
+      }
+      return null;
+    },
+  },
+
+  watch: {
+    date() {
+      this.$emit("update:modelValue", this.monthText);
+    },
+    modelValue: {
+      immediate: true,
+      handler() {
+        if (this.modelValue) {
+          let date = ymDateParse(this.modelValue);
+          this.date = {
+            year: date.getFullYear(),
+            month: date.getMonth(),
+          };
+        }
+      },
     },
   },
 };

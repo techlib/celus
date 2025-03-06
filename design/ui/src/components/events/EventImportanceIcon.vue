@@ -1,10 +1,10 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-tooltip bottom max-width="600px">
-    <template #activator="{ on }">
-      <v-icon :color="color" v-on="on" v-bind="$attrs">
-        {{ icon }} {{ fixedWidth ? "fa-fw" : "" }}
+  <v-tooltip max-width="600px" location="bottom">
+    <template #activator="{ props }">
+      <v-icon :color="color" v-bind="props" :size="small ? 'x-small' : ''">
+        {{ icon }} {{ fixedWidth ? "fa fa-fw" : "" }}
       </v-icon>
     </template>
     <span>{{
@@ -12,6 +12,7 @@
     }}</span>
   </v-tooltip>
 </template>
+
 <script>
 export default {
   name: "EventImportanceIcon",
@@ -19,6 +20,7 @@ export default {
   props: {
     importance: { required: true },
     fixedWidth: { type: Boolean, default: false },
+    small: { type: Boolean, default: false },
   },
 
   computed: {
@@ -41,11 +43,11 @@ export default {
     icon() {
       switch (this.importanceNumber) {
         case 20:
-          return "fa-exclamation-triangle";
+          return "fa fa-exclamation-triangle";
         case 10:
-          return "fa-info-circle";
+          return "fa fa-info-circle";
         default:
-          return "fa-expand";
+          return "fa fa-expand";
       }
     },
   },

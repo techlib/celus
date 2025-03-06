@@ -22,17 +22,17 @@
     </v-card>
     <v-expansion-panels>
       <SpecializedReportPart
-        v-for="definition in parts"
+        v-for="(definition, index) in parts"
+        :key="index"
         :name="definition.name"
         :description="definition.description"
         :explanation="definition.explanation"
-        :report-data-sources="sourceReportsObj"
         :stages="definition.stages"
-        :implementationNote="definition.implementationNote"
-        :key="definition.name"
         :data="resultData[definition.name] ? resultData[definition.name] : {}"
         :loading="loading"
-      />
+        :reportDataSources="sourceReportsObj"
+        :implementationNote="definition.implementationNote"
+      ></SpecializedReportPart>
     </v-expansion-panels>
   </div>
 </template>

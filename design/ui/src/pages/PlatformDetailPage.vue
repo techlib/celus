@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   no_info: Unfortunately there are no data about titles available for this platform.
@@ -68,13 +70,13 @@ cs:
 
 <template>
   <div v-if="loading">
-    <LoaderWidget />
+    <LoaderWidget></LoaderWidget>
   </div>
   <div v-else-if="errorLoadingDetails" class="mt-10 mx-6">
-    <ErrorPlaceholder :text="$t('error_loading_data')" />
+    <ErrorPlaceholder :text="$t('error_loading_data')"></ErrorPlaceholder>
   </div>
   <div v-else-if="platformDoesNotExist" class="mt-10 mx-6">
-    <ErrorPlaceholder :text="$t('platform_does_not_exist')" />
+    <ErrorPlaceholder :text="$t('platform_does_not_exist')"></ErrorPlaceholder>
   </div>
   <div v-else class="px-md-2">
     <div>
@@ -92,9 +94,7 @@ cs:
         </template>
       </v-breadcrumbs>
     </div>
-
     <h2 class="mb-0">{{ platformObj ? platformObj.name : "" }}</h2>
-
     <v-container fluid class="px-0">
       <v-row>
         <v-col cols="auto" mr-sm-4>
@@ -156,21 +156,21 @@ cs:
         </v-col>
         <v-spacer></v-spacer>
         <v-col cols="auto">
-          <TagCard scope="platform" :item-id="platformId" />
+          <TagCard scope="platform" :item-id="platformId"></TagCard>
         </v-col>
         <v-col cols="auto" v-if="showAdminStuff">
           <v-card>
             <v-card-text>
               <div>
                 <v-btn
-                  text
-                  small
+                  variant="text"
+                  size="small"
                   :to="{
                     name: 'platform-upload-data',
                     params: { platformId: platformId },
                   }"
                 >
-                  <v-icon small class="mr-2">fa-upload</v-icon>
+                  <v-icon size="small" class="mr-2">fa fa-upload</v-icon>
                   {{ $t("actions.upload_data") }}
                 </v-btn>
               </div>
@@ -181,18 +181,16 @@ cs:
                   @update="refreshAnnotations()"
                   text
                   small
-                />
+                ></AddAnnotationButton>
               </div>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
     </v-container>
-
-    <v-alert v-if="unconnectedPlatform" type="warning" outlined>
+    <v-alert v-if="unconnectedPlatform" type="warning" variant="outlined">
       {{ $t("unconnected_platform", { platform: unconnectedPlatform.name }) }}
     </v-alert>
-
     <section class="mb-5" v-if="platformObj">
       <AnnotationsWidget
         :platform="platformObj"
@@ -202,40 +200,39 @@ cs:
       >
       </AnnotationsWidget>
     </section>
-
-    <v-tabs
-      v-model="activeTab"
-      background-color="#f5f5f5"
-      centered
-      grow
-      class="mt-1"
-    >
-      <v-tabs-slider></v-tabs-slider>
-
-      <v-tab href="#chart" v-if="platform">
-        <v-icon class="mr-2">fa-chart-bar</v-icon>
-        <span v-text="$t('charts')"></span>
-      </v-tab>
-      <v-tab href="#titles" v-if="platform">
-        <v-icon class="mr-2">fa-bars</v-icon>
-        <span v-text="$t('titles')"></span>
-      </v-tab>
-      <v-tab href="#coverage" v-if="platform">
-        <v-icon class="mr-2">fa-layer-group</v-icon>
-        <span v-text="$t('series.data_coverage')"></span>
-      </v-tab>
-      <v-tab v-if="showAdminStuff && platformObj" href="#sushi">
-        <v-icon class="mr-2">fa-download</v-icon>
-        <span v-text="$t('sushi')"></span>
-      </v-tab>
-      <v-tab v-if="platform" href="#admin">
-        <v-icon class="mr-2">fa-tools</v-icon>
-        <span v-text="$t('data_management')"></span>
-      </v-tab>
-
-      <v-tabs-items v-model="activeTab" class="platform-page">
-        <v-tab-item value="chart">
-          <section v-if="selectedOrganizationId && platform">
+    <v-card>
+      <v-tabs
+        v-model="activeTab"
+        bg-color="#f5f5f5"
+        centered
+        grow
+        class="mt-1"
+        color="#2d5854"
+      >
+        <v-tab value="chart" v-if="platform">
+          <v-icon class="mr-2">fas fa-chart-bar</v-icon>
+          <span>{{ $t("charts") }}</span>
+        </v-tab>
+        <v-tab value="titles" v-if="platform">
+          <v-icon class="mr-2">fa fa-bars</v-icon>
+          <span>{{ $t("titles") }}</span>
+        </v-tab>
+        <v-tab value="coverage" v-if="platform">
+          <v-icon class="mr-2">fas fa-layer-group</v-icon>
+          <span>{{ $t("series.data_coverage") }}</span>
+        </v-tab>
+        <v-tab v-if="showAdminStuff && platformObj" value="sushi">
+          <v-icon class="mr-2">fa fa-download</v-icon>
+          <span>{{ $t("sushi") }}</span>
+        </v-tab>
+        <v-tab v-if="showAdminStuff && platform" value="admin">
+          <v-icon class="mr-2">fas fa-tools</v-icon>
+          <span>{{ $t("data_management") }}</span>
+        </v-tab>
+      </v-tabs>
+      <v-window v-model="activeTab" class="platform-page">
+        <v-window-item value="chart">
+          <section v-if="selectedOrganizationId && platform" class="px-4">
             <CounterChartSet
               :platform-id="platformId"
               :title-id="null"
@@ -245,12 +242,12 @@ cs:
             >
             </CounterChartSet>
           </section>
-        </v-tab-item>
-
-        <v-tab-item value="titles">
+        </v-window-item>
+        <v-window-item value="titles">
           <section v-if="platform && platform.title_count">
-            <InterestGroupSelector />
+            <InterestGroupSelector class="px-4"></InterestGroupSelector>
             <TitleList
+              class="px-4"
               :url="titleListURL"
               :platform-id="platformId"
               :order-interest="orderInterest"
@@ -258,68 +255,61 @@ cs:
             ></TitleList>
           </section>
           <section v-if="platform && !platform.title_count">
-            <v-container fluid>
-              <v-alert
-                elevation="2"
-                colored-border
-                border="right"
-                type="warning"
-                >{{ $t("no_info") }}</v-alert
-              >
+            <v-container fluid class="px-4">
+              <v-alert elevation="2" border="end" type="warning" border-color>{{
+                $t("no_info")
+              }}</v-alert>
             </v-container>
           </section>
-        </v-tab-item>
-
-        <v-tab-item value="coverage">
+        </v-window-item>
+        <v-window-item value="coverage">
           <section v-if="platform">
-            <CoverageOverviewWidget :platform-id="platformId" />
+            <CoverageOverviewWidget
+              :platform-id="platformId"
+            ></CoverageOverviewWidget>
           </section>
-        </v-tab-item>
-
-        <v-tab-item value="sushi" v-if="showAdminStuff">
+        </v-window-item>
+        <v-window-item value="sushi" v-if="showAdminStuff">
           <SushiCredentialsManagementWidget
             :organization-id="this.selectedOrganizationId"
             :platform-id="this.platformId"
           >
           </SushiCredentialsManagementWidget>
-
           <div class="ma-3">
             <v-expansion-panels>
               <v-expansion-panel>
-                <v-expansion-panel-header>
+                <v-expansion-panel-title>
                   <span>
-                    <v-icon small class="pr-2">fa-chart-bar</v-icon>
+                    <v-icon class="mr-2" size="x-small">fa fa-chart-bar</v-icon>
                     <span class="font-weight-medium small-caps">{{
                       $t("stats_for_geeks")
                     }}</span>
                   </span>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
                   <h3 class="text-h5 pb-3">{{ $t("curve_title") }}</h3>
                   <p>{{ $t("curve_info") }}</p>
                   <div>
                     <v-switch
                       v-model="showAttemptsOnCurve"
                       label="Show attempts"
-                    />
+                    ></v-switch>
                   </div>
                   <SushiArrivalCurve
                     v-if="platform"
                     :stats="platform.sushi_arrival_stats"
                     :show-title="false"
                     :highlight-probas="havestingProbabilities"
-                  />
-
+                  ></SushiArrivalCurve>
                   <p v-if="showAttemptsOnCurve">
                     {{ $t("curve_attempts_info") }}
                   </p>
-                </v-expansion-panel-content>
+                </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
           </div>
-        </v-tab-item>
-
-        <v-tab-item value="admin">
+        </v-window-item>
+        <v-window-item value="admin" v-if="showAdminStuff">
           <v-sheet class="ma-1">
             <v-card>
               <v-card-text>
@@ -328,20 +318,22 @@ cs:
                     <!-- raw data export -->
                     <v-row>
                       <v-col>
-                        <h3 class="text-h4">{{ $t("labels.data_export") }}</h3>
+                        <h3 class="text-h4 label_admin">
+                          {{ $t("labels.data_export") }}
+                        </h3>
                       </v-col>
                     </v-row>
                     <v-row>
                       <v-col>
-                        <p>{{ $t("raw_export_text") }}</p>
-                        <p>
-                          <i18n path="raw_export_reporting_link">
-                            <template #reporting_module="">
+                        <p class="admin_tab">{{ $t("raw_export_text") }}</p>
+                        <p class="admin_tab">
+                          <i18n-t keypath="raw_export_reporting_link">
+                            <template #reporting_module>
                               <router-link :to="{ name: 'flexitable' }">{{
                                 $t("reporting_module")
                               }}</router-link>
                             </template>
-                          </i18n>
+                          </i18n-t>
                         </p>
                       </v-col>
                     </v-row>
@@ -354,19 +346,18 @@ cs:
                       </v-col>
                     </v-row>
                   </section>
-
                   <section v-if="clickhouseQueryActive" class="pt-4 pb-8">
                     <!-- counter data export -->
                     <v-row>
                       <v-col>
-                        <h3 class="text-h4">
+                        <h3 class="text-h4 label_admin">
                           {{ $t("labels.counter_data_export") }}
                         </h3>
                         <v-alert
                           v-if="(selectedOrganizationId || 0) <= 0"
                           class="mt-2 mb-1"
-                          outlined
                           type="warning"
+                          variant="outlined"
                         >
                           <p class="mb-0">
                             {{ $t("counter_data_export_no_org") }}
@@ -376,15 +367,20 @@ cs:
                     </v-row>
                     <v-row>
                       <v-col>
-                        <p>{{ $t("counter_data_export_text") }}</p>
+                        <p class="admin_tab">
+                          {{ $t("counter_data_export_text") }}
+                        </p>
                       </v-col>
                     </v-row>
                     <v-row no-gutters>
-                      <v-simple-table>
+                      <v-table>
                         <tbody>
                           <tr>
                             <th>COUNTER 5.1</th>
-                            <td v-for="item in exportableCounterReportTypes51">
+                            <td
+                              v-for="item in exportableCounterReportTypes51"
+                              :key="item.id"
+                            >
                               <CounterDataExportWidget
                                 v-if="item"
                                 :platform="platformObj"
@@ -394,7 +390,10 @@ cs:
                           </tr>
                           <tr>
                             <th>COUNTER 5</th>
-                            <td v-for="item in exportableCounterReportTypes5">
+                            <td
+                              v-for="item in exportableCounterReportTypes5"
+                              :key="item.pk"
+                            >
                               <CounterDataExportWidget
                                 v-if="item"
                                 :platform="platformObj"
@@ -403,21 +402,21 @@ cs:
                             </td>
                           </tr>
                         </tbody>
-                      </v-simple-table>
+                      </v-table>
                     </v-row>
                   </section>
-
                   <section v-if="showAdminStuff" class="pt-4 pb-8">
                     <!-- delete data -->
                     <v-row>
                       <v-col>
-                        <h3 class="text-h4">{{ $t("labels.delete_data") }}</h3>
+                        <h3 class="text-h4 label_admin">
+                          {{ $t("labels.delete_data") }}
+                        </h3>
                       </v-col>
                     </v-row>
-
                     <v-row>
                       <v-col>
-                        <p>{{ $t("delete_data_text") }}</p>
+                        <p class="admin_tab">{{ $t("delete_data_text") }}</p>
                       </v-col>
                     </v-row>
                     <v-row no-gutters>
@@ -425,7 +424,7 @@ cs:
                         <DeletePlatformDataWidget
                           :platform="platform"
                           @finished="deleteFinished"
-                        />
+                        ></DeletePlatformDataWidget>
                       </v-col>
                     </v-row>
                   </section>
@@ -433,9 +432,9 @@ cs:
               </v-card-text>
             </v-card>
           </v-sheet>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-tabs>
+        </v-window-item>
+      </v-window>
+    </v-card>
   </div>
 </template>
 
@@ -601,7 +600,7 @@ export default {
       const map = new Map(
         this.counterReportTypes
           .filter((e) => e.counter_version === 5)
-          .map((e) => [e.code, e])
+          .map((e) => [e.code, e]),
       );
       if (this.enableItems) {
         return [
@@ -619,7 +618,7 @@ export default {
       const map = new Map(
         this.counterReportTypes
           .filter((e) => e.counter_version === 51)
-          .map((e) => [e.code, e])
+          .map((e) => [e.code, e]),
       );
       if (this.enableItems) {
         return [
@@ -646,7 +645,7 @@ export default {
         try {
           let response = await axios.get(this.platformDetailUrl);
           this.platform = response.data;
-          this.$set(this.platform, "interests", { loading: false });
+          this.platform.interests = { loading: false };
           await Promise.all([
             this.loadPlatformTitleCount(),
             this.loadPlatformInterest(),
@@ -671,31 +670,31 @@ export default {
     },
     async loadPlatformInterest() {
       if (this.platformInterestUrl) {
-        this.$set(this.platform, "interests", { loading: true });
+        this.platform.interests = { loading: true };
         try {
           let response = await axios.get(this.platformInterestUrl);
-          this.$set(this.platform, "interests", response.data);
+          this.platform.interests = response.data;
         } catch (error) {
           this.showSnackbar({
             content: "Error loading interest: " + error,
             color: "error",
           });
-          this.$set(this.platform, "interests", { loading: false });
+          this.platform.interests = { loading: false };
         }
       }
     },
     async loadPlatformTitleCount() {
       if (this.platformTitleCountUrl) {
-        this.$set(this.platform, "title_count", "loading");
+        this.platform.title_count = "loading";
         try {
           let response = await axios.get(this.platformTitleCountUrl);
-          this.$set(this.platform, "title_count", response.data.title_count);
+          this.platform.title_count = response.data.title_count;
         } catch (error) {
           this.showSnackbar({
             content: "Error loading title count: " + error,
             color: "error",
           });
-          this.$set(this.platform, "title_count", null);
+          this.platform.title_count = null;
         }
       }
     },
@@ -786,4 +785,21 @@ hr.light {
     min-height: 600px;
   }
 }
+
+.admin_tab {
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 16px;
+}
+
+.label_admin {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* .tab-active {
+  color: #2d5854 !important;
+}
+
+.tab-inactive {
+  color: #0000008a !important;
+} */
 </style>

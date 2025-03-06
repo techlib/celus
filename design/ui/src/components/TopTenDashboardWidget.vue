@@ -14,26 +14,44 @@ cs:
   <v-card min-height="320px" height="100%" min-width="400" class="text-center">
     <!-- publication type selector -->
     <div v-if="pubTypes && pubTypes.length" class="float-right mt-4 mr-3">
-      <v-btn-toggle v-model="selectedPubType">
-        <v-tooltip bottom v-for="pubType in pubTypes" :key="pubType.value">
-          <template #activator="{ on }">
-            <v-btn v-on="on" :value="pubType.value" small>
-              <v-icon small>fa {{ pubType.icon }}</v-icon>
+      <v-btn-toggle
+        v-model="selectedPubType"
+        variant="outlined"
+        divided
+        text-warning
+        density="compact"
+      >
+        <v-tooltip
+          location="bottom"
+          v-for="pubType in pubTypes"
+          :key="pubType.value"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              style="padding: 0 12px"
+              size="small"
+              :value="pubType.value"
+            >
+              <v-icon size="small">fa {{ pubType.icon }}</v-icon>
             </v-btn>
           </template>
           {{ $t(pubType.text) }}
         </v-tooltip>
       </v-btn-toggle>
     </div>
-
-    <v-card-title v-text="interestGroup.name"></v-card-title>
+    <v-card-title class="text-left">{{ interestGroup.name }}</v-card-title>
     <v-card-subtitle class="text-left">{{
       $t("titles_with_most_interest")
     }}</v-card-subtitle>
     <v-card-text>
-      <LargeSpinner v-if="loading" />
-      <v-progress-linear v-else-if="!titles" indeterminate />
-      <v-simple-table v-if="titles && titles.length" class="dashboard" dense>
+      <LargeSpinner v-if="loading"></LargeSpinner>
+      <v-progress-linear v-else-if="!titles" indeterminate></v-progress-linear>
+      <v-table
+        v-if="titles && titles.length"
+        class="dashboard"
+        density="compact"
+      >
         <tbody>
           <tr v-for="title in titles" :key="title.pk">
             <td class="text-left">
@@ -43,7 +61,7 @@ cs:
                   params: { platformId: null, titleId: title.pk },
                 }"
               >
-                <ShortenText :text="title.name" :length="40" />
+                <ShortenText :text="title.name" :length="40"></ShortenText>
               </router-link>
             </td>
             <td class="text-right">
@@ -51,11 +69,11 @@ cs:
             </td>
           </tr>
         </tbody>
-      </v-simple-table>
+      </v-table>
       <div v-else-if="titles">
         <!-- titles loaded, but no data -->
         <div class="mt-8 mb-2">
-          <v-icon large color="grey">fa-times</v-icon>
+          <v-icon color="grey" size="large">fa fa-times</v-icon>
         </div>
         {{ $t("no_matching_titles") }}
       </div>

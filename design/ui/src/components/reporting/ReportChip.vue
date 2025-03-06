@@ -1,22 +1,34 @@
 <template>
-  <v-tooltip bottom max-width="400">
-    <template v-slot:activator="{ on }">
-      <span v-on="on">
-        <v-chip class="ma-1" :color="color" :outlined="!highlight" label>
-          <slot> {{ report.short_name }} </slot>
-        </v-chip>
-      </span>
+  <v-tooltip location="bottom" max-width="400" v-model="show">
+    <template v-slot:activator="{ props }">
+      <v-chip
+        v-bind="props"
+        class="ma-1"
+        :color="color"
+        :variant="!highlight ? 'outlined' : 'flat'"
+        label
+      >
+        <slot> {{ report.short_name }} </slot>
+      </v-chip>
     </template>
-    <span>{{ report.short_name }}</span>
-    <span v-if="showName && report.name" class="font-weight-light"
-      >: {{ report.name }}</span
-    >
+    <template #default>
+      <span>{{ report.short_name }}</span>
+      <span v-if="showName && report.name" class="font-weight-light"
+        >: {{ report.name }}</span
+      >
+    </template>
   </v-tooltip>
 </template>
 
 <script>
 export default {
   name: "ReportChip",
+
+  data() {
+    return {
+      show: false,
+    };
+  },
 
   props: {
     report: {

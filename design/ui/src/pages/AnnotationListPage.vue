@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   validity: Validity
@@ -30,16 +31,16 @@ cs:
                   <AddAnnotationButton
                     @update="fetchAnnotations"
                     color="primary"
-                  />
+                  ></AddAnnotationButton>
                 </v-col>
-
                 <v-spacer></v-spacer>
                 <v-col cols="4">
                   <v-text-field
                     v-model="searchDebounced"
-                    append-icon="fa-search"
+                    append-inner-icon="fa fa-search"
                     :label="$t('labels.search')"
                     single-line
+                    style="min-width: 85px"
                     hide-details
                   >
                   </v-text-field>
@@ -52,10 +53,11 @@ cs:
                     :items="Object.values(organizations)"
                     :label="$t('organization')"
                     item-value="pk"
-                    item-text="name"
+                    item-title="name"
+                    style="min-width: 85px"
                     clearable
                     clear-icon="fas fa-times"
-                    @change="() => (page = 1)"
+                    @update:modelValue="() => (page = 1)"
                   ></v-select>
                 </v-col>
                 <v-col cols="6">
@@ -64,21 +66,23 @@ cs:
                     :label="$t('title_fields.platforms')"
                     :items="platforms"
                     item-value="pk"
-                    item-text="name"
+                    style="min-width: 85px"
+                    item-title="name"
                     multiple
                     clearable
                     clear-icon="fas fa-times"
-                    @change="() => (page = 1)"
+                    @update:modelValue="() => (page = 1)"
                   ></v-select>
                 </v-col>
-                <v-col cols="2">
+                <v-col :cols="$vuetify.display.xs ? 3 : 2">
                   <v-select
                     v-model="filterValidity"
                     :items="validities"
+                    style="min-width: 85px"
                     :label="$t('validity')"
                     clearable
                     clear-icon="fas fa-times"
-                    @change="() => (page = 1)"
+                    @update:modelValue="() => (page = 1)"
                   ></v-select>
                 </v-col>
               </v-row>
@@ -91,7 +95,7 @@ cs:
                 :server-items-length="annotations.count"
                 @update:options="options = $event"
                 @updated="fetchAnnotations"
-              />
+              ></AnnotationList>
             </v-container>
           </v-card-text>
         </v-card>
@@ -126,9 +130,9 @@ export default {
       filterPlatforms: null,
       filterValidity: null,
       validities: [
-        { text: this.$t("valid"), value: "valid" },
-        { text: this.$t("future"), value: "future" },
-        { text: this.$t("outdated"), value: "outdated" },
+        { title: this.$t("valid"), value: "valid" },
+        { title: this.$t("future"), value: "future" },
+        { title: this.$t("outdated"), value: "outdated" },
       ],
       search: "",
       page: 1,
@@ -206,7 +210,7 @@ export default {
         this.page = page;
         this.page_size = itemsPerPage;
         this.ordering = sortBy.map(
-          (field, i) => (sortDesc[i] ? "-" : "") + field.replace(".", "__")
+          (field, i) => (sortDesc[i] ? "-" : "") + field.replace(".", "__"),
         );
       },
     },

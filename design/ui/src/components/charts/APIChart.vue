@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/charts.yaml"></i18n>
 
 <template>
@@ -6,7 +7,7 @@
     v-if="loading || crunchingData"
     :height="height"
     :text="crunchingData ? crunchingText : $t('chart.loading_data')"
-  />
+  ></LoaderWidget>
   <div v-else-if="tooMuchData" :style="{ height: height }" id="loading">
     <div>
       <i class="far fa-frown pb-6"></i>
@@ -30,15 +31,24 @@
     v-else-if="dataRaw.length === 0"
     :style="{ height: height }"
     id="loading"
+    class="if_data_empty"
   >
     <div>
-      <i class="far fa-frown" :style="{ marginTop: '36px' }"></i>
-      <div class="infotext">{{ $t("chart.no_data") }}</div>
+      <div
+        class="data_are_empty"
+        :style="{
+          paddingTop: parseFloat(height) / 4 + 'px',
+          paddingRight: '70px',
+        }"
+      >
+        <i class="far fa-frown" :style="{ marginTop: '36px' }"></i>
+        <div class="infotext">{{ $t("chart.no_data") }}</div>
+      </div>
       <v-alert
         v-if="reportedMetrics.length"
         type="info"
         class="mt-8 d-inline-block text-left"
-        outlined
+        variant="outlined"
         max-width="960px"
       >
         <div>{{ $t("reported_metrics_empty_data_intro") }}</div>
@@ -53,19 +63,24 @@
     <v-container class="pa-0" fluid>
       <v-row class="pb-3 pt-4">
         <v-col v-if="showTableToggle" cols="auto" class="pl-5 py-0">
-          <v-btn-toggle v-model="tableView" mandatory borderless>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="false" small v-on="on">
-                  <v-icon small>fa fa-chart-bar</v-icon>
+          <v-btn-toggle
+            v-model="tableView"
+            mandatory="force"
+            density="compact"
+            variant="outlined"
+          >
+            <v-tooltip location="bottom" opacity="5">
+              <template #activator="{ props }">
+                <v-btn size="small" v-bind="props" :value="false">
+                  <v-icon size="small">fas fa-chart-bar</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("chart_view.chart") }}</span>
             </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="true" small v-on="on">
-                  <v-icon small>fa fa-list</v-icon>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn size="small" v-bind="props" :value="true">
+                  <v-icon size="small">fa fa-list</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("chart_view.table") }}</span>
@@ -73,44 +88,56 @@
           </v-btn-toggle>
         </v-col>
         <v-col v-if="showYearToYear" cols="auto" class="pl-5 py-0">
-          <v-btn-toggle v-model="yearAsSeries" mandatory borderless>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="false" small v-on="on">
-                  <v-icon x-small>fa fa-chart-line</v-icon>
+          <v-btn-toggle
+            v-model="yearAsSeries"
+            mandatory="force"
+            borderless
+            density="compact"
+            variant="outlined"
+          >
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn size="small" v-bind="props" :value="false">
+                  <v-icon size="x-small">fa fa-chart-line</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("x_axis.linear") }}</span>
             </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
                 <v-btn
-                  :value="true"
-                  small
-                  v-on="on"
+                  size="small"
+                  v-bind="props"
                   :disabled="!showYearToYear"
+                  :value="true"
                 >
-                  <v-icon x-small>fa fa-calendar-alt</v-icon>
+                  <v-icon size="x-small">fa fa-calendar-alt</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("x_axis.year_months") }}</span>
             </v-tooltip>
           </v-btn-toggle>
         </v-col>
-        <v-col v-if="isStackable" cols="auto" class="py-0">
-          <v-btn-toggle v-model="doStack" mandatory borderless>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="false" small v-on="on">
-                  <v-icon x-small>fa fa-ellipsis-h</v-icon>
+        <v-col v-if="isStackable" cols="auto" class="pl-5 py-0">
+          <v-btn-toggle
+            v-model="doStack"
+            mandatory="force"
+            borderless
+            density="compact"
+            variant="outlined"
+          >
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn size="small" v-bind="props" :value="false">
+                  <v-icon size="x-small">fa fa-ellipsis-h</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("stack.no") }}</span>
             </v-tooltip>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-btn :value="true" small v-on="on">
-                  <v-icon x-small>fa fa-layer-group</v-icon>
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn size="small" v-bind="props" :value="true">
+                  <v-icon size="x-small">fa fa-layer-group</v-icon>
                 </v-btn>
               </template>
               <span>{{ $t("stack.yes") }}</span>
@@ -118,12 +145,12 @@
           </v-btn-toggle>
         </v-col>
         <v-col
-          class="pt-1 pb-1 font-weight-normal ml-4 mr-4 text-center"
+          class="pt-1 pb-1 font-weight-normal ml-1 mr-1 d-flex align-center justify-center text-center"
           :class="showYearToYear ? 'subtitle-parent' : ''"
         >
           <span
             v-if="showYearToYear"
-            class="chart-subtitle pt-2 px-5"
+            class="chart-subtitle px-4"
             v-text="
               yearAsSeries ? $t('x_axis.year_months') : $t('x_axis.linear')
             "
@@ -132,13 +159,13 @@
         <v-col
           cols="auto"
           shrink
-          class="pr-3 pa-0 pt-1"
+          class="pa-0 d-flex align-center justify-center"
           v-if="reportedMetrics.length"
         >
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <span v-on="on">
-                <v-icon color="info">fa-info-circle</v-icon>
+          <v-tooltip location="bottom">
+            <template #activator="{ props }">
+              <span v-bind="props">
+                <v-icon color="info" size="x-small">fas fa-info-circle</v-icon>
               </span>
             </template>
             <strong>{{ $t("reported_metrics_tooltip") }}</strong>
@@ -163,7 +190,6 @@
         @click="click"
       >
       </v-chart>
-
       <ChartDataTable
         :rows="displayData"
         :columns="[shownPrimaryDimension, ...seriesNames]"
@@ -186,7 +212,7 @@
             :start-month="dateRangeStart"
             :end-month="dateRangeEnd"
             :rows="coverageRows"
-          />
+          ></CoverageMap>
         </v-card-text>
         <v-card-actions class="pb-4 pr-4">
           <v-spacer></v-spacer>
@@ -198,6 +224,7 @@
     </v-dialog>
   </div>
 </template>
+
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import LoaderWidget from "@/components/util/LoaderWidget";
@@ -337,8 +364,7 @@ export default {
       type: Number,
     },
     noCoverage: {
-      default: false,
-      type: Boolean,
+      type: [Boolean, Number],
     }, // exclude coverage from chart
     fillDateRange: {
       default: false,
@@ -378,7 +404,7 @@ export default {
       return months.map((item) =>
         new Date(2020, item - 1, 1).toLocaleString(this.$i18n.locale, {
           month: "short",
-        })
+        }),
       );
     },
     dataURL() {
@@ -444,7 +470,7 @@ export default {
         return null;
       }
       return this.xValues.findIndex(
-        (value) => value === this.selectedOrganization.name
+        (value) => value === this.selectedOrganization.name,
       );
     },
     dataYears() {
@@ -591,7 +617,7 @@ export default {
       if (this.reportedMetrics.length > 0) {
         let inside = this.reportedMetrics
           .map((metric) =>
-            (metric.name || metric.short_name).replace(/_/g, " ")
+            (metric.name || metric.short_name).replace(/_/g, " "),
           )
           .join("</li><li>");
         return `<ul><li>${inside}</li></ul>`;
@@ -689,8 +715,8 @@ export default {
         // more space for names when bars are horizontal
         grid:
           this.type === "bar"
-            ? { left: "25%" }
-            : { left: this.maxValue.toString().length * 10 },
+            ? { left: "25%", top: 90 }
+            : { left: this.maxValue.toString().length * 10, top: 90 },
         xAxis: this.xAxis,
         yAxis: this.yAxis,
         dataset: {
@@ -725,7 +751,7 @@ export default {
             ) {
               return `<div>${out}
                 <div class="chart-missing-data">${me.$t(
-                  "chart.missing_data"
+                  "chart.missing_data",
                 )}</div></div>`;
             }
             // this is normal output
@@ -752,10 +778,13 @@ export default {
         toolbox: this.toolbox,
         dataZoom: this.dataZoom,
         legend: {
+          type: "scroll",
+          orient: "horizontal",
+          width: "85%",
           // checkmarks as icons for the series
           icon: "path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z",
-          itemWidth: 16,
-          itemGap: 16,
+          itemWidth: 20,
+          itemGap: 30,
           itemHeight: 16,
           data: this.seriesNames,
         },
@@ -781,7 +810,7 @@ export default {
         let rows = this.displayData;
         return [
           ...Object.keys(rows[0]).filter(
-            (item) => item !== this.shownPrimaryDimension
+            (item) => item !== this.shownPrimaryDimension,
           ),
         ];
       } else {
@@ -820,8 +849,8 @@ export default {
       return Math.max(
         0,
         ...this.displayData.map((item) =>
-          this.seriesNames.reduce((acc, series) => acc + item[series], 0)
-        )
+          this.seriesNames.reduce((acc, series) => acc + item[series], 0),
+        ),
       );
     },
   },
@@ -874,8 +903,8 @@ export default {
           function sumNonPrimary(rec) {
             // remove value of primary dimension, sum the rest
             return Object.entries(rec)
-              .filter(([a, b]) => a !== this.shownPrimaryDimension)
-              .map(([a, b]) => b)
+              .filter(([a]) => a !== this.shownPrimaryDimension)
+              .map(([b]) => b)
               .reduce((x, y) => x + y);
           }
 
@@ -901,7 +930,7 @@ export default {
               if (!found) {
                 let rec = { month: monthStr };
                 keys.forEach((key) =>
-                  key !== "month" ? (rec[key] = 0) : null
+                  key !== "month" ? (rec[key] = 0) : null,
                 );
                 filled.push(rec);
               }
@@ -991,7 +1020,7 @@ export default {
         this.dataRaw,
         this.shownPrimaryDimension,
         this.shownSecondaryDimension,
-        "count"
+        "count",
       );
     },
     click() {
@@ -1022,6 +1051,7 @@ export default {
   },
 };
 </script>
+
 <style scoped lang="scss">
 .accomp-text {
   font-size: 125%;
@@ -1034,6 +1064,11 @@ export default {
   &.right {
     padding-left: 0;
   }
+}
+
+:deep(.legend-container) {
+  white-space: nowrap; /* Prevents text wrapping */
+  overflow: hidden; /* Hides overflow */
 }
 
 .chart {
@@ -1063,5 +1098,17 @@ export default {
 .subtitle-parent {
   border-bottom: solid 1px #dddddd;
   border-top: solid 1px #dddddd;
+}
+
+.data_are_empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.if_data_empty {
+  display: flex;
+  flex-direction: column;
 }
 </style>

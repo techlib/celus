@@ -33,20 +33,16 @@ cs:
 <template>
   <v-container fluid>
     <!--h1 class="text-h3 mb-4">{{ $t('management_page') }}</h1-->
-
     <section v-if="user.is_superuser || user.is_staff">
       <h2 class="text-h4 mb-3">{{ $t("django_admin") }}</h2>
-
       <p
         v-html="$t('django_admin_text', { adminUrl: getCelusAdminSitePath })"
         v-bind:title="getCelusAdminSitePath"
-        class="font-weight-light"
+        class="font-weight-light mb-4"
       ></p>
     </section>
-
     <h2 class="text-h4 mb-3">{{ $t("background_tasks") }}</h2>
     <p class="font-weight-light" v-text="$t('background_tasks_info')"></p>
-
     <v-alert
       v-if="lastTask"
       :type="lastTask.success ? 'success' : 'error'"
@@ -54,7 +50,6 @@ cs:
       elevation="1"
     >
       <h4 class="heading-2" v-text="lastTask.task.title"></h4>
-
       <div v-if="lastTask.success" v-text="$t('task_success')"></div>
       <div v-else>
         {{ $t("task_error") }}
@@ -64,17 +59,14 @@ cs:
       </div>
       <div class="font-weight-light" v-text="lastTask.time"></div>
     </v-alert>
-
     <table>
       <tr v-for="task in celeryTasks" :key="task.taskName">
         <th v-text="task.title" class="text-left pr-2 pb-3"></th>
         <td class="pb-3">
           <v-btn @click="runCeleryTask(task)" color="primary">
-            <v-icon
-              small
-              class="fa-fw"
-              v-text="task.icon ? task.icon : 'fas fa-sync-alt'"
-            ></v-icon>
+            <v-icon size="small" class="fa-fw">{{
+              task.icon ? task.icon : "fas fa-sync-alt"
+            }}</v-icon>
           </v-btn>
         </td>
       </tr>
@@ -127,7 +119,7 @@ export default {
         uses_erms: !!this.basicInfo.USES_ERMS,
       };
       return this.allCeleryTasks.filter((item) =>
-        item.filter ? item.filter(context) : true
+        item.filter ? item.filter(context) : true,
       );
     },
   },

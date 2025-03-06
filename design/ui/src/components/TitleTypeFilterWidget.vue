@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/pub-types.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   select_pub_type: Title type filter
@@ -14,13 +15,20 @@ cs:
     <div
       v-if="showTitle"
       v-text="$t('select_pub_type') + ':'"
-      class="font-weight-bold mr-1 pt-1"
+      class="font-weight-bold mr-1 pt-2"
     ></div>
     <div class="pr-3 pt-0">
-      <v-tooltip bottom>
-        <template #activator="{ on }">
-          <v-btn icon :color="color" v-on="on" @click="revertSelection()">
-            <v-icon small>fa fa-retweet</v-icon>
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
+          <v-btn
+            icon
+            :color="color"
+            v-bind="props"
+            variant="text"
+            density="comfortable"
+            @click="revertSelection()"
+          >
+            <v-icon size="small">fa fa-retweet</v-icon>
           </v-btn>
         </template>
         {{ $t("revert_selection") }}
@@ -31,19 +39,20 @@ cs:
       :key="pubType.code"
       class="mr-4 no-messages"
     >
-      <v-tooltip bottom :disabled="!iconsOnly">
-        <template #activator="{ on }">
-          <span v-on="on">
+      <v-tooltip location="bottom" :disabled="!iconsOnly">
+        <template #activator="{ props }">
+          <span v-bind="props">
             <v-checkbox
-              :value="pubType.code"
               v-model="selectedPubTypes"
-              dense
+              density="compact"
               class="mt-0"
+              :hide-details="true"
               :color="color"
+              :value="pubType.code"
             >
               <template #label>
                 <v-icon
-                  small
+                  size="small"
                   class="ml-1 mr-1"
                   :color="
                     selectedPubTypes.indexOf(pubType.code) >= 0
@@ -74,7 +83,7 @@ export default {
       default: false,
       type: Boolean,
     },
-    value: {
+    modelValue: {
       required: true,
     },
     color: {
@@ -88,26 +97,22 @@ export default {
 
   methods: {
     revertSelection() {
-      this.$set(
-        this,
-        "selectedPubTypes",
-        pubTypes
-          .map((item) => item.code)
-          .filter((item) => this.selectedPubTypes.indexOf(item) === -1)
-      );
+      this.selectedPubTypes = pubTypes
+        .map((item) => item.code)
+        .filter((item) => this.selectedPubTypes.indexOf(item) === -1);
     },
   },
 
   data() {
     return {
       pubTypes: pubTypes,
-      selectedPubTypes: [...this.value],
+      selectedPubTypes: [...this.modelValue],
     };
   },
 
   watch: {
     selectedPubTypes() {
-      this.$emit("input", this.selectedPubTypes);
+      this.$emit("update:modelValue", this.selectedPubTypes);
     },
   },
 };

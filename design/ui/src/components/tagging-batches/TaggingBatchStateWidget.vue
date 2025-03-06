@@ -2,10 +2,11 @@
 
 <template>
   <span>
-    <v-icon small :color="color" class="pr-2">{{ icon }}</v-icon>
+    <v-icon size="small" :color="color" class="pr-6">{{ icon }}</v-icon>
     {{ $t("tag_state." + text) }}
   </span>
 </template>
+
 <script>
 export default {
   name: "TaggingBatchStateWidget",
@@ -26,16 +27,16 @@ export default {
       switch (this.batch.state) {
         case "prefailed":
         case "failed":
-          return "fa-exclamation-triangle";
+          return "fa fa-exclamation-triangle";
         case "imported":
-          return "fa-check";
+          return "fa fa-check";
         case "preflight":
           // no matched titles
           return this.batch.preflight?.recognized_columns?.length === 0
-            ? "fa-times"
-            : "fa-forward";
+            ? "fa fa-times"
+            : "fa fa-forward";
         default:
-          return "fa-cogs";
+          return "fa fa-cogs";
       }
     },
     color() {

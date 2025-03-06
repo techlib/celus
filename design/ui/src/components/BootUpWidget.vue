@@ -25,7 +25,7 @@ cs:
       height="300px"
       padding-top="80px"
       max-width="400px"
-    />
+    ></LoaderWidget>
   </div>
 </template>
 

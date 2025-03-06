@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   title: Report type creation examples
@@ -61,7 +62,6 @@ cs:
       <p v-html="$t('ex_metric_text')"></p>
       <img src="../assets/ex-title.png" alt="Example with title" class="mt-4" />
       <p v-html="$t('ex_title_text')"></p>
-
       <h3>{{ $t("more_complex_title") }}</h3>
       <img
         src="../assets/ex-title-metric-publisher-success.png"

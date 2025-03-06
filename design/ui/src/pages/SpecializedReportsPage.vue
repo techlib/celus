@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   intro: This page contains several purpose-built reports intended for specific
@@ -31,14 +32,22 @@ cs:
     </v-row>
     <v-row v-if="!organizationSelected">
       <v-col>
-        <v-alert type="warning" outlined>
+        <v-alert
+          type="warning"
+          variant="outlined"
+          icon="fas fa-circle-exclamation"
+        >
           {{ $t("organization_missing") }}
         </v-alert>
       </v-col>
     </v-row>
     <v-row v-if="!dateRangeCorrect">
       <v-col>
-        <v-alert type="warning" outlined>
+        <v-alert
+          type="warning"
+          variant="outlined"
+          icon="fas fa-circle-exclamation"
+        >
           {{ $t("select_date_range") }}
         </v-alert>
       </v-col>
@@ -46,24 +55,22 @@ cs:
     <v-row class="px-2">
       <v-col>
         <v-select
+          style="min-width: 170px"
           :items="reports"
           v-model="selectedReport"
-          item-text="name"
+          item-title="name"
           item-value="name"
           return-object
           :label="$t('labels.select_report')"
           :hint="selectedReport ? selectedReport.description : ''"
           :persistent-hint="!!selectedReport"
         >
-          <template #item="{ item }">
-            <v-list-item-content>
-              <v-list-item-title>
-                {{ item.name }}
-              </v-list-item-title>
+          <template #item="{ item, props }">
+            <v-list-item v-bind="props">
               <v-list-item-subtitle>
-                {{ item.description }}
+                {{ item.raw.description }}
               </v-list-item-subtitle>
-            </v-list-item-content>
+            </v-list-item>
           </template>
         </v-select>
       </v-col>
@@ -73,12 +80,12 @@ cs:
         </v-btn>
       </v-col>
       <v-col cols="auto" class="align-self-center">
-        <v-tooltip bottom>
-          <template #activator="{ on }">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
             <v-btn
               :href="exportUrl"
               color="warning"
-              v-on="on"
+              v-bind="props"
               :disabled="!canRun"
             >
               {{ $t("labels.export") }}
@@ -88,14 +95,13 @@ cs:
         </v-tooltip>
       </v-col>
     </v-row>
-
     <v-row>
       <v-col>
         <SpecializedReport
           v-if="selectedReport"
           :definition="selectedReport"
           ref="output"
-        />
+        ></SpecializedReport>
       </v-col>
     </v-row>
   </v-container>
@@ -177,3 +183,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.v-text-field .v-input__details {
+  padding-inline: 0;
+}
+.v-list-item--one-line {
+  padding: 10px 16px !important;
+}
+</style>

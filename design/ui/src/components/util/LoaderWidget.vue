@@ -1,18 +1,19 @@
 <template>
   <div
     :style="{ height: height, paddingTop: paddingTop }"
-    class="loader primary--text"
+    class="loader text-primary"
   >
     <i class="fas fa-spin" :class="iconName"></i>
     <v-progress-linear
       v-if="showProgress"
-      :value="progress"
       color="primary"
       class="my-6"
-    />
+      :value="progress"
+    ></v-progress-linear>
     <p class="text">{{ text }}</p>
   </div>
 </template>
+
 <script>
 export default {
   name: "LoaderWidget",
@@ -20,7 +21,7 @@ export default {
     loading: {},
     height: { default: "600px" },
     text: { default: "", required: false },
-    iconName: { default: "fa-cog" },
+    iconName: { default: "fa fa-cog" },
     paddingTop: { default: "160px" },
     showProgress: {
       default: false,
@@ -33,6 +34,7 @@ export default {
   },
 };
 </script>
+
 <style scoped lang="scss">
 div.loader {
   text-align: center;

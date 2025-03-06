@@ -4,8 +4,8 @@
     :false-color="falseColor"
     :true-icon="trueIcon"
     :false-icon="falseIcon"
-    :value="value"
     v-bind="$attrs"
+    :model-value="value"
   ></CheckMark>
 </template>
 
@@ -22,8 +22,8 @@ export default {
     value: { default: false },
     trueColor: { default: "success" },
     falseColor: { default: "error" },
-    trueIcon: { default: "fa-check" },
-    falseIcon: { default: "fa-times" },
+    trueIcon: { default: "fa fa-check" },
+    falseIcon: { default: "fa fa-times" },
   },
 };
 </script>

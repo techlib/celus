@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="@/locales/sushi.yaml" />
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   details: Details
@@ -15,20 +16,19 @@ cs:
 
 <template>
   <span v-if="intentionState">
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <span v-on="on">
+    <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
+        <span v-bind="props">
           <v-icon :color="icon.color">{{ icon.icon }} fa-fw</v-icon>
           <!-- show additional icon when credentials are broken -->
-          <v-icon v-if="brokenCredentials" x-small color="warning" class="pl-1">
-            fa-exclamation fa-fw
+          <v-icon v-if="brokenCredentials" size="x-small" color="warning">
+            fas fa-exclamation fa-fw
           </v-icon>
-          <v-icon v-else-if="brokenReport" x-small color="warning" class="pl-1">
-            fa-exclamation fa-fw
+          <v-icon v-else-if="brokenReport" size="x-small" color="warning">
+            fas fa-exclamation fa-fw
           </v-icon>
         </span>
       </template>
-
       <div>
         <div class="explanation">
           {{ $t(`sushi.state_desc.${intentionState}`) }}
@@ -62,6 +62,7 @@ cs:
     </v-tooltip>
   </span>
 </template>
+
 <script>
 import {
   intentionState,

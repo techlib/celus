@@ -1,33 +1,37 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/notifications.yaml"></i18n>
 
 <template>
-  <v-navigation-drawer v-model="show" :mini-variant.sync="mini" clipped app>
+  <v-navigation-drawer v-model="show" :mini-variant="mini">
     <!-- stuff that should be here on xs displays because it is hidden from the app-bar -->
     <OrganizationSelector
       :lang="appLanguage"
       internal-label
-      v-if="$vuetify.breakpoint.smAndDown"
-    />
-    <SelectedDateRangeWidget input-like-label v-if="$vuetify.breakpoint.xs" />
-
+      v-if="$vuetify.display.smAndDown"
+      class="pb-0"
+    ></OrganizationSelector>
+    <SelectedDateRangeWidget
+      input-like-label
+      v-if="$vuetify.display.smAndDown"
+      class="pl-0"
+    ></SelectedDateRangeWidget>
     <v-divider class="d-md-none"></v-divider>
-
     <!-- the navigation menu itself -->
     <v-list
-      class="pt-0"
-      dense
+      class="pa-0"
+      density="compact"
       v-for="(group, index) in activeGroups"
       :key="index"
-      subheader
+      nav
+      :lines="false"
     >
-      <v-subheader>
+      <v-list-subheader class="mt-3 pl-0">
         {{ group.title }}
-      </v-subheader>
-
+      </v-list-subheader>
       <MenuListItem
         v-for="item in group.items.filter((item) =>
-          item.show == null ? true : item.show
+          item.show == null ? true : item.show,
         )"
         :item="item"
         :key="item.title"
@@ -36,7 +40,22 @@
       >
       </MenuListItem>
     </v-list>
-
+    <!-- <template #append>
+      <div class="pb-3 text-center">
+        <v-btn
+          v-if="tourName"
+          variant="outlined"
+          color="grey"
+          @click="activateTour({ name: tourName })"
+          >{{ $t(tourToShow.title) }}</v-btn
+        >
+      </div>
+      <div class="small subdued text-center mb-2">
+        <router-link :to="{ name: 'changelog' }">
+          {{ $t("celus_version") }}: {{ celusVersion }}
+        </router-link>
+      </div>
+    </template> -->
     <template #append>
       <div class="small subdued text-center mb-2">
         <router-link :to="{ name: 'changelog' }">
@@ -46,25 +65,31 @@
     </template>
   </v-navigation-drawer>
 </template>
+
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import MenuListItem from "@/components/util/MenuListItem";
 
+import { useDisplay } from "vuetify";
+
 export default {
   name: "SidePanel",
   components: { MenuListItem, SelectedDateRangeWidget, OrganizationSelector },
   props: {
-    value: { default: true, type: Boolean },
+    modelValue: { default: true, type: Boolean },
+    tourName: { default: null, required: false, type: String },
   },
   data() {
     return {
       mini: false,
-      show: this.value,
+      show: this.modelValue,
     };
   },
   computed: {
+    // xs,
+    // smAndDown,
     ...mapState({
       user: "user",
       appLanguage: "appLanguage",
@@ -164,7 +189,7 @@ export default {
                   title: this.$t("pages.specialized_reports"),
                   linkTo: "specialized-reports",
                   chip: {
-                    text: this.$t("labels.new_menu_item"),
+                    title: this.$t("labels.new_menu_item"),
                     color: "error",
                   },
                 },
@@ -176,20 +201,20 @@ export default {
               items: [
                 {
                   title: this.$i18n.t("pages.overlap_analysis_titles"),
-                  icon: "fa fa-layer-group",
+                  // icon: "fa fa-layer-group",
                   linkTo: "overlap-analysis",
                 },
                 {
                   title: this.$i18n.t("pages.overlap_analysis_platforms"),
-                  icon: "fa fa-th",
+                  // icon: "fa fa-th",
                   linkTo: "platform-overlap-analysis",
                 },
                 {
                   title: this.$i18n.t("pages.title_list_overlap"),
-                  icon: "fa fa-list",
+                  // icon: "fa fa-list",
                   linkTo: "title-list-overlap",
                   chip: {
-                    text: this.$t("labels.new_menu_item"),
+                    title: this.$t("labels.new_menu_item"),
                     color: "error",
                   },
                 },
@@ -208,25 +233,25 @@ export default {
               items: [
                 {
                   title: this.$i18n.t("pages.sushi_monthly_overview"),
-                  icon: "far fa-calendar-check",
+                  // icon: "far fa-calendar-check",
                   linkTo: "sushi-monthly-overview",
                   show: this.showAdminStuff,
                 },
                 {
                   title: this.$i18n.t("pages.sushi_management"),
-                  icon: "far fa-arrow-alt-circle-down",
+                  // icon: "far fa-arrow-alt-circle-down",
                   linkTo: "sushi-credentials-list",
                   show: this.showAdminStuff,
                 },
                 {
                   title: this.$t("pages.sushi_fetch_attempts"),
-                  icon: "fa-retweet",
+                  // icon: "fa fa-retweet",
                   linkTo: "harvests",
                   show: this.showAdminStuff,
                 },
                 {
                   title: this.$t("pages.sushi_troubleshooting"),
-                  icon: "fa-exclamation-triangle",
+                  // icon: "fa fa-exclamation-triangle",
                   linkTo: "sushi-troubleshooting",
                   show: this.showAdminStuff,
                 },
@@ -234,16 +259,16 @@ export default {
             },
             {
               title: this.$t("pages.manual_data_uploads"),
-              icon: "fa-upload",
+              icon: "fa fa-upload",
               linkTo: "manual-data-upload-list",
               show: this.showAdminStuff,
             },
             {
               title: this.$t("pages.supported_non_counter_platforms"),
-              icon: "fa-file-excel",
+              icon: "fas fa-file-excel",
               linkTo: "supported-non-counter-platforms",
               chip: {
-                text: this.$t("labels.new_menu_item"),
+                title: this.$t("labels.new_menu_item"),
                 color: "error",
               },
               show: this.showAdminStuff && this.isRawImportEnabled,
@@ -253,7 +278,7 @@ export default {
               icon: "fa fa-sitemap",
               linkTo: "data-coverage-overview",
               chip: {
-                text: this.$t("labels.new_menu_item"),
+                title: this.$t("labels.new_menu_item"),
                 color: "error",
               },
               show: true,
@@ -273,19 +298,19 @@ export default {
               items: [
                 {
                   title: this.$i18n.t("pages.management"),
-                  icon: "fas fa-tools",
+                  // icon: "fas fa-tools",
                   linkTo: "management",
                   show: this.showManagementStuff,
                 },
                 {
                   title: this.$t("pages.maintenance"),
-                  icon: "fa fa-toolbox",
+                  // icon: "fa fa-toolbox",
                   linkTo: "maintenance",
                   show: this.showManagementStuff,
                 },
                 {
                   title: this.$t("pages.management_commands"),
-                  icon: "fa fa-terminal",
+                  // icon: "fa fa-terminal",
                   linkTo: "management-commands",
                   show: this.isSuperuser,
                 },
@@ -337,11 +362,20 @@ export default {
 
   watch: {
     show() {
-      this.$emit("input", this.show);
+      this.$emit("update:modelValue", this.show);
     },
-    value() {
-      this.show = this.value;
+    modelValue() {
+      this.show = this.modelValue;
     },
   },
+  setup(props, { emit }) {
+    const { xs, smAndDown, md } = useDisplay();
+    return {
+      xs,
+      smAndDown,
+      md,
+    };
+  },
+  mounted() {},
 };
 </script>

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   export_raw_data: Export raw data
@@ -41,18 +42,21 @@ cs:
     <v-btn
       @click="showDialog = true"
       :color="color"
-      :text="text"
-      :small="small"
+      :variant="text ? 'text' : 'flat'"
+      :size="small ? 'small' : 'default'"
+      elevation="2"
     >
-      <v-icon left :small="small">fa-download</v-icon>
+      <v-icon left class="mr-2" :size="small ? 'small' : 'default'"
+        >fa fa-download</v-icon
+      >
       {{ $t("export_raw_data") }}
     </v-btn>
     <v-dialog v-model="showDialog" max-width="600">
       <v-card>
         <v-card-title>{{ $t("export_raw_data") }}</v-card-title>
         <v-card-text>
-          <div class="py-2">{{ $t("info_text") }}</div>
-          <div class="py-2">
+          <div class="card_text py-2 text-disabled">{{ $t("info_text") }}</div>
+          <div class="card_text py-2 text-disabled">
             <strong>{{ $t("record_count") }}</strong
             >:
             <span v-if="loadingCount"
@@ -61,7 +65,6 @@ cs:
             >
             <span v-else>{{ formatInteger(totalCount) }}</span>
           </div>
-
           <!-- error :( -->
           <div v-if="error">
             <v-alert type="error">
@@ -87,7 +90,7 @@ cs:
           <!-- export in progress -->
           <div v-else-if="waiting" class="pt-4">
             <div class="py-2">{{ $t("export_running") }}</div>
-            <v-progress-linear :value="progress" height="30">
+            <v-progress-linear height="30" :value="progress">
               <span v-if="currentCount === null"
                 ><span class="fa fa-spin fa-spinner"></span>
                 {{ $t("preparing") }}</span
@@ -105,8 +108,13 @@ cs:
             <span>{{ $t("data_ready") }}</span>
             <div class="d-flex pt-4">
               <v-spacer></v-spacer>
-              <v-btn :href="resultUrl" color="warning" target="_blank" outlined>
-                <v-icon left>fa-download</v-icon>
+              <v-btn
+                :href="resultUrl"
+                color="warning"
+                target="_blank"
+                variant="outlined"
+              >
+                <v-icon left>fa fa-download</v-icon>
                 {{ $t("download_data") }}
               </v-btn>
               <v-btn @click="showDialog = false" class="ml-2">{{
@@ -157,8 +165,7 @@ export default {
     },
     // following are passed on to v-btn
     text: {
-      default: false,
-      type: Boolean,
+      type: String,
     },
     color: {
       required: false,
@@ -297,4 +304,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.card_text {
+  font-size: 14px;
+}
+</style>

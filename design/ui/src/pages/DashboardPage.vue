@@ -29,19 +29,19 @@ cs:
 </i18n>
 
 <template>
-  <v-container fluid v-if="organizationId" pa-0 pa-sm-2>
-    <!--v-row>
-            <v-col>
-                <h1 v-text="$t('pages.dashboard')"></h1>
-            </v-col>
-        </v-row-->
+  <!-- <IntroPage v-if="loggedIn && showIntro"></IntroPage> -->
+  <v-container fluid v-if="organizationId" class="pa-0 pa-sm-2">
+    <!-- <v-row>
+      <v-col>
+        <h1 v-text="$t('pages.dashboard')"></h1>
+      </v-col>
+    </v-row> -->
     <v-row>
       <v-col cols="12" lg="6">
         <v-card min-height="480">
-          <v-card-title
-            v-text="$t('interest')"
-            class="float-left pt-3"
-          ></v-card-title>
+          <v-card-title class="float-left pt-5">{{
+            $t("interest")
+          }}</v-card-title>
           <v-card-text class="pt-3">
             <APIChart
               v-if="interestReportType"
@@ -58,22 +58,25 @@ cs:
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col v-if="showAdminStuff" cols="12" lg="6">
         <v-card min-height="480">
-          <v-card-title
-            v-text="$t('sushi_status')"
-            class="float-left"
-          ></v-card-title>
+          <v-card-title class="float-left">
+            {{ $t("sushi_status") }}
+          </v-card-title>
           <v-card-text class="pt-3">
             <div class="text-right">
-              <v-btn-toggle v-model="sushiMonth" mandatory dense>
+              <v-btn-toggle
+                v-model="sushiMonth"
+                mandatory="force"
+                density="compact"
+                variant="outlined"
+              >
                 <v-btn
                   v-for="month in sushiMonths"
                   :key="month"
                   :value="month"
-                  v-text="month"
-                ></v-btn>
+                  >{{ month }}</v-btn
+                >
               </v-btn-toggle>
             </div>
             <br />
@@ -120,13 +123,16 @@ cs:
         </v-card>
       </v-col>
     </v-row>
-
     <v-row class="align-stretch">
       <v-col cols="auto">
-        <v-card height="100%" min-height="320">
-          <v-card-title v-text="$t('interest_totals')"></v-card-title>
+        <v-card height="100%" min-height="320px">
+          <v-card-title>{{ $t("interest_totals") }}</v-card-title>
           <v-card-text>
-            <div v-if="totalInterestData" class="text-center ma-5">
+            <div
+              v-if="totalInterestData"
+              class="text-center ma-5"
+              style="color: rgba(0, 0, 0, 0.6)"
+            >
               <div v-text="$t('total_interest')"></div>
               <div
                 class="text-h4"
@@ -142,34 +148,33 @@ cs:
                 class="text-h4"
                 v-text="
                   smartFormatFloat(
-                    totalInterestData.interest_sum / totalInterestData.days
+                    totalInterestData.interest_sum / totalInterestData.days,
                   )
                 "
               ></div>
             </div>
-            <LargeSpinner v-else />
+            <LargeSpinner v-else></LargeSpinner>
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col v-if="showAdminStuff" cols="auto">
         <v-card height="100%" min-height="320" min-width="200">
-          <v-card-title v-text="$t('sushi_overview')"></v-card-title>
+          <v-card-title>{{ $t("sushi_overview") }}</v-card-title>
           <v-card-text>
-            <SushiStatsDashboardWidget class="mx-3 mt-5" />
+            <SushiStatsDashboardWidget
+              class="mx-3 mt-5"
+            ></SushiStatsDashboardWidget>
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col cols="auto">
         <v-card height="100%" min-height="320" min-width="200">
-          <v-card-title v-text="$t('coverage_overview')"></v-card-title>
+          <v-card-title>{{ $t("coverage_overview") }}</v-card-title>
           <v-card-text>
-            <OverallCoverageDashboardWidget />
+            <OverallCoverageDashboardWidget></OverallCoverageDashboardWidget>
           </v-card-text>
         </v-card>
       </v-col>
-
       <v-col
         cols="auto"
         v-for="interestGroup in this.interestGroupTitlesSorted"
@@ -221,7 +226,7 @@ export default {
   data() {
     const lastMonth = ymDateFormat(addDays(startOfMonth(new Date()), -15));
     const monthBeforeLast = ymDateFormat(
-      addDays(startOfMonth(new Date()), -45)
+      addDays(startOfMonth(new Date()), -45),
     );
     return {
       sushiMonths: [lastMonth, monthBeforeLast],
@@ -244,7 +249,7 @@ export default {
     }),
     interestGroupTitlesSorted() {
       let igs = this.interestGroups.filter(
-        (item) => item.short_name !== "other"
+        (item) => item.short_name !== "other",
       );
       if (igs) {
         return igs.sort((a, b) => a.position > b.position);
@@ -281,7 +286,7 @@ export default {
 
     pubTypesForInterestGroup(igShortName) {
       if (igShortName.indexOf("full_text") > -1) {
-        let all = { text: "pub_type.all", value: "", icon: "fa-expand" };
+        let all = { text: "pub_type.all", value: "", icon: "fa fa-expand" };
         return [
           all,
           ...pubTypes

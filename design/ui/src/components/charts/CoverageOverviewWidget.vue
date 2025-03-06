@@ -7,7 +7,7 @@
             v-model="selectedReportView"
             :report-views-url="reportViewsUrl"
             :view-filter="notInterestFilter"
-          />
+          ></ReportViewSelector>
         </v-col>
       </v-row>
       <v-row v-if="selectedReportView">
@@ -19,7 +19,7 @@
             :start-month="dateRangeStart"
             :end-month="dateRangeEnd"
             :raw-report-type="selectedReportView.is_proxy"
-          />
+          ></CoverageMap>
         </v-col>
       </v-row>
     </v-container>

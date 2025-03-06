@@ -32,7 +32,11 @@ cs:
                 persistent-hint
                 v-model="formData[arg.name]"
                 v-bind="extraAttrs(arg)"
-              />
+                :variant="arg.type !== 'bool' ? 'underlined' : 'default'"
+                :density="arg.type === 'bool' ? 'compact' : 'default'"
+                :class="arg.type === 'bool' ? 'mt-4' : ''"
+              >
+              </component>
               <div class="pt-8 d-flex align-center">
                 <div style="width: 240px">
                   <v-btn
@@ -48,11 +52,16 @@ cs:
                   v-model="formData.doit"
                   color="warning"
                   class="ps-8"
+                  width="200px"
+                  :hide-details="true"
                 >
                   <template #label>
                     {{ $t("really_do_it") }}
-                    <v-icon color="warning" small class="ps-1"
-                      >fa-exclamation-triangle</v-icon
+                    <v-icon
+                      color="warning"
+                      size="small"
+                      class="ps-1 icon_warning"
+                      >fa fa-exclamation-triangle</v-icon
                     >
                   </template>
                 </v-checkbox>
@@ -62,11 +71,10 @@ cs:
         </v-card>
       </v-col>
     </v-row>
-
     <v-row v-if="result && result.exception">
       <v-col cols="1" class="text-caption">exception:</v-col>
       <v-col>
-        <v-alert type="error" outlined class="overflow-auto">
+        <v-alert type="error" variant="outlined" class="overflow-auto">
           <pre class="pt-1">
             {{ result.exception }}
           </pre>
@@ -89,11 +97,7 @@ cs:
       <v-col cols="1" class="text-caption">log:</v-col>
       <v-col>
         <pre>
-          <div
-            v-for="(line, index) in textToLines(result.log)"
-            :key="index"
-            :class="typeToColor(line.type) + '--text'"
-          >{{ line.text }}</div>
+          <div v-for="(line, index) in textToLines(result.log)" :key="index" :class="typeToColor(line.type) + '--text'">{{ line.text }}</div>
         </pre>
       </v-col>
     </v-row>
@@ -103,7 +107,7 @@ cs:
 <script>
 import { defineComponent } from "vue";
 import cancellation from "@/mixins/cancellation";
-import { VCheckbox, VTextField, VFileInput } from "vuetify/lib";
+// import { VCheckbox, VTextField, VFileInput } from "vuetify/lib";
 import capitalize from "lodash/capitalize";
 import OrganizationSelectionWidget from "@/components/selectors/OrganizationSelectionWidget.vue";
 
@@ -113,9 +117,9 @@ export default defineComponent({
   mixins: [cancellation],
 
   components: {
-    VCheckbox,
-    VTextField,
-    VFileInput,
+    // VCheckbox,
+    // VTextField,
+    // VFileInput,
     OrganizationSelectionWidget,
   },
 
@@ -155,6 +159,9 @@ export default defineComponent({
       this.result = null;
       let formData = new FormData();
       for (let [key, value] of Object.entries(this.formData)) {
+        if (typeof value === "object" && value !== null) {
+          formData.append(key, value[0]);
+        }
         if (value !== null) formData.append(key, value);
       }
       this.uploading = true;
@@ -235,4 +242,14 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style lang="scss">
+.v-input__details {
+  min-height: 0;
+}
+.icon_warning {
+  width: 30px;
+}
+.v-label {
+  word-break: normal !important;
+}
+</style>

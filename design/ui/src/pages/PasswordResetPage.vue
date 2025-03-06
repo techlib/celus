@@ -1,4 +1,5 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   messed_up: You may have only copied a part of it or your email application messed it up.
@@ -65,18 +66,15 @@ cs:
           />
         </v-col>
       </v-row>
-
       <v-row v-if="!ready">
-        <LargeSpinner />
+        <LargeSpinner></LargeSpinner>
       </v-row>
-
       <template v-else-if="resetTokenOk && !success">
         <v-row>
           <v-col>
-            <h2 v-text="$t(scope + '.header')"></h2>
+            <h2>{{ $t(scope + ".header") }}</h2>
           </v-col>
         </v-row>
-
         <v-row
           v-if="attemptFinished && error && passwordError === true"
           justify="center"
@@ -85,53 +83,52 @@ cs:
             {{ $t(scope + ".some_error") }}
           </v-alert>
         </v-row>
-
         <v-row>
           <v-col>
-            <div v-text="$t(scope + '.info')"></div>
+            <div>{{ $t(scope + ".info") }}</div>
           </v-col>
         </v-row>
-
         <v-row justify="center">
           <v-col cols="auto" v-if="!usesEduId">
             <v-text-field
+              class="reset_pass"
               v-model="password"
               :label="$t('new_password')"
+              density="compact"
               :rules="[passwordError, rules.required, rules.min]"
               :type="showPassword ? 'text' : 'password'"
-              :append-icon="showPassword ? 'fa-eye' : 'fa-eye-slash'"
-              @click:append="showPassword = !showPassword"
-              outlined
-            ></v-text-field>
+              variant="outlined"
+            >
+              <template #append-inner>
+                <v-icon @click="showPassword = !showPassword" size="small">
+                  {{ showPassword ? "fa fa-eye" : "fa fa-eye-slash" }}
+                </v-icon>
+              </template>
+            </v-text-field>
           </v-col>
           <v-col cols="auto">
             <v-btn
-              v-text="invitation ? $t('register') : $t('reset')"
               color="primary"
-              class="mt-2"
+              class="button_reset"
               @click="proceed()"
               :disabled="!valid"
             >
+              {{ invitation ? $t("register") : $t("reset") }}
             </v-btn>
           </v-col>
         </v-row>
       </template>
-
       <v-row v-else-if="success" justify="center">
         <v-alert type="success">
-          <i18n :path="scope + '.success'" tag="span">
+          <i18n-t :keypath="scope + '.success'" tag="span">
             <template #here>
-              <a
-                href="/"
-                v-text="$t('here')"
-                class="font-weight-black white--text"
-              >
+              <a href="/" class="font-weight-black white--text">
+                {{ $t("here") }}
               </a>
             </template>
-          </i18n>
+          </i18n-t>
         </v-alert>
       </v-row>
-
       <v-row v-else justify="center">
         <!-- the token data is not OK -->
         <v-alert type="error">
@@ -230,7 +227,7 @@ export default {
             new_password1: this.password,
             new_password2: this.password,
           },
-          { privileged: true }
+          { privileged: true },
         );
         this.success = true;
       } catch (error) {
@@ -250,7 +247,7 @@ export default {
             uid: this.uid,
             token: this.token,
           },
-          { privileged: true }
+          { privileged: true },
         );
         this.success = true;
       } catch (error) {
@@ -263,3 +260,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.reset_pass {
+  min-width: 200px;
+}
+
+.button_reset {
+  margin-top: 2px;
+}
+</style>

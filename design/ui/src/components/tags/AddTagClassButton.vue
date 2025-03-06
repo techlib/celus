@@ -3,11 +3,13 @@
 <template>
   <v-btn
     :color="color"
-    :small="small"
+    :size="small ? 'small' : 'default'"
     @click="showDialog = true"
     v-bind="$attrs"
+    :variant="outlined ? 'outlined' : 'flat'"
+    :elevation="outlined ? 0 : 2"
   >
-    <v-icon small class="pr-2">fa fa-plus</v-icon>
+    <v-icon size="small" class="pr-2">fa fa-plus</v-icon>
     {{ $t("labels.new_tag_class") }}
     <v-dialog v-model="showDialog" max-width="720px">
       <EditTagClassWidget
@@ -15,7 +17,7 @@
         @close="showDialog = false"
         ref="widget"
         :fixed-scope="scope"
-      />
+      ></EditTagClassWidget>
     </v-dialog>
   </v-btn>
 </template>
@@ -29,6 +31,7 @@ export default {
   components: { EditTagClassWidget },
 
   props: {
+    outlined: { type: Boolean },
     small: { type: Boolean, default: false },
     color: { type: String, default: "" },
     scope: {

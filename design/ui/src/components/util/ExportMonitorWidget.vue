@@ -1,13 +1,14 @@
-<i18n lang="yaml" src="@/locales/reporting.yaml" />
+<i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
-  progress_tt: "|{current} out of {total} row exported so far|{current} out of {total} rows exported so far"
+  # progress_tt: "|{current} out of {total} row exported so far|{current} out of {total} rows exported so far"
   waiting_for_start: Waiting for export to start
   exporting: Exporting
   download: Download
 
 cs:
-  progress_tt: "Zatím bylo vyexportováno {current} z {total} řádku|Zatím bylo vyexportováno {current} ze {total} řádků|Zatím bylo vyexportováno {current} z {total} řádků"
+  # progress_tt: "Zatím bylo vyexportováno {current} z {total} řádku|Zatím bylo vyexportováno {current} ze {total} řádků|Zatím bylo vyexportováno {current} z {total} řádků"
   waiting_for_start: Čekám na spuštění exportu
   exporting: Exportuji
   download: Stáhnout
@@ -18,41 +19,42 @@ cs:
     :href="outputFile"
     :color="color"
     :disabled="disabled"
-    text
+    variant="text"
     v-if="status !== EXPORT_ERROR"
   >
-    <v-tooltip bottom v-if="inProgress">
-      <template #activator="{ on }">
-        <span v-on="on">
+    <v-tooltip location="bottom" v-if="inProgress">
+      <template #activator="{ props }">
+        <span v-bind="props">
           <v-progress-circular
-            :value="progress"
             :indeterminate="progress === 0"
             height="24"
             dark
+            :model-value="progress"
           >
             <span class="small-text">{{ progressText }}</span>
           </v-progress-circular>
           <span class="ml-2"
             >{{ $t("exporting")
             }}<span class="loading"
-              ><span class="three-dots">&#x2026;</span></span
+              ><span class="three-dots">…</span></span
             ></span
           >
         </span>
       </template>
       {{ progressTooltip }}
     </v-tooltip>
-
     <span v-else>
-      <v-icon small>fa fa-download</v-icon>
+      <v-icon size="small">fa fa-download</v-icon>
       <span class="ml-2">{{ $t("download") }}</span>
     </span>
   </v-btn>
   <span v-else>
-    <v-tooltip bottom>
-      <template #activator="{ on }">
-        <span v-on="on" class="ml-4 text-button">
-          <v-icon small color="warning">fa fa-exclamation-triangle</v-icon>
+    <v-tooltip location="bottom">
+      <template #activator="{ props }">
+        <span v-bind="props" class="ml-4 text-button">
+          <v-icon size="small" color="warning"
+            >fa fa-exclamation-triangle</v-icon
+          >
           <span class="ml-2 text-warning">{{ $t("export_status.error") }}</span>
         </span>
       </template>

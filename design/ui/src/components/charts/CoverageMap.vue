@@ -10,12 +10,12 @@ cs:
   <v-container fluid>
     <v-row no-gutters>
       <v-col :cols="12">
-        <LoaderWidget v-if="loading" />
+        <LoaderWidget v-if="loading"></LoaderWidget>
         <div
           v-else-if="coverageData.length > 0"
           :style="{ height: height + 'px' }"
         >
-          <v-chart :option="option" @click="onClick" autoresize />
+          <v-chart :option="option" @click="onClick" autoresize></v-chart>
         </div>
       </v-col>
     </v-row>
@@ -140,7 +140,7 @@ export default {
     },
     yValuesWidth() {
       const maxLen = Math.max(
-        ...this.yValues.map((item) => item.toString().length)
+        ...this.yValues.map((item) => item.toString().length),
       );
       return maxLen * 5 + 20;
     },
@@ -174,7 +174,7 @@ export default {
       return (
         this.yValues.findIndex(
           (item) =>
-            this.sumsByRow.get(item).ib_count < this.sumsByRow.get(item).ib_max
+            this.sumsByRow.get(item).ib_count < this.sumsByRow.get(item).ib_max,
         ) - 1
       );
     },
@@ -227,7 +227,8 @@ export default {
             type: "heatmap",
             data: this.coverageData.map((item) => [
               item[this.cols],
-              item[this.rows].toString(),
+              // item[this.rows].toString(),
+              item[this.rows],
               item.ratio * 100,
             ]),
             markLine: markline,
@@ -317,7 +318,7 @@ export default {
           let mapping = {};
           this.coverageData.forEach((item) => {
             mapping[item.platform_id] = trans.translateKeyToString(
-              item.platform_id
+              item.platform_id,
             );
           });
           this.platformIdMap = uniqueMapping(mapping);
@@ -344,7 +345,7 @@ export default {
       let out = { [this.rows]: event.value[1], [this.cols]: event.value[0] };
       if (out.platform) {
         out.platformId = Object.keys(this.platformIdMap).find(
-          (key) => this.platformIdMap[key] === out.platform
+          (key) => this.platformIdMap[key] === out.platform,
         );
       }
       this.$emit("click", out);

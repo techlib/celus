@@ -1,14 +1,16 @@
 <template>
   <v-progress-linear
-    :indeterminate="task.progressPercentage === null"
-    :value="task.progressPercentage"
+    :indeterminate="task?.progressPercentage === null"
     :height="dense ? '24px' : '32px'"
+    :buffer-value="task?.progressPercentage"
+    :value="task?.progressPercentage"
+    color="primary"
   >
     <slot></slot>
-    <span v-if="task.progressPercentage !== null" class="ps-4">
+    <span v-if="task?.progressPercentage !== null" class="ps-4">
       {{ progressText }}
       <span v-if="!dense"
-        >({{ task.progressCurrent }}/{{ task.progressTotal }})</span
+        >({{ task?.progressCurrent }}/{{ task?.progressTotal }})</span
       >
     </span>
   </v-progress-linear>
@@ -21,13 +23,13 @@ export default {
   name: "ServerTaskMonitor",
 
   props: {
-    value: { required: true, type: Object },
+    modelValue: { required: true, type: Object },
     dense: { type: Boolean, default: false },
   },
 
   data() {
     return {
-      task: this.value,
+      task: this.modelValue,
       retryInterval: 2000,
       timeout: null,
     };
@@ -35,6 +37,10 @@ export default {
 
   computed: {
     progressText() {
+      if (!this.task) {
+        return "No task available";
+      }
+
       return this.task.progressPercentage === null
         ? this.task.message
         : `${round(this.task.progressPercentage)} %`;
@@ -65,7 +71,7 @@ export default {
     this.checkProgress();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.stop();
   },
 };

@@ -1,17 +1,17 @@
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <template>
-  <LoaderWidget v-if="loading" :height="height" />
+  <LoaderWidget v-if="loading" :height="height"></LoaderWidget>
   <div
     v-else-if="noData"
     class="d-flex justify-center"
     :style="{ height: height - 20 + 'px' }"
   >
-    <slot name="no-data" />
+    <slot name="no-data"></slot>
   </div>
   <div v-else :style="{ height: height - 20 + 'px' }">
-    <v-chart :option="option" />
-    <slot name="data-footer" />
+    <v-chart :option="option"></v-chart>
+    <slot name="data-footer"></slot>
   </div>
 </template>
 
@@ -138,7 +138,10 @@ export default {
             },
           },
         ],
-        legend: {},
+        legend: {
+          left: "center",
+          itemGap: 10,
+        },
         tooltip: {},
       };
     },
@@ -184,7 +187,10 @@ export default {
       // create a map to easily find the attempt data
       let attemptMap = new Map();
       this.rawData.forEach((item) =>
-        attemptMap.set(`${item.credentials_id}-${item.counter_report_id}`, item)
+        attemptMap.set(
+          `${item.credentials_id}-${item.counter_report_id}`,
+          item,
+        ),
       );
 
       let statusCounter = new Map();

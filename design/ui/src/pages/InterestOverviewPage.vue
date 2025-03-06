@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   platform_to_report: Platforms ⭢ Report types
@@ -46,32 +47,51 @@ cs:
           <v-tabs
             v-model="tab"
             dark
-            background-color="info"
+            bg-color="info"
             centered
+            align-tabs="center"
             slider-color="#ffffff33"
             slider-size="48"
           >
-            <v-tab href="#reports">{{ $t("platform_to_report") }}</v-tab>
-            <v-tab href="#metrics">{{ $t("report_to_metrics") }}</v-tab>
-            <v-tab-item value="reports">
-              <v-card flat>
-                <v-card-text class="pa-8">
-                  <p>{{ $t("interest_reports_intro") }}</p>
-                  <p>{{ $t("interest_reports_intro2") }}</p>
-                  <InterestOverviewReports />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-            <v-tab-item value="metrics">
-              <v-card flat>
-                <v-card-text class="pa-8">
-                  <p>{{ $t("interest_metrics_intro") }}</p>
-                  <p>{{ $t("interest_metrics_intro2") }}</p>
-                  <InterestOverviewMetrics />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+            <v-tab
+              :class="{
+                'tab-active': tab === 'reports',
+                'tab-inactive': tab !== 'reports',
+              }"
+              value="reports"
+              >{{ $t("platform_to_report") }}</v-tab
+            >
+            <v-tab
+              :class="{
+                'tab-active': tab === 'metrics',
+                'tab-inactive': tab !== 'metrics',
+              }"
+              value="metrics"
+              >{{ $t("report_to_metrics") }}</v-tab
+            >
           </v-tabs>
+          <v-card-text class="pa-8">
+            <v-window v-model="tab">
+              <v-window-item value="reports">
+                <v-card flat>
+                  <v-card-text>
+                    <p>{{ $t("interest_reports_intro") }}</p>
+                    <p>{{ $t("interest_reports_intro2") }}</p>
+                    <InterestOverviewReports></InterestOverviewReports>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+              <v-window-item value="metrics">
+                <v-card flat>
+                  <v-card-text>
+                    <p>{{ $t("interest_metrics_intro") }}</p>
+                    <p>{{ $t("interest_metrics_intro2") }}</p>
+                    <InterestOverviewMetrics></InterestOverviewMetrics>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
+            </v-window>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -94,3 +114,18 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.tab-active {
+  color: #ffffffff !important;
+  background-color: #ffffff33;
+}
+
+.tab-inactive {
+  color: #ffffffd6 !important;
+}
+p {
+  margin-bottom: 16px;
+  color: #757557;
+}
+</style>

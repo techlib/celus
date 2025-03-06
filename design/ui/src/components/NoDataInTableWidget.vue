@@ -30,7 +30,7 @@ cs:
     </p>
 
     <p>
-      <i18n path="manual_upload" tag="span">
+      <i18n-t keypath="manual_upload" tag="span">
         <template #manual_upload_link>
           <router-link
             color="primary"
@@ -38,7 +38,7 @@ cs:
             >{{ $t("manually_upload") }}</router-link
           >
         </template>
-      </i18n>
+      </i18n-t>
     </p>
   </div>
 </template>

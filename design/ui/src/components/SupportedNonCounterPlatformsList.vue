@@ -1,4 +1,5 @@
 <i18n src="@/locales/common.yaml" lang="yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   knowledgebase_article: Detailed information about the format from CELUS knowledgebase
@@ -12,55 +13,54 @@ cs:
     :items="platforms"
     item-key="pk"
     :headers="headers"
-    sort-by="name"
+    v-model:sort-by="sortBy"
     :items-per-page="-1"
     :search="search"
     :loading="loading"
     class="auto-table"
-    dense
   >
-    <template #item.actions="{ item }">
-      <v-tooltip bottom>
-        <template #activator="{ on }">
+    <template #[`item.actions`]="{ item }">
+      <v-tooltip location="bottom">
+        <template #activator="{ props }">
           <v-btn
-            v-on="on"
-            text
+            v-bind="props"
+            variant="text"
             :to="{
               name: 'platform-upload-data',
               params: { platformId: item.pk },
               query: { method: 'raw' },
             }"
             color="secondary"
-            small
+            size="small"
           >
-            <v-icon small class="pr-2">fa-upload</v-icon>
+            <v-icon size="small" class="pr-5">fa fa-upload</v-icon>
             {{ $t("actions.upload_data") }}
           </v-btn>
         </template>
         {{ $t("actions.upload_data") }}
       </v-tooltip>
     </template>
-
-    <template #item.info="{ item }">
-      <v-tooltip bottom max-width="600px">
-        <template #activator="{ on }">
+    <template #[`item.info`]="{ item }">
+      <v-tooltip location="bottom" max-width="600px">
+        <template #activator="{ props }">
           <v-btn
             v-if="item.knowledgebase && item.knowledgebase.notes_url"
-            v-on="on"
+            v-bind="props"
             :href="item.knowledgebase.notes_url"
             target="_blank"
-            text
-            small
+            variant="text"
             color="tertiary"
+            size="small"
           >
-            <v-icon small color="info" class="pr-2">fa-info-circle</v-icon>
+            <v-icon size="small" color="info" class="mr-2"
+              >fas fa-info-circle</v-icon
+            >
             {{ $t("title_fields.info") }}
           </v-btn>
         </template>
         {{ $t("knowledgebase_article") }}
       </v-tooltip>
     </template>
-
     <template #top>
       <v-row>
         <v-spacer></v-spacer>
@@ -69,8 +69,8 @@ cs:
             v-model="search"
             :label="$t('labels.search')"
             clearable
-            clear-icon="fa-times"
-            append-icon="fa-search"
+            clear-icon="fa fa-times"
+            append-inner-icon="fa fa-search"
           ></v-text-field>
         </v-col>
       </v-row>
@@ -92,6 +92,7 @@ export default {
     return {
       platforms: [],
       loading: false,
+      sortBy: [{ key: "name", order: "asc" }],
       search: "",
       // state tracking support
       watchedAttrs: [
@@ -109,10 +110,25 @@ export default {
     }),
     headers() {
       let ret = [
-        { text: this.$t("title_fields.short_name"), value: "short_name" },
-        { text: this.$t("title_fields.name"), value: "name" },
-        { text: this.$t("title_fields.knowledgebase"), value: "info" },
-        { text: this.$t("title_fields.actions"), value: "actions" },
+        {
+          title: this.$t("title_fields.short_name"),
+          value: "short_name",
+          key: "short_name",
+          sortable: true,
+        },
+        {
+          title: this.$t("title_fields.name"),
+          value: "name",
+          key: "name",
+          sortable: true,
+        },
+        {
+          title: this.$t("title_fields.knowledgebase"),
+          value: "info",
+          key: "info",
+          sortable: true,
+        },
+        { title: this.$t("title_fields.actions"), value: "actions" },
       ];
       return ret;
     },
@@ -126,7 +142,7 @@ export default {
       });
       if (!resp.error) {
         this.platforms = resp.response.data.filter(
-          (p) => !!p.knowledgebase?.notes_url
+          (p) => !!p.knowledgebase?.notes_url,
         );
       }
       this.loading = false;

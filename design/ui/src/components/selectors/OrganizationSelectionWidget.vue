@@ -4,7 +4,7 @@
   <v-autocomplete
     v-model="orgId"
     :items="items"
-    item-text="name"
+    item-title="name"
     item-value="pk"
     clearable
     clear-icon="fa fa-times"
@@ -17,6 +17,7 @@
   >
   </v-autocomplete>
 </template>
+
 <script>
 import { mapGetters } from "vuex";
 
@@ -24,7 +25,7 @@ export default {
   name: "OrganizationSelectionWidget",
 
   props: {
-    value: { required: false },
+    modelValue: { required: false },
     label: { default: "organization", type: String },
     hint: { default: null, type: String, required: false },
     persistentHint: { default: false, type: Boolean, required: false },
@@ -32,7 +33,7 @@ export default {
 
   data() {
     return {
-      orgId: this.value,
+      orgId: this.modelValue,
     };
   },
 
@@ -55,7 +56,7 @@ export default {
   },
   watch: {
     orgId() {
-      this.$emit("input", this.orgId);
+      this.$emit("update:modelValue", this.orgId);
     },
     id() {
       this.orgId = this.id;
@@ -63,4 +64,5 @@ export default {
   },
 };
 </script>
+
 <style lang="scss"></style>

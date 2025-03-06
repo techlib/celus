@@ -10,17 +10,17 @@ cs:
 
 <template>
   <span>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
+    <v-tooltip location="bottom">
+      <template v-slot:activator="{ props }">
         <v-btn
           @click="go()"
           :text="text"
-          :small="small"
+          :size="small ? 'small' : 'default'"
           :color="color"
           :disabled="disabled"
-          v-on="on"
+          v-bind="props"
         >
-          <v-icon class="mr-2" small>fa-upload</v-icon>
+          <v-icon class="mr-2" size="small" icon="fa fa-upload"></v-icon>
           {{ $t("actions.upload_data") }}
         </v-btn>
       </template>
@@ -29,12 +29,15 @@ cs:
     <v-dialog v-model="showDialog" v-if="showDialog" max-width="640px">
       <PlatformSelectionWidget allow-create>
         <template v-slot:actions>
-          <v-btn @click="showDialog = false">{{ $t("actions.cancel") }}</v-btn>
+          <v-btn @click="showDialog = false" variant="flat" elevation="2">{{
+            $t("actions.cancel")
+          }}</v-btn>
         </template>
       </PlatformSelectionWidget>
     </v-dialog>
   </span>
 </template>
+
 <script>
 import PlatformSelectionWidget from "./selectors/PlatformSelectionWidget";
 
@@ -42,7 +45,7 @@ export default {
   name: "ManualUploadButton",
   components: { PlatformSelectionWidget },
   props: {
-    text: { type: Boolean, default: false },
+    text: { type: String },
     small: { type: Boolean, default: false },
     color: { type: String },
     disabled: { type: Boolean, default: false },

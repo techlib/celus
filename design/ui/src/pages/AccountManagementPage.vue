@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   already_verified: This user is already verified.
@@ -52,51 +53,54 @@ cs:
       max-width="1000px"
     >
       <AccountCreateModifyWidget
-        :organizationList="orgList"
-        :selectedOrganization="selectedOrganization"
-        :editMode="false"
         @cancel="closeDialog"
         @success="successCreate"
         @send_email="sendInvitationEmail"
-      />
-    </v-dialog>
-
-    <v-dialog v-if="showEditDialog" v-model="showEditDialog" max-width="1000px">
-      <AccountCreateModifyWidget
         :organizationList="orgList"
         :selectedOrganization="selectedOrganization"
+        :editMode="false"
+      ></AccountCreateModifyWidget>
+    </v-dialog>
+    <v-dialog v-if="showEditDialog" v-model="showEditDialog" max-width="1000px">
+      <AccountCreateModifyWidget
         :account="selectedAccount"
-        :editMode="true"
         @cancel="closeEditDialog"
         @success="successEdit"
-      />
+        :organizationList="orgList"
+        :selectedOrganization="selectedOrganization"
+        :editMode="true"
+      ></AccountCreateModifyWidget>
     </v-dialog>
-
     <v-dialog v-model="showDeleteDialog" max-width="620px">
       <v-card class="pb-2">
         <v-card-title> {{ $t("actions.delete") }} </v-card-title>
         <v-card-text>
-          {{
-            $t("delete_prompt", {
-              first_name: selectedAccount.first_name,
-              last_name: selectedAccount.last_name,
-              username: selectedAccount.username,
-            })
-          }}
+          <p class="text-disabled delete_info">
+            {{
+              $t("delete_prompt", {
+                first_name: selectedAccount.first_name,
+                last_name: selectedAccount.last_name,
+                username: selectedAccount.username,
+              })
+            }}
+          </p>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
-          <v-btn @click="closeDeleteDialog()">
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="closeDeleteDialog()"
+            variant="elevated"
+            color="defaultButton"
+          >
             {{ $t("actions.cancel") }}</v-btn
           >
-          <v-btn @click="deleteAccount()" color="error">
-            <v-icon small class="mr-2">fa-trash</v-icon>
+          <v-btn @click="deleteAccount()" color="error" variant="elevated">
+            <v-icon class="mr-2" size="small">fa fa-trash</v-icon>
             {{ $t("actions.delete") }}
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
     <v-dialog v-model="showSendEmailDialog" max-width="620px">
       <v-card class="pb-2">
         <v-card-title>
@@ -117,33 +121,32 @@ cs:
           }}) ?
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
+          <v-spacer></v-spacer>
           <v-btn @click="closeSendEmailDialog()">
             {{ $t("actions.cancel") }}
           </v-btn>
           <v-btn @click="sendUserEmail()" color="primary">
-            <v-icon small class="mr-2">fas fa-envelope</v-icon>
+            <v-icon class="mr-2" size="small">fas fa-envelope</v-icon>
             {{ $t("send") }}
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
     <v-container>
       <v-row>
-        <v-col cols="auto">
+        <v-col cols="2">
           <v-autocomplete
             v-if="orgItems.length > 1"
             v-model="selectedOrganization"
             :items="orgList"
             item-value="pk"
-            item-text="name"
             :label="$t('select_organization')"
             class="ml-2 mt-3"
+            item-title="name"
+            hide-details
           ></v-autocomplete>
         </v-col>
       </v-row>
-
       <v-row>
         <v-col>
           <v-btn
@@ -152,7 +155,7 @@ cs:
             class="ml-2 mt-3"
             color="primary"
           >
-            <v-icon small class="mr-2">fas fa-user-plus</v-icon>
+            <v-icon class="mr-2" size="small">fas fa-user-plus</v-icon>
             {{ $t("create_new_user") }}
           </v-btn>
         </v-col>
@@ -172,47 +175,62 @@ cs:
           <v-data-table
             v-if="orgUsers.length > 0"
             :items="orgUsers"
+            density="comfortable"
             :headers="headers"
             :search="search"
           >
-            <template #item.is_admin="{ item }">
-              <CheckMark :value="getIsAdmin(item)" />
+            <template v-slot:[`item.is_admin`]="{ item }">
+              <CheckMark :model-value="getIsAdmin(item)"></CheckMark>
             </template>
-
-            <template #item.actions="{ item }">
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <v-icon v-on="on" small @click="deleteItem(item)" class="mr-2"
+            <template v-slot:[`item.actions`]="{ item }">
+              <v-tooltip max-width="600px" location="bottom">
+                <template #activator="{ props }">
+                  <v-icon
+                    @click="deleteItem(item)"
+                    class="mr-2 text-grey"
+                    size="small"
+                    v-bind="props"
                     >fas fa-trash
                   </v-icon>
                 </template>
                 <span>{{ $t("delete_user") }}</span>
               </v-tooltip>
-              <v-tooltip bottom max-width="600px">
-                <template #activator="{ on }">
-                  <v-icon v-on="on" small @click="editItem(item)" class="mr-2"
+              <v-tooltip max-width="600px" location="bottom">
+                <template #activator="{ props }">
+                  <v-icon
+                    @click="editItem(item)"
+                    class="mr-2 text-grey"
+                    size="small"
+                    v-bind="props"
                     >fas fa-edit
                   </v-icon>
                 </template>
                 <span>{{ $t("edit_user") }}</span>
               </v-tooltip>
-              <v-tooltip bottom max-width="600px">
-                <template v-slot:activator="{ on }">
-                  <v-icon small v-on="on" @click="sendEmail(item, 'invitation')"
+              <v-tooltip max-width="600px" location="bottom">
+                <template v-slot:activator="{ props }">
+                  <v-icon
+                    class="text-grey"
+                    @click="sendEmail(item, 'invitation')"
+                    size="small"
+                    v-bind="props"
                     >fas fa-envelope</v-icon
                   >
                 </template>
                 <span> {{ $t("send_invitation") }}</span>
               </v-tooltip>
             </template>
-
-            <template v-if="user.is_superuser" #item.superactions="{ item }">
-              <v-tooltip bottom max-width="600px">
-                <template v-slot:activator="{ on }">
+            <template
+              v-if="user.is_superuser"
+              v-slot:[`item.superactions`]="{ item }"
+            >
+              <v-tooltip max-width="600px" location="bottom">
+                <template v-slot:activator="{ props }">
                   <v-icon
-                    small
-                    v-on="on"
                     @click="sendEmail(item, 'verification')"
+                    size="small"
+                    class="text-grey"
+                    v-bind="props"
                     >fas fa-envelope-open</v-icon
                   >
                 </template>
@@ -270,23 +288,41 @@ export default {
     isAdmin() {
       //is admin of currently selected org
       const orgMatch = this.orgItems.find(
-        (org) => org.pk == this.selectedOrganization
+        (org) => org.pk == this.selectedOrganization,
       );
       return orgMatch.is_admin;
     },
 
     headers() {
       const baseHeaders = [
-        { text: this.$t("labels.first_name"), value: "first_name" },
-        { text: this.$t("labels.last_name"), value: "last_name" },
-        { text: this.$t("labels.email"), value: "email" },
-        { text: this.$t("is_admin"), value: "is_admin", align: "center" },
-        { text: this.$t("title_fields.actions"), value: "actions" },
+        {
+          title: this.$t("labels.first_name"),
+          value: "first_name",
+          sortable: true,
+        },
+        {
+          title: this.$t("labels.last_name"),
+          value: "last_name",
+          sortable: true,
+        },
+        { title: this.$t("labels.email"), value: "email", sortable: true },
+        {
+          title: this.$t("is_admin"),
+          value: "is_admin",
+          align: "center",
+          sortable: true,
+        },
+        {
+          title: this.$t("title_fields.actions"),
+          value: "actions",
+          sortable: false,
+        },
       ];
       if (this.user.is_superuser) {
         baseHeaders.push({
-          text: this.$t("superactions"),
+          title: this.$t("superactions"),
           value: "superactions",
+          sortable: false,
         });
       }
       return baseHeaders;
@@ -296,8 +332,8 @@ export default {
       //data about users from selected organization
       return this.usersData.filter((item) =>
         item.organizations.some(
-          (org) => org.organization.pk === this.selectedOrganization
-        )
+          (org) => org.organization.pk === this.selectedOrganization,
+        ),
       );
     },
   },
@@ -323,7 +359,7 @@ export default {
       }
       //is admin of currently selected org
       const orgMatch = account.organizations.find(
-        (org) => org.organization.pk === this.selectedOrganization
+        (org) => org.organization.pk === this.selectedOrganization,
       );
       return orgMatch.is_admin;
     },
@@ -467,3 +503,8 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+.delete_info {
+  font-size: 14px;
+}
+</style>

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   confirm_tag_delete: Confirm tag delete
@@ -27,52 +28,68 @@ cs:
 
 <template>
   <div>
-    <v-skeleton-loader v-if="loading" type="table" />
+    <v-skeleton-loader v-if="loading" type="table"></v-skeleton-loader>
     <v-data-table
       v-else
       :items="visibleTags"
       :headers="headers"
+      density="comfortable"
       item-key="pk"
-      :items-per-page.sync="itemsPerPage"
-      :page.sync="page"
-      :sort-by.sync="orderBy"
-      :sort-desc.sync="orderDesc"
+      item-value="name"
+      v-model:items-per-page="itemsPerPage"
+      v-model:page="page"
+      v-model:sort-by="orderBy"
       hide-default-footer
       :search="search"
-      :group-by="groupByClass ? '_group_sorter' : null"
+      :group-by="[{ key: groupByClass ? '_group_sorter' : null }]"
       :custom-group="groupingFn"
     >
       <template #top>
         <v-row v-if="optimizePerformance">
           <v-col cols="12" class="pb-0">
-            <v-alert type="info" dense text>
+            <v-alert type="info" density="compact" text>
               {{ $t("performance_warning") }}
             </v-alert>
           </v-col>
         </v-row>
-        <v-row class="d-flex">
+        <v-row class="d-flex align-center">
           <v-col class="align-self-center" cols="auto">
-            <AddTagClassButton @saved="fetchTagClasses()" />
+            <AddTagClassButton
+              color="defaultButton"
+              @saved="fetchTagClasses()"
+            ></AddTagClassButton>
           </v-col>
           <v-col class="align-self-center" cols="auto">
-            <AddTagButton @saved="fetchTags()" color="primary" />
+            <AddTagButton
+              @saved="fetchTags()"
+              flat
+              color="primary"
+            ></AddTagButton>
           </v-col>
           <v-spacer></v-spacer>
-          <v-col cols="auto">
+          <v-col cols="auto" class="mt-4">
             <v-switch
               v-model="showSystemTags"
               :label="$t('show_system_tags')"
-            />
+              color="primary"
+              density="comfortable"
+            ></v-switch>
           </v-col>
-          <v-col>
+          <v-col cols="2">
             <v-select
               :items="tagScopes"
               v-model="tagScope"
+              density="comfortable"
               :label="$t('labels.tag_scope')"
-            />
+            ></v-select>
           </v-col>
-          <v-col cols="auto" v-if="!optimizePerformance">
-            <v-switch v-model="showClass" :label="$t('labels.show_class')" />
+          <v-col class="mt-4" cols="auto" v-if="!optimizePerformance">
+            <v-switch
+              color="primary"
+              v-model="showClass"
+              density="comfortable"
+              :label="$t('labels.show_class')"
+            ></v-switch>
           </v-col>
           <!-- the following switch is probably not very useful, let's turn off -->
           <!--v-col cols="auto">
@@ -85,139 +102,188 @@ cs:
             <v-text-field
               v-model="search"
               clearable
+              density="comfortable"
               :label="$t('labels.search')"
             ></v-text-field>
           </v-col>
         </v-row>
       </template>
-
-      <template #item.name="{ item }" v-if="optimizePerformance">
+      <template #[`item.name`]="{ item }" v-if="optimizePerformance">
         <span class="fa fa-tag pe-1" :style="{ color: item.bg_color }"></span>
         {{ item.name }}
       </template>
-      <template #item.name="{ item }" v-else>
-        <TagChip :tag="item" :show-class="showClass" link />
+      <template v-slot:[`item.name`]="{ item }" v-else>
+        <TagChip :tag="item" :show-class="showClass" link></TagChip>
       </template>
-
-      <template #item._group_sorter="{ item }" v-if="optimizePerformance">
+      <template #[`item._group_sorter`]="{ item }" v-if="optimizePerformance">
         {{ item.tag_class.name }}
-        <span class="text-caption text--secondary"
+        <span class="text-caption text-secondary"
           >[{{ $t(item.tag_class.scope) }}]</span
         >
       </template>
-      <template #item._group_sorter="{ item }" v-else>
+      <template #[`item._group_sorter`]="{ item }" v-else>
         <TagClassScopeWidget
           :scope="item.tag_class.scope"
-          class="pl-3 text-caption text--disabled"
-        />
+          class="pl-3 text-caption text-disabled"
+        ></TagClassScopeWidget>
       </template>
-
-      <template #item.can_see="{ item }">
+      <template #[`item.can_see`]="{ item }">
         <span class="text-caption">{{
           tagAccessLevelToText[item.can_see]
         }}</span>
       </template>
-
-      <template #item.can_assign="{ item }">
+      <template #[`item.can_assign`]="{ item }">
         <span class="text-caption">{{
           tagAccessLevelToText[item.can_assign]
         }}</span>
       </template>
-
-      <template #item.actions="{ item }">
-        <v-btn @click="editTag(item)" small icon v-if="item.user_can_modify">
-          <v-icon small>fa fa-edit</v-icon>
+      <template #[`item.actions`]="{ item }">
+        <v-btn
+          @click="editTag(item)"
+          size="small"
+          icon
+          density="comfortable"
+          variant="text"
+          v-if="item.user_can_modify"
+          color="lighterIcons"
+        >
+          <v-icon size="small">fa fa-edit</v-icon>
         </v-btn>
-        <v-btn @click="deleteTag(item)" small icon v-if="item.user_can_modify">
-          <v-icon small>fa fa-trash</v-icon>
+        <v-btn
+          @click="deleteTag(item)"
+          size="small"
+          density="comfortable"
+          icon
+          color="lighterIcons"
+          variant="text"
+          v-if="item.user_can_modify"
+        >
+          <v-icon size="small">fa fa-trash</v-icon>
         </v-btn>
       </template>
-
       <template
-        #group.header="{ items, isOpen, toggle, remove, headers, group }"
+        v-slot:[`group-header`]="{ item, isGroupOpen, toggleGroup, columns }"
       >
-        <td>
-          <v-btn icon @click="toggle" small>
-            <v-icon x-small>{{ isOpen ? "fa fa-minus" : "fa fa-plus" }}</v-icon>
-          </v-btn>
-          <span class="font-weight-light pr-2"
-            >{{ $t("labels.tag_class") }}:</span
-          >
-          <span class="font-weight-bold" v-if="classIdToObj.has(group)">{{
-            classIdToObj.get(group).name
-          }}</span>
-        </td>
-        <td :colspan="headers.length - 2">
-          <span class="font-weight-light pr-2"
-            >{{ $t("labels.tag_scope") }}:</span
-          >
-          <span class="font-weight-bold" v-if="classIdToObj.has(group)">
-            <TagClassScopeWidget
-              :scope="classIdToObj.get(group).scope"
-              icon-color="#a0a0a0"
-              class="text--secondary"
-            />
-          </span>
-        </td>
-        <td>
-          <v-btn
-            v-if="
-              classIdToObj.has(group) && classIdToObj.get(group).user_can_modify
-            "
-            small
-            icon
-            @click="editClass(group)"
-          >
-            <v-icon small>fa-edit</v-icon>
-          </v-btn>
-
-          <v-btn
-            v-if="
-              classIdToObj.has(group) && classIdToObj.get(group).user_can_modify
-            "
-            small
-            icon
-            @click="deleteClass(group)"
-          >
-            <v-icon small>fa-trash</v-icon>
-          </v-btn>
-
-          <v-tooltip bottom max-width="600px" :key="'group-' + group">
-            <template #activator="{ on }">
-              <v-btn small icon @click="hideClass(group)" v-on="on">
-                <v-icon small
-                  >{{
-                    classIdToObj.has(group) && classIdToObj.get(group).hidden
-                      ? "fa-eye-slash"
-                      : "fa-eye"
-                  }}
-                </v-icon>
-              </v-btn>
-            </template>
-            <span>{{
-              classIdToObj.has(group) && classIdToObj.get(group).hidden
-                ? $t("tag_class_hidden")
-                : $t("tag_class_visible")
-            }}</span>
-          </v-tooltip>
-
-          <v-tooltip
-            bottom
-            max-width="600px"
-            v-if="canCreateTagsInClass(group)"
-          >
-            <template #activator="{ on }">
-              <AddTagButton
-                v-on="on"
-                :tag-class="classIdToObj.get(group)"
-                icon
-                small
-                @saved="fetchTags()"
-              />
-            </template>
-            {{ $t("labels.new_tag") }}
-          </v-tooltip>
-        </td>
+        <tr class="group_header">
+          <td class="group_column">
+            <v-btn
+              @click="toggleGroup(item)"
+              size="x-small"
+              variant="text"
+              icon
+            >
+              <v-icon size="x-small">{{
+                isGroupOpen(item) ? "fa fa-minus" : "fa fa-plus"
+              }}</v-icon>
+            </v-btn>
+          </td>
+          <td class="tag_column">
+            <span class="font-weight-light pr-2"
+              >{{ $t("labels.tag_class") }}:</span
+            >
+            <span
+              class="font-weight-bold"
+              v-if="classIdToObj.has(item.items[0].raw.tag_class.pk)"
+              >{{ classIdToObj.get(item.items[0].raw.tag_class.pk).name }}</span
+            >
+          </td>
+          <td :colspan="columns.length - 3">
+            <span class="font-weight-light pr-2"
+              >{{ $t("labels.tag_scope") }}:</span
+            >
+            <span
+              class="font-weight-bold"
+              v-if="classIdToObj.has(item.items[0].raw.tag_class.pk)"
+            >
+              <TagClassScopeWidget
+                :scope="classIdToObj.get(item.items[0].raw.tag_class.pk).scope"
+                icon-color="#a0a0a0"
+                style="color: rgba(0, 0, 0, 0.6)"
+              ></TagClassScopeWidget>
+            </span>
+          </td>
+          <td>
+            <v-btn
+              v-if="
+                classIdToObj.has(item.items[0].raw.tag_class.pk) &&
+                classIdToObj.get(item.items[0].raw.tag_class.pk).user_can_modify
+              "
+              size="small"
+              density="comfortable"
+              icon
+              color="lighterIcons"
+              variant="text"
+              @click="editClass(item.items[0].raw.tag_class.pk)"
+            >
+              <v-icon size="small">fas fa-edit</v-icon>
+            </v-btn>
+            <v-btn
+              v-if="
+                classIdToObj.has(item.items[0].raw.tag_class.pk) &&
+                classIdToObj.get(item.items[0].raw.tag_class.pk).user_can_modify
+              "
+              size="small"
+              density="comfortable"
+              color="lighterIcons"
+              icon
+              variant="text"
+              @click="deleteClass(item.items[0].raw.tag_class.pk)"
+            >
+              <v-icon size="small">fa fa-trash</v-icon>
+            </v-btn>
+            <v-tooltip
+              location="bottom"
+              max-width="600px"
+              :key="'group-' + item.items[0].raw.tag_class.pk"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  size="small"
+                  icon
+                  @click="hideClass(item.items[0].raw.tag_class.pk)"
+                  v-bind="props"
+                  variant="text"
+                  color="lighterIcons"
+                  density="comfortable"
+                >
+                  <v-icon size="small"
+                    >{{
+                      classIdToObj.has(item.items[0].raw.tag_class.pk) &&
+                      classIdToObj.get(item.items[0].raw.tag_class.pk).hidden
+                        ? "fas fa-eye-slash"
+                        : "fas fa-eye"
+                    }}
+                  </v-icon>
+                </v-btn>
+              </template>
+              <span>{{
+                classIdToObj.has(item.items[0].raw.tag_class.pk) &&
+                classIdToObj.get(item.items[0].raw.tag_class.pk).hidden
+                  ? $t("tag_class_hidden")
+                  : $t("tag_class_visible")
+              }}</span>
+            </v-tooltip>
+            <v-tooltip
+              location="bottom"
+              max-width="600px"
+              v-if="canCreateTagsInClass(item.items[0].raw.tag_class.pk)"
+            >
+              <template #activator="{ props }">
+                <AddTagButton
+                  v-bind="props"
+                  :tag-class="classIdToObj.get(item.items[0].raw.tag_class.pk)"
+                  icon
+                  small
+                  comfortable
+                  color="lighterIcons"
+                  text
+                  @saved="fetchTags()"
+                ></AddTagButton>
+              </template>
+              {{ $t("labels.new_tag") }}
+            </v-tooltip>
+          </td>
+        </tr>
       </template>
     </v-data-table>
     <v-dialog v-model="showEditDialog" max-width="720px">
@@ -226,14 +292,14 @@ cs:
         @close="showEditDialog = false"
         @saved="onSave()"
         ref="tagEditWidget"
-      />
+      ></EditTagWidget>
     </v-dialog>
     <v-dialog v-model="showClassEditDialog" max-width="720px">
       <EditTagClassWidget
         :tag-class="editedTagClass"
         @close="showClassEditDialog = false"
         @saved="onClassSave()"
-      />
+      ></EditTagClassWidget>
     </v-dialog>
   </div>
 </template>
@@ -288,7 +354,7 @@ export default {
       showClass: false,
       showSystemTags: false,
       // table state
-      orderBy: null,
+      orderBy: [{ key: null, order: this.orderDesc ? "desc" : "asc" }],
       orderDesc: false,
       page: 1,
       itemsPerPage: -1,
@@ -296,7 +362,7 @@ export default {
       watchedAttrs: [
         {
           name: "orderBy",
-          type: String,
+          type: Object,
         },
         {
           name: "orderDesc",
@@ -340,26 +406,30 @@ export default {
     headers() {
       return [
         {
-          text: this.$i18n.t("labels.tag_name"),
+          title: this.$i18n.t("labels.tag_name"),
           value: "name",
+          key: "name",
           groupable: false,
         },
+        // {
+        //   title: this.$i18n.t("labels.tag_class"),
+        //   value: "_group_sorter",
+        //   key: "_group_sorter",
+        // },
         {
-          text: this.$i18n.t("labels.tag_class"),
-          value: "_group_sorter",
-        },
-        {
-          text: this.$i18n.t("labels.tag_can_see"),
+          title: this.$i18n.t("labels.tag_can_see"),
           value: "can_see",
+          key: "can_see",
           groupable: false,
         },
         {
-          text: this.$i18n.t("labels.tag_can_assign"),
+          title: this.$i18n.t("labels.tag_can_assign"),
           value: "can_assign",
+          key: "can_assign",
           groupable: false,
         },
         {
-          text: this.$i18n.t("title_fields.actions"),
+          title: this.$i18n.t("title_fields.actions"),
           value: "actions",
           groupable: false,
           sortable: false,
@@ -388,10 +458,10 @@ export default {
     },
     tagScopes() {
       return [
-        { value: "", text: this.$t("labels.all_tags") },
-        { value: "title", text: this.$t("title") },
-        { value: "platform", text: this.$t("platform") },
-        { value: "organization", text: this.$t("organization") },
+        { value: "", title: this.$t("labels.all_tags") },
+        { value: "title", title: this.$t("title") },
+        { value: "platform", title: this.$t("platform") },
+        { value: "organization", title: this.$t("organization") },
       ];
     },
     classIdToObj() {
@@ -416,7 +486,7 @@ export default {
         this.tags = reply.response.data;
         this.tags.forEach(
           (item) =>
-            (item._group_sorter = `${item.tag_class.name}-${item.tag_class.pk}`)
+            (item._group_sorter = `${item.tag_class.name}-${item.tag_class.pk}`),
         );
       }
     },
@@ -457,7 +527,9 @@ export default {
             title: this.$t("confirm_tag_delete"),
             buttonTrueText: this.$t("actions.delete"),
             buttonFalseText: this.$t("actions.cancel"),
-          }
+            color: "warning",
+            icon: "fa fa-warning",
+          },
         );
         if (goOn) {
           const reply = await this.http({
@@ -477,7 +549,7 @@ export default {
     async deleteClass(clsId) {
       const cls = this.classIdToObj.get(clsId);
       const tagCount = this.tags.filter(
-        (tag) => tag.tag_class.pk === cls.pk
+        (tag) => tag.tag_class.pk === cls.pk,
       ).length;
       const goOn = await this.$confirm(
         this.$tc("delete_tag_class_tag_count", tagCount, cls),
@@ -485,7 +557,9 @@ export default {
           title: this.$t("confirm_tag_class_delete"),
           buttonTrueText: this.$t("actions.delete"),
           buttonFalseText: this.$t("actions.cancel"),
-        }
+          color: "warning",
+          icon: "fa fa-warning",
+        },
       );
       if (goOn) {
         const reply = await this.http({
@@ -501,7 +575,7 @@ export default {
           });
           this.tags = this.tags.filter((item) => item.tag_class.pk !== cls.pk);
           this.tagClasses = this.tagClasses.filter(
-            (item) => item.pk !== cls.pk
+            (item) => item.pk !== cls.pk,
           );
         }
       }
@@ -540,7 +614,7 @@ export default {
         out.push({
           name: clsId,
           items: tags,
-        })
+        }),
       );
       return out;
     },
@@ -577,6 +651,17 @@ export default {
 </script>
 
 <style scoped lang="scss">
+:deep(
+    .v-table
+      > .v-table__wrapper
+      > table
+      > thead
+      > tr
+      > th:first-child
+      > .v-data-table-header__content
+  ) {
+  visibility: hidden;
+}
 .tag {
   padding: 0.5rem 0.75rem;
   border-radius: 1.5rem;
@@ -584,5 +669,17 @@ export default {
   span.fa {
     font-size: 0.75rem;
   }
+}
+.group_header {
+  background: #eeeeeeee;
+}
+
+.group_column {
+  width: 30px;
+  padding-right: 0 !important;
+}
+
+.tag_column {
+  padding-left: 0px !important;
 }
 </style>

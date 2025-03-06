@@ -6,23 +6,24 @@
   <v-card>
     <v-card-title>{{ $t("sushi.clone_to_newer.title") }}</v-card-title>
     <v-card-text>
-      <v-alert type="info" outlined class="mt-2 mb-0">
+      <v-alert type="info" variant="outlined" class="mt-2 mb-0">
         <p>{{ $t("sushi.clone_to_newer.alert_text_p1") }}</p>
-        <p class="mb-0">
-          <i18n path="sushi.clone_to_newer.alert_text_p2">
+        <p class="mb-0 mt-4">
+          <i18n-t keypath="sushi.clone_to_newer.alert_text_p2">
             <template #link>
               <a
                 href="https://support.celus.net/support/solutions/articles/103000331653"
                 target="_blank"
+                class="text-info active_link"
                 >{{ $t("sushi.clone_to_newer.link_text") }}</a
               >
             </template>
-          </i18n>
+          </i18n-t>
         </p>
       </v-alert>
 
       <div
-        class="pt-6 text-normal"
+        class="pt-6 text-disabled"
         v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
       ></div>
 
@@ -33,20 +34,24 @@
         <v-card-text>
           <table class="overview">
             <tr>
-              <th>{{ $t("sushi.update.can_update_verified_legend") }}</th>
-              <td class="text-right">{{ safeToCloneCount }}</td>
+              <th class="text-disabled">
+                {{ $t("sushi.update.can_update_verified_legend") }}
+              </th>
+              <td class="text-right text-disabled">{{ safeToCloneCount }}</td>
               <td class="pl-2">
-                <v-icon v-if="safeToCloneCount" color="success" x-small
-                  >fa-check-circle</v-icon
+                <v-icon v-if="safeToCloneCount" color="success" size="x-small"
+                  >fa fa-check-circle</v-icon
                 >
               </td>
             </tr>
             <tr>
-              <th>{{ $t("sushi.update.can_update_legend") }}</th>
-              <td class="text-right">{{ unsafeToCloneCount }}</td>
+              <th class="text-disabled">
+                {{ $t("sushi.update.can_update_legend") }}
+              </th>
+              <td class="text-right text-disabled">{{ unsafeToCloneCount }}</td>
               <td class="pl-2">
-                <v-icon v-if="unsafeToCloneCount" color="warning" x-small
-                  >fa-exclamation-triangle</v-icon
+                <v-icon v-if="unsafeToCloneCount" color="warning" size="x-small"
+                  >fa fa-exclamation-triangle</v-icon
                 >
               </td>
             </tr>
@@ -66,14 +71,19 @@
       <v-switch
         v-model="startHarvesting"
         :label="$t('actions.start_harvesting')"
+        color="primary"
+        hide-details
       ></v-switch>
       <v-spacer></v-spacer>
-      <v-btn @click="closeDialog()">{{ $t("close") }}</v-btn>
+      <v-btn @click="closeDialog()" variant="elevated" color="defaultButton">{{
+        $t("close")
+      }}</v-btn>
       <v-btn
         @click="cloneToNewer()"
         color="primary"
         :loading="saving"
         :disabled="!!unsafeToCloneCount && !iAmSure"
+        variant="elevated"
       >
         {{ $t("sushi.clone_to_newer.button") }}
       </v-btn>
@@ -101,9 +111,13 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="closeDialog()" class="mb-5 mr-5">{{
-            $t("close")
-          }}</v-btn>
+          <v-btn
+            @click="closeDialog()"
+            class="mb-5 mr-5"
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("close") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -155,7 +169,7 @@ export default {
       try {
         let response = await axios.post(
           "/api/sushi-credentials/clone-to-newer/",
-          inputData
+          inputData,
         );
         this.newCredentials = response.data;
         if (this.newCredentials.length) {
@@ -190,12 +204,12 @@ export default {
     },
     safeToCloneCount() {
       return this.credentials.filter(
-        (item) => item.can_update && item.has_51_provider && !item.broken
+        (item) => item.can_update && item.has_51_provider && !item.broken,
       ).length;
     },
     unsafeToCloneCount() {
       return this.credentials.filter(
-        (item) => item.can_update && !item.has_51_provider && !item.broken
+        (item) => item.can_update && !item.has_51_provider && !item.broken,
       ).length;
     },
   },
@@ -204,4 +218,16 @@ export default {
 };
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.info_text {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.info_link {
+  font-weight: 600;
+}
+
+.active_link {
+  font-weight: 600;
+}
+</style>

@@ -11,24 +11,41 @@ cs:
   <v-container fluid>
     <v-row>
       <v-col>
-        <h2 v-text="$t('maintenance')"></h2>
+        <h2>{{ $t("maintenance") }}</h2>
       </v-col>
     </v-row>
     <v-row>
       <v-col :cols="12">
         <v-card>
+          <v-tabs v-model="tab">
+            <v-tab
+              color="primary"
+              value="no-interest"
+              :class="{
+                'tab-active': tab === 'no-interest',
+                'tab-inactive': tab === 'charts',
+              }"
+              >{{ $t("no_interest") }}
+            </v-tab>
+            <v-tab
+              color="primary"
+              value="charts"
+              :class="{
+                'tab-inactive': tab === 'no-interest',
+                'tab-active': tab === 'charts',
+              }"
+              >{{ $t("charts") }}
+            </v-tab>
+          </v-tabs>
           <v-card-text>
-            <v-tabs v-model="tab">
-              <v-tab href="#no-interest" v-text="$t('no_interest')"> </v-tab>
-              <v-tab href="#charts" v-text="$t('charts')"> </v-tab>
-
-              <v-tab-item value="no-interest">
-                <UndefinedInterestWidget />
-              </v-tab-item>
-              <v-tab-item value="charts">
-                <ReportViewToChartManagementWidget />
-              </v-tab-item>
-            </v-tabs>
+            <v-window v-model="tab">
+              <v-window-item value="no-interest">
+                <UndefinedInterestWidget></UndefinedInterestWidget>
+              </v-window-item>
+              <v-window-item value="charts">
+                <ReportViewToChartManagementWidget></ReportViewToChartManagementWidget>
+              </v-window-item>
+            </v-window>
           </v-card-text>
         </v-card>
       </v-col>
@@ -53,4 +70,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.tab-inactive {
+  color: rgba(0, 0, 0, 0.54);
+}
+</style>

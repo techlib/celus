@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   assign_tag_header: After reviewing the preprocessing results, you can assign the selected tag to all matched titles.
@@ -29,30 +31,31 @@ cs:
 <template>
   <v-form>
     <v-card>
-      <v-card-title
+      <v-card-title class="pt-4"
         >{{
           batch ? $t("tagging.title_list") : $t("tagging.create_new_title_list")
         }}
       </v-card-title>
-
       <v-card-text>
         <v-row v-if="!taggingBatch">
-          <v-col>{{ $t("intro_message") }}</v-col>
+          <v-col :class="batch ? '' : 'intro_new'">{{
+            $t("intro_message")
+          }}</v-col>
         </v-row>
         <v-row>
           <v-col>
             <v-radio-group
               v-model="getTagsFromFile"
-              row
+              inline
               :label="$t('tag_source') + ':'"
               :disabled="!!taggingBatch"
+              class="tag_group"
             >
-              <v-radio :label="$t('tag_with_one_tag')" :value="false" />
-              <v-radio :label="$t('get_tag_from_file')" :value="true" />
+              <v-radio :label="$t('tag_with_one_tag')" :value="false"></v-radio>
+              <v-radio :label="$t('get_tag_from_file')" :value="true"></v-radio>
             </v-radio-group>
           </v-col>
         </v-row>
-
         <!-- no batch -->
         <v-row v-if="!taggingBatch">
           <v-col v-if="getTagsFromFile">
@@ -62,9 +65,9 @@ cs:
               :label="$t('select_class')"
               allow-create
               show-icon
-            />
+            ></TagClassSelector>
           </v-col>
-          <v-col v-else>
+          <v-col v-if="!getTagsFromFile">
             <TagSelector
               scope="title"
               v-model="tag"
@@ -74,7 +77,7 @@ cs:
               assignable-only
               dont-check-exclusive
               allow-create
-            />
+            ></TagSelector>
           </v-col>
         </v-row>
         <v-row v-if="!taggingBatch">
@@ -84,8 +87,10 @@ cs:
               :label="$t('labels.source_file')"
               show-size
               required
-              prepend-icon="fa-list-alt"
-            />
+              variant="underlined"
+              prepend-icon="fa fa-list-alt"
+              hide-details
+            ></v-file-input>
           </v-col>
           <v-col cols="auto" class="align-self-center">
             <v-btn @click="upload()" color="primary" :disabled="!canUpload"
@@ -93,7 +98,6 @@ cs:
             </v-btn>
           </v-col>
         </v-row>
-
         <!-- preprocessing stage -->
         <v-row v-else-if="taggingBatch.state === 'preprocessing'">
           <v-col cols="12">
@@ -102,58 +106,59 @@ cs:
           <v-col>
             <ServerTaskMonitor
               v-if="task"
-              :value="task"
               @finished="taskFinished()"
               ref="taskMonitor"
+              :model-value="task"
             >
               {{ $t("tagging.preprocessing_data") }}
             </ServerTaskMonitor>
-            <v-progress-linear v-else indeterminate height="32px">
+            <v-progress-linear
+              v-else
+              indeterminate
+              height="32px"
+              color="primary"
+            >
               {{ $t("tagging.preprocessing_data") }}
             </v-progress-linear>
           </v-col>
         </v-row>
-
         <!-- any other stage -->
         <div v-else>
           <v-row>
             <v-col>
               <v-card elevation="1">
-                <v-card-text>
+                <v-card-text style="overflow-x: auto">
                   <TaggingBatchStats
                     :tagging-batch="taggingBatch"
                     show-file-name
                     full-width
-                  />
+                  ></TaggingBatchStats>
                 </v-card-text>
               </v-card>
             </v-col>
           </v-row>
-
           <v-row>
             <v-col>
               <v-alert
                 v-if="taggingBatch.annotated_file && canAssign"
                 type="info"
-                outlined
+                variant="outlined"
                 class="mb-0"
               >
                 {{ $t("annotated_file_hint") }}
               </v-alert>
             </v-col>
           </v-row>
-
           <!-- preflight done - we can show assign button -->
           <div v-if="taggingBatch.state === 'preflight' && canAssign">
             <v-row class="mt-4 mx-0">
-              <v-col class="px-1">{{
+              <v-col class="px-1 assign_tag">{{
                 getTagsFromFile
                   ? $t("assign_tags_header")
                   : $t("assign_tag_header")
               }}</v-col>
             </v-row>
           </div>
-
           <!-- something is currently going on with the batch -->
           <div
             v-else-if="
@@ -165,19 +170,24 @@ cs:
               <v-col>
                 <ServerTaskMonitor
                   v-if="task"
-                  :value="task"
                   @finished="taskFinished()"
                   ref="taskMonitor"
+                  :model-value="task"
                 >
                   {{ $t("tag_state." + taggingBatch.state) }}
                 </ServerTaskMonitor>
-                <v-progress-linear v-else indeterminate height="32px">
+                <v-progress-linear
+                  v-else
+                  color="primary"
+                  indeterminate
+                  height="32px"
+                  :buffer-value="100 * taggingBatch.state"
+                >
                   {{ $t("tag_state." + taggingBatch.state) }}
                 </v-progress-linear>
               </v-col>
             </v-row>
           </div>
-
           <!-- batch is imported -->
           <v-row v-else-if="taggingBatch.state === 'imported'">
             <v-col>
@@ -186,8 +196,9 @@ cs:
                 :label="$t('tagging.automatic_reprocessing')"
                 :hint="$t('tagging.automatic_reprocessing_tt')"
                 persistent-hint
+                color="primary"
                 class="pt-0 mt-0 mx-2"
-              />
+              ></v-switch>
             </v-col>
           </v-row>
         </div>
@@ -197,50 +208,76 @@ cs:
         <span
           v-if="taggingBatch && taggingBatch.state === 'preflight' && canAssign"
         >
-          <v-btn v-if="getTagsFromFile" color="primary" @click="assignTag()">
+          <v-btn
+            v-if="getTagsFromFile"
+            variant="flat"
+            elevation="2"
+            color="primary"
+            @click="assignTag()"
+          >
             {{ $t("actions.assign_tags") }}
           </v-btn>
-          <v-btn v-else @click="assignTag()" color="primary" :disabled="!tag"
+          <v-btn
+            v-else
+            @click="assignTag()"
+            color="primary"
+            :disabled="!tag"
+            variant="flat"
+            elevation="2"
             >{{ $t("actions.assign_tag") }}
           </v-btn>
         </span>
         <!-- unassign button -->
         <v-tooltip
-          bottom
+          location="bottom"
           v-else-if="taggingBatch && taggingBatch.state === 'imported'"
         >
-          <template #activator="{ on }">
-            <v-btn @click="unassign()" color="error" v-on="on">
-              <v-icon x-small class="mr-1">fa fa-trash</v-icon>
+          <template #activator="{ props }">
+            <v-btn
+              @click="unassign()"
+              variant="flat"
+              elevation="2"
+              color="error"
+              v-bind="props"
+            >
+              <v-icon size="x-small" class="mr-1">fa fa-trash</v-icon>
               {{ $t("tagging.unassign_tag") }}
             </v-btn>
           </template>
           <span>{{ $t("tagging.unassign_tag_tt") }}</span>
         </v-tooltip>
-
-        <v-spacer />
-
+        <v-spacer></v-spacer>
         <v-tooltip
-          bottom
+          location="bottom"
           v-if="taggingBatch && taggingBatch.state === 'imported'"
         >
-          <template #activator="{ on }">
-            <v-btn @click="assignTag()" color="primary" v-on="on">
-              <v-icon x-small class="mr-1">fa fa-redo-alt</v-icon>
+          <template #activator="{ props }">
+            <v-btn
+              @click="assignTag()"
+              v-bind="props"
+              variant="flat"
+              elevation="2"
+            >
+              <v-icon size="x-small" class="mr-1">fa fa-redo-alt</v-icon>
               {{ $t("tagging.reassign_tag") }}
             </v-btn>
           </template>
           <span>{{ $t("tagging.reassign_tag_tt") }}</span>
         </v-tooltip>
-
-        <v-btn @click="$emit('close')">{{ $t("actions.close") }}</v-btn>
+        <v-btn
+          @click="$emit('close')"
+          variant="flat"
+          elevation="2"
+          color="primary"
+          >{{ $t("actions.close") }}</v-btn
+        >
       </v-card-actions>
     </v-card>
     <ErrorDialog
       v-if="showErrorDialog"
       v-model="showErrorDialog"
       :errors="errors"
-    />
+    ></ErrorDialog>
   </v-form>
 </template>
 
@@ -371,7 +408,7 @@ export default {
       if (
         !this.task &&
         ["preprocessing", "importing", "undoing"].includes(
-          this.taggingBatch?.state
+          this.taggingBatch?.state,
         )
       ) {
         await this.fetchBatch();
@@ -414,7 +451,7 @@ export default {
     this.refreshBatch();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.$refs.taskMonitor) {
       this.$refs.taskMonitor.stop();
     }
@@ -425,4 +462,30 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.assign_tag {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+}
+.intro_new {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+:deep(.v-input) {
+  align-items: center;
+}
+
+:deep(.v-input__control) {
+  flex-direction: row !important;
+  align-items: center;
+}
+:deep(.v-selection-control-group) {
+  margin-top: 0 !important;
+}
+
+:deep(.v-input__control) {
+  height: 20px;
+  min-height: 20px;
+}
+</style>

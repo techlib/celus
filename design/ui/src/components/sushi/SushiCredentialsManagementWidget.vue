@@ -1,6 +1,9 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   add_new: Add new SUSHI
@@ -136,28 +139,28 @@ cs:
 <template>
   <v-container fluid>
     <v-card>
-      <v-card-text>
+      <v-card-title>
         <v-container fluid>
           <v-row>
             <v-col cols="auto" align-self="center">
-              <v-btn @click="activateCreateDialog()" color="primary">
-                <v-icon small class="mr-2">fa-plus</v-icon>
+              <v-btn @click="activateCreateDialog" color="primary">
+                <v-icon size="small" class="mr-2">fa fa-plus</v-icon>
                 {{ $t("add_new") }}
               </v-btn>
             </v-col>
             <v-col cols="auto" align-self="center">
-              <v-tooltip bottom>
-                <template #activator="{ on }">
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
                   <v-btn
                     @click="testChecked('showTestDialog')"
                     color="secondary"
-                    v-on="on"
+                    v-bind="props"
                   >
-                    <v-icon small class="mr-2">fa fa-download</v-icon>
+                    <v-icon size="small" class="mr-2">fa fa-download</v-icon>
                     {{ $t("test_checked") }}
                     <v-badge color="white" inline>
                       <template #badge>
-                        <span class="success--text">{{
+                        <span class="text-success">{{
                           checkedCredentials.length
                         }}</span>
                       </template>
@@ -169,16 +172,20 @@ cs:
             </v-col>
             <v-spacer></v-spacer>
             <v-col cols="auto">
-              <v-tooltip bottom>
-                <template #activator="{ on }">
-                  <v-btn @click="triggerCloneToNewer" color="info" v-on="on">
-                    <v-icon small class="mr-2"
+              <v-tooltip location="bottom">
+                <template #activator="{ props }">
+                  <v-btn
+                    @click="triggerCloneToNewer"
+                    color="info"
+                    v-bind="props"
+                  >
+                    <v-icon size="small" class="mr-2"
                       >far fa-arrow-alt-circle-up</v-icon
                     >
                     {{ $t("sushi.clone_to_newer.button") }}
                     <v-badge color="white" inline>
                       <template #badge>
-                        <span class="info--text">{{
+                        <span class="text-info">{{
                           checkedUpdatableCredentials.length
                         }}</span>
                       </template>
@@ -189,24 +196,29 @@ cs:
               </v-tooltip>
             </v-col>
             <v-col cols="auto" align-self="center">
-              <v-tooltip top>
-                <template #activator="tooltip">
+              <v-tooltip location="top">
+                <template #activator="{ props: tooltipProps }">
                   <v-menu offset-y>
-                    <template #activator="menu">
-                      <v-btn v-on="{ ...menu.on, ...tooltip.on }">
-                        <v-icon small class="mr-2">fas fa-file-export</v-icon>
+                    <template #activator="{ props: menuProps }">
+                      <v-btn
+                        color="defaultButton"
+                        v-bind="{ ...tooltipProps, ...menuProps }"
+                      >
+                        <v-icon size="small" class="mr-2"
+                          >fas fa-file-export</v-icon
+                        >
                         {{ $t("export") }}
                       </v-btn>
                     </template>
                     <v-list>
-                      <v-tooltip left>
-                        <template #activator="exportAllTooltip">
+                      <v-tooltip location="left">
+                        <template #activator="{ props }">
                           <form :action="exportUrl" method="post">
                             <input
                               type="hidden"
                               name="csrfmiddlewaretoken"
-                              :value="getCSRFToken"
                               style="display: none"
+                              :value="getCSRFToken"
                             />
                             <input
                               :type="
@@ -220,7 +232,7 @@ cs:
                             <label for="submitExportAll">
                               <v-list-item
                                 @click="showAddCredentials"
-                                v-on="{ ...exportAllTooltip.on }"
+                                v-bind="props"
                               >
                                 <v-list-item-title>
                                   {{ $t("export_all") }}
@@ -230,7 +242,7 @@ cs:
                                     class="mt-0"
                                   >
                                     <template #badge>
-                                      <span class="white--text">{{
+                                      <span class="text-white">{{
                                         sushiCredentialsList.length
                                       }}</span>
                                     </template>
@@ -242,14 +254,14 @@ cs:
                         </template>
                         {{ $t("export_all_tooltip") }}
                       </v-tooltip>
-                      <v-tooltip left>
-                        <template #activator="exportFilteredTooltip">
+                      <v-tooltip location="left">
+                        <template #activator="{ props }">
                           <form :action="exportUrl" method="post">
                             <input
                               type="hidden"
                               name="csrfmiddlewaretoken"
-                              :value="getCSRFToken"
                               style="display: none"
+                              :value="getCSRFToken"
                             />
                             <div
                               v-for="filteredCredential in filteredCredentials"
@@ -275,7 +287,7 @@ cs:
                             <label for="submitExportFiltered">
                               <v-list-item
                                 @click="showFilterCredentials"
-                                v-on="{ ...exportFilteredTooltip.on }"
+                                v-bind="props"
                               >
                                 <v-list-item-title>
                                   {{ $t("export_filtered") }}
@@ -285,7 +297,7 @@ cs:
                                     class="mt-0"
                                   >
                                     <template #badge>
-                                      <span class="white--text">{{
+                                      <span class="text-white">{{
                                         filteredCredentials.length
                                       }}</span>
                                     </template>
@@ -297,14 +309,14 @@ cs:
                         </template>
                         {{ $t("export_filtered_tooltip") }}
                       </v-tooltip>
-                      <v-tooltip left>
-                        <template #activator="exportSelectedTooltip">
+                      <v-tooltip location="left">
+                        <template #activator="{ props }">
                           <form :action="exportUrl" method="post">
                             <input
                               type="hidden"
                               name="csrfmiddlewaretoken"
-                              :value="getCSRFToken"
                               style="display: none"
+                              :value="getCSRFToken"
                             />
                             <div
                               v-for="checkedCredential in checkedCredentials"
@@ -330,7 +342,7 @@ cs:
                             <label for="submitExportSelected">
                               <v-list-item
                                 @click="showSelectCredentials"
-                                v-on="{ ...exportSelectedTooltip.on }"
+                                v-bind="props"
                               >
                                 <v-list-item-title>
                                   {{ $t("export_selected") }}
@@ -340,7 +352,7 @@ cs:
                                     class="mt-0"
                                   >
                                     <template #badge>
-                                      <span class="white--text">{{
+                                      <span class="text-white">{{
                                         checkedCredentials.length
                                       }}</span>
                                     </template>
@@ -359,13 +371,16 @@ cs:
               </v-tooltip>
             </v-col>
             <v-col cols="auto" align-self="center">
-              <v-tooltip top>
-                <template #activator="tooltip">
+              <v-tooltip location="top">
+                <template #activator="{ props }">
                   <v-btn
-                    v-on="{ ...tooltip.on }"
+                    v-bind="props"
+                    color="defaultButton"
                     @click="showImportCredentialsModal"
                   >
-                    <v-icon small class="mr-2">fas fa-file-import</v-icon>
+                    <v-icon size="small" class="mr-2"
+                      >fas fa-file-import</v-icon
+                    >
                     {{ $t("import") }}
                   </v-btn>
                 </template>
@@ -373,56 +388,62 @@ cs:
               </v-tooltip>
             </v-col>
             <v-col cols="auto" align-self="center">
-              <v-tooltip top>
-                <template #activator="tooltip">
+              <v-tooltip location="top">
+                <template #activator="{ props: tooltipProps }">
                   <v-menu offset-y>
-                    <template #activator="menu">
-                      <v-btn v-on="{ ...menu.on, ...tooltip.on }"
-                        >&hellip;</v-btn
+                    <template #activator="{ props: menuProps }">
+                      <v-btn
+                        v-bind="{ ...menuProps, ...tooltipProps }"
+                        color="defaultButton"
+                        >…</v-btn
                       >
                     </template>
                     <v-list>
-                      <v-tooltip bottom max-width="600px">
-                        <template #activator="{ on }">
+                      <v-tooltip location="bottom" max-width="600px">
+                        <template #activator="{ props }">
                           <v-list-item
                             @click="
                               testChecked('showLastHarvestableMonthDialog')
                             "
-                            v-on="on"
+                            v-bind="props"
+                            :disabled="checkedCredentials.length === 0"
                           >
-                            <v-list-item-icon class="mr-2">
-                              <v-icon small>far fa-calendar-alt</v-icon>
-                            </v-list-item-icon>
-                            <v-list-item-content>
-                              <v-list-item-title>
-                                {{ $t("set_last_harvestable_month") }}
-                                <v-badge color="secondary" inline class="mt-1">
-                                  <template #badge>
-                                    {{ checkedCredentials.length }}
-                                  </template>
-                                </v-badge>
-                              </v-list-item-title>
-                            </v-list-item-content>
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                              >
+                                far fa-calendar-alt</v-icon
+                              >
+                              {{ $t("set_last_harvestable_month") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedCredentials.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
                           </v-list-item>
                         </template>
-                        {{ $t("set_last_harvestable_month_tooltip") }}
+                        {{ $t("sushi.mark_as_fixed.tooltip") }}
                       </v-tooltip>
-                      <v-tooltip bottom max-width="600px">
-                        <template #activator="{ on }">
-                          <v-list-item @click="triggerMarkFixed" v-on="on">
-                            <v-list-item-icon class="mr-2">
-                              <v-icon small>fa fa-tools</v-icon>
-                            </v-list-item-icon>
-                            <v-list-item-content>
-                              <v-list-item-title>
-                                {{ $t("sushi.mark_as_fixed.button") }}
-                                <v-badge color="secondary" inline class="mt-1">
-                                  <template #badge>
-                                    {{ checkedBrokenCredentials.length }}
-                                  </template>
-                                </v-badge>
-                              </v-list-item-title>
-                            </v-list-item-content>
+                      <v-tooltip location="bottom" max-width="600px">
+                        <template #activator="{ props }">
+                          <v-list-item @click="triggerMarkFixed" v-bind="props">
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                                >fa fa-tools</v-icon
+                              >
+                              {{ $t("sushi.mark_as_fixed.button") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedBrokenCredentials.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
                           </v-list-item>
                         </template>
                         {{ $t("sushi.mark_as_fixed.tooltip") }}
@@ -441,7 +462,7 @@ cs:
                 {{ $t("sushi.update.can_update_legend_header") }}
               </div>
               <div>
-                <v-icon small class="mr-1" color="info"
+                <v-icon size="x-small" class="mr-1" color="info"
                   >far fa-arrow-alt-circle-up</v-icon
                 >
                 <span class="caption">{{
@@ -449,7 +470,7 @@ cs:
                 }}</span>
               </div>
               <div>
-                <v-icon small class="mr-1" color="info"
+                <v-icon size="x-small" class="mr-1" color="info"
                   >fas fa-arrow-alt-circle-up</v-icon
                 >
                 <span class="caption">{{
@@ -457,7 +478,7 @@ cs:
                 }}</span>
               </div>
               <div>
-                <v-icon small class="mr-1" color="error"
+                <v-icon size="x-small" class="mr-1" color="error"
                   >far fa-arrow-alt-circle-left</v-icon
                 >
                 <span class="caption">{{
@@ -468,33 +489,35 @@ cs:
           </v-row>
 
           <v-row>
-            <v-col cols="3" md="2" xl="auto">
+            <v-col cols="3" md="2" xl="2">
               <v-select
                 v-model="potentialIssuesFilter"
                 :label="$t('potential_issues.label')"
+                density="comfortable"
+                class="mt_without_label"
                 :items="[
                   {
-                    text: $t('potential_issues.broken'),
+                    title: $t('potential_issues.broken'),
                     value: 'broken',
                     tooltip: $t('potential_issues_tt.broken'),
                   },
                   {
-                    text: $t('potential_issues.not_validated'),
+                    title: $t('potential_issues.not_validated'),
                     value: 'not_validated',
                     tooltip: $t('potential_issues_tt.not_validated'),
                   },
                   {
-                    text: $t('potential_issues.can_update_verified'),
+                    title: $t('potential_issues.can_update_verified'),
                     value: 'can_update_verified',
                     tooltip: $t('potential_issues_tt.can_update_verified'),
                   },
                   {
-                    text: $t('potential_issues.can_update'),
+                    title: $t('potential_issues.can_update'),
                     value: 'can_update',
                     tooltip: $t('potential_issues_tt.can_update'),
                   },
                   {
-                    text: $t('potential_issues.duplicated'),
+                    title: $t('potential_issues.duplicated'),
                     value: 'duplicated',
                     tooltip: $t('potential_issues_tt.duplicated'),
                   },
@@ -502,112 +525,126 @@ cs:
                 single-line
                 hide-details
                 clearable
-                clear-icon="fa-times"
+                clear-icon="fa fa-times"
               >
-                <template #item="{ item }">
-                  <v-tooltip right>
-                    <template #activator="{ on }">
-                      <v-list-item v-on="on">
-                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                <template #item="{ props, item }">
+                  <v-tooltip location="right">
+                    <template #activator="{ props: TooltipProps }">
+                      <v-list-item v-bind="{ ...TooltipProps, ...props }">
                       </v-list-item>
                     </template>
-                    {{ item.tooltip }}
+                    {{ item.raw.tooltip }}
                   </v-tooltip>
                 </template>
               </v-select>
             </v-col>
             <v-spacer></v-spacer>
-            <v-col cols="3" md="2" xl="auto">
+            <v-col :cols="!$vuetify.display.smAndDown ? 2 : 4" md="2" xl="2">
               <v-select
+                density="comfortable"
                 :items="[
                   {
-                    text: $t('last_harvestable_month_filter.all'),
+                    title: $t('last_harvestable_month_filter.all'),
                     value: null,
                   },
                   {
-                    text: $t('last_harvestable_month_filter.set'),
+                    title: $t('last_harvestable_month_filter.set'),
                     value: true,
                   },
                   {
-                    text: $t('last_harvestable_month_filter.not_set'),
+                    title: $t('last_harvestable_month_filter.not_set'),
                     value: false,
                   },
                 ]"
                 v-model="withLastHarvestableMonthSet"
                 :label="$t('title_fields.last_harvestable_month')"
+                style="min-width: 80px"
               ></v-select>
             </v-col>
-            <v-col cols="3" md="2" xl="auto">
+            <v-col :cols="!$vuetify.display.smAndDown ? 2 : 6" md="2" xl="2">
               <v-select
+                style="min-width: 100px"
                 :items="[
-                  { text: $t('sushi.all_counter_versions'), value: null },
-                  { text: '4', value: 4 },
-                  { text: '5', value: 5 },
-                  { text: '5.1', value: 51 },
+                  { title: $t('sushi.all_counter_versions'), value: null },
+                  { title: '4', value: 4 },
+                  { title: '5', value: 5 },
+                  { title: '5.1', value: 51 },
                 ]"
+                density="comfortable"
                 v-model="counterVersion"
                 :label="$t('labels.counter_version')"
               ></v-select>
             </v-col>
-            <v-col v-if="showPlatformFilter" cols="auto">
+            <v-col
+              v-if="showPlatformFilter"
+              :style="$vuetify.display.xs ? 'ml-2' : ''"
+              :cols="!$vuetify.display.smAndDown ? 2 : 5"
+            >
               <PlatformSelector
                 :platforms="platforms"
+                style="min-width: 100px"
                 v-model="platformFilter"
                 :label="$t('labels.platform')"
+                density="comfortable"
               />
             </v-col>
-            <v-col cols="auto" class="ml-auto">
+            <v-col :cols="!$vuetify.display.smAndDown ? 2 : 5">
               <v-text-field
                 v-model="searchDebounced"
-                append-icon="fa-search"
+                append-inner-icon="fa fa-search"
                 :label="$t('labels.search')"
+                density="comfortable"
                 single-line
                 hide-details
                 clearable
-                clear-icon="fa-times"
+                clear-icon="fa fa-times"
               ></v-text-field>
             </v-col>
           </v-row>
         </v-container>
-      </v-card-text>
-
-      <v-skeleton-loader v-if="loading" type="table" class="mt-5" />
+      </v-card-title>
+      <v-skeleton-loader
+        v-if="loading"
+        type="table"
+        class="mt-5"
+      ></v-skeleton-loader>
       <v-data-table
         v-else
         v-model="checkedRows"
         :items="filteredCredentials"
         :headers="headers"
-        :items-per-page.sync="itemsPerPage"
-        :sort-by.sync="orderBy"
-        :sort-desc.sync="orderDesc"
-        :page.sync="page"
+        v-model:items-per-page="itemsPerPage"
+        v-model:sort-by="orderBy"
+        v-model:page="page"
         multi-sort
         :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
         show-select
-        item-key="pk"
+        density="default"
+        item-value="pk"
         ref="credentialsTable"
+        return-object
       >
-        <template v-slot:item.counter_reports="{ item }">
+        <template v-slot:[`item.counter_reports`]="{ item }">
           <v-chip
             v-for="(report, index) in item.counter_reports_long"
             :key="index"
             class="mr-1 px-2"
             :color="report.broken ? '#888888' : 'teal'"
-            outlined
+            variant="outlined"
             label
           >
-            <SushiReportIndicator :report="report" />
+            <SushiReportIndicator :report="report"></SushiReportIndicator>
           </v-chip>
         </template>
-        <template v-slot:item.counter_version="{ item }">
-          <v-tooltip bottom v-if="item.can_update && !item.broken">
-            <template v-slot:activator="{ on }">
-              <span v-on="on">
+        <template v-slot:[`item.counter_version`]="{ item }">
+          <v-tooltip location="bottom" v-if="item.can_update && !item.broken">
+            <template v-slot:activator="{ props }">
+              <span v-bind="props">
                 <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
                 <i
                   class="fa-arrow-alt-circle-up ml-1"
                   :class="
-                    item.has_51_provider ? 'info--text fas' : 'info--text far'
+                    item.has_51_provider ? 'text-info fas' : 'text-info far'
                   "
                 ></i>
               </span>
@@ -615,11 +652,14 @@ cs:
             {{ $t("sushi.update.can_update_tt") }}
           </v-tooltip>
 
-          <v-tooltip bottom v-else-if="item.can_update && item.broken">
-            <template v-slot:activator="{ on }">
-              <span v-on="on">
+          <v-tooltip
+            location="bottom"
+            v-else-if="item.can_update && item.broken"
+          >
+            <template v-slot:activator="{ props }">
+              <span v-bind="props">
                 <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
-                <i class="far fa-arrow-alt-circle-left ml-1 error--text"></i>
+                <i class="far fa-arrow-alt-circle-left ml-1 text-error"></i>
               </span>
             </template>
             {{ $t("sushi.update.cannot_update_broken_tt") }}
@@ -629,68 +669,78 @@ cs:
             counterVersionToStr(item.counter_version)
           }}</strong>
         </template>
-
-        <template v-slot:item.last_harvestable_month="{ item }">
+        <template v-slot:[`item.last_harvestable_month`]="{ item }">
           <div
             v-for="rec in extractLastHarvestableMonth(
-              item.counter_reports_long
+              item.counter_reports_long,
             )"
             :key="rec.fake_id"
           >
             <span v-if="rec.month">{{ rec.month }}</span>
-            <v-badge v-if="rec.count > 0" :content="rec.count" inline />
+            <v-badge
+              v-if="rec.count > 0"
+              :content="rec.count"
+              inline
+              color="primary"
+            ></v-badge>
           </div>
         </template>
-        <template v-slot:item.actions="{ item }">
+        <template v-slot:[`item.actions`]="{ item }">
           <v-btn
             v-if="!item.locked_for_me"
-            text
-            small
+            variant="text"
+            size="small"
             color="secondary"
             @click.stop="
               selectedCredentials = item;
               showEditDialog = true;
             "
           >
-            <v-icon left x-small>fa-edit</v-icon>
+            <v-icon left size="x-small" class="pr-4">fas fa-edit</v-icon>
             {{ $t("actions.edit") }}
           </v-btn>
           <v-btn
-            text
-            small
+            variant="text"
+            size="small"
             color="secondary"
             @click.stop="
               selectedCredentials = item;
               showDetailsDialog = true;
             "
           >
-            <v-icon left x-small>fa-list</v-icon>
+            <v-icon left size="x-small" class="pr-4">fa fa-list</v-icon>
             {{ $t("actions.show_attempts") }}
           </v-btn>
-          <v-tooltip left>
-            <template v-slot:activator="{ on }">
+          <v-tooltip location="left">
+            <template v-slot:activator="{ props }">
               <v-btn
-                v-on="on"
-                text
-                small
+                v-bind="props"
+                variant="text"
+                size="small"
                 color="secondary"
                 @click.stop="
                   selectedCredentials = item;
                   showDataDialog = true;
                 "
               >
-                <v-icon left x-small>far fa-calendar-alt</v-icon>
+                <v-icon left size="x-small" class="pr-4"
+                  >far fa-calendar-alt</v-icon
+                >
                 {{ $t("actions.show_overview") }}
               </v-btn>
             </template>
             {{ $t("actions.show_overview_details") }}
           </v-tooltip>
         </template>
-        <template v-slot:item.title="{ item }">
-          <v-tooltip bottom v-if="warnSameCredentials(item)" max-width="400">
-            <template v-slot:activator="{ on }">
-              <v-icon v-on="on" small color="warning" class="pe-1"
-                >fa-copy</v-icon
+        <template v-slot:[`item.title`]="{ item }">
+          <v-tooltip
+            v-if="warnSameCredentials(item)"
+            max-width="400"
+            location="bottom"
+          >
+            <template v-slot:activator="{ props }">
+              <v-icon color="warning" class="pe-1" size="small" v-bind="props"
+                >fa fa-copy</v-icon
               >
               {{ item.title }}
             </template>
@@ -700,67 +750,82 @@ cs:
             {{ item.title }}
           </span>
         </template>
-        <template v-slot:item.enabled="{ item }">
+        <template v-slot:[`item.enabled`]="{ item }">
           <CheckMark
-            :value="item.enabled"
             true-color="error"
             false-color="error"
             v-if="item.broken"
-          />
+            :model-value="item.enabled"
+          ></CheckMark>
           <CheckMark
-            :value="item.enabled"
             true-color="warning"
             false-color="warning"
             v-else-if="!item.verified"
-          />
-          <CheckMark :value="item.enabled" v-else />
-          <v-tooltip bottom v-if="item.broken" max-width="400">
-            <template v-slot:activator="{ on }">
-              <v-btn text icon v-on="on"
-                ><v-icon small color="error">fa-exclamation-triangle</v-icon>
-              </v-btn>
+            :model-value="item.enabled"
+          ></CheckMark>
+          <CheckMark v-else :model-value="item.enabled"></CheckMark>
+          <v-tooltip location="bottom" v-if="item.broken" max-width="400">
+            <template v-slot:activator="{ props }">
+              <v-icon class="ml-1" size="small" color="error" v-bind="props"
+                >fa fa-exclamation-triangle</v-icon
+              >
             </template>
             {{ $t("is_broken") }}
           </v-tooltip>
-          <v-tooltip bottom v-else-if="!item.verified" max-width="400">
-            <template v-slot:activator="{ on }">
-              <v-btn text icon v-on="on"
-                ><v-icon small color="warning">fa-exclamation-triangle</v-icon>
-              </v-btn>
+          <v-tooltip
+            location="bottom"
+            v-else-if="!item.verified"
+            max-width="400"
+          >
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" class="ml-1" color="warning" v-bind="props"
+                >fa fa-exclamation-triangle</v-icon
+              >
             </template>
             {{ $t("unverified_tooltip") }}
           </v-tooltip>
         </template>
-        <template v-slot:item.outside_consortium="{ item }">
-          <CheckMark :value="item.outside_consortium" />
+        <template v-slot:[`item.outside_consortium`]="{ item }">
+          <CheckMark :model-value="item.outside_consortium"></CheckMark>
         </template>
-        <template v-slot:item.locked="{ item }">
+        <template v-slot:[`item.locked`]="{ item }">
           <!-- locked for me -->
-          <v-tooltip bottom v-if="item.locked && item.locked_for_me">
-            <template v-slot:activator="{ on }">
-              <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
+          <v-tooltip location="bottom" v-if="item.locked && item.locked_for_me">
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" v-bind="props" color="red"
+                >fa fa-fw fa-lock</v-icon
+              >
             </template>
             {{ $t("is_locked") }} {{ $t("cannot_edit") }}
           </v-tooltip>
           <!-- locked, but I can edit -->
-          <v-tooltip bottom v-else-if="item.locked">
-            <template v-slot:activator="{ on }">
-              <v-icon small v-on="on" color="red">fa-fw fa-lock</v-icon>
+          <v-tooltip location="bottom" v-else-if="item.locked">
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" v-bind="props" color="red"
+                >fa fa-fw fa-lock</v-icon
+              >
             </template>
             {{ $t("is_locked") }} {{ $t("can_edit") }}
           </v-tooltip>
           <!-- not locked at all -->
-          <v-tooltip bottom v-else>
-            <template v-slot:activator="{ on }">
-              <v-icon small v-on="on" color="green">fa-fw fa-lock-open</v-icon>
+          <v-tooltip location="bottom" v-else>
+            <template v-slot:activator="{ props }">
+              <v-icon size="small" v-bind="props" color="green"
+                >fa fa-fw fa-lock-open</v-icon
+              >
             </template>
             {{ $t("is_unlocked") }}
           </v-tooltip>
-
-          <v-tooltip bottom v-if="item.can_lock">
-            <template v-slot:activator="{ on }">
-              <v-btn text icon @click="toggleLock(item)" v-on="on"
-                ><v-icon small>fa-key</v-icon></v-btn
+          <v-tooltip location="bottom" v-if="item.can_lock">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                variant="text"
+                icon
+                @click="toggleLock(item)"
+                v-bind="props"
+                ><v-icon size="small" color="#0000008a"
+                  >fas fa-key</v-icon
+                ></v-btn
               >
             </template>
             {{ $t("can_lock") }}
@@ -768,7 +833,6 @@ cs:
         </template>
       </v-data-table>
     </v-card>
-
     <v-dialog
       v-model="showEditDialog"
       v-if="showEditDialog"
@@ -782,9 +846,9 @@ cs:
         @set-dirty="reloadSelectedCredentials"
         :existing-credentials="sushiCredentialsList"
         key="edit"
+        @close-dialog="showEditDialog = false"
       ></SushiCredentialsEditDialog>
     </v-dialog>
-
     <v-dialog
       v-model="showCreateDialog"
       v-if="showCreateDialog"
@@ -792,6 +856,7 @@ cs:
     >
       <SushiCredentialsEditDialog
         v-model="showCreateDialog"
+        @close-dialog="showCreateDialog = false"
         @update-credentials="updateCredentials"
         @set-dirty="reloadSelectedCredentials"
         :existing-credentials="sushiCredentialsList"
@@ -799,7 +864,6 @@ cs:
         :fixed-platform="platformId"
       ></SushiCredentialsEditDialog>
     </v-dialog>
-
     <v-dialog v-model="showDetailsDialog">
       <SushiAttemptListWidget
         v-if="selectedCredentials"
@@ -808,13 +872,13 @@ cs:
       >
       </SushiAttemptListWidget>
     </v-dialog>
-
     <v-dialog
       v-model="showTestDialog"
       max-width="1320px"
       content-class="top-dialog"
+      max-height="80vh"
     >
-      <v-card>
+      <v-card class="pb-5">
         <v-card-title>{{ $t("test_dialog") }}</v-card-title>
         <v-card-text class="pb-0">
           <HarvestSelectedWidget
@@ -829,13 +893,17 @@ cs:
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="stopTestDialog()" class="mb-5 mr-5">{{
-            $t("close")
-          }}</v-btn>
+          <v-btn
+            @click="stopTestDialog()"
+            variant="flat"
+            color="defaultButton"
+            class="mr-5"
+            elevation="2"
+            >{{ $t("close") }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
-
     <v-dialog
       v-model="showDataDialog"
       v-if="showDataDialog"
@@ -846,7 +914,6 @@ cs:
         @close="closeDataDialog"
       ></SushiCredentialsDataDialog>
     </v-dialog>
-
     <v-dialog
       v-model="showLastHarvestableMonthDialog"
       v-if="showLastHarvestableMonthDialog"
@@ -902,6 +969,7 @@ import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import stateTracking from "@/mixins/stateTracking";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import { counterVersionToStr } from "@/libs/sushi";
+import { template } from "lodash";
 
 export default {
   name: "SushiCredentialsManagementWidget",
@@ -969,8 +1037,11 @@ export default {
       // table options
       page: 1,
       itemsPerPage: 25,
-      orderBy: ["organization.name", "platform.name", "counter_version"],
-      orderDesc: [false, false, false],
+      orderBy: [
+        { key: "organization.name", order: "asc" },
+        { key: "platform.name", order: "asc" },
+        { key: "counter_version", order: "asc" },
+      ],
       // state tracking support
       watchedAttrs: [
         {
@@ -1000,13 +1071,13 @@ export default {
         },
         {
           name: "orderBy",
-          type: Array,
+          type: Object,
           alwaysTrack: true,
         },
-        {
-          name: "orderDesc",
-          type: Array,
-        },
+        // {
+        //   name: "orderDesc",
+        //   type: Array,
+        // },
         {
           name: "platformFilter",
           type: Number,
@@ -1030,59 +1101,66 @@ export default {
       return csrftoken;
     },
     headers() {
-      const large = this.$vuetify.breakpoint.lgAndUp;
+      const large = this.$vuetify.display.lgAndUp;
       let allHeaders = [
         {
-          text: this.$i18n.t("title"),
+          title: this.$i18n.t("title"),
           value: "title",
           class: "wrap",
+          key: "title",
         },
         {
-          text: this.$i18n.t("organization"),
+          title: this.$i18n.t("organization"),
           value: "organization.name",
           class: "wrap",
+          key: "organization.name",
         },
         {
-          text: this.$i18n.t("platform"),
+          title: this.$i18n.t("platform"),
           value: "platform.name",
+          key: "platform.name",
         },
         {
-          text: this.$i18n.t("title_fields.counter_version"),
+          title: this.$i18n.t("title_fields.counter_version"),
           value: "counter_version",
           align: "center",
+          key: "counter_version",
         },
         {
-          text: this.$i18n.t("title_fields.active_reports"),
+          title: this.$i18n.t("title_fields.active_reports"),
           value: "counter_reports",
           sortable: false,
         },
         {
-          text: this.$i18n.t("title_fields.last_harvestable_month"),
+          title: this.$i18n.t("title_fields.last_harvestable_month"),
           value: "last_harvestable_month",
           sortable: false,
         },
         {
-          text: this.$i18n.t("title_fields.outside_consortium"),
+          title: this.$i18n.t("title_fields.outside_consortium"),
           value: "outside_consortium",
           show: this.consortialInstall && large,
+          key: "outside_consortium",
         },
         {
-          text: this.$i18n.t("sushi.enabled"),
+          title: this.$i18n.t("sushi.enabled"),
           value: "enabled",
+          key: "enabled",
         },
         {
-          text: this.$i18n.t("title_fields.lock"),
+          title: this.$i18n.t("title_fields.lock"),
           value: "locked",
           show: this.consortialInstall && large,
+          key: "locked",
         },
         {
-          text: this.$i18n.t("title_fields.actions"),
+          title: this.$i18n.t("title_fields.actions"),
           value: "actions",
           sortable: false,
         },
       ];
       return allHeaders.filter(
-        (row) => !row.hasOwnProperty("show") || row.show
+        (row) => !row.hasOwnProperty("show") || row.show,
       );
     },
     searchDebounced: {
@@ -1124,24 +1202,25 @@ export default {
         .filter(
           (item) =>
             this.counterVersion === null ||
-            this.counterVersion === item.counter_version
+            this.counterVersion === item.counter_version,
         )
         .filter(
           (item) =>
             this.withLastHarvestableMonthSet === null ||
             this.withLastHarvestableMonthSet ===
               item.counter_reports_long.some(
-                (e) => e.last_harvestable_month != null
-              )
+                (e) => e.last_harvestable_month != null,
+              ),
         )
         .filter(this.createSearchFilter())
         .filter((item) =>
-          this.platformFilter ? item.platform.pk === this.platformFilter : true
+          this.platformFilter ? item.platform.pk === this.platformFilter : true,
         );
     },
+
     checkedCredentials() {
       let filteredIds = new Set(
-        this.filteredCredentials.map((item) => item.pk)
+        this.filteredCredentials.map((item) => item.pk),
       );
       return this.checkedRows.filter((item) => filteredIds.has(item.pk));
     },
@@ -1172,7 +1251,7 @@ export default {
     },
     checkedBrokenCredentials() {
       return this.checkedCredentials.filter(
-        (e) => e.broken || e.has_broken_reports
+        (e) => e.broken || e.has_broken_reports,
       );
     },
     checkedUpdatableCredentials() {
@@ -1212,7 +1291,7 @@ export default {
           color: "primary",
           icon: "fa fa-info-circle",
           width: 500,
-        }
+        },
       );
       if (res) {
         this.downloadImportTemplate();
@@ -1224,6 +1303,8 @@ export default {
           title: this.$t("no_credentials_filtered"),
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
+          color: "warning",
+          icon: "fa fa-warning",
         });
       }
     },
@@ -1233,6 +1314,8 @@ export default {
           title: this.$t("no_credentials_selected"),
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
+          color: "warning",
+          icon: "fa fa-warning",
         });
       }
     },
@@ -1251,7 +1334,7 @@ export default {
         let response = await axios.get(this.dataUrl);
         this.sushiCredentialsList = response.data;
         this.sushiCredentialsList.forEach((item) =>
-          this.preprocessCredentials(item)
+          this.preprocessCredentials(item),
         );
       } catch (error) {
         this.showSnackbar({
@@ -1265,7 +1348,7 @@ export default {
       if (this.selectedCredentials) {
         try {
           let response = await axios.get(
-            `/api/sushi-credentials/${this.selectedCredentials.pk}/`
+            `/api/sushi-credentials/${this.selectedCredentials.pk}/`,
           );
           this.updateCredentials(response.data);
         } catch (error) {
@@ -1293,7 +1376,7 @@ export default {
       let found = false;
       for (let i = 0; i < this.sushiCredentialsList.length; i++) {
         if (this.sushiCredentialsList[i].pk === credentials.pk) {
-          this.$set(this.sushiCredentialsList, i, credentials);
+          this.sushiCredentialsList[i] = credentials;
           found = true;
           break;
         }
@@ -1301,7 +1384,7 @@ export default {
       // checkedRows contains a copy of the credentials, so we need to update it as well
       for (let i = 0; i < this.checkedRows.length; i++) {
         if (this.checkedRows[i].pk === credentials.pk) {
-          this.$set(this.checkedRows, i, credentials);
+          this.checkedRows[i] = credentials;
           break;
         }
       }
@@ -1314,12 +1397,14 @@ export default {
         this.selectedCredentials = credentials;
       }
     },
-    async deleteCredentials({ id }) {
-      await this.loadSushiCredentialsList();
+    deleteCredentials({ id }) {
+      this.sushiCredentialsList = this.sushiCredentialsList.filter(
+        (item) => item.pk !== id,
+      );
     },
     preprocessCredentials(item) {
       item["has_broken_reports"] = !!item.counter_reports_long.filter(
-        (report) => report.broken
+        (report) => report.broken,
       ).length;
       //tem["isSelectable"] = !item.broken;
       if (item.broken) {
@@ -1339,7 +1424,7 @@ export default {
       try {
         let response = await axios.post(
           `/api/sushi-credentials/${credentials.pk}/lock/`,
-          { lock_level: newLockLevel }
+          { lock_level: newLockLevel },
         );
         credentials.lock_level = response.data.lock_level;
         credentials.locked = response.data.locked;
@@ -1368,7 +1453,11 @@ export default {
     closeMarkAsFixedDialog() {
       this.showMarkAsFixedDialog = false;
     },
-    closeCloneToNewer() {
+    closeCloneToNewer(refresh) {
+      if (refresh) {
+        this.loadSushiCredentialsList();
+        this.checkedRows = [];
+      }
       this.showCloneToNewerDialog = false;
     },
     activateCreateDialog() {
@@ -1382,6 +1471,8 @@ export default {
           title: this.$t("no_credentials_selected"),
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
+          color: "warning",
+          icon: "fa fa-warning",
         });
       }
     },
@@ -1394,9 +1485,13 @@ export default {
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
           width: 600,
+          color: "warning",
+          icon: "fa fa-warning",
+          buttonTrueVariant: "elevated",
         });
       }
     },
+
     triggerCloneToNewer() {
       if (this.checkedUpdatableCredentials.length > 0) {
         this.showCloneToNewerDialog = true;
@@ -1406,6 +1501,8 @@ export default {
           buttonTrueText: this.$t("close"),
           buttonFalseText: null,
           width: 600,
+          color: "warning",
+          icon: "fa fa-warning",
         });
       }
     },
@@ -1480,12 +1577,23 @@ export default {
     },
     async credentialsClonedHandler() {
       await this.loadSushiCredentialsList();
-      // unselect any previously selected credentials
-      this.checkedRows = [];
+      if (startHarvesting) {
+        this.checkedRows = this.filteredCredentials.filter((e) =>
+          credentials_pks.includes(e.pk),
+        );
+        this.showTestDialog = true;
+      } else {
+        this.checkedRows = [];
+      }
     },
   },
 
   watch: {
+    platforms(newVal) {
+      if (!this.platforms.some((item) => item.pk === newVal)) {
+        this.platformFilter = null;
+      }
+    },
     showEditDialog(value) {
       if (!value) {
         this.selectedCredentials = null;
@@ -1522,4 +1630,12 @@ export default {
 };
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+.v-selection-control--dirty .v-selection-control__input > .v-icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.mt_without_label {
+  margin-top: 3px;
+}
+</style>

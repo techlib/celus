@@ -1,10 +1,11 @@
 <!-- presents a bar with parts of different colors representing individual parts of a whole -->
+
 <template>
   <div class="d-flex" :style="{ lineHeight: height + 'px' }">
-    <v-tooltip bottom v-for="(chunk, index) in data" :key="index">
-      <template #activator="{ on }">
+    <v-tooltip location="bottom" v-for="(chunk, index) in data" :key="index">
+      <template #activator="{ props }">
         <div
-          v-on="on"
+          v-bind="props"
           :style="{
             width: (100 * chunk.value) / total + '%',
             backgroundColor: chunk.color,
@@ -16,10 +17,10 @@
           }"
           class="text-center"
         >
-          <span class="px-4" :class="textClass">{{ chunk.text }}</span>
+          <span class="px-4" :class="textClass">{{ chunk.title }}</span>
         </div>
       </template>
-      {{ showAllTooltipsAsOne ? overallTooltip : chunk.tooltip || chunk.text }}
+      {{ showAllTooltipsAsOne ? overallTooltip : chunk.tooltip || chunk.title }}
     </v-tooltip>
   </div>
 </template>
@@ -52,7 +53,7 @@ export default {
       return this.data.reduce((acc, cur) => acc + cur.value, 0);
     },
     overallTooltip() {
-      return this.data.map((chunk) => chunk.tooltip || chunk.text).join("; ");
+      return this.data.map((chunk) => chunk.tooltip || chunk.title).join("; ");
     },
   },
 };

@@ -11,6 +11,7 @@
   >
   </v-chart>
 </template>
+
 <script>
 import { mapActions } from "vuex";
 import cancellation from "@/mixins/cancellation";
@@ -99,7 +100,7 @@ export default {
       let keyToCount = new Map();
       return this.data.map((item) => {
         let newItem = Object.fromEntries(
-          Object.keys(this.series).map((k) => [k, item[k]])
+          Object.keys(this.series).map((k) => [k, item[k]]),
         );
 
         let key = item[this.shownPrimaryDimension];
@@ -122,7 +123,7 @@ export default {
           this.data.map((item) => [
             tagText(item.tag),
             item?.tag?.bg_color || "#666666",
-          ])
+          ]),
         );
       } else {
         return {};
@@ -227,6 +228,9 @@ export default {
         toolbox: this.toolbox,
         dataZoom: this.dataZoom,
         legend: {
+          type: "scroll",
+          orient: "horizontal",
+          width: "85%",
           // checkmarks as icons for the series
           icon: "path://M 592,480 H 240 c -26.51,0 -48,-21.49 -48,-48 V 80 c 0,-26.51 21.49,-48 48,-48 h 352 c 26.51,0 48,21.49 48,48 v 352 c 0,26.51 -21.49,48 -48,48 z m -204.686,-98.059 184,-184 c 6.248,-6.248 6.248,-16.379 0,-22.627 l -22.627,-22.627 c -6.248,-6.248 -16.379,-6.249 -22.628,0 L 376,302.745 305.941,232.686 c -6.248,-6.248 -16.379,-6.248 -22.628,0 l -22.627,22.627 c -6.248,6.248 -6.248,16.379 0,22.627 l 104,104 c 6.249,6.25 16.379,6.25 22.628,0 z",
           itemWidth: 16,
@@ -238,7 +242,7 @@ export default {
     },
     xValues() {
       let values = this.displayData.map(
-        (item) => item[this.shownPrimaryDimension]
+        (item) => item[this.shownPrimaryDimension],
       );
       if (this.type === "bar") {
         // to show the values in the same order as in the data table

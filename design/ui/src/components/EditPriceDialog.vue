@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   year: Year
@@ -36,12 +38,17 @@ cs:
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn @click="close">{{ $t("cancel") }}</v-btn>
-      <v-btn @click="save" color="primary">{{ $t("save") }}</v-btn>
+      <v-btn @click="close" variant="elevated" color="defaultButton">{{
+        $t("cancel")
+      }}</v-btn>
+      <v-btn @click="save" color="primary" variant="elevated">{{
+        $t("save")
+      }}</v-btn>
       <v-spacer></v-spacer>
     </v-card-actions>
   </v-card>
 </template>
+
 <script>
 export default {
   name: "EditPriceDialog",
@@ -75,5 +82,9 @@ export default {
 <style lang="scss">
 th {
   padding-right: 0.5rem;
+  font-size: 14px;
+}
+td {
+  font-size: 14px;
 }
 </style>

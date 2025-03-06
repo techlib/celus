@@ -1,5 +1,7 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   title: Set last harvestable month
@@ -40,36 +42,36 @@ cs:
         <v-col>
           <table class="mx-auto">
             <tr v-for="(cr, index) in counterReportsOrdered" :key="cr.id">
-              <th class="text-left pr-3 pt-2">
+              <th class="text-left pr-3 pt-4">
                 <v-chip
                   class="mr-1 px-2"
                   :color="cr.broken ? '#888888' : 'teal'"
-                  outlined
+                  variant="outlined"
                   label
                 >
-                  <SushiReportIndicator :report="cr" />
+                  <SushiReportIndicator :report="cr"></SushiReportIndicator>
                 </v-chip>
               </th>
-              <td>
+              <td style="min-width: 140px">
                 <MonthEntry v-model="reportIdToDate[cr.id]"></MonthEntry>
               </td>
-              <td class="align-self-center pl-0">
-                <v-tooltip bottom max-width="600px">
-                  <template #activator="{ on }">
+              <td class="align-self-center pl-0 pt-3">
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props }">
                     <v-btn
                       icon
-                      small
+                      variant="text"
+                      size="x-small"
                       v-show="index > 0"
-                      v-on="on"
+                      v-bind="props"
                       @click="
-                        $set(
-                          reportIdToDate,
-                          cr.id,
+                        reportIdToDate[cr.id] =
                           reportIdToDate[counterReportsOrdered[index - 1].id]
-                        )
                       "
                     >
-                      <v-icon small>far fa-copy</v-icon>
+                      <v-icon size="large" color="lighterIcons"
+                        >far fa-copy</v-icon
+                      >
                     </v-btn>
                   </template>
                   {{ $t("copy_tt") }}
@@ -82,8 +84,20 @@ cs:
     </v-card-text>
     <v-card-actions class="pb-4">
       <v-spacer></v-spacer>
-      <v-btn @click="close">{{ $t("close") }}</v-btn>
-      <v-btn @click="apply" color="primary" :loading="loading">
+      <v-btn
+        @click="close"
+        variant="flat"
+        elevation="2"
+        color="defaultButton"
+        >{{ $t("close") }}</v-btn
+      >
+      <v-btn
+        @click="apply"
+        variant="flat"
+        elevation="2"
+        color="primary"
+        :loading="loading"
+      >
         {{ $t("apply") }}
       </v-btn>
     </v-card-actions>
@@ -101,7 +115,7 @@ export default {
   components: { MonthEntry, SushiReportIndicator },
 
   props: {
-    value: { type: Object },
+    modelValue: { type: Object },
     counterReportsOrdered: { type: Array },
     loading: { type: Boolean, default: false },
     multipleCredentials: { type: Boolean, default: false },
@@ -109,8 +123,8 @@ export default {
 
   data() {
     let reportIdToDate = {};
-    if (this.value) {
-      reportIdToDate = { ...this.value };
+    if (this.modelValue) {
+      reportIdToDate = { ...this.modelValue };
     } else {
       this.counterReportsOrdered.forEach((cr) => {
         reportIdToDate[cr.id] = cr.last_harvestable_month;
@@ -126,12 +140,15 @@ export default {
       this.$emit("close");
     },
     apply() {
-      this.$emit("apply", this.reportIdToDate);
+      Object.entries(this.reportIdToDate).forEach(([reportId, dateValue]) => {
+        const reportData = { [reportId]: dateValue };
+        this.$emit("apply", reportData);
+      });
     },
   },
 
   watch: {
-    value: {
+    modelValue: {
       handler: function (val) {
         if (val && !isEqual(val, this.reportIdToDate)) {
           this.reportIdToDate = { ...val };
@@ -141,10 +158,20 @@ export default {
     },
     reportIdToDate: {
       handler: function (val) {
-        this.$emit("input", val);
+        this.$emit("update:modelValue", val);
       },
       deep: true,
     },
   },
 };
 </script>
+
+<style lang="scss" scoped>
+p {
+  color: #00000090;
+  font-size: 14px;
+  &:first-child {
+    padding-bottom: 15px;
+  }
+}
+</style>

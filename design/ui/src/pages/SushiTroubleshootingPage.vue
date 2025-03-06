@@ -11,7 +11,7 @@ en:
     If you find that some of your SUSHI credentials are not working in CELUS, it might
     be necessary to register the IP addresses of this CELUS server with your provider. These are:
   ip_authentication_description_3: |
-    Feel free to contact us at <a href="mailto:ask@celus.net">ask@celus.net</a>
+    Feel free to contact us at <a href="mailto:ask{'@'}celus.net">ask{'@'}celus.net</a>
     if you are not sure how to proceed.
 cs:
   sushi_troubleshooting: Řešení problémů se SUSHI
@@ -25,8 +25,9 @@ cs:
     bude možná nutné zaregistrovat IP adresy tohoto serveru u vašeho poskytovatele. Adresy jsou:
   ip_authentication_description_3: |
     Pokud nevíte, jak postupovat, neváhejte nás kontaktovat na
-    <a href="mailto:ask@celus.net">ask@celus.net</a>.
+    <a href="mailto:ask{'@'}celus.net">ask{'@'}celus.net</a>.
 </i18n>
+
 <template>
   <div class="pa-3">
     <h2>{{ $t("sushi_troubleshooting") }}</h2>
@@ -34,7 +35,7 @@ cs:
       <h3 class="mb-4">{{ $t("ip_authentication") }}</h3>
       <p>{{ $t("ip_authentication_description") }}</p>
       <p>{{ $t("ip_authentication_description_2") }}</p>
-      <HarvesterIPAddressList />
+      <HarvesterIPAddressList></HarvesterIPAddressList>
       <p class="mt-4" v-html="$t('ip_authentication_description_3')"></p>
     </section>
   </div>
@@ -50,4 +51,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+p {
+  margin-bottom: 16px;
+}
+</style>

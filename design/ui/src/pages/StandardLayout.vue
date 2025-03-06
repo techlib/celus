@@ -1,5 +1,6 @@
-<i18n lang="yaml" src="@/locales/dialog.yaml" />
-<i18n lang="yaml" src="@/locales/common.yaml" />
+<i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -19,115 +20,139 @@ cs:
 
 <template>
   <v-app>
-    <SidePanel v-model="showSidePanel" />
-
-    <v-app-bar app clipped-left clipped-right>
-      <v-toolbar-title class="flex-sm-shrink-0">
-        <img
-          :src="
-            siteLogo
-              ? siteLogo.img
-              : require('../assets/celus-horizontal-dark.svg')
-          "
-          :alt="siteLogo ? siteLogo.alt_text : 'CELUS'"
-          id="logo-image"
-        />
-      </v-toolbar-title>
-
+    <SidePanel
+      v-model="showSidePanel"
+      data-tour="side-panel"
+      order="2"
+    ></SidePanel>
+    <v-app-bar
+      data-tour="app-bar"
+      color="defaultButton"
+      order="1"
+      density="compact"
+      class="pr-4 pl-4 pt-1 pb-1"
+    >
+      <template v-slot:prepend>
+        <v-btn
+          @click.stop="showSidePanel = !showSidePanel"
+          icon
+          class="mr-2"
+          data-tour="menu-show-button"
+          v-if="$vuetify.display.mobile"
+        >
+          <v-icon icon="fa fa-bars" color="lighterIcons"></v-icon>
+        </v-btn>
+        <v-toolbar-title class="flex-sm-shrink-0">
+          <img
+            :src="siteLogo ? siteLogo.img : defaultLogoHorizontal"
+            class="logo pt-1"
+            :alt="siteLogo ? siteLogo.alt_text : 'CELUS'"
+            id="logo-image"
+          />
+        </v-toolbar-title>
+      </template>
       <v-divider class="mx-3 d-none d-md-block" inset vertical></v-divider>
-
-      <OrganizationSelector
-        internal-label
-        :lang="appLanguage"
-        v-if="showOrganizationSelector"
-        class="d-flex"
-        :disabled="disableOrganizationSelector"
-      />
-      <SelectedDateRangeWidget
-        input-like-label
-        class="d-flex"
-        v-if="showDateRangeSelector"
-      />
-
+      <v-row align="center" justify="start" style="width: 100%">
+        <v-col
+          cols="6"
+          lg="4"
+          md="4"
+          align-self="auto"
+          class="organization_selector"
+        >
+          <OrganizationSelector
+            internal-label
+            :lang="appLanguage"
+            style="width: 250px"
+            v-if="showOrganizationSelector"
+            class="ml-0"
+            :disabled="disableOrganizationSelector"
+          ></OrganizationSelector>
+        </v-col>
+        <v-col cols="6" lg="8" md="8">
+          <SelectedDateRangeWidget
+            input-like-label
+            class="d-flex"
+            v-if="showDateRangeSelector"
+          ></SelectedDateRangeWidget>
+        </v-col>
+      </v-row>
       <v-spacer></v-spacer>
-
       <v-select
         v-if="showLanguageSelector"
         v-model="appLanguage"
         :items="activeLanguageCodes"
         class="short"
+        min-width="90px"
+        width="90px"
         shrink
       >
         <template #prepend>
-          <v-icon class="fs-20">fa-globe</v-icon>
+          <v-icon size="small" class="pt-1" color="lighterGreyIcons"
+            >fa fa-globe</v-icon
+          >
         </template>
       </v-select>
-
       <!-- user icon -->
-      <v-toolbar-items class="align-baseline">
+      <v-toolbar-items class="align-center">
         <v-divider class="mx-3" inset vertical></v-divider>
-
         <v-badge
           color="error"
           overlap
-          :value="unreadEventCount"
           :content="unreadEventCount"
           class="align-self-center mr-2"
+          :value="unreadEventCount"
         >
-          <v-tooltip bottom max-width="600px">
-            <template #activator="{ on }">
+          <v-tooltip max-width="600px" location="bottom">
+            <template #activator="{ props }">
               <v-btn
-                v-on="on"
                 icon
-                small
-                text
-                plain
+                variant="plain"
                 :to="{
                   name: 'events',
-                  query: { sortBy: 'created', sortDesc: true },
                 }"
+                size="medium"
+                v-bind="props"
               >
-                <v-icon>fa-envelope</v-icon>
+                <v-icon color="lighterIcons">fas fa-envelope</v-icon>
               </v-btn>
             </template>
             {{ $t("labels.unread_messages") }}
           </v-tooltip>
         </v-badge>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <span v-on="on" class="align-self-center">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
+            <span v-bind="props" class="align-self-center">
               <router-link :to="{ name: 'releases' }">
                 <v-badge
-                  :value="displayNewReleaseBadge"
                   color="warning"
-                  right
                   dot
-                  offset-x="16"
-                  offset-y="31"
+                  offset-x="5"
+                  offset-y="25"
+                  :model-value="displayNewReleaseBadge"
                 >
-                  <v-icon class="mx-2 fs-20" color="disabled"
-                    >fa fa-bullhorn</v-icon
-                  >
+                  <v-icon
+                    class="mx-2 fs-20"
+                    color="lighterIcons"
+                    icon="fa fa-bullhorn"
+                  ></v-icon>
                 </v-badge>
               </router-link>
             </span>
           </template>
           {{ $t("releases") }}
         </v-tooltip>
-
-        <v-tooltip bottom v-if="impersonator">
-          <template v-slot:activator="{ on }">
-            <v-icon v-on="on" class="mx-1 align-self-center" color="purple"
-              >fa-mask</v-icon
+        <v-tooltip location="bottom" v-if="impersonator">
+          <template v-slot:activator="{ props }">
+            <v-icon v-bind="props" class="mx-1 align-self-center" color="purple"
+              >fas fa-mask</v-icon
             >
           </template>
           {{ $t("impersonated") }}
         </v-tooltip>
-
-        <v-tooltip bottom v-if="!emailVerified">
-          <template v-slot:activator="{ on }">
-            <span v-on="on" class="align-self-center">
+        <v-tooltip location="bottom" v-if="!emailVerified">
+          <template v-slot:activator="{ props }">
+            <span v-bind="props" class="align-self-center">
               <router-link :to="{ name: 'user-page' }">
                 <v-icon class="mx-1" color="warning"
                   >fa fa-exclamation-triangle</v-icon
@@ -137,20 +162,17 @@ cs:
           </template>
           {{ $t("email_not_verified") }}
         </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <span v-on="on">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">
               <router-link :to="{ name: 'user-page' }">
-                <v-avatar color="primary" class="mt-2">
-                  <v-gravatar
+                <v-avatar color="primary" data-tour="user-avatar">
+                  <img
                     v-if="loggedIn && user"
-                    :email="user.email"
+                    :src="gravatar"
                     :alt="avatarText"
-                    default-img="mp"
-                  >
-                  </v-gravatar>
-                  <v-icon v-else dark>fa-user</v-icon>
+                  />
+                  <v-icon v-else dark>fas fa-user</v-icon>
                 </v-avatar>
               </router-link>
             </span>
@@ -158,16 +180,7 @@ cs:
           <span>{{ usernameText }}</span>
         </v-tooltip>
       </v-toolbar-items>
-
-      <v-btn
-        @click.stop="showSidePanel = !showSidePanel"
-        icon
-        v-if="$vuetify.breakpoint.mobile"
-      >
-        <v-icon>fa fa-bars</v-icon>
-      </v-btn>
     </v-app-bar>
-
     <!-- we need some empty space at the bottom of each page for the
          floating info button to fit in -->
     <v-main
@@ -175,19 +188,21 @@ cs:
       class="mb-8"
     >
       <v-alert
-        class="ma-4 mt-6"
         v-if="displayNewReleaseAlert"
+        class="ma-4 mt-6 alert_new_version"
         @input="dismissLastRelease(false)"
-        dense
+        density="compact"
         dismissible
-        outlined
-        icon="fa-bullhorn"
+        variant="outlined"
+        closable
+        icon="fa fa-bullhorn"
+        close-icon="fa fa-times-circle"
         text
         type="success"
       >
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <span v-on="on">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
+            <span v-bind="props">
               <router-link :to="{ name: 'releases' }">
                 {{
                   latestPublishedRelease.title[appLanguage] ||
@@ -199,28 +214,26 @@ cs:
           {{ $t("click_for_more_info") }}
         </v-tooltip>
       </v-alert>
-      <v-container fluid pa-0 pa-sm-2>
-        <v-tooltip left v-if="showHelpButton">
-          <template #activator="{ on }">
+      <v-container fluid class="pa-0 pa-sm-2">
+        <v-tooltip location="left" v-if="showHelpButton">
+          <template #activator="{ props }">
             <v-btn
               color="info"
-              fab
-              small
-              fixed
-              bottom
-              right
-              v-on="on"
+              icon
+              size="small"
+              position="fixed"
+              location="bottom right"
+              v-bind="props"
               target="_blank"
               :href="helpLink"
+              class="fixed_button"
             >
-              <v-icon>fa-question</v-icon>
+              <v-icon>fa fa-question fa-2x</v-icon>
             </v-btn>
           </template>
           {{ helpText || $t("context_help_tt") }}
         </v-tooltip>
-
-        <router-view :key="$route.fullPath" v-if="loggedIn" />
-
+        <router-view :key="$route.fullPath" v-if="loggedIn"></router-view>
         <v-snackbar v-model="snackbarShow" :color="snackbarColor">
           {{ snackbarText }}
           <template #action="{ attrs }">
@@ -231,7 +244,6 @@ cs:
         </v-snackbar>
       </v-container>
     </v-main>
-
     <v-footer app absolute inset height="128px" v-if="footerImages.length">
       <v-container fluid>
         <v-row no-gutters wrap>
@@ -245,9 +257,10 @@ cs:
         </v-row>
       </v-container>
     </v-footer>
-
-    <LoginDialog />
-    <CreateOrganizationDialog v-if="showCreateOrganizationDialog" />
+    <LoginDialog></LoginDialog>
+    <CreateOrganizationDialog
+      v-if="showCreateOrganizationDialog"
+    ></CreateOrganizationDialog>
   </v-app>
 </template>
 
@@ -257,9 +270,13 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
 import LoginDialog from "@/components/account/LoginDialog";
-import VGravatar from "vue-gravatar";
 import CreateOrganizationDialog from "@/components/account/CreateOrganizationDialog";
 import axios from "axios";
+import defaultLogo from "@/assets/celus-dark.png";
+import md5 from "md5";
+import defaultLogoHorizontal from "../assets/celus-horizontal-dark.svg";
+
+import { useDisplay } from "vuetify";
 
 export default {
   name: "Dashboard",
@@ -269,7 +286,6 @@ export default {
     SelectedDateRangeWidget,
     OrganizationSelector,
     SidePanel,
-    VGravatar,
   },
   data() {
     return {
@@ -277,7 +293,13 @@ export default {
       showSidePanel: true,
       helpLink: false,
       helpText: "",
+      defaultLogoHorizontal: defaultLogoHorizontal,
     };
+  },
+  setup() {
+    const display = useDisplay();
+
+    return { display };
   },
   computed: {
     ...mapState({
@@ -352,19 +374,29 @@ export default {
     },
     showOrganizationSelector() {
       return (
-        this.$vuetify.breakpoint.mdAndUp &&
+        this.$vuetify.display.mdAndUp &&
         !this.$route.meta.hideOrganizationSelector
       );
     },
     showDateRangeSelector() {
       return (
-        this.$vuetify.breakpoint.mdAndUp &&
+        this.$vuetify.display.mdAndUp &&
         !this.$route.meta.hideDateRangeSelector &&
         !this.hideDateRangeSelector
       );
     },
     showHelpButton() {
       return !!this.helpLink;
+    },
+    logoSrc() {
+      return this.siteLogo ? this.siteLogo.img : defaultLogo;
+    },
+    logoAltText() {
+      return this.siteLogo ? this.siteLogo.alt_text : "Celus";
+    },
+    gravatar() {
+      const hash = md5(this.user.email.trim().toLowerCase());
+      return `https://www.gravatar.com/avatar/${hash}?d=mp&s=40`;
     },
   },
 
@@ -379,7 +411,7 @@ export default {
     async fetchHelpLink() {
       try {
         const result = await axios.get(
-          `https://spaces.celus.net/help/${this.$route.name}.json`
+          `https://spaces.celus.net/help/${this.$route.name}.json`,
         );
         this.helpLink = result.data.url;
         this.helpText = result.data.help_text;
@@ -423,6 +455,18 @@ export default {
   height: 36px;
 }
 
+.logo {
+  @media only screen and (max-width: 600px) {
+  }
+  max-width: 128px;
+  height: 36px;
+}
+
+.fixed_button {
+  margin-right: 36px;
+  margin-bottom: 16px;
+  z-index: 4;
+}
 img.logo {
   max-width: 20vw;
 }
@@ -431,8 +475,27 @@ img.logow {
   max-height: 92px;
 }
 
+.v-navigation-drawer {
+  &.v-tour__target--relative {
+    position: fixed;
+  }
+}
+
+.fs-30 {
+  font-size: 30px;
+  line-height: 30px;
+}
+
 .fs-20 {
   font-size: 20px;
   line-height: 28px;
+}
+
+.alert_new_version {
+  background-color: rgb(76, 175, 80, 0.1);
+}
+
+:deep(.v-alert__close > button) {
+  font-size: 15px;
 }
 </style>

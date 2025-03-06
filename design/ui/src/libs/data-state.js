@@ -9,7 +9,7 @@ function dataStateToIcon(state) {
     case DATA_UNTRIED:
       return { color: "grey", icon: "far fa-circle" };
     case DATA_FAILED:
-      return { color: "error", icon: "fas fa-exclamation-circle" };
+      return { color: "error", icon: "fa fa-exclamation-circle" };
     case DATA_NO_DATA:
       return { color: "success", icon: "far fa-circle" };
     case DATA_SUCCESS:

@@ -12,7 +12,6 @@ cs:
   <div>
     <section v-if="selectedOrganizationId">
       <h3 class="pt-3">{{ $t("multiplatform_titles") }}</h3>
-
       <TitleList
         :url="titleListURL"
         titles-on-multiple-platforms

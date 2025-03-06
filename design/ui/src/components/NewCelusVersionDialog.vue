@@ -15,8 +15,8 @@ cs:
   <v-dialog v-model="newCelusVersion" persistent :max-width="400">
     <v-card>
       <v-card-title class="headline"
-        >{{ $t("title") }}<v-spacer
-      /></v-card-title>
+        >{{ $t("title") }}<v-spacer></v-spacer
+      ></v-card-title>
       <v-card-text>
         <div>
           {{
@@ -27,20 +27,20 @@ cs:
           }}
         </div>
         <br />
-        <div>{{ $t("wait") }} <v-icon color="info">fa-cog fa-spin</v-icon></div>
+        <div>
+          {{ $t("wait") }} <v-icon color="info">fa fa-cog fa-spin</v-icon>
+        </div>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          class="ma-3"
-          @click="refreshPage"
-          v-text="$t('button')"
-        ></v-btn>
+        <v-btn color="primary" class="ma-3" @click="refreshPage">{{
+          $t("button")
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
+
 <script>
 import { mapGetters, mapState } from "vuex";
 
@@ -73,6 +73,7 @@ export default {
   },
 };
 </script>
+
 <style lang="scss">
 .v-select.v-text-field.short input {
   max-width: 0;

@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   delete: Delete
@@ -39,8 +40,8 @@ cs:
 
 <template>
   <span>
-    <v-btn color="error" @click="dialog = true">
-      <v-icon small class="mr-1">fa fa-trash-alt</v-icon>
+    <v-btn color="error" variant="flat" @click="dialog = true">
+      <v-icon size="small" class="mr-1">fa fa-trash-alt</v-icon>
       {{ $t("delete") }}
     </v-btn>
     <v-dialog v-model="dialog" max-width="500px">
@@ -55,13 +56,16 @@ cs:
                   : $t('platform_name', { name: platform.name }),
               })
             "
+            class="text-disabled text"
           ></p>
           <v-checkbox
             v-model="alsoDeleteData"
             :label="$t('also_delete_data')"
             :disabled="success || !!error || loading"
+            color="primary"
+            class="mt-6 checkbox_delete"
           ></v-checkbox>
-          <p>
+          <p class="text-disabled text">
             <span
               v-html="
                 $t('delete_all_platform_data', {
@@ -81,22 +85,22 @@ cs:
             </span>
             <span>.</span>
           </p>
-
           <v-alert
             v-if="alsoDeleteData && !success && !error"
             type="warning"
-            outlined
+            variant="outlined"
+            class="mt-4"
           >
             <span v-html="$t('delete_warning')"></span>
           </v-alert>
-          <v-alert v-if="success" type="success" outlined>
+          <v-alert v-if="success" type="success" variant="outlined">
             <span
               v-html="
                 alsoDeleteData ? $t('success_also_delete_data') : $t('success')
               "
             ></span>
           </v-alert>
-          <v-alert v-if="error" type="error" outlined>
+          <v-alert v-if="error" type="error" variant="outlined">
             <span v-html="$t('error', { error: error.message })"></span>
           </v-alert>
         </v-card-text>
@@ -105,13 +109,15 @@ cs:
           <v-btn
             v-if="!success && !error"
             color="error"
+            variant="elevated"
             @click="performDelete"
+            hide-detaile
             :loading="loading"
             :disabled="loading"
             >{{ $t("delete") }}</v-btn
           >
-          <v-btn @click="closeDialog">
-            <v-icon v-if="success || error" small class="mr-1"
+          <v-btn @click="closeDialog" variant="elevated" color="defaultButton">
+            <v-icon v-if="success || error" size="small" class="mr-1"
               >fa fa-times</v-icon
             >
             {{ success || error ? $t("close") : $t("cancel") }}
@@ -121,6 +127,7 @@ cs:
     </v-dialog>
   </span>
 </template>
+
 <script>
 import axios from "axios";
 
@@ -152,7 +159,7 @@ export default {
           this.loading = true;
           this.error = null;
           await axios.delete(
-            `/api/sushi-credentials/${this.credentials.pk}/?delete_data=${this.alsoDeleteData}`
+            `/api/sushi-credentials/${this.credentials.pk}/?delete_data=${this.alsoDeleteData}`,
           );
 
           this.success = true;
@@ -173,3 +180,12 @@ export default {
   },
 };
 </script>
+<style scoped>
+.text {
+  font-size: 14px;
+}
+
+.checkbox_delete {
+  margin-left: -12px;
+}
+</style>

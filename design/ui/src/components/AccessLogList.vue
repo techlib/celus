@@ -1,19 +1,17 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 
 <template>
-  <v-data-table
+  <v-data-table-server
     :items="accessLogs"
     :headers="headers"
-    :sort-by.sync="orderBy"
-    :sort-desc.sync="orderDesc"
+    v-model:sort-by="sortBy"
     :loading="loading"
-    :server-items-length="total"
-    :page.sync="page"
-    :items-per-page.sync="ipp"
+    :items-length="total"
+    v-model:page="page"
+    v-model:items-per-page="ipp"
     :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
-    dense
   >
-  </v-data-table>
+  </v-data-table-server>
 </template>
 
 <script>
@@ -35,8 +33,7 @@ export default {
   data() {
     return {
       accessLogs: [],
-      orderBy: "target",
-      orderDesc: false,
+      sortBy: [{ key: "target", order: "asc" }],
       loading: false,
       ipp: 10,
       page: 1,
@@ -48,38 +45,40 @@ export default {
     headers() {
       let out = [
         {
-          text: this.$t("labels.date"),
+          title: this.$i18n.t("labels.date"),
           value: "date",
+          key: "date",
         },
         ...(this.showOrganization
           ? [
               {
-                text: this.$t("labels.organization"),
+                title: this.$i18n.t("labels.organization"),
                 value: "organization",
+                key: "organization",
               },
             ]
           : []),
         {
-          text: this.$t("labels.title"),
+          title: this.$i18n.t("labels.title"),
           value: "target",
-        },
-        {
-          text: this.$t("labels.item"),
-          value: "item",
+          key: "target",
+          sortable: true,
         },
         ...this.dynamicHeaders,
         {
-          text: this.$t("labels.metric"),
+          title: this.$i18n.t("labels.metric"),
           value: "metric",
+          key: "metric",
         },
         {
-          text: this.$t("labels.value"),
+          title: this.$i18n.t("labels.value"),
           value: "value",
+          key: "value",
         },
       ];
       return out.filter(
         (header) =>
-          this.nonEmptyAttrs.has(header.value) || header.value === "value"
+          this.nonEmptyAttrs.has(header.value) || header.value === "value",
       );
     },
     dynamicHeaders() {
@@ -98,7 +97,7 @@ export default {
             key !== "row"
           ) {
             headers.push({
-              text: key.replace(/_/g, " "),
+              title: key.replace(/_/g, " "),
               value: key,
               sortable: false,
             });
@@ -113,9 +112,9 @@ export default {
           .map((log) =>
             Object.entries(log)
               .filter((e) => !!e[1])
-              .map((e) => e[0])
+              .map((e) => e[0]),
           )
-          .flat()
+          .flat(),
       );
     },
     queryUrl() {
@@ -128,13 +127,16 @@ export default {
         console.error('Either "importBatch" or "mduId" must be set');
         return;
       }
+
+      const sortKey = this.sortBy?.[0]?.key || "target";
+      const orderDesc = this.sortBy?.[0]?.order === "desc" ? true : false;
       return this.$router.resolve({
         path: url,
         query: {
           page: this.page,
           page_size: this.ipp,
-          order_by: this.orderBy,
-          desc: this.orderDesc,
+          order_by: sortKey,
+          desc: orderDesc,
         },
       }).href;
     },
@@ -173,4 +175,10 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+:deep(.v-data-table__tr) {
+  &:hover {
+    background-color: #00000016;
+  }
+}
+</style>

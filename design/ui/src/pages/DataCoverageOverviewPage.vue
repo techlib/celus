@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml">
 en:
   click_to_see_details: Click on cards of individual reports to see more details.
@@ -92,31 +93,32 @@ cs:
     </v-row>
     <v-row>
       <v-col>
-        <span class="font-weight-bold text--secondary">{{
+        <span class="font-weight-bold text-medium-emphasis">{{
           $t("labels.date_range")
         }}</span
         >: {{ dateRangeStart }} -
         {{ dateRangeCoverageEndText }}
-        <v-tooltip bottom max-width="600px">
-          <template #activator="{ on }">
-            <v-icon color="info" v-on="on">fa fa-info-circle</v-icon>
+        <v-tooltip location="bottom" max-width="600px">
+          <template #activator="{ props }">
+            <v-icon color="info" v-bind="props">fa fa-info-circle</v-icon>
           </template>
           <span>{{ $t("implicit_end_date") }}</span>
         </v-tooltip>
-        <span class="text-caption text--disabled ms-3">{{
+        <span class="text-caption text-disabled ms-3">{{
           $t("date_change_hint")
         }}</span>
       </v-col>
     </v-row>
     <v-row>
+      <v-col> </v-col>
       <v-expansion-panels
-        accordion
+        variant="accordion"
         v-model="openedPanel"
         flat
         class="bordered-panel"
       >
-        <v-expansion-panel v-for="cv in counterVersions" :value="cv" :key="cv">
-          <v-expansion-panel-header class="justify-space-between">
+        <v-expansion-panel v-for="cv in counterVersions" :key="cv" :value="cv">
+          <v-expansion-panel-title class="justify-space-between">
             <div class="flex-grow-0 me-4">
               {{
                 cv
@@ -124,8 +126,8 @@ cs:
                   : $t("title_fields.non_counter")
               }}
             </div>
-            <v-spacer />
-            <div class="mx-4" style="max-width: 200px">
+            <v-spacer></v-spacer>
+            <div class="mx-4" style="width: 200px">
               <v-progress-linear
                 v-if="progressByCounterVersion(cv) < 1"
                 :value="100 * progressByCounterVersion(cv)"
@@ -137,10 +139,11 @@ cs:
               </v-progress-linear>
               <v-progress-linear
                 v-else
-                :value="roundValue(ratioByCounterVersion(cv))"
+                :buffer-value="roundValue(ratioByCounterVersion(cv))"
                 :color="colorSuccess(ratioByCounterVersion(cv), true)"
                 height="20"
                 class="text-caption"
+                dark
               >
                 <span class="hidden-sm-and-down">
                   {{ $t("labels.total_coverage") }}:
@@ -149,13 +152,12 @@ cs:
                 %
               </v-progress-linear>
             </div>
-          </v-expansion-panel-header>
-
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-row class="my-3">
               <v-col
                 v-for="reportType in visibleReportTypes.filter(
-                  (rt) => rt.counter_version === cv
+                  (rt) => rt.counter_version === cv,
                 )"
                 :key="reportType.pk"
                 cols="6"
@@ -170,13 +172,14 @@ cs:
                   :refreshing="
                     refreshingSelected && selectedReportTypeId === reportType.pk
                   "
+                  :selectedDateRange="selectedDate()"
                   show-platform-count
                   :show-organization-count="showingAllOrganizations"
                   @click="rtClick({ reportType: reportType })"
-                />
+                ></CoverageCard>
               </v-col>
             </v-row>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
@@ -198,7 +201,7 @@ cs:
           height="36"
           show-all-tooltips-as-one
           ref="compositionBar"
-        />
+        ></CompositionBar>
       </v-col>
       <v-col v-if="userCanHarvest" cols="12" md="6" lg="4" xl="3">
         <v-btn
@@ -220,10 +223,11 @@ cs:
     </v-row>
     <v-row v-if="selectedHarvestableCount > selectedWillingToHarvestCount">
       <v-col>
-        <v-alert type="info" text>{{ $t("date_limit_info") }}</v-alert>
+        <v-alert type="info" variant="tonal">{{
+          $t("date_limit_info")
+        }}</v-alert>
       </v-col>
     </v-row>
-
     <v-row v-if="selectedReportType" class="pt-6">
       <v-col cols="auto" class="align-self-center">
         <h4 class="font-weight-ight">
@@ -234,13 +238,13 @@ cs:
         v-if="showingAllOrganizations"
         class="text-caption font-weight-ight align-self-center"
       >
-        (<v-icon small>far fa-hand-pointer</v-icon>
+        (<v-icon size="small">far fa-hand-pointer</v-icon>
         {{ $t("click_chart_for_organizations") }})
       </v-col>
     </v-row>
     <v-row v-else-if="!loading" class="pt-6">
       <v-col>
-        <v-alert type="info" text class="mb-0">
+        <v-alert type="info" variant="tonal" class="mb-0">
           {{
             reportTypes.length === 0
               ? $t("no_data")
@@ -249,7 +253,6 @@ cs:
         </v-alert>
       </v-col>
     </v-row>
-
     <v-row v-if="selectedReportType">
       <v-col class="pa-0">
         <CoverageMap
@@ -263,7 +266,7 @@ cs:
           sort-by-coverage
           @click="onClick"
           ref="rtCoverageMap"
-        />
+        ></CoverageMap>
       </v-col>
     </v-row>
     <v-dialog
@@ -289,17 +292,21 @@ cs:
             cols="date"
             raw-report-type
             sort-by-coverage
-          />
+          ></CoverageMap>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
-          <v-btn @click="showDetailByOrganization = false" class="mb-3 me-3">
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="showDetailByOrganization = false"
+            class="mb-3 me-3"
+            variant="elevated"
+            color="defaultButton"
+          >
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
     <v-dialog
       v-model="showHarvestDialog"
       v-if="showHarvestDialog"
@@ -311,28 +318,32 @@ cs:
           <SushiFetchIntentionsListWidget
             :harvest-id="harvestId"
             ref="intentionsList"
-          />
+          ></SushiFetchIntentionsListWidget>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
-          <v-btn @click="showHarvestDialog = false" class="mb-3 me-3">
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="showHarvestDialog = false"
+            class="mb-3 me-3"
+            variant="elevated"
+            color="defaultButton"
+          >
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>
       </v-card>
-
       <v-card v-else>
         <v-card-title>{{ $t("harvest_missing_data") }}</v-card-title>
         <v-card-text>
           <v-data-table
+            v-model="platformsToHarvest"
             :items="selectedHarvestablePlatforms"
             :headers="harvestablePlatformsHeaders"
             show-select
             item-key="platform"
-            v-model="platformsToHarvest"
-            dense
+            item-value="platform"
           >
-            <template #item.records="{ item }">
+            <template #[`item.records`]="{ item }">
               {{ item.records.length }}
             </template>
             <template #top>
@@ -346,10 +357,20 @@ cs:
                   </span>
                 </span>
                 <v-spacer></v-spacer>
-                <v-btn @click="selectAllPlatforms" small class="mx-2">
+                <v-btn
+                  @click="selectAllPlatforms"
+                  size="small"
+                  color="defaultButton"
+                  class="mx-2"
+                >
                   {{ $t("actions.select_all") }}
                 </v-btn>
-                <v-btn @click="unselectAllPlatforms" small class="mx-2">
+                <v-btn
+                  color="defaultButton"
+                  @click="unselectAllPlatforms"
+                  size="small"
+                  class="mx-2"
+                >
                   {{ $t("actions.clear_selection") }}
                 </v-btn>
               </div>
@@ -357,16 +378,24 @@ cs:
           </v-data-table>
         </v-card-text>
         <v-card-actions>
-          <v-spacer />
+          <v-spacer></v-spacer>
           <v-btn
             color="primary"
             @click="harvestSelected()"
             :disabled="selectedMonthCount === 0"
             class="mb-3 me-3"
+            variant="flat"
+            elevation="2"
           >
             {{ $t("harvest_selected") }}
           </v-btn>
-          <v-btn @click="showHarvestDialog = false" class="mb-3 me-3">
+          <v-btn
+            @click="showHarvestDialog = false"
+            variant="flat"
+            elevation="2"
+            color="defaultButton"
+            class="mb-3 me-3"
+          >
             {{ $t("actions.close") }}
           </v-btn>
         </v-card-actions>
@@ -383,8 +412,8 @@ cs:
       "
       v-if="!isDetailVisible && selectedReportType"
     >
-      <span @click="$vuetify.goTo('#detailTop')" id="scrollBtn">
-        <v-icon color="white">fa-angle-down</v-icon>
+      <span @click="goTo('#detailTop')" id="scrollBtn">
+        <v-icon color="white">fa fa-angle-down</v-icon>
       </span>
     </div>
   </v-container>
@@ -405,6 +434,7 @@ import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntenti
 import CoverageCard from "@/components/coverage/CoverageCard.vue";
 import stateTracking from "@/mixins/stateTracking";
 import { counterVersionToStr } from "@/libs/sushi";
+import { useGoTo } from "vuetify";
 
 export default {
   name: "DataCoverageOverviewPage",
@@ -416,6 +446,11 @@ export default {
     SushiFetchIntentionsListWidget,
     CompositionBar,
     CoverageMap,
+  },
+
+  setup() {
+    const goTo = useGoTo();
+    return { goTo };
   },
 
   data() {
@@ -473,7 +508,7 @@ export default {
         .sort((a, b) =>
           a.counter_version === b.counter_version
             ? a.name.localeCompare(b.name)
-            : b.counter_version - a.counter_version
+            : b.counter_version - a.counter_version,
         );
     },
     counterVersions() {
@@ -502,7 +537,7 @@ export default {
       }
       return this.harvestInfo.reduce(
         (sum, record) => sum + record.months.length,
-        0
+        0,
       );
     },
     selectedWillingToHarvestCount() {
@@ -513,7 +548,7 @@ export default {
         (sum, record) =>
           sum +
           record.months.filter((m) => m >= this.oldestHarvestedMonth).length,
-        0
+        0,
       );
     },
     selectedHarvestablePlatforms() {
@@ -535,36 +570,38 @@ export default {
             (sum, rec) =>
               sum +
               rec.months.filter((m) => m >= this.oldestHarvestedMonth).length,
-            0
+            0,
           ),
         });
       }
       return out.sort((a, b) => a.platform.localeCompare(b.platform));
     },
     selectedCredentialsCount() {
-      return this.platformsToHarvest.reduce(
-        (out, platform) => out + platform.records.length,
-        0
-      );
+      return this.selectedHarvestablePlatforms
+        .filter((item) =>
+          Object.values(this.platformsToHarvest).includes(item.platform),
+        )
+        .reduce((out, platform) => out + platform.records.length, 0);
     },
     selectedMonthCount() {
-      return this.platformsToHarvest.reduce(
-        (out, platform) => out + platform.monthCount,
-        0
-      );
+      return this.selectedHarvestablePlatforms
+        .filter((item) =>
+          Object.values(this.platformsToHarvest).includes(item.platform),
+        )
+        .reduce((out, platform) => out + platform.monthCount, 0);
     },
     compositionBarData() {
       let out = [
         {
           value: this.selectedIbCount / this.selectedIbMax,
-          text: this.$tc("months_present", this.selectedIbCount),
+          title: this.$tc("months_present", this.selectedIbCount),
           color: "#cef5ce",
         },
         {
           value: this.selectedWillingToHarvestCount / this.selectedIbMax,
-          text: this.$tc(
+          title: this.$tc(
             "months_auto_harvestable",
-            this.selectedWillingToHarvestCount
+            this.selectedWillingToHarvestCount,
           ),
           color: "#f8e6ac",
         },
@@ -574,12 +611,12 @@ export default {
               this.selectedIbCount -
               this.selectedHarvestableCount) /
             this.selectedIbMax,
-          text: this.harvestInfo
+          title: this.harvestInfo
             ? this.$tc(
                 "months_no_sushi",
                 this.selectedIbMax -
                   this.selectedIbCount -
-                  this.selectedHarvestableCount
+                  this.selectedHarvestableCount,
               )
             : this.$t("labels.loading") + "...",
           color: "#d2d2d2",
@@ -591,9 +628,9 @@ export default {
             (this.selectedHarvestableCount -
               this.selectedWillingToHarvestCount) /
             this.selectedIbMax,
-          text: this.$tc(
+          title: this.$tc(
             "months_harvestable",
-            this.selectedHarvestableCount - this.selectedWillingToHarvestCount
+            this.selectedHarvestableCount - this.selectedWillingToHarvestCount,
           ),
           color: "#fdbfc6",
         });
@@ -601,16 +638,18 @@ export default {
     },
     harvestablePlatformsHeaders() {
       return [
-        { text: this.$t("labels.platform"), value: "platform" },
+        { title: this.$t("labels.platform"), value: "platform", key: "value" },
         {
-          text: this.$t("labels.credentials"),
+          title: this.$t("labels.credentials"),
           value: "records",
-          align: "right",
+          key: "records",
+          align: "end",
         },
         {
-          text: this.$t("labels.months"),
+          title: this.$t("labels.months"),
           value: "monthCount",
-          align: "right",
+          key: "monthCount",
+          align: "end",
         },
       ];
     },
@@ -698,9 +737,12 @@ export default {
     roundValue(value) {
       return Math.floor(value * 100);
     },
+    selectedDate() {
+      return { start: this.dateRangeStart, end: this.dateRangeCoverageEndText };
+    },
     progressByCounterVersion(version) {
       let rts = this.visibleReportTypes.filter(
-        (rt) => rt.counter_version === version
+        (rt) => rt.counter_version === version,
       );
       return rts.filter((rt) => !!this.coverageData[rt.pk]).length / rts.length;
     },
@@ -712,7 +754,7 @@ export default {
             acc[0] + this.coverageData[rt.pk].ib_max,
             acc[1] + this.coverageData[rt.pk].ib_count,
           ],
-          [0, 0]
+          [0, 0],
         )
         .reduce((acc, num) => num / acc, 1);
     },
@@ -724,7 +766,7 @@ export default {
         // we do this iteratively to avoid overloading the server
         let reply = await this.fetchTopLevelCoverage(reportType);
         if (!reply.error) {
-          this.$set(this.coverageData, reportType.pk, reply.response.data[0]);
+          this.coverageData[reportType.pk] = reply.response.data[0];
         }
       }
       if (this.counterVersions.length > 0) {
@@ -745,11 +787,7 @@ export default {
       this.refreshingSelected = true;
       let reply = await this.fetchTopLevelCoverage(this.selectedReportType);
       if (!reply.error) {
-        this.$set(
-          this.coverageData,
-          this.selectedReportType.pk,
-          reply.response.data[0]
-        );
+        this.coverageData[this.selectedReportType.pk] = reply.response.data[0];
         this.harvestInfo = null;
         await this.fetchHarvestableInfo();
         if (this.$refs.rtCoverageMap) {
@@ -759,21 +797,31 @@ export default {
       this.refreshingSelected = false;
     },
     onClick(event) {
+      // this.selectedPoint = event;
+      if (event.target) {
+        return;
+      }
       this.selectedPoint = event;
       if (this.showingAllOrganizations) this.showDetailByOrganization = true;
     },
     selectAllPlatforms() {
-      this.platformsToHarvest = [...this.selectedHarvestablePlatforms];
+      this.platformsToHarvest = [...this.selectedHarvestablePlatforms].map(
+        (item) => {
+          return item.platform;
+        },
+      );
     },
     unselectAllPlatforms() {
       this.platformsToHarvest = [];
     },
     async harvestSelected() {
       let intentions = [];
-      for (let platformRec of this.platformsToHarvest) {
+      for (let platformRec of this.selectedHarvestablePlatforms.filter((item) =>
+        Object.values(this.platformsToHarvest).includes(item.platform),
+      )) {
         for (let credRec of platformRec.records) {
           for (let month of credRec.months.filter(
-            (m) => m >= this.oldestHarvestedMonth
+            (m) => m >= this.oldestHarvestedMonth,
           )) {
             intentions.push({
               start_date: month,
@@ -808,7 +856,7 @@ export default {
       }
     },
     onDetailIntersect(entries, observer) {
-      this.isDetailVisible = entries[0].isIntersecting;
+      this.isDetailVisible = observer[0].isIntersecting;
     },
   },
 
@@ -858,22 +906,25 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.v-expansion-panel-title--active {
+  border-bottom: none !important;
+}
 .bordered-panel {
-  .v-expansion-panel-header {
+  .v-expansion-panel-title {
     border: 1px solid #ddd;
     border-bottom: none;
   }
 
-  .v-expansion-panel-content {
+  .v-expansion-panel-text {
     border-left: 1px solid #ddd;
     border-right: 1px solid #ddd;
   }
 
   .v-expansion-panel:last-of-type {
-    .v-expansion-panel-header {
+    .v-expansion-panel-title {
       border-bottom: 1px solid #ddd;
     }
-    .v-expansion-panel-content {
+    .v-expansion-panel-text {
       border-bottom: 1px solid #ddd;
     }
   }
@@ -910,5 +961,8 @@ export default {
     box-shadow: 0 0 0 0 rgba(0, 12, 8, 0);
     background-color: #ffc400;
   }
+}
+:deep(div.v-progress-linear__buffer) {
+  opacity: 0.5 !important;
 }
 </style>

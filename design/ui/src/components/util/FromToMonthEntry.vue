@@ -9,23 +9,28 @@ cs:
 </i18n>
 
 <template>
-  <div class="d-flex">
-    <span class="pr-4">
+  <div
+    class="d-flex"
+    :style="sm ? 'flex-direction: column' : 'flex-direction: row'"
+  >
+    <span class="pr-3" :style="computedStyle">
       <MonthEntry
         v-model="startMonth"
         :label="textStart"
-        :allowed-months="allowedStartMonths"
+        :max-month="endMonth"
         :disabled="disabled"
         :clearable="clearable"
       ></MonthEntry>
     </span>
-    <MonthEntry
-      v-model="endMonth"
-      :label="textEnd"
-      :allowed-months="allowedEndMonths"
-      :disabled="disabled"
-      :clearable="clearable"
-    ></MonthEntry>
+    <span class="pr-3" :style="computedStyle">
+      <MonthEntry
+        v-model="endMonth"
+        :label="textEnd"
+        :min-month="startMonth"
+        :disabled="disabled"
+        :clearable="clearable"
+      ></MonthEntry>
+    </span>
   </div>
 </template>
 
@@ -36,8 +41,12 @@ export default {
 
   components: { MonthEntry },
 
+  emits: ["update:modelValue"],
+
   props: {
-    value: { required: true, type: Object },
+    w: { type: Boolean, default: false },
+    sm: { type: Boolean },
+    modelValue: { required: true, type: Object },
     startLabel: { required: false, type: String, default: null },
     endLabel: { required: false, type: String, default: null },
     disabled: { required: false, type: Boolean, default: false },
@@ -58,35 +67,32 @@ export default {
     textEnd() {
       return this.endLabel ?? this.$t("month_end");
     },
-  },
-
-  methods: {
-    allowedEndMonths(value) {
-      if (this.startMonth) {
-        return value >= this.startMonth;
-      }
-      return true;
-    },
-    allowedStartMonths(value) {
-      if (this.endMonth) {
-        return value <= this.endMonth;
-      }
-      return true;
+    computedStyle() {
+      return {
+        "min-width": "150px",
+        width: this.w ? "50%" : "100%",
+      };
     },
   },
 
   watch: {
     startMonth() {
-      this.$emit("input", { start: this.startMonth, end: this.endMonth });
+      this.$emit("update:modelValue", {
+        start: this.startMonth,
+        end: this.endMonth,
+      });
     },
     endMonth() {
-      this.$emit("input", { start: this.startMonth, end: this.endMonth });
+      this.$emit("update:modelValue", {
+        start: this.startMonth,
+        end: this.endMonth,
+      });
     },
-    value: {
+    modelValue: {
       immediate: true,
       handler() {
-        this.startMonth = this.value.start;
-        this.endMonth = this.value.end;
+        this.startMonth = this.modelValue.start;
+        this.endMonth = this.modelValue.end;
       },
     },
   },

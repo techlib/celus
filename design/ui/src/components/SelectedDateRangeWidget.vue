@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/common.yaml"></i18n>
+
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
 
 <i18n lang="yaml">
@@ -11,8 +12,8 @@ cs:
 </i18n>
 
 <template>
-  <v-container ml-3>
-    <v-row align="center">
+  <v-container class="ml-3">
+    <v-row align="center" class="flex-row pl-4">
       <v-col cols="auto" class="pa-0" shrink>
         <span :class="inputLikeLabel ? 'input-like' : 'sc'">
           {{ $t("labels.date_range") }} </span
@@ -21,6 +22,7 @@ cs:
       <v-col
         cols="auto"
         class="py-0"
+        :class="$vuetify.display.smAndDown ? 'pl-0' : ''"
         id="date-range-selector"
         :style="
           highlight
@@ -31,19 +33,18 @@ cs:
             : { border: 'solid 4px transparent' }
         "
       >
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props }">
             <div
               @click="showDialog = true"
               class="clickable align-center d-flex"
-              v-on="on"
+              v-bind="props"
             >
-              <v-container>
-                <v-row>{{ rangeName }}</v-row>
+              <v-container class="pl-2">
+                <v-row style="font-size: 14px">{{ rangeName }}</v-row>
                 <v-row class="small subdued">
-                  <DateRangeText :start="start" :end="end" />
+                  <DateRangeText :start="start" :end="end"></DateRangeText>
                 </v-row>
-
                 <v-dialog v-model="showDialog" max-width="640px">
                   <v-card>
                     <v-card-title
@@ -52,19 +53,22 @@ cs:
                       <span>{{ $t("select_date_range") }}</span>
                       <span style="max-width: 12rem">
                         <v-select
+                          width="200px"
                           :items="months"
                           v-model="fyStart"
+                          item-title="text"
+                          item-value="value"
                           :label="$t('labels.fiscal_year_start_month')"
-                          dense
-                          outlined
+                          density="compact"
                           class="caption"
                           hide-details
-                        />
+                          variant="outlined"
+                        ></v-select>
                       </span>
                     </v-card-title>
-                    <v-divider></v-divider>
+                    <v-divider class="mt-2"></v-divider>
                     <v-card-text class="pt-4">
-                      <DateRangeSelector />
+                      <DateRangeSelector></DateRangeSelector>
                     </v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
@@ -75,7 +79,9 @@ cs:
                   </v-card>
                 </v-dialog>
               </v-container>
-              <div class="pl-2"><v-icon>fa-caret-down</v-icon></div>
+              <div class="pl-2">
+                <v-icon icon="fas fa-caret-down" color="lighterIcons"></v-icon>
+              </div>
             </div>
           </template>
           <div>
