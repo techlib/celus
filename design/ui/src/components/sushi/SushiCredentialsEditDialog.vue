@@ -843,7 +843,10 @@ export default {
     let platformFilter = "";
     if (credentials) {
       for (let [key, value] of Object.entries(credentials.extra_params)) {
-        if (key === "platform" && credentials.counter_version === 5) {
+        if (
+          key === "platform" &&
+          [5, 51].includes(credentials.counter_version)
+        ) {
           platformFilter = value;
         } else {
           extraParams.push({ key: key, value: value });
