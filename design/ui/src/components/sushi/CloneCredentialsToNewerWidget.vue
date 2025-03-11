@@ -27,8 +27,13 @@
         v-html="$t('sushi.clone_to_newer.info', { count: credentialsCount })"
       ></div>
 
-      <v-card elevation="0" outlined class="mt-6 mb-2">
-        <v-card-subtitle class="pb-2 font-weight-light">{{
+      <v-card
+        elevation="2"
+        variant="default"
+        class="mt-6 mb-2"
+        v-if="safeToCloneCount !== 0 && unsafeToCloneCount !== 0"
+      >
+        <v-card-subtitle class="pb-2 pt-2 font-weight-light">{{
           $t("overview")
         }}</v-card-subtitle>
         <v-card-text>
@@ -58,6 +63,16 @@
           </table>
         </v-card-text>
       </v-card>
+
+      <v-alert
+        v-if="unsafeToCloneCount !== 0 && safeToCloneCount === 0"
+        type="warning"
+        variant="outlined"
+        class="mt-8"
+        >{{
+          $tc("sushi.update.can_update_legend", unsafeToCloneCount)
+        }}</v-alert
+      >
 
       <div class="mt-8" v-if="unsafeToCloneCount">
         <v-checkbox

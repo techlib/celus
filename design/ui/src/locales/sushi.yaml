@@ -68,7 +68,7 @@ en:
       can_update_tt: These COUNTER 5 credentials do not have a COUNTER 5.1 version and can be cloned into a COUNTER 5.1 copy
       cannot_update_broken_tt: These COUNTER 5 credentials are broken and cannot be cloned to COUNTER 5.1
       can_update_legend_header: "COUNTER 5 credentials which do not have a COUNTER 5.1 counterpart and can be cloned are marked with one of the following symbols:"
-      can_update_legend: The status of COUNTER 5.1 for platform is unknown
+      can_update_legend: The status of COUNTER 5.1 for {count} platform is unknown | The status of COUNTER 5.1 for {count} platforms is unknown
       can_update_verified_legend: Platform is known to support COUNTER 5.1
       cannot_update_broken_legend: Credentials are broken and cannot be cloned
       i_am_sure: I really want to clone the selected credentials to COUNTER 5.1, even though the platform may not yet support it.
@@ -144,7 +144,9 @@ cs:
       can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
       cannot_update_broken_tt: Tyto přístupové údaje pro COUNTER 5 jsou nefunkční a nelze je naklonovat do COUNTER 5.1
       can_update_legend_header: "Přístupové údaje pro COUNTER 5, které nemají verzi pro COUNTER 5.1 a lze je naklonovat, jsou označeny jedním z následujících symbolů:"
-      can_update_legend: Stav COUNTER 5.1 pro platformu je neznámý
+      can_update_legend: Stav COUNTER 5.1 pro {count} platformu je neznámý |
+        Stav COUNTER 5.1 pro {count} platformy je neznámý |
+        Stav COUNTER 5.1 pro {count} platforem je neznámý
       can_update_verified_legend: Platforma podporuje COUNTER 5.1
       cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
       i_am_sure: Opravdu chci naklonovat vybrané přístupové údaje do COUNTER 5.1, i když platforma nemusí být ještě podporována.
