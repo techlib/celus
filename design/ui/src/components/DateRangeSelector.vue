@@ -46,36 +46,20 @@
     <v-row v-if="dateRange.custom">
       <!-- start date selector -->
       <v-col cols="12" :sm="6">
-        <DatePicker v-model="start" :max-date="endRaw">
-          <template v-slot:activator="{ props }">
-            <v-text-field
-              v-model="DateForTextStart"
-              label="Start"
-              readonly
-              v-bind="props"
-            >
-              <template v-slot:prepend>
-                <v-icon color="primary">fas fa-calendar-alt</v-icon>
-              </template>
-            </v-text-field>
-          </template>
+        <DatePicker
+          v-model="start"
+          :max-date="endRaw"
+          :label="$t('title_fields.start_date')"
+        >
         </DatePicker>
       </v-col>
       <!-- end date selector -->
       <v-col cols="12" :sm="6">
-        <DatePicker v-model="end" :min-date="startRaw">
-          <template v-slot:activator="{ props }">
-            <v-text-field
-              v-model="DateForTextEnd"
-              label="End"
-              readonly
-              v-bind="props"
-            >
-              <template v-slot:prepend>
-                <v-icon color="primary">fas fa-calendar-alt</v-icon>
-              </template>
-            </v-text-field>
-          </template>
+        <DatePicker
+          v-model="end"
+          :min-date="startRaw"
+          :label="$t('title_fields.end_date')"
+        >
         </DatePicker>
       </v-col>
     </v-row>
@@ -86,12 +70,11 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import { ymDateParse } from "@/libs/dates";
 import DateRangeText from "@/components/util/DateRangeText";
-import MonthEntry from "./util/MonthEntry.vue";
 import DatePicker from "@/components/DatePicker.vue";
 
 export default {
   name: "DateRangeSelector",
-  components: { DateRangeText, MonthEntry, DatePicker },
+  components: { DateRangeText, DatePicker },
   data() {
     return {
       menuStart: false,
@@ -154,22 +137,6 @@ export default {
           this.setDateRangeEnd(value);
         }
       },
-    },
-    DateForTextStart() {
-      const month = this.start.month + 1;
-      const year = this.start.year;
-      if (month < 10) {
-        return `${year} - 0${month}`;
-      }
-      return `${year} - ${month}`;
-    },
-    DateForTextEnd() {
-      const month = this.end.month + 1;
-      const year = this.end.year;
-      if (month < 10) {
-        return `${year} - 0${month}`;
-      }
-      return `${year} - ${month}`;
     },
   },
   methods: {

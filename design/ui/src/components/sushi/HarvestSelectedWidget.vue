@@ -35,17 +35,9 @@ cs:
           :disabled="started"
           v-model="startDate"
           :max-date="EndDateText"
+          hide-details="auto"
+          :label="$t('title_fields.start_date')"
         >
-          <template v-slot:activator="{ props }">
-            <v-text-field
-              hide-details="auto"
-              v-model="StartTextField"
-              :label="$t('title_fields.start_date')"
-              prepend-icon="fa fa-calendar"
-              readonly
-              v-bind="props"
-            ></v-text-field>
-          </template>
         </DatePicker>
       </v-col>
       <v-col cols="2">
@@ -53,18 +45,10 @@ cs:
           :disabled="started"
           v-model="endDate"
           :min-date="StartDateText"
-          :max-date="new Date()"
+          :max-date="finishedMonth"
+          hide-details="auto"
+          :label="$t('title_fields.end_date')"
         >
-          <template v-slot:activator="{ props }">
-            <v-text-field
-              hide-details="auto"
-              v-model="EndTextField"
-              :label="$t('title_fields.end_date')"
-              prepend-icon="fa fa-calendar"
-              readonly
-              v-bind="props"
-            ></v-text-field>
-          </template>
         </DatePicker>
       </v-col>
       <v-col cols="auto">
@@ -214,12 +198,15 @@ export default {
     return {
       harvestId: null,
       started: false,
+      endDate: null,
+      startDate: null,
       startDateMenu: null,
       reharvestMode: false,
       endDateMenu: null,
       error: null,
       slotsReady: false,
       showDeleteDialog: false,
+      finishedMonth: null,
     };
   },
 
@@ -229,48 +216,6 @@ export default {
       startRaw: "dateRangeStart",
       endRaw: "dateRangeEnd",
     }),
-
-    startDate: {
-      get() {
-        return {
-          month: this.startRaw.getMonth(),
-          year: this.startRaw.getFullYear(),
-        };
-      },
-      set(value) {
-        if (value && typeof value === "object" && "month" in value) {
-          const day = value.day || 1;
-          this.setDateRangeStart(new Date(value.year, value.month, day));
-        } else if (typeof value === "string") {
-          let date = ymDateParse(value);
-          this.setDateRangeStart(date);
-        } else {
-          this.setDateRangeStart(value);
-        }
-      },
-    },
-    endDate: {
-      get() {
-        if (this.endRaw) {
-          return {
-            month: this.endRaw.getMonth(),
-            year: this.endRaw.getFullYear(),
-          };
-        } else {
-          return {
-            month: new Date().getMonth(),
-            year: new Date().getFullYear(),
-          };
-        }
-      },
-      set(value) {
-        if ("month" in value) {
-          this.setDateRangeEnd(new Date(value.year, value.month));
-        } else {
-          this.setDateRangeEnd(value);
-        }
-      },
-    },
     StartDateText() {
       if (typeof this.startDate === "string" || this.startDate === null) {
         return new Date(this.startDate);
@@ -278,41 +223,11 @@ export default {
         return new Date(this.startDate.year, this.startDate.month);
       }
     },
-    StartTextField() {
-      if (
-        typeof this.startDate === "object" &&
-        this.startDate !== null &&
-        "month" in this.startDate
-      ) {
-        return `${this.startDate.year}-${
-          this.startDate.month <= 8
-            ? `0${this.startDate.month + 1}`
-            : this.startDate.month + 1
-        }`;
-      } else {
-        return this.startDate;
-      }
-    },
     EndDateText() {
       if (typeof this.endDate === "string" || this.endDate === null) {
         return new Date(this.endDate);
       } else {
         return new Date(this.endDate.year, this.endDate.month);
-      }
-    },
-    EndTextField() {
-      if (
-        typeof this.endDate === "object" &&
-        this.startDate !== null &&
-        "month" in this.endDate
-      ) {
-        return `${this.endDate.year}-${
-          this.endDate.month <= 8
-            ? `0${this.endDate.month + 1}`
-            : this.endDate.month + 1
-        }`;
-      } else {
-        return this.endDate;
       }
     },
     totalReportCount() {
@@ -338,34 +253,6 @@ export default {
         return brokenCredentials;
       }
       return [];
-    },
-    monthsToCover() {
-      let start = null;
-      if ("month" in this.startDate && typeof this.startDate === "object") {
-        start = ymDateParse(
-          new Date(this.startDate.year, this.startDate.month),
-        );
-      } else {
-        start = ymDateParse(new Date(this.startDate));
-      }
-      let months = [start];
-      if (this.test) {
-        return months;
-      }
-      let endMonth = null;
-      if ("month" in this.endDate && typeof this.endDate === "object") {
-        endMonth = ymDateParse(new Date(this.endDate.year, this.endDate.month));
-      } else {
-        endMonth = ymDateParse(new Date(this.endDate));
-      }
-      while (start < endMonth) {
-        start = addMonths(start, 1);
-        months.push(start);
-      }
-      return months;
-    },
-    monthsToCoverCount() {
-      return this.monthsToCover.length;
     },
     slotsFree() {
       if (this.slotsReady && this.$refs.slotWidget) {
@@ -425,9 +312,8 @@ export default {
     PickerTextStart(value) {
       if (value) {
         if (typeof value === "object" && "month" in value) {
-          return `${value.year}-${
-            value.month <= 8 ? `0${value.month + 1}` : value.month + 1
-          }`;
+          const monthStr = (value.month + 1).toString().padStart(2, "0");
+          return `${value.year}-${monthStr}`;
         } else {
           return value;
         }
@@ -515,10 +401,19 @@ export default {
   mounted() {
     if (this.startDate === null) {
       this.startDate = ymDateFormat(addMonths(lastFinishedMonthDate(), -11));
+      this.startDate = {
+        month: new Date(this.startDate).getMonth(),
+        year: new Date(this.startDate).getFullYear(),
+      };
     }
     if (this.endDate === null) {
       this.endDate = lastFinishedMonth();
+      this.endDate = {
+        month: new Date(this.endDate).getMonth(),
+        year: new Date(this.endDate).getFullYear(),
+      };
     }
+    this.finishedMonth = new Date(lastFinishedMonth());
   },
 };
 </script>

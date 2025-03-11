@@ -32,30 +32,24 @@ cs:
       <v-container fluid>
         <v-row>
           <v-col cols="6" sm="4" md="3" lg="2">
-            <DatePicker v-model="selectedDatePicker" :max-date="lastMonth + 1">
-              <template v-slot:activator="{ props }">
-                <v-text-field
-                  v-model="SelectedDateText"
-                  :label="$t('month')"
-                  prepend-icon="fa fa-calendar"
-                  readonly
-                  v-bind="props"
-                  style="min-width: 170px"
+            <DatePicker
+              v-model="selectedDatePicker"
+              :max-date="lastMonth"
+              :label="$t('month')"
+              :styleField="'min-width: 170px'"
+            >
+              <template #prepend-inner>
+                <IconButton @click.stop="shiftMonth(-1)"
+                  >fa fa-caret-left
+                </IconButton>
+              </template>
+              <template #append-inner>
+                <IconButton
+                  @click.stop="shiftMonth(1)"
+                  :disabled="selectedMonth >= lastMonth"
                 >
-                  <template #prepend-inner>
-                    <IconButton @click.stop="shiftMonth(-1)"
-                      >fa fa-caret-left
-                    </IconButton>
-                  </template>
-                  <template #append-inner>
-                    <IconButton
-                      @click.stop="shiftMonth(1)"
-                      :disabled="SelectedDateText >= lastMonth"
-                    >
-                      fa fa-caret-right
-                    </IconButton>
-                  </template>
-                </v-text-field>
+                  fa fa-caret-right
+                </IconButton>
               </template>
             </DatePicker>
           </v-col>
@@ -301,10 +295,6 @@ export default {
     ...mapGetters({
       consortialInstall: "consortialInstall",
     }),
-    // selectedDatePicker(){
-    //   const [year, month] = this.selectedMonth.split('-');
-    //   return {'month': month - 1, 'year': year}
-    // },
     selectedDatePicker: {
       get() {
         const [year, month] = this.selectedMonth.split("-");
@@ -316,21 +306,6 @@ export default {
           "0",
         )}`;
       },
-    },
-    SelectedDateText() {
-      if (
-        typeof this.selectedMonth === "object" &&
-        this.selectedMonth !== null &&
-        "month" in this.selectedMonth
-      ) {
-        return `${this.selectedMonth.year}-${
-          this.selectedMonth.month <= 8
-            ? `0${this.selectedMonth.month + 1}`
-            : this.selectedMonth.month + 1
-        }`;
-      } else {
-        return this.selectedMonth;
-      }
     },
     headers() {
       let allHeaders = [
@@ -382,10 +357,10 @@ export default {
       return `/api/sushi-credentials/?organization=${this.organizationId}`;
     },
     intentionsUrl() {
-      if (!this.SelectedDateText) {
+      if (!this.selectedMonth) {
         return null;
       }
-      let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.SelectedDateText}`;
+      let url = `/api/sushi-credentials/month-overview/?organization=${this.organizationId}&month=${this.selectedMonth}`;
       if (this.showInactive) {
         url += "&disabled=true";
       }
@@ -615,7 +590,7 @@ export default {
       this.showDetailsDialog = !!this.selectedIntention;
     },
     shiftMonth(months) {
-      let date = parseDateTime(this.SelectedDateText);
+      let date = parseDateTime(this.selectedMonth);
       const shifted = ymDateFormat(addMonths(date, months));
       if (this.allowedMonths(shifted)) {
         this.selectedMonth = shifted;
@@ -639,11 +614,11 @@ export default {
   },
 
   watch: {
-    SelectedDateText() {
+    selectedMonth() {
       history.pushState(
         {},
         null,
-        this.$route.path + `?month=${this.SelectedDateText}`,
+        this.$route.path + `?month=${this.selectedMonth}`,
       );
     },
     dataUrl() {
