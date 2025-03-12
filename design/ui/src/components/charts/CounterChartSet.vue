@@ -103,7 +103,14 @@ cs:
         >
           {{ $t("no_chart_types_available") }}
         </v-alert>
-        <v-alert v-else type="warning" border="end" border-color elevation="2">
+        <v-alert
+          v-else
+          type="warning"
+          border="end"
+          class="mb-4"
+          border-color
+          elevation="2"
+        >
           {{ $t("no_reports_available_for_title") }}
         </v-alert>
       </v-col>

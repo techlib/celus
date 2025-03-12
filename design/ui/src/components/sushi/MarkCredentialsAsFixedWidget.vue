@@ -17,7 +17,12 @@
       <v-btn @click="closeDialog()" variant="elevated" color="defaultButton">{{
         $t("close")
       }}</v-btn>
-      <v-btn @click="markCheckedFixed()" color="primary" :loading="saving">
+      <v-btn
+        @click="markCheckedFixed()"
+        color="primary"
+        variant="elevated"
+        :loading="saving"
+      >
         {{ $t("sushi.mark_as_fixed.button") }}
       </v-btn>
     </v-card-actions>

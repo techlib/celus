@@ -217,9 +217,13 @@ cs:
             <p class="bold">{{ $t("broken") }}</p>
             <p>{{ $t("broken_unbreak_manually") }}</p>
             <div>
-              <v-btn color="error" variant="outlined" @click="markFixed()">{{
-                $t("mark_fixed")
-              }}</v-btn>
+              <v-btn
+                color="error"
+                variant="outlined"
+                class="mt-4"
+                @click="markFixed()"
+                >{{ $t("mark_fixed") }}</v-btn
+              >
             </div>
           </v-alert>
           <v-alert
