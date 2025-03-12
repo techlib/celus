@@ -11,7 +11,6 @@ en:
   new_password: Choose a password
   password2: Repeat password
   login_error: There was an error logging you in
-  how_to_gain_access: "To gain or renew access to this CELUS installation, let us know at <a href='mailto:ask{'@'}celus.net'>ask{'@'}celus.net</a>"
   signup: "Don't have an account yet? {register_here}"
   register: Register here!
   just_registering: Register
@@ -43,7 +42,6 @@ cs:
   new_password: Zvolte si heslo
   password2: Potvrzení hesla
   login_error: Při přihlášování došlo k chybě
-  # how_to_gain_access: Pokud chcete získat nebo obnovit přístup k tomuto systému, napište nám na <a href="mailto:ask@celus.net">ask@celus.net</a>
   signup: "Ještě nemáte účet? {register_here}"
   register: Zaregistrujte se!
   just_registering: Registrace
@@ -94,12 +92,6 @@ cs:
                 <a @click="currentTab = 'register'" v-text="$t('register')"></a>
               </template>
             </i18n-t>
-            <!-- <span class="text--secundary">
-              {{ $t("signup.register_here") }}
-              <a href="#" @click="currentTab = 'register'">{{
-                $t("register")
-              }}</a>
-            </span> -->
           </v-alert>
           <v-divider class="my-3"></v-divider>
           <v-text-field
@@ -137,11 +129,6 @@ cs:
           >
             {{ $t("login_error") }}: "<em>{{ loginErrorText }}</em
             >"
-            <!--
-                        we need to find a better way how to decide if we want to display the following;
-                        until then, I am disabling it.
-                      -->
-            <!-- p v-if="!allowSignUp" class="mt-4" v-html="$t('how_to_gain_access')"></p-->
           </v-alert>
         </v-card-text>
         <v-card-actions>
@@ -161,12 +148,6 @@ cs:
                 ></a>
               </template>
             </i18n-t>
-            <!-- <span :class="loginError ? 'warning--text' : 'secondary--text'">
-              {{ $t("password_reset.switch") }}
-              <a @click="changeCurrentTabForReset">
-                {{ $t("password_reset.link") }}
-              </a>
-            </span> -->
             <v-icon color="warning" class="ml-2" v-if="loginError">
               fa fa-caret-left
             </v-icon>
@@ -218,10 +199,6 @@ cs:
                 <a @click="currentTab = 'login'" v-text="$t('login_link')"></a>
               </template>
             </i18n-t>
-            <!-- <span class="text--secondary">
-              {{ $t("login_from_register") }}
-              <a @click="changeTabToLogin">{{ $t("login_link") }}</a>
-            </span> -->
           </v-alert>
           <v-divider class="my-3"></v-divider>
           <v-text-field
@@ -304,9 +281,6 @@ cs:
                 <a :href="'mailto:' + email" v-text="email"></a>
               </template>
             </i18n-t>
-            <!-- <template #reset_email>
-              <a :href="'mailto:' + email">{{ email }}</a>
-            </template> -->
           </v-alert>
         </v-card-text>
         <v-card-actions>
@@ -326,13 +300,6 @@ cs:
                 ></a>
               </template>
             </i18n-t>
-            <!-- <a
-              @click="
-                currentTab = 'login';
-                resetForm();
-              "
-              >{{ $t("login") }}</a
-            > -->
           </div>
           <v-spacer></v-spacer>
           <v-btn
@@ -466,16 +433,6 @@ export default {
       resetPassword: "resetPassword",
       showSnackbar: "showSnackbar",
     }),
-    changeTabToRegister() {
-      this.currentTab = "register";
-    },
-    changeCurrentTabForReset() {
-      this.currentTab = "reset-password";
-    },
-    changeTabToLogin() {
-      this.currentTab = "login";
-    },
-    //new
     resetForm() {
       this.resetError = null;
       this.resetSuccess = false;
@@ -522,11 +479,6 @@ export default {
         this.resetError = error;
       } finally {
         this.requestInProgress = false;
-      }
-    },
-    processError(error) {
-      let data = error.response.data;
-      if ("email" in data) {
       }
     },
   },

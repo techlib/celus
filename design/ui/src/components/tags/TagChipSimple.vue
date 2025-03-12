@@ -1,8 +1,8 @@
 <template>
   <v-chip
     :size="small ? 'small' : 'default'"
-    :key="'raw' in tag ? tag.raw.pk : tag.pk"
-    :color="'raw' in tag ? tag.raw.bg_color : tag.bg_color"
+    :key="tag.pk"
+    :color="tag.bg_color"
     variant="flat"
     class="pt-0"
     :closable="removable"
@@ -20,7 +20,7 @@
       }"
       class="chip-class"
       :class="{ small: small }"
-      >{{ "raw" in tag ? tag.raw.tag_class.name : tag.tag_class.name }}</span
+      >{{ tag.tag_class.name }}</span
     >
     {{ text }}
   </v-chip>
@@ -66,11 +66,7 @@ export default {
 
   computed: {
     text() {
-      if ("raw" in this.tag) {
-        return this.tag.raw.name;
-      } else {
-        return this.tag.name;
-      }
+      return this.tag.name;
     },
     color() {
       if (this.tag.bg_color === "#FFFFFF") {
@@ -85,65 +81,50 @@ export default {
       // class colors are reversed from normal colors
       let bgc = null;
       let txc = null;
-      if ("raw" in this.tag) {
-        bgc = color(this.tag.raw.text_color);
-        txc = color(this.tag.raw.bg_color);
-      } else {
-        bgc = color(this.tag.text_color);
-        txc = color(this.tag.bg_color);
-      }
+      bgc = color(this.tag.text_color);
+      txc = color(this.tag.bg_color);
       if (
         txc.contrast(bgc) < 8 &&
         txc.contrast(bgc) < txc.contrast(color("#FFFFFF"))
       ) {
         return "#FFFFFF";
       }
-      return "raw" in this.tag ? this.tag.raw.text_color : this.tag.text_color;
+      return this.tag.text_color;
     },
     classTextColor() {
       const bgc = color(this.classBgColor);
-      const txc = color(
-        "raw" in this.tag ? this.tag.raw.bg_color : this.tag.bg_color,
-      );
+      const txc = color(this.tag.bg_color);
       if (
         txc.contrast(bgc) < 8 &&
         bgc.contrast(txc) < bgc.contrast(color("#FFFFFF"))
       ) {
         return "#FFFFFF";
       } else {
-        if ("raw" in this.tag) {
-          return this.tag.raw.bg_color;
-        } else {
-          return this.tag.bg_color;
-        }
+        return this.tag.bg_color;
       }
     },
     to() {
       if (this.link) {
-        switch (
-          "raw" in this.tag
-            ? this.tag.raw.tag_class.scope
-            : this.tag.tag_class.scope
-        ) {
+        switch (this.tag.tag_class.scope) {
           case "title":
             return {
               name: "title-list",
               query: {
-                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+                tags: this.tag.pk,
               },
             };
           case "organization":
             return {
               name: "organization-list",
               query: {
-                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+                tags: this.tag.pk,
               },
             };
           case "platform":
             return {
               name: "platform-list",
               query: {
-                tags: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+                tags: this.tag.pk,
               },
             };
         }
@@ -155,7 +136,7 @@ export default {
   methods: {
     close() {
       this.$emit("remove", {
-        tagId: "raw" in this.tag ? this.tag.raw.pk : this.tag.pk,
+        tagId: this.tag.pk,
       });
     },
   },

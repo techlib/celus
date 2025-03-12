@@ -84,7 +84,7 @@
               </v-col>
             </v-row>
           </template>
-          <template #[`item.actions`]="{ item }">
+          <template #item.actions="{ item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <v-btn
@@ -208,7 +208,7 @@
               ></ExportMonitorWidget>
             </span>
           </template>
-          <template #[`item.accessLevel`]="{ item }">
+          <template #item.accessLevel="{ item }">
             <span>
               <v-tooltip location="bottom">
                 <template #activator="{ props }">
@@ -220,7 +220,7 @@
               </v-tooltip>
             </span>
           </template>
-          <template v-slot:[`item.name`]="{ item }">
+          <template #item.name="{ item }">
             <v-menu
               v-if="item.canEdit(user, organizations)"
               :modelValue="activeItem === item"
@@ -256,7 +256,7 @@
             <span v-else>{{ item.name }}</span>
             <!-- </div> -->
           </template>
-          <template #[`item.primaryDimension.name`]="{ item }">
+          <template #item.primaryDimension.name="{ item }">
             {{ item.primaryDimension.getName($i18n) }}
             <v-tooltip location="bottom">
               <template #activator="{ props }">
@@ -267,14 +267,14 @@
               {{ $t("tag_roll_up_tt") }}
             </v-tooltip>
           </template>
-          <template #[`item.lastUpdated`]="{ item }">
+          <template #item.lastUpdated="{ item }">
             <span v-html="isoDateTimeFormatSpans(item.lastUpdated)"></span>
           </template>
-          <template v-slot:[`item.lastUpdatedBy`]="{ value, item }">
+          <template v-slot:item.lastUpdatedBy="{ value, item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <span v-bind="props">
-                  {{ value }}
+                  {{ userToString(item.lastUpdatedBy) }}
                 </span>
               </template>
               <span v-if="!!item.lastUpdatedBy?.first_name">
@@ -312,7 +312,7 @@
               </td>
             </tr>
           </template>
-          <template #[`item.data-table-expand`]="{ item }">
+          <template #item.data-table-expand="{ item }">
             <v-btn @click="toggleExpand(item)" icon size="small" variant="text">
               <v-icon size="small">
                 {{ arrowIcon(item.pk === isSelect[0]) }}-{{
@@ -350,11 +350,7 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import axios from "axios";
-import {
-  parseDateTime,
-  smartMonthRange,
-  isoDateTimeFormatSpans,
-} from "@/libs/dates";
+import { isoDateTimeFormatSpans } from "@/libs/dates";
 import { dimensionMixin } from "@/mixins/dimensions";
 import reportTypes from "@/mixins/reportTypes";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
@@ -485,7 +481,6 @@ export default {
   },
 
   methods: {
-    smartMonthRange,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
@@ -545,56 +540,6 @@ export default {
         this.expandedRows.push(item.pk);
       }
     },
-    async translateFilter() {
-      let filteredItems = [];
-      let translateName = this.values.map((item) => ({
-        [item.pk]: item.report_config.filters.filter(
-          (filtr) => filtr.dimension !== "report_type",
-        ),
-      }));
-      filteredItems = await translateName.reduce(async (accPromise, filtr) => {
-        let acc = await accPromise;
-        let pk = Object.keys(filtr)[0];
-        let translatedFilters = await Object.values(filtr)[0].reduce(
-          async (subAccPromise, subitem) => {
-            let subAcc = await subAccPromise;
-            let refDim = subitem.dimension;
-            let translateRef =
-              refDim === "dim1"
-                ? this.translators.explicitDimension
-                : this.translators[refDim];
-            if (translateRef) {
-              let toTranslate = [...subitem.values];
-              if (typeof toTranslate[0] !== "string") {
-                await translateRef.prepareTranslation(toTranslate);
-                let translatedValues = toTranslate.map((item) =>
-                  translateRef.translateKeyToString(item, this.$i18n.locale),
-                );
-                translatedValues.sort((a, b) => a.localeCompare(b));
-                subAcc.push({ [refDim]: translatedValues });
-              } else {
-                subAcc.push({ [refDim]: toTranslate });
-              }
-            }
-            return subAcc;
-          },
-          Promise.resolve([]),
-        );
-        acc.push({ [pk]: translatedFilters });
-        return acc;
-      }, Promise.resolve([]));
-      this.translatedValue = filteredItems;
-    },
-    getTranslatedValue(pk, type) {
-      for (let obj of this.translatedValue) {
-        if (Object.prototype.hasOwnProperty.call(obj, pk)) {
-          let objType = obj[pk].find((item) => item[type]);
-          return Object.values(objType[type]).join(", ");
-        }
-      }
-      return null;
-    },
-
     async saveNewName(reportId, value) {
       try {
         let report = this.reports.find((item) => item.pk === reportId);

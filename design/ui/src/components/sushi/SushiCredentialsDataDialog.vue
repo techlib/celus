@@ -212,7 +212,7 @@ cs:
                   </td>
                 </tr>
               </template>
-              <template v-slot:[`footer.prepend`]="">
+              <template #footer.prepend="">
                 <v-btn
                   size="small"
                   color="success"

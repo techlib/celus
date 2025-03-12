@@ -16,7 +16,7 @@ cs:
     }"
     class="chart-data-table"
   >
-    <template #[`body.append`]="{ headers }">
+    <template #body.append="{ headers }">
       <tr class="totals">
         <th v-for="(total, i) in totals" :key="i" class="text-right">
           <span v-if="headers[0][i].value !== primaryDimension"

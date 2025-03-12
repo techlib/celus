@@ -47,7 +47,7 @@ cs:
       <template #top>
         <v-row v-if="optimizePerformance">
           <v-col cols="12" class="pb-0">
-            <v-alert type="info" density="compact" text>
+            <v-alert type="info" density="compact" variant="text">
               {{ $t("performance_warning") }}
             </v-alert>
           </v-col>
@@ -108,36 +108,36 @@ cs:
           </v-col>
         </v-row>
       </template>
-      <template #[`item.name`]="{ item }" v-if="optimizePerformance">
+      <template #item.name="{ item }" v-if="optimizePerformance">
         <span class="fa fa-tag pe-1" :style="{ color: item.bg_color }"></span>
         {{ item.name }}
       </template>
-      <template v-slot:[`item.name`]="{ item }" v-else>
+      <template #item.name="{ item }" v-else>
         <TagChip :tag="item" :show-class="showClass" link></TagChip>
       </template>
-      <template #[`item._group_sorter`]="{ item }" v-if="optimizePerformance">
+      <template #item._group_sorter="{ item }" v-if="optimizePerformance">
         {{ item.tag_class.name }}
         <span class="text-caption text-secondary"
           >[{{ $t(item.tag_class.scope) }}]</span
         >
       </template>
-      <template #[`item._group_sorter`]="{ item }" v-else>
+      <template #item._group_sorter="{ item }" v-else>
         <TagClassScopeWidget
           :scope="item.tag_class.scope"
           class="pl-3 text-caption text-disabled"
         ></TagClassScopeWidget>
       </template>
-      <template #[`item.can_see`]="{ item }">
+      <template #item.can_see="{ item }">
         <span class="text-caption">{{
           tagAccessLevelToText[item.can_see]
         }}</span>
       </template>
-      <template #[`item.can_assign`]="{ item }">
+      <template #item.can_assign="{ item }">
         <span class="text-caption">{{
           tagAccessLevelToText[item.can_assign]
         }}</span>
       </template>
-      <template #[`item.actions`]="{ item }">
+      <template #item.actions="{ item }">
         <v-btn
           @click="editTag(item)"
           size="small"
@@ -161,9 +161,7 @@ cs:
           <v-icon size="small">fa fa-trash</v-icon>
         </v-btn>
       </template>
-      <template
-        v-slot:[`group-header`]="{ item, isGroupOpen, toggleGroup, columns }"
-      >
+      <template #group-header="{ item, isGroupOpen, toggleGroup, columns }">
         <tr class="group_header">
           <td class="group_column">
             <v-btn
@@ -590,7 +588,7 @@ export default {
       this.showClassEditDialog = false;
       await Promise.all([this.fetchTags(), this.fetchTagClasses()]);
     },
-    groupingFn(items, groupBy, groupDesc) {
+    groupingFn(items) {
       // we want to add empty groups for tag-classes without tag,
       // so we need a custom grouping function
       let groups = new Map();

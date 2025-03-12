@@ -97,7 +97,7 @@ cs:
         </v-col>
       </v-row>
     </template>
-    <template v-slot:[`item.data-table-expand`]="{ item }">
+    <template #item.data-table-expand="{ item }">
       <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
         <v-icon>
           {{
@@ -162,22 +162,22 @@ cs:
         </td>
       </tr>
     </template>
-    <template v-slot:[`item.short_name`]="{ item }">
+    <template #item.short_name="{ item }">
       <ReportChip :report="item"></ReportChip>
     </template>
-    <template v-slot:[`item.metrics`]="{ item }">
+    <template #item.metrics="{ item }">
       <ReportInterestGroups
         :report="item"
         :highlight-group-id="selectedGroup"
         :max-count="3"
       ></ReportInterestGroups>
     </template>
-    <template #[`item.approx_record_count`]="{ item }">
+    <template #item.approx_record_count="{ item }">
       <span class="text-caption">{{
         formatInteger(item.approx_record_count)
       }}</span>
     </template>
-    <template #[`header.approx_record_count`]="{ column }">
+    <template #header.approx_record_count="{ column }">
       <v-tooltip location="bottom">
         <template #activator="{ props }">
           {{ column.title }}

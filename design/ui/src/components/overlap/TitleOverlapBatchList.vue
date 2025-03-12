@@ -41,7 +41,7 @@ cs:
           {{ $t("actions.upload_file_for_annotation") }}
         </v-btn>
       </template>
-      <template #[`item.created`]="{ item }">
+      <template #item.created="{ item }">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <span v-bind="props">{{ relativeDate(item.created) }}</span>
@@ -49,7 +49,7 @@ cs:
           <span>{{ isoDateTimeFormat(item.created) }}</span>
         </v-tooltip>
       </template>
-      <template #[`item.state`]="{ item }">
+      <template #item.state="{ item }">
         <!-- processing -->
         <ServerTaskMonitor
           v-if="item.state === 'processing' && item.task"
@@ -101,7 +101,7 @@ cs:
           {{ item.state }}
         </v-tooltip>
       </template>
-      <template #[`item.source_file`]="{ item }">
+      <template #item.source_file="{ item }">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <a :href="item.source_file" target="_blank" v-bind="props">
@@ -111,7 +111,7 @@ cs:
           <span>{{ $t("source_file_tt") }}</span>
         </v-tooltip>
       </template>
-      <template #[`item.annotated_file`]="{ item }">
+      <template #item.annotated_file="{ item }">
         <v-tooltip location="bottom" v-if="item.annotated_file">
           <template #activator="{ props }">
             <a :href="item.annotated_file" target="_blank" v-bind="props">
@@ -127,7 +127,7 @@ cs:
         </v-tooltip>
         <span v-else>-</span>
       </template>
-      <template #[`item.matched_rows`]="{ item }">
+      <template #item.matched_rows="{ item }">
         <span
           v-if="
             item.processing_info.stats && item.processing_info.stats.row_count
@@ -141,7 +141,7 @@ cs:
         </span>
         <span v-else>-</span>
       </template>
-      <template #[`item.actions`]="{ item }">
+      <template #item.actions="{ item }">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <v-btn

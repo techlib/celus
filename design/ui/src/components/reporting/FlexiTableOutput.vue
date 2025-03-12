@@ -138,11 +138,11 @@ cs:
             class="py-10 px-5"
           ></v-skeleton-loader>
         </template>
-        <template #[`item.tag`]="{ item }">
+        <template #item.tag="{ item }">
           <TagChip :tag="item.tag" show-class small v-if="item.pk"></TagChip>
           <span v-else class="text--secondary">{{ item.tag }}</span>
         </template>
-        <template #[`item.assignedTags`]="{ item }">
+        <template #item.assignedTags="{ item }">
           <TagChip
             v-for="tag in objIdToTags.get(item.pk)"
             :key="tag.pk"
@@ -151,14 +151,14 @@ cs:
             show-class
           ></TagChip>
         </template>
-        <template #[`item.reldiff`]="{ item }">
+        <template #item.reldiff="{ item }">
           <span>
             {{ formatPercentage(item.reldiff) }}
             <TrendArrow :diff="item.reldiff"></TrendArrow>
           </span>
         </template>
         <template
-          v-slot:[`body.append`]="{ columns }"
+          #body.append="{ columns }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
         >
           <tr>
@@ -188,7 +188,7 @@ cs:
             </td>
           </tr>
         </template>
-        <template #[`footer.prepend`]="">
+        <template #footer.prepend>
           <v-btn
             @click="togglePopOut"
             variant="text"
@@ -520,7 +520,6 @@ export default {
   methods: {
     ...mapActions(["showSnackbar"]),
     formatInteger,
-    smartMonthRange,
     async updateOutput(report, clean = true) {
       this.report = report;
 

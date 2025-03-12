@@ -30,8 +30,8 @@
         {{ group.title }}
       </v-list-subheader>
       <MenuListItem
-        v-for="item in group.items.filter((item) =>
-          item.show == null ? true : item.show,
+        v-for="item in group.items.filter((itm) =>
+          itm.show == null ? true : itm.show,
         )"
         :item="item"
         :key="item.title"
@@ -71,8 +71,6 @@ export default {
     };
   },
   computed: {
-    // xs,
-    // smAndDown,
     ...mapState({
       user: "user",
       appLanguage: "appLanguage",
@@ -350,14 +348,6 @@ export default {
     modelValue() {
       this.show = this.modelValue;
     },
-  },
-  setup(props, { emit }) {
-    const { xs, smAndDown, md } = useDisplay();
-    return {
-      xs,
-      smAndDown,
-      md,
-    };
   },
   mounted() {},
 };

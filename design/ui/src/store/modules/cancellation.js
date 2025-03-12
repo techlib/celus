@@ -39,9 +39,6 @@ export default {
     setOngoing(state, { value, component }) {
       state.ongoing[component] = value;
     },
-    setCurrent(state, { component }) {
-      state.current = component;
-    },
     deleteComponent(state, component) {
       delete state.controllers[component];
       delete state.ongoing[component];

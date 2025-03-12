@@ -194,10 +194,6 @@ export default {
       const { response } = await this.http({ url: this.basePlatformUrl });
       if (response) this.platforms = response.data;
     },
-    filterUpdated() {
-      this.page = 1;
-      this.fetchAnnotations();
-    },
   },
   mounted() {
     this.fetchAnnotations();

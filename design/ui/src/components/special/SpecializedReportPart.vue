@@ -96,12 +96,12 @@ cs:
         class="main_table"
         density="default"
       >
-        <template #[`item.total`]="{ item }">
+        <template #item.total="{ item }">
           <span class="item_total">
             {{ formatInteger(item.total) }}
           </span>
         </template>
-        <template #[`item.source_name`]="{ item }">
+        <template #item.source_name="{ item }">
           <span :style="{ color: sourceColor(item.source_name) }">{{
             item.source_name
           }}</span>

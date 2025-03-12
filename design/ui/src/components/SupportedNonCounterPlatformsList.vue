@@ -19,7 +19,7 @@ cs:
     :loading="loading"
     class="auto-table"
   >
-    <template #[`item.actions`]="{ item }">
+    <template #item.actions="{ item }">
       <v-tooltip location="bottom">
         <template #activator="{ props }">
           <v-btn
@@ -40,7 +40,7 @@ cs:
         {{ $t("actions.upload_data") }}
       </v-tooltip>
     </template>
-    <template #[`item.info`]="{ item }">
+    <template #item.info="{ item }">
       <v-tooltip location="bottom" max-width="600px">
         <template #activator="{ props }">
           <v-btn

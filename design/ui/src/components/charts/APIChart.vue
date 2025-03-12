@@ -895,7 +895,6 @@ export default {
       }
       // secondary dimension
       if (this.shownSecondaryDimension) {
-        let now = new Date();
         let out = this.pivot();
         this.out = out;
         if (this.orderBy) {

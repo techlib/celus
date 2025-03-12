@@ -143,7 +143,11 @@ cs:
         <v-card-title class="headline d-flex"
           >{{ $t("title.edit_sushi_credentials") }}
           <v-spacer></v-spacer>
-          <v-tooltip location="bottom" max-width="600px">
+          <v-tooltip
+            location="bottom"
+            max-width="600px"
+            v-if="canShowDebugLinks"
+          >
             <template #activator="{ props }">
               <v-icon
                 size="x-small"
@@ -160,7 +164,10 @@ cs:
         </v-card-title>
         <v-card-text>
           <!-- debug info -->
-          <v-sheet v-if="showDebug" class="text-right mx-2 mb-2">
+          <v-sheet
+            v-if="canShowDebugLinks && showDebug"
+            class="text-right mx-2 mb-2"
+          >
             <span>{{ $t("sushi_debug_links") }}:</span>
             <v-chip
               v-for="rt in selectedReportTypeObjs"
@@ -451,6 +458,7 @@ cs:
               </v-col>
               <v-col cols="12" md="5" class="active_report">
                 <v-autocomplete
+                  v-if="reportTypes.length"
                   density="comfortable"
                   v-model="selectedReportTypes"
                   :items="reportTypes"
@@ -690,8 +698,8 @@ cs:
           </v-container>
         </v-card-text>
         <v-card-actions>
-          <v-container fluid mx-2>
-            <v-row no-gutters>
+          <v-container fluid class="pt-2">
+            <v-row no-gutters align="center">
               <v-col cols="auto">
                 <v-tooltip location="bottom">
                   <template v-slot:activator="{ props }">
@@ -702,6 +710,7 @@ cs:
                         class="pl-2 my-0"
                         color="primary"
                         :disabled="!activePlatform"
+                        hide-details
                       ></v-switch>
                     </span>
                   </template>
@@ -718,6 +727,7 @@ cs:
                         color="primary"
                         class="pl-2 my-0"
                         :disabled="!userIsManager || !activePlatform"
+                        hide-details
                       ></v-switch>
                     </span>
                   </template>
@@ -752,8 +762,6 @@ cs:
                 <v-btn
                   color="primary"
                   @click="saveAndClose()"
-                  class="mr-2"
-                  :style="$vuetify.display.xs ? 'margin-left: 0;' : ''"
                   variant="elevated"
                   :disabled="saving || disableSave"
                   :loading="saving"
@@ -1385,33 +1393,6 @@ export default {
       }
       await this.reloadCredentials();
     },
-    async deleteObject() {
-      if (this.credentials) {
-        const res = await this.$confirm(this.$t("really_delete"), {
-          title: this.$t("confirm_delete"),
-          buttonTrueText: this.$t("delete"),
-          buttonFalseText: this.$t("cancel"),
-        });
-        if (res) {
-          try {
-            await axios.delete(
-              `/api/sushi-credentials/${this.credentials.pk}/`,
-            );
-            this.$emit("deleted", { id: this.credentials.pk });
-            this.$emit("update:modelValue", false);
-            this.showSnackbar({
-              content: this.$t("delete_success"),
-              color: "success",
-            });
-          } catch (error) {
-            this.showSnackbar({
-              content: "Error deleting SUSHI credentials: " + error,
-              color: "error",
-            });
-          }
-        }
-      }
-    },
     async markFixed(markReports) {
       if (this.credentials) {
         let data = { credentials_id: this.credentials.pk };
@@ -1703,13 +1684,6 @@ export default {
         this.$refs.selectedReportTypesField.focus();
       }
     },
-    ToolTipContent() {
-      if (this.counterVersion === 4) {
-        return this.$t("extra_attributes_tooltip");
-      } else {
-        return "";
-      }
-    },
   },
 
   async mounted() {
@@ -1789,10 +1763,6 @@ export default {
 
 :deep(.v-messages__message) {
   line-height: 1.2;
-}
-
-.margin-right-negative {
-  margin-left: -30px;
 }
 
 :deep(.v-field__append-inner > .v-icon) {

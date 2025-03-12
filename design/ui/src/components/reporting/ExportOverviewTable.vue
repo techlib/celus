@@ -16,12 +16,14 @@
     density="default"
   >
     <template #top>
-      <v-btn @click="fetchData" color="primary" width="128px">
-        <v-icon size="small" class="mr-2">fa fa-sync-alt</v-icon>
-        <span v-text="$t('actions.refresh')"></span>
-      </v-btn>
+      <v-col>
+        <v-btn @click="fetchData" color="primary">
+          <v-icon size="small" class="mr-2">fa fa-sync-alt</v-icon>
+          <span v-text="$t('actions.refresh')"></span>
+        </v-btn>
+      </v-col>
     </template>
-    <template #[`item.data-table-expand`]="{ item }">
+    <template #item.data-table-expand="{ item }">
       <v-btn @click="toggleExpand(item)" variant="text" icon size="x-small">
         <v-icon size="small">{{
           expandedRows.includes(item.pk)
@@ -45,7 +47,7 @@
         </td>
       </tr>
     </template>
-    <template #[`item.outputFile`]="{ item }">
+    <template #item.outputFile="{ item }">
       <div class="d-inline" width="140px">
         <v-btn
           :href="item.outputFile"
@@ -77,13 +79,13 @@
         {{ $t("delete_export_tt") }}
       </v-tooltip>
     </template>
-    <template #[`item.created`]="{ item }">
+    <template #item.created="{ item }">
       <span v-html="formatDate(item.created)"></span>
     </template>
-    <template #[`item.fileSize`]="{ item }">
+    <template #item.fileSize="{ item }">
       {{ filesize(item.fileSize) }}
     </template>
-    <template #[`header.expiresIn`]="{ column }">
+    <template #header.expiresIn="{ column }">
       <v-tooltip location="top">
         <template #activator="{ props }">
           <span v-bind="props">{{ column.title }}</span>
@@ -92,16 +94,16 @@
         <p>{{ $t("expires_in_tt_2") }}</p>
       </v-tooltip>
     </template>
-    <template #[`item.expiresIn`]="{ item }">
+    <template #item.expiresIn="{ item }">
       <span v-html="getExpiration(item.created)"></span>
     </template>
-    <template #[`item.primaryDimension`]="{ item }">
+    <template #item.primaryDimension="{ item }">
       {{ item.primaryDimension.getName($i18n) }}
     </template>
-    <template #[`item.statusText`]="{ item }">
+    <template #item.statusText="{ item }">
       {{ $t("export_status." + item.statusText) }}
     </template>
-    <template #[`item.fileFormat`]="{ item }">
+    <template #item.fileFormat="{ item }">
       {{ $t(item.fileFormat) }}
     </template>
   </v-data-table>
@@ -111,11 +113,7 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import { formatDistanceToNow } from "date-fns";
 import axios from "axios";
-import {
-  isoDateTimeFormatSpans,
-  parseDateTime,
-  smartMonthRange,
-} from "@/libs/dates";
+import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import { filesize } from "filesize";
 import { FlexiExport } from "@/libs/flexi-reports";
 import reportTypes from "@/mixins/reportTypes";
@@ -123,7 +121,6 @@ import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import { EXPORT_ERROR, EXPORT_FINISHED } from "@/libs/flexi-reports";
 import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
-import { icon } from "@fortawesome/fontawesome-svg-core";
 
 export default {
   name: "ExportOverviewTable",
@@ -198,7 +195,6 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     filesize,
-    smartMonthRange,
     expiresOn(createdOn) {
       return new Date(
         parseDateTime(createdOn).getTime() +

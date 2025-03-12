@@ -72,7 +72,7 @@ cs:
       :no-data-text="$t('no_records')"
       density="default"
     >
-      <template v-slot:[`item.name`]="{ item }">
+      <template #item.name="{ item }">
         <router-link
           v-if="platformId"
           :to="{
@@ -96,7 +96,7 @@ cs:
           <ShortenText :text="item.name"></ShortenText>
         </router-link>
       </template>
-      <template v-slot:[`item.pub_type`]="{ item }">
+      <template #item.pub_type="{ item }">
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
             <v-icon size="small" v-bind="props">{{
@@ -106,7 +106,7 @@ cs:
           <span>{{ $t(titleForPubType(item.pub_type)) }}</span>
         </v-tooltip>
       </template>
-      <template v-slot:[`item.doi`]="{ item }">
+      <template #item.doi="{ item }">
         <DoiLink :doi="item.doi" small></DoiLink>
       </template>
       <template

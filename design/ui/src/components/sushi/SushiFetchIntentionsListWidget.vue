@@ -90,7 +90,7 @@ cs:
           <template
             v-for="h in headers"
             :key="h.value"
-            v-slot:[`column.${h.value}`]="{ header }"
+            #column.${h.value}="{ header }"
           >
             <v-tooltip location="bottom" v-if="header.tooltip">
               <template v-slot:activator="{ props }">
@@ -100,7 +100,7 @@ cs:
             </v-tooltip>
             <span v-else>{{ h.title }}</span>
           </template>
-          <template v-slot:[`item.data-table-expand`]="{ item }">
+          <template #item.data-table-expand="{ item }">
             <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
               <v-icon>
                 {{
@@ -183,25 +183,25 @@ cs:
               </v-row>
             </v-container>
           </template>
-          <template v-slot:[`item.notBefore`]="{ item }">
+          <template #item.notBefore="{ item }">
             <span
               v-html="formatDateTime(item.notBefore)"
               v-if="!item.isFinished"
             ></span>
           </template>
 
-          <template v-slot:[`item.counter_report_version`]="{ item }">
+          <template #item.counter_report_version="{ item }">
             <strong>{{
               counterVersionToStr(item.counter_report_version)
             }}</strong>
           </template>
 
-          <template #[`item.status`]="{ item }">
+          <template #item.status="{ item }">
             <FetchIntentionStatusIcon
               :fetch-intention="item"
             ></FetchIntentionStatusIcon>
           </template>
-          <template #[`item.isFinished`]="{ item }">
+          <template #item.isFinished="{ item }">
             <CheckMark v-model="item.isFinished"></CheckMark>
           </template>
           <template #expanded-row="{ columns, item }">

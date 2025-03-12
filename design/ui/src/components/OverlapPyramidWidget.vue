@@ -302,22 +302,6 @@ export default {
       }
       this.constructPyramid();
     },
-    platformTitleCount(platformId) {
-      const titles = this.platformTitles.get(platformId.toString());
-      if (titles) {
-        return titles.length;
-      }
-      return 0;
-    },
-    platformTitleInterest(platformId) {
-      const titles = this.platformTitles.get(platformId.toString());
-      if (titles) {
-        return titles
-          .map((pk) => this.titleInterest.get(pk) ?? 0)
-          .reduce((a, b) => a + b);
-      }
-      return 0;
-    },
     constructPyramid() {
       if (
         this.titleInterest.size > 0 &&

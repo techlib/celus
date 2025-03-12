@@ -1305,9 +1305,6 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    ruleRequired(value) {
-      return !!value || this.$t("required");
-    },
     ruleNotEmpty(modelValue) {
       return modelValue.length > 0 || this.$t("not_empty");
     },

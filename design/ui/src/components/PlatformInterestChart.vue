@@ -85,7 +85,7 @@ export default {
           source: this.rows,
           dimensions: this.columns,
         },
-        series: this.interestGroups.map((series, index) => ({
+        series: this.interestGroups.map((series) => ({
           id: series.pk,
           name: series.name,
           type: "bar",

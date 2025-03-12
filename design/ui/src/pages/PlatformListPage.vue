@@ -163,11 +163,6 @@ export default {
       }
       this.loading = false;
     },
-    loadPlatforms() {
-      if (this.$refs.overviewWidget) {
-        this.$refs.overviewWidget.loadPlatforms();
-      }
-    },
     refreshAnnotations() {
       this.$refs.annotWidget.fetchAnnotations();
       if (this.$refs.overviewWidget) {

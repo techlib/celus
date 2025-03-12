@@ -81,13 +81,13 @@ cs:
         :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
       >
         <!-- v-model:sort-by="orderByCr" -->
-        <template #[`item.user.last_name`]="{ item }">
+        <template #item.user.last_name="{ item }">
           {{ userToString(item.user) }}
         </template>
-        <template #[`item.created`]="{ item }">
+        <template #item.created="{ item }">
           <span v-html="isoDateTimeFormatSpans(item.created)"></span>
         </template>
-        <template #[`item.report_type.short_name`]="{ item }">
+        <template #item.report_type.short_name="{ item }">
           <v-tooltip location="bottom">
             <template v-slot:activator="{ props }">
               <span v-if="!!item.report_type" v-bind="props">{{
@@ -97,12 +97,12 @@ cs:
             <span v-if="!!item.report_type">{{ item.report_type.name }}</span>
           </v-tooltip>
         </template>
-        <template #[`item.orgs`]="{ item }">
+        <template #item.orgs="{ item }">
           <div v-for="org_name in item.orgs" v-bind:key="org_name">
             {{ org_name }}
           </div>
         </template>
-        <template #[`item.actions`]="{ item }">
+        <template #item.actions="{ item }">
           <v-tooltip location="bottom" v-if="item.can_edit">
             <template v-slot:activator="{ props }">
               <v-btn
@@ -185,7 +185,7 @@ cs:
             <span>{{ $t("mdu_page") }}</span>
           </v-tooltip>
         </template>
-        <template #[`item.data_file`]="{ item }">
+        <template #item.data_file="{ item }">
           <v-tooltip location="bottom" v-if="item.data_file">
             <template v-slot:activator="{ props }">
               <v-btn
@@ -204,7 +204,7 @@ cs:
             <span>{{ $t("data_file_tt") }}</span>
           </v-tooltip>
         </template>
-        <template #[`item.state`]="{ item }">
+        <template #item.state="{ item }">
           <ManualUploadState :state="item.state"></ManualUploadState>
         </template>
       </v-data-table-server>

@@ -382,12 +382,6 @@ export default {
     showHelpButton() {
       return !!this.helpLink;
     },
-    logoSrc() {
-      return this.siteLogo ? this.siteLogo.img : defaultLogo;
-    },
-    logoAltText() {
-      return this.siteLogo ? this.siteLogo.alt_text : "Celus";
-    },
     gravatar() {
       const hash = md5(this.user.email.trim().toLowerCase());
       return `https://www.gravatar.com/avatar/${hash}?d=mp&s=40`;
@@ -399,9 +393,6 @@ export default {
       hideSnackbar: "hideSnackbar",
       dismissLastRelease: "dismissLastRelease",
     }),
-    toggleNavbar() {
-      this.navbarExpanded = !this.navbarExpanded;
-    },
     async fetchHelpLink() {
       try {
         const result = await axios.get(
@@ -428,7 +419,7 @@ export default {
 
     $route: {
       immediate: true,
-      handler(to, from) {
+      handler(to) {
         document.title = to.meta?.title
           ? this.$t(to.meta.title) + " – CELUS"
           : "CELUS";

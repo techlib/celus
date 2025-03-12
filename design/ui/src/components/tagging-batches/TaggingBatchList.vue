@@ -35,19 +35,19 @@
           ></v-switch>
         </div>
       </template>
-      <template #[`item.created`]="{ item }">
+      <template #item.created="{ item }">
         <span v-html="formatDate(item.created)"></span>
       </template>
-      <template #[`item.state`]="{ item }">
+      <template #item.state="{ item }">
         <TaggingBatchStateWidget :batch="item"></TaggingBatchStateWidget>
       </template>
-      <template #[`item.tag`]="{ item }">
+      <template #item.tag="{ item }">
         <TagChip v-if="item.tag" :tag="item.tag" show-class link></TagChip>
         <span v-else-if="item.tag_class">{{
           $t("tagging.tags_read_from_file")
         }}</span>
       </template>
-      <template #[`item.preflight.rows_total`]="{ item, value }">
+      <template #item.preflight.rows_total="{ item, value }">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <span v-bind="props">{{ formatInteger(value) }}</span>
@@ -55,7 +55,7 @@
           {{ $t("tagging.data_rows_tt") }}
         </v-tooltip>
       </template>
-      <template #[`item.preflight.unique_matched_titles`]="{ item }">
+      <template #item.preflight.unique_matched_titles="{ item }">
         <v-tooltip
           v-if="item.import_count > 1"
           location="bottom"
@@ -96,7 +96,7 @@
           </div>
         </v-tooltip>
       </template>
-      <template #[`item.actions`]="{ item }">
+      <template #item.actions="{ item }">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <v-btn
@@ -143,7 +143,7 @@
           </td>
         </tr>
       </template>
-      <template #[`item.last_updated_by`]="{ item }">
+      <template #item.last_updated_by="{ item }">
         {{ userToString(item.last_updated_by) }}
       </template>
     </v-data-table>

@@ -39,13 +39,13 @@ cs:
       }"
       :loading="loading"
     >
-      <template #[`item.created`]="{ item }">
+      <template #item.created="{ item }">
         <span v-html="isoDateTimeFormatSpans(item.created)"></span>
       </template>
-      <template #[`item.date`]="{ item }">
+      <template #item.date="{ item }">
         <span v-html="ymDateFormat(parseDateTime(item.date))"></span>
       </template>
-      <template #[`item.sushifetchattempt`]="{ item }">
+      <template #item.sushifetchattempt="{ item }">
         <CheckMark
           true-icon="fas fa-cloud-download-alt"
           false-icon="fas fa-upload"
@@ -56,7 +56,7 @@ cs:
           :model-value="!!item.sushifetchattempt"
         ></CheckMark>
       </template>
-      <template v-slot:[`item.accesslog_count`]="{ item }">
+      <template #item.accesslog_count="{ item }">
         <span class="text-right">{{
           formatInteger(item.accesslog_count)
         }}</span>

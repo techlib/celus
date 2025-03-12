@@ -74,7 +74,7 @@ cs:
               v-model:page="page"
               density="default"
             >
-              <template v-slot:[`item.data-table-expand`]="{ item }">
+              <template #item.data-table-expand="{ item }">
                 <v-btn
                   icon
                   variant="text"
@@ -90,23 +90,19 @@ cs:
                   </v-icon>
                 </v-btn>
               </template>
-              <template
-                v-slot:[`item.counter_report_verbose.counter_version`]="{
-                  item,
-                }"
-              >
+              <template #item.counter_report_verbose.counter_version="{ item }">
                 <strong>{{
                   counterVersionToStr(
                     item.counter_report_verbose.counter_version,
                   )
                 }}</strong>
               </template>
-              <template #[`item.status`]="{ item }">
+              <template #item.status="{ item }">
                 <SushiFetchIntentionStateIcon
                   :intention="item"
                 ></SushiFetchIntentionStateIcon>
               </template>
-              <template #[`item.timestamp`]="{ item }">
+              <template #item.timestamp="{ item }">
                 <span
                   v-html="
                     item.attempt && formatDateTime(item.attempt.timestamp)
@@ -152,7 +148,7 @@ cs:
                   </td>
                 </tr>
               </template>
-              <template #[`item.actions`]="{ item }">
+              <template #item.actions="{ item }">
                 <v-tooltip
                   location="bottom"
                   v-if="item.attempt && item.attempt.import_batch"

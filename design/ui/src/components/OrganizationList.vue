@@ -81,7 +81,7 @@ cs:
                     <span>{{ $t("aliases_tooltip") }}</span>
                   </v-tooltip>
                 </v-list-subheader>
-                <template v-for="(e, index) in item.alt_names" :key="e.pk">
+                <template v-for="e in item.alt_names" :key="e.pk">
                   <v-list-item
                     style="min-height: 32px"
                     :isActive="showManagementStuff"
@@ -139,7 +139,7 @@ cs:
         </td>
       </tr>
     </template>
-    <template #[`item.tags`]="{ item }">
+    <template #item.tags="{ item }">
       <TagChip
         v-for="tag in objIdToTags.get(item.pk)"
         :key="tag.pk"

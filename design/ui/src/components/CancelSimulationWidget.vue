@@ -109,16 +109,16 @@ cs:
         v-if="!(loading || preparingData)"
         items-per-page="-1"
       >
-        <template #[`item.titleCount`]="{ item }">
+        <template #item.titleCount="{ item }">
           {{ formatInteger(item.titleCount) }}
         </template>
-        <template #[`item.titleInterest`]="{ item }">
+        <template #item.titleInterest="{ item }">
           {{ formatInteger(item.titleInterest) }}
         </template>
-        <template #[`item.uniqueInterest`]="{ item }">
+        <template #item.uniqueInterest="{ item }">
           {{ formatInteger(item.uniqueInterest) }}
         </template>
-        <template #[`item.uniqueTitleCount`]="{ item }">
+        <template #item.uniqueTitleCount="{ item }">
           {{ formatInteger(item.uniqueTitleCount) }}
         </template>
         <template #bottom></template>
@@ -485,7 +485,7 @@ export default {
         this.selectedPlatforms = this.tableData.map((item) => {
           return item.pk;
         });
-        this.loadingPlatform = false;
+        this.loadingPlatforms = false;
         await this.prepareData();
       } catch (error) {
         this.showSnackbar({

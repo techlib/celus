@@ -28,7 +28,7 @@ cs:
     return-object
     density="default"
   >
-    <template v-slot:[`item.data-table-expand`]="{ item }">
+    <template #item.data-table-expand="{ item }">
       <v-icon
         @click="toggleExpanded(item)"
         :class="{ rotated: expanded.includes(item) }"
@@ -37,7 +37,7 @@ cs:
         fa fa-caret-down
       </v-icon>
     </template>
-    <template v-slot:[`item.read`]="{ item }">
+    <template #item.read="{ item }">
       <v-icon
         v-if="item.read"
         @click="markRead({ item, read: false, refresh: false })"
@@ -51,13 +51,13 @@ cs:
         >far fa-envelope</v-icon
       >
     </template>
-    <template v-slot:[`item.created`]="{ item }">
+    <template #item.created="{ item }">
       <span
         :class="item.read ? '' : 'font-weight-bold'"
         v-html="isoDateTimeFormatSpans(item.created)"
       ></span>
     </template>
-    <template v-slot:[`item.title`]="{ item }">
+    <template #item.title="{ item }">
       <a
         @click="toggleExpanded(item)"
         class="text-decoration-underline"
@@ -65,17 +65,17 @@ cs:
         >{{ item.title }}</a
       >
     </template>
-    <template v-slot:[`item.category`]="{ item }">
+    <template #item.category="{ item }">
       <EventCategoryMark :item="item" :bold="!item.read"></EventCategoryMark>
     </template>
-    <template v-slot:[`item.importance`]="{ item }">
+    <template #item.importance="{ item }">
       <EventImportanceIcon
         :importance="item.importance"
         small
       ></EventImportanceIcon>
       <span class="ml-2">{{ $t("event_importance." + item.importance) }}</span>
     </template>
-    <template v-slot:[`item.expiration_date`]="{ item }">
+    <template #item.expiration_date="{ item }">
       <span v-if="item.expiration_date">{{
         isoDateFormat(parseDateTime(item.expiration_date))
       }}</span>
@@ -445,7 +445,7 @@ export default {
       }
     },
     async markSelectedRead(read) {
-      const eventIds = this.selectedEvents
+      const eventIds = this.selectedEventsLive
         .filter((item) => item.read != read)
         .map((item) => item.pk);
       const reply = await this.http({

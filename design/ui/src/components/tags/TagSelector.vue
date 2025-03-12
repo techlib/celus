@@ -19,28 +19,32 @@
     hide-selected
   >
     <template #item="{ item, props }">
-      <div v-bind="props" class="option_tag">
-        <v-list-item-title class="d-flex align-center justify-space-between">
-          <TagChip
-            v-if="item.raw.disabled"
-            :tag="item"
-            hide-icon
-            disabled
-          ></TagChip>
-          <TagChip v-else :tag="item"></TagChip>
-          <span class="text-caption">{{ item.raw.tag_class.name }}</span>
-        </v-list-item-title>
-        <v-list-item-subtitle v-if="item.raw.disabled" class="text-caption">
-          {{ $t("labels.tag_exclusive_already_present") }}
-        </v-list-item-subtitle>
-      </div>
+      <v-list-item v-bind="props">
+        <template #title>
+          <v-list-item-title class="d-flex align-center justify-space-between">
+            <TagChip
+              v-if="item.raw.disabled"
+              :tag="item.raw"
+              hide-icon
+              disabled
+            ></TagChip>
+            <TagChip v-else :tag="item.raw"></TagChip>
+            <span class="text-caption">{{ item.raw.tag_class.name }}</span>
+          </v-list-item-title>
+        </template>
+        <template #subtitle>
+          <v-list-item-subtitle v-if="item.raw.disabled" class="text-caption">
+            {{ $t("labels.tag_exclusive_already_present") }}
+          </v-list-item-subtitle>
+        </template>
+      </v-list-item>
     </template>
     <template v-slot:chip="{ props, item }">
       <!-- tooltips on tags work strange in autocomplete and the whole tag
       sometimes disappears, so we disable the tooltip here -->
       <TagChip
         v-bind="props"
-        :tag="item"
+        :tag="item.raw"
         small
         :hide-icon="!singleTag"
         hide-tooltip
@@ -196,13 +200,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.option_tag {
-  padding: 5px 5px;
-  cursor: pointer;
-  &:hover {
-    background-color: #2d585421;
-  }
-}
 :deep .v-field__input {
   padding-bottom: 5px;
 }

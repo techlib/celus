@@ -2,6 +2,7 @@
 import vue from "@vitejs/plugin-vue";
 import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 import ViteFonts from "unplugin-fonts/vite";
+import vueDevTools from "vite-plugin-vue-devtools";
 
 // Utilities
 import { defineConfig } from "vite";
@@ -45,6 +46,7 @@ export default defineConfig({
       strictMessage: false,
       include: resolve(dirname(fileURLToPath(import.meta.url)), "locales/**"),
     }),
+    // vueDevTools(),
   ],
   define: { "process.env": {} },
   resolve: {
@@ -53,15 +55,19 @@ export default defineConfig({
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
+  // the following should make is faster and get rid of unwanted reloads due
+  // to code optimization
+  optimizeDeps: { exclude: ["vuetify"] },
   css: {
     preprocessorOptions: {
       scss: {
-        api: "modern-compiler", // or "modern"
+        api: "modern",
       },
       sass: {
-        api: "modern-compiler", // or "modern"
+        api: "modern",
       },
     },
+    preprocessorMaxWorkers: true,
   },
   server: {
     port: 8080,

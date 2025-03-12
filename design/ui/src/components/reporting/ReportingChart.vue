@@ -197,9 +197,6 @@ export default {
     shownPrimaryDimension() {
       return this.primaryDimension;
     },
-    shownSecondaryDimension() {
-      return this.secondaryDimension;
-    },
     // new stuff for vue-echarts starts here
     option() {
       // the returned object itself

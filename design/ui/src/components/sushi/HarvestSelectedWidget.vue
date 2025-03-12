@@ -375,21 +375,6 @@ export default {
       // we call startHarvest() again to make sure that no data is left
       await this.startHarvest();
     },
-    allowedStartMonths(value) {
-      let end = this.endDate;
-      if (end) {
-        return value <= end && value > "2010";
-      }
-      return value < ymDateFormat(new Date()) && value > "2010";
-    },
-    allowedEndMonths(value) {
-      let now = ymDateFormat(new Date());
-      let start = this.startDate;
-      if (start) {
-        return start <= value && value < now;
-      }
-      return value < now;
-    },
     clean() {
       this.started = false;
       if (this.$refs.intentionsList) {

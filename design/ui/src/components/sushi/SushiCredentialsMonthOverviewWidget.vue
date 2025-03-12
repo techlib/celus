@@ -141,7 +141,7 @@ cs:
             >
               <template
                 v-for="rtCode in usedReportTypeCodes"
-                v-slot:[`item.${rtCode}`]="{ item }"
+                #item.${rtCode}="{ item }"
                 :key="`${rtCode}-${item.credentials_id}`"
               >
                 <span
@@ -169,7 +169,7 @@ cs:
                   ></SushiFetchIntentionStateIcon>
                 </span>
               </template>
-              <template #[`item.counter_version`]="{ item }">
+              <template #item.counter_version="{ item }">
                 <v-tooltip location="bottom">
                   <template #activator="{ props }">
                     <span

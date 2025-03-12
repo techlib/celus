@@ -188,7 +188,7 @@ cs:
     <v-row>
       <v-col>
         <v-data-table :items="organizationList" :headers="headers">
-          <template v-slot:[`item.is_admin`]="{ item }">
+          <template #item.is_admin="{ item }">
             <CheckMark :model-value="item.is_admin"></CheckMark>
           </template>
         </v-data-table>
@@ -229,7 +229,7 @@ cs:
               </v-row>
             </v-container>
           </template>
-          <template v-slot:[`item.current`]="{ item }">
+          <template #item.current="{ item }">
             <v-btn
               icon
               size="x-small"
@@ -246,7 +246,7 @@ cs:
               </v-icon>
             </v-btn>
           </template>
-          <template v-slot:[`item.email`]="{ item }">
+          <template #item.email="{ item }">
             <div class="email_cell">
               <v-tooltip
                 location="bottom"
@@ -292,17 +292,17 @@ cs:
               <span v-else>{{ item.email }}</span>
             </div>
           </template>
-          <template v-slot:[`item.first_name`]="{ item }">
+          <template #item.first_name="{ item }">
             <div class="email_cell">
               {{ item.first_name }}
             </div>
           </template>
-          <template v-slot:[`item.last_name`]="{ item }">
+          <template #item.last_name="{ item }">
             <div class="email_cell">
               {{ item.last_name }}
             </div>
           </template>
-          <template v-slot:[`item.organizations`]="{ item }">
+          <template #item.organizations="{ item }">
             <div class="email_cell">
               <span
                 :key="organization.pk"

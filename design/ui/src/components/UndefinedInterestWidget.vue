@@ -17,10 +17,10 @@ cs:
     :hide-default-footer="true"
     v-model:sort-by="orderBy"
   >
-    <template v-slot:[`item.name`]="{ item }">
+    <template #item.name="{ item }">
       <span v-text="item.name" :class="{ bold: item.has_data }"></span>
     </template>
-    <template v-slot:[`item.has_data`]="{ item }">
+    <template #item.has_data="{ item }">
       <CheckMark
         true-color="warning"
         false-color="grey"

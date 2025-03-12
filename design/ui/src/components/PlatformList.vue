@@ -71,7 +71,7 @@ cs:
           v-model:sort-by="orderBy"
           class="custom-header"
         >
-          <template v-slot:[`item.name`]="{ item }">
+          <template #item.name="{ item }">
             <router-link
               :to="{
                 name: 'platform-detail',
@@ -80,7 +80,7 @@ cs:
               >{{ item.name || item.short_name }}
             </router-link>
           </template>
-          <template v-slot:[`item.title_count`]="{ item }">
+          <template #item.title_count="{ item }">
             <span
               v-if="item.title_count === 'loading'"
               class="fas fa-spinner fa-spin subdued"
@@ -89,7 +89,7 @@ cs:
               {{ formatInteger(item.title_count) }}
             </span>
           </template>
-          <template v-slot:[`item.actions`]="{ item }">
+          <template #item.actions="{ item }">
             <v-btn
               v-if="item.source && item.source.organization"
               variant="text"
@@ -118,7 +118,7 @@ cs:
               {{ formatInteger(item.interests[ig.short_name]) }}
             </span>
           </template>
-          <template v-slot:[`item.sushi_credentials_versions`]="{ item }">
+          <template #item.sushi_credentials_versions="{ item }">
             <v-tooltip
               location="bottom"
               v-for="record in item.sushi_credentials_versions"
@@ -146,7 +146,7 @@ cs:
               </template>
             </v-tooltip>
           </template>
-          <template v-slot:[`item.annotations`]="{ item }">
+          <template #item.annotations="{ item }">
             <v-tooltip location="bottom" v-if="item.annotations">
               <template v-slot:activator="{ props }">
                 <v-icon
@@ -158,7 +158,7 @@ cs:
               {{ $t("annotations_available") }}
             </v-tooltip>
           </template>
-          <template #[`item.tags`]="{ item }">
+          <template #item.tags="{ item }">
             <TagChip
               v-for="tag in objIdToTags.get(item.pk)"
               :key="tag.pk"

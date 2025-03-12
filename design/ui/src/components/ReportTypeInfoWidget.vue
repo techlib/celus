@@ -131,19 +131,8 @@ export default {
         (item) => item.metric.name || item.metric.short_name,
       );
     },
-
-    specificDimensionsText() {
-      return this.reportType.dimensions_sorted
-        .map((item) => item.short_name)
-        .join(", ");
-    },
-
     specificDimensions() {
       return this.reportType.dimensions_sorted.map((item) => item.short_name);
-    },
-
-    standardDimensionsText() {
-      return this.standardDimensions.join(", ");
     },
   },
 };

@@ -127,7 +127,7 @@ export default {
     async runCeleryTask(task) {
       this.lastTask = null;
       try {
-        let result = await axios.post(`/api/run-task/${task.taskName}`, {});
+        await axios.post(`/api/run-task/${task.taskName}`, {});
         this.lastTask = {
           task: task,
           success: true,

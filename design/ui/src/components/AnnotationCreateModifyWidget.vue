@@ -444,9 +444,7 @@ export default {
     async deleteAnnotation() {
       if (this.annotationId) {
         try {
-          let response = await axios.delete(
-            `/api/annotations/${this.annotationId}/`,
-          );
+          await axios.delete(`/api/annotations/${this.annotationId}/`);
           this.showSnackbar({
             content: this.$t("annotations.messages.annotation_deleted"),
             color: "success",
@@ -488,12 +486,6 @@ export default {
       if (this.availablePlatformsUrl) {
         this.fetchPlatforms();
       }
-    },
-    startDate(newDate) {
-      this.formattedStartDate = this.formatDateToDDMMYYYY(newDate);
-    },
-    endDate(newDate) {
-      this.formattedEndDate = this.formatDateToDDMMYYYY(newDate);
     },
   },
 

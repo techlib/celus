@@ -7,16 +7,16 @@
     :headers="headers"
     :loading="loading"
   >
-    <template #[`item.created`]="{ item }">
+    <template #item.created="{ item }">
       <span v-html="formatDate(item.created)"></span>
     </template>
-    <template #[`item.unique_matched_titles`]="{ item }">
+    <template #item.unique_matched_titles="{ item }">
       <span v-html="formatInteger(item.unique_matched_titles)"></span>
     </template>
-    <template #[`item.tagged_titles`]="{ item }">
+    <template #item.tagged_titles="{ item }">
       <span v-html="formatInteger(item.tagged_titles)"></span>
     </template>
-    <template #[`item.already_tagged_titles`]="{ item }">
+    <template #item.already_tagged_titles="{ item }">
       <span v-html="formatInteger(item.already_tagged_titles)"></span>
     </template>
   </v-data-table>

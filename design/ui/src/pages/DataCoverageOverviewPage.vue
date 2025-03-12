@@ -343,7 +343,7 @@ cs:
             item-key="platform"
             item-value="platform"
           >
-            <template #[`item.records`]="{ item }">
+            <template #item.records="{ item }">
               {{ item.records.length }}
             </template>
             <template #top>

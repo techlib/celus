@@ -111,7 +111,7 @@ cs:
         </td>
       </tr>
     </template>
-    <template v-slot:[`item.data-table-expand`]="{ item }">
+    <template #item.data-table-expand="{ item }">
       <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
         <v-icon>
           {{
@@ -120,7 +120,7 @@ cs:
         </v-icon>
       </v-btn>
     </template>
-    <template v-slot:[`item.reports`]="{ item }">
+    <template #item.reports="{ item }">
       <ReportChip
         v-for="(report, index) in item.interest_reports"
         :key="index"
@@ -129,7 +129,7 @@ cs:
       >
       </ReportChip>
     </template>
-    <template v-slot:[`item.actions`]="{ item }">
+    <template #item.actions="{ item }">
       <v-icon
         size="small"
         class="mr-2"

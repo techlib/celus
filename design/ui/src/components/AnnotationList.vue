@@ -86,7 +86,7 @@ cs:
             </v-card>
           </v-dialog>
         </template>
-        <template v-slot:[`item.level`]="{ item }">
+        <template #item.level="{ item }">
           <v-tooltip location="bottom" v-if="item.level == 'info'">
             <template v-slot:activator="{ props }">
               <v-icon size="small" class="mr-2" color="blue" v-bind="props">
@@ -104,7 +104,7 @@ cs:
             <span v-text="$t('annotations.labels.level_important')"></span>
           </v-tooltip>
         </template>
-        <template v-slot:[`item.actions`]="{ item }">
+        <template #item.actions="{ item }">
           <v-icon
             v-if="item.can_edit"
             size="small"

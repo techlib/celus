@@ -179,9 +179,6 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
     }),
-    isReady() {
-      return this.selectedOrganization && this.titleId;
-    },
     platform() {
       return this.platformData;
     },

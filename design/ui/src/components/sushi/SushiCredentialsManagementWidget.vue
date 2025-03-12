@@ -624,7 +624,7 @@ cs:
         ref="credentialsTable"
         return-object
       >
-        <template v-slot:[`item.counter_reports`]="{ item }">
+        <template #item.counter_reports="{ item }">
           <v-chip
             v-for="(report, index) in item.counter_reports_long"
             :key="index"
@@ -636,7 +636,7 @@ cs:
             <SushiReportIndicator :report="report"></SushiReportIndicator>
           </v-chip>
         </template>
-        <template v-slot:[`item.counter_version`]="{ item }">
+        <template #item.counter_version="{ item }">
           <v-tooltip location="bottom" v-if="item.can_update && !item.broken">
             <template v-slot:activator="{ props }">
               <span v-bind="props">
@@ -669,7 +669,7 @@ cs:
             counterVersionToStr(item.counter_version)
           }}</strong>
         </template>
-        <template v-slot:[`item.last_harvestable_month`]="{ item }">
+        <template #item.last_harvestable_month="{ item }">
           <div
             v-for="rec in extractLastHarvestableMonth(
               item.counter_reports_long,
@@ -685,7 +685,7 @@ cs:
             ></v-badge>
           </div>
         </template>
-        <template v-slot:[`item.actions`]="{ item }">
+        <template #item.actions="{ item }">
           <v-btn
             v-if="!item.locked_for_me"
             variant="text"
@@ -732,7 +732,7 @@ cs:
             {{ $t("actions.show_overview_details") }}
           </v-tooltip>
         </template>
-        <template v-slot:[`item.title`]="{ item }">
+        <template #item.title="{ item }">
           <v-tooltip
             v-if="warnSameCredentials(item)"
             max-width="400"
@@ -750,7 +750,7 @@ cs:
             {{ item.title }}
           </span>
         </template>
-        <template v-slot:[`item.enabled`]="{ item }">
+        <template #item.enabled="{ item }">
           <CheckMark
             true-color="error"
             false-color="error"
@@ -785,10 +785,10 @@ cs:
             {{ $t("unverified_tooltip") }}
           </v-tooltip>
         </template>
-        <template v-slot:[`item.outside_consortium`]="{ item }">
+        <template #item.outside_consortium="{ item }">
           <CheckMark :model-value="item.outside_consortium"></CheckMark>
         </template>
-        <template v-slot:[`item.locked`]="{ item }">
+        <template #item.locked="{ item }">
           <!-- locked for me -->
           <v-tooltip location="bottom" v-if="item.locked && item.locked_for_me">
             <template v-slot:activator="{ props }">

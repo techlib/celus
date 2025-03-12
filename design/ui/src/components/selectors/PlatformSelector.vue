@@ -37,14 +37,12 @@
 
 <script>
 import ItemBadge from "@/components/util/ItemBadge";
-import AddPlatformButton from "@/components/AddPlatformButton.vue";
 import { all } from "mathjs";
 
 export default {
   name: "PlatformSelector",
 
   components: {
-    AddPlatformButton,
     ItemBadge,
   },
 
@@ -98,10 +96,6 @@ export default {
 </script>
 
 <style scoped>
-.margin-right-negative {
-  margin-left: -30px;
-}
-
 .subtitle {
   font-size: 80%;
   color: rgba(0, 0, 0, 0.5);

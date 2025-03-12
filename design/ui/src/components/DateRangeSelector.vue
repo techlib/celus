@@ -145,13 +145,6 @@ export default {
       setDateRangeStart: "changeDateRangeStart",
       setDateRangeEnd: "changeDateRangeEnd",
     }),
-    allowedEndMonths(value) {
-      let start = this.start;
-      if (start) {
-        return value >= start;
-      }
-      return true;
-    },
     formatDate(dateString) {
       if (dateString) {
         const date = new Date(dateString);
@@ -161,13 +154,6 @@ export default {
       } else {
         return this.$t("today");
       }
-    },
-    allowedStartMonths(value) {
-      let end = this.end;
-      if (end) {
-        return value <= end;
-      }
-      return true;
     },
   },
 };

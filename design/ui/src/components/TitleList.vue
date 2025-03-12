@@ -115,7 +115,7 @@ cs:
       class="auto-table"
       variant="comfortable"
     >
-      <template v-slot:[`item.name`]="{ item }">
+      <template #item.name="{ item }">
         <router-link
           v-if="platformId"
           :to="{
@@ -135,7 +135,7 @@ cs:
           <ShortenText :text="item.name"></ShortenText>
         </router-link>
       </template>
-      <template v-slot:[`item.pub_type`]="{ item }">
+      <template #item.pub_type="{ item }">
         <v-tooltip location="bottom">
           <template v-slot:activator="{ props }">
             <v-icon size="small" v-bind="props" color="lighterIcons">{{
@@ -158,7 +158,7 @@ cs:
           {{ formatInteger(item.interests[ig.short_name]) }}
         </span>
       </template>
-      <template v-slot:[`item.ratios`]="{ item }">
+      <template #item.ratios="{ item }">
         <SimplePie
           size="32"
           :parts="
@@ -168,7 +168,7 @@ cs:
           "
         ></SimplePie>
       </template>
-      <template v-slot:[`item.platforms`]="{ item }">
+      <template #item.platforms="{ item }">
         <v-tooltip
           v-for="([platform_id, interest], index) of Object.entries(
             item.interests,
@@ -205,7 +205,7 @@ cs:
           </div>
         </v-tooltip>
       </template>
-      <template #[`item.tags`]="{ props, item }">
+      <template #item.tags="{ props, item }">
         <TagChip
           v-bind="props"
           v-for="tag in objIdToTags.get(item.pk)"
@@ -523,23 +523,6 @@ export default {
         }
         this.loading = false;
       }
-    },
-    extractPubTypes(i18n) {
-      let all = {
-        title: i18n.t("pub_type.all"),
-        value: null,
-        icon: "fas fa-expand",
-      };
-      return [
-        all,
-        ...pubTypes.map((item) => {
-          return {
-            title: i18n.t(item.title),
-            icon: item.icon,
-            value: item.code,
-          };
-        }),
-      ];
     },
     async loadPlatforms() {
       const reply = await this.http({

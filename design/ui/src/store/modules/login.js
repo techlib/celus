@@ -69,7 +69,7 @@ export default {
       await dispatch("setShowLoginDialog", { show: true });
     },
     async signup({ commit, dispatch }, { email, password1, password2 }) {
-      let result = await axios.post(
+      await axios.post(
         "/api/rest-auth/registration/",
         {
           email: email,
@@ -98,7 +98,7 @@ export default {
         { headers: { "X-CSRFToken": csrftoken } },
       );
     },
-    async finishAuthentication({ commit, dispatch }) {
+    async finishAuthentication({ dispatch }) {
       await dispatch("loadUserData");
       await dispatch("afterAuthentication");
     },

@@ -179,10 +179,10 @@ cs:
             :headers="headers"
             :search="search"
           >
-            <template v-slot:[`item.is_admin`]="{ item }">
+            <template #item.is_admin="{ item }">
               <CheckMark :model-value="getIsAdmin(item)"></CheckMark>
             </template>
-            <template v-slot:[`item.actions`]="{ item }">
+            <template #item.actions="{ item }">
               <v-tooltip max-width="600px" location="bottom">
                 <template #activator="{ props }">
                   <v-icon
@@ -220,10 +220,7 @@ cs:
                 <span> {{ $t("send_invitation") }}</span>
               </v-tooltip>
             </template>
-            <template
-              v-if="user.is_superuser"
-              v-slot:[`item.superactions`]="{ item }"
-            >
+            <template v-if="user.is_superuser" #item.superactions="{ item }">
               <v-tooltip max-width="600px" location="bottom">
                 <template v-slot:activator="{ props }">
                   <v-icon

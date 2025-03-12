@@ -111,7 +111,7 @@ cs:
           :loading="loading"
           v-model:sort-by="sortBy"
         >
-          <template v-slot:[`item.name`]="props">
+          <template #item.name="props">
             <router-link
               :to="{
                 name: 'platform-detail',
@@ -180,7 +180,7 @@ cs:
               <span v-else :key="ig.pk + '-' + selectedYear">-</span>
             </v-fade-transition>
           </template>
-          <template v-slot:[`item.price`]="{ item }">
+          <template #item.price="{ item }">
             <span @click="editPrice(item)">
               <v-fade-transition leave-absolute>
                 <span :key="selectedYear">{{ formatInteger(item.price) }}</span>
@@ -190,7 +190,7 @@ cs:
               </span>
             </span>
           </template>
-          <template v-slot:[`header.price`]="{ column }">
+          <template #header.price="{ column }">
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
                 <span v-bind="props">

@@ -13,7 +13,8 @@ en:
   slot_tooltip_unknown: Data already exists in the database, probably from a deleted source. Will not harvest.
   slot_tooltip_rh-expired: Data are no longer harvestable via SUSHI. Will not attempt to reharvest.
   slot_tooltip_rh-ok: Data will be reharvested by deleting the existing data and harvesting it again.
-  reharvest_warning: Reharvesting will be performed by at first deleting the existing data and then harvesting it again. <strong>If the data is not available anymore, it will be lost</strong>!
+  reharvest_warning: Reharvesting will be performed by at first deleting the existing data and then harvesting it again.
+  reharvest_warning_inner: If the data is not available anymore, it will be lost!
   reports_to_harvest: Reports to harvest
 
 cs:
@@ -26,7 +27,8 @@ cs:
   slot_tooltip_unknown: Data již existují v databázi, pravděpodobně z odstraněného zdroje. Stahování nebude provedeno.
   slot_tooltip_rh-expired: Data již nejde stáhnout pomocí SUSHI. Nebude proveden pokus o znovustažení.
   slot_tooltip_rh-ok: Data budou znovu stažena smazáním existujících dat a jejich opětovným stažením.
-  reharvest_warning: Znovu stažení bude provedeno smazáním existujících dat a jejich opětovným stažením. <strong>Pokud data již nejsou dostupná, budou ztracena</strong>!
+  reharvest_warning: Znovu stažení bude provedeno smazáním existujících dat a jejich opětovným stažením.
+  reharvest_warning_inner: Pokud data již nejsou dostupná, budou ztracena!
   reports_to_harvest: Reporty k stažení
 </i18n>
 
@@ -85,7 +87,8 @@ cs:
       variant="outlined"
       class="mb-4"
     >
-      <span v-html="$t('reharvest_warning')"></span>
+      {{ $t("reharvest_warning") }}
+      <strong>{{ $t("reharvest_warning_inner") }}</strong>
     </v-alert>
 
     <v-data-table hide-default-footer>

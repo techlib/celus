@@ -140,7 +140,7 @@ cs:
           :must-sort="true"
           v-model:sort-by="tableOptions.sortBy"
         >
-          <template v-slot:[`footer.prepend`]="">
+          <template #footer.prepend="">
             <v-btn
               size="x-small"
               variant="plain"
@@ -151,7 +151,7 @@ cs:
               {{ $t("actions.refresh") }}
             </v-btn>
           </template>
-          <template v-slot:[`item.pk`]="{ item }">
+          <template #item.pk="{ item }">
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
                 <v-btn
@@ -184,20 +184,20 @@ cs:
               }}</span>
             </v-tooltip>
           </template>
-          <template v-slot:[`item.manual`]="{ item }">
+          <template #item.manual="{ item }">
             <CheckMark
               :true-tooltip="$t('tooltip.manual')"
               :false-tooltip="$t('tooltip.automatic')"
               :model-value="item.manual"
             ></CheckMark>
           </template>
-          <template v-slot:[`item.created`]="{ item }">
+          <template #item.created="{ item }">
             <div
               class="date_format"
               v-html="formatDateTime(item.created)"
             ></div>
           </template>
-          <template v-slot:[`item.last_processed`]="{ item }">
+          <template #item.last_processed="{ item }">
             <div
               class="date_format"
               v-html="
@@ -205,13 +205,13 @@ cs:
               "
             ></div>
           </template>
-          <template v-slot:[`item.month`]="{ item }">
+          <template #item.month="{ item }">
             <span v-html="formatYM(item.start_date)"></span>
             <div v-if="formatYM(item.start_date) != formatYM(item.end_date)">
               <span v-html="' ' + formatYM(item.end_date)"></span>
             </div>
           </template>
-          <template #[`item.lastAttempt`]="{ item }">
+          <template #item.lastAttempt="{ item }">
             <span v-if="item.finished || !item.lastAttempt">-</span>
             <div
               v-else
@@ -219,7 +219,7 @@ cs:
               v-html="formatDateTime(item.lastAttempt)"
             ></div>
           </template>
-          <template #[`item.finishedRatio`]="{ item }">
+          <template #item.finishedRatio="{ item }">
             <v-icon size="x-small" v-if="item.working"
               >fa fa-cog fa-spin</v-icon
             >

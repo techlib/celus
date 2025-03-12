@@ -1173,11 +1173,6 @@ export default {
         "changeForceDisableOrganizationSelector",
       selectOrganization: "selectOrganization",
     }),
-    highlightStyle(highlighted) {
-      return highlighted
-        ? { "background-color": "rgba(255, 255, 0, .15)" }
-        : {};
-    },
     filledIn(v) {
       if (v === null) return "File must be filled in";
       return true;
@@ -1479,7 +1474,6 @@ export default {
     },
     nibblerErrorText(error) {
       const sheet_idx = error.sheet_idx;
-      const name = error.name;
       const parsers_info = error.parsers_info;
       let prefix = "";
       if (sheet_idx != null) {
