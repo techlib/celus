@@ -1234,10 +1234,12 @@ class TestTitlesOnMultiplePlatforms:
         at_attr = tr.dim_name_to_dim_attr("Access_Type")
         yop_dim = tr.dimension_by_attr_name(yop_attr)
         at_dim = tr.dimension_by_attr_name(at_attr)
-        t1 = TitleFactory(pub_type="J", name="foo", issn="1234-5678")
-        t2 = TitleFactory(pub_type="J", name="bar", eissn="2345-6789")
-        t3 = TitleFactory(pub_type="J", name="foobar", issn="1234-9876")
-        t4 = TitleFactory(pub_type="B", name="bazooka", doi="10.1007/9876.5432")
+        t1 = TitleFactory(pub_type="J", name="foo", issn="1234-5678", doi="", isbn="", eissn="")
+        t2 = TitleFactory(pub_type="J", name="bar", eissn="2345-6789", doi="", isbn="", issn="")
+        t3 = TitleFactory(pub_type="J", name="foobar", issn="1234-9876", doi="", isbn="", eissn="")
+        t4 = TitleFactory(
+            pub_type="B", name="bazooka", doi="10.1007/9876.5432", isbn="", eissn="", issn=""
+        )
         p1, p2 = PlatformFactory.create_batch(2)
         ib1 = ImportBatchFactory(report_type=tr, organization=org, platform=p1)
         ib2 = ImportBatchFactory(report_type=tr, organization=org, platform=p2)
