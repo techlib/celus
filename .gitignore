@@ -9,7 +9,8 @@ celerybeat-schedule
 /.pytest_cache
 .~*
 media/*
-/.env
+/.env.*
 /venv
 error.log
 .DS_Store
+apps/core/static/

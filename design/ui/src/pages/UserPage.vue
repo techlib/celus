@@ -17,7 +17,7 @@ en:
   logout: Log out
   change_password: Change password
   impersonation:
-    title: impersonation
+    title: Impersonation
     email: Email
     text: You are a consortial manager, so you can switch to other user accounts.
     first_name: First name
@@ -65,7 +65,7 @@ cs:
 </i18n>
 
 <template>
-  <v-container v-if="loggedIn && user" class="text-center">
+  <v-container v-if="loggedIn && user" class="text-center" max-width="1000px">
     <v-row>
       <v-col>
         <!--
@@ -175,6 +175,7 @@ cs:
         </v-card-actions>
       </v-card>
     </v-row>
+    <v-divider thickness="4" color="secondary" opacity="0.4" class="my-12" />
     <v-row>
       <v-col>
         <h2>{{ $t("associated_organizations") }}</h2>
@@ -186,7 +187,7 @@ cs:
       </v-col>
     </v-row>
     <v-row>
-      <v-col>
+      <v-col class="text-left">
         <v-data-table :items="organizationList" :headers="headers">
           <template #item.is_admin="{ item }">
             <CheckMark :model-value="item.is_admin"></CheckMark>
@@ -194,8 +195,15 @@ cs:
         </v-data-table>
       </v-col>
     </v-row>
-    <v-row v-if="showImpersonate" class="mb-2" align="center" justify="center">
-      <v-col cols="12" md="10">
+    <v-divider
+      thickness="4"
+      color="secondary"
+      opacity="0.4"
+      class="my-12"
+      v-if="showImpersonate"
+    />
+    <v-row v-if="showImpersonate" class="mb-2">
+      <v-col>
         <h2 v-text="$t('impersonation.title')"></h2>
         <div class="font-weight-light mt-2 mb-4">
           {{ $t("impersonation.text") }}
