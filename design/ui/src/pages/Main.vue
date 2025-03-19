@@ -125,7 +125,7 @@ div.v-input {
   top: 0 !important;
 
   @media screen and (min-height: 720px) {
-    top: 10vh !important;
+    top: 2vh !important;
   }
 }
 
