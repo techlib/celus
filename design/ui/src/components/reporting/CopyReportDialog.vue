@@ -14,6 +14,7 @@
       @update="copyReport"
       :copyReport="true"
       :reportAccess="this.report.accessLevel"
+      :createdOrg="this.report.ownerOrganization"
     >
       <template #top>
         <span v-text="$t('original_title')"></span>:

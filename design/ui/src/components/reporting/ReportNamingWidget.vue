@@ -26,7 +26,7 @@
           :model-value="ownershipType"
           :copyReport="copyReport"
           :reportAccess="reportAccess"
-          :createNew="createNew"
+          :createdOrg="createdOrg"
         ></AccessLevelSelector>
       </v-card-text>
       <v-card-actions>
@@ -75,7 +75,7 @@ export default {
       default: false,
     },
     reportAccess: { type: String, required: false },
-    createNew: { type: Boolean, default: false },
+    createdOrg: { type: Number, required: false },
   },
   emits: ["update"],
   data() {

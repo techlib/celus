@@ -17,7 +17,7 @@ en:
   save_success: Report was successfully saved.
   report_title: Report title
   report_description: Report description
-  please_fill_in_title: Please fill in report title and access level and hit 'Save changes' again.
+  please_fill_in_title: Report title is required in order to save the report.
   select_at_least_one_column_dim: At least one column dimension must be selected.
   split_to_parts: Split report to parts by selected attribute
   dont_split: "-- no splitting --"
@@ -66,7 +66,7 @@ cs:
   save_success: Report byl úspěšně uložen.
   report_title: Název reportu
   report_description: Popis reportu
-  please_fill_in_title: Vyplňte prosím název reportu a úroveň přístupu výše a pak stiskněte tlačítko 'Uložit změny' znovu.
+  please_fill_in_title: Název reportu je vyžadován před jeho uložením
   select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
   split_to_parts: Rozdělit report na části podle vybraného atributu
   dont_split: "-- nedělit --"
@@ -110,6 +110,7 @@ cs:
         <v-row v-if="wantsSave">
           <v-col cols="8" md="5">
             <v-text-field
+              ref="reportNameField"
               :disabled="readOnly"
               v-model="reportName"
               class="font-weight-light text-h5"
@@ -192,6 +193,8 @@ cs:
               :disabled="readOnly"
               :model-value="accessLevel"
               @update:modelValue="updateAccessLevel"
+              @update:isValidOrg="accessLevelValid = $event"
+              :createNew="true"
             ></AccessLevelSelector>
           </v-col>
         </v-row>
@@ -245,7 +248,7 @@ cs:
               <template #activator="{ props }">
                 <v-btn
                   elevation="2"
-                  fab
+                  icon
                   size="small"
                   color="primary"
                   @click="edit = true"
@@ -905,7 +908,7 @@ cs:
             <v-btn
               @click="wantsSave ? saveReport() : (showNameEditDialog = true)"
               color="primary"
-              :disabled="!(formValid && hasGroupBy)"
+              :disabled="!(formValid && hasGroupBy) || !accessLevelValid"
             >
               <v-icon class="mr-1" size="small">far fa-hdd</v-icon>
               {{
@@ -1023,6 +1026,9 @@ export default {
       row: "organization",
       columns: [],
       filters: [],
+      rules: {
+        required: (value) => !!value || this.$t("please_fill_in_title"),
+      },
       splitBy: null,
       tableDimension: null,
       selectedMetrics: [],
@@ -1077,6 +1083,7 @@ export default {
       initialLoad: true,
       reportViews: [], // list of standard views associated with selected rt
       mailingCount: 0,
+      accessLevelValid: true,
     };
   },
 
@@ -1455,6 +1462,23 @@ export default {
       await this.saveReport();
     },
     async saveReport() {
+      if (this.wantsSave && !this.reportName) {
+        if (this.$refs.reportNameField) {
+          this.$refs.reportNameField.validate();
+          await this.goTo(this.$refs.reportNameField.$el, {
+            duration: 300,
+            offset: -100,
+          });
+          await this.$nextTick();
+          this.$refs.reportNameField.focus();
+          const inputElement =
+            this.$refs.reportNameField.$el.querySelector("input");
+          if (inputElement) {
+            inputElement.focus();
+          }
+        }
+        return;
+      }
       if (!this.formValid) {
         return;
       }
