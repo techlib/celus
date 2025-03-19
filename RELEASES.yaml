@@ -1,3 +1,19 @@
+- version: 8.0.4
+  title:
+    en: Bugfix release 8.0.4
+    cs: Opravná verze 8.0.4
+  text:
+    en: |
+      - Display of platform filter in SUSHI 5.1 credentials was fixed
+      - Several other small fixes were introduced
+    cs: |
+      - Bylo opraveno zobrazení filtru platforem v SUSHI 5.1 přihlašovacích údajích
+      - Bylo provedeno několik dalších drobných oprav
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 8.0.3
   title:
     en: Bugfix release 8.0.3 brings several fixes

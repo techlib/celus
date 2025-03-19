@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.4]  - 2025-03-20
+
+### Changes
+
+#### Backend
+
+* enforce that `ImportBatch.date` is not null
+* make it possible to batch edit organizations in the Django admin by uploading a CSV file
+* remove `dateparser` from python requirements
+
+### Fixed
+
+#### Frontend
+
+* properly display platform filter of C5.1 credentials in sushi edit dialog
+* fix incorrect Czech text after successful copy of a report
+* reload credentials once harvest dialog in DataOverview is closed in order to update broken state
+  of the credentials
+* deleting tag class in UI enforces update of the tag class list
+* fix error in websocket transmission of events with count data
+
+#### Backend
+
+* ensure that tags are preserved when merging titles
+* fix loading of C5.1 credentials from file incorrectly assigning C5.0 reports to the credentials
+
 
 ## [8.0.3]  - 2025-02-22
 
