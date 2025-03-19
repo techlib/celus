@@ -33,6 +33,7 @@ en:
   chunk_data: all usage data for the platform
   what_will_be_deleted: What will be deleted
   what_will_be_preserved: What will be preserved
+  no_problem_closing_dialog: Feel free to close this dialog. The deletion process will continue in the background.
 cs:
   dialog_text1: |
     Chystáte se smazat veškerá data o využívanosti platformy "<strong>{platform}</strong>".
@@ -65,6 +66,7 @@ cs:
   chunk_data: všechna data o využívanosti pro platformu
   what_will_be_deleted: Co bude smazáno
   what_will_be_preserved: Co bude zachováno
+  no_problem_closing_dialog: Tento dialog můžete bezpečně zavřít. Proces mazání bude pokračovat na pozadí.
 </i18n>
 
 <template>
@@ -202,6 +204,11 @@ cs:
               :value="task.progressPercentage"
               >{{ progressText }}</v-progress-linear
             >
+            <v-alert type="info" variant="tonal" density="compact" class="mt-4">
+              <div>
+                {{ $t("no_problem_closing_dialog") }}
+              </div>
+            </v-alert>
           </div>
         </v-card-text>
         <v-card-actions v-if="task === null" class="pb-4 mx-2">

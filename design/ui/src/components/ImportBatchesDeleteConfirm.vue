@@ -10,6 +10,7 @@ en:
     title_reharvest: Delete before reharvest
     records_reharvest: Do you really want to continue reharvesting by deleting following records?
     delete_btn_reharvest: Delete & reharvest
+  no_problem_closing_dialog: Feel free to close this dialog. The deletion process will continue in the background.
 cs:
   confirm_delete:
     title: Potvrzení smazání
@@ -19,6 +20,7 @@ cs:
     title_reharvest: Smazat před reharvestem
     records_reharvest: Opravdu si přejete pokračovat v reharvestu smazáním následujících záznamů?
     delete_btn_reharvest: Smazat a reharvestovat
+  no_problem_closing_dialog: Tento dialog můžete bezpečně zavřít. Proces mazání bude pokračovat na pozadí.
 </i18n>
 
 <template>
@@ -43,6 +45,17 @@ cs:
         :loading="loading"
       ></ImportBatchesList>
       <p v-else>{{ $t("confirm_delete.no_data") }}</p>
+      <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="me-3"
+        v-if="deleting"
+      >
+        <div>
+          {{ $t("no_problem_closing_dialog") }}
+        </div>
+      </v-alert>
     </v-card-text>
     <v-card-actions>
       <v-btn
