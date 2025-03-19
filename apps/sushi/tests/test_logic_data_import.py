@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 from core.fake_data import DataSourceFactory
 from core.models import DataSource
+from django.db.models import F, Q
 from faker import Faker
 from openpyxl import Workbook
 from organizations.fake_data import OrganizationFactory
@@ -16,7 +17,7 @@ from sushi.logic.data_import import (
     import_sushi_credentials_new,
     import_sushi_credentials_old,
 )
-from sushi.models import AttemptStatus
+from sushi.models import AttemptStatus, CounterReportsToCredentials
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
     data_sources,
@@ -242,6 +243,12 @@ class TestLogicDataImportXLSX:
 
             # retry
             stats = import_sushi_credentials_new(records, counter_version=counter5_version)
+            assert (
+                CounterReportsToCredentials.objects.filter(
+                    ~Q(credentials__counter_version=F("counter_report__counter_version"))
+                ).count()
+                == 0
+            ), "Counter version of credentials and report types has to be the same"
             assert stats["skipped"] == 2
         assert SushiCredentials.objects.count() == 2
 
@@ -348,6 +355,12 @@ class TestLogicDataImportXLSX:
             }
         ]
         stats = import_sushi_credentials_new(records, counter_version=counter5_version)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["error"] == error
         assert stats["added"] == added
 
@@ -396,6 +409,12 @@ class TestLogicDataImportCSV:
         ]
         Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["added"] == 3
         assert stats["error"] == 1, "the last record is missing organization"
         assert SushiCredentials.objects.count() == 3
@@ -425,6 +444,12 @@ class TestLogicDataImportCSV:
         assert {crt.code for crt in cr3.counter_reports.all()} == {"IR"}
         # retry
         stats = import_sushi_credentials_old(data)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["skipped"] == 3
         assert SushiCredentials.objects.count() == 3
 
@@ -462,6 +487,12 @@ class TestLogicDataImportCSV:
         ]
         Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["added"] == 3
         assert SushiCredentials.objects.count() == 3
         # retry
@@ -469,6 +500,12 @@ class TestLogicDataImportCSV:
         data[1]["extra_attrs"] = "api_key=kekekeyyy;foo=bar"
         data[2]["extra_attrs"] = "foot=ball"
         stats = import_sushi_credentials_old(data)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["skipped"] == 1
         assert stats["synced"] == 2
         assert SushiCredentials.objects.count() == 3
@@ -519,6 +556,12 @@ class TestLogicDataImportCSV:
             },
         ]
         stats = import_sushi_credentials_old(data)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["added"] == 2, "one global and one for org specific platform"
         assert stats["error"] == 1, "one org specific platform not matching"
         assert SushiCredentials.objects.count() == 2, "one global and one for org specific platform"
@@ -554,6 +597,12 @@ class TestLogicDataImportCSV:
         ]
         Platform.objects.create(short_name="XXX", name="XXXX")
         stats = import_sushi_credentials_old(data, override_organization=org3)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["added"] == 2
         assert SushiCredentials.objects.count() == 2
         assert SushiCredentials.objects.filter(organization=org3).count() == 2
@@ -576,6 +625,12 @@ class TestLogicDataImportCSV:
         Platform.objects.create(short_name="XXX", name="XXXX")
         extra = {"default_version": default_version} if default_version is not None else {}
         stats = import_sushi_credentials_old(data, **extra)
+        assert (
+            CounterReportsToCredentials.objects.filter(
+                ~Q(credentials__counter_version=F("counter_report__counter_version"))
+            ).count()
+            == 0
+        ), "Counter version of credentials and report types has to be the same"
         assert stats["added"] == 1
         cr1 = SushiCredentials.objects.first()
         assert cr1.counter_version == (5 if default_version is None else default_version)

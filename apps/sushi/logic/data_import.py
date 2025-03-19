@@ -298,7 +298,7 @@ def import_sushi_credentials_new(
             ):
                 for report_type in provider["assigned_report_types"]:
                     if rt := CounterReportType.objects.filter(
-                        code=report_type["report_type"]
+                        code=report_type["report_type"], counter_version=counter_version
                     ).first():
                         if report_type["report_type"] not in linked_rts:
                             CounterReportsToCredentials.objects.create(
@@ -531,7 +531,9 @@ def import_sushi_credentials_old(
         for report_type in report_types:
             report_type = report_type.strip()
             if report_type and report_type not in linked_rts:
-                if rt := CounterReportType.objects.filter(code=report_type).first():
+                if rt := CounterReportType.objects.filter(
+                    code=report_type, counter_version=version
+                ).first():
                     CounterReportsToCredentials.objects.create(credentials=cr, counter_report=rt)
                     stats["report_type_assigned"] += 1
                 else:
