@@ -322,7 +322,7 @@ export default {
       if (match(value, search)) {
         return true;
       }
-      for (const im of item.interest_metric_set) {
+      for (const im of item.raw.interest_metric_set) {
         if (match(im.metric.short_name, search)) {
           return true;
         }
