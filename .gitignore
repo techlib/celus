@@ -8,9 +8,13 @@ locale/*/LC_MESSAGES/django.mo
 celerybeat-schedule
 /.pytest_cache
 .~*
-media/*
+/media
 /.env.*
 /venv
 error.log
 .DS_Store
 apps/core/static/
+design/ui/node_modules*
+tmp/
+docs/_build/
+design/ui/.yarn/
