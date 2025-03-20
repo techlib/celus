@@ -1,11 +1,11 @@
 from unittest.mock import patch
 
 import pytest
-from publications.models import PlatformInterestReport
+from publications.tests.conftest import interest_rt  # noqa - fixture
 
-from logs.fake_data import MetricFactory
-from logs.logic.materialized_interest import smart_interest_sync
-from logs.models import ImportBatch, InterestGroup, LastAction, ReportInterestMetric
+from logs.fake_data import InterestGroupFactory, MetricFactory
+from logs.logic.interest.computation import smart_interest_sync
+from logs.models import ImportBatch, LastAction, ReportInterestMetric
 
 
 @pytest.mark.django_db()
@@ -53,81 +53,36 @@ class TestLastActionInterestChange:
         LastAction.objects.create(action="bar")
         assert LastAction.should_run(self_action, trigger_action) is should_run
 
-    def test_last_interest_change_marked_when_platformreporttype_changes(
-        self, platform, report_type_nd
-    ):
-        rt = report_type_nd(0)
-        report_type_nd(0, short_name="interest")
-        assert ImportBatch.objects.count() == 0
-        with patch(
-            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
-        ) as mock:
-            mock.return_value = ImportBatch.objects.none()
-            smart_interest_sync()
-            mock.assert_called_once()
-        # try again - now it should be skipped because interest definition
-        # did not change in the meantime
-        with patch(
-            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
-        ) as mock:
-            smart_interest_sync()
-            mock.assert_not_called()
-        # now create PlatformInterestReport, thus changing interest definition
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=rt)
-        with patch(
-            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
-        ) as mock:
-            mock.return_value = ImportBatch.objects.none()
-            smart_interest_sync()
-            mock.assert_called_once()
-        # try again - now it should be skipped because interest definition
-        # did not change in the meantime
-        with patch(
-            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
-        ) as mock:
-            smart_interest_sync()
-            mock.assert_not_called()
-        # delete the PlatformInterestReport - changes interest definition again
-        pir.delete()
-        with patch(
-            "logs.logic.materialized_interest._find_platform_report_type_disconnect"
-        ) as mock:
-            mock.return_value = ImportBatch.objects.none()
-            smart_interest_sync()
-            mock.assert_called_once()
-
     def test_last_interest_change_marked_when_reportinterestmetric_changes(
-        self, platform, report_type_nd
+        self, platform, report_type_nd, interest_rt
     ):
         rt = report_type_nd(0)
-        report_type_nd(0, short_name="interest")
         metric = MetricFactory.create()
-        ig = InterestGroup.objects.create(short_name="foo", name="FOO", position=1)
+        ig = InterestGroupFactory(short_name="foo", name="FOO", position=1)
         assert ImportBatch.objects.count() == 0
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt)
-        with patch("logs.logic.materialized_interest._find_metric_interest_changes") as mock:
+        with patch("logs.logic.interest.computation._find_metric_interest_changes") as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
         # try again - now it should be skipped because interest definition
         # did not change in the meantime
-        with patch("logs.logic.materialized_interest._find_metric_interest_changes") as mock:
+        with patch("logs.logic.interest.computation._find_metric_interest_changes") as mock:
             smart_interest_sync()
             mock.assert_not_called()
         # now create ReportInterestMetric, thus changing interest definition
         rim = ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
-        with patch("logs.logic.materialized_interest._find_metric_interest_changes") as mock:
+        with patch("logs.logic.interest.computation._find_metric_interest_changes") as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()
         # try again - now it should be skipped because interest definition
         # did not change in the meantime
-        with patch("logs.logic.materialized_interest._find_metric_interest_changes") as mock:
+        with patch("logs.logic.interest.computation._find_metric_interest_changes") as mock:
             smart_interest_sync()
             mock.assert_not_called()
         # delete the ReportInterestMetric - changes interest definition again
         rim.delete()
-        with patch("logs.logic.materialized_interest._find_metric_interest_changes") as mock:
+        with patch("logs.logic.interest.computation._find_metric_interest_changes") as mock:
             mock.return_value = ImportBatch.objects.none()
             smart_interest_sync()
             mock.assert_called_once()

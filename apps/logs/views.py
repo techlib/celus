@@ -208,14 +208,11 @@ class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
     queryset = (
         ReportType.objects.exclude_materialized()
         .exclude(short_name="interest", source__isnull=True)
-        .annotate(used_by_platforms=Count("platforminterestreport__platform", distinct=True))
         .prefetch_related(
             "interest_metrics",
             Prefetch(
                 "reportinterestmetric_set",
-                queryset=ReportInterestMetric.objects.select_related(
-                    "metric", "target_metric", "interest_group"
-                ),
+                queryset=ReportInterestMetric.objects.select_related("metric", "interest_group"),
             ),
             "controlled_metrics",
         )

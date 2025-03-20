@@ -3,6 +3,7 @@ from core.logic.serialization import b64json
 from django.urls import reverse
 from organizations.models import UserOrganization
 from publications.fake_data import PlatformFactory
+from publications.tests.conftest import interest_rt  # noqa - fixture
 from sushi.fake_data import CredentialsFactory
 from tags.fake_data import TagFactory
 from tags.models import TagScope, TitleTag
@@ -534,7 +535,14 @@ class TestSlicerAPI:
 
     @pytest.mark.parametrize(["end_date", "exp_ib_max"], (("2020-02-28", 2), (None, 0)))
     def test_report_coverage_no_data(
-        self, clients, organizations, report_types, counter_report_types, end_date, exp_ib_max
+        self,
+        clients,
+        organizations,
+        report_types,
+        counter_report_types,
+        end_date,
+        exp_ib_max,
+        interest_rt,
     ):
         pl = PlatformFactory.create()  # create one platform
         org = organizations["branch"]

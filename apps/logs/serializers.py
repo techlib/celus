@@ -207,11 +207,10 @@ class ReportTypeSerializer(ModelSerializer):
 class ReportInterestMetricSerializer(ModelSerializer):
     interest_group = InterestGroupSerializer(read_only=True)
     metric = MetricSerializer(read_only=True)
-    target_metric = MetricSerializer(read_only=True)
 
     class Meta:
         model = ReportInterestMetric
-        fields = ("metric", "report_type", "target_metric", "interest_group")
+        fields = ("metric", "report_type", "interest_group")
 
 
 class ReportTypeExtendedSerializer(ModelSerializer):
@@ -244,9 +243,6 @@ class ReportTypeInterestSerializer(ModelSerializer):
     interest_metric_set = ReportInterestMetricSerializer(
         many=True, read_only=True, source="reportinterestmetric_set"
     )
-    # used_by_platforms is added as an annotation in one case where it is important
-    # it is a number of platforms that use this report type to define interest
-    used_by_platforms = IntegerField(read_only=True, default=0)
 
     class Meta:
         model = ReportType
@@ -259,7 +255,6 @@ class ReportTypeInterestSerializer(ModelSerializer):
             "desc",
             "interest_metric_set",
             "approx_record_count",
-            "used_by_platforms",
         )
 
 

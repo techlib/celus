@@ -48,7 +48,7 @@ cs:
               :organization="organizationId"
               primary-dimension="date"
               :report-type-id="interestReportType.pk"
-              secondary-dimension="Interest_Type"
+              secondary-dimension="metric"
               raw-report-type
               stack
               dashboard-chart

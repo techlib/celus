@@ -17,7 +17,7 @@ from logs.fake_data import ImportBatchFactory, MetricFactory
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from publications.fake_data import PlatformFactory
 from publications.logic import knowledgebase
-from publications.models import Platform, PlatformInterestReport
+from publications.models import Platform
 from scheduler.models import FetchIntention
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportPlatform, SushiCredentials
@@ -160,13 +160,6 @@ class TestPlatformImportAttempt:
         attempt.save()
 
         attempt.process(PLATFORM_INPUT_DATA)
-
-        default_rt_pks = set(
-            ReportType.objects.filter(default_platform_interest=True).values_list(
-                "short_name", flat=True
-            )
-        )
-
         # Check update
         assert attempt.stats == {"created": 3, "total": 3}
 
@@ -181,14 +174,6 @@ class TestPlatformImportAttempt:
         assert platform1.knowledgebase["report_types"] == PLATFORM_INPUT_DATA[0]["report_types"]
         assert platform1.knowledgebase["platform_filter"] is None
         assert platform1.knowledgebase["notes_url"] is None
-        assert (
-            set(
-                platform1.platforminterestreport_set.values_list(
-                    "report_type__short_name", flat=True
-                )
-            )
-            == default_rt_pks
-        ), "Interest report types created check"
 
         platform2 = Platform.objects.get(short_name="AACR")
         assert platform2.url == "https://www.aacr.org/"
@@ -203,15 +188,6 @@ class TestPlatformImportAttempt:
         )
         assert platform2.knowledgebase["notes_url"] == PLATFORM_INPUT_DATA[1]["notes_url"]
 
-        assert (
-            set(
-                platform2.platforminterestreport_set.values_list(
-                    "report_type__short_name", flat=True
-                )
-            )
-            == default_rt_pks
-        ), "Interest report types created check"
-
         platform3 = Platform.objects.get(short_name="APS")
         assert platform3.url == "https://www.journals.aps.org/"
         assert platform3.provider == "APS"
@@ -223,14 +199,6 @@ class TestPlatformImportAttempt:
         assert platform3.knowledgebase["report_types"] == []
         assert platform3.knowledgebase["platform_filter"] is None
         assert platform3.knowledgebase["notes_url"] is None
-        assert (
-            set(
-                platform3.platforminterestreport_set.values_list(
-                    "report_type__short_name", flat=True
-                )
-            )
-            == default_rt_pks
-        ), "Interest report types created check"
 
         # Same data
         attempt = PlatformImportAttempt(source=data_sources["brain"])
@@ -810,12 +778,10 @@ class TestReportTypeImportAttempt:
         assert report_type3.interest_metrics.order_by("id").first().short_name == "metric2"
         assert report_type3.interest_metrics.order_by("id").last().short_name == "metric3"
         assert report_type3.reportinterestmetric_set.all().count() == 2
-        assert report_type3.reportinterestmetric_set.order_by("id").first().target_metric is None
         assert (
             report_type3.reportinterestmetric_set.order_by("id").first().interest_group.short_name
             == "search"
         )
-        assert report_type3.reportinterestmetric_set.order_by("id").last().target_metric is None
         assert (
             report_type3.reportinterestmetric_set.order_by("id").last().interest_group.short_name
             == "other"
@@ -874,14 +840,8 @@ class TestParserDefinitionImportAttempt:
 
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
-        assert not PlatformInterestReport.objects.filter(
-            report_type=report_types["custom1"], platform=platforms["brain"]
-        ).exists(), "related PlatformInterestReport does not exit"
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"same": 1, "total": 1}, "All same"
-        assert not PlatformInterestReport.objects.filter(
-            report_type=report_types["custom1"], platform=platforms["brain"]
-        ).exists(), "PlatformInterestReport was not created"
 
         definition["parser_name"] = "parserX"
         ReportInterestMetric.objects.create(
@@ -893,9 +853,6 @@ class TestParserDefinitionImportAttempt:
         attempt.save()
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"updated": 1, "total": 1}, "One updated"
-        assert PlatformInterestReport.objects.filter(
-            report_type=report_types["custom1"], platform=platforms["brain"]
-        ).exists(), "PlatformInterestReport was created"
 
         definition["pk"] += 1
         definition["parser_name"] = "parserY"

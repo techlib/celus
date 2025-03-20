@@ -31,6 +31,7 @@ export default defineConfig({
         configFile: "src/styles/settings.scss",
       },
     }),
+    vueDevTools(),
     ViteFonts({
       google: {
         families: [

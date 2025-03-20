@@ -32,7 +32,7 @@ class IsMaterialized(admin.SimpleListFilter):
 
 class ReportInterestMetricInline(TabularInline):
     model = ReportInterestMetric
-    fields = ["metric", "interest_group", "target_metric"]
+    fields = ["metric", "interest_group"]
 
 
 class ReportTypeForm(forms.ModelForm):
@@ -63,7 +63,7 @@ class ReportTypeAdmin(TranslationAdmin):
         "record_count",
     ]
     ordering = ["short_name"]
-    list_filter = ["source", IsMaterialized, "default_platform_interest"]
+    list_filter = ["source", IsMaterialized]
     readonly_fields = ["approx_record_count", "materialization_date"]
     inlines = [ReportInterestMetricInline]
     list_select_related = ["source__organization"]
@@ -135,10 +135,10 @@ class MetricAdmin(TranslationAdmin):
 
 @admin.register(models.ReportInterestMetric)
 class ReportInterestMetricAdmin(TranslationAdmin):
-    list_display = ["report_type", "metric", "interest_group", "target_metric"]
+    list_display = ["report_type", "metric", "interest_group"]
     list_filter = ["report_type", "metric", "interest_group"]
     search_fields = ["report_type__short_name", "report_type__name", "metric__name"]
-    list_select_related = ["report_type", "metric", "target_metric", "interest_group"]
+    list_select_related = ["report_type", "metric", "interest_group"]
 
 
 @admin.register(models.Dimension)
@@ -292,3 +292,30 @@ class ManualDataUploadAdmin(admin.ModelAdmin):
 @admin.register(models.LastAction)
 class LastActionAdmin(admin.ModelAdmin):
     list_display = ["action", "last_updated"]
+
+
+@admin.register(models.InterestProfile)
+class InterestProfileAdmin(admin.ModelAdmin):
+    list_display = ["short_name", "name", "desc"]
+
+
+@admin.register(models.DimensionFilter)
+class DimensionFilterAdmin(admin.ModelAdmin):
+    list_display = ["dimension", "values", "negated"]
+
+
+class InterestFilterInline(TabularInline):
+    model = models.InterestFilter
+    fields = ["filter"]
+    extra = 0
+
+
+@admin.register(models.InterestConfig)
+class InterestConfigAdmin(admin.ModelAdmin):
+    list_display = ["organization", "interest_profile", "filters"]
+    list_filter = ["organization", "interest_profile"]
+    list_select_related = ["organization", "interest_profile"]
+    inlines = [InterestFilterInline]
+
+    def filters(self, obj: models.InterestConfig):
+        return "; ".join(str(e) for e in obj.interest_filters.all())

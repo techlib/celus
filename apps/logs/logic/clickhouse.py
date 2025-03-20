@@ -392,9 +392,14 @@ def compare_titles_with_clickhouse(import_batch_id: Optional[int] = None) -> Com
 
 @needs_clickhouse_sync
 def deal_with_comparison_results(results: ComparisonResult, delete_batch_size=1_000):
-    for ib in ImportBatch.objects.filter(pk__in=results.import_batches_to_resync):
-        logger.debug("Resyncing #%s", ib.pk)
-        resync_import_batch_with_clickhouse(ib)
+    iterator = iter(results.import_batches_to_resync)
+    while ib_batch := ImportBatch.objects.filter(pk__in=list(islice(iterator, 100))):
+        # batching IBs into batches seems to be a bit faster (like 20%) than processing them
+        # one by one
+        with atomic():
+            for ib in ib_batch:
+                logger.debug("Resyncing #%s", ib.pk)
+                resync_import_batch_with_clickhouse(ib)
     iterator = iter(results.import_batches_to_delete)
     while batch := list(islice(iterator, delete_batch_size)):
         logger.debug("Deleting batch %s", batch)

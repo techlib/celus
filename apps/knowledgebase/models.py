@@ -28,7 +28,7 @@ from logs.models import (
     ReportTypeToDimension,
 )
 from nibbler.models import ParserDefinition
-from publications.models import Platform, PlatformInterestReport
+from publications.models import Platform
 from semantic_version import Version
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
@@ -402,7 +402,6 @@ class PlatformImportAttempt(ImportAttempt):
 
             if created:
                 logger.info("Platform '%s' created", record["short_name"])
-                platform.create_default_interests()
                 counter["created"] += 1
 
             elif needs_update:
@@ -664,25 +663,6 @@ class ParserDefinitionImportAttempt(ImportAttempt):
     def required_kind(self):
         return ImportAttempt.KIND_PARSER_DEFINITION
 
-    def make_interests(self, parser_definition: ParserDefinition):
-        try:
-            report_type = ReportType.objects.distinct().get(
-                source=parser_definition.source,
-                ext_id=parser_definition.report_type_ext_id,
-                # Don't create Platform interest when there is no Report <-> Metric interest
-                reportinterestmetric__isnull=False,
-            )
-
-            platforms = Platform.objects.filter(
-                source=parser_definition.source, short_name__in=parser_definition.platforms
-            )
-            for platform in platforms:
-                PlatformInterestReport.objects.get_or_create(
-                    platform=platform, report_type=report_type
-                )
-        except ReportType.DoesNotExist:
-            pass
-
     @transaction.atomic
     def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
         # Check whether the data are valid
@@ -728,8 +708,6 @@ class ParserDefinitionImportAttempt(ImportAttempt):
                     counter["updated"] += 1
                     parser_definition.definition = definition
                     parser_definition.save()
-
-            self.make_interests(parser_definition)
 
         if deleted_count := ParserDefinition.objects.exclude(pk__in=seen_ids).delete()[0]:
             counter["wiped"] = deleted_count

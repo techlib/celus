@@ -106,7 +106,7 @@ cs:
         </div>
       </div>
       <v-data-table-server
-        v-if="view === 'table'"
+        v-if="view === 'table' && totalRowCount !== null"
         :items="formattedData"
         :headers="tableHeaders"
         item-key="pk"

@@ -47,13 +47,14 @@ from logs.logic.clickhouse import (
 )
 from logs.logic.custom_import import custom_import_preflight_check, import_custom_data
 from logs.logic.export import CSVExport
-from logs.logic.materialized_interest import smart_interest_sync
+from logs.logic.interest.computation import recompute_interest_by_batch, smart_interest_sync
 from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
 from logs.models import (
     FlexibleReportUserEmail,
+    ImportBatch,
     ImportBatchSyncLog,
     ManualDataUpload,
     MduMethod,
@@ -155,6 +156,17 @@ def smart_interest_sync_task():
     not processed or out of sync
     """
     smart_interest_sync()
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def sync_interest_for_superseded_import_batches_task():
+    """
+    Synchronizes interest for superseded import batches where the superseding batch was
+    deleted (ending up with interest_ib being null due to on_delete=SET_NULL).
+    """
+    recompute_interest_by_batch(ImportBatch.objects.filter(interest_ib__isnull=True))
 
 
 @celery.shared_task

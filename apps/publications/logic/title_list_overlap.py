@@ -1,13 +1,16 @@
+import logging
 from typing import Callable, List, Optional
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Max, Min
-from logs.logic.interest import get_interest_subdim_ids_implying_availability
-from logs.models import AccessLog, ReportType
+from logs.logic.interest.structure import get_interest_metrics_implying_availability
+from logs.models import AccessLog, InterestConfig, ReportType
 from organizations.models import Organization
 from tags.logic.titles_lists import CsvReaderMixin, TitleListReader, TitleTaggingRecord
 
 from publications.models import PlatformTitle, Title
+
+logger = logging.getLogger(__name__)
 
 
 class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
@@ -24,11 +27,21 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
         super().__init__()
         self.organization = organization
         self.dump_id_formatter = dump_id_formatter
+        self.interest_rt = ReportType.objects.get_interest_rt()
+        self._interest_metric_ids = [m.pk for m in get_interest_metrics_implying_availability()]
+        self._interest_config_filters = self.interest_config_filters()
 
     def org_filter(self):
         if self.organization:
             return {"organization_id": self.organization.pk}
         return {}
+
+    def interest_config_filters(self):
+        if self.organization:
+            ic = self.organization.get_interest_config()
+        else:
+            ic = InterestConfig.objects.default()
+        return ic.get_interest_filters()
 
     def title_qs(self):
         """
@@ -36,18 +49,21 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
         `self.organization` or have some interest at all.
 
         We only use types of interest which imply that the title is available on a platform.
-        :return:
+
+        Note: this method is called for each batch of titles, so we want to avoid repeating
+        the same queries.
         """
-        interest_rt = ReportType.objects.get_interest_rt()
-        # resolving the dims into list makes the subsequent query slightly faster
-        dim1_ids = list(get_interest_subdim_ids_implying_availability(interest_rt))
         title_ids_query = AccessLog.objects.filter(
-            report_type=interest_rt, dim1__in=dim1_ids, target_id__isnull=False, **self.org_filter()
+            report_type=self.interest_rt,
+            metric_id__in=self._interest_metric_ids,
+            target_id__isnull=False,
+            **self.org_filter(),
+            **self._interest_config_filters,
         ).values("target_id")
         qs = Title.objects.filter(pk__in=title_ids_query)
         return qs
 
-    def extra_column_names(self) -> [str]:
+    def extra_column_names(self) -> List[str]:
         return [
             self.platform_list_column,
             self.start_date_column,
@@ -63,7 +79,7 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
             len(record.title_ids),
         ] + list(map(self.dump_id_formatter, sorted(record.title_ids)))
 
-    def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):
+    def add_extra_data_to_rec_batch(self, records: List[TitleTaggingRecord]):
         title_ids = set()
         for record in records:
             if record.title_ids:

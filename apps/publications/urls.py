@@ -82,12 +82,6 @@ root_router.register(r"platform", views.GlobalPlatformsViewSet, basename="global
 root_router.register(r"title", views.GlobalTitleViewSet, basename="global-titles")
 
 root_router.register(
-    "platform-interest-report",
-    views.PlatformInterestReportViewSet,
-    basename="platform-interest-report",
-)
-
-root_router.register(
     "title-overlap-batch", views.TitleOverlapBatchViewSet, basename="title-overlap-batch"
 )
 

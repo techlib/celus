@@ -2,14 +2,7 @@
 
 <i18n lang="yaml">
 en:
-  platform_to_report: Platforms ⭢ Report types
   report_to_metrics: Report type ⭢ Metrics
-  interest_reports_intro: |
-    The following table shows which reports are set to define interest for
-    each platform. Only data from the corresponding reports will be considered when computing
-    interest from the underlying platform data.
-  interest_reports_intro2: |
-    More detailed info about used metrics is available on the next tab.
   interest_metrics_intro: |
     The following table shows metrics assigned to individual reports which define the interest
     for that particular report. If a report does not have a metric assigned, no interest will
@@ -19,13 +12,7 @@ en:
     a metric will be used.
 
 cs:
-  platform_to_report: Platformy ⭢ Typy reportů
   report_to_metrics: Typy reportů ⭢ Metriky
-  interest_reports_intro: |
-    Následující tabulka ukazuje jaké reporty definují zájem pro jednotlivé platformy. Jen data
-    z těchto reportů budou použita při výpočtu zájmu z dat pro danou platformu.
-  interest_reports_intro2: |
-    Podrobnější informace o použitých metrikách jsou dostupné na sousední záložce.
   interest_metrics_intro: |
     Následující tabulka ukazuje metriky přiřazené k jednotlivým reportům, které definují zájem
     pro daný report. Pokud nemá report vybranou žádnou metriku, nebude pro něj vypočítáván zájem.
@@ -55,14 +42,6 @@ cs:
           >
             <v-tab
               :class="{
-                'tab-active': tab === 'reports',
-                'tab-inactive': tab !== 'reports',
-              }"
-              value="reports"
-              >{{ $t("platform_to_report") }}</v-tab
-            >
-            <v-tab
-              :class="{
                 'tab-active': tab === 'metrics',
                 'tab-inactive': tab !== 'metrics',
               }"
@@ -72,20 +51,11 @@ cs:
           </v-tabs>
           <v-card-text class="pa-8">
             <v-window v-model="tab">
-              <v-window-item value="reports">
-                <v-card flat>
-                  <v-card-text>
-                    <p>{{ $t("interest_reports_intro") }}</p>
-                    <p>{{ $t("interest_reports_intro2") }}</p>
-                    <InterestOverviewReports></InterestOverviewReports>
-                  </v-card-text>
-                </v-card>
-              </v-window-item>
               <v-window-item value="metrics">
                 <v-card flat>
                   <v-card-text>
                     <p>{{ $t("interest_metrics_intro") }}</p>
-                    <p>{{ $t("interest_metrics_intro2") }}</p>
+                    <p class="pb-8 pt-4">{{ $t("interest_metrics_intro2") }}</p>
                     <InterestOverviewMetrics></InterestOverviewMetrics>
                   </v-card-text>
                 </v-card>
@@ -99,33 +69,19 @@ cs:
 </template>
 
 <script>
-import InterestOverviewReports from "@/components/InterestOverviewReports";
 import InterestOverviewMetrics from "@/components/InterestOverviewMetrics";
 
 export default {
   name: "InterestOverview",
 
-  components: { InterestOverviewReports, InterestOverviewMetrics },
+  components: { InterestOverviewMetrics },
 
   data() {
     return {
-      tab: "reports",
+      tab: "metrics",
     };
   },
 };
 </script>
 
-<style scoped>
-.tab-active {
-  color: #ffffffff !important;
-  background-color: #ffffff33;
-}
-
-.tab-inactive {
-  color: #ffffffd6 !important;
-}
-p {
-  margin-bottom: 16px;
-  color: #757557;
-}
-</style>
+<style scoped></style>

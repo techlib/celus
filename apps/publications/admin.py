@@ -9,16 +9,8 @@ from necronomicon.admin import NecronomiconAdminMixin
 from . import models
 
 
-def create_default_interests(modeladmin, request, queryset):
-    for platform in queryset:
-        platform.create_default_interests()
-
-
 def flush_knowledgebase(modeladmin, request, queryset):
     queryset.update(knowledgebase=None)
-
-
-create_default_interests.short_description = "Create default interest for selected platforms"
 
 
 @admin.register(models.Platform)
@@ -41,7 +33,7 @@ class PlatformAdmin(NecronomiconAdminMixin, TranslationAdmin):
     ]
     readonly_fields = ["pretty_knowledgebase"]
     exclude = ["knowledgebase"]
-    actions = (create_default_interests, flush_knowledgebase)
+    actions = [flush_knowledgebase]
 
     def has_knowledgebase(self, obj):
         return bool(obj.knowledgebase)
@@ -57,13 +49,6 @@ class PlatformAdmin(NecronomiconAdminMixin, TranslationAdmin):
 
     pretty_knowledgebase.allow_tags = True
     pretty_knowledgebase.short_description = "Knowledgebase"
-
-
-@admin.register(models.PlatformInterestReport)
-class PlatformInterestReportAdmin(admin.ModelAdmin):
-    list_display = ["platform", "report_type", "last_modified"]
-    list_filter = ["report_type", "platform"]
-    search_fields = ["platform__short_name", "platform__name", "platform__provider"]
 
 
 @admin.register(models.Title)

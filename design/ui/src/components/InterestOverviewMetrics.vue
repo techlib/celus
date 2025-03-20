@@ -14,7 +14,6 @@ en:
     interest_group_filter: Interest type filter
     source_metric: Source metric
     interest_metric: Interest metric
-    used_by_platforms: Used by platforms
     no_metric: No metric is assigned as defining interest
   tt:
     record_count: Please note that the number of records may be up to one day old
@@ -35,7 +34,6 @@ cs:
     interest_group_filter: Filtr typu zájmu
     source_metric: Zdrojová metrika
     interest_metric: Metrika zájmu
-    used_by_platforms: Použit u platforem
     no_metric: Není přiřazena žádná metrika definující zájem
   tt:
     record_count: Počet záznamů je jen orientační - může být až jeden den starý
@@ -241,13 +239,6 @@ export default {
           title: this.$i18n.t("labels.metrics"),
           value: "metrics",
           sortable: false,
-        },
-        {
-          title: this.$i18n.t("labels.used_by_platforms"),
-          value: "used_by_platforms",
-          key: "used_by_platforms",
-          align: "end",
-          cellClass: "text-caption",
         },
         {
           title: this.$i18n.t("labels.record_count"),

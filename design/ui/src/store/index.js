@@ -443,9 +443,6 @@ export default createStore({
           dispatch("loadEvents", {}),
           dispatch("startEventWorker"),
         ];
-        if (getters.showManagementStuff) {
-          promises.push(dispatch("fetchNoInterestPlatforms"));
-        }
 
         try {
           await Promise.all(promises);

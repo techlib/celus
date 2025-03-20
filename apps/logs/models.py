@@ -68,6 +68,8 @@ from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Item, Platform, Title
 
+from logs.logic.interest.definitions import DEFAULT_INTEREST_DIMENSIONS, INTEREST_DEFAULT_PROFILES
+
 from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
 logger = logging.getLogger(__name__)
@@ -78,6 +80,9 @@ if typing.TYPE_CHECKING:
     from logs.logic.reporting import FlexibleDataSlicer
 
 DIMENSION_COUNT = 8
+
+if typing.TYPE_CHECKING:
+    from sushi.models import CounterReportType
 
 
 class OrganizationPlatform(models.Model):
@@ -104,9 +109,26 @@ class ReportTypeQuerySet(models.QuerySet):
     def _get_interest_rt(self):
         # we use get_or_create to make sure interest is always present
         # this is mostly for tests, because in production it should be always present
-        return self.get_or_create(
+        rt, created = self.get_or_create(
             short_name="interest", source__isnull=True, defaults={"name": "Interest"}
-        )[0]
+        )
+        if created:
+            # if the interest RT was just created, we need to set it up completely
+            for i, ddef in enumerate(DEFAULT_INTEREST_DIMENSIONS):
+                dim = Dimension.objects.get_or_create(
+                    short_name=ddef["short_name"], defaults={"name": ddef["name"]}
+                )[0]
+                rtd = ReportTypeToDimension.objects.get_or_create(
+                    report_type=rt, dimension=dim, position=i
+                )[0]
+                if not ddef.get("auto"):
+                    # auto is computed in the code, so it does not need default value
+                    InterestDimensionValueMapping.objects.get_or_create(
+                        interest_rtdim=rtd,
+                        source_rtdim=None,
+                        defaults={"default_value": ddef.get("default_value")},
+                    )
+        return rt
 
     def only_materialized(self):
         return self.filter(materialization_spec__isnull=False)
@@ -135,10 +157,6 @@ class ReportType(models.Model):
     )
     materialization_spec = models.OneToOneField(
         "ReportMaterializationSpec", null=True, blank=True, on_delete=models.CASCADE
-    )
-    default_platform_interest = models.BooleanField(
-        default=False,
-        help_text="Should this report type be automatically connected to new platforms?",
     )
     materialization_date = models.DateTimeField(
         default=now,
@@ -186,6 +204,10 @@ class ReportType(models.Model):
             return self.materialization_spec.base_report_type.dimensions_sorted
         return list(self.dimensions.all().order_by("reporttypetodimension__position"))
 
+    @cached_property
+    def explicit_dimensions(self) -> typing.List[str]:
+        return [f"dim{i+1}" for i, _dim in enumerate(self.dimensions_sorted)]
+
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
         if (
@@ -216,6 +238,16 @@ class ReportType(models.Model):
         """
         for i, dim in enumerate(self.dimensions_sorted):
             if dim.short_name == dim_short_name:
+                return f"dim{i+1}"
+        return None
+
+    def dim_to_dim_attr(self, dim: "Dimension") -> typing.Optional[str]:
+        """
+        Given a dimension, returns the attribute name for that dimension like 'dim2'. If dimension
+        is not present, returns None
+        """
+        for i, d in enumerate(self.dimensions_sorted):
+            if d == dim:
                 return f"dim{i+1}"
         return None
 
@@ -295,34 +327,6 @@ class ReportMaterializationSpec(models.Model):
         return keep, remove
 
 
-class InterestGroup(models.Model):
-    """
-    Describes a measure of interest of users. It is assigned to Metrics which are
-    deemed as interest-defining. If more metrics refer to the same InterestGroup
-    they are treated as describing the same interest.
-    There will for instance be interest in books which would be described by different
-    metrics in COUNTER 4 and 5, then there will be the interest in databases, etc.
-    """
-
-    short_name = models.CharField(max_length=100)
-    name = models.CharField(max_length=250)
-    important = models.BooleanField(
-        default=False, help_text="Important interest groups should be shown preferentially to users"
-    )
-    position = models.PositiveSmallIntegerField(help_text="Used for sorting")
-    implies_availability = models.BooleanField(
-        default=True,
-        help_text="Does existence of this kind of interest imply that the resource is available? "
-        "Should be set to False for denials.",
-    )
-
-    class Meta:
-        ordering = ("position", "important")
-
-    def __str__(self):
-        return self.name
-
-
 class Metric(models.Model):
     """
     Type of metric, such as 'Unique_Item_Requests', etc.
@@ -370,33 +374,6 @@ class ControlledMetric(models.Model):
                 name="controlled_report_type_and_metric_unique",
             )
         ]
-
-
-class ReportInterestMetric(models.Model):
-    """
-    Links a report type to metric which signifies interest for that report type.
-    If it is desired that in the outcome, the metric appears as a different one,
-    it may be remapped by using target_metric
-    """
-
-    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
-    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
-    target_metric = models.ForeignKey(
-        Metric,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="source_report_interest_metrics",
-    )
-    interest_group = models.ForeignKey(InterestGroup, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("interest_group", "metric", "report_type")
-
-    def __str__(self):
-        return f"{self.report_type} - {self.metric} ({self.interest_group})"
 
 
 class Dimension(models.Model):
@@ -490,6 +467,15 @@ class ImportBatch(models.Model):
     log = models.TextField(blank=True)
     interest_timestamp = models.DateTimeField(
         null=True, blank=True, help_text="When was interest processed for this batch"
+    )
+    interest_ib = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="superseded_interest_ibs",
+        help_text="Link to the import batch that includes interest data for this batch - "
+        "can be either the same batch or a superseding one",
     )
     materialization_data = models.JSONField(
         default=dict,
@@ -622,6 +608,269 @@ class DimensionText(models.Model):
         if self.text_local:
             return self.text_local
         return self.text
+
+
+## interest
+
+
+class DimensionFilter(models.Model):
+    """
+    Describes a filter for a dimension.
+    """
+
+    dimension = models.ForeignKey(
+        "Dimension", on_delete=models.CASCADE, related_name="interest_filters"
+    )
+    values = models.JSONField(default=list)
+    negated = models.BooleanField(default=False)
+
+    def __str__(self):
+        sign = "!" if self.negated else ""
+        return f"{self.dimension} {sign}{self.values}"
+
+
+class InterestProfileQuerySet(models.QuerySet):
+    def default(self) -> "InterestProfile":
+        if out := self.filter(interest_config__organization=None).first():
+            return out
+        default_def = next(p for p in INTEREST_DEFAULT_PROFILES if p["default"])
+        return self.create(
+            short_name=default_def["short_name"],
+            name=default_def["name"],
+            desc=default_def["description"],
+        )
+
+
+class InterestProfile(models.Model):
+    """
+    Describes a profile for computation of interest.
+    Makes it possible to have 'Unique' or 'Total' interest computations for different organizations
+    """
+
+    short_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
+    desc = models.TextField(blank=True)
+
+    objects = InterestProfileQuerySet.as_manager()
+
+    class Meta:
+        ordering = ("short_name", "name")
+
+    def __str__(self):
+        return self.name
+
+
+class InterestGroup(models.Model):
+    """
+    Describes a measure of interest of users. It is assigned to Metrics which are
+    deemed as interest-defining. If more metrics refer to the same InterestGroup
+    they are treated as describing the same interest.
+    There will for instance be interest in books which would be described by different
+    metrics in COUNTER 4 and 5, then there will be the interest in databases, etc.
+    """
+
+    short_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
+    metric = models.OneToOneField(
+        Metric,
+        on_delete=models.CASCADE,
+        related_name="interest_group",
+        help_text="Metric which represents this kind of interest",
+    )
+    important = models.BooleanField(
+        default=False, help_text="Important interest groups should be shown preferentially to users"
+    )
+    position = models.PositiveSmallIntegerField(help_text="Used for sorting")
+    implies_availability = models.BooleanField(
+        default=True,
+        help_text="Does existence of this kind of interest imply that the resource is available? "
+        "Should be set to False for denials.",
+    )
+
+    class Meta:
+        ordering = ("position", "important")
+
+    def __str__(self):
+        return self.name
+
+
+class ReportInterestMetric(models.Model):
+    """
+    Links a report type to metric which signifies interest for that report type.
+    """
+
+    report_type = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE)
+    interest_group = models.ForeignKey(InterestGroup, on_delete=models.CASCADE)
+    interest_profile = models.ForeignKey(
+        InterestProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="If given, this RIM will be taken into account only for organizations "
+        "which have this profile active. If null, will be used regardless of profile.",
+    )
+    filters = models.ManyToManyField(DimensionFilter, through="ReportInterestMetricFilter")
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("interest_group", "metric", "report_type")
+
+    def __str__(self):
+        profile = self.interest_profile.short_name if self.interest_profile else "default"
+        return f"{self.report_type} - {self.metric} ({self.interest_group}) profile={profile}"
+
+
+class ReportInterestMetricFilter(models.Model):
+    """
+    Describes a filter for a ReportInterestMetric.
+    """
+
+    report_interest_metric = models.ForeignKey(ReportInterestMetric, on_delete=models.CASCADE)
+    filter = models.ForeignKey(
+        DimensionFilter, on_delete=models.CASCADE, related_name="rim_filters"
+    )
+
+    class Meta:
+        unique_together = ("report_interest_metric", "filter")
+
+    def __str__(self):
+        return f"{self.report_interest_metric} - {self.filter}"
+
+
+class InterestDimensionValueMapping(models.Model):
+    """
+    Describes a mapping between a dimension value in the interest report and a dimension value
+    in the source report type.
+
+    The idea is as follows:
+
+    Get an InterestDimensionValueMapping object for a given interest dimension and source report
+    type:
+    - if a source report type does not have this record, a record with source_rtdim=None is used
+    - if a source report type has this record, that record is used
+
+    Get a value for the interest dimension from the source data:
+    - if this is the default record, or the value is not found in the mapping, the default value is
+      used
+    - otherwise, use the key from mapping where the value is listed in the list of values
+    """
+
+    interest_rtdim = models.ForeignKey(
+        ReportTypeToDimension, on_delete=models.CASCADE, related_name="interest_value_mappings"
+    )
+    source_rtdim = models.ForeignKey(
+        ReportTypeToDimension,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text="If null, represents default for this interest dimension; otherwise report type "
+        "specific dimension",
+    )
+    default_value = models.CharField(
+        max_length=250, help_text="Used when value is not found in mapping"
+    )
+    mapping = models.JSONField(
+        default=dict,
+        help_text="Mapping between interest dimension value and source dimension values: "
+        "str->[str]",
+    )
+
+    class Meta:
+        unique_together = ("interest_rtdim", "source_rtdim")
+
+
+class InterestConfigQuerySet(models.QuerySet):
+    def default(self) -> "InterestConfig":
+        if out := self.filter(organization=None).first():
+            return out
+        dp = InterestProfile.objects.default()
+        return self.create(organization=None, interest_profile=dp)
+
+
+class InterestConfig(CreatedUpdatedMixin, models.Model):
+    """ReportType
+    Describes how interest should be computed for an organization.
+    """
+
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="interest_config",
+        unique=True,
+        help_text="If not set, the config will be the default one",
+    )
+    interest_profile = models.ForeignKey(
+        InterestProfile, on_delete=models.CASCADE, related_name="interest_config"
+    )
+    interest_filters = models.ManyToManyField(DimensionFilter, through="InterestFilter")
+
+    objects = InterestConfigQuerySet.as_manager()
+
+    class Meta:
+        ordering = ("organization",)
+        # only one default interest config is allowed
+        constraints = [
+            UniqueConstraint(
+                fields=["organization"],
+                condition=Q(organization=None),
+                name="only_one_default_interest_config",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.organization or 'default'} / {self.interest_profile}"
+
+    def get_interest_filters(self) -> typing.Dict[str, list]:
+        interest_rt = ReportType.objects.get_interest_rt()
+        filters = {}
+        for filter in self.interest_filters.all():
+            interest_dim_attr = interest_rt.dim_to_dim_attr(filter.dimension)
+            values = DimensionText.objects.filter(
+                dimension=filter.dimension, text__in=filter.values
+            ).values_list("pk", flat=True)
+            mod = "__in" if not filter.negated else "__not_in"
+            filters[interest_dim_attr + mod] = list(values)
+        return filters
+
+
+class InterestFilter(CreatedUpdatedMixin, models.Model):
+    """
+    Describes how interest should be filtered when displayed in the UI.
+    """
+
+    interest_config = models.ForeignKey(InterestConfig, on_delete=models.CASCADE)
+    filter = models.ForeignKey(DimensionFilter, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.interest_config} / {self.filter}"
+
+    def save(self, *args, **kwargs):
+        """
+        Enforce that one interest config can have only one filter per dimension.
+        Enforce that the filter dimension is present in the interest report type.
+        """
+        interest_rt = ReportType.objects.get_interest_rt()
+        # check if the filter dimension is present in the interest report type
+        if self.filter.dimension not in interest_rt.dimensions.all():
+            raise ValidationError("Filter dimension is not present in the interest report type")
+
+        # check if the filter dimension is present in the interest report type
+        qs = InterestFilter.objects.filter(
+            interest_config=self.interest_config, filter__dimension=self.filter.dimension
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError("One interest config can have only one filter per dimension")
+
+        return super().save(*args, **kwargs)
+
+
+## end of interest
 
 
 def where_to_store(instance: "ManualDataUpload", filename):
@@ -1684,8 +1933,8 @@ class LastAction(CreatedUpdatedMixin, models.Model):
         if 'update_interest' is older than 'interest_definition_has_changed', it should run
         if it is newer, it should not run
         if 'interest_definition_has_changed' does not exist, then 'update_interest' is always newer
-          and shouldn't run, but only if it does exist at all - if 'update_interest' does not exist,
-          then it should run.
+        and shouldn't run, but only if it does exist at all - if 'update_interest' does not exist,
+        then it should run.
         """
         try:
             trigger = LastAction.objects.get(action=trigger_action)

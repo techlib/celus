@@ -794,12 +794,4 @@ hr.light {
 .label_admin {
   color: rgba(0, 0, 0, 0.6);
 }
-
-/* .tab-active {
-  color: #2d5854 !important;
-}
-
-.tab-inactive {
-  color: #0000008a !important;
-} */
 </style>

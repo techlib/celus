@@ -6,6 +6,7 @@ import pytest
 from django.urls import reverse
 from events.models import EventImportance
 from logs.fake_data import create_interest_for_title
+from logs.models import DimensionText
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from organizations.fake_data import OrganizationFactory
 
@@ -13,7 +14,12 @@ from publications.fake_data import PlatformFactory, TitleFactory, TitleOverlapBa
 from publications.logic.title_list_overlap import CsvTitleListOverlapReader
 from publications.models import TitleOverlapBatch, TitleOverlapBatchState
 from publications.tasks import process_title_overlap_batch_task
-from publications.tests.test_api import MockTask
+from publications.tests.conftest import interest_rt  # noqa - fixtures
+from publications.tests.test_api import (  # noqa - fixtures
+    MockTask,
+    real_world_data_with_interest,
+    real_world_data_with_interest_and_configs,
+)
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -68,7 +74,7 @@ class TestTitleListOverlap:
         reader = CsvTitleListOverlapReader()
         dump = BytesIO()
         with open("test-data/tagging_batch/plain-title-list.csv", "r") as infile:
-            with django_assert_max_num_queries(num_queries * 5 + 2):  # 5 queries per batch
+            with django_assert_max_num_queries(num_queries * 2 + 2):  # 2 queries per batch
                 data = list(
                     reader.process_source(
                         infile, merge_issns=merge_issns, batch_size=batch_size, dump_file=dump
@@ -204,6 +210,46 @@ class TestTitleListOverlap:
             assert "Bar" in t2_rec["_Found on platforms_"]
         else:
             assert "Bar" not in t2_rec["_Found on platforms_"]
+
+    def test_title_matching_with_interest_config(self, real_world_data_with_interest_and_configs):
+        org = real_world_data_with_interest_and_configs["organization"]
+
+        reader = CsvTitleListOverlapReader(organization=org)
+        dump = BytesIO()
+        input_data = StringIO("Name,ISBN,issn\nFoo,9780787960186,\nBar,,1234-5678\n")
+        data = list(reader.process_source(input_data, dump_file=dump))
+        assert len(data) == 2
+        # check the dump file
+        dump.seek(0)
+        dump_reader = get_dict_reader_from_csv(dump)
+        t1_rec = list(dump_reader)[0]
+        assert t1_rec["_Matched titles_"] == "1"
+
+    def test_title_matching_with_interest_config_without_oa(
+        self, real_world_data_with_interest_and_configs
+    ):
+        """
+        Similar to the test above, but tests that when I delete "Controlled" interest and and use
+        config without "Free" interest, the titles without OA will not be matched.
+
+        Note: the used org interest config already filters out "Free" interest - we just use it
+        """
+        org = real_world_data_with_interest_and_configs["organization"]
+        interest_rt = real_world_data_with_interest_and_configs["interest_rt"]
+        at_dim_attr = interest_rt.dim_name_to_dim_attr("Access_Type")
+        dt = DimensionText.objects.get(dimension__short_name="Access_Type", text="Controlled")
+        interest_rt.accesslog_set.filter(**{at_dim_attr: dt.pk}).delete(i_know_what_i_am_doing=True)
+
+        reader = CsvTitleListOverlapReader(organization=org)
+        dump = BytesIO()
+        input_data = StringIO("Name,ISBN,issn\nFoo,9780787960186,\nBar,,1234-5678\n")
+        data = list(reader.process_source(input_data, dump_file=dump))
+        assert len(data) == 2
+        # check the dump file
+        dump.seek(0)
+        dump_reader = get_dict_reader_from_csv(dump)
+        t1_rec = list(dump_reader)[0]
+        assert t1_rec["_Matched titles_"] == "0"
 
 
 plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plain-title-list.csv"
@@ -372,7 +418,6 @@ class TestTitleOverlapBatchAPI:
         # check the batch data
         response = admin_client.get(reverse("title-overlap-batch-detail", args=[batch.pk]))
         assert response.status_code == 200
-        print(response.data)
         assert response.data["state"] == TitleOverlapBatchState.DONE
         assert response.data["annotated_file"].endswith("-annotated.csv")
 

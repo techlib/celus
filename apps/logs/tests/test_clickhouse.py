@@ -8,11 +8,11 @@ from django.db.models import Sum
 from hcube.api.models.aggregation import Sum as HSum
 from organizations.tests.conftest import organizations  # noqa  - used as fixture
 from publications.fake_data import PlatformFactory, TitleFactory
-from publications.models import Platform, PlatformInterestReport, Title
+from publications.models import Platform, Title
 from publications.tests.conftest import interest_rt  # noqa  - used as fixture
 
 from logs.cubes import AccessLogCube, ch_backend
-from logs.fake_data import ImportBatchFullFactory, MetricFactory
+from logs.fake_data import ImportBatchFullFactory, InterestGroupFactory, MetricFactory
 from logs.logic.clickhouse import (
     ComparisonResult,
     compare_db_with_clickhouse,
@@ -23,15 +23,8 @@ from logs.logic.clickhouse import (
     sync_import_batch_with_clickhouse,
 )
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import smart_interest_sync
-from logs.models import (
-    AccessLog,
-    ImportBatch,
-    ImportBatchSyncLog,
-    InterestGroup,
-    Metric,
-    ReportInterestMetric,
-)
+from logs.logic.interest.computation import smart_interest_sync
+from logs.models import AccessLog, ImportBatch, ImportBatchSyncLog, Metric, ReportInterestMetric
 from logs.tasks import (
     compare_db_with_clickhouse_task,
     process_outstanding_import_batch_sync_logs_task,
@@ -124,11 +117,10 @@ class TestClickhouseSync:
         if not report_type:
             report_type = report_type_nd(3)
         # prepare interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
             metric=MetricFactory.create(short_name="Hits"),
-            interest_group=InterestGroup.objects.create(short_name="aaa", position=1),
+            interest_group=InterestGroupFactory(short_name="aaa", position=1),
         )
         # import the data
         import_batches, _stats = import_counter_records(

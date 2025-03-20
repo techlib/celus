@@ -369,22 +369,23 @@ class FlexibleDataExporter(ABC):
 
         # coverage for normal vs trend mode
         coverage = self.slicer.get_coverage()
-        if self.slicer.trend_mode:
-            coverage_base = coverage["base"]["ratio"] * 100
-            coverage_compared = coverage["compared"]["ratio"] * 100
-            writer.writerow(
-                [
-                    _("Data coverage"),
-                    _("Base period: %(coverage).1f%%") % {"coverage": coverage_base},
-                    _("Compared period: %(coverage).1f%%") % {"coverage": coverage_compared},
-                ]
-            )
-        else:
-            if coverage["overall"]["ratio"] is not None:
-                coverage_overall = coverage["overall"]["ratio"] * 100
-                writer.writerow([_("Data coverage"), f"{coverage_overall:.1f}%"])
+        if coverage:
+            if self.slicer.trend_mode:
+                coverage_base = coverage["base"]["ratio"] * 100
+                coverage_compared = coverage["compared"]["ratio"] * 100
+                writer.writerow(
+                    [
+                        _("Data coverage"),
+                        _("Base period: %(coverage).1f%%") % {"coverage": coverage_base},
+                        _("Compared period: %(coverage).1f%%") % {"coverage": coverage_compared},
+                    ]
+                )
             else:
-                writer.writerow([_("Data coverage"), "-"])
+                if coverage["overall"]["ratio"] is not None:
+                    coverage_overall = coverage["overall"]["ratio"] * 100
+                    writer.writerow([_("Data coverage"), f"{coverage_overall:.1f}%"])
+                else:
+                    writer.writerow([_("Data coverage"), "-"])
 
         writer.writerow(
             [

@@ -279,4 +279,13 @@ th.auto-width {
 .text-normal {
   font-size: 1rem;
 }
+
+.tab-active {
+  color: #ffffffff !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.tab-inactive {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
 </style>

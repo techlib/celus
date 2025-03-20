@@ -12,11 +12,11 @@ from django.utils import timezone
 from organizations.fake_data import OrganizationFactory
 from organizations.models import Organization
 from publications.fake_data import PlatformFactory, TitleFactory
-from publications.models import Platform, PlatformInterestReport, PlatformTitle
+from publications.models import Platform, PlatformTitle
 
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import create_platformtitle_links_from_accesslogs
-from logs.logic.materialized_interest import sync_interest_by_import_batches
+from logs.logic.interest.computation import sync_interest_by_import_batches
 from logs.models import (
     AccessLog,
     Dimension,
@@ -202,10 +202,18 @@ class ManualDataUploadFullFactory(ManualDataUploadFactory):
 
 class InterestGroupFactory(factory.django.DjangoModelFactory):
     short_name = factory.Faker("slug")
+    name = factory.Faker("word")
     position = 1
+    implies_availability = True
+    metric = factory.SubFactory(
+        MetricFactory,
+        short_name=factory.SelfAttribute("..short_name"),
+        name=factory.SelfAttribute("..name"),
+    )
 
     class Meta:
         model = InterestGroup
+        django_get_or_create = ("short_name",)
 
 
 # Fake counter records from nigiri
@@ -258,6 +266,7 @@ def create_interest_for_title(
     dates: Optional[List[Union[date, str]]] = None,
     create_full_text=True,
     create_no_license=True,
+    create_oa=False,
 ):
     org = org or OrganizationFactory()
     platforms = platforms or [PlatformFactory()]
@@ -275,9 +284,9 @@ def create_interest_for_title(
     at_controlled, _created = DimensionText.objects.get_or_create(
         text="Controlled", dimension=at_dim
     )
-    # define interest for the TR report type
-    for p in platforms:
-        PlatformInterestReport.objects.get_or_create(report_type=tr, platform=p)
+    at_oa = None
+    if create_oa:
+        at_oa, _created = DimensionText.objects.get_or_create(text="OA_Gold", dimension=at_dim)
     ReportInterestMetric.objects.get_or_create(
         report_type=tr,
         metric=full_text_metric,
@@ -306,6 +315,14 @@ def create_interest_for_title(
                 metric=m,
                 **{at_attr: at_controlled.pk},
             )
+            if create_oa:
+                AccessLogFactory(
+                    import_batch=ib,
+                    target=title,
+                    value=(ib_idx + 1) * (m_idx + 2) + 1,
+                    metric=m,
+                    **{at_attr: at_oa.pk},
+                )
     sync_interest_by_import_batches()
     create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
     return {"import_batches": ibs, "organization": org, "platforms": platforms}

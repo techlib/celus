@@ -2,6 +2,7 @@ import json
 import logging
 from collections import Counter
 from time import monotonic
+from typing import Tuple
 
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
@@ -22,9 +23,16 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponseBadRequest
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from logs.logic.interest import get_interest_subdim_ids_implying_availability
+from logs.logic.interest.structure import get_interest_metrics_implying_availability
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import AccessLog, DimensionText, Metric, OrganizationPlatform, ReportType
+from logs.models import (
+    AccessLog,
+    DimensionText,
+    InterestConfig,
+    Metric,
+    OrganizationPlatform,
+    ReportType,
+)
 from pycountry import subdivisions
 from recache.util import recache_queryset
 from rest_framework import status
@@ -312,7 +320,7 @@ For more info see Django admin: {request.build_absolute_uri(
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
 
-    def _overlap_accesslog_filters(self, request, pk) -> (str, dict, dict):
+    def _overlap_accesslog_filters(self, request, pk) -> Tuple[str, dict, dict]:
         """
         Returns
 
@@ -326,10 +334,10 @@ For more info see Django admin: {request.build_absolute_uri(
         logger.debug("Org filter: %s", org_filter)
         date_filter = date_filter_from_params(request.GET)
         interest_rt = ReportType.objects.get_interest_rt()
-        dim1_ids = get_interest_subdim_ids_implying_availability(interest_rt)
+        metric_ids = [m.pk for m in get_interest_metrics_implying_availability()]
 
-        where_parts = ["report_type_id = %(rt_id)s", "dim1 IN %(dim1_ids)s"]
-        where_params = {"rt_id": interest_rt.pk, "dim1_ids": tuple(dim1_ids)}
+        where_parts = ["report_type_id = %(rt_id)s", "metric_id IN %(metric_ids)s"]
+        where_params = {"rt_id": interest_rt.pk, "metric_ids": tuple(metric_ids)}
         if "date__gte" in date_filter:
             where_parts.append("date >= %(date__gte)s")
             where_params.update(date_filter)
@@ -339,6 +347,23 @@ For more info see Django admin: {request.build_absolute_uri(
         if org_filter:
             where_parts.append("organization_id = %(org_id)s")
             where_params["org_id"] = org_filter["organization__pk"]
+            org = get_object_or_404(Organization.objects.filter(id=org_filter["organization__pk"]))
+            ic = org.get_interest_config()
+        else:
+            ic = InterestConfig.objects.default()
+        # handle interest config
+        ic_filters = {}
+        for fltr, values in ic.get_interest_filters().items():
+            ic_filters[fltr] = values
+            dim, mod = fltr.split("__")
+            if mod == "in":
+                where_parts.append(f"{dim} IN %(dim_values_{dim})s")
+                where_params[f"dim_values_{dim}"] = tuple(values)
+            elif mod == "not_in":
+                where_parts.append(f"{dim} NOT IN %(dim_values_{dim})s")
+                where_params[f"dim_values_{dim}"] = tuple(values)
+            else:
+                raise ValueError(f"Invalid filter: {fltr}")
 
         if where_part := " AND ".join(where_parts):
             where_part = "WHERE " + where_part
@@ -346,7 +371,13 @@ For more info see Django admin: {request.build_absolute_uri(
         return (
             where_part,
             where_params,
-            {"report_type": interest_rt, "dim1__in": dim1_ids, **org_filter, **date_filter},
+            {
+                "report_type": interest_rt,
+                "metric_id__in": metric_ids,
+                **org_filter,
+                **date_filter,
+                **ic_filters,
+            },
         )
 
     @action(detail=True, url_path="platform-overlap")
@@ -611,10 +642,15 @@ For more info see Django admin: {request.build_absolute_uri(
             )
         }
         # add list of non-null YOPs for each title
-        # we use the filters from the above `accesslog_filters` but we remove the `dim1__in` filter
-        # and the `report_type` filter
+        # we use the filters from the above `accesslog_filters` but we remove those which are
+        # interest specific:
+        # - `report_type`
+        # - `metric_id__in`
+        # - all explicit dimensions (those are for interest, not for TR)
         al_filters = {
-            k: v for k, v in accesslog_filters.items() if k not in ("report_type", "dim1__in")
+            k: v
+            for k, v in accesslog_filters.items()
+            if k not in ("report_type", "metric_id__in") and not k.startswith("dim")
         }
         al_filters[f"{access_type_dim_ref}__in"] = access_type_ids
         qs = (

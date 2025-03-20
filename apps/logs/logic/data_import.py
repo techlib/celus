@@ -5,7 +5,7 @@ from collections import Counter
 from datetime import date
 from io import StringIO
 from time import time
-from typing import Dict, Generator, Iterable, List, Optional, Set, Union
+from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
 from celus_nigiri import CounterRecord
 from core.logic.debug import log_memory
@@ -21,6 +21,12 @@ from publications.logic.title_management import TitleManager
 from publications.models import Platform, PlatformTitle
 from sushi.models import SushiFetchAttempt
 
+from logs.logic.get_or_create_with_map import get_or_create_with_map
+from logs.logic.interest.computation import (
+    find_superseded_import_batches,
+    recompute_interest_by_batch,
+    sync_interest_for_import_batch,
+)
 from logs.models import ImportBatch
 
 from ..exceptions import (
@@ -30,28 +36,11 @@ from ..exceptions import (
     UnsupportedMetric,
 )
 from ..models import AccessLog, DimensionText, Metric, ReportType
-from .materialized_interest import (
-    find_superseded_import_batches,
-    recompute_interest_by_batch,
-    sync_interest_for_import_batch,
-)
 from .materialized_reports import sync_materialized_reports_for_import_batch
 
 logger = logging.getLogger(__name__)
 
 COUNTER_RECORD_BUFFER_SIZE = settings.COUNTER_RECORD_BUFFER_SIZE
-
-
-def get_or_create_with_map(model, mapping, attr_name, attr_value, other_attrs=None) -> int:
-    if attr_value in mapping:
-        return mapping[attr_value]["pk"]
-    data = {attr_name: attr_value}
-    if other_attrs:
-        data.update(other_attrs)
-    obj, created = model.objects.get_or_create(**data)
-    data["pk"] = obj.pk
-    mapping[attr_value] = data
-    return obj.pk
 
 
 def get_or_create_metric(mapping, value, controlled_metrics: List[str] = None) -> int:
@@ -88,7 +77,7 @@ def import_empty_batches(
     platform: Platform,
     months: Iterable[str],
     import_batch_kwargs: dict,
-) -> [ImportBatch]:
+) -> List[ImportBatch]:
     return [
         create_import_batch_or_crash(
             report_type, organization, platform, month, ib_kwargs=import_batch_kwargs
@@ -107,7 +96,7 @@ def import_counter_records(
     import_batch_kwargs: Optional[dict] = None,
     skip_clickhouse_sync: bool = False,
     buffer_size: int = COUNTER_RECORD_BUFFER_SIZE,
-) -> ([ImportBatch], Counter):
+) -> Tuple[List[ImportBatch], Counter]:
     """
     If `months` are given, then only import data for the months listed in there, skip others.
     Months are given as strings in ISO format.
@@ -506,7 +495,7 @@ def create_platformtitle_links_from_import_batch(import_batch: ImportBatch, targ
     return {"new platformtitles": after_count - before_count}
 
 
-def create_platformtitle_links_from_accesslogs(accesslogs: [AccessLog]) -> [PlatformTitle]:
+def create_platformtitle_links_from_accesslogs(accesslogs: List[AccessLog]) -> List[PlatformTitle]:
     """
     Creates all the required platformtitle objects from a list of accesslogs
     :param accesslogs:

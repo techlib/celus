@@ -292,7 +292,6 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "organizations_organization",
         "organizations_userorganization",
         "publications_platform",
-        "publications_platforminterestreport",
         "publications_platformtitle",
         "publications_title",
         "sushi_counterreporttype",
@@ -659,6 +658,8 @@ LOGGING = {
         "django_cachalot": {"level": "DEBUG"},
         "core.middleware": {"level": "DEBUG"},
         "celus_nibbler": {"level": "INFO"},
+        "factory": {"level": "INFO"},
+        "faker": {"level": "INFO"},
     },
     "formatters": {
         "colored": {"()": "colorlog.ColoredFormatter", "format": "%(log_color)s%(message)s"}

@@ -3,12 +3,11 @@ from celus_nigiri.counter5 import CounterRecord
 from django.core.management import call_command
 from django.utils.timezone import now
 from organizations.tests.conftest import organizations  # noqa - fixture
-from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt, platform  # noqa - fixture
 
-from logs.fake_data import MetricFactory
+from logs.fake_data import InterestGroupFactory, MetricFactory
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import sync_interest_for_import_batch
+from logs.logic.interest.computation import sync_interest_for_import_batch
 from logs.logic.materialized_reports import (
     materialized_import_batch_queryset,
     sync_materialized_reports,
@@ -16,7 +15,6 @@ from logs.logic.materialized_reports import (
 from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import (
     AccessLog,
-    InterestGroup,
     Metric,
     ReportInterestMetric,
     ReportMaterializationSpec,
@@ -163,12 +161,11 @@ class TestMaterializedReport:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         # we use metric m1 with one record - we will switch to m2 later
         rim = ReportInterestMetric.objects.create(
             report_type=report_type,
             metric=MetricFactory.create(short_name="m1"),
-            interest_group=InterestGroup.objects.create(short_name="ig1", position=1),
+            interest_group=InterestGroupFactory(short_name="ig1", position=1),
         )
         # define materialized report for interest
         spec = ReportMaterializationSpec.objects.create(

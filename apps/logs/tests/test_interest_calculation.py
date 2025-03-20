@@ -1,22 +1,33 @@
-from unittest.mock import patch
+import logging
+from datetime import date
+from unittest import mock
 
 import pytest
+from celus_nigiri import CounterRecord
+from django.core.management import call_command
 from django.db.models import Sum
 from django.utils.timezone import now
+from organizations.fake_data import OrganizationFactory
 from organizations.tests.conftest import organizations  # noqa - fixture
-from publications.models import Platform, PlatformInterestReport
-from publications.tests.conftest import interest_rt  # noqa - fixture
+from publications.fake_data import PlatformFactory, TitleFactory
+from publications.models import Platform
+from publications.tests.conftest import interest_groups, interest_rt  # noqa - fixture
 
-from logs.fake_data import ImportBatchFactory, ImportBatchFullFactory, MetricFactory
+from logs.fake_data import (
+    ImportBatchFactory,
+    ImportBatchFullFactory,
+    InterestGroupFactory,
+    MetricFactory,
+    ReportTypeFactory,
+)
 from logs.logic.data_import import import_counter_records
-from logs.logic.materialized_interest import (
-    _check_platform_interests,
+from logs.logic.interest.computation import (
+    InterestComputer,
     _find_metric_interest_changes,
-    _find_platform_report_type_disconnect,
     _find_report_type_metric_disconnect,
-    _find_superseded_import_batches,
     _find_unprocessed_batches,
     fast_compare_existing_and_new_records,
+    get_report_type_superseding_report_types,
     sync_interest_for_import_batch,
 )
 from logs.logic.materialized_reports import (
@@ -25,29 +36,81 @@ from logs.logic.materialized_reports import (
 )
 from logs.models import (
     AccessLog,
+    Dimension,
     DimensionText,
-    InterestGroup,
+    InterestConfig,
+    InterestProfile,
     Metric,
     ReportInterestMetric,
     ReportMaterializationSpec,
     ReportType,
 )
+from logs.tasks import sync_interest_for_superseded_import_batches_task
 
 
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures("clickhouse_db")
 @pytest.mark.django_db()
 class TestInterestCalculation:
-    def test_simple(self, counter_records, organizations, report_type_nd, interest_rt):
+    @classmethod
+    def get_dim_text_id(cls, dim_name, text):
+        return DimensionText.objects.get(
+            dimension=Dimension.objects.get(short_name=dim_name), text=text
+        ).pk
+
+    def test_interest_rt_structure(self, interest_rt):
+        assert interest_rt.dimensions_sorted[0].short_name == "Original_Report_Type"
+        assert interest_rt.dimensions_sorted[1].short_name == "Original_Metric"
+        assert interest_rt.dimensions_sorted[2].short_name == "Access_Type"
+        assert interest_rt.dimensions_sorted[3].short_name == "Access_Method"
+
+    def test_extract_interest_from_import_batch(
+        self, report_type_nd, interest_rt, django_assert_max_num_queries
+    ):
+        uir = MetricFactory.create(short_name="Unique_Item_Requests")
+        rt = report_type_nd(1)
+        ig = InterestGroupFactory(short_name="ig1", position=1)
+        ReportInterestMetric.objects.create(report_type=rt, metric=uir, interest_group=ig)
+        titles = TitleFactory.create_batch(5)
+        ib = ImportBatchFullFactory.create(
+            report_type=rt, create_accesslogs__metrics=[uir], create_accesslogs__titles=titles
+        )
+        with django_assert_max_num_queries(10):  # TODO: lower this number later
+            interest_computer = InterestComputer(interest_rt)
+        with django_assert_max_num_queries(35):  # TODO: lower this number later
+            interest_data = interest_computer.extract_interest_from_import_batch(ib)
+
+        assert len(interest_data) == 5
+
+        for rec in interest_data:
+            orig_rt_dim_text_id = self.get_dim_text_id("Original_Report_Type", rt.short_name)
+            assert rec["dim1"] == orig_rt_dim_text_id
+            assert (
+                DimensionText.objects.get(pk=orig_rt_dim_text_id).text_local_en == rt.name_en
+            ), "whole name is preserved"
+            orig_metric_dim_text_id = self.get_dim_text_id("Original_Metric", uir.short_name)
+            assert rec["dim2"] == orig_metric_dim_text_id
+            assert (
+                DimensionText.objects.get(pk=orig_metric_dim_text_id).text_local_en == uir.name_en
+            ), "whole name is preserved"
+            assert rec["dim3"] == self.get_dim_text_id("Access_Type", "Controlled")
+            assert rec["dim4"] == self.get_dim_text_id("Access_Method", "Normal")
+            assert rec["metric_id"] != uir.pk
+            assert Metric.objects.get(pk=rec["metric_id"]).short_name == "ig1"
+            assert rec["value"] != 0
+
+    def test_simple(
+        self, counter_records, organizations, report_type_nd, interest_rt, interest_groups
+    ):
         platform = Platform.objects.create(
             short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
         report_type = report_type_nd(1)
         organization = organizations[0]
+        orig_metric = MetricFactory.create(short_name="Hits")
         # define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
-            report_type=report_type,
-            metric=MetricFactory.create(short_name="Hits"),
-            interest_group=InterestGroup.objects.create(short_name="ig1", position=1),
+            report_type=report_type, metric=orig_metric, interest_group=interest_groups["full_text"]
         )
         # import data
         data1 = [
@@ -64,11 +127,24 @@ class TestInterestCalculation:
         assert report_type.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
         assert interest_rt.accesslog_set.count() == 3, "3 interest logs"
         assert interest_rt.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
+        for al in interest_rt.accesslog_set.all():
+            assert al.dim1 == self.get_dim_text_id("Original_Report_Type", report_type.short_name)
+            assert al.dim2 == self.get_dim_text_id("Original_Metric", orig_metric.short_name)
+            assert al.dim3 == self.get_dim_text_id("Access_Type", "Controlled")
+            assert al.dim4 == self.get_dim_text_id("Access_Method", "Normal")
+            assert al.metric_id != orig_metric.pk
+            assert Metric.objects.get(pk=al.metric_id).short_name == "full_text"
 
     @pytest.mark.parametrize(["new_before_old"], [[True], [False]])
     @pytest.mark.django_db(transaction=True)
     def test_superseded_report_types(
-        self, counter_records, organizations, report_type_nd, new_before_old, interest_rt
+        self,
+        counter_records,
+        organizations,
+        report_type_nd,
+        new_before_old,
+        interest_rt,
+        interest_groups,
     ):
         """
         Test that when there are data for two report types from which one obsoletes the other,
@@ -89,15 +165,16 @@ class TestInterestCalculation:
         report_type_old.superseded_by = report_type_new
         report_type_old.save()
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
         hit_metric = MetricFactory.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
         ReportInterestMetric.objects.create(
-            report_type=report_type_old, metric=hit_metric, interest_group=ig
+            report_type=report_type_old,
+            metric=hit_metric,
+            interest_group=interest_groups["full_text"],
         )
         ReportInterestMetric.objects.create(
-            report_type=report_type_new, metric=hit_metric, interest_group=ig
+            report_type=report_type_new,
+            metric=hit_metric,
+            interest_group=interest_groups["full_text"],
         )
         # prepare data
         data_old = [
@@ -123,7 +200,13 @@ class TestInterestCalculation:
                 report_type_new, organization, platform, crs_new
             )
         assert len(ibs_old) == 2, "one import batch per month"
-        old_ib1, old_ib2 = ibs_old
+        old_ib1, old_ib2 = sorted(ibs_old, key=lambda x: x.date)
+        old_ib1.refresh_from_db()
+        old_ib2.refresh_from_db()
+        assert old_ib1.date == date(2018, 1, 1)
+        assert old_ib2.date == date(2018, 2, 1)
+        assert old_ib1.interest_ib == ibs_new[0], "interest is superseded by new"
+        assert old_ib2.interest_ib == old_ib2, "contains its own interest"
         assert old_ib1.accesslog_set.count() == 2, "2 normal + no interest logs in first batch"
         assert old_ib2.accesslog_set.count() == 2, "1 normal + 1 interest logs in second batch"
 
@@ -131,59 +214,6 @@ class TestInterestCalculation:
         new_ib = ibs_new[0]
         assert new_ib.accesslog_set.count() == 6, "3 normal logs + 3 interest logs"
         assert interest_rt.accesslog_set.count() == 4, "3 new interest logs + 1 remaining old"
-
-    @pytest.mark.parametrize("platform_connected", [True, False])
-    @pytest.mark.django_db(transaction=True)
-    def test_superseded_report_types_platform_connected(
-        self, counter_records, organizations, report_type_nd, platform_connected, interest_rt
-    ):
-        """
-        Test that when there are data for two report types from which one obsoletes the other,
-        the newer data get precedence in interest values. But only if the new report type is
-        connected to the platform as platform defining report type. If it is not, the old report
-        type data are used for interest calculation.
-        """
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        report_type_old: ReportType = report_type_nd(1, short_name="old")
-        report_type_new: ReportType = report_type_nd(1, short_name="new")
-        report_type_old.superseded_by = report_type_new
-        report_type_old.save()
-        # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
-        if platform_connected:
-            PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
-        hit_metric = MetricFactory.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type_old, metric=hit_metric, interest_group=ig
-        )
-        ReportInterestMetric.objects.create(
-            report_type=report_type_new, metric=hit_metric, interest_group=ig
-        )
-        # prepare data
-        data_old = [["Title1", "2018-01-01", "1v1", 1], ["Title2", "2018-01-01", "1v2", 2]]
-        crs_old = counter_records(data_old, metric="Hits", platform="Platform1")
-        data_new = [["Title1", "2018-01-01", "1v1", 8], ["Title2", "2018-01-01", "1v2", 16]]
-        crs_new = counter_records(data_new, metric="Hits", platform="Platform1")
-        # import and check
-        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
-        assert len(ibs_old) == 1
-        old_ib = ibs_old[0]
-        assert old_ib.accesslog_set.count() == 2 + 2, "2 normal logs, 2 interest logs"
-
-        ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
-        assert len(ibs_new) == 1
-        new_ib = ibs_new[0]
-
-        if platform_connected:
-            assert old_ib.accesslog_set.count() == 2, "2 normal + no interest logs in first batch"
-            assert new_ib.accesslog_set.count() == 4, "2 normal logs + 2 interest logs"
-        else:
-            assert old_ib.accesslog_set.count() == 4, "2 normal logs, 2 interest logs"
-            assert new_ib.accesslog_set.count() == 2, "2 normal logs"
 
     def test_two_report_types_with_the_same_metric(
         self, counter_records, organizations, report_type_nd, interest_rt
@@ -199,11 +229,9 @@ class TestInterestCalculation:
         report_type_1: ReportType = report_type_nd(1, short_name="old")
         report_type_2: ReportType = report_type_nd(1, short_name="new")
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_1)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_2)
         hit_metric = MetricFactory.create(short_name="Hits")
-        ig1 = InterestGroup.objects.create(short_name="ig1", position=1)
-        ig2 = InterestGroup.objects.create(short_name="ig2", position=2)
+        ig1 = InterestGroupFactory(short_name="ig1", position=1)
+        ig2 = InterestGroupFactory(short_name="ig2", position=2)
         ReportInterestMetric.objects.create(
             report_type=report_type_1, metric=hit_metric, interest_group=ig1
         )
@@ -235,10 +263,10 @@ class TestInterestCalculation:
             rec["text"]: rec["pk"]
             for rec in DimensionText.objects.filter(dimension=dim1).values("pk", "text")
         }
-        assert interest_rt.accesslog_set.filter(dim1=dim1_values["ig1"]).aggregate(
+        assert interest_rt.accesslog_set.filter(dim1=dim1_values["old"]).aggregate(
             sum=Sum("value")
         ) == {"sum": 7}
-        assert interest_rt.accesslog_set.filter(dim1=dim1_values["ig2"]).aggregate(
+        assert interest_rt.accesslog_set.filter(dim1=dim1_values["new"]).aggregate(
             sum=Sum("value")
         ) == {"sum": 56}
 
@@ -275,11 +303,10 @@ class TestInterestCalculation:
         ib = ibs[0]
         assert ib.accesslog_set.count() == 6
         # connect the interest with report type and platform
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
             metric=Metric.objects.get(short_name="Hits"),
-            interest_group=InterestGroup.objects.create(short_name="ig1", position=1),
+            interest_group=InterestGroupFactory(short_name="ig1", position=1),
         )
         sync_interest_for_import_batch(ib, interest_rt)
         assert interest_rt.accesslog_set.count() == 3, "3 interest logs"
@@ -287,7 +314,7 @@ class TestInterestCalculation:
 
     @pytest.mark.django_db(transaction=True)
     def test_sync_interest_for_import_batch_with_iterest_materialized_views(
-        self, counter_records, organizations, interest_rt, report_type_nd
+        self, counter_records, organizations, interest_rt, report_type_nd, settings
     ):
         """
         Test that when there are materialized views for interest, when interest is recalculated,
@@ -296,6 +323,7 @@ class TestInterestCalculation:
         The recomputation is done in a transaction, so we need to use transaction=True in the
         decorator.
         """
+        settings.CLICKHOUSE_SYNC_ACTIVE = False
         platform = Platform.objects.create(
             short_name="Platform1", name="Platform 1", provider="Provider 1"
         )
@@ -314,15 +342,13 @@ class TestInterestCalculation:
         ]
         crs1 = counter_records(data1, metric="Hits", platform="Platform1")
 
-        assert PlatformInterestReport.objects.count() == 0
         ibs, _stats = import_counter_records(rt, organization, platform, crs1)
         assert AccessLog.objects.count() == 3
         assert len(ibs) == 1, "only one import batch"
         assert interest_rt.accesslog_set.count() == 0, "no interest logs yet"
         assert interest_sub_rt.accesslog_set.count() == 0, "no interest logs yet"
         # connect the interest with report type and platform
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt)
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        ig = InterestGroupFactory(short_name="ig1", position=1)
         ReportInterestMetric.objects.create(
             report_type=rt, metric=Metric.objects.get(short_name="Hits"), interest_group=ig
         )
@@ -346,7 +372,6 @@ class TestInterestCalculation:
         rt2 = report_type_nd(1, short_name="new")
         rt.superseded_by = rt2
         rt.save()
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt2)
         ReportInterestMetric.objects.create(
             report_type=rt2, metric=Metric.objects.get(short_name="Hits"), interest_group=ig
         )
@@ -373,6 +398,372 @@ class TestInterestCalculation:
         ), "materialized interest logs are in the new import batches"
 
 
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures("clickhouse_db")
+@pytest.mark.django_db()
+class TestRealWorldInterestCalculation:
+    def test_create_interest_definitions(self, interest_groups, interest_rt):
+        call_command("check_report_type_dimensions", "--fix-it")
+        assert ReportType.objects.count() > 0
+        assert ReportInterestMetric.objects.count() == 0
+        call_command("check_interest_definitions", "--fix-it")
+        assert ReportInterestMetric.objects.count() > 0
+        assert InterestProfile.objects.count() > 0
+
+    @pytest.mark.parametrize("interest_profile", [None, "total", "unique"])
+    def test_computation_with_profiles(self, interest_groups, interest_rt, interest_profile):
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # now compute interest
+        organization = OrganizationFactory()
+        if interest_profile:
+            InterestConfig.objects.create(
+                organization=organization,
+                interest_profile=InterestProfile.objects.get(short_name=interest_profile),
+            )
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="TR51")
+        dates = {"start": "2024-01-01", "end": "2024-01-31"}
+        dimension_data = {
+            "Data_Type": "Book",
+            "Access_Type": "Free_To_Read",
+            "Access_Method": "Normal",
+        }
+        crs = [
+            CounterRecord(
+                value=2,
+                title="Title1",
+                metric="Total_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+            CounterRecord(
+                value=1,
+                title="Title1",
+                metric="Unique_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+        ]
+        import_counter_records(report_type, organization, platform, crs)
+        assert AccessLog.objects.count() == 3, "two normal, one interest"
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 1, "one interest log"
+        al = AccessLog.objects.filter(report_type=interest_rt).first()
+        assert al.value == 1 if interest_profile == "unique" else 2
+        assert al.organization == organization
+        assert al.platform == platform
+
+        assert DimensionText.objects.get(id=al.dim1).text == "TR51"
+        assert (
+            DimensionText.objects.get(id=al.dim2).text == "Unique_Item_Requests"
+            if interest_profile == "unique"
+            else "Total_Item_Requests"
+        )
+        assert DimensionText.objects.get(id=al.dim3).text == "Free"
+        assert DimensionText.objects.get(id=al.dim4).text == "Normal"
+
+    def test_access_type_and_method(self, interest_groups, interest_rt):
+        """
+        Test that values of access type and method are correctly mapped to interest dimensions
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="TR51")
+        basics = {
+            "start": "2024-01-01",
+            "end": "2024-01-31",
+            "title": "Title 1",
+            "metric": "Total_Item_Requests",
+        }
+        crs = [
+            CounterRecord(
+                value=1,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Free_To_Read",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=2,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Free_To_Read",
+                    "Access_Method": "TDM",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=4,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Open",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=8,
+                dimension_data={"Data_Type": "Book", "Access_Type": "Open", "Access_Method": "TDM"},
+                **basics,
+            ),
+            CounterRecord(
+                value=16,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=32,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "TDM",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=64,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "XXX",
+                },
+                **basics,
+            ),
+        ]
+
+        import_counter_records(report_type, organization, platform, crs)
+        # the interest should be:
+        # - Free, Normal: 1 + 4 = 5
+        # - Free, TDM: 2 + 8 = 10
+        # - Controlled, Normal: 16 + 64 = 80
+        # - Controlled, TDM: 32
+
+        assert AccessLog.objects.count() == 7 + 4, "11 access logs"
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 4, "4 interest logs"
+        assert set(
+            (
+                DimensionText.objects.get(id=al.dim3).text,
+                DimensionText.objects.get(id=al.dim4).text,
+                al.value,
+            )
+            for al in AccessLog.objects.filter(report_type=interest_rt)
+        ) == {
+            ("Free", "Normal", 5),
+            ("Free", "TDM", 10),
+            ("Controlled", "Normal", 80),
+            ("Controlled", "TDM", 32),
+        }
+
+    def test_data_type_filtering_in_ir(self, interest_groups, interest_rt):
+        """
+        Test that data type filtering in interest report type works
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="IR51")
+        basics = {
+            "start": "2024-01-01",
+            "end": "2024-01-31",
+            "title": "Title 1",
+            "metric": "Total_Item_Requests",
+            "item": "Item 1",
+        }
+        crs = [
+            CounterRecord(
+                value=1,
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Free_To_Read",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=2,
+                dimension_data={
+                    "Data_Type": "Journal",
+                    "Access_Type": "Free_To_Read",
+                    "Access_Method": "TDM",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=4,
+                dimension_data={
+                    "Data_Type": "FooBar",
+                    "Access_Type": "Open",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=8,
+                dimension_data={
+                    "Data_Type": "Multimedia",
+                    "Access_Type": "Open",
+                    "Access_Method": "TDM",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=16,
+                dimension_data={
+                    "Data_Type": "Audiovisual",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "Normal",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=32,
+                dimension_data={
+                    "Data_Type": "Image",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "TDM",
+                },
+                **basics,
+            ),
+            CounterRecord(
+                value=64,
+                dimension_data={
+                    "Data_Type": "Interactive_Resource",
+                    "Access_Type": "Controlled",
+                    "Access_Method": "XXX",
+                },
+                **basics,
+            ),
+        ]
+        import_counter_records(report_type, organization, platform, crs)
+        # the interest should be:
+        # - Full_Text, Free, Normal: 1 + 4 = 5
+        # - Full_Text, Free, TDM: 2 = 2
+        # - Multimedia, Free, TDM: 8 = 8
+        # - Multimedia, Controlled, Normal: 16+64 = 80
+        # - Multimedia, Controlled, TDM: 32 = 32
+
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "Metric values %s",
+            interest_rt.accesslog_set.all().values("metric__short_name").annotate(Sum("value")),
+        )
+        logger.info(
+            "AccessLog values %s", interest_rt.accesslog_set.all().values_list("value", flat=True)
+        )
+        assert AccessLog.objects.count() == 7 + 5, "12 access logs"
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 5, "5 interest logs"
+        assert set(
+            (
+                al.metric.short_name,
+                DimensionText.objects.get(id=al.dim3).text,
+                DimensionText.objects.get(id=al.dim4).text,
+                al.value,
+            )
+            for al in AccessLog.objects.filter(report_type=interest_rt)
+        ) == {
+            ("full_text", "Free", "Normal", 5),
+            ("full_text", "Free", "TDM", 2),
+            ("multimedia", "Free", "TDM", 8),
+            ("multimedia", "Controlled", "Normal", 80),
+            ("multimedia", "Controlled", "TDM", 32),
+        }
+
+    @pytest.mark.parametrize(
+        ["rt", "expected"],
+        [
+            ("TR51", ["IR51"]),
+            ("IR51", []),
+            ("TR", ["IR51", "TR51"]),
+            ("JR1", ["IR51", "TR51", "TR"]),
+            ("BR2", ["IR51", "TR51", "TR"]),
+            ("DB1", ["DR51", "DR"]),
+            ("DR51", []),
+            ("DR", ["DR51"]),
+            ("IR_M1", ["IR51"]),
+        ],
+    )
+    def test_get_report_type_superseding_report_types(
+        self, interest_rt, interest_groups, rt, expected
+    ):
+        """
+        Test that get_report_type_superseding_report_types returns the correct list of report types
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        rt = ReportType.objects.get(short_name=rt)
+        assert [t.short_name for t in get_report_type_superseding_report_types(rt)] == expected
+
+    @pytest.mark.parametrize(
+        ["existing_tr", "clashes"], [[None, False], ["IR51", True], ["TR51", True]]
+    )
+    def test_report_type_hierarchy_during_import(
+        self, interest_rt, interest_groups, existing_tr, clashes
+    ):
+        """
+        Test that interest from IR51 will prevent computation of interest from TR
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        tr = ReportType.objects.get(short_name="TR")
+        if existing_tr:
+            ImportBatchFactory(
+                organization=organization,
+                platform=platform,
+                report_type=ReportType.objects.get(short_name=existing_tr),
+                date="2024-01-01",
+            )
+        crs = [
+            CounterRecord(
+                value=1,
+                metric="Total_Item_Requests",
+                start="2024-01-01",
+                end="2024-01-31",
+                title="Title 1",
+                dimension_data={
+                    "Data_Type": "Book",
+                    "Access_Type": "Free_To_Read",
+                    "Access_Method": "Normal",
+                },
+            )
+        ]
+        import_counter_records(tr, organization, platform, crs)
+        if clashes:
+            assert AccessLog.objects.count() == 1, "1 access log"
+            assert AccessLog.objects.filter(report_type=interest_rt).count() == 0, "no interest log"
+        else:
+            assert AccessLog.objects.count() == 2, "2 access logs"
+            assert AccessLog.objects.filter(report_type=interest_rt).count() == 1, "1 interest log"
+
+    @pytest.mark.parametrize("pr_version", ["PR", "PR51"])
+    def test_report_interest_metric_for_pr_is_deleted(
+        self, interest_rt, interest_groups, pr_version
+    ):
+        """
+        Test that the report interest metric for PR is deleted as it is obsolete in new interest
+        system
+        """
+        pr = ReportTypeFactory(short_name=pr_version)
+        ReportInterestMetric.objects.create(
+            report_type=pr,
+            metric=MetricFactory(short_name="Unique_Item_Requests"),
+            interest_group=interest_groups["full_text"],
+        )
+        assert ReportInterestMetric.objects.count() == 1
+        call_command("check_interest_definitions", "--fix-it")
+        assert ReportInterestMetric.objects.count() == 0
+
+
 @pytest.mark.django_db()
 class TestInterestRecomputationDetection:
     """
@@ -396,106 +787,14 @@ class TestInterestRecomputationDetection:
             interest_timestamp=now(),
         )
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        hit_metric = MetricFactory.create(short_name="Hits")
+        ig = InterestGroupFactory(short_name="ig1", position=1)
         ReportInterestMetric.objects.create(
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
         # let's test the function
         qs = _find_unprocessed_batches()
         assert {obj.pk for obj in qs} == {ib1.pk}
-
-    def test_check_platform_interests(self, organizations, report_type_nd):
-        """
-        Test that platform interest created after import batch is processed is detected
-        """
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        report_type: ReportType = report_type_nd(1)
-        ib1 = ImportBatchFullFactory.create(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-        # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        # now create the second one - this one is newer than PlatformInterestReport, so it's ok
-        ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type, metric=hit_metric, interest_group=ig
-        )
-        # let's test the function
-        with patch(
-            "logs.logic.materialized_interest.recompute_interest_by_batch"
-        ) as mock_recompute:
-            stats = _check_platform_interests()
-            assert mock_recompute.call_count == 1
-            assert mock_recompute.call_args_list[0][0][0][0] == ib1
-        assert stats["new interest"] == 1
-
-    def test_check_platform_interests2(self, organizations, report_type_nd, interest_rt):
-        """
-        Test that when changing report type of PlatformInterestReport, import batches for that
-        platform and the original report type will have interest removed.
-        """
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        report_type: ReportType = report_type_nd(1, short_name="rt1")
-        report_type2: ReportType = report_type_nd(1, short_name="rt2")
-        assert report_type.pk != report_type2.pk
-        # now define the interest
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type, metric=hit_metric, interest_group=ig
-        )
-        ib1 = ImportBatchFullFactory.create(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-        # create some mock interest logs
-        AccessLog.objects.create(
-            report_type=interest_rt,
-            platform=platform,
-            import_batch=ib1,
-            organization=organization,
-            value=10,
-            date=ib1.date,
-            metric=hit_metric,
-        )
-        assert ib1.accesslog_set.filter(report_type=interest_rt).exists()
-        # update pir - it should invalidate ib1
-        pir.report_type = report_type2
-        pir.save()
-        assert pir.last_modified > ib1.interest_timestamp
-        # now create the second one - this one is newer than PlatformInterestReport, so its ok
-        ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-
-        # let's test the function
-        stats = _check_platform_interests()
-        assert stats["no longer interest"] == 1
-        assert not ib1.accesslog_set.filter(report_type=interest_rt).exists()
 
     def test_find_metric_interest_changes(self, organizations, report_type_nd):
         organization = organizations[0]
@@ -506,7 +805,6 @@ class TestInterestRecomputationDetection:
         report_type2: ReportType = report_type_nd(1, short_name="rt2")
         assert report_type.pk != report_type2.pk
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatchFactory(
             organization=organization,
             platform=platform,
@@ -514,7 +812,7 @@ class TestInterestRecomputationDetection:
             interest_timestamp=now(),
         )
         hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        ig = InterestGroupFactory(short_name="ig1", position=1)
         ReportInterestMetric.objects.create(
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
@@ -528,43 +826,6 @@ class TestInterestRecomputationDetection:
         qs = _find_metric_interest_changes()
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_platform_report_type_disconnect(self, organizations, report_type_nd):
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        report_type: ReportType = report_type_nd(1)
-        interest_rt: ReportType = report_type_nd(1, short_name="interest")
-        # now define the interest
-        pir = PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
-        ib1 = ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=report_type,
-            interest_timestamp=now(),
-        )
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=report_type, metric=hit_metric, interest_group=ig
-        )
-        AccessLog.objects.create(
-            report_type=interest_rt,
-            platform=platform,
-            import_batch=ib1,
-            organization=organization,
-            value=10,
-            date="2019-01-01",
-            metric=hit_metric,
-        )
-        # let's test the function
-        qs = _find_platform_report_type_disconnect()
-        assert {obj.pk for obj in qs} == set()
-        # let's do the disconnect and retry
-        pir.delete()
-        qs = _find_platform_report_type_disconnect()
-        assert {obj.pk for obj in qs} == {ib1.pk}
-
     def test_find_report_type_metric_disconnect(self, organizations, report_type_nd, interest_rt):
         organization = organizations[0]
         platform = Platform.objects.create(
@@ -572,15 +833,14 @@ class TestInterestRecomputationDetection:
         )
         report_type: ReportType = report_type_nd(1)
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ib1 = ImportBatchFactory(
             organization=organization,
             platform=platform,
             report_type=report_type,
             interest_timestamp=now(),
         )
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        hit_metric = MetricFactory.create(short_name="Hits")
+        ig = InterestGroupFactory(short_name="ig1", position=1)
         rim = ReportInterestMetric.objects.create(
             report_type=report_type, metric=hit_metric, interest_group=ig
         )
@@ -603,84 +863,6 @@ class TestInterestRecomputationDetection:
         qs = next(_find_report_type_metric_disconnect())
         assert {obj.pk for obj in qs} == {ib1.pk}
 
-    def test_find_superseded_import_batches(self, organizations, report_type_nd, interest_rt):
-        organization = organizations[0]
-        platform = Platform.objects.create(
-            short_name="Platform1", name="Platform 1", provider="Provider 1"
-        )
-        rt_old: ReportType = report_type_nd(1, short_name="old")
-        # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt_old)
-        ib_old = ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=rt_old,
-            interest_timestamp=now(),
-        )
-        hit_metric = Metric.objects.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
-        ReportInterestMetric.objects.create(
-            report_type=rt_old, metric=hit_metric, interest_group=ig
-        )
-        AccessLog.objects.create(
-            report_type=rt_old,
-            platform=platform,
-            import_batch=ib_old,
-            organization=organization,
-            value=10,
-            date="2019-01-01",
-            metric=hit_metric,
-        )
-        ib_old_unrel = ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=rt_old,
-            interest_timestamp=now(),
-        )
-        AccessLog.objects.create(
-            report_type=rt_old,
-            platform=platform,
-            import_batch=ib_old_unrel,
-            organization=organization,
-            value=20,
-            date="2019-02-01",
-            metric=hit_metric,
-        )
-        stats = sync_interest_for_import_batch(ib_old, interest_rt)
-        assert stats["new_logs"] == 1
-        stats = sync_interest_for_import_batch(ib_old_unrel, interest_rt)
-        assert stats["new_logs"] == 1
-        # now nothing should be returned
-        qs = _find_superseded_import_batches()
-        assert {obj.pk for obj in qs} == set()
-        # let's add a newer data and check that we detect it
-        rt_new: ReportType = report_type_nd(1, short_name="new")
-        rt_old.superseded_by = rt_new
-        rt_old.save()
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt_new)
-        ReportInterestMetric.objects.create(
-            report_type=rt_new, metric=hit_metric, interest_group=ig
-        )
-        ib_new = ImportBatchFactory(
-            organization=organization,
-            platform=platform,
-            report_type=rt_new,
-            interest_timestamp=now(),
-        )
-        AccessLog.objects.create(
-            report_type=rt_new,
-            platform=platform,
-            import_batch=ib_new,
-            organization=organization,
-            value=20,
-            date="2019-01-01",
-            metric=hit_metric,
-        )
-        stats = sync_interest_for_import_batch(ib_new, interest_rt)
-        assert stats["new_logs"] == 1
-        qs = _find_superseded_import_batches()
-        assert {obj.pk for obj in qs} == {ib_old.pk}
-
     @pytest.mark.django_db(transaction=True)
     def test_superseded_interest_deleted_with_different_titles(
         self, counter_records, organizations, report_type_nd, interest_rt
@@ -698,10 +880,8 @@ class TestInterestRecomputationDetection:
         report_type_old.superseded_by = report_type_new
         report_type_old.save()
         # define interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_old)
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type_new)
-        hit_metric = MetricFactory.create(short_name="Hits")
-        ig = InterestGroup.objects.create(short_name="ig1", position=1)
+        hit_metric = MetricFactory(short_name="Hits")
+        ig = InterestGroupFactory(short_name="ig1", position=1)
         ReportInterestMetric.objects.create(
             report_type=report_type_old, metric=hit_metric, interest_group=ig
         )
@@ -741,6 +921,65 @@ class TestInterestRecomputationDetection:
         assert (
             ib_old.accesslog_set.filter(report_type=interest_rt).count() == 0
         ), "old interest should be removed"
+
+    def test_interest_superseding_ib_is_deleted(self, organizations, report_type_nd, interest_rt):
+        """
+        Test that if IB1 is superseded by IB2, and IB2 is deleted, IB1 will have its interest
+        recomputed
+        """
+
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # now compute interest
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        tr_51 = ReportType.objects.get(short_name="TR51")
+        tr_50 = ReportType.objects.get(short_name="TR")
+        dates = {"start": "2024-01-01", "end": "2024-01-31"}
+        dimension_data = {
+            "Data_Type": "Book",
+            "Access_Type": "Free_To_Read",
+            "Access_Method": "Normal",
+        }
+        crs = [
+            CounterRecord(
+                value=2,
+                title="Title1",
+                metric="Total_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+            CounterRecord(
+                value=1,
+                title="Title1",
+                metric="Unique_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+        ]
+        tr51_ibs, _stats = import_counter_records(tr_51, organization, platform, crs)
+        # import the same data for TR50
+        tr50_ibs, _stats = import_counter_records(tr_50, organization, platform, crs)
+        assert len(tr51_ibs) == 1
+        assert len(tr50_ibs) == 1
+        tr51_ib = tr51_ibs[0]
+        tr50_ib = tr50_ibs[0]
+        assert tr51_ib.interest_ib == tr51_ib
+        assert tr51_ib.accesslog_set.filter(report_type=interest_rt).count() == 1
+        assert tr50_ib.interest_ib == tr51_ib
+        assert tr50_ib.accesslog_set.filter(report_type=interest_rt).count() == 0, "no interest"
+        # delete the superseded IB
+        with mock.patch(
+            "logs.signals.sync_interest_for_superseded_import_batches_task.delay"
+        ) as mock_task:
+            tr51_ib.delete()
+            assert mock_task.call_count == 1
+        # now run the task manually
+        sync_interest_for_superseded_import_batches_task()
+        tr50_ib.refresh_from_db()
+        # check that the interest is recomputed
+        assert tr50_ib.interest_ib == tr50_ib
+        assert tr50_ib.accesslog_set.filter(report_type=interest_rt).count() == 1, "interest"
 
 
 class TestSupportCode:

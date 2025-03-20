@@ -18,7 +18,7 @@ from publications.models import Title
 @dataclass
 class TitleTaggingRecord:
     title_rec: TitleRec = None
-    tag_names: [str] = field(default_factory=list)
+    tag_names: List[str] = field(default_factory=list)
     title_ids: Set[int] = field(default_factory=set)
     source_data: Dict = None  # the original data from input
     extra_data: Dict = None  # extra data to be added to the dump file
@@ -46,13 +46,13 @@ class TitleListReader(abc.ABC):
                 dump_writer.writerow(list(rec.source_data.values()) + annotations)
             yield rec
 
-    def extra_column_names(self) -> [str]:
+    def extra_column_names(self) -> List[str]:
         return []
 
     def annotate_dump_record(self, record: TitleTaggingRecord) -> List[str]:
         return []
 
-    def add_extra_data_to_rec_batch(self, records: [TitleTaggingRecord]):  # noqa: B027
+    def add_extra_data_to_rec_batch(self, records: List[TitleTaggingRecord]):  # noqa: B027
         """
         Override this method to add extra data to the records. This method is called
         after the titles have been matched to the records, so `title_ids` is guaranteed
@@ -89,7 +89,7 @@ class TitleListReader(abc.ABC):
             yield from self._add_title_ids_to_records_one_chunk(batch, merge_issns=merge_issns)
 
     def _add_title_ids_to_records_one_chunk(
-        self, records: [TitleTaggingRecord], merge_issns=True
+        self, records: List[TitleTaggingRecord], merge_issns=True
     ) -> Generator[TitleTaggingRecord, None, None]:
         if merge_issns:
             issn_set = eissn_set = set()

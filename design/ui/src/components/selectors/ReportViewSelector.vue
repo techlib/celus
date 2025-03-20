@@ -12,7 +12,7 @@ cs:
 </i18n>
 
 <template>
-  <div style="display: flex">
+  <div class="d-flex flex-row ga-6">
     <v-select
       :items="typesOfReportForSelect"
       item-title="name"
@@ -23,8 +23,8 @@ cs:
       density="compact"
       :return-object="true"
       :loading="loading"
-      class="pr-6"
       style="flex-basis: 50%"
+      hide-details
     >
     </v-select>
     <v-select
@@ -38,6 +38,7 @@ cs:
       density="compact"
       :loading="loading"
       style="flex-basis: 50%"
+      hide-details
     >
       <template v-slot:item="{ item, props }">
         <v-list-item class="active_item" v-if="item.raw.name" v-bind="props">

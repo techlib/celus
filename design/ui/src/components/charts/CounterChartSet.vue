@@ -24,7 +24,7 @@ cs:
           ref="reportViewSelector"
         ></ReportViewSelector>
       </v-col>
-      <v-col cols="12" md="4" xl="3" class="pb-0" v-if="!fixedChart">
+      <v-col cols="6" md="4" xl="3" class="pb-0" v-if="!fixedChart">
         <ChartTypeSelector
           :report-type="selectedReportView"
           :scope="scope"
@@ -33,16 +33,16 @@ cs:
         ></ChartTypeSelector>
       </v-col>
       <v-col
-        cols="12"
+        cols="6"
         md="4"
         xl="3"
         class="pb-0"
         v-if="!fixedChart && metricFilterNeeded"
       >
         <v-select
-          :items="availableMetrics"
+          :items="usableMetrics"
           v-model="selectedMetric"
-          item-title="short_name"
+          item-title="name"
           item-value="pk"
           :label="$t('labels.metric')"
           :loading="loadingMetrics"
@@ -219,11 +219,14 @@ export default {
       }
       return null;
     },
-    metricFilterNeeded() {
-      if (
+    canSumMetrics() {
+      return (
         this.selectedChartType &&
-        this.selectedReportView.short_name !== "interest_view"
-      ) {
+        this.selectedReportView.short_name === "interest_view"
+      );
+    },
+    metricFilterNeeded() {
+      if (this.selectedChartType) {
         return !(
           this.primaryDimension === "metric" ||
           this.secondaryDimension === "metric"
@@ -231,7 +234,24 @@ export default {
       }
       return false;
     },
+    usableMetrics() {
+      let out = [...this.availableMetrics];
+      if (this.canSumMetrics) {
+        // put "All" first
+        out.unshift({
+          name: this.$t("metric.all"),
+          short_name: "All",
+          is_interest_metric: false,
+          pk: null,
+          props: {
+            class: "font-italic",
+          },
+        });
+      }
+      return out;
+    },
   },
+
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
@@ -270,27 +290,32 @@ export default {
         let resp = await axios.get(url);
         this.availableMetrics = resp.data;
         if (this.availableMetrics.length > 0) {
-          // we want to select preferentially a metric which defined interest
-          // and then one with "Requests" in the name (to penalize denial
-          // metrics, such as No_License, and Investigation metrics)
-          let metrics = [...this.availableMetrics];
-          metrics.sort((a, b) =>
-            [
-              !a.is_interest_metric,
-              !a.short_name.includes("Requests"),
-              a.short_name,
-              a.pk,
-            ] >
-            [
-              !b.is_interest_metric,
-              !b.short_name.includes("Requests"),
-              b.short_name,
-              b.pk,
-            ]
-              ? 1
-              : -1,
-          );
-          this.selectedMetric = metrics[0].pk;
+          if (this.canSumMetrics) {
+            // we want to select "All" metric if it is available
+            this.selectedMetric = this.usableMetrics[0].pk;
+          } else {
+            // we want to select preferentially a metric which defined interest
+            // and then one with "Requests" in the name (to penalize denial
+            // metrics, such as No_License, and Investigation metrics)
+            let metrics = [...this.availableMetrics];
+            metrics.sort((a, b) =>
+              [
+                !a.is_interest_metric,
+                !a.short_name.includes("Requests"),
+                a.short_name,
+                a.pk,
+              ] >
+              [
+                !b.is_interest_metric,
+                !b.short_name.includes("Requests"),
+                b.short_name,
+                b.pk,
+              ]
+                ? 1
+                : -1,
+            );
+            this.selectedMetric = metrics[0].pk;
+          }
         } else {
           this.selectedMetric = null;
         }

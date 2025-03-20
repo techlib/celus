@@ -3,22 +3,22 @@ Functions that help in constructing django queries
 """
 
 import logging
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
 from django.db import models
-from django.db.models import Exists, OuterRef, Q, QuerySet, Sum
-from django.db.models.functions import Coalesce
+from django.db.models import Exists, OuterRef, QuerySet, Sum
 from django.shortcuts import get_object_or_404
+from organizations.models import Organization
 from recache.util import recache_queryset
 
-from logs.logic.interest import get_interest_type_dim_from_interest_rt
 from logs.logic.remap import remap_dicts
 from logs.models import (
     AccessLog,
     Dimension,
     DimensionText,
+    InterestConfig,
     ManualDataUpload,
     Metric,
     ReportInterestMetric,
@@ -34,55 +34,6 @@ class TooMuchDataError(Exception):
 
 class BadRequestError(Exception):
     pass
-
-
-def interest_value_to_annot_name(dt: DimensionText) -> str:
-    return f"interest_{dt.pk}"
-
-
-def interest_annotation_params(
-    accesslog_filter: dict, interest_rt: ReportType, prefix="accesslog__"
-) -> dict:
-    """
-    :param interest_rt: report type 'interest'
-    :param accesslog_filter: filter to apply to all access logs in the summation
-    :param prefix: prefix to use for the accesslog fields
-    :return:
-    """
-    interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
-    interest_annot_params = {
-        interest_value_to_annot_name(interest_type): Coalesce(
-            Sum(
-                prefix + "value",
-                filter=Q(**{prefix + "dim1": interest_type.pk, prefix + "report_type": interest_rt})
-                & Q(**accesslog_filter),
-            ),
-            0,
-        )
-        for interest_type in interest_type_dim.dimensiontext_set.all()
-    }
-    return interest_annot_params
-
-
-def extract_interests_from_objects(interest_rt: ReportType, objects: Iterable):
-    """
-    Goes over all objects in the list of objects and extracts all attributes that were created
-    by first using the `interest_annotation_params` function to a separate attribute on
-    the object called `interests`
-    :param interest_rt: report type 'interest' instance
-    :param objects: objects of extraction
-    :return:
-    """
-    interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
-    int_param_name_to_interest_type = {
-        interest_value_to_annot_name(dt): dt for dt in interest_type_dim.dimensiontext_set.all()
-    }
-    for obj in objects:
-        interests = {}
-        for int_param_name, dt in int_param_name_to_interest_type.items():
-            if hasattr(obj, int_param_name):
-                interests[dt.text] = {"value": getattr(obj, int_param_name), "name": dt.text_local}
-        obj.interests = interests
 
 
 def extract_accesslog_attr_query_params(
@@ -233,12 +184,7 @@ def find_best_materialized_view(rt: ReportType, used_dimensions: [str]) -> Optio
 
 class StatsComputer:
     implicit_dims = ["date", "platform", "metric", "organization", "target", "item", "import_batch"]
-    input_dim_to_query_dim = {"interest": "metric"}
-    extra_query_params = {"interest": lambda rt: {"metric__reportinterestmetric__report_type": rt}}
-    implicit_dim_to_text_fn = {
-        "interest": lambda x: str(x),
-        "metric": lambda x: x.name or x.short_name,
-    }
+    implicit_dim_to_text_fn = {"metric": lambda x: x.name or x.short_name}
     hard_result_count_limit = 20_000
 
     def __init__(self, report_type: Union[ReportType, ReportDataView], params: dict):
@@ -278,7 +224,7 @@ class StatsComputer:
         # construct the accesslog query
         self.query = self.construct_accesslog_query()
 
-    def _translate_dimension_spec(self, dim_name: str) -> (str, str, Optional[Dimension]):
+    def _translate_dimension_spec(self, dim_name: str) -> Tuple[str, str, Optional[Dimension]]:
         """
         Translate the value which is used to specify the dimension in request to the actual
         dimension for querying
@@ -294,8 +240,6 @@ class StatsComputer:
 
         if dim_name is None:
             return None, None, None
-        if dim_name in self.input_dim_to_query_dim:
-            return dim_name, self.input_dim_to_query_dim[dim_name], None
         if dim_name in self.implicit_dims:
             # this is the only place where we use the split version of dim_name (for now)
             if rest:
@@ -410,15 +354,17 @@ class StatsComputer:
             self.dim_raw_name_to_name[self.prim_dim_name] = self.io_prim_dim_name
         if self.sec_dim_name != self.io_sec_dim_name:
             self.dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
-        # add extra filters if requested
-        prim_extra = self.extra_query_params.get(self.io_prim_dim_name)
-        if prim_extra:
-            query_params.update(prim_extra(self.report_type))
-        sec_extra = self.extra_query_params.get(self.io_sec_dim_name)
-        if sec_extra:
-            query_params.update(sec_extra(self.report_type))
         # add filter for dates
         query_params.update(date_filter_from_params(self.params))
+        # add interest config filters if interest is the report type
+        if self.used_report_type and self.used_report_type == ReportType.objects.get_interest_rt():
+            # get interest config - either the default one or the one for the organization
+            org_filter = self.params.get("organization")
+            if org_filter and org_filter not in ("-1", -1):
+                ic = Organization.objects.get(pk=org_filter).get_interest_config()
+            else:
+                ic = InterestConfig.objects.default()
+            query_params.update(ic.get_interest_filters())
 
         # maybe use materialized report if available
         extra_dims = {self.prim_dim_name}

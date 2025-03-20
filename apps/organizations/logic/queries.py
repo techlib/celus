@@ -1,9 +1,18 @@
+from typing import Union
+
 from core.models import User
 from django.http import Http404
+from logs.models import InterestConfig
+
+from organizations.models import Organization
 
 
 def organization_filter_from_org_id(
-    org_id, user: User, prefix="", admin_required: bool = False, clickhouse=False
+    org_id: Union[str, int],
+    user: User,
+    prefix: str = "",
+    admin_required: bool = False,
+    clickhouse: bool = False,
 ) -> dict:
     """
     Returns a filter parameters in form of a dictionary based on the org_id and the user
@@ -42,3 +51,18 @@ def organization_filter_from_org_id(
 
 def extend_query_filter(filter_dict: dict, prefix: str) -> dict:
     return {prefix + key: value for key, value in filter_dict.items()}
+
+
+def get_organization_related_accesslog_filters_for_interest(
+    org_id: Union[str, int], user: User, clickhouse: bool = False
+) -> dict:
+    org_filter = organization_filter_from_org_id(org_id, user, clickhouse=clickhouse)
+    if org_filter:
+        # if there is a filter, it means that the organization_pk is not -1
+        # and the user has access to the organization
+        org = Organization.objects.get(pk=org_id)
+        ic = org.get_interest_config()
+    else:
+        ic = InterestConfig.objects.default()
+    interest_filters = ic.get_interest_filters()
+    return {**org_filter, **interest_filters}

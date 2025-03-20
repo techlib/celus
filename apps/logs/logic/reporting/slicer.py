@@ -1059,10 +1059,17 @@ class FlexibleDataSlicer:
         )
         return coverage
 
-    def get_coverage(self) -> dict:
+    def get_coverage(self) -> Optional[dict]:
         """
         Returns the result of data coverage computation based on the filters applied to the slicer
         """
+        # check that the involved report types are compatible with coverage
+        if any(
+            rt.short_name in settings.REPORT_TYPES_WITHOUT_COVERAGE
+            for rt in self.involved_report_types()
+        ):
+            return None
+
         # resolve the filters
         platform_ids = None
         organization_ids = None

@@ -28,14 +28,6 @@ from .logic.validation import (
     normalize_author_name,
 )
 
-
-class PlatformInterestReport(models.Model):
-    report_type = models.ForeignKey("logs.ReportType", on_delete=models.CASCADE)
-    platform = models.ForeignKey("Platform", on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-
 # the following curve was obtained as a generic curve from the production data on K1
 # and slightly modified to make it more generic.
 # It will be used in case there are not enough attempts in a CELUS installation to create a
@@ -110,9 +102,6 @@ class Platform(models.Model):
     name = models.CharField(max_length=250)
     provider = models.CharField(max_length=250)
     url = models.URLField(blank=True)
-    interest_reports = models.ManyToManyField(
-        "logs.ReportType", through=PlatformInterestReport, related_name="interest_platforms"
-    )
     source = models.ForeignKey(DataSource, on_delete=models.CASCADE, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -232,22 +221,6 @@ class Platform(models.Model):
             return harvest_start + timedelta(days=max(next_days, min_start))
 
         return None
-
-    def create_default_interests(self) -> Counter:
-        from logs.models import ReportType
-
-        stats: Counter = Counter()
-
-        for report_type in ReportType.objects.filter(default_platform_interest=True):
-            _, created = PlatformInterestReport.objects.get_or_create(
-                platform=self, report_type=report_type
-            )
-            if created:
-                stats["created"] += 1
-            else:
-                stats["existing"] += 1
-
-        return stats
 
     @property
     def slugified_name(self):

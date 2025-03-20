@@ -16,16 +16,20 @@ from nibbler.logic.processing import counter_format_poops, get_records_from_nibb
 from organizations.tests.conftest import organization_random, organizations  # noqa - fixture
 from publications.fake_data import PlatformFactory
 from publications.logic.title_management import find_mergeable_titles, merge_titles
-from publications.models import Item, PlatformInterestReport, PlatformTitle, Title
+from publications.models import Item, PlatformTitle, Title
 from publications.tests.conftest import interest_rt  # noqa - fixture
 from tags.fake_data import TagForTitleFactory
 
-from logs.fake_data import ManualDataUploadFullFactory, MetricFactory, ReportTypeFactory
+from logs.fake_data import (
+    InterestGroupFactory,
+    ManualDataUploadFullFactory,
+    MetricFactory,
+    ReportTypeFactory,
+)
 from logs.models import (
     AccessLog,
     DimensionText,
     ImportBatch,
-    InterestGroup,
     ReportInterestMetric,
     ReportMaterializationSpec,
     ReportType,
@@ -264,11 +268,10 @@ class TestDataImport:
         report_type = report_type_nd(1)
         organization = organizations[0]
         # now define the interest
-        PlatformInterestReport.objects.create(platform=platform, report_type=report_type)
         ReportInterestMetric.objects.create(
             report_type=report_type,
             metric=MetricFactory.create(short_name="Hits"),
-            interest_group=InterestGroup.objects.create(short_name="ig1", position=1),
+            interest_group=InterestGroupFactory(short_name="ig1", position=1),
         )
         # and materialized view
         rt_no_title_spec = ReportMaterializationSpec.objects.create(
@@ -601,10 +604,7 @@ class TestCounter5Import:
 
     def test_c5_tr_nature_merging(self, organization_random, platform):
         rt = ReportTypeFactory(
-            name="Counter 5 - Title report",
-            short_name="TR",
-            default_platform_interest=True,
-            dimensions=Counter5TRReport.dimensions,
+            name="Counter 5 - Title report", short_name="TR", dimensions=Counter5TRReport.dimensions
         )
 
         path = Path(__file__).parent / "data/counter5/counter5_tr_nature.json"
@@ -645,10 +645,7 @@ class TestCounter5Import:
         title and other dimensions.
         """
         rt = ReportTypeFactory(
-            name="Counter 5 - Title report",
-            short_name="TR",
-            default_platform_interest=True,
-            dimensions=Counter5TRReport.dimensions,
+            name="Counter 5 - Title report", short_name="TR", dimensions=Counter5TRReport.dimensions
         )
 
         path = Path(__file__).parent / "data/counter5/TR-one-title-more-ids.json"

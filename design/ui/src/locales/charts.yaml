@@ -46,6 +46,8 @@ en:
     no: Series as individual bars
   series:
     data_coverage: Data coverage
+  metric:
+    all: All metrics summed up
 cs:
   chart:
     date_metric: Metrika v čase
@@ -93,3 +95,5 @@ cs:
     no: Série jako nezávislé sloupce
   series:
     data_coverage: Pokrytí daty
+  metric:
+    all: Všechny metriky sečtené

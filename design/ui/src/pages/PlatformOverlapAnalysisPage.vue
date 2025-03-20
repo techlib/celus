@@ -319,14 +319,6 @@ export default {
 </script>
 
 <style scoped>
-.tab-active {
-  color: #ffffffff !important;
-  background-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.tab-inactive {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
 p {
   margin-bottom: 16px;
 }

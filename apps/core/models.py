@@ -229,7 +229,7 @@ class User(AbstractUser):
         #     tree_id__in=self.organizations.all().values('tree_id').distinct())
 
     def accessible_platforms(
-        self, organization: typing.Optional["apps.publications.models.Organization"] = None
+        self, organization: typing.Optional["Organization"] = None
     ) -> models.QuerySet:
         """
         Display accessible platform for the user

@@ -1,14 +1,17 @@
+import logging
 from dataclasses import dataclass
 from datetime import date
 from typing import Dict, Iterable, Optional, Tuple
 
 from core.logic.dates import months_in_range
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Subquery, Sum, Value
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, QuerySet, Sum, Value
 from organizations.models import Organization
 from publications.models import Platform, PlatformTitle, Title
 from sushi.models import SushiCredentials
 
 from logs.models import AccessLog, ImportBatch, OrganizationPlatform, ReportType
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -113,8 +116,11 @@ class DataCoverageExtractor:
 
     def create_rt_qs(self) -> QuerySet[ReportType]:
         if self.report_type.is_interest_rt:
-            return ReportType.objects.filter(platforminterestreport__isnull=False)
-        return ReportType.objects.filter(pk=self.report_type.pk)
+            return ReportType.objects.filter(
+                reportinterestmetric__isnull=False, superseded_by__isnull=True
+            )
+        else:
+            return ReportType.objects.filter(pk=self.report_type.pk)
 
     def get_basic_ib_qs(self) -> QuerySet[ImportBatch]:
         return ImportBatch.objects.filter(
@@ -200,22 +206,19 @@ class DataCoverageExtractor:
             # then 2 IBs (for JR1 and BR2) are needed.
             # this is unfortunately too involved for now, so I have to think about it a bit more...
 
+            rt_count = (
+                ReportType.objects.filter(
+                    reportinterestmetric__isnull=False, superseded_by__isnull=True
+                )
+                .distinct()
+                .count()
+            )
+            logger.info(f"rt_count: {rt_count}")
+
             qs = (
                 basic_qs.annotate(
                     foo=Value(42),  # dummy value to have something if split_by is empty
-                    # the following is a convoluted way of making the Sum of rt_count possible
-                    # because a more straightforward way complains that is it not possible
-                    # to do Sum on an aggregate value
-                    rt_count=Subquery(
-                        ReportType.objects.filter(
-                            platforminterestreport__platform=OuterRef("platform"),
-                            superseded_by__isnull=True,
-                        )
-                        .annotate(x=Value(7))
-                        .values("x")
-                        .annotate(c=Count("id"))
-                        .values("c")
-                    ),
+                    rt_count=Value(rt_count),
                 )
                 .values("foo", *self.split_by_without_date)
                 .annotate(

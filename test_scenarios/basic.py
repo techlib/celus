@@ -207,40 +207,26 @@ def basic1(users, organizations, platforms, data_sources, identities, clients): 
 @pytest.fixture
 def report_types(data_sources):
     # Counter 5
-    tr = ReportTypeFactory(
-        name="Counter 5 - Title report", short_name="TR", default_platform_interest=True
-    )
-    dr = ReportTypeFactory(
-        name="Counter 5 - Database report", short_name="DR", default_platform_interest=True
-    )
+    tr = ReportTypeFactory(name="Counter 5 - Title report", short_name="TR")
+    dr = ReportTypeFactory(name="Counter 5 - Database report", short_name="DR")
     pr = ReportTypeFactory(name="Counter 5 - Platform report", short_name="PR")
     ir = ReportTypeFactory(name="Counter 5 - Item report", short_name="IR")
 
     # Counter 5.1
-    tr51 = ReportTypeFactory(
-        name="Counter 5.1 - Title report", short_name="TR51", default_platform_interest=True
-    )
-    dr51 = ReportTypeFactory(
-        name="Counter 5.1 - Database report", short_name="DR51", default_platform_interest=True
-    )
+    tr51 = ReportTypeFactory(name="Counter 5.1 - Title report", short_name="TR51")
+    dr51 = ReportTypeFactory(name="Counter 5.1 - Database report", short_name="DR51")
     pr51 = ReportTypeFactory(name="Counter 5.1 - Platform report", short_name="PR51")
     ir51 = ReportTypeFactory(name="Counter 5.1 - Item report", short_name="IR51")
 
     # Counter 4
     br1 = ReportTypeFactory(name="Counter 4 - Book report 1", short_name="BR1")
-    br2 = ReportTypeFactory(
-        name="Counter 4 - Book report 2", short_name="BR2", default_platform_interest=True
-    )
+    br2 = ReportTypeFactory(name="Counter 4 - Book report 2", short_name="BR2")
     br3 = ReportTypeFactory(name="Counter 4 - Book report 3", short_name="BR3")
 
-    db1 = ReportTypeFactory(
-        name="Counter 4 - Database report 1", short_name="DB1", default_platform_interest=True
-    )
+    db1 = ReportTypeFactory(name="Counter 4 - Database report 1", short_name="DB1")
     db2 = ReportTypeFactory(name="Counter 4 - Database report 2", short_name="DB2")
 
-    jr1 = ReportTypeFactory(
-        name="Counter 4 - Journal report 1", short_name="JR1", default_platform_interest=True
-    )
+    jr1 = ReportTypeFactory(name="Counter 4 - Journal report 1", short_name="JR1")
     jr1goa = ReportTypeFactory(
         name="Counter 4 - Journal report 1 Gold Open Access", short_name="JR1GOA"
     )
@@ -548,9 +534,6 @@ def interests(report_types, platforms, metrics):
             ReportInterestMetric.objects.create(
                 report_type=report_types[rt_name], metric=metrics[metric_name], interest_group=ig
             )
-
-    platforms["standalone"].interest_reports.set([report_types["tr"], report_types["dr"]])
-    platforms["branch"].interest_reports.set([report_types["jr1"]])
     return {"ig": ig}
 
 

@@ -5,7 +5,6 @@ from django.db import IntegrityError
 from django.db.models.signals import post_delete, post_save
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from publications.models import PlatformInterestReport
 
 from logs.constants import ACTION_INTEREST_CHANGE
 from logs.logic.clickhouse import delete_import_batch_from_clickhouse
@@ -18,6 +17,7 @@ from logs.models import (
     OrganizationPlatform,
     ReportInterestMetric,
 )
+from logs.tasks import sync_interest_for_superseded_import_batches_task
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,14 @@ def import_batch_delete_sync_with_clickhouse(sender, instance: ImportBatch, usin
             delete_import_batch_from_clickhouse(import_batch_id)
 
         on_commit(delete_from_clickhouse)
+
+
+@receiver(post_delete, sender=ImportBatch)
+def sync_interest_for_superseded_import_batches(sender, instance: ImportBatch, using, **kwargs):
+    """
+    Look at all superseded import batches and recompute their interest if needed.
+    """
+    sync_interest_for_superseded_import_batches_task.delay()
 
 
 @receiver(post_save, sender=ImportBatch)
@@ -54,11 +62,6 @@ def import_batch_create_organization_platform_link(sender, instance: ImportBatch
             # created in another process between the `get` and the `create` parts
             # we can safely ignore this
             pass
-
-
-@receiver([post_delete, post_save], sender=PlatformInterestReport)
-def store_last_action_interest_change_pir(sender, instance, using, **kwargs):
-    LastAction.update_action(ACTION_INTEREST_CHANGE)
 
 
 @receiver([post_delete, post_save], sender=ReportInterestMetric)

@@ -38,17 +38,6 @@ export default {
   },
 
   actions: {
-    async fetchNoInterestPlatforms({ commit }) {
-      const { response } = await http({
-        url: "/api/organization/-1/platform/no-interest-defined/",
-      });
-      if (!response) return [];
-      commit("setNoInterestPlatformsCount", { count: response.data.length });
-      commit("setNoInterestPlatformsWithDataCount", {
-        count: response.data.filter((item) => item.has_data).length,
-      });
-      return response.data;
-    },
     async loadSushiCredentialsCount({ commit }, component) {
       const { response } = await http({
         url: "/api/sushi-credentials/count/",

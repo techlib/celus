@@ -9,7 +9,7 @@ import requests_mock
 from logs.models import Dimension, Metric, ReportInterestMetric, ReportType
 from nibbler.models import ParserDefinition
 from publications.fake_data import PlatformFactory
-from publications.models import Platform, PlatformInterestReport
+from publications.models import Platform
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus
 
@@ -71,7 +71,6 @@ class TestCeleryTasks:
             parser_definition_count = ParserDefinition.objects.count()
             import_attempts = ImportAttempt.objects.count()
             rim_count = ReportInterestMetric.objects.count()
-            pir_count = PlatformInterestReport.objects.count()
             metric_count = Metric.objects.count()
 
             # Create some dimensions
@@ -88,9 +87,6 @@ class TestCeleryTasks:
             assert ParserDefinition.objects.count() == parser_definition_count + 1
             assert Metric.objects.count() == metric_count, "no new metrics should be created"
             assert ReportInterestMetric.objects.count() == rim_count + 3
-            # 7 report_types with default_platform_interest * 3 new platforms
-            # + 1 from parser_definition
-            assert PlatformInterestReport.objects.count() == (pir_count + 7 * 3 + 1)
 
             # The REPORT_TYPE_INPUT_DATA2 contains 3 dimensions
             # 1 was created before the sync and 2 were created during the sync

@@ -1615,14 +1615,6 @@ strong {
   font-weight: 700 !important;
 }
 
-.tab-active {
-  color: #ffffffff !important;
-}
-
-.tab-inactive {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
 .expand_trans {
   display: flex;
   align-items: center;

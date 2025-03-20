@@ -3,6 +3,8 @@ from unittest import mock
 
 import pytest
 from api.models import OrganizationAPIKey
+from celus_nigiri import CounterRecord
+from core.fake_data import DataSourceFactory
 from core.models import DataSource, Identity
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,  # noqa - fixtures
@@ -12,22 +14,32 @@ from core.tests.conftest import (  # noqa - fixtures
     master_user_identity,
     valid_identity,
 )
+from django.core.management import call_command
 from django.db.models import Sum
 from django.urls import reverse
 from logs.fake_data import (
     AccessLogFactory,
     ImportBatchFactory,
     ImportBatchFullFactory,
+    InterestGroupFactory,
     MetricFactory,
     ReportTypeFactory,
 )
-from logs.logic.data_import import create_platformtitle_links_from_accesslogs
-from logs.logic.materialized_interest import sync_interest_by_import_batches
+from logs.logic.data_import import (
+    create_platformtitle_links_from_accesslogs,
+    import_counter_records,
+)
+from logs.logic.interest.computation import sync_interest_by_import_batches
 from logs.models import (
     AccessLog,
+    Dimension,
+    DimensionFilter,
     DimensionText,
     ImportBatch,
-    InterestGroup,
+    InterestConfig,
+    InterestDimensionValueMapping,
+    InterestFilter,
+    InterestProfile,
     Metric,
     OrganizationPlatform,
     ReportInterestMetric,
@@ -42,7 +54,7 @@ from tags.fake_data import TagForTitleFactory
 from tags.models import AccessibleBy
 
 from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
-from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
+from publications.models import Platform, PlatformTitle, Title
 from test_scenarios.basic import *  # noqa - fixtures
 
 KNOWLEDGEBASE = {
@@ -87,6 +99,152 @@ KNOWLEDGEBASE = {
 class MockTask:
     def __init__(self):
         self.id = uuid.uuid4()
+
+
+@pytest.fixture
+def real_world_data_with_interest(interest_rt):
+    call_command("check_report_type_dimensions", "--fix-it")
+    call_command("check_interest_definitions", "--fix-it")
+    org = OrganizationFactory.create()
+    platform = PlatformFactory.create()
+    tr = ReportType.objects.get(short_name="TR")
+    # load data
+    basic_data = {
+        "start": "2024-01-01",
+        "end": "2024-01-31",
+        "title": "Title 1",
+        "title_ids": {"ISBN": "9780787960186"},
+        "metric": "Total_Item_Requests",
+    }
+    crs = [
+        CounterRecord(
+            value=1,
+            dimension_data={
+                "Data_Type": "Book",
+                "Access_Type": "Controlled",
+                "Access_Method": "Normal",
+            },
+            **basic_data,
+        ),
+        CounterRecord(
+            value=2,
+            dimension_data={
+                "Data_Type": "Book",
+                "Access_Type": "OA_Gold",
+                "Access_Method": "Normal",
+            },
+            **basic_data,
+        ),
+        CounterRecord(
+            value=4,
+            dimension_data={"Data_Type": "Book", "Access_Type": "OA_Gold", "Access_Method": "TDM"},
+            **basic_data,
+        ),
+        CounterRecord(
+            value=8,
+            dimension_data={
+                "Data_Type": "Book",
+                "Access_Type": "Controlled",
+                "Access_Method": "TDM",
+            },
+            **basic_data,
+        ),
+    ]
+    import_counter_records(tr, org, platform, crs)
+    return {"organization": org, "platform": platform, "tr": tr, "interest_rt": interest_rt}
+
+
+def create_interest_configs(org):
+    # global config
+    interest_filters = {"Access_Type": "Controlled"}
+    ic = InterestConfig.objects.default()
+    for dim_name, value in interest_filters.items():
+        df = DimensionFilter.objects.create(
+            dimension=Dimension.objects.get(short_name=dim_name), values=[value]
+        )
+        InterestFilter.objects.create(interest_config=ic, filter=df)
+    # org config
+    interest_filters = {"Access_Type": "Controlled", "Access_Method": "Normal"}
+    org_ic = InterestConfig.objects.create(
+        organization=org, interest_profile=InterestProfile.objects.default()
+    )
+    for dim_name, value in interest_filters.items():
+        df = DimensionFilter.objects.create(
+            dimension=Dimension.objects.get(short_name=dim_name), values=[value]
+        )
+        InterestFilter.objects.create(interest_config=org_ic, filter=df)
+    return {"global_interest_config": ic, "org_interest_config": org_ic}
+
+
+@pytest.fixture
+def real_world_data_with_interest_and_configs(real_world_data_with_interest):
+    org = real_world_data_with_interest["organization"]
+    return {**create_interest_configs(org), **real_world_data_with_interest}
+
+
+@pytest.fixture
+def real_world_item_data_with_interest(interest_rt):
+    call_command("check_report_type_dimensions", "--fix-it")
+    call_command("check_interest_definitions", "--fix-it")
+    org = OrganizationFactory.create()
+    platform = PlatformFactory.create()
+    ir = ReportType.objects.get(short_name="IR51")
+    # load data
+    basic_data = {
+        "start": "2024-01-01",
+        "end": "2024-01-31",
+        "title": "Title 1",
+        "item": "Item 1",
+        "metric": "Total_Item_Requests",
+    }
+    crs = [
+        CounterRecord(
+            value=1,
+            dimension_data={
+                "Data_Type": "Article",
+                "Access_Type": "Controlled",
+                "Access_Method": "Normal",
+            },
+            **basic_data,
+        ),
+        CounterRecord(
+            value=2,
+            dimension_data={
+                "Data_Type": "Article",
+                "Access_Type": "Free_To_Read",
+                "Access_Method": "Normal",
+            },
+            **basic_data,
+        ),
+        CounterRecord(
+            value=4,
+            dimension_data={
+                "Data_Type": "Article",
+                "Access_Type": "Free_To_Read",
+                "Access_Method": "TDM",
+            },
+            **basic_data,
+        ),
+        CounterRecord(
+            value=8,
+            dimension_data={
+                "Data_Type": "Article",
+                "Access_Type": "Controlled",
+                "Access_Method": "TDM",
+            },
+            **basic_data,
+        ),
+    ]
+    import_counter_records(ir, org, platform, crs)
+    return {"organization": org, "platform": platform, "ir": ir}
+
+
+@pytest.fixture
+def real_world_item_data_with_interest_and_configs(real_world_item_data_with_interest):
+    return {
+        **create_interest_configs(real_world_item_data_with_interest["organization"]),
+        **real_world_item_data_with_interest,
+    }
 
 
 @pytest.mark.django_db
@@ -238,19 +396,6 @@ class TestPlatformAPI:
             assert new_platform.name == "long_platform"
             assert new_platform.provider == "provider"
             assert new_platform.url == "https://example.com"
-            assert set(
-                new_platform.platforminterestreport_set.values_list(
-                    "report_type__short_name", flat=True
-                )
-            ) == {
-                "TR",
-                "DR",
-                "JR1",
-                "BR2",
-                "DB1",
-                "TR51",
-                "DR51",
-            }, "Interest report types created check"
 
         resp = clients[client].post(
             reverse("platform-list", args=[organization_pk]),
@@ -876,10 +1021,9 @@ class TestPlatformTitleAPI:
         # - title is present in the output only once - distinct is used properly
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name="interest1", position=1)
-        metric = Metric.objects.create(short_name="m1", name="Metric1")
+        ig = InterestGroupFactory(short_name="interest1", position=1)
+        metric = MetricFactory(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch = ImportBatchFactory(
             platform=platform, organization=organization, report_type=rt
         )
@@ -941,10 +1085,9 @@ class TestPlatformTitleAPI:
         # - title is present in the output only once - distinct is used properly
         # - second title is not present - the filtering works OK
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name="interest1", position=1)
-        metric = Metric.objects.create(short_name="m1", name="Metric1")
+        ig = InterestGroupFactory(short_name="interest1", position=1)
+        metric = MetricFactory(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         import_batch1 = ImportBatchFactory(
             platform=platform, organization=organization, report_type=rt
         )
@@ -984,6 +1127,39 @@ class TestPlatformTitleAPI:
         assert data[0]["name"] == titles[0].name
         assert data[0]["interests"]["interest1"] == 3
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_title_interest_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        platform = real_world_data_with_interest_and_configs["platform"]
+        org = real_world_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        url = reverse(
+            "platform-title-interest-list", args=(org.pk if org_in_query else -1, platform.pk)
+        )
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 1, "There is only one title"
+        assert data[0]["interests"]["full_text"] == exp_value
+
     def test_organization_platforms_overlap(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms
     ):
@@ -1004,7 +1180,6 @@ class TestPlatformTitleAPI:
         # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
         rt = accesslogs_with_interest["rt"]
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
         ib = ImportBatchFullFactory.create(
             platform=platform2,
             organization=organization,
@@ -1046,7 +1221,6 @@ class TestPlatformTitleAPI:
         # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
         rt = accesslogs_with_interest["rt"]
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
         ib = ImportBatchFullFactory.create(
             platform=platform2,
             organization=organization,
@@ -1085,6 +1259,38 @@ class TestPlatformTitleAPI:
             len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 1
         ), "1 self-overlap"
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_organization_platform_overlap_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+
+        org = real_world_data_with_interest_and_configs["organization"]
+
+        url = reverse("organization-platform-overlap", args=[org.pk if org_in_query else -1])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, "only 1 self overlap"
+        assert data[0]["interest"] == exp_value
+
     def test_organization_all_platform_overlap(
         self, authenticated_client, accesslogs_with_interest, valid_identity, platforms, interest_rt
     ):
@@ -1097,7 +1303,6 @@ class TestPlatformTitleAPI:
         # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
         rt = accesslogs_with_interest["rt"]
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
         ib = ImportBatchFullFactory.create(
             platform=platform2,
             organization=organization,
@@ -1108,8 +1313,6 @@ class TestPlatformTitleAPI:
             create_accesslogs__value=1,
         )
         sync_interest_by_import_batches(ImportBatch.objects.filter(pk=ib.pk))
-
-        print(list(AccessLog.objects.filter(report_type=interest_rt)))
 
         resp = authenticated_client.get(
             reverse("organization-all-platforms-overlap", args=[organization.pk])
@@ -1145,9 +1348,6 @@ class TestPlatformTitleAPI:
         import_batch = accesslogs_with_interest["import_batch"]
         metric = accesslogs_with_interest["metric"]
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
-        PlatformInterestReport.objects.create(
-            report_type=import_batch.report_type, platform=platform2
-        )
         import_batch2 = ImportBatchFactory(
             platform=platform2, organization=organization, report_type=import_batch.report_type
         )
@@ -1228,11 +1428,9 @@ class TestPlatformTitleAPI:
         title = TitleFactory.create()
         # create the interest related records
         rt = report_type_nd(0)
-        ig = InterestGroup.objects.create(short_name="interest1", position=1)
-        metric = Metric.objects.create(short_name="m1", name="Metric1")
+        ig = InterestGroupFactory(short_name="interest1", position=1)
+        metric = MetricFactory(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
-        for platform in (platform1, platform2, platform3):
-            PlatformInterestReport.objects.create(report_type=rt, platform=platform)
         # create some data
         ib1 = ImportBatchFactory.create(
             platform=platform1, organization=org1, report_type=rt, date="2023-01-01"
@@ -1268,6 +1466,44 @@ class TestPlatformTitleAPI:
                 assert rec["overlap_interest"] in (1, 2)
                 assert rec["total_interest"] == rec["overlap_interest"]
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_organization_all_platform_overlap_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        """
+        This is a simplified test which checks that the interest config is applied correctly.
+        It only uses the `total_interest` field to check the interest config is applied,
+        but it should be enough.
+        """
+        org = real_world_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        url = reverse("organization-all-platforms-overlap", args=[org.pk if org_in_query else -1])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, "only 1 record - self overlap"
+        assert data[0]["overlap"] == 0, "no overlap"
+        assert (
+            data[0]["total_interest"] == exp_value
+        ), "the total interest should reflect the interest config"
+
     def test_organization_all_platform_overlap_all_orgs(
         self, master_user_client, accesslogs_with_interest, platforms
     ):
@@ -1278,7 +1514,6 @@ class TestPlatformTitleAPI:
         # add some usage to platform 2 and title 1 to create overlap
         platform2 = [pl for pl in platforms.values() if pl.pk != platform.pk][0]
         rt = accesslogs_with_interest["rt"]
-        PlatformInterestReport.objects.create(report_type=rt, platform=platform2)
         ib = ImportBatchFullFactory.create(
             platform=platform2,
             organization=organization,
@@ -1454,6 +1689,13 @@ class TestTitlesOnMultiplePlatforms:
         at_attr = tr.dim_name_to_dim_attr("Access_Type")
         yop_dim = tr.dimension_by_attr_name(yop_attr)
         at_dim = tr.dimension_by_attr_name(at_attr)
+        # add InterestDimensionValueMapping for Access_Type
+        InterestDimensionValueMapping.objects.create(
+            interest_rtdim=interest_rt.reporttypetodimension_set.get(dimension=at_dim),
+            source_rtdim=tr.reporttypetodimension_set.get(dimension=at_dim),
+            default_value="Free",  # what is not Controlled will be mapped to Free
+            mapping={"Controlled": ["Controlled"]},
+        )
         t1 = TitleFactory(pub_type="J", name="foo", issn="1234-5678", doi="", isbn="", eissn="")
         t2 = TitleFactory(pub_type="J", name="bar", eissn="2345-6789", doi="", isbn="", issn="")
         t3 = TitleFactory(pub_type="J", name="foobar", issn="1234-9876", doi="", isbn="", eissn="")
@@ -1468,12 +1710,10 @@ class TestTitlesOnMultiplePlatforms:
         yop_2011 = DimensionText.objects.create(text="2011", dimension=yop_dim)
         at_controlled = DimensionText.objects.create(text="Controlled", dimension=at_dim)
         # define interest for the TR report type
-        PlatformInterestReport.objects.create(report_type=tr, platform=p1)
-        PlatformInterestReport.objects.create(report_type=tr, platform=p2)
         ReportInterestMetric.objects.create(
             report_type=tr,
             metric=metric,
-            interest_group=InterestGroup.objects.create(
+            interest_group=InterestGroupFactory(
                 short_name="interest1", position=1, implies_availability=True
             ),
         )
@@ -1596,6 +1836,57 @@ class TestTitlesOnMultiplePlatforms:
                 }, "2011 should be ignored - no No_License metric and no Controlled access type"
                 assert rec["total_interest"] == 7 + 14 + 13 + 26
 
+    def test_titles_on_multiple_platforms_output_structure_with_org_config(
+        self, admin_client, overlaping_data
+    ):
+        """
+        Tests that `titles-on-multiple-platforms` view returns correct data interest
+        in presence of an organization specific interest config.
+        """
+        org = overlaping_data["org"]
+        t1 = overlaping_data["t1"]
+        t2 = overlaping_data["t2"]
+        t4 = overlaping_data["t4"]
+        ib1 = overlaping_data["ib1"]
+        ib2 = overlaping_data["ib2"]
+
+        # create an organization specific interest config
+        ic = InterestConfig.objects.create(
+            organization=org, interest_profile=InterestProfile.objects.default()
+        )
+        df = DimensionFilter.objects.create(
+            dimension=Dimension.objects.get(short_name="Access_Type"), values=["Controlled"]
+        )
+        InterestFilter.objects.create(interest_config=ic, filter=df)
+
+        # test the API output
+        resp = admin_client.get(reverse("organization-titles-on-multiple-platforms", args=[org.pk]))
+        assert resp.status_code == 200
+        assert "results" in resp.json()
+        data = resp.json()["results"]
+        assert len(data) == 3
+        for rec in data:
+            if rec["pk"] == t1.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2010, "max": 2011},
+                    f"{ib2.platform_id}": {"min": 2010, "max": 2011},
+                }
+                assert rec["total_interest"] == 2 + 3 + 4 + 6
+            elif rec["pk"] == t2.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2011, "max": 2011},
+                    f"{ib2.platform_id}": {"min": 2011, "max": 2011},
+                }
+                assert rec["total_interest"] == 3 + 4
+            elif rec["pk"] == t4.pk:
+                assert rec["yops"] == {
+                    f"{ib1.platform_id}": {"min": 2010, "max": 2010},
+                    f"{ib2.platform_id}": {"min": 2010, "max": 2010},
+                }, "2011 should be ignored - no No_License metric and no Controlled access type"
+                assert (
+                    rec["total_interest"] == 7 + 14
+                ), "Access_Type != Controlled (13+26) should be ignored"
+
     @pytest.mark.parametrize(
         "order_by", ["total_interest", "name", "issn", "isbn", "doi", "platform_count"]
     )
@@ -1710,7 +2001,7 @@ class TestTitlesOnMultiplePlatforms:
 @pytest.mark.django_db
 class TestPlatformInterestAPI:
     @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
-    def test_platfrom_interest_list_empty(
+    def test_platform_interest_list_empty(
         self, master_user_client, interest_rt, organizations, fmt
     ):
         url = reverse("platform-interest-list", args=(organizations["standalone"].pk,))
@@ -1722,7 +2013,7 @@ class TestPlatformInterestAPI:
             assert resp.json() == []
 
     @pytest.mark.parametrize("fmt", (None, "csv", "xlsx"))
-    def test_platfrom_interest_list_all_org_empty(self, master_user_client, interest_rt, fmt):
+    def test_platform_interest_list_all_org_empty(self, master_user_client, interest_rt, fmt):
         url = reverse("platform-interest-list", args=(-1,))
         if fmt:
             url += f"?format={fmt}"
@@ -1730,6 +2021,88 @@ class TestPlatformInterestAPI:
         assert resp.status_code == 200
         if fmt is None:
             assert resp.json() == []
+
+    @pytest.mark.parametrize(
+        ["interest_filters", "exp_value"],
+        [
+            ({}, 15),
+            ({"Access_Type": "Controlled"}, 9),
+            ({"Access_Type": "Free"}, 6),
+            ({"Access_Type": "Controlled", "Access_Method": "TDM"}, 8),
+            ({"Access_Type": "Controlled", "Access_Method": "Normal"}, 1),
+            ({"Access_Type": "Free", "Access_Method": "TDM"}, 4),
+            ({"Access_Type": "Free", "Access_Method": "Normal"}, 2),
+            ({"Access_Method": "TDM"}, 12),
+            ({"Access_Method": "Normal"}, 3),
+        ],
+    )
+    def test_platform_interest_list_real_world_data(
+        self, master_user_client, interest_filters, exp_value, real_world_data_with_interest
+    ):
+        org = real_world_data_with_interest["organization"]
+        tr = real_world_data_with_interest["tr"]
+        interest_rt = real_world_data_with_interest["interest_rt"]
+        assert tr.accesslog_set.count() == 4
+        assert tr.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        assert interest_rt.accesslog_set.count() == 4
+        assert interest_rt.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        # configure the interest
+        ic = InterestConfig.objects.default()
+        for dim_name, value in interest_filters.items():
+            df = DimensionFilter.objects.create(
+                dimension=Dimension.objects.get(short_name=dim_name), values=[value]
+            )
+            InterestFilter.objects.create(interest_config=ic, filter=df)
+        assert ic.interest_filters.count() == len(interest_filters)
+        # check the API
+        url = reverse("platform-interest-list", args=(org.pk,))
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["full_text"] == exp_value
+
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_platform_interest_list_real_world_data_org_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        """
+        Test that the interest list API returns the correct value for the given organization
+        depending on the presence of a organization specific interest config.
+        """
+        org = real_world_data_with_interest_and_configs["organization"]
+        tr = real_world_data_with_interest_and_configs["tr"]
+        interest_rt = real_world_data_with_interest_and_configs["interest_rt"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+
+        assert tr.accesslog_set.count() == 4
+        assert tr.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        assert interest_rt.accesslog_set.count() == 4
+        assert interest_rt.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        # check the API
+        url = reverse("platform-interest-list", args=(org.pk if org_in_query else -1,))
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["full_text"] == exp_value
 
 
 @pytest.mark.django_db
@@ -1874,17 +2247,32 @@ class TestAllPlatformsAPI:
             assert {e["pk"] for e in resp.json()} == {platforms[e].pk for e in available}
 
     def test_all_platforms_detail_report_types(self, basic1, report_type_nd, settings):
+        """
+        Test that the all-platforms endpoint returns all report types that are not created by other
+        organizations.
+        """
         # prepare data
         client = basic1["clients"]["admin2"]
         organization = basic1["organizations"]["standalone"]  # admin2 is admin of standalone
         platform = basic1["platforms"]["shared"]
-        assert ReportType.objects.count() == 0, "make sure not report are created upfront"
+        assert ReportType.objects.count() == 0, "make sure no reports are created upfront"
+        kb_source = DataSourceFactory.create()
+        other_org = basic1["organizations"]["branch"]
+
+        # create some report types
         rt_counter = report_type_nd(0, short_name="counter")
         rt_counter_no_interest = report_type_nd(0, short_name="counter no interest")
         rt_noncounter = report_type_nd(0, short_name="noncounter")
-        # connect the platform and reports
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt_counter)
-        PlatformInterestReport.objects.create(platform=platform, report_type=rt_noncounter)
+        # private RTs are not used in the wild now, but I am adding them to the test
+        # to make sure that they would be handled correctly
+        rt_organization = report_type_nd(
+            0, short_name="organization", source=organization.private_data_source
+        )
+        rt_other_org = report_type_nd(
+            0, short_name="other org", source=other_org.private_data_source
+        )
+        rt_kb = report_type_nd(0, short_name="kb", source=kb_source)
+
         # create CounterReportType which marks the report as COUNTER report
         CounterReportType.objects.create(
             code="test", name="test", report_type=rt_counter, counter_version=5
@@ -1902,7 +2290,10 @@ class TestAllPlatformsAPI:
             rt_counter.pk,
             rt_counter_no_interest.pk,
             rt_noncounter.pk,
-        }
+            rt_organization.pk,  # visible - source is the same organization
+            rt_kb.pk,  # visible - source is knowledge base
+        }, "5 report types should be visible"
+        assert rt_other_org.pk not in {rec["pk"] for rec in data}, "other org should not be visible"
 
     @pytest.mark.parametrize(
         ["organization", "record_count"], [("branch", 1), ("standalone", 1), (None, 2)]
@@ -2058,10 +2449,9 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
     organization = organizations["root"]
     platform = platforms["root"]
     rt = report_type_nd(0)
-    ig = InterestGroup.objects.create(short_name="interest1", position=1, implies_availability=True)
+    ig = InterestGroupFactory(short_name="interest1", position=1, implies_availability=True)
     metric = Metric.objects.create(short_name="m1", name="Metric1")
     ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
-    PlatformInterestReport.objects.create(report_type=rt, platform=platform)
     import_batch = ImportBatchFactory(platform=platform, organization=organization, report_type=rt)
     accesslog_basics = {
         "report_type": rt,
@@ -2172,6 +2562,45 @@ class TestTopTitleInterestViewSet:
         assert data[0]["name"] == titles[1].name
         assert data[0]["interests"]["interest1"] == 4  # 4
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_all_titles_interest_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        org = real_world_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        url = reverse("top-title-interest-list", args=[org.pk if org_in_query else -1])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1, "we have one title"
+        assert data[0]["interests"]["full_text"] == exp_value
+
+    def test_interest_order_by_nonexistent_interest_type(
+        self, master_user_client, accesslogs_with_interest
+    ):
+        resp = master_user_client.get(
+            reverse("top-title-interest-list", args=["-1"]), {"order_by": "nonexistent"}
+        )
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == 'Interest type "nonexistent" does not exist'
+
 
 @pytest.mark.django_db
 class TestTitleInterestBrief:
@@ -2218,24 +2647,40 @@ class TestTitleInterestBrief:
         assert len(data) == 1, 'just "interest" key'
         assert data["interest"] == 3  # 1 + 2
 
-
-@pytest.mark.django_db
-class TestPlatformInterestReport:
-    def test_get_platform_interest_report(
-        self, authenticated_client, platforms, report_types, metrics, interests
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_list_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
     ):
-        url = reverse("platform-interest-report-list")
-        resp = authenticated_client.get(url)
+        """
+        Test that the interest list API returns the correct value for the given organization
+        depending on the presence of a organization specific interest config.
+        """
+        org = real_world_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        # check the API
+        url = reverse("title-interest-brief-list", args=(org.pk if org_in_query else -1,))
+        resp = master_user_client.get(url)
         assert resp.status_code == 200
-        data = {e["short_name"]: e for e in resp.json()}
-        assert len(data["branch"]["interest_reports"]) == 1
-        assert len(data["branch"]["interest_reports"][0]["interest_metric_set"]) == 2
-        assert len(data["standalone"]["interest_reports"]) == 2
-        assert (
-            len(data["standalone"]["interest_reports"][0]["interest_metric_set"])
-            + len(data["standalone"]["interest_reports"][1]["interest_metric_set"])
-            == 2
-        )
+        data = resp.json()
+        assert len(data) == 1, "There is only one title"
+        assert data[0]["interest"] == exp_value
 
 
 @pytest.mark.django_db()
@@ -2260,6 +2705,36 @@ class TestTitleInterestViewSet:
         resorted = sorted(values, reverse=desc == "true")
         assert values == resorted
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_all_titles_with_interest_config(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        org = real_world_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        url = reverse("title-interest-list", args=(org.pk if org_in_query else -1,))
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 1, "There is only one title"
+        assert data[0]["interests"]["full_text"] == exp_value
+
 
 @pytest.mark.django_db
 class TestItemViewSet:
@@ -2267,7 +2742,7 @@ class TestItemViewSet:
         self, master_user_client, interest_rt, django_assert_max_num_queries
     ):
         items = ItemFactory.create_batch(30)
-        with django_assert_max_num_queries(21):
+        with django_assert_max_num_queries(25):
             resp = master_user_client.get(reverse("global-items-list"))
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -2388,6 +2863,36 @@ class TestItemViewSet:
         item_ids = {item.pk for item in items}
         for rec in data:
             assert rec["pk"] in item_ids
+
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 9),  # org used default config with one filter, value is 9
+            (False, True, 9),  # all orgs, global config is used, value is 9
+            (False, False, 9),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_item_list_with_interest_config(
+        self,
+        master_user_client,
+        real_world_item_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        org = real_world_item_data_with_interest_and_configs["organization"]
+        if not org_has_config:
+            real_world_item_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_item_data_with_interest_and_configs["global_interest_config"].delete()
+        url = reverse("organization-item-list", args=[org.pk if org_in_query else -1])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 1, "There is only one item"
+        assert data[0]["interests"]["full_text"] == exp_value
 
     def test_item_list_for_org_platform_title(self, master_user_client, interest_rt):
         pl = PlatformFactory()

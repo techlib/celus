@@ -8,6 +8,7 @@ from core.tests.conftest import *  # noqa
 from django.core.files.base import ContentFile
 from django.urls import reverse
 from organizations.fake_data import OrganizationFactory
+from publications.tests.conftest import interest_rt  # noqa - fixtures
 
 from logs.fake_data import ManualDataUploadFullFactory, MetricFactory
 from logs.models import AccessLog, ImportBatch, ManualDataUpload, MduMethod, MduState
@@ -140,6 +141,7 @@ class TestManualUploadForCounterData:
         filename,
         report_code,
         hash_matches,
+        interest_rt,
     ):
         with (Path(__file__).parent / "data" / filename).open() as f:
             data_file = ContentFile(f.read())
@@ -904,6 +906,7 @@ class TestManualUploadForRaw:
         report_types,
         basic1,
         organization_set,
+        interest_rt,
     ):
         with (
             Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate-single.csv"

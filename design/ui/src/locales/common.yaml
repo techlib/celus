@@ -19,7 +19,7 @@ en:
     flexitable: Reporting and exports
     heatmap: Interest heatmap
     import_batches: Import batches
-    interest_overview: Interests
+    interest_overview: Interest overview
     item_detail: Item detail
     maintenance: Maintenance
     management: Management
@@ -429,7 +429,7 @@ cs:
     flexitable: Reporting a exporty
     heatmap: Heatmapa zájmu
     import_batches: Importované dávky
-    interest_overview: Zájmy
+    interest_overview: Nastavení zájmu
     item_detail: Detail položky
     maintenance: Údržba
     management: Management

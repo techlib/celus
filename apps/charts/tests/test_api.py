@@ -15,7 +15,7 @@ from logs.models import AccessLog, MduState, Metric, ReportMaterializationSpec, 
 from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fixture
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Title
-from publications.tests.conftest import platform  # noqa - fixture
+from publications.tests.conftest import interest_rt, platform  # noqa - fixture
 
 from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
 from charts.models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
@@ -403,7 +403,7 @@ class TestChartDataAPIView:
         report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
-        metric = Metric.objects.get()
+        metric = Metric.objects.get(interest_group__isnull=True)
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
             reverse("chart_data", args=(report_view.pk,)),
@@ -418,7 +418,13 @@ class TestChartDataAPIView:
         assert "data" in resp.json()
 
     def test_with_data_dashboard(
-        self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
+        self,
+        counter_records_0d,
+        organizations,
+        report_type_nd,
+        authenticated_client,
+        platform,
+        interest_rt,
     ):
         """
         Test that recache is used for queries marked with the `dashboard` attribute
@@ -427,7 +433,9 @@ class TestChartDataAPIView:
         report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
-        metric = Metric.objects.get()
+        metric = Metric.objects.get(
+            interest_group__isnull=True
+        )  # the metric not connected to interest
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
             reverse("chart_data", args=(report_view.pk,)),
@@ -443,7 +451,13 @@ class TestChartDataAPIView:
         assert "data" in resp.json()
 
     def test_available_metrics(
-        self, counter_records_0d, organizations, report_type_nd, authenticated_client, platform
+        self,
+        counter_records_0d,
+        organizations,
+        report_type_nd,
+        authenticated_client,
+        platform,
+        interest_rt,
     ):
         """
         Test the api for getting list of metrics used in a chart
@@ -452,7 +466,7 @@ class TestChartDataAPIView:
         report_type: ReportType = report_type_nd(0)
         import_counter_records(report_type, organization, platform, counter_records_0d)
         assert AccessLog.objects.count() == 1
-        metric = Metric.objects.get()
+        metric = Metric.objects.get(interest_group__isnull=True)
         report_view = ReportDataView.objects.create(base_report_type=report_type)
         resp = authenticated_client.get(
             reverse("chart_data_metrics", args=(report_view.pk,)),

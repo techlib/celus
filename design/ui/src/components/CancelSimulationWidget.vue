@@ -108,6 +108,7 @@ cs:
         show-select
         v-if="!(loading || preparingData)"
         items-per-page="-1"
+        density="compact"
       >
         <template #item.titleCount="{ item }">
           {{ formatInteger(item.titleCount) }}

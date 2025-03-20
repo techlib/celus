@@ -33,6 +33,7 @@
     item-value="index"
     variant="outlined"
     density="compact"
+    hide-details
   >
     <template v-slot:item="{ item, props }">
       <v-list-item v-bind="props">

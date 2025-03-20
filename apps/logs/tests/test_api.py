@@ -21,8 +21,11 @@ from django.urls import reverse
 from freezegun import freeze_time
 from organizations.models import UserOrganization
 from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
-from publications.models import PlatformInterestReport
 from publications.tests.conftest import interest_rt  # noqa - fixtures
+from publications.tests.test_api import (  # noqa - fixtures
+    real_world_data_with_interest,
+    real_world_data_with_interest_and_configs,
+)
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 
@@ -33,6 +36,10 @@ from logs.fake_data import (
     ManualDataUploadFactory,
     ManualDataUploadFullFactory,
     ReportTypeFactory,
+)
+from logs.logic.interest.computation import (
+    sync_interest_by_import_batches,
+    sync_interest_for_import_batch,
 )
 from logs.models import (
     AccessLog,
@@ -63,10 +70,6 @@ from test_scenarios.basic import (  # noqa - fixtures
 from ..logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from ..logic.data_import import import_counter_records
 from ..logic.export import CSVExport
-from ..logic.materialized_interest import (
-    sync_interest_by_import_batches,
-    sync_interest_for_import_batch,
-)
 from ..logic.materialized_reports import sync_materialized_reports
 
 
@@ -201,6 +204,7 @@ class TestChartDataAPI:
         secondary_dim,
         result,
         master_admin_client,
+        interest_rt,
     ):
         platform = PlatformFactory(short_name="Platform1")
         data = [
@@ -390,6 +394,71 @@ class TestChartDataAPI:
         data = resp.json()
         assert len(data["data"]) == 2
         assert data["data"][0]["count"] == 7
+
+    @pytest.mark.parametrize(
+        ("global_interest_config", "org_interest_config", "exp_value"),
+        ((True, True, 1), (True, False, 9), (False, True, 1), (False, False, 15)),
+    )
+    def test_api_interest_config(
+        self,
+        real_world_data_with_interest_and_configs,
+        authenticated_client,
+        global_interest_config,
+        org_interest_config,
+        exp_value,
+    ):
+        """
+        Test that interest is properly filtered by interest config if requested from chart data API
+        """
+        organization = real_world_data_with_interest_and_configs["organization"]
+        platform = real_world_data_with_interest_and_configs["platform"]
+        report_type = real_world_data_with_interest_and_configs["interest_rt"]
+        # remove unused interest configs
+        if not global_interest_config:
+            real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        if not org_interest_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+        # check that the data is filtered by the interest config
+        params = {
+            "organization": organization.pk,
+            "platform": platform.pk,
+            "prim_dim": "date",
+            "sec_dim": "metric",
+        }
+        resp = authenticated_client.get(reverse("chart_data_raw", args=(report_type.pk,)), params)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["data"]) == 1
+        assert data["data"][0]["count"] == exp_value
+
+    @pytest.mark.parametrize(("global_interest_config", "exp_value"), ((True, 9), (False, 15)))
+    def test_api_interest_config_whole_consortium(
+        self,
+        real_world_data_with_interest_and_configs,
+        authenticated_client,
+        global_interest_config,
+        exp_value,
+    ):
+        """
+        Test that interest is properly filtered by interest config if the organization is set to -1
+        """
+        platform = real_world_data_with_interest_and_configs["platform"]
+        report_type = real_world_data_with_interest_and_configs["interest_rt"]
+        # remove unused interest config
+        if not global_interest_config:
+            real_world_data_with_interest_and_configs["global_interest_config"].delete()
+        # check that the data is filtered by the interest config
+        params = {
+            "organization": "-1",
+            "platform": platform.pk,
+            "prim_dim": "date",
+            "sec_dim": "metric",
+        }
+        resp = authenticated_client.get(reverse("chart_data_raw", args=(report_type.pk,)), params)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["data"]) == 1
+        assert data["data"][0]["count"] == exp_value
 
 
 @pytest.mark.django_db
@@ -626,18 +695,16 @@ class TestRawDataExport:
         rt1 = flexible_slicer_test_data["report_types"][0]
         m1 = flexible_slicer_test_data["metrics"][0]
         ig = InterestGroupFactory.create()
-        pl = flexible_slicer_test_data["platforms"][0]
-        PlatformInterestReport.objects.create(platform_id=pl.pk, report_type=rt1)
         ReportInterestMetric.objects.create(report_type=rt1, metric=m1, interest_group=ig)
         sync_interest_by_import_batches()
-        assert interest_rt.accesslog_set.count() > 0
+        assert interest_rt.accesslog_set.count() == 108
         # retry the export
         resp = master_admin_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
         # rt1 has 972 records (1/5), from that interest is for
-        # (1/3 platforms, 1/3 report types, 1/3 metrics) = 972/27 = 36
-        assert data["total_count"] == 4860 + 36, "total count of records with interest"
+        # (all platforms, 1/3 report types, 1/3 metrics) = 972/9 = 108
+        assert data["total_count"] == 4860 + 108, "total count of records with interest"
         # add materialized interest
         mat_spec = ReportMaterializationSpec.objects.create(
             name="x", base_report_type=interest_rt, keep_target=False
@@ -649,7 +716,7 @@ class TestRawDataExport:
         resp = master_admin_client.get(url)
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total_count"] == 4860 + 36, "total count of records with interest, no mat rt"
+        assert data["total_count"] == 4860 + 108, "total count of records with interest, no mat rt"
 
     @pytest.mark.clickhouse
     @pytest.mark.django_db(transaction=True)
@@ -667,8 +734,6 @@ class TestRawDataExport:
         rt1 = flexible_slicer_test_data["report_types"][0]
         m1 = flexible_slicer_test_data["metrics"][0]
         ig = InterestGroupFactory.create()
-        pl = flexible_slicer_test_data["platforms"][0]
-        PlatformInterestReport.objects.create(platform_id=pl.pk, report_type=rt1)
         ReportInterestMetric.objects.create(report_type=rt1, metric=m1, interest_group=ig)
         sync_interest_by_import_batches()
         mat_spec = ReportMaterializationSpec.objects.create(
@@ -688,7 +753,7 @@ class TestRawDataExport:
             assert exporter.called
             # now we take the exporter and call it directly to get the data
             exp = CSVExport(*exporter.call_args[0], **exporter.call_args[1])
-            assert exp.record_count == 4860 + 36
+            assert exp.record_count == 4860 + 108
             # the data
             out = StringIO()
             # the code below fails wheh clickhouse is used because it uses dictionaries which are
@@ -697,7 +762,7 @@ class TestRawDataExport:
             exp.export_raw_accesslogs_to_stream_lowlevel(out)
             out.seek(0)
             reader = csv.reader(out)
-            assert len(list(reader)) == 4860 + 36 + 1, "header row + all records"
+            assert len(list(reader)) == 4860 + 108 + 1, "header row + all records"
 
 
 @pytest.fixture

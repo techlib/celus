@@ -19,23 +19,20 @@ from django.db.models.functions import Coalesce
 from hcube.api.models.aggregation import Count as CubeCount
 from logs.cubes import AccessLogCube, ch_backend
 from logs.filters import OrderByFilter
-from logs.logic.interest import (
-    get_interest_subdim_ids_implying_availability,
-    get_interest_type_dim_from_interest_rt,
+from logs.logic.interest.structure import (
+    get_interest_metrics,
+    get_interest_metrics_implying_availability,
 )
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import (
-    AccessLog,
-    DimensionText,
-    ImportBatch,
-    InterestGroup,
-    ReportInterestMetric,
-    ReportType,
-)
-from logs.serializers import PlatformInterestReportSerializer, ReportTypeExtendedSerializer
+from logs.models import AccessLog, InterestConfig, InterestGroup, Metric, ReportType
+from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from nibbler.models import ParserDefinition
-from organizations.logic.queries import extend_query_filter, organization_filter_from_org_id
+from organizations.logic.queries import (
+    extend_query_filter,
+    get_organization_related_accesslog_filters_for_interest,
+    organization_filter_from_org_id,
+)
 from organizations.models import Organization, OrganizationAltName
 from organizations.serializers import OrganizationAltNameSerializer
 from pandas import DataFrame
@@ -75,12 +72,7 @@ from publications.serializers import (
 
 from .filters import PlatformFilter, PubTypeFilter
 from .logic.use_cases import get_use_cases
-from .serializers import (
-    AllPlatformSerializer,
-    DetailedPlatformSerializer,
-    PlatformSerializer,
-    TitleSerializer,
-)
+from .serializers import AllPlatformSerializer, PlatformSerializer, TitleSerializer
 from .tasks import (
     delete_platform_data_task,
     erms_sync_platforms_task,
@@ -152,16 +144,21 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         """
         Provides a list of report types associated with this platform + list of all COUNTER reports.
         This view represents all the reports that may be manually uploaded to a platform.
+
+        It is only used when data are uploaded manually to a platform in the CELUS format.
         """
         organization = self._organization_pk_to_obj(organization_pk)
-        platform = get_object_or_404(
-            request.user.accessible_platforms(organization=organization), pk=pk
-        )
+        # the following line is a sanity check to make sure the platform belongs to the organization
+        # but the platform itself is not part of the computation because with the new interest
+        # there is no connection between platforms and report types
+        get_object_or_404(request.user.accessible_platforms(organization=organization), pk=pk)
+        # We show all the reports that are not created by other organizations.
+        # => all where the source is not other organizations private_data_source
+        conditions = Q(source__isnull=True) | ~Q(source__type=DataSource.TYPE_ORGANIZATION)
+        if organization:
+            conditions |= Q(source__organization=organization)
         report_types = (
-            ReportType.objects.filter(
-                Q(interest_platforms=platform)
-                | Q(counterreporttype__isnull=False, source__isnull=True)
-            )
+            ReportType.objects.filter(conditions)
             .distinct()
             .select_related("counterreporttype")
             .prefetch_related(
@@ -172,6 +169,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
                 "controlled_metrics",
             )
         )
+
         return Response(ReportTypeExtendedSerializer(report_types, many=True).data)
 
 
@@ -238,9 +236,7 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
         serializer.is_valid()  # -> sets validated_data
         self._short_name_check(serializer.validated_data["short_name"], source, None)
-
         platform = serializer.save(ext_id=None, source=source)
-        platform.create_default_interests()
 
         # Update related report types based on knowledgebase
         if platform.counter_reports_source == CounterReportSource.KNOWLEDGEBASE:
@@ -287,15 +283,6 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
         else:
             qs = Platform.objects.all()
         return qs.select_related("source", "source__organization")
-
-    @action(methods=["GET"], url_path="no-interest-defined", detail=False)
-    def without_interest_definition(self, request, organization_pk):
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
-        import_batch_query = ImportBatch.objects.filter(platform_id=OuterRef("pk"))
-        qs = Platform.objects.filter(**org_filter, interest_reports__isnull=True).annotate(
-            has_data=Exists(import_batch_query)
-        )
-        return Response(DetailedPlatformSerializer(qs, many=True).data)
 
     @action(methods=["GET"], url_path="title-count", url_name="title-count", detail=False)
     def title_count(self, request, organization_pk):
@@ -390,22 +377,19 @@ class PlatformInterestViewSet(ViewSet):
     @classmethod
     def get_report_type_and_filters(cls):
         interest_rt = ReportType.objects.get_interest_rt()
-        # parameters for annotation defining an annotation for each of the interest groups
-        interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
-        # we get active InterestGroups in order to filter out unused InterestGroups
-        # for which the dimension text mapping still exists
-        ig_names = {x["short_name"] for x in InterestGroup.objects.all().values("short_name")}
+        interest_metrics = get_interest_metrics()
         interest_annot_params = {
-            interest_type.text: Coalesce(Sum("value", filter=Q(dim1=interest_type.pk)), 0)
-            for interest_type in interest_type_dim.dimensiontext_set.filter(text__in=ig_names)
+            im.short_name: Coalesce(Sum("value", filter=Q(metric=im)), 0) for im in interest_metrics
         }
         return interest_rt, interest_annot_params
 
     def get_queryset(self, request, organization_pk):
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
+        org_filters = get_organization_related_accesslog_filters_for_interest(
+            organization_pk, request.user
+        )
         date_filter_params = date_filter_from_params(request.GET)
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        accesslog_filter = {"report_type": interest_rt, **org_filter, **date_filter_params}
+        accesslog_filter = {"report_type": interest_rt, **org_filters, **date_filter_params}
         replace_report_type_with_materialized(accesslog_filter)
         result = (
             AccessLog.objects.filter(**accesslog_filter)
@@ -448,8 +432,8 @@ class PlatformInterestViewSet(ViewSet):
     @action(detail=True, url_path="by-year")
     def by_year(self, request, pk, organization_pk):
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
-        accesslog_filter = {"report_type": interest_rt, "platform_id": pk, **org_filter}
+        org_filters = self._get_organization_related_accesslog_filters(request, organization_pk)
+        accesslog_filter = {"report_type": interest_rt, "platform_id": pk, **org_filters}
         replace_report_type_with_materialized(accesslog_filter)
         result = (
             AccessLog.objects.filter(**accesslog_filter)
@@ -461,8 +445,8 @@ class PlatformInterestViewSet(ViewSet):
     @action(detail=False, url_path="by-year")
     def list_by_year(self, request, organization_pk):
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        org_filter = organization_filter_from_org_id(organization_pk, request.user)
-        accesslog_filter = {"report_type": interest_rt, **org_filter}
+        org_filters = self._get_organization_related_accesslog_filters(request, organization_pk)
+        accesslog_filter = {"report_type": interest_rt, **org_filters}
         replace_report_type_with_materialized(accesslog_filter)
         result = (
             AccessLog.objects.filter(**accesslog_filter)
@@ -470,19 +454,6 @@ class PlatformInterestViewSet(ViewSet):
             .annotate(**interest_annot_params)
         )
         return Response(result)
-
-
-class PlatformInterestReportViewSet(ReadOnlyModelViewSet):
-    serializer_class = PlatformInterestReportSerializer
-    queryset = Platform.objects.prefetch_related(
-        "interest_reports",
-        Prefetch(
-            "interest_reports__reportinterestmetric_set",
-            queryset=ReportInterestMetric.objects.select_related(
-                "metric", "target_metric", "interest_group"
-            ),
-        ),
-    )
 
 
 class GlobalPlatformsViewSet(ReadOnlyModelViewSet):
@@ -662,12 +633,12 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization and platform
         """
-        org_filter = organization_filter_from_org_id(
+        org_filters = get_organization_related_accesslog_filters_for_interest(
             self.kwargs.get("organization_pk"), self.request.user
         )
         date_filter = date_filter_from_params(self.request.GET)
         interest_rt = ReportType.objects.get_interest_rt()
-        dim1_ids = get_interest_subdim_ids_implying_availability(interest_rt)
+        metric_ids = [m.pk for m in get_interest_metrics_implying_availability()]
 
         search_filters = []
         pub_type_arg = self.request.query_params.get("pub_type")
@@ -677,9 +648,9 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
             AccessLog.objects.filter(
                 *search_filters,
                 report_type=interest_rt,
-                dim1__in=dim1_ids,  # only those interest types which imply availability
+                metric_id__in=metric_ids,  # only those interest types which imply availability
                 **date_filter,
-                **org_filter,
+                **org_filters,
             )
             .values("target_id")
             .exclude(target_id__isnull=True)
@@ -717,15 +688,11 @@ class TitleInterestMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.interest_rt = None
-        self.interest_type_dim = None
-        self.interest_groups_names = set()
+        self.interest_metrics = None
 
     def _before_queryset(self):
         self.interest_rt = ReportType.objects.get_interest_rt()
-        self.interest_type_dim = get_interest_type_dim_from_interest_rt(self.interest_rt)
-        self.interest_groups_names = {
-            x["short_name"] for x in InterestGroup.objects.all().values("short_name")
-        }
+        self.interest_metrics = get_interest_metrics()
 
     def _extra_accesslog_filters(self):
         filters = super()._extra_accesslog_filters()
@@ -734,33 +701,28 @@ class TitleInterestMixin:
             filters["accesslog__platform_id"] = self.platform.pk
         if self.org_filter:
             filters["accesslog__organization_id"] = self.org_filter.get("organization__pk")
+            org = Organization.objects.get(pk=self.org_filter["organization__pk"])
+            ic = org.get_interest_config()
+        else:
+            ic = InterestConfig.objects.default()
+        interest_filters = extend_query_filter(ic.get_interest_filters(), "accesslog__")
+        filters.update(**interest_filters)
         return filters
 
     def _annotations(self):
         annotations = super()._annotations()
         interest_annot_params = {
-            interest_type.text: Coalesce(
-                Sum(
-                    "relevant_accesslogs__value",
-                    filter=Q(relevant_accesslogs__dim1=interest_type.pk),
-                ),
-                0,
+            im.short_name: Coalesce(
+                Sum("relevant_accesslogs__value", filter=Q(relevant_accesslogs__metric=im)), 0
             )
-            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
-                text__in=self.interest_groups_names
-            )
+            for im in self.interest_metrics
         }
         annotations.update(interest_annot_params)
         return annotations
 
     def _postprocess_paginated(self, result):
         result = super()._postprocess_paginated(result)
-        interest_types = {
-            interest_type.text
-            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
-                text__in=self.interest_groups_names
-            )
-        }
+        interest_types = {im.short_name for im in self.interest_metrics}
         for record in result:
             record.interests = {it: getattr(record, it) for it in interest_types}
         return result
@@ -922,7 +884,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         interest_rt = ReportType.objects.get_interest_rt()
-        interest_type_dim = get_interest_type_dim_from_interest_rt(interest_rt)
+        interest_metrics = get_interest_metrics()
         interest_type_name = self.request.query_params.get("order_by", "full_text")
 
         # -- title filters --
@@ -932,29 +894,36 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         # -- accesslog filters --
         # filtering only interest related accesslogs
         try:
-            interest_type_id = interest_type_dim.dimensiontext_set.get(text=interest_type_name).pk
-        except DimensionText.DoesNotExist:
+            interest_metric = interest_metrics.get(short_name=interest_type_name)
+        except Metric.DoesNotExist:
             raise BadRequestException(
                 detail=f'Interest type "{interest_type_name}" does not exist'
             ) from None
         # date filter
         date_filter = date_filter_from_params(self.request.GET)
 
+        # -- interest config --
+        org_filters = get_organization_related_accesslog_filters_for_interest(
+            self.kwargs.get("organization_pk"),
+            self.request.user,
+            clickhouse=self.request.USE_CLICKHOUSE,
+        )
+
         if self.request.USE_CLICKHOUSE and not pub_type_arg:
             from hcube.api.models.aggregation import Sum as HSum
 
-            org_filter = organization_filter_from_org_id(
-                self.kwargs.get("organization_pk"), self.request.user, clickhouse=True
-            )
             query = (
                 AccessLogCube.query()
-                .filter(report_type_id=interest_rt.pk, dim1=interest_type_id, target_id__not_in=[0])
+                .filter(
+                    report_type_id=interest_rt.pk,
+                    metric_id=interest_metric.pk,
+                    target_id__not_in=[0],
+                    **org_filters,
+                )
                 .group_by("target_id")
                 .aggregate(**{interest_type_name: HSum("value")})
                 .order_by(f"-{interest_type_name}")
             )
-            if org_filter:
-                query.filter(**org_filter)
             if date_filter:
                 query.filter(**date_filter)
             if pub_type_arg:
@@ -970,14 +939,11 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
             return out
         else:
             filters = {}
-            org_filter = organization_filter_from_org_id(
-                self.kwargs.get("organization_pk"), self.request.user
-            )
             interest_annot_params = {interest_type_name: Coalesce(Sum("accesslog__value"), 0)}
             filters["accesslog__report_type_id"] = interest_rt.pk
-            filters["accesslog__dim1"] = interest_type_id
-            if org_filter:
-                filters["accesslog__organization_id"] = org_filter.get("organization__pk")
+            filters["accesslog__metric"] = interest_metric
+            if org_filters:
+                filters.update(extend_query_filter(org_filters, "accesslog__"))
             if pub_type_arg:
                 if self.request.USE_CLICKHOUSE:
                     print("`pub_type` filter not supported in ClickHouse yet.")
@@ -1129,16 +1095,7 @@ class ItemViewSet(ReadOnlyModelViewSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.interest_rt = ReportType.objects.get_interest_rt()
-        self.interest_type_dim = get_interest_type_dim_from_interest_rt(self.interest_rt)
-        self.interest_groups_names = {
-            x["short_name"] for x in InterestGroup.objects.all().values("short_name")
-        }
-        self.interest_types = {
-            interest_type.text
-            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
-                text__in=self.interest_groups_names
-            )
-        }
+        self.interest_metrics = get_interest_metrics()
         self.organization_id = None
         self.platform_id = None
         self.title_id = None
@@ -1148,8 +1105,14 @@ class ItemViewSet(ReadOnlyModelViewSet):
         self.platform_id = self.kwargs.get("platform_pk")
         self.title_id = self.kwargs.get("title_pk")
         fltrs = {}
+
+        # interest config and organization filter
+        ic = InterestConfig.objects.default()
+        org_filter = {}
         if self.organization_id:
-            fltrs.update(organization_filter_from_org_id(self.organization_id, self.request.user))
+            org_filter = organization_filter_from_org_id(self.organization_id, self.request.user)
+            fltrs.update(org_filter)
+
         if self.platform_id:
             fltrs["platform_id"] = self.platform_id
         if self.title_id:
@@ -1170,28 +1133,31 @@ class ItemViewSet(ReadOnlyModelViewSet):
             qs = qs.filter(pk__in=item_ids)
 
         # add interest annotations
-        accesslog_filter = {f"accesslog__{fltr}": val for fltr, val in fltrs.items()}
+        accesslog_filter = extend_query_filter(fltrs, "accesslog__")
         accesslog_filter["accesslog__report_type_id"] = self.interest_rt.pk
+        # add interest config filters
+        ic = InterestConfig.objects.default()
+        if org_filter:  # if the filter is not empty, it means that the organization id is valid
+            org = Organization.objects.get(pk=self.organization_id)
+            ic = org.get_interest_config()
+        accesslog_filter.update(extend_query_filter(ic.get_interest_filters(), "accesslog__"))
+
         qs = qs.annotate(
             relevant_accesslogs=FilteredRelation("accesslog", condition=Q(**accesslog_filter))
         )
         interest_annot_params = {
-            interest_type.text: Coalesce(
-                Sum(
-                    "relevant_accesslogs__value",
-                    filter=Q(relevant_accesslogs__dim1=interest_type.pk),
-                ),
-                0,
+            im.short_name: Coalesce(
+                Sum("relevant_accesslogs__value", filter=Q(relevant_accesslogs__metric=im)), 0
             )
-            for interest_type in self.interest_type_dim.dimensiontext_set.filter(
-                text__in=self.interest_groups_names
-            )
+            for im in self.interest_metrics
         }
         qs = qs.annotate(**interest_annot_params)
         return qs
 
     def _transform_interests(self, record):
-        record.interests = {it: getattr(record, it) for it in self.interest_types}
+        record.interests = {
+            im.short_name: getattr(record, im.short_name) for im in self.interest_metrics
+        }
         return record
 
     def paginate_queryset(self, queryset):

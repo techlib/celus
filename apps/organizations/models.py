@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from core.models import DataSource, User
 from core.validators import ISNI_LENGTH, ROR_LENGTH, isni_validator, ror_validator
 from django.conf import settings
@@ -13,6 +15,9 @@ from pycountry import countries, subdivisions
 COUNTRIES = [(e.alpha_2, f"({e.alpha_2}) {_(e.name)}") for e in countries]
 
 STATES = [(e.code, f"({e.country_code}) {_(e.name)}") for e in subdivisions if e.type == "State"]
+
+if TYPE_CHECKING:
+    from logs.models import InterestConfig, InterestProfile
 
 
 class Organization(MPTTModel):
@@ -107,6 +112,17 @@ class Organization(MPTTModel):
     @property
     def is_master_organization(self) -> bool:
         return self.internal_id in settings.MASTER_ORGANIZATIONS
+
+    def get_interest_config(self) -> "InterestConfig":
+        if hasattr(self, "interest_config"):
+            return self.interest_config
+
+        from logs.models import InterestConfig
+
+        return InterestConfig.objects.default()
+
+    def get_interest_profile(self) -> "InterestProfile":
+        return self.get_interest_config().interest_profile
 
     def get_or_create_private_source(self):
         def_name = DataSource.create_default_short_name(None, self.name)
