@@ -11,13 +11,13 @@
     v-model="selectedPlatform"
     :loading="loading"
     clearable
-    :filter="filter"
-    :return-object="returnObject"
+    :custom-filter="filter"
     :height="height"
     ref="platformSelector"
     clear-icon="fas fa-times"
     density="default"
     :menu-props="{ eager: true }"
+    return-object
   >
     <template v-slot:item="{ props, item }">
       <v-list-item v-bind="props" title="">
@@ -73,9 +73,9 @@ export default {
     all() {
       return all;
     },
-    filter(item, queryText) {
-      const text = item.name.toLowerCase();
-      const shortName = item.short_name.toLowerCase();
+    filter(itemTitle, queryText, item) {
+      const text = item.raw.name.toLowerCase();
+      const shortName = item.raw.short_name.toLowerCase();
       const query = queryText.toLowerCase();
       return text.includes(query) || shortName.includes(query);
     },

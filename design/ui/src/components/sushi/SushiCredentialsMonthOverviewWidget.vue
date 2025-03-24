@@ -399,7 +399,7 @@ export default {
         a.name.localeCompare(b.name),
       );
 
-      return [{ name: this.$t("all_platforms"), pk: null }, ...usedPlatforms];
+      return [...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name));
     },
     activeIntentions() {
       let intentions = [];
