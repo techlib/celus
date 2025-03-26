@@ -74,19 +74,15 @@ export default defineConfig({
     proxy: {
       "/api/": {
         target: devURLBase,
-        changeOrigin: true,
       },
       "/static/": {
         target: devURLBase,
-        changeOrigin: true,
       },
       "/media/": {
         target: devURLBase,
-        changeOrigin: true,
       },
       "/ws/": {
         target: "http://localhost:8077/",
-        changeOrigin: true,
         ws: true,
       },
     },
