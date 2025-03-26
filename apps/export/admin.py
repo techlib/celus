@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 
-from .models import FlexibleDataExport
+from .models import FlexibleDataAPIExport, FlexibleDataExport
 
 
 @admin.register(FlexibleDataExport)
@@ -18,3 +18,8 @@ class FlexibleDataExportAdmin(admin.ModelAdmin):
         messages.add_message(request, messages.SUCCESS, f"{counter} exports processed")
 
     create_output_file.allowed_permissions = ("change",)
+
+
+@admin.register(FlexibleDataAPIExport)
+class FlexibleDataAPIExportAdmin(admin.ModelAdmin):
+    list_display = ["pk", "owner_org", "status", "created", "output_file"]
