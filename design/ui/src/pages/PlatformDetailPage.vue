@@ -596,41 +596,18 @@ export default {
     platformObj() {
       return this.platform || this.unconnectedPlatform;
     },
-    exportableCounterReportTypes5() {
-      const map = new Map(
-        this.counterReportTypes
-          .filter((e) => e.counter_version === 5)
-          .map((e) => [e.code, e]),
-      );
+    exportableReportCodes() {
+      let out = ["PR", "DR", "TR", "IR_M1"];
       if (this.enableItems) {
-        return [
-          map.get("PR"),
-          map.get("DR"),
-          map.get("TR"),
-          map.get("IR"),
-          map.get("IR_M1"),
-        ];
-      } else {
-        return [map.get("PR"), map.get("DR"), map.get("TR"), map.get("IR_M1")];
+        out.splice(out.indexOf("IR_M1"), 0, "IR");
       }
+      return out;
+    },
+    exportableCounterReportTypes5() {
+      return this.exportableCounterReportTypes(5);
     },
     exportableCounterReportTypes51() {
-      const map = new Map(
-        this.counterReportTypes
-          .filter((e) => e.counter_version === 51)
-          .map((e) => [e.code, e]),
-      );
-      if (this.enableItems) {
-        return [
-          map.get("PR"),
-          map.get("DR"),
-          map.get("TR"),
-          map.get("IR"),
-          map.get("IR_M1"),
-        ];
-      } else {
-        return [map.get("PR"), map.get("DR"), map.get("TR"), map.get("IR_M1")];
-      }
+      return this.exportableCounterReportTypes(51);
     },
   },
 
@@ -739,6 +716,19 @@ export default {
     },
     goToSushi() {
       this.activeTab = "sushi";
+    },
+    exportableCounterReportTypes(version) {
+      let out = [];
+      const candidates = this.counterReportTypes.filter(
+        (e) => e.counter_version === version,
+      );
+      this.exportableReportCodes.forEach((code) => {
+        let crt = candidates.find((e) => e.code === code);
+        if (crt) {
+          out.push(crt);
+        }
+      });
+      return out;
     },
   },
   created() {
