@@ -10,6 +10,7 @@ celerybeat-schedule
 .~*
 /media
 /.env.*
+/.env
 /venv
 error.log
 .DS_Store
