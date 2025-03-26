@@ -6,9 +6,11 @@ from logs.serializers import DimensionSerializer, MetricSerializer
 from pandas import DataFrame
 from rest_framework import serializers, status
 from rest_framework.generics import get_object_or_404
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
 
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from charts.serializers import (
@@ -84,6 +86,8 @@ class ReportDataViewChartDefinitions(APIView):
 
 
 class ChartDataView(APIView):
+    renderer_classes = [JSONRenderer, PandasCSVRenderer, PandasExcelRenderer]
+
     def get(self, request, report_view_id):
         report_view = get_object_or_404(ReportDataView, pk=report_view_id)
         # special attribute signaling that this view is used on dashboard and thus we

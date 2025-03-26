@@ -44,10 +44,12 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
+from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
 from tags.models import Tag
 
 from config.permissions import IsAuthenticatedWithOptional2FA
@@ -362,6 +364,8 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
 
 
 class PlatformInterestViewSet(ViewSet):
+    renderer_classes = [JSONRenderer, PandasCSVRenderer, PandasExcelRenderer]
+
     @classmethod
     def get_report_type_and_filters(cls):
         interest_rt = ReportType.objects.get_interest_rt()
@@ -499,6 +503,7 @@ class GlobalTitleViewSet(ReadOnlyModelViewSet):
 
 class BaseTitleViewSet(ReadOnlyModelViewSet):
     serializer_class = TitleSerializer
+    renderer_classes = [JSONRenderer, PandasCSVRenderer, PandasExcelRenderer]
     # pagination_class = StandardResultsSetPagination
 
     def __init__(self, *args, **kwargs):

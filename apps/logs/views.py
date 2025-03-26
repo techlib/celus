@@ -60,11 +60,13 @@ from rest_framework.fields import (
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelatedField, Serializer
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
+from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
 from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
 from sushi.models import (
@@ -129,6 +131,8 @@ class Counter5DataView(APIView):
     # permission_classes = [IsAuthenticatedWithOptional2FA &
     #                       (SuperuserOrAdminPermission | CanAccessOrganizationFromGETAttrs)
     #                      ]
+
+    renderer_classes = [JSONRenderer, PandasCSVRenderer, PandasExcelRenderer]
 
     def get(self, request, report_type_id):
         report_type = get_object_or_404(ReportType, pk=report_type_id)
