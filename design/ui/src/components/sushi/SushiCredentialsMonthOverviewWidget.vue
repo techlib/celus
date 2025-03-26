@@ -141,7 +141,7 @@ cs:
             >
               <template
                 v-for="rtCode in usedReportTypeCodes"
-                #item.${rtCode}="{ item }"
+                v-slot:[`item.${rtCode}`]="{ item }"
                 :key="`${rtCode}-${item.credentials_id}`"
               >
                 <span
