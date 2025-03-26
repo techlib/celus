@@ -1,5 +1,6 @@
 import typing
 
+from core.admin import CreatedUpdatedAdminMixin
 from django.conf import settings
 from django.contrib import admin, messages
 from django.db.transaction import atomic
@@ -55,7 +56,7 @@ class SushiCredentialsResource(ModelResource):
 
 
 @admin.register(models.SushiCredentials)
-class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
+class SushiCredentialsAdmin(CreatedUpdatedAdminMixin, ExportActionMixin, VersionAdmin):
     list_display = [
         "organization",
         "organization_internal_id",
@@ -68,7 +69,13 @@ class SushiCredentialsAdmin(ExportActionMixin, VersionAdmin):
     ]
     list_filter = ["enabled", "broken", "counter_version", "organization", "platform"]
     search_fields = ["organization__name", "platform__name", "pk", "url"]
-    readonly_fields = ["first_broken_attempt", "version_hash"]
+    readonly_fields = [
+        "first_broken_attempt",
+        "version_hash",
+        "last_updated_by",
+        "created",
+        "last_updated",
+    ]
     resource_class = SushiCredentialsResource  # for django-import-export
 
     @classmethod

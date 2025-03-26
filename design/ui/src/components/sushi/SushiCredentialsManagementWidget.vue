@@ -69,6 +69,7 @@ en:
     can_update: All COUNTER 5 credentials which can be cloned to COUNTER 5.1
     can_update_verified: COUNTER 5 credentials which can be cloned to COUNTER 5.1 and platform is known to support COUNTER 5.1
     duplicated: Same credentials are used multiple times
+  last_updated_tooltip: Credentials were last updated by {user} on {time}.
 
 cs:
   add_new: Přidat nové SUSHI
@@ -134,6 +135,7 @@ cs:
     can_update: Všechny COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1
     can_update_verified: COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1 a platforma má ověřenou podporu COUNTER 5.1
     duplicated: Stejné přístupové údaje jsou použity vícekrát
+  last_updated_tooltip: Přístupové údaje byly naposledy upraveny uživatelem {user} dne {time}.
 </i18n>
 
 <template>
@@ -831,6 +833,22 @@ cs:
             {{ $t("can_lock") }}
           </v-tooltip>
         </template>
+        <template #item.organization="{ item }">
+          <span>{{ item.organization.name }}</span>
+          <v-tooltip location="bottom" v-if="item.last_updated_by">
+            <template v-slot:activator="{ props }">
+              <span v-bind="props">
+                <i class="text-grey-lighten-1 fas fa-user ml-1"></i>
+              </span>
+            </template>
+            {{
+              $t("last_updated_tooltip", {
+                time: isoDateTimeFormat(item.last_updated),
+                user: userToString(item.last_updated_by, "-", true),
+              })
+            }}
+          </v-tooltip>
+        </template>
       </v-data-table>
     </v-card>
     <v-dialog
@@ -970,6 +988,8 @@ import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import stateTracking from "@/mixins/stateTracking";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import { counterVersionToStr } from "@/libs/sushi";
+import { isoDateTimeFormat } from "@/libs/dates";
+import { userToString } from "@/libs/user";
 import { template } from "lodash";
 
 export default {
@@ -1039,7 +1059,7 @@ export default {
       page: 1,
       itemsPerPage: 25,
       orderBy: [
-        { key: "organization.name", order: "asc" },
+        { key: "organization", order: "asc" },
         { key: "platform.name", order: "asc" },
         { key: "counter_version", order: "asc" },
       ],
@@ -1114,7 +1134,7 @@ export default {
           title: this.$i18n.t("organization"),
           value: "organization.name",
           class: "wrap",
-          key: "organization.name",
+          key: "organization",
         },
         {
           title: this.$i18n.t("platform"),
@@ -1270,6 +1290,8 @@ export default {
     counterVersionToStr(value) {
       return counterVersionToStr(value);
     },
+    userToString,
+    isoDateTimeFormat,
     downloadImportTemplate() {
       const link = document.createElement("a");
       link.href = this.exportForImportUrl;

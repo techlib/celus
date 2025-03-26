@@ -13,6 +13,14 @@ from organizations.models import UserOrganization
 from .models import DataSource, Identity, User
 
 
+class CreatedUpdatedAdminMixin:
+    """Should be used together with CreatedUpdatedMixin model mixin"""
+
+    def save_model(self, request, obj, form, change):
+        obj.last_updated_by = request.user
+        return super().save_model(request, obj, form, change)
+
+
 class MyUserResource(ModelResource):
     """
     This is used by django-import-export to facilitate CSV export in Django admin

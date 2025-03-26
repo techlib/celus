@@ -1,4 +1,5 @@
 from core.models import UL_CONS_STAFF
+from core.serializers import UserSimpleSerializer
 from django.db.models import Q
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
@@ -107,6 +108,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     can_update = BooleanField(read_only=True)
     has_51_provider = BooleanField(read_only=True)
     forced = BooleanField(write_only=True, default=False)
+    last_updated_by = UserSimpleSerializer(read_only=True)
 
     class Meta:
         model = SushiCredentials
@@ -142,6 +144,8 @@ class SushiCredentialsSerializer(ModelSerializer):
             "forced",
             "can_update",
             "has_51_provider",
+            "last_updated_by",
+            "last_updated",
         )
 
     def get_locked(self, obj: SushiCredentials):
