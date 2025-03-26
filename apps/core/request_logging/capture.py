@@ -7,6 +7,7 @@ import urllib
 import redis
 from django.conf import settings
 from requestlogs.storages import BaseStorage
+from rest_framework.exceptions import UnsupportedMediaType
 
 from core.tasks import async_mail_admins
 
@@ -71,6 +72,9 @@ def entry_to_dict(entry):
         request_data = getattr(request_info, "data", None)
     except TypeError:
         request_data = getattr(request_info.request, "data", None)
+    except UnsupportedMediaType:
+        # when UnsupportedMediaType is raised, the request_data is not available
+        request_data = ""
     request_data = str(request_data) if request_data else ""
     # streaming responses do not have 'content' attribute
     response_size = (

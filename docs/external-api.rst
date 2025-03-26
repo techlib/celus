@@ -282,6 +282,10 @@ Request body:
 
 Response code: ``201 Created``
 
+**Note**: Please do not forget to post the request with the appropriate ``Content-Type`` header.
+We recommend using ``application/json`` and sending the request body as JSON, but you can also use
+``application/x-www-form-urlencoded``.
+
 Response body: The response body will contain the ID of the export job which was started and some
 additional information::
 
