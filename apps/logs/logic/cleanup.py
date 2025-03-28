@@ -91,7 +91,7 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
             for rec in ch_backend.get_records(query):
                 stats["ch duplicates"] += 1
                 to_fix.append(rec)
-            logger.info("Scanned IBs: %d; stats: %s", i + 1, stats)
+            logger.info("Scanned IBs: %d (%.2f%%); stats: %s", i + 1, (i + 1) / total * 100, stats)
             ib_ids = []
 
     ibs_to_resync = set()
@@ -110,18 +110,27 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
                 als_to_delete.extend(rec.ids[1:])
 
             # update the values of the first record to the sum and delete the rest
-            to_update = []
             logger.info(
                 "Updating %d records and deleting %d", len(als_to_update), len(als_to_delete)
             )
-            for al in AccessLog.objects.filter(pk__in=als_to_update.keys()):
-                al.value = als_to_update[al.pk]
-                to_update.append(al)
+            # sort by pk to make the delete operation more efficient as the values in batches
+            # are close to each other in the database
+            to_update = [
+                AccessLog(pk=pk, value=value) for pk, value in sorted(als_to_update.items())
+            ]
+            als_to_delete.sort()
             with atomic():
-                # batch_size was set to 500 because in production, trying to update 4k records
+                # batch_size was set to 100 because in production, trying to update 4k records
                 # at once caused postgres to eat more than 8 GB or RAM and then crash with OOM
-                AccessLog.objects.bulk_update(to_update, ["value"], batch_size=500)
-                AccessLog.objects.filter(pk__in=als_to_delete).delete(i_know_what_i_am_doing=True)
+                AccessLog.objects.bulk_update(to_update, ["value"], batch_size=100)
+                # delete in batches of 1000 to avoid memory issues in postgres
+                # (deleting 40k records in production caused postgres to eat all RAM and then
+                # crash with OOM)
+                for i in range(0, len(als_to_delete), 1000):
+                    logger.info("Deleting records %d - %d", i + 1, i + 1000)
+                    AccessLog.objects.filter(pk__in=als_to_delete[i : i + 1000]).delete(
+                        i_know_what_i_am_doing=True
+                    )
 
             logger.info("Resyncing import batches with clickhouse")
             for i, ib in enumerate(ImportBatch.objects.filter(pk__in=ibs_to_resync)):
