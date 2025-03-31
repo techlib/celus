@@ -232,7 +232,8 @@ cs:
                     color="primary"
                     :disabled="
                       row.id === splitBy ||
-                      (row.id.startsWith('date') && trendMode)
+                      (row.id.startsWith('date') && trendMode) ||
+                      readOnly
                     "
                     :value="row.id"
                   ></v-radio>
@@ -253,6 +254,7 @@ cs:
                   style="min-width: 100px"
                   color="primary"
                   hide-details
+                  :disabled="readOnly"
                 ></v-switch>
               </v-card-title>
               <v-card-text>
@@ -262,6 +264,7 @@ cs:
                     <FromToMonthEntry
                       v-model="tmBaseDateRange"
                       :clearable="false"
+                      :disabled="readOnly"
                     ></FromToMonthEntry>
                   </div>
                   <div class="pt-6">
@@ -269,6 +272,7 @@ cs:
                     <FromToMonthEntry
                       v-model="tmComparedDateRange"
                       :clearable="false"
+                      :disabled="readOnly"
                     ></FromToMonthEntry>
                   </div>
                   <v-alert
