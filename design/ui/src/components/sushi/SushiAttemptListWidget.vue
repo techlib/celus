@@ -69,7 +69,7 @@ cs:
               @sort-desc="orderDesc"
               v-model:items-per-page="pageSize"
               :loading="loading"
-              :footer-props="{ itemsPerPageOptions: [5, 10, 25] }"
+              :items-per-page-options="[5, 10, 25]"
               :server-items-length="intentionCount"
               v-model:page="page"
               density="default"

@@ -34,10 +34,8 @@ cs:
     <v-data-table
       :headers="headers"
       :items="importBatches"
-      :footer-props="{
-        disableItemsPerPage: true,
-      }"
       :loading="loading"
+      class="batch_list"
     >
       <template #item.created="{ item }">
         <span v-html="isoDateTimeFormatSpans(item.created)"></span>
@@ -139,3 +137,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.batch_list .v-data-table-footer .v-data-table-footer__items-per-page {
+  display: none !important;
+}
+.batch_list .v-data-table-footer__info {
+  margin-top: 14px;
+  padding: 0 !important;
+}
+</style>

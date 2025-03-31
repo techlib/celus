@@ -92,7 +92,7 @@ cs:
             <v-data-table
               :items="processedData"
               :headers="headers"
-              :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+              :items-per-page-options="itemsPerPageOptions"
               :loading="loadingDownloads"
               update:options="tableOptions"
               v-model:items-per-page="itemsPerPage"

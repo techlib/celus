@@ -111,7 +111,7 @@ cs:
         :headers="tableHeaders"
         item-key="pk"
         :loading="loading"
-        :footer-props="{ itemsPerPageOptions: itemsPerPageOptions }"
+        :items-per-page-options="itemsPerPageOptions"
         :options="options"
         :server-items-length="totalRowCount"
         :fixed-header="popped"

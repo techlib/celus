@@ -56,7 +56,7 @@ cs:
     :expanded="expanded"
     expand-icon="fas fa-caret-down"
     :items-per-page="50"
-    :footer-props="{ itemsPerPageOptions: [50, 100, -1] }"
+    :items-per-page-options="[50, 100, -1]"
     :custom-filter="searchFilter"
     class="auto-table"
   >

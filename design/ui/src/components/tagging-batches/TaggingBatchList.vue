@@ -15,7 +15,7 @@
       density="default"
       v-model:page="page"
       v-model:items-per-page="itemsPerPage"
-      :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
+      :items-per-page-options="[10, 25, 50]"
       v-model:expanded="expanded"
       expand-icon="fas fa-caret-down"
     >

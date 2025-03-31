@@ -9,7 +9,7 @@
     :items-length="total"
     v-model:page="page"
     v-model:items-per-page="ipp"
-    :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
+    :items-per-page-options="[10, 25, 50]"
   >
   </v-data-table-server>
 </template>

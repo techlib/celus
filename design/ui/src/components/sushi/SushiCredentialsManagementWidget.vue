@@ -619,7 +619,7 @@ cs:
         v-model:sort-by="orderBy"
         v-model:page="page"
         multi-sort
-        :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+        :items-per-page-options="[10, 25, 50, 100]"
         show-select
         density="default"
         item-value="pk"

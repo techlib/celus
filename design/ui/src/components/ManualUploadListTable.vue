@@ -78,7 +78,7 @@ cs:
         v-model:page="page"
         v-model:items-per-page="pageSize"
         :search="searchDebounced"
-        :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
+        :items-per-page-options="[10, 25, 50]"
       >
         <!-- v-model:sort-by="orderByCr" -->
         <template #item.user.last_name="{ item }">

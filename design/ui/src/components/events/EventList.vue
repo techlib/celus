@@ -20,7 +20,7 @@ cs:
     expand-icon="fa fa-caret-down"
     :loading="loading"
     v-model:sort-by="sortBy"
-    :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+    :items-per-page-options="[10, 25, 50, 100]"
     :items-length="eventCount"
     v-model:page="page"
     v-model:items-per-page="pageSize"

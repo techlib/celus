@@ -135,7 +135,7 @@ cs:
               :items-per-page="itemsPerPage"
               v-model:sort-by="orderBy"
               multi-sort
-              :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+              :items-per-page-options="[10, 25, 50, 100]"
               :loading="loading"
               class="custom_table"
             >

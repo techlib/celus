@@ -26,7 +26,7 @@ cs:
         :sort-by="[{ key: 'pk', order: 'asc' }]"
         item-key="pk"
         item-value="pk"
-        :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+        :items-per-page-options="[10, 25, 50, 100]"
         :options="options"
         :loading="loading"
         :page="page"

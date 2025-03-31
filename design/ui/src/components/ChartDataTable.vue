@@ -10,10 +10,8 @@ cs:
   <v-data-table
     :headers="headers"
     :items="formattedRows"
-    :footer-props="{
-      disableItemsPerPage: true,
-      itemsPerPageOptions: [this.itemsPerPage],
-    }"
+    :items-per-page="itemsPerPage"
+    :items-per-page-options="[itemsPerPage]"
     class="chart-data-table"
   >
     <template #body.append="{ headers }">
@@ -100,5 +98,13 @@ tr.totals th {
   .v-data-table__wrapper {
     width: 100%;
   }
+}
+.chart-data-table .v-data-table-footer .v-data-table-footer__items-per-page {
+  display: none !important;
+}
+
+.chart-data-table .v-data-table-footer__info {
+  margin-top: 14px;
+  padding: 0 !important;
 }
 </style>

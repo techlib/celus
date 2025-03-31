@@ -62,7 +62,7 @@ cs:
       :items="filteredItems"
       :loading="loading"
       :headers="headers"
-      :footer-props="{ itemsPerPageOptions: [10, 25, 50, 100] }"
+      :items-per-page-options="[10, 25, 50, 100]"
       :server-items-length="totalItemCount"
       :must-sort="true"
       :items-per-page="itemsPerPage"

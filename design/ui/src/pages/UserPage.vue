@@ -281,7 +281,7 @@ cs:
           density="comfortable"
           fixed-header
           v-model:sort-by="orderBy"
-          :footer-props="{ itemsPerPageOptions: [10, 25, 50] }"
+          :items-per-page-options="[10, 25, 50]"
           :custom-filter="searchImpersonateFilter"
         >
           <template #top>
