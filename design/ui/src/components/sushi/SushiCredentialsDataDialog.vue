@@ -94,7 +94,7 @@ cs:
               :headers="headers"
               :items-per-page-options="itemsPerPageOptions"
               :loading="loadingDownloads"
-              update:options="tableOptions"
+              @update:options="tableOptions"
               v-model:items-per-page="itemsPerPage"
               :calculate-widths="true"
               v-model="checkedItem"

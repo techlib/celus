@@ -105,18 +105,19 @@ cs:
           </v-btn-toggle>
         </div>
       </div>
-      <v-data-table
+      <v-data-table-server
         v-if="view === 'table'"
         :items="formattedData"
         :headers="tableHeaders"
         item-key="pk"
         :loading="loading"
+        :page="page"
+        :items-per-page="itemsPerPage"
         :items-per-page-options="itemsPerPageOptions"
-        :options="options"
-        :server-items-length="totalRowCount"
+        :items-length="totalRowCount"
         :fixed-header="popped"
-        :sort-by="[{ key: '_total', order: 'desc' }]"
         :height="popped ? 'calc(100vh - 72px)' : null"
+        @update:options="updateOptions"
         :style="
           popped
             ? {
@@ -203,7 +204,7 @@ cs:
             {{ popped ? $t("close") : $t("pop_out") }}
           </v-btn>
         </template>
-      </v-data-table>
+      </v-data-table-server>
       <ReportingChart
         v-else
         :data="dataWithRemainder"
@@ -288,7 +289,6 @@ export default {
       dataComputing: false,
       translatorsUpdating: false,
       extractedHeaders: [],
-      options: { itemsPerPage: this.contextOverride ? -1 : 20, page: 1 },
       titleColumns: {
         issn: true,
         eissn: true,
@@ -304,6 +304,10 @@ export default {
       loadingParts: false,
       totalParts: 0,
       view: "table",
+      page: 1,
+      itemsPerPage: 10,
+      prevOptions: {},
+      ordering: "-_total",
       baseWidth: 0,
       remainder: null,
       rowToTagScope: {
@@ -445,13 +449,6 @@ export default {
     dataUrl() {
       return "/api/flexible-slicer/";
     },
-    orderByParam() {
-      let prefix = this.options.sortBy && this.options.sortBy[0] ? "-" : "";
-      if (this.options.sortBy && this.options.sortBy.length) {
-        return { order_by: prefix + this.options.sortBy[0] };
-      }
-      return {};
-    },
     errorText() {
       if (this.errorCode) {
         return this.$t(this.errorCode, this.errorDetails);
@@ -507,7 +504,7 @@ export default {
       return this.row === "tag" && this.report.showUntaggedRemainder;
     },
     itemsPerPageOptions() {
-      return this.contextOverride ? [20, 50, 100, -1] : [20, 50, 100];
+      return this.contextOverride ? [10, 20, 50, 100, -1] : [10, 20, 50, 100];
     },
     noPartAvailable() {
       return this.report.splitBy && !this.currentPart && !this.loadingParts;
@@ -550,7 +547,6 @@ export default {
         this.data = [];
         this.cleanData = [];
         this.setOrdering(report);
-        this.options.page = 1;
       }
       await this.fetchData();
     },
@@ -630,9 +626,9 @@ export default {
       }
       let params = {
         ...this.report.urlParams(filterOverride),
-        page_size: this.options.itemsPerPage,
-        page: this.options.page,
-        ...this.orderByParam,
+        page_size: this.itemsPerPage,
+        page: this.page,
+        order_by: this.ordering,
       };
       if (this.report.splitBy && this.currentPart) {
         params["part"] = toBase64JSON([this.currentPart]);
@@ -814,8 +810,6 @@ export default {
     },
     setOrdering(report) {
       let ob = djangoToDataTableOrderBy(report.orderBy);
-      this.options.sortBy = [{ key: "_total", type: "desc" }];
-      this.options.sortDesc = ob.sortDesc;
     },
     updateSize() {
       this.baseWidth = this.$refs.base.clientWidth;
@@ -842,6 +836,25 @@ export default {
         );
       }
     },
+    updateOptions(newOptions) {
+      if (!isEqual(newOptions, this.prevOptions)) {
+        this.page = newOptions.page;
+        this.itemsPerPage = newOptions.itemsPerPage;
+        if (newOptions.sortBy && newOptions.sortBy.length) {
+          this.ordering = newOptions.sortBy
+            .map(({ key, order }) => {
+              return (order === "desc" ? "-" : "") + key;
+            })
+            .join("");
+        } else {
+          this.ordering = "-_total";
+        }
+        if (!this.loading) {
+          this.fetchData();
+        }
+      }
+      this.prevOptions = { ...newOptions };
+    },
   },
 
   watch: {
@@ -853,14 +866,6 @@ export default {
           this.report.includeTotals = false;
         }
       }
-    },
-    options: {
-      deep: true,
-      handler(oldVal, newVal) {
-        if (!isEqual(newVal, oldVal)) {
-          this.fetchData();
-        }
-      },
     },
     currentPart() {
       this.fetchData();

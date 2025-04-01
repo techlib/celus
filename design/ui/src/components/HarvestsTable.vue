@@ -135,7 +135,6 @@ cs:
           :loading="loading"
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
-          :options="tableOptions"
           :items-length="totalCount"
           :must-sort="true"
           v-model:sort-by="tableOptions.sortBy"

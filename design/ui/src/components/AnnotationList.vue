@@ -19,21 +19,21 @@ cs:
 <template>
   <v-row>
     <v-col>
-      <v-data-table
+      <v-data-table-server
         :items="annotations"
         density="default"
         :headers="headers"
-        :sort-by="[{ key: 'pk', order: 'asc' }]"
         item-key="pk"
         item-value="pk"
         :items-per-page-options="[10, 25, 50, 100]"
-        :options="options"
         :loading="loading"
         :page="page"
-        :items-per-page="10"
-        :server-items-length="serverItemsLength"
+        :search="search"
+        :items-per-page="itemsPerPage"
+        :items-length="itemsLength"
         v-model:expanded="expandedRows"
         class="auto-table"
+        @update:options="handleUpdateOptions"
       >
         <template v-slot:top>
           <v-dialog
@@ -150,7 +150,7 @@ cs:
             </td>
           </tr>
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </v-col>
   </v-row>
 </template>
@@ -165,7 +165,13 @@ export default {
 
   mixins: [cancellation],
 
+  emits: ["updated"],
+
   props: {
+    platforms: {
+      type: Array,
+      required: true,
+    },
     loading: {
       type: Boolean,
       required: true,
@@ -178,9 +184,16 @@ export default {
       type: Number,
       required: true,
     },
-    serverItemsLength: {
+    itemsLength: {
       type: Number,
       required: true,
+    },
+    itemsPerPage: {
+      type: Number,
+      required: true,
+    },
+    search: {
+      type: String,
     },
   },
 
@@ -220,12 +233,12 @@ export default {
         {
           title: this.$i18n.t("organization"),
           value: `organization.name_${this.lang}`,
-          key: `organization.name_${this.lang}`,
+          key: `organization__name_${this.lang}`,
         },
         {
           title: this.$i18n.t("platform"),
           value: "platform.name",
-          key: "platform.name",
+          key: "platform__name",
         },
         {
           title: this.$i18n.t("annotations.labels.level"),
@@ -279,12 +292,8 @@ export default {
       this.$emit("updated");
       this.$refs.widget.clean();
     },
-  },
-  watch: {
-    // Communicates back to the page the state such as sorting,
-    // page and items per page to make the backend request.
-    options: function () {
-      this.$emit("update:options", this.options);
+    handleUpdateOptions(options) {
+      this.$emit("updated", options);
     },
   },
 };

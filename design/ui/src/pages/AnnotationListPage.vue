@@ -92,9 +92,10 @@ cs:
                 :annotations="annotations.results"
                 :platforms="platforms"
                 :page="page"
-                :server-items-length="annotations.count"
-                @update:options="options = $event"
-                @updated="fetchAnnotations"
+                :items-length="annotations.count"
+                @updated="updateOptions"
+                :items-per-page="itemsPerPage"
+                :search="search"
               ></AnnotationList>
             </v-container>
           </v-card-text>
@@ -136,10 +137,9 @@ export default {
       ],
       search: "",
       page: 1,
-      itemsPerPage: undefined,
-      ordering: undefined,
+      itemsPerPage: 10,
+      ordering: "pk",
       count: 0,
-      options: {},
     };
   },
 
@@ -159,7 +159,7 @@ export default {
         organization: this.filterOrganization,
         platform: this.filterPlatforms,
         page: this.page,
-        page_size: this.page_size,
+        page_size: this.itemsPerPage,
         ordering: this.ordering,
         ...(this.searchDebounced && { search: this.searchDebounced }),
         ...(this.filterValidity && { validity: this.filterValidity }),
@@ -194,28 +194,31 @@ export default {
       const { response } = await this.http({ url: this.basePlatformUrl });
       if (response) this.platforms = response.data;
     },
+    updateOptions(options) {
+      this.page = options.page;
+      this.itemsPerPage = options.itemsPerPage;
+      if (options.sortBy.length > 0) {
+        this.ordering = options.sortBy.map(({ key, order }) => {
+          return (order === "desc" ? "-" : "") + key;
+        });
+      } else {
+        this.ordering = "pk";
+      }
+      if (!this.loading) {
+        this.fetchAnnotations();
+      }
+    },
   },
   mounted() {
-    this.fetchAnnotations();
+    if (!this.loading) {
+      this.fetchAnnotations();
+    }
     this.fetchPlatforms();
   },
   watch: {
-    options: {
-      handler() {
-        const { page, itemsPerPage, sortBy, sortDesc } = this.options;
-        this.page = page;
-        this.page_size = itemsPerPage;
-        this.ordering = sortBy.map(
-          (field, i) => (sortDesc[i] ? "-" : "") + field.replace(".", "__"),
-        );
-      },
-    },
-    params: {
-      handler() {
-        this.fetchAnnotations();
-      },
-      deep: true,
-    },
+    filterOrganization: "fetchAnnotations",
+    filterPlatforms: "fetchAnnotations",
+    filterValidity: "fetchAnnotations",
   },
 };
 </script>

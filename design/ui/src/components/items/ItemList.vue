@@ -57,13 +57,13 @@ cs:
       v-if="loading && items.length === 0"
       type="table"
     ></v-skeleton-loader>
-    <v-data-table
+    <v-data-table-server
       v-else
       :items="filteredItems"
       :loading="loading"
       :headers="headers"
       :items-per-page-options="[10, 25, 50, 100]"
-      :server-items-length="totalItemCount"
+      :items-length="totalItemCount"
       :must-sort="true"
       :items-per-page="itemsPerPage"
       :sort-by="orderBy"
@@ -123,7 +123,7 @@ cs:
         </span>
         <span v-else :key="ig.pk">-</span>
       </template>
-    </v-data-table>
+    </v-data-table-server>
   </v-card>
 </template>
 

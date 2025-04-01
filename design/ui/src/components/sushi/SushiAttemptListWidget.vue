@@ -59,7 +59,7 @@ cs:
         </v-row>
         <v-row>
           <v-col>
-            <v-data-table
+            <v-data-table-server
               :items="filteredIntentions"
               :headers="headers"
               v-model:expanded="expandedRows"
@@ -70,7 +70,7 @@ cs:
               v-model:items-per-page="pageSize"
               :loading="loading"
               :items-per-page-options="[5, 10, 25]"
-              :server-items-length="intentionCount"
+              :items-length="intentionCount"
               v-model:page="page"
               density="default"
             >
@@ -194,7 +194,7 @@ cs:
                   <span>{{ $t("show_chart") }}</span>
                 </v-tooltip>
               </template>
-            </v-data-table>
+            </v-data-table-server>
           </v-col>
         </v-row>
       </v-container>
