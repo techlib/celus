@@ -67,10 +67,8 @@ def make_harvest_reports(
     cred_qs = (
         models.SushiCredentials.objects.filter(organization__in=list(organizations))
         .annotate(
-            broken_since_cred=Min("first_broken_attempt__when_processed"),
-            broken_since_rt=Min(
-                "counterreportstocredentials__first_broken_attempt__when_processed"
-            ),
+            broken_since_cred=Min("first_broken_attempt__timestamp"),
+            broken_since_rt=Min("counterreportstocredentials__first_broken_attempt__timestamp"),
             broken_since=Greatest(F("broken_since_cred"), F("broken_since_rt")),
         )
         .annotate_verified()

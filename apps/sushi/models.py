@@ -679,6 +679,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         fetch_attempt.save()
 
         fetch_attempt.update_broken()
+        fetch_attempt.mark_processed()
 
         from scheduler.logic.automatic import update_verified_for_automatic_scheduling
 
@@ -776,8 +777,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 attempt.status = AttemptStatus.IMPORTING
             else:
                 attempt.status = AttemptStatus.NO_DATA
-        finally:
-            attempt.when_processed = now()
 
         if report:
             # Write tsv report into output (otherwise original file will remain there)
@@ -962,8 +961,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     attempt.status = AttemptStatus.NO_DATA
                 else:
                     attempt.status = AttemptStatus.DOWNLOAD_FAILED
-
-                attempt.when_processed = now()
         else:
             # no errors, if warnings then with data
             if report.record_found:

@@ -3,6 +3,7 @@ This module should test the functionality of harvest reports.
 """
 
 import pytest
+from core.models import User
 from django.urls import reverse
 from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory
@@ -27,18 +28,16 @@ from test_scenarios.basic import (
 
 @pytest.fixture
 def report_data(organizations, platforms, report_types, counter_report_types):
-    CounterReportsToCredentialsFactory(
-        credentials__organization=organizations["branch"],
-        credentials__platform=platforms["shared"],
-        counter_report=counter_report_types["tr"],
-    ).credentials.set_broken(
-        FetchAttemptFactory(
-            when_processed="2025-01-03 12:00:00",  # broken cred
-            start_date="2024-12-01",
-            end_date="2024-12-31",
-        ),
-        "sushi",
-    )
+    with freeze_time("2025-01-03 12:00:00"):  # setting timestamp of broken attempt
+        # broken credentials
+        CounterReportsToCredentialsFactory(
+            credentials__organization=organizations["branch"],
+            credentials__platform=platforms["shared"],
+            counter_report=counter_report_types["tr"],
+        ).credentials.set_broken(
+            FetchAttemptFactory(start_date="2024-12-01", end_date="2024-12-31"), "sushi"
+        )
+
     CounterReportsToCredentialsFactory(
         credentials__organization=organizations["branch"],
         credentials__platform=platforms["empty"],
@@ -54,18 +53,14 @@ def report_data(organizations, platforms, report_types, counter_report_types):
         credentials__platform=platforms["shared"],
         counter_report=counter_report_types["pr51"],
     )
-    CounterReportsToCredentialsFactory(
-        credentials__organization=organizations["standalone"],
-        credentials__platform=platforms["shared"],
-        counter_report=counter_report_types["dr"],
-    ).set_broken(
-        FetchAttemptFactory(
-            when_processed="2025-02-03 12:00:00",  # broken rt lately
-            start_date="2025-01-01",
-            end_date="2025-01-31",
-        ),
-        "sushi",
-    )
+
+    with freeze_time("2025-02-03 12:00:00"):  # setting timestamp of broken attempt
+        # broken report type
+        CounterReportsToCredentialsFactory(
+            credentials__organization=organizations["standalone"],
+            credentials__platform=platforms["shared"],
+            counter_report=counter_report_types["dr"],
+        ).set_broken(FetchAttemptFactory(start_date="2025-01-01", end_date="2025-01-31"), "sushi")
 
     ImportBatchFactory(
         organization=organizations["branch"],
@@ -158,13 +153,11 @@ class TestTask:
         assert len(mailoutbox) == 0
         UserOrganization.objects.filter(user=users[user]).update(send_harvest_reports=True)
 
-        users[user].is_active = False
-        users[user].save()
+        User.objects.filter(pk=users[user].pk).update(is_active=False)
         send_harvesting_reports()
         assert len(mailoutbox) == 0, "Don't send emails for deactivated users"
 
-        users[user].is_active = True
-        users[user].save()
+        User.objects.filter(pk=users[user].pk).update(is_active=True)
         send_harvesting_reports()
         assert len(mailoutbox) == sent_count
 
