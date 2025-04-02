@@ -535,6 +535,7 @@ class FlexibleReportSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
+            "description",
             "owner",
             "owner_organization",
             "last_updated",

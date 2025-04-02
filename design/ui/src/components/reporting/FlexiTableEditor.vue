@@ -16,6 +16,7 @@ en:
   unlock_tt: Unlock the report for editing.
   save_success: Report was successfully saved.
   report_title: Report title
+  report_description: Report description
   please_fill_in_title: Please fill in report title and access level and hit 'Save changes' again.
   select_at_least_one_column_dim: At least one column dimension must be selected.
   split_to_parts: Split report to parts by selected attribute
@@ -62,6 +63,7 @@ cs:
   unlock_tt: Odemknout report pro editaci.
   save_success: Report byl úspěšně uložen.
   report_title: Název reportu
+  report_description: Popis reportu
   please_fill_in_title: Vyplňte prosím název reportu a úroveň přístupu výše a pak stiskněte tlačítko 'Uložit změny' znovu.
   select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
   split_to_parts: Rozdělit report na části podle vybraného atributu
@@ -102,17 +104,84 @@ cs:
     <div v-else>
       <v-form>
         <v-row v-if="wantsSave">
-          <v-col cols="12" md="8">
+          <v-col cols="8" md="5">
             <v-text-field
               :disabled="readOnly"
               v-model="reportName"
               class="font-weight-light text-h5"
               :label="$t('report_title')"
               :rules="wantsSave ? [rules.required] : []"
-              ref="titleField"
             ></v-text-field>
           </v-col>
-          <v-col>
+          <v-col cols="8" md="5">
+            <section class="d-flex align-center description_report">
+              <v-dialog max-width="800" class="edit_description_dialog">
+                <template v-slot:activator="{ props: activatorProps }">
+                  <v-tooltip
+                    location="bottom"
+                    max-width="400px"
+                    v-if="reportDescription"
+                  >
+                    <template v-slot:activator="{ props: tooltipProps }">
+                      <div v-bind="tooltipProps" style="width: 100%">
+                        <v-text-field
+                          :disabled="readOnly"
+                          v-model="reportDescription"
+                          class="font-weight-light text-h5"
+                          :label="$t('report_description')"
+                          readonly
+                          hide-details
+                          v-bind="activatorProps"
+                        ></v-text-field>
+                      </div>
+                    </template>
+                    <span>
+                      {{ reportDescription }}
+                    </span>
+                  </v-tooltip>
+                  <v-text-field
+                    :disabled="readOnly"
+                    v-model="reportDescription"
+                    class="font-weight-light text-h5"
+                    :label="$t('report_description')"
+                    v-else
+                    readonly
+                    hide-details
+                    v-bind="activatorProps"
+                  ></v-text-field>
+                  <v-icon
+                    v-if="!readOnly || (readOnly && reportDescription)"
+                    size="x-small"
+                    v-bind="activatorProps"
+                    :class="['ml-2 mt-3', readOnly ? 'disabled_icon' : '']"
+                  >
+                    fas fa-edit
+                  </v-icon>
+                </template>
+                <template v-slot:default="{ isActive }">
+                  <v-card :title="$t('report_description')">
+                    <v-card-text>
+                      <v-textarea
+                        v-model="reportDescription"
+                        class="font-weight-light text-h5"
+                        :label="$t('report_description')"
+                        :readonly="readOnly"
+                        hide-details
+                      ></v-textarea>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        variant="elevated"
+                        :text="$t('actions.close')"
+                        @click="isActive.value = false"
+                      ></v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </template>
+              </v-dialog>
+            </section>
+          </v-col>
+          <v-col cols="4" md="2" style="min-width: 165px">
             <AccessLevelSelector
               ref="accessLevel"
               :owner-organization="ownerOrganization"
@@ -982,6 +1051,7 @@ export default {
       exportHandle: null,
       exportHint: false,
       reportName: "",
+      reportDescription: "",
       ignoreUrlFilteringParams: false,
       reportTypeSetOnLoad: false, // helps guard against updates when loading data from a stored report
       reportPk: this.reportId,
@@ -1195,6 +1265,7 @@ export default {
     reportObject() {
       let rt = new FlexiReport();
       rt.name = this.reportName;
+      rt.description = this.reportDescription;
       rt.pk = this.reportPk;
       rt.reportTypes = [...this.selectedReportTypeObjs];
       rt.primaryDimension = rt.resolveDim(this.row);
@@ -1300,6 +1371,9 @@ export default {
         return false;
       return true;
     },
+    reportDescriptionClass() {
+      return this.readOnly ? "text-grey-lighten-1" : "";
+    },
   },
 
   methods: {
@@ -1370,8 +1444,9 @@ export default {
         );
       }
     },
-    async firstSave(name, access) {
+    async firstSave(name, description, access) {
       this.reportName = name;
+      this.reportDescription = description;
       this.owner = access.owner;
       this.ownerOrganization = access.owner_organization;
       if (!this.wantsSave) {
@@ -1527,6 +1602,7 @@ export default {
       this.selectedTagClass = config.tag_class ?? null;
       this.showRemainder = config.show_untagged_remainder ?? false;
       this.reportName = settings.name;
+      this.reportDescription = settings.description;
       this.reportPk = settings.pk;
       this.owner = settings.owner;
       this.ownerOrganization = settings.owner_organization;
@@ -1835,6 +1911,10 @@ export default {
       content: "";
     }
   }
+}
+
+.disabled_icon {
+  opacity: 0.7;
 }
 
 .v-selection-control--density-comfortable {

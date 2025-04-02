@@ -1,5 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
-
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml" src="@/locales/reporting.yaml"></i18n>
 
 <template>
@@ -15,6 +15,12 @@
           :rules="[rules.required]"
           ref="title"
         ></v-text-field>
+        <v-textarea
+          v-if="!copyReport"
+          v-model="newDescription"
+          :label="$t('labels.description')"
+          class="mt-2"
+        ></v-textarea>
         <AccessLevelSelector
           ref="accessLevel"
           :model-value="ownershipType"
@@ -76,6 +82,7 @@ export default {
     return {
       newTitle: this.name,
       valid: false,
+      newDescription: "",
     };
   },
 
@@ -100,7 +107,12 @@ export default {
       this.$emit("cancel");
     },
     update() {
-      this.$emit("update", this.newTitle, this.$refs.accessLevel.valueFromData);
+      this.$emit(
+        "update",
+        this.newTitle,
+        this.newDescription,
+        this.$refs.accessLevel.valueFromData,
+      );
     },
   },
 };

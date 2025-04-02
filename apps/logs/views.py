@@ -1441,6 +1441,7 @@ class FlexibleReportViewSet(ModelViewSet):
             "owner": owner,
             "owner_organization": (request.data.get("owner_organization")),
             "name": request.data.get("name"),
+            "description": request.data.get("description", ""),
         }
 
     def _check_write_permissions(self, request, owner, owner_organization):

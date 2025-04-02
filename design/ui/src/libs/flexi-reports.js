@@ -103,6 +103,7 @@ class FlexiReport {
     this.orderBy = [];
     this.splitBy = null;
     this.name = "";
+    this.description = "";
     this.owner = null;
     this.ownerOrganization = null;
     this.includeZeroRows = false;
@@ -155,6 +156,7 @@ class FlexiReport {
     let report = new FlexiReport();
     report.pk = data.pk;
     report.name = data.name;
+    report.description = data.description;
     report.owner = data.owner;
     report.lastUpdated = data.last_updated;
     report.lastUpdatedBy = data.last_updated_by;
@@ -290,6 +292,7 @@ class FlexiReport {
   async save() {
     let data = {
       name: this.name,
+      description: this.description,
       config: this.urlParams(),
       owner: this.owner,
       owner_organization: this.ownerOrganization,

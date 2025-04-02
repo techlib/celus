@@ -35,6 +35,18 @@ a {
   color: rgba(0, 0, 0, 0.55) !important;
 }
 
+.description_report {
+  .v-field__input {
+    text-overflow: ellipsis;
+  }
+}
+
+.edit_description_dialog {
+  .v-field__input {
+    min-height: 60vh !important;
+  }
+}
+
 .v-field__input {
   min-height: 43px !important;
 }

@@ -1140,6 +1140,7 @@ class FlexibleReport(models.Model):
         CONSORTIUM = 3
 
     name = models.CharField(max_length=120)
+    description = models.TextField(blank=True, default="")
     created = models.DateTimeField(default=now)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

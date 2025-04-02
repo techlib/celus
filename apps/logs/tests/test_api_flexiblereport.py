@@ -53,6 +53,7 @@ class TestFlexibleReportAPI:
             reverse("flexible-report-list"),
             {
                 "name": "test report",
+                "description": "description",
                 "config": {"primary_dimension": "platform", "groups": b64json(["metric"])},
             },
             content_type="application/json",
@@ -64,6 +65,7 @@ class TestFlexibleReportAPI:
         assert report.last_updated_by == admin_user
         assert report.report_config["primary_dimension"] == "platform"
         assert report.report_config["group_by"] == ["metric"]
+        assert report.description == "description"
 
     def test_create_with_tag_roll_up(self, admin_client, admin_user):
         resp = admin_client.post(
