@@ -286,7 +286,7 @@ export default new Vuex.Store({
     },
     showAdminStuff(state, getters) {
       // can the user admin the organization that is selected?
-      return (
+      return !!(
         (state.user &&
           (state.user.is_admin_of_master_organization ||
             state.user.is_superuser)) ||
