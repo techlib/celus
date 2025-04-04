@@ -33,9 +33,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from sushi.logic.email import send_harvest_reports
-from sushi.logic.harvest_reports import make_harvest_reports
 from sushi.models import SushiCredentials
+from sushi.tasks import send_grouped_harvesting_report_task, send_harvesting_report_task
 from tags.models import Tag
 
 from organizations.logic.queries import organization_filter_from_org_id
@@ -153,8 +152,12 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
     @action(detail=True, methods=["post"], url_path="send-harvest-report")
     def send_harvest_report(self, request, pk):
         organization = get_object_or_404(request.user.admin_organizations(), pk=pk)
-        harvest_reports = make_harvest_reports([organization])
-        send_harvest_reports(request.user, harvest_reports)
+        send_harvesting_report_task.delay(request.user.pk, organization.pk)
+        return Response()
+
+    @action(detail=False, methods=["post"], url_path="send-grouped-harvest-report")
+    def send_grouped_harvest_report(self, request):
+        send_grouped_harvesting_report_task.delay(request.user.pk)
         return Response()
 
     @action(detail=True, url_path="year-interest")

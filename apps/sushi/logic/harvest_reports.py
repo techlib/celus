@@ -58,6 +58,7 @@ class HarvestReport:
     month: date
     credentials: List[models.SushiCredentials]
     success_rate: Optional[float]
+    data_counts: List[DataCounts]
 
 
 def make_harvest_reports(
@@ -72,7 +73,7 @@ def make_harvest_reports(
             broken_since=Greatest(F("broken_since_cred"), F("broken_since_rt")),
         )
         .annotate_verified()
-        .select_related("platform")
+        .select_related("platform", "organization")
     ).order_by("pk")
 
     org_map = {e.pk: e for e in organizations}
@@ -99,6 +100,7 @@ def make_harvest_reports(
             month=month,
             credentials=[e for e in cred_qs if e.organization == org],
             success_rate=data_counts[org].success_rate,
+            data_counts=data_counts[org],
         )
         for org in organizations
     ]

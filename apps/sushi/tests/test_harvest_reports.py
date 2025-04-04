@@ -9,10 +9,10 @@ from freezegun import freeze_time
 from logs.fake_data import ImportBatchFactory
 from organizations.models import Organization, UserOrganization
 
+from sushi import tasks
 from sushi.fake_data import CounterReportsToCredentialsFactory, FetchAttemptFactory
-from sushi.logic.email import send_harvest_reports
+from sushi.logic.email import send_grouped_harvest_reports, send_harvest_reports
 from sushi.logic.harvest_reports import make_harvest_reports
-from sushi.tasks import send_harvesting_reports
 from test_scenarios.basic import (
     basic1,  # noqa
     clients,  # noqa
@@ -129,6 +129,16 @@ class TestSendingEmails:
         assert send_harvest_reports(users["master_user"], reports) == 3
         assert len(mailoutbox) == 3, "email is sent even for organization without credentials"
 
+    def test_grouped_email_was_sent(self, users, report_data, organizations, mailoutbox):
+        organizations_pks = [
+            v.pk for k, v in organizations.items() if k in ["branch", "standalone", "root"]
+        ]
+        reports = make_harvest_reports(
+            Organization.objects.filter(pk__in=organizations_pks).order_by("name")
+        )
+        assert send_grouped_harvest_reports(users["master_user"], reports) == 1
+        assert len(mailoutbox) == 1
+
 
 @pytest.mark.django_db
 class TestTask:
@@ -145,21 +155,62 @@ class TestTask:
             ("su", 0),
         ),
     )
-    def test_sending_task(
+    def test_send_harvesting_reports_task(
         self, users, basic1, report_data, organizations, mailoutbox, user, sent_count
     ):
         UserOrganization.objects.update(send_harvest_reports=False)
-        send_harvesting_reports()
+        tasks.send_harvesting_reports_task()
         assert len(mailoutbox) == 0
         UserOrganization.objects.filter(user=users[user]).update(send_harvest_reports=True)
 
-        User.objects.filter(pk=users[user].pk).update(is_active=False)
-        send_harvesting_reports()
+        users[user].is_active = False
+        users[user].save()
+        tasks.send_harvesting_reports_task()
+        assert len(mailoutbox) == 0, "Don't send emails for deactivated users"
+
+        users[user].is_active = True
+        users[user].save()
+        tasks.send_harvesting_reports_task()
+        assert len(mailoutbox) == sent_count
+
+    def test_send_harvest_report_task(self, users, basic1, report_data, organizations, mailoutbox):
+        tasks.send_harvesting_report_task(users["master_admin"].pk, organizations["branch"].pk)
+        assert len(mailoutbox) == 1
+
+    @pytest.mark.parametrize(
+        "user,sent_count",
+        (
+            ("master_admin", 1),
+            ("master_user", 0),
+            ("user2", 0),
+            ("user1", 0),
+            ("admin1", 1),
+            ("admin2", 1),
+            ("su", 1),
+        ),
+    )
+    def test_send_grouped_harvesting_reports_task(
+        self, users, basic1, report_data, organizations, mailoutbox, user, sent_count
+    ):
+        User.objects.filter(pk=users[user].pk).update(send_grouped_harvest_reports=False)
+        tasks.send_grouped_harvesting_reports_task()
+        assert len(mailoutbox) == 0
+
+        User.objects.filter(pk=users[user].pk).update(
+            send_grouped_harvest_reports=True, is_active=False
+        )
+        tasks.send_grouped_harvesting_reports_task()
         assert len(mailoutbox) == 0, "Don't send emails for deactivated users"
 
         User.objects.filter(pk=users[user].pk).update(is_active=True)
-        send_harvesting_reports()
+        tasks.send_grouped_harvesting_reports_task()
         assert len(mailoutbox) == sent_count
+
+    def test_send_grouped_harvest_report_task(
+        self, users, basic1, report_data, organizations, mailoutbox
+    ):
+        tasks.send_grouped_harvesting_report_task(users["master_admin"].pk)
+        assert len(mailoutbox) == 1
 
 
 @pytest.mark.django_db
@@ -183,20 +234,54 @@ class TestApi:
         organizations,
         report_data,
         mailoutbox,
+        monkeypatch,
         user,
         organization,
         status_code,
         was_sent,
     ):
+        x = set()
+
+        def handler(*args, **kwargs):
+            x.add(True)
+
+        monkeypatch.setattr(tasks.send_harvesting_report_task, "delay", handler)
+
         resp = clients[user].post(
             reverse("organization-send-harvest-report", args=(organizations[organization].pk,))
         )
         assert resp.status_code == status_code
 
         if was_sent:
-            assert len(mailoutbox) == 1, "report for organization was sent"
+            assert len(x) == 1, "report for organization was planned to send"
         else:
-            assert len(mailoutbox) == 0, "no report was sent for organization"
+            assert len(x) == 0, "report for organization was not planned to send"
+
+    @pytest.mark.parametrize(
+        "user,status_code",
+        (
+            ("master_admin", 200),
+            ("master_user", 200),
+            ("user2", 200),
+            ("user1", 200),
+            ("admin1", 200),
+            ("admin2", 200),
+            ("su", 200),
+        ),
+    )
+    def test_send_grouped_harvest_report(
+        self, basic1, clients, report_data, mailoutbox, monkeypatch, user, status_code
+    ):
+        x = set()
+
+        def handler(*args, **kwargs):
+            x.add(True)
+
+        monkeypatch.setattr(tasks.send_grouped_harvesting_report_task, "delay", handler)
+
+        resp = clients[user].post(reverse("organization-send-grouped-harvest-report"))
+        assert resp.status_code == status_code
+        assert len(x) == 1, "report was planned to sent"
 
     @pytest.mark.parametrize(
         "user,organization,enabled,status_code,sent_count",
@@ -237,5 +322,5 @@ class TestApi:
         )
         assert resp.status_code == status_code
 
-        send_harvesting_reports()
+        tasks.send_harvesting_reports_task()
         assert len(mailoutbox) == sent_count

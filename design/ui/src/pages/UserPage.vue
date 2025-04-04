@@ -35,8 +35,14 @@ en:
     sent: The latest harvest report was sent.
     title: Send Harvest reports
     tooltip: When enabled, CELUS will send you a monthly overview email of harvesting success in the previous month
+    grouped_tooltip: When enabled, CELUS will send you a monthly overview email of harvesting success in the previous month for every organization
     switched_on: Sending of regular harvest reports for organization '{organization}' has been enabled.
     switched_off: Sending of regular harvest reports for organization '{organization}' has been disabled.
+    grouped_switched_on: Sending of regular harvest reports for all organizations has been enabled.
+    grouped_switched_off: Sending of regular harvest reports for all organizations has been disabled.
+    send_grouped: Send the latest harvest report for all organizations.
+  entire_consortium: Entire Consortium
+  entire_consortium_description: This record represent setting for all organizations in consortium.
 
 cs:
   is_superuser: Superuživatel
@@ -74,8 +80,14 @@ cs:
     sent: Nejnovější zpráva o stahování byla odeslána.
     title: Odesílat zprávy o stahování
     tooltip: Pokud je zapnuto, CELUS bude každý posílat email s přehledem o úspěšných stahováních z předchozího měsíce
-    switched_on: Odesílání pravidelných zpráv o stahování pro organizaci '{organization}' bylo aktivováno.
+    grouped_tooltip: Pokud je zapnuto, CELUS bude každý posílat email s přehledem o úspěšných stahováních z předchozího měsíce pro všechny organizace
+    switched_on: Odesílání pravidelných zpráv o stahování pro organizaci '{organization}' bylo zapnuto.
     switched_off: Odesílání pravidelných zpráv o stahování pro organizaci '{organization}' bylo vypnuto.
+    grouped_switched_on: Odesílání pravidelných zpráv o stahování za všechny organizace bylo zapnuto.
+    grouped_switched_off: Odesílání pravidelných zpráv o stahování za všechny organizace bylo vypnuto.
+    send_grouped: Odeslat zprávu za stahování za poslední měsíc pro všechny organizace.
+  entire_consortium: Celé konzorcium
+  entire_consortium_description: Tento záznam vyjadřuje nastavení pro všechny organizace v konzorciu.
 </i18n>
 
 <template>
@@ -208,6 +220,25 @@ cs:
           :items-per-page-options="[10, 25, 50, -1]"
           :hide-default-footer="organizationList.length <= 10"
         >
+          <template #item.name="{ item }">
+            <v-tooltip location="bottom" v-if="!item.pk">
+              <template #activator="{ props }">
+                <span v-bind="props">
+                  <v-icon
+                    v-bind="props"
+                    size="small"
+                    color="amber"
+                    class="mr-1 mb-1"
+                  >
+                    fas fa-crown
+                  </v-icon>
+                  {{ item.name }}
+                </span>
+              </template>
+              {{ $t("entire_consortium_description") }}
+            </v-tooltip>
+            <span v-else>{{ item.name }}</span>
+          </template>
           <template #item.is_admin="{ item }">
             <CheckMark
               :model-value="item.is_admin"
@@ -222,9 +253,17 @@ cs:
               :disabled="!harvestReportsEnabled(item, user)"
             >
               <CheckMark
+                v-if="item.pk"
                 true-color="success"
                 :true-tooltip="$t('harvest_reports.tooltip')"
                 :false-tooltip="$t('harvest_reports.tooltip')"
+                :model-value="item.send_harvest_reports"
+              ></CheckMark>
+              <CheckMark
+                v-else
+                true-color="success"
+                :true-tooltip="$t('harvest_reports.grouped_tooltip')"
+                :false-tooltip="$t('harvest_reports.grouped_tooltip')"
                 :model-value="item.send_harvest_reports"
               ></CheckMark>
             </v-btn>
@@ -235,7 +274,9 @@ cs:
                   icon
                   v-bind="props"
                   @click="sendHarvestReport(item)"
-                  :disabled="!harvestReportsEnabled(item, user)"
+                  :disabled="
+                    !harvestReportsEnabled(item, user) || sendingHarvestReport
+                  "
                 >
                   <v-icon
                     color="info"
@@ -246,7 +287,12 @@ cs:
                   </v-icon>
                 </v-btn>
               </template>
-              {{ $t("harvest_reports.send") }}
+              <span v-if="item.pk">
+                {{ $t("harvest_reports.send") }}
+              </span>
+              <span v-else>
+                {{ $t("harvest_reports.send_grouped") }}
+              </span>
             </v-tooltip>
           </template>
         </v-data-table>
@@ -327,7 +373,7 @@ cs:
                     v-bind="props"
                     size="small"
                     color="amber"
-                    class="mr-1"
+                    class="mr-1 mb-1"
                   >
                     fas fa-crown
                   </v-icon>
@@ -435,6 +481,7 @@ export default {
       showUserEditDialog: false,
       impersonateSearch: "",
       defaultImg: "mp",
+      sendingHarvestReport: false,
     };
   },
   computed: {
@@ -451,6 +498,7 @@ export default {
       emailVerified: "emailVerified",
       usesPasswordLogin: "usesPasswordLogin",
       allowUserManagement: "allowUserManagement",
+      showManagementStuff: "showManagementStuff",
     }),
     headers() {
       return [
@@ -477,10 +525,26 @@ export default {
       ];
     },
     organizationList() {
-      if (!this.organizations) {
-        return [];
+      let organizations = Object.values(this.organizations).filter(
+        (item) => item.is_member,
+      );
+      // Insert fake organization representing the entire consortium
+      if (
+        this.user.is_superuser ||
+        this.user.is_admin_of_master_organization ||
+        this.user.is_user_of_master_organization
+      ) {
+        return [
+          {
+            name: this.$t("entire_consortium"),
+            is_admin:
+              this.user.is_superuser ||
+              this.user.is_admin_of_master_organization,
+            send_harvest_reports: this.user.send_grouped_harvest_reports,
+          },
+          ...organizations,
+        ];
       }
-      return Object.values(this.organizations).filter((item) => item.is_member);
     },
     showImpersonate() {
       return (
@@ -620,6 +684,9 @@ export default {
     },
     async toggleSendHarvestReports(organization) {
       let enabled = !organization.send_harvest_reports;
+      if (!organization.pk) {
+        return this.toggleSendGroupedHarvestReports(enabled, organization);
+      }
       try {
         let response = await axios.post(
           `/api/organization/${organization.pk}/harvest-reports/`,
@@ -648,8 +715,37 @@ export default {
         });
       }
     },
-    async sendHarvestReport(organization) {
+    async toggleSendGroupedHarvestReports(enabled, fake_organization) {
       try {
+        let response = await axios.put(
+          `/api/user-management/${this.user.pk}/`,
+          { send_grouped_harvest_reports: enabled },
+        );
+        this.user.send_grouped_harvest_reports = enabled;
+        if (enabled) {
+          this.showSnackbar({
+            content: this.$t("harvest_reports.grouped_switched_on"),
+            color: "success",
+          });
+        } else {
+          this.showSnackbar({
+            content: this.$t("harvest_reports.grouped_switched_off"),
+            color: "success",
+          });
+        }
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error enabling/disabling harvest reports: " + error,
+          color: "error",
+        });
+      }
+    },
+    async sendHarvestReport(organization) {
+      if (!organization.pk) {
+        return this.sendGroupedHarvestReport();
+      }
+      try {
+        this.sendingHarvestReport = true;
         let response = await axios.post(
           `/api/organization/${organization.pk}/send-harvest-report/`,
         );
@@ -662,6 +758,27 @@ export default {
           content: "Error sending harvest report: " + error,
           color: "error",
         });
+      } finally {
+        this.sendingHarvestReport = false;
+      }
+    },
+    async sendGroupedHarvestReport() {
+      try {
+        this.sendingHarvestReport = true;
+        let response = await axios.post(
+          "/api/organization/send-grouped-harvest-report/",
+        );
+        this.showSnackbar({
+          content: this.$t("harvest_reports.sent"),
+          color: "success",
+        });
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error sending harvest report: " + error,
+          color: "error",
+        });
+      } finally {
+        this.sendingHarvestReport = false;
       }
     },
     harvestReportsEnabled(organization, user) {

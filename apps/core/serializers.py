@@ -81,6 +81,7 @@ class UserSerializer(ModelSerializer):
             "extra_data",
             "impersonator",
             "sesame_token",
+            "send_grouped_harvest_reports",
         )
 
     def get_email_verification_status(self, obj: User) -> str:
@@ -204,6 +205,7 @@ class AccessibleUsersSerializer(ModelSerializer):
             "is_admin",
             "organization",
             "is_admin_of_master_organization",
+            "send_grouped_harvest_reports",
         )
 
     def validate_email(self, value):
@@ -231,6 +233,9 @@ class AccessibleUsersSerializer(ModelSerializer):
         instance.first_name = validated_data.get("first_name", instance.first_name)
         instance.last_name = validated_data.get("last_name", instance.last_name)
         instance.username = validated_data.get("username", instance.username)
+        instance.send_grouped_harvest_reports = validated_data.get(
+            "send_grouped_harvest_reports", instance.send_grouped_harvest_reports
+        )
         instance.save()
 
         if "organization" in validated_data:

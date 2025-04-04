@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 4.2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-21 14:07+0100\n"
+"POT-Creation-Date: 2025-04-16 12:17+0200\n"
 "PO-Revision-Date: 2024-12-11 18:34+0100\n"
 "Last-Translator: Beda Kosata <beda@ecomole.com>\n"
 "Language-Team: Czech <beda@ecomole.com>\n"
@@ -50,25 +50,23 @@ msgstr "vertikální lišta"
 msgid "line"
 msgstr "čára"
 
-#: apps/core/admin.py:49
-#, fuzzy
-#| msgid "has verified email"
+#: apps/core/admin.py:57
 msgid "has verified email"
 msgstr "má ověřený email"
 
-#: apps/core/admin.py:53 apps/core/admin.py:68 apps/core/admin.py:83
+#: apps/core/admin.py:61 apps/core/admin.py:76 apps/core/admin.py:91
 msgid "Yes"
 msgstr "Ano"
 
-#: apps/core/admin.py:53 apps/core/admin.py:68 apps/core/admin.py:83
+#: apps/core/admin.py:61 apps/core/admin.py:76 apps/core/admin.py:91
 msgid "No"
 msgstr "Ne"
 
-#: apps/core/admin.py:63
+#: apps/core/admin.py:71
 msgid "is admin in at least one organization"
 msgstr "je admin alespoň jedné organizace"
 
-#: apps/core/admin.py:78
+#: apps/core/admin.py:86
 msgid "is consortial admin"
 msgstr "je konzorciální admin"
 
@@ -280,14 +278,18 @@ msgid "Title"
 msgstr "Titul"
 
 #: apps/logs/logic/reporting/slicer.py:1016 apps/organizations/models.py:68
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:20
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:50
 #: apps/tags/models.py:44
 msgid "Organization"
 msgstr "Organizace"
 
 #: apps/logs/logic/reporting/slicer.py:1017 apps/publications/models.py:82
 #: apps/publications/models.py:239
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:19
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:5
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:20
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:6
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:21
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:6
 #: apps/tags/models.py:43
 msgid "Platform"
 msgstr "Platforma"
@@ -326,7 +328,7 @@ msgid ""
 "type."
 msgstr ""
 "Nahrávaný soubor je špatného typu nebo je poškozen. Soubor je pravděpodobně "
-"typu  '{detected_type}'. Prosím nahrajte soubor požadovaného typu. "
+"typu '{detected_type}'. Prosím nahrajte soubor požadovaného typu. "
 
 #: apps/logs/models.py:657 apps/necronomicon/models.py:17
 #: apps/publications/models.py:406 apps/sushi/models.py:996
@@ -405,6 +407,10 @@ msgstr "Naplánovat mazání."
 #: apps/necronomicon/admin.py:118
 msgid "Deletion is being prepared. You need to confirm it"
 msgstr "Mazání se připravuje. Je potřeba je potvrdit."
+
+#: apps/necronomicon/admin.py:120
+msgid "here"
+msgstr "zde"
 
 #: apps/necronomicon/models.py:18
 msgid "Preparing Stats"
@@ -567,68 +573,128 @@ msgstr "ve vašem profilu"
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:14
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:4
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:14
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:4
 #, python-format
 msgid "New Issues - %(month)s - Broken Credentials"
 msgstr "Nové problémy - %(month)s - rozbité přístupové údaje"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:20
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:15
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:5
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:15
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:5
+msgid "New issues which appeared in the previous month."
+msgstr "Nové problémy, které se objevily minulý měsíc."
+
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:21
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:6
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:22
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:6
 msgid "Counter Version"
 msgstr "Verze Counteru"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:31
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:7
-msgid "No new issues"
-msgstr "Žádné nové problémy"
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:32
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:8
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:34
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:8
+#, python-format
+msgid "No newly broken credentials in %(month)s."
+msgstr "Žádné nové rozbité přístupové údaje za měsíc %(month)s."
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:40
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:10
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:41
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:11
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:43
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:11
 #, python-format
 msgid "%(month)s Data Harvesting Success Rate"
 msgstr "Úspěšnost stahování dat za %(month)s"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:42
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:11
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:43
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:12
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:45
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:12
 #, python-format
 msgid "Percentage of %(month)s usage successfully harvested in %(last_month)s"
 msgstr ""
 "Procento úspěšných stažení pro %(month)s, stažených v minulém měsíci "
 "(%(last_month)s)"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:51
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:13
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:52
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:14
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:67
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:17
 msgid "Potential Issues"
 msgstr "Potenciální problémy"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:55
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:14
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:53
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:15
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:68
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:18
+msgid "All potential issues - regardless of when they first appeared"
+msgstr "Všechny potenciální problémy - bez ohledu na to, kdy se poprvé objevily"
+
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:57
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:16
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:72
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:19
 msgid "Issue"
 msgstr "Problém"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:56
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:14
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:58
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:16
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:73
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:19
 msgid "Count"
 msgstr "Počet"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:59
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:61
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:76
 msgid "Broken Credentials"
 msgstr "Rozbité přístupové údaje"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:63
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:65
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:80
 msgid "Unverified Credentials"
 msgstr "Neověřené přístupové údaje"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:15
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:17
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:20
 msgid "Broken"
 msgstr "Rozbité"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:16
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:18
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:21
 msgid "Unverified"
 msgstr "Neověřené"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:19
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:21
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:24
 msgid "Made By"
 msgstr "Vyrobeno"
+
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:51
+msgid "Percentage"
+msgstr "Procent"
+
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_subject.txt:1
+#: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_subject.txt:1
+#: apps/sushi/templates/sushi/email/harvest_report_subject.txt:1
+#, python-format
+msgid "CELUS Harvesting Report - %(month)s"
+msgstr "CELUS Zpráva o stahování - %(month)s"
+
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_subject.txt:1
+#: apps/sushi/templates/sushi/email/harvest_report_subject.txt:1
+#, python-format
+msgid "(%(new_issues)s new issue)"
+msgid_plural "(%(new_issues)s new issues)"
+msgstr[0] "(%(new_issues)s nový problém)"
+msgstr[1] "(%(new_issues)s nové problémy)"
+msgstr[2] "(%(new_issues)s nových problémů)"
+
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_subject.txt:1
+msgid "All Organizations"
+msgstr "Všechny organizace"
 
 #: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_body.mjml:14
 #: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_body.txt:5
@@ -646,7 +712,8 @@ msgstr ""
 msgid ""
 "If you are not sure how to create credentials within CELUS, you can check "
 msgstr ""
-"Pokud si nejste jistí, jak vytvořit přístupové ůdaje v CELUSu, můžete se podívat "
+"Pokud si nejste jistí, jak vytvořit přístupové ůdaje v CELUSu, můžete se "
+"podívat "
 
 #: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_body.mjml:15
 msgid "our documentation"
@@ -658,26 +725,12 @@ msgid ""
 "If you are not sure how to create credentials within CELUS, you can check "
 "our documentation at %(url)s ."
 msgstr ""
-"Pokud si nejste jistí, jak vytvořit přístupové ůdaje v CELUSu, můžete se podívat "
-"do naší dokumentace na %(url)s ."
-
-#: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_subject.txt:1
-#: apps/sushi/templates/sushi/email/harvest_report_subject.txt:1
-#, python-format
-msgid "CELUS Harvesting Report - %(month)s"
-msgstr "CELUS Zpráva o stahování - %(month)s"
+"Pokud si nejste jistí, jak vytvořit přístupové ůdaje v CELUSu, můžete se "
+"podívat do naší dokumentace na %(url)s ."
 
 #: apps/sushi/templates/sushi/email/harvest_report_missing_credentials_subject.txt:1
 msgid "Missing Credentials"
 msgstr "Chybí přístupové údaje"
-
-#: apps/sushi/templates/sushi/email/harvest_report_subject.txt:1
-#, python-format
-msgid "(%(new_issues)s new issue)"
-msgid_plural "(%(new_issues)s new issues)"
-msgstr[0] "(%(new_issues)s nový problém)"
-msgstr[1] "(%(new_issues)s nové problémy)"
-msgstr[2] "(%(new_issues)s nových problémů)"
 
 #: apps/tags/models.py:29
 msgid "Everybody"
@@ -726,6 +779,3 @@ msgstr "Angličtina"
 #: config/settings/base.py:223
 msgid "Czech"
 msgstr "Čeština"
-
-#~ msgid "Unsubscribe"
-#~ msgstr "Odhlásit odběr"

@@ -114,7 +114,7 @@ cs:
 <script>
 import cancellation from "@/mixins/cancellation";
 import formRulesMixin from "@/mixins/formRulesMixin";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapGetters } from "vuex";
 
 export default {
   name: "AccountCreateModifyWidget",

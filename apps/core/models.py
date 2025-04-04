@@ -178,6 +178,7 @@ class User(AbstractUser):
     skip_2fa = models.BooleanField(
         help_text="If set to True, 2FA auth will be bypassed", default=False
     )
+    send_grouped_harvest_reports = models.BooleanField(default=False)
     objects = CelusUserManager()
 
     class Meta:

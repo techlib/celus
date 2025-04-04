@@ -17,12 +17,14 @@
 {% if newly_broken|length %}
          <mj-table color="#555" align="center">
             <tr style="border-bottom: 1px solid #ddd">
-                <th style="width: 50%; text-align: left">{% translate 'Platform' %}</th>
-                <th style="width: 50%; text-align: center">{% translate 'Counter Version' %}</th>
+                <th style="width: 33%; text-align: left">{% translate 'Organization' %}</th>
+                <th style="width: 33%; text-align: left">{% translate 'Platform' %}</th>
+                <th style="width: 33%; text-align: center">{% translate 'Counter Version' %}</th>
             </tr>
   {% for creds in newly_broken %}
             <tr>
-                <td style="text-align: left"><a href="{{ celus_url }}/admin/sushi-credentials?platformFilter={{ creds.platform.id }}&counterVersion={{ creds.counter_version }}">{{ creds.platform }}</a></td>
+                <td style="text-align: left; padding: 3px;">{{ creds.organization }}</td>
+                <td style="text-align: left; padding: 3px;"><a href="{{ celus_url }}/admin/sushi-credentials?platformFilter={{ creds.platform.id }}&counterVersion={{ creds.counter_version }}">{{ creds.platform }}</a></td>
                 <td style="text-align: center">{{ creds.counter_version_repr }}</td>
             </tr>
   {% endfor %}
@@ -38,11 +40,24 @@
     <mj-section>
       <mj-column border="1px solid #eee" border-radius="10px">
         <mj-text>
-          <h3 style="margin-bottom: 0">{% blocktranslate with month=month|date:"F"|title %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ harvest_report.success_rate|floatformat }} %</h3>
+          <h3 style="margin-bottom: 0">{% blocktranslate with month=month|date:"F"|title %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ overall_success_rate|floatformat }} %</h3>
           <p>
             <i>{% blocktranslate with month=month|date:"F" last_month=last_month|date:"F" %}Percentage of {{ month }} usage successfully harvested in {{ last_month }}{% endblocktranslate %}</i>
           </p>
         </mj-text>
+        <mj-table color="#555" align="center">
+           <tr style="border-bottom: 1px solid #ddd">
+               <th style="width: 50%; text-align: left">{% translate 'Organization' %}</th>
+               <th style="width: 50%; text-align: center">{% translate 'Percentage' %}</th>
+           </tr>
+  {% for harvest_report in harvest_reports %}
+           <tr>
+               <td style="text-align: left">{{ harvest_report.organization }}</td>
+               <td style="text-align: center">{{ harvest_report.success_rate|default:0|floatformat }} %</td>
+           </tr>
+  {% endfor %}
+        </mj-table>
+
       </mj-column>
     </mj-section>
 

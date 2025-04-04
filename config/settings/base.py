@@ -397,7 +397,10 @@ CELERY_TASK_ROUTES = {
     "scheduler.tasks.trigger_scheduler": {"queue": "sushi"},
     "scheduler.tasks.update_automatic_harvesting": {"queue": "sushi"},
     "sushi.tasks.delete_fetchattempts_and_related_importbatches_task": {"queue": "import"},
-    "sushi.tasks.send_harvesting_reports": {"queue": "celery"},
+    "sushi.tasks.send_harvesting_report_task": {"queue": "celery"},
+    "sushi.tasks.send_harvesting_reports_task": {"queue": "celery"},
+    "sushi.tasks.send_grouped_harvesting_report_task": {"queue": "celery"},
+    "sushi.tasks.send_grouped_harvesting_reports_task": {"queue": "celery"},
     "tags.tasks.reprocess_due_tagging_batches_task": {"queue": "celery"},
     "tags.tasks.tagging_batch_assign_tag_task": {"queue": "celery"},
     "tags.tasks.tagging_batch_preflight_task": {"queue": "celery"},
@@ -539,9 +542,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(day_of_month="1", hour="0", minute="1"),  # on each month start
         "options": {"expires": 60 * 60},
     },
-    "send_harvesting_reports": {
-        "task": "sushi.tasks.send_harvesting_reports",
+    "send_harvesting_reports_task": {
+        "task": "sushi.tasks.send_harvesting_reports_task",
         "schedule": crontab(day_of_month="1", hour="0", minute="1"),  # on each month start
+        "options": {"expires": 60 * 60},
+    },
+    "send_grouped_harvesting_reports_task": {
+        "task": "sushi.tasks.send_grouped_harvesting_reports_task",
+        "schedule": crontab(day_of_month="1", hour="0", minute="30"),  # on each month start
         "options": {"expires": 60 * 60},
     },
 }
