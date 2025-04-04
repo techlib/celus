@@ -651,7 +651,11 @@ cs:
                 ></i>
               </span>
             </template>
-            {{ $t("sushi.update.can_update_tt") }}
+            {{
+              item.has_51_provider
+                ? $t("sushi.update.can_update_verified_legend")
+                : $t("sushi.update.can_update_legend")
+            }}
           </v-tooltip>
 
           <v-tooltip

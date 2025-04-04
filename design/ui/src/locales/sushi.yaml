@@ -65,7 +65,6 @@ en:
       alert_text_p2: For more information, see the {link}.
       link_text: knowledge base article
     update:
-      can_update_tt: These COUNTER 5 credentials do not have a COUNTER 5.1 version and can be cloned into a COUNTER 5.1 copy
       cannot_update_broken_tt: These COUNTER 5 credentials are broken and cannot be cloned to COUNTER 5.1
       can_update_legend_header: "COUNTER 5 credentials which do not have a COUNTER 5.1 counterpart and can be cloned are marked with one of the following symbols:"
       can_update_legend: The status of COUNTER 5.1 for {count} platform is unknown | The status of COUNTER 5.1 for {count} platforms is unknown
@@ -141,7 +140,6 @@ cs:
       alert_text_p2: Pro více informací navštivte {link}.
       link_text: znalostní bázi
     update:
-      can_update_tt: Tyto přístupové údaje pro COUNTER 5 lze naklonovat do kopie pro COUNTER 5.1
       cannot_update_broken_tt: Tyto přístupové údaje pro COUNTER 5 jsou nefunkční a nelze je naklonovat do COUNTER 5.1
       can_update_legend_header: "Přístupové údaje pro COUNTER 5, které nemají verzi pro COUNTER 5.1 a lze je naklonovat, jsou označeny jedním z následujících symbolů:"
       can_update_legend: Stav COUNTER 5.1 pro {count} platformu je neznámý |
