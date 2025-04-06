@@ -72,6 +72,8 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
     total = len(ids)
     shuffle(ids)
     logger.info("Total import batches: %d, batch size: %d", total, settings.SPLIT_LOGS_BATCH_SIZE)
+    ibs_to_resync = set()
+    titles_to_fix = set()
     for i, ib_id in enumerate(ids):
         ib_ids.append(ib_id)
         if len(ib_ids) == settings.SPLIT_LOGS_BATCH_SIZE or i == total - 1:
@@ -91,14 +93,21 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
             for rec in ch_backend.get_records(query):
                 stats["ch duplicates"] += 1
                 to_fix.append(rec)
-            logger.info("Scanned IBs: %d (%.2f%%); stats: %s", i + 1, (i + 1) / total * 100, stats)
+                ibs_to_resync.add(rec.import_batch_id)
+                titles_to_fix.add(rec.target_id)
+            logger.info(
+                "Scanned IBs: %d (%.2f%%); stats: %s; IBs to resync: %d; titles to fix: %d",
+                i + 1,
+                (i + 1) / total * 100,
+                stats,
+                len(ibs_to_resync),
+                len(titles_to_fix),
+            )
             ib_ids = []
 
-    ibs_to_resync = set()
-    for rec in to_fix:
-        ibs_to_resync.add(rec.import_batch_id)
-
     logger.info("Import batches to resync: %d", len(ibs_to_resync))
+    logger.debug("Import batches to resync: %s", ibs_to_resync)
+    logger.debug("Titles to fix: %s", titles_to_fix)
 
     als_to_update = {}
     als_to_delete: List[int] = []
