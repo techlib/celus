@@ -14,7 +14,7 @@ cs:
   <v-card
     class="pt-4 d-flex flex-column justify-space-between"
     :class="selected ? 'selected' : ''"
-    :elevation="el"
+    :elevation="elevation"
     @[clickHandler]="$emit('click', { reportType })"
   >
     <div
