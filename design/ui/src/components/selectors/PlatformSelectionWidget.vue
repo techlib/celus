@@ -13,7 +13,6 @@
         :platforms="availablePlatforms"
         v-model="platformId"
         :loading="loading"
-        :allow-create="allowCreate"
       >
         <template #prepend v-if="allowCreate">
           <v-list-item>

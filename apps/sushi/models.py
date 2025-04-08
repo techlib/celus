@@ -189,6 +189,7 @@ class CounterReportType(models.Model):
         unique_together = (("code", "counter_version"),)
         verbose_name_plural = "COUNTER report types"
         verbose_name = "COUNTER report type"
+        ordering = ["-counter_version", "code"]
 
     def __str__(self):
         return f"{self.code} ({self.counter_version}) - {self.name}"
@@ -336,6 +337,43 @@ class SushiCredentialsQuerySet(models.QuerySet):
             )
         )
 
+    def update_report_types_based_on_platform(self) -> int:
+        to_delete = set()
+        to_add = set()
+        count = 0
+        for creds in (
+            self.filter(use_counter_reports_from_platform=True)
+            .select_related("platform")
+            .prefetch_related("counter_reports", "platform__counter_reports")
+        ):
+            crps = {
+                (creds, e)
+                for e in creds.platform.counter_reports.filter(
+                    counter_version=creds.counter_version
+                )
+            }
+            crcs = {(creds, e) for e in creds.counter_reports.all()}
+
+            if crps != crcs:
+                count += 1
+
+            to_delete |= crcs - crps
+            to_add |= crps - crcs
+
+        if to_delete:
+            CounterReportsToCredentials.objects.filter(
+                reduce(lambda x, y: x | Q(credentials=y[0], counter_report=y[1]), to_delete, Q())
+            ).delete()
+        if to_add:
+            CounterReportsToCredentials.objects.bulk_create(
+                [
+                    CounterReportsToCredentials(credentials=cred, counter_report=crt)
+                    for (cred, crt) in to_add
+                ]
+            )
+
+        return count
+
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     UNLOCKED = 0
@@ -383,6 +421,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         through_fields=("credentials", "counter_report"),
         related_name="sushicredentials_set",
     )
+    use_counter_reports_from_platform = models.BooleanField(default=False)
     outside_consortium = models.BooleanField(
         default=False,
         help_text="True if these credentials belong to access bought outside of the consortium - "
@@ -1420,3 +1459,14 @@ class CounterReportsToCredentials(BrokenCredentialsMixin):
             self.save()
             return True
         return False
+
+
+class CounterReportPlatform(CreatedUpdatedMixin, models.Model):
+    """This class represents counter reports assigned directly to platform"""
+
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE)
+    counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = (UniqueConstraint(fields=["counter_report", "platform"], name="unique_crtp"),)
+        verbose_name_plural = "Counter reports to platforms"

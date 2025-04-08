@@ -91,7 +91,7 @@ cs:
           </template>
           <template #item.actions="{ item }">
             <v-btn
-              v-if="item.source && item.source.organization"
+              v-if="showPlatformEditButton(item)"
               variant="text"
               size="small"
               color="secondary"
@@ -176,12 +176,10 @@ cs:
     </v-row>
     <v-dialog v-model="showEditDialog" :max-width="dialogMaxWidth">
       <PlatformEditDialog
-        ref="widget"
         :platform-id="selectedPlatform && selectedPlatform.pk"
         v-if="showEditDialog"
-        @close="closeEditDialog()"
+        @close="closeEditDialog"
         @saved="editDialogSaved"
-        key="edit"
       ></PlatformEditDialog>
     </v-dialog>
   </v-container>
@@ -267,6 +265,7 @@ export default {
     ...mapGetters({
       formatNumber: "formatNumber",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
+      showManagementStuff: "showManagementStuff",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
@@ -386,6 +385,9 @@ export default {
           toTag.forEach((pk) => this.resolvingTagsForIds.delete(pk));
         }
       }
+    },
+    showPlatformEditButton(platform) {
+      return platform.source?.organization || this.showManagementStuff;
     },
   },
 

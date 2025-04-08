@@ -106,12 +106,12 @@ def get_empty_credentials_c4():
                 "DB1",
                 "DB2",
                 "JR1",
-                "JR1GOA",
                 "JR1a",
+                "JR1GOA",
                 "JR2",
                 "JR5",
-                "PR1",
                 "MR1",
+                "PR1",
             ]
         }
     )
@@ -121,7 +121,7 @@ def get_empty_credentials_c4():
 def get_empty_credentials_c5():
     empty_credentials_c5 = get_core_attrs_credentials()
     empty_credentials_c5.update(
-        {key: None for key in ["api key", "platform filter", "TR", "DR", "PR", "IR"]}
+        {key: None for key in ["api key", "platform filter", "DR", "IR", "PR", "TR"]}
     )
     return empty_credentials_c5
 
@@ -129,7 +129,7 @@ def get_empty_credentials_c5():
 def get_empty_credentials_c51():
     empty_credentials_c51 = get_core_attrs_credentials()
     empty_credentials_c51.update(
-        {key: None for key in ["api key", "platform filter", "TR", "DR", "PR", "IR"]}
+        {key: None for key in ["api key", "platform filter", "DR", "IR", "PR", "TR"]}
     )
     return empty_credentials_c51
 

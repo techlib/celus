@@ -30,7 +30,7 @@ from logs.models import (
 from nibbler.models import ParserDefinition
 from publications.models import Platform, PlatformInterestReport
 from semantic_version import Version
-from sushi.models import AttemptStatus, SushiFetchAttempt
+from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
 from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
 
@@ -410,7 +410,7 @@ class PlatformImportAttempt(ImportAttempt):
                     setattr(platform, e, updatable[e])
                 platform.save()
                 logger.info("Platform '%s' updated", record["short_name"])
-                updated_credentials = platform.update_related_credentials()
+                updated_credentials = platform.update_related_credentials_url()
                 logger.info(
                     "%d credentials updated for platform '%s' updated",
                     updated_credentials,
@@ -450,6 +450,11 @@ class PlatformImportAttempt(ImportAttempt):
                     [f"Short_name: '{e['short_name']}' Count: {e['count']}" for e in duplicates]
                 ),
             )
+
+        # Update CounterReportPlatforms
+        Platform.objects.update_counter_reports_from_knowledgebase()
+        # Update SushiCredentials based on newly updated CounterReportPlatforms
+        SushiCredentials.objects.update_report_types_based_on_platform()
 
         self.save()
 

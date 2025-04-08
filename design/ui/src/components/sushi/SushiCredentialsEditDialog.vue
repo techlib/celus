@@ -70,6 +70,11 @@ en:
   auto_update_url_text_off: Set URL manually
   auto_update_url_text_on: URL will be set automatically based on platform metadata
   auto_update_url_hint: URL is automatically managed by CELUS based on the platform metadata
+  counter_report_from_platform_text_off: Set Report Types manually
+  counter_report_from_platform_text_on: Report Types will be set automatically based on platform metadata
+  counter_report_from_platform_hint: Report Types are automatically managed by CELUS based on the platform metadata
+  counter_report_from_empty_platform_hint: The platform does not define any reports for the selected COUNTER version. Set them manually.
+  edit_platform_tooltip: Edit platform
 
 cs:
   add_custom_param: Přidat vlastní parametr
@@ -134,6 +139,11 @@ cs:
   auto_update_url_text_off: Nastavit URL ručně
   auto_update_url_text_on: URL bude nastavena automaticky z metadat platformy
   auto_update_url_hint: URL je automaticky spravována CELUSem na základě metadat platformy
+  counter_report_from_platform_text_off: Nastavit typy reportů ručně
+  counter_report_from_platform_text_on: Typy reportů budou nastaveny automaticky z metadat platformy
+  counter_report_from_platform_hint: Typy reportů budou automaticky spravovány CELUSem na základě metadat platformy
+  counter_report_from_empty_platform_hint: Platforma nedefinuje žádné reporty pro zadanou verzi COUNTERu. Nastavte je prosím ručně.
+  edit_platform_tooltip: Editovat platformu
 </i18n>
 
 <template>
@@ -278,7 +288,7 @@ cs:
                   :label="$t('organization')"
                   return-object
                   :disabled="organizationSelected"
-                  :rules="[ruleRequired]"
+                  :rules="[rules.required]"
                   density="compact"
                   height="2.75rem"
                   :menu-props="{ maxHeight: 480 }"
@@ -295,6 +305,24 @@ cs:
                     height="2.75rem"
                     :model-value="activePlatformName"
                   >
+                    <template #default v-if="editablePlatform">
+                      <v-tooltip location="bottom">
+                        <template #activator="{ props }">
+                          <v-btn
+                            density="comfortable"
+                            v-bind="props"
+                            class="edit-platform pb-0 mb-0"
+                            size="x-small"
+                            :elevation="0"
+                            variant="plain"
+                            color="primary"
+                            icon="fa fa-edit"
+                            @click="showPlatformEditDialog = true"
+                          ></v-btn>
+                        </template>
+                        {{ $t("edit_platform_tooltip") }}
+                      </v-tooltip>
+                    </template>
                   </v-text-field>
                   <PlatformSelector
                     v-else
@@ -364,7 +392,7 @@ cs:
                 <v-text-field
                   v-model="customerId"
                   :label="$t('labels.customer_id')"
-                  :rules="[ruleRequired]"
+                  :rules="[rules.required]"
                   :disabled="!activePlatform"
                   persistent-hint
                   :hint="customerIdInfo ? $t('see_registry_hint') : ''"
@@ -412,7 +440,7 @@ cs:
                   :label="$t('labels.url')"
                   :placeholder="this.urlPlaceholder"
                   :rules="[
-                    ruleRequired,
+                    rules.required,
                     ruleUrlValid,
                     ruleUrlC5NoReport,
                     ruleUrlC5NoQueryParams,
@@ -465,15 +493,21 @@ cs:
                   v-if="reportTypes.length"
                   density="comfortable"
                   v-model="selectedReportTypes"
-                  :items="reportTypes"
+                  :items="reportTypesSorted"
                   :label="$t('active_report_types')"
                   multiple
                   item-title="code"
                   item-value="id"
-                  :rules="[ruleAtLeastOne]"
+                  :rules="[rules.atLeastOne]"
                   :loading="loadingReportTypes"
-                  :disabled="!activePlatform"
+                  :disabled="
+                    !activePlatform ||
+                    (useCounterReportsFromPlatform &&
+                      reportTypesFromPlatform.length > 0)
+                  "
                   ref="selectedReportTypesField"
+                  :hint="reportTypeSelectorHint"
+                  :persistent-hint="useCounterReportsFromPlatform"
                 >
                   <template #item="{ props, item }">
                     <v-list-item v-bind="props" title>
@@ -508,7 +542,39 @@ cs:
                       ></SushiReportIndicator>
                     </v-chip>
                   </template>
-                  <template v-slot:append>
+                  <template #append>
+                    <v-tooltip
+                      location="bottom"
+                      max-width="400"
+                      v-if="reportTypesFromPlatform.length > 0"
+                    >
+                      <template v-slot:activator="{ props }">
+                        <v-btn
+                          color="primary"
+                          variant="plain"
+                          icon
+                          @click="toggleUseCounterReportsFromPlatform"
+                          size="small"
+                          v-bind="props"
+                        >
+                          <v-icon size="small"
+                            >fa
+                            {{
+                              useCounterReportsFromPlatform
+                                ? "fa-edit"
+                                : "fa-book"
+                            }}</v-icon
+                          >
+                        </v-btn>
+                      </template>
+                      <span
+                        >{{
+                          useCounterReportsFromPlatform
+                            ? $t("counter_report_from_platform_text_off")
+                            : $t("counter_report_from_platform_text_on")
+                        }}
+                      </span>
+                    </v-tooltip>
                     <v-tooltip location="bottom" max-width="600px">
                       <template #activator="{ props }">
                         <div class="calendar_button" v-bind="props">
@@ -628,7 +694,7 @@ cs:
                         <v-text-field
                           v-model="param.key"
                           :label="$t('labels.variable')"
-                          :rules="[ruleRequired, ruleExtraNoDuplicateKey]"
+                          :rules="[rules.required, ruleExtraNoDuplicateKey]"
                           :disabled="!activePlatform"
                         >
                         </v-text-field>
@@ -637,7 +703,7 @@ cs:
                         <v-text-field
                           v-model="param.value"
                           :label="$t('labels.variable_value')"
-                          :rules="[ruleRequired]"
+                          :rules="[rule.required]"
                           :disabled="!activePlatform"
                         >
                         </v-text-field>
@@ -731,14 +797,16 @@ cs:
                         :label="$t('outside')"
                         color="primary"
                         class="pl-2 my-0"
-                        :disabled="!userIsManager || !activePlatform"
+                        :disabled="!showManagementStuff || !activePlatform"
                         hide-details
                       ></v-switch>
                     </span>
                   </template>
                   <span>
                     {{ $t("outside_tooltip") }}
-                    {{ userIsManager ? "" : $t("only_managers_can_change") }}
+                    {{
+                      showManagementStuff ? "" : $t("only_managers_can_change")
+                    }}
                   </span>
                 </v-tooltip>
               </v-col>
@@ -811,6 +879,13 @@ cs:
             @apply="updateLastHarvestableMonth"
           ></LastHarvestableMonthEntryWidget>
         </v-dialog>
+        <v-dialog v-model="showPlatformEditDialog" v-if="editablePlatform">
+          <PlatformEditDialog
+            :platform-id="platform.pk"
+            @close="closeEditPlatformDialog"
+            @saved="saveAndCloseEditPlatformDialog"
+          ></PlatformEditDialog>
+        </v-dialog>
       </v-card>
     </v-form>
   </v-sheet>
@@ -830,10 +905,16 @@ import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCred
 import LastHarvestableMonthEntryWidget from "@/components/sushi/LastHarvestableMonthEntryWidget.vue";
 import ItemBadge from "@/components/util/ItemBadge";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import formRulesMixin from "@/mixins/formRulesMixin";
+import PlatformEditDialog from "@/components/PlatformEditDialog";
 
 export default {
   name: "SushiCredentialsEditDialog",
+
+  mixins: [formRulesMixin],
+
   components: {
+    PlatformEditDialog,
     PlatformSelector,
     LastHarvestableMonthEntryWidget,
     HarvesterIPAddressList,
@@ -854,6 +935,7 @@ export default {
     const credentials = this.credentialsObject;
     let extraParams = [];
     let platformFilter = "";
+    let sortedReportTypes = [];
     if (credentials) {
       for (let [key, value] of Object.entries(credentials.extra_params)) {
         if (
@@ -865,6 +947,8 @@ export default {
           extraParams.push({ key: key, value: value });
         }
       }
+      sortedReportTypes = [...credentials.counter_reports_long];
+      sortedReportTypes.sort((a, b) => a.code.localeCompare(b.code));
     }
     return {
       allReportTypes: [],
@@ -875,6 +959,9 @@ export default {
       counterVersion: credentials ? credentials.counter_version : 5,
       url: credentials ? credentials.url : "",
       autoUpdateUrl: credentials ? credentials.auto_update_url : true,
+      useCounterReportsFromPlatform: credentials
+        ? credentials.use_counter_reports_from_platform
+        : true,
       urlManuallyEdited: false,
       platformFilterManuallyEdited: false,
       httpUsername: credentials ? credentials.http_username : "",
@@ -882,11 +969,10 @@ export default {
       apiKey: credentials ? credentials.api_key : "",
       platformFilter: platformFilter,
       extraParams: extraParams,
-      selectedReportTypes: credentials
-        ? [...credentials.counter_reports_long.map((item) => item.id)]
-        : [],
+      selectedReportTypes: sortedReportTypes.map((item) => item.id),
       showTestDialog: false,
       showLastHarvestableMonthDialog: false,
+      showPlatformEditDialog: false,
       reportToLastHarvestableMonth: null,
       organizations: [],
       platforms: [],
@@ -911,7 +997,6 @@ export default {
     ...mapGetters({
       selectedOrganization: "selectedOrganization",
       organizationSelected: "organizationSelected",
-      userIsManager: "showManagementStuff",
       consortialInstall: "consortialInstall",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
       debugMonth: "dateRangeCoverageEndText",
@@ -962,6 +1047,9 @@ export default {
         api_key: this.apiKey,
         counter_version: this.counterVersion,
         auto_update_url: autoUpdateUrl,
+        use_counter_reports_from_platform:
+          this.useCounterReportsFromPlatform &&
+          this.reportTypesFromPlatform.length > 0,
         http_username: this.httpUsername,
         http_password: this.httpPassword,
         extra_params: extraParams,
@@ -1081,23 +1169,30 @@ export default {
        * return true if there are credentials with the same organization, platform and counter
        * version - this is not allowed and should be reflected in the UI
        * */
-      return this.similarCredentials.length > 0;
+      return this.usedCounterVersions.includes(this.counterVersion);
     },
-    similarCredentials() {
-      /*
-        list of credentials that have the same organization, platform and counter version
-         */
+    usedCounterVersions() {
+      // return list of counter versions that are used by other credentials
+      // for the same organization and platform
       if (this.existingCredentials) {
-        return this.existingCredentials.filter(
-          (cred) =>
-            cred.organization.pk === this.organization?.pk &&
-            this.platform &&
-            cred.platform.pk === this.platform?.pk &&
-            cred.counter_version === this.counterVersion &&
-            (!this.credentials || cred.pk !== this.credentials?.pk),
-        );
+        return this.existingCredentials
+          .filter(
+            (cred) =>
+              cred.organization.pk === this.organization?.pk &&
+              this.platform &&
+              cred.platform.pk === this.platform?.pk &&
+              (!this.credentials || cred.pk !== this.credentials?.pk),
+          )
+          .map((cred) => cred.counter_version);
       }
       return [];
+    },
+    unusedCounterVersions() {
+      // return list of counter versions that are not used by other credentials
+      // for the same organization and platform
+      return this.allowedCounterVersions
+        .map((cv) => cv.value)
+        .filter((cv) => !this.usedCounterVersions.includes(cv));
     },
     platformsBaseUrl() {
       if (this.organization?.pk) {
@@ -1198,6 +1293,36 @@ export default {
     counterVersionStr() {
       return counterVersionToStr(this.counterVersion);
     },
+    editablePlatform() {
+      return this.showManagementStuff;
+    },
+    reportTypesSorted() {
+      let reports = [...this.reportTypes];
+      reports.sort((a, b) => a.code.localeCompare(b.code));
+      return reports;
+    },
+    reportTypesFromPlatform() {
+      if (!this.activePlatform) {
+        return [];
+      }
+      const counter_reports_filtered =
+        this.activePlatform.counter_reports_long.filter(
+          (e) => e.counter_version === this.counterVersion,
+        );
+      counter_reports_filtered.sort((a, b) => a.code.localeCompare(b.code));
+      return counter_reports_filtered;
+    },
+    reportTypeSelectorHint() {
+      if (this.useCounterReportsFromPlatform) {
+        if (this.reportTypesFromPlatform.length > 0) {
+          return this.$t("counter_report_from_platform_hint");
+        } else {
+          return this.$t("counter_report_from_empty_platform_hint");
+        }
+      } else {
+        return "";
+      }
+    },
   },
 
   methods: {
@@ -1218,6 +1343,7 @@ export default {
     },
     updateReportTypeObjects() {
       this.allReportTypes.forEach((item) => {
+        item.pk = item.id;
         item.long_name = item.name ? `${item.code}: ${item.name}` : item.code;
         if (this.credentials) {
           const reportRec = this.credentials.counter_reports_long.find(
@@ -1563,12 +1689,6 @@ export default {
         `Please remove the "${this.prefixPlatform}" part of your input.`
       );
     },
-    ruleRequired(modelValue) {
-      return !!modelValue || this.$t("required");
-    },
-    ruleAtLeastOne(modelValue) {
-      return modelValue.length > 0 || this.$t("required");
-    },
     ruleExtraNoDuplicateKey(modelValue) {
       return (
         this.extraParams.filter((item) => item.key.trim() === modelValue.trim())
@@ -1662,8 +1782,25 @@ export default {
       }
       return `${base}reports/${rt.code.toLowerCase()}/?${searchParams.toString()}`;
     },
-    async closeLastHarvestableMonthDialog() {
+    closeLastHarvestableMonthDialog() {
       this.showLastHarvestableMonthDialog = false;
+    },
+    closeEditPlatformDialog() {
+      this.showPlatformEditDialog = false;
+    },
+    fillSelectedReportTypesBasedOnPlatform() {
+      this.selectedReportTypes = this.reportTypesFromPlatform.map((e) => e.pk);
+      if (this.$refs.selectedReportTypesField) {
+        this.$refs.selectedReportTypesField.resetValidation();
+      }
+    },
+    saveAndCloseEditPlatformDialog(data) {
+      this.showPlatformEditDialog = false;
+      this.platform = data;
+      this.credentials.platform = data;
+      if (this.useCounterReportsFromPlatform) {
+        this.fillSelectedReportTypesBasedOnPlatform();
+      }
     },
     updateLastHarvestableMonth(data) {
       Object.entries(data).forEach(([key, value]) => {
@@ -1685,8 +1822,14 @@ export default {
         });
       } else {
         this.url = this.currentKnowledgebaseUrl;
-        // lose focus
+        // loose focus
         this.$refs.selectedReportTypesField.focus();
+      }
+    },
+    toggleUseCounterReportsFromPlatform() {
+      this.useCounterReportsFromPlatform = !this.useCounterReportsFromPlatform;
+      if (this.useCounterReportsFromPlatform) {
+        this.fillSelectedReportTypesBasedOnPlatform();
       }
     },
   },
@@ -1721,6 +1864,12 @@ export default {
           this.guessPlatformFilter();
         }
         this.loadRegistryData();
+        if (this.useCounterReportsFromPlatform) {
+          this.fillSelectedReportTypesBasedOnPlatform();
+        }
+        if (this.$refs.form) {
+          this.$refs.form.resetValidation();
+        }
       },
     },
     counterVersion() {
@@ -1730,15 +1879,45 @@ export default {
       this.selectedReportTypes = this.selectedReportTypes.filter((item) =>
         currentReportTypes.includes(item),
       );
+      if (this.$refs.form) {
+        this.$refs.form.resetValidation();
+      }
       if (this.$refs.platformField)
         // sometimes platform is fixed and the field is not there
         this.$refs.platformField.validate();
       if (!this.credentials) {
         this.guessUrl();
         this.guessPlatformFilter();
+        if (this.reportTypesFromPlatform.length > 0) {
+          this.fillSelectedReportTypesBasedOnPlatform();
+        }
       }
     },
     platform() {
+      // when the platform is changed and the credentials are not saved yet,
+      // we want to select the highest COUNTER version for which there are no credentials
+      // and some reports are defined.
+      if (!this.credentials && this.activePlatform) {
+        let counterVersion = null;
+        for (let cv of this.unusedCounterVersions) {
+          if (
+            this.activePlatform.counter_reports_long.some(
+              (e) => e.counter_version === cv,
+            )
+          ) {
+            counterVersion = cv;
+            break;
+          }
+        }
+        // if no counter version is found, we select the first one from the list
+        // of unused counter versions or the first one from the list of allowed
+        // counter versions if there are no unused ones.
+        this.counterVersion =
+          counterVersion ||
+          (this.unusedCounterVersions.length > 0
+            ? this.unusedCounterVersions[0]
+            : this.allowedCounterVersions[0].value);
+      }
       this.$refs.counterVersionField.validate();
     },
     url() {
@@ -1789,6 +1968,11 @@ export default {
 }
 
 :deep(.v-input__append) {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.edit-platform {
   pointer-events: auto;
   opacity: 1;
 }

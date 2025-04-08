@@ -9,6 +9,7 @@ export default {
         required: (value) => !!value || this.$t("required"),
         min: (v) => v.length >= minPasswordLength || this.$t("min_pwd_length"),
         email: (v) => !!validateEmail(v) || this.$t("email_required"),
+        atLeastOne: (v) => (v && v.length > 0) || this.$t("required"),
       },
     };
   },

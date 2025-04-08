@@ -8,6 +8,8 @@ en:
   texts:
     adding_platform: You are adding a new platform, please make sure not to duplicate an already existing one.
     editing_platform: You are editing an existing platform, please make sure not to duplicate an already existing one.
+    counter_report_from_knowledgebase_on: COUNTER reports will be used based on the knowledgebase of the platform.
+    counter_report_from_knowledgebase_off: Fill in COUNTER reports manually.
   form:
     short_name: Short Name
     name: Name
@@ -19,7 +21,9 @@ en:
       name: Full platform name (e.g. Cambridge University)
       provider: Platfrom provider (vendor) - who manages the platform
       url: "Website of the platform (e.g. https://www.cambridge.org/core/). Note that this URL is not SUSHI URL."
+      counter_report_knowledgebase: Report Types are automatically managed by CELUS based on the platform's knowledgebase
     similar_platform_name: A platform with similar name already exists
+    counter_report_types: COUNTER Report types
   errors:
     invalid_url: "Invalid URL (valid URL starts with 'http(s)://', e.g. 'https://www.cambridge.org/core')"
     short_name_not_unique: "Short name is not unique"
@@ -32,6 +36,8 @@ cs:
   texts:
     adding_platform: Přidáváte novou platformu, ujistěte se prosím, že nová platforma neduplikuje nějakou existující.
     editing_platform: Měníte existující platformu, ujistěte se prosím, že změněná platforma neduplikuje nějakou existující.
+    counter_report_from_knowledgebase_on: COUNTER reporty budou použity na základě znalostní databáze o platformě.
+    counter_report_from_knowledgebase_off: Vyplnit COUNTER reporty ručně.
   form:
     short_name: Krátké jméno
     name: Jméno
@@ -43,7 +49,9 @@ cs:
       name: Celé jméno platformy (např. Cambridge University)
       provider: Poskytovatel (provozovatel) - kdo zajišťuje chod platformy
       url: "Webová stránka platformy (např. https://www.cambridge.org/core/). Pozn: tato URL není URL pro SUSHI."
+      counter_report_knowledgebase: Typy reportů budou automaticky spravovány CELUSem na základě znalostní databáze platformy
     similar_platform_name: Platforma s podobným jménem už existuje
+    counter_report_types: Typy COUNTER reportů
   errors:
     invalid_url: "Neplatná URL (platná URL začíná na 'http(s)://', např. 'https://www.cambridge.org/core')"
     short_name_not_unique: "Krátké jméno není unikátní"
@@ -59,7 +67,7 @@ cs:
       <v-card-title v-else class="headline">{{ $t("title.add") }}</v-card-title>
       <v-card-text>
         <v-container fluid class="pb-0">
-          <v-row>
+          <v-row v-if="(isEdit && editableDetails) || !isEdit">
             <v-col>
               <p class="font-italic" v-if="isEdit">
                 {{ $t("texts.editing_platform") }}
@@ -70,7 +78,7 @@ cs:
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="12" :md="4">
+            <v-col cols="12" :md="4" v-if="showOrganizationSelect">
               <v-select
                 v-model="organization"
                 :items="organizations"
@@ -90,6 +98,7 @@ cs:
                 :label="$t('form.short_name')"
                 :rules="[rules.required, ruleUniqueShortName]"
                 :hint="$t('form.hint.short_name')"
+                :disabled="!editableDetails"
                 persistent-hint
               >
               </v-text-field>
@@ -100,12 +109,13 @@ cs:
                 :label="$t('form.name')"
                 :rules="[rules.required]"
                 :hint="$t('form.hint.name')"
+                :disabled="!editableDetails"
                 persistent-hint
               >
               </v-text-field>
             </v-col>
           </v-row>
-          <v-row>
+          <v-row v-if="editableDetails">
             <v-col cols="12" :sm="6" v-if="similarPlatforms.length > 0">
               <v-alert type="warning" density="compact" variant="outlined">
                 {{ $t("form.similar_platform_name") }}:
@@ -124,6 +134,7 @@ cs:
                 :label="$t('form.provider')"
                 :rules="[rules.required]"
                 :hint="$t('form.hint.provider')"
+                :disabled="!editableDetails"
                 persistent-hint
               >
               </v-text-field>
@@ -137,8 +148,94 @@ cs:
                 :error-messages="errors.url"
                 :hint="$t('form.hint.url')"
                 persistent-hint
+                :disabled="!editableDetails"
               >
               </v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12" class="active_report">
+              <v-autocomplete
+                v-if="counterReports"
+                density="comfortable"
+                v-model="selectedCounterReports"
+                :items="counterReportsSorted"
+                :label="$t('form.counter_report_types')"
+                multiple
+                item-title="code"
+                item-value="id"
+                :loading="loadingCounterReports"
+                :disabled="!manuallyUpdateCounterReports"
+                ref="selectedReportTypesField"
+                :hint="
+                  !manuallyUpdateCounterReports
+                    ? $t('form.hint.counter_report_knowledgebase')
+                    : ''
+                "
+                :persistent-hint="!manuallyUpdateCounterReports"
+              >
+                <template #item="{ props, item }">
+                  <v-list-item v-bind="props" title>
+                    <template v-slot:default>
+                      <SushiReportIndicator
+                        v-if="item.raw.code"
+                        :report="item.raw"
+                        show-name
+                      ></SushiReportIndicator>
+                    </template>
+                  </v-list-item>
+                </template>
+                <template #selection="{ item, props, selected }">
+                  <v-chip
+                    v-bind="props"
+                    :model-value="selected"
+                    size="small"
+                    label
+                    variant="flat"
+                    color="primary"
+                  >
+                    <SushiReportIndicator
+                      v-if="item.raw.code"
+                      :report="item.raw"
+                      is-autocomplete
+                      show-version
+                    ></SushiReportIndicator>
+                  </v-chip>
+                </template>
+                <template #append>
+                  <v-tooltip location="bottom" max-width="400">
+                    <template
+                      v-slot:activator="{ props }"
+                      v-if="canUsePlatformsFromKnowledgebase"
+                    >
+                      <v-btn
+                        color="primary"
+                        variant="plain"
+                        icon
+                        @click="toggleUseCounterReportsFromKnowledgebase"
+                        size="small"
+                        v-bind="props"
+                      >
+                        <v-icon size="small"
+                          >fa
+                          {{
+                            !manuallyUpdateCounterReports
+                              ? "fa-edit"
+                              : "fa-book"
+                          }}</v-icon
+                        >
+                      </v-btn>
+                    </template>
+                    <span
+                      >{{
+                        !manuallyUpdateCounterReports
+                          ? $t("texts.counter_report_from_knowledgebase_off")
+                          : $t("texts.counter_report_from_knowledgebase_on")
+                      }}
+                    </span>
+                  </v-tooltip>
+                </template>
+              </v-autocomplete>
             </v-col>
           </v-row>
         </v-container>
@@ -151,7 +248,7 @@ cs:
             </v-col>
             <v-col cols="auto">
               <v-btn
-                @click="closeDialog()"
+                @click="closeDialog"
                 class="mr-2"
                 color="defaultButton"
                 variant="flat"
@@ -162,7 +259,7 @@ cs:
               </v-btn>
               <v-btn
                 color="primary"
-                @click="saveAndClose()"
+                @click="saveAndClose"
                 class="mr-2"
                 variant="flat"
                 elevation="2"
@@ -185,23 +282,32 @@ import { mapActions, mapGetters } from "vuex";
 import validate from "validate.js";
 import stringSimilarity from "string-similarity";
 import formRulesMixin from "@/mixins/formRulesMixin";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 
 export default {
   name: "PlatformEditDialog",
 
   mixins: [formRulesMixin],
+  components: {
+    SushiReportIndicator,
+  },
 
   props: {
     platformId: { required: false, type: Number },
   },
   data() {
     return {
+      counterReports: [],
+      selectedCounterReports: [],
+      loadingCounterReports: false,
       organization: null,
       platform: {
         short_name: "",
         name: "",
         provider: "",
         url: "",
+        counter_reports: [],
+        counter_reports_source: "manual",
       },
       organizations: [],
       platforms: [],
@@ -225,6 +331,8 @@ export default {
         name: this.platform.name,
         provider: this.platform.provider,
         url: this.platform.url,
+        counter_reports: this.selectedCounterReports,
+        counter_reports_source: this.platform.counter_reports_source,
       };
       if (this.platform) {
         data.pk = this.platform.pk;
@@ -285,6 +393,43 @@ export default {
       }
       return [...new Set(res)]; // unique
     },
+    manuallyUpdateCounterReports() {
+      return this.platform.counter_reports_source == "manual";
+    },
+    editableDetails() {
+      if (this.isEdit) {
+        if (this.platform.source) {
+          // Only platforms with organization source can be editted
+          return !!this.platform.source.organization;
+        } else {
+          // Not updated externally
+          return true;
+        }
+      } else {
+        // Can edit everything for new credentials
+        return true;
+      }
+    },
+    showOrganizationSelect() {
+      return !this.isEdit || this.platform?.source?.organization;
+    },
+    counterReportsFromKnowledgebase() {
+      let counterReports = [];
+      for (const provider of this.platform?.knowledgebase?.providers || []) {
+        for (const art of provider.assigned_report_types) {
+          counterReports.push(`${provider.counter_version}|${art.report_type}`);
+        }
+      }
+      return this.counterReportsSorted.filter((e) =>
+        counterReports.includes(`${e.counter_version}|${e.code}`),
+      );
+    },
+    counterReportsSorted() {
+      return this.sortCounterReports(this.counterReports);
+    },
+    canUsePlatformsFromKnowledgebase() {
+      return !!this.platform.knowledgebase;
+    },
   },
 
   methods: {
@@ -297,6 +442,8 @@ export default {
         name: "",
         provider: "",
         url: "",
+        counter_reports: [],
+        counter_reports_source: this.isEdit ? "knowledgebase" : "manual",
       };
     },
     async loadOrganizations() {
@@ -324,7 +471,14 @@ export default {
           let result = await axios.get(
             this.platformsBaseUrl + this.platformId + "/",
           );
+          this.clean();
           this.platform = result.data;
+          this.selectedCounterReports = this.sortCounterReports(
+            this.platform.counter_reports_long,
+          ).map((e) => e.pk);
+          if (!this.canUsePlatformsFromKnowledgebase) {
+            this.platform.counter_reports_source = "manual";
+          }
         } catch (error) {
           this.showSnackbar({
             content: `Error loading platform id:${this.platformId}: ` + error,
@@ -399,6 +553,7 @@ export default {
       if (!this.organization && this.selectedOrganization) {
         this.organization = this.selectedOrganization;
       }
+      await this.loadCounterReports();
       await this.loadPlatform();
 
       if (this.selectedOrganization.pk === -1) {
@@ -438,6 +593,52 @@ export default {
       delete this.errors.url;
       return true;
     },
+    async loadCounterReports() {
+      this.loadingCounterReports = true;
+      try {
+        let result = await axios.get("/api/counter-report-type/");
+        this.counterReports = result.data;
+        this.updateCounterReportsObjects();
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error loading counter reports: " + error,
+        });
+      } finally {
+        this.loadingCounterReports = false;
+      }
+    },
+    updateCounterReportsObjects() {
+      this.counterReports.forEach((item) => {
+        item.long_name = item.name ? `${item.code}: ${item.name}` : item.code;
+        item.pk = item.id;
+      });
+    },
+    toggleUseCounterReportsFromKnowledgebase() {
+      if (this.platform) {
+        if (this.platform.counter_reports_source == "knowledgebase") {
+          this.platform.counter_reports_source = "manual";
+          this.$refs.selectedReportTypesField.focus();
+        } else {
+          this.platform.counter_reports_source = "knowledgebase";
+          if (this.counterReportsFromKnowledgebase) {
+            this.selectedCounterReports =
+              this.counterReportsFromKnowledgebase.map((e) => e.pk);
+          }
+        }
+      }
+    },
+    sortCounterReports(arr) {
+      let reports = [...arr];
+      reports.sort((a, b) => {
+        if (a.counter_version == b.counter_version) {
+          return a.code.localeCompare(b.code);
+        } else {
+          // reversed
+          return b.counter_version - a.counter_version;
+        }
+      });
+      return reports;
+    },
   },
 
   mounted() {
@@ -446,7 +647,10 @@ export default {
 
   watch: {
     organization() {
-      this.loadPlatforms();
+      if (!this.isEdit) {
+        // update platforms only when organization can be picked
+        this.loadPlatforms();
+      }
     },
   },
 };
@@ -455,5 +659,9 @@ export default {
 <style lang="scss" scoped>
 p {
   color: rgba(0, 0, 0, 0.6);
+}
+:deep(.v-input__append) {
+  pointer-events: auto;
+  opacity: 1;
 }
 </style>

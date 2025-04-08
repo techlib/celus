@@ -54,7 +54,6 @@ export default {
     returnObject: { default: false, type: Boolean },
     dense: { default: false, type: Boolean },
     height: { default: null, type: [Number, String] },
-    allowCreate: { default: false, type: Boolean },
   },
 
   data() {

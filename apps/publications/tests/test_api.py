@@ -45,6 +45,44 @@ from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
 from publications.models import Platform, PlatformInterestReport, PlatformTitle, Title
 from test_scenarios.basic import *  # noqa - fixtures
 
+KNOWLEDGEBASE = {
+    "notes_url": None,
+    "providers": [
+        {
+            "provider": {
+                "pk": 999,
+                "url": "https://www.example.com/sushi5/",
+                "name": "www.example.com",
+                "extra": {},
+                "yearly": None,
+                "monthly": None,
+                "counter_registry_id": "11111111-1111-1111-1111-111111111111",
+            },
+            "counter_version": 5,
+            "assigned_report_types": [
+                {"report_type": "PR", "not_valid_after": None, "not_valid_before": None},
+                {"report_type": "TR", "not_valid_after": None, "not_valid_before": None},
+            ],
+        },
+        {
+            "provider": {
+                "pk": 998,
+                "url": "https://www.example.com/sushi51/",
+                "name": "www.example.com",
+                "extra": {},
+                "yearly": None,
+                "monthly": None,
+                "counter_registry_id": "22222222-2222-2222-2222-222222222222",
+            },
+            "counter_version": 51,
+            "assigned_report_types": [
+                {"report_type": "IR", "not_valid_after": None, "not_valid_before": None},
+                {"report_type": "DR", "not_valid_after": None, "not_valid_before": None},
+            ],
+        },
+    ],
+}
+
 
 class MockTask:
     def __init__(self):
@@ -257,6 +295,78 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 400, "Already created"
 
+    def test_create_platform_for_organization_counter_reports_knowledgebase(
+        self, basic1, clients, organizations, client, counter_report_types, settings
+    ):
+        # Override to knowledgebase
+        resp = clients["master_admin"].post(
+            reverse("platform-list", args=[organizations["master"].pk]),
+            {
+                "short_name": "platform1",
+                "name": "first_platform",
+                "url": "https://example.com",
+                "provider": "provider",
+                "counter_reports_source": "knowledgebase",
+                "counter_reports": [
+                    counter_report_types["tr"].pk,
+                    counter_report_types["jr1"].pk,
+                ],  # these counter_report_types should be overriden
+                "knowledgebase": KNOWLEDGEBASE,
+            },
+            format="json",
+        )
+        assert resp.status_code == 201
+        platform = Platform.objects.get(pk=resp.data["pk"])
+        assert set(platform.counter_reports.values_list("counter_version", "code")) == {
+            (5, "PR"),
+            (5, "TR"),
+            (51, "IR"),
+            (51, "DR"),
+        }
+
+    def test_create_platform_for_organization_counter_reports_manual(
+        self, basic1, clients, organizations, client, counter_report_types, settings
+    ):
+        resp = clients["master_admin"].post(
+            reverse("platform-list", args=[organizations["master"].pk]),
+            {
+                "short_name": "platform2",
+                "name": "second_platform",
+                "url": "https://example2.com",
+                "provider": "provider",
+                "counter_reports_source": "manual",
+                "counter_reports": [counter_report_types["tr"].pk, counter_report_types["jr1"].pk],
+                "knowledgebase": KNOWLEDGEBASE,
+            },
+            format="json",
+        )
+        assert resp.status_code == 201
+        platform = Platform.objects.get(pk=resp.data["pk"])
+        assert set(platform.counter_reports.values_list("counter_version", "code")) == {
+            (5, "TR"),
+            (4, "JR1"),
+        }
+
+    def test_create_platform_for_organization_counter_reports_empty_kb(
+        self, basic1, clients, organizations, client, counter_report_types, settings
+    ):
+        resp = clients["master_admin"].post(
+            reverse("platform-list", args=[organizations["master"].pk]),
+            {
+                "short_name": "platform3",
+                "name": "third_platform",
+                "url": "https://example3.com",
+                "provider": "provider",
+                "counter_reports_source": "knowledgebase",
+                "counter_reports": [counter_report_types["tr"].pk, counter_report_types["jr1"].pk],
+                "knowledgebase": None,
+            },
+            format="json",
+        )
+        assert resp.status_code == 201
+        platform = Platform.objects.get(pk=resp.data["pk"])
+        assert set(platform.counter_reports.values_list("counter_version", "code")) == set()
+
     def test_create_platform_for_two_organizations_with_no_data_source(
         self, basic1, clients, organizations, client, settings
     ):
@@ -285,10 +395,13 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 201
 
-    def test_create_platform_when_disabled(self, basic1, clients, organizations, client, settings):
+    @pytest.mark.parametrize("user,status", (("admin2", 403), ("master_admin", 201), ("su", 201)))
+    def test_create_platform_when_disabled(
+        self, basic1, clients, organizations, settings, user, status
+    ):
         settings.ALLOW_USER_CREATED_PLATFORMS = False
 
-        resp = clients["su"].post(
+        resp = clients[user].post(
             reverse("platform-list", args=[organizations["standalone"].pk]),
             {
                 "short_name": "platform",
@@ -297,7 +410,7 @@ class TestPlatformAPI:
                 "provider": "provider",
             },
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status
 
     def test_list_platforms_for_all_organization(self, basic1, clients, organizations, client):
         resp = clients["master_admin"].get(reverse("platform-list", args=[-1]))
@@ -370,10 +483,24 @@ class TestPlatformAPI:
             assert platform.provider == "provider"
             assert platform.url == "https://example.com"
 
+    @pytest.mark.parametrize(
+        "client,code",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 403),
+            ("admin1", 403),  # this admin
+            ("admin2", 403),  # other admin
+            ("user1", 403),  # user
+        ),
+    )
     def test_update_platform_for_organization_with_no_data_source(
-        self, basic1, clients, organizations, client, platforms
+        self, basic1, clients, organizations, platforms, client, code
     ):
-        resp = clients["su"].patch(
+        OrganizationPlatform.objects.create(
+            organization=organizations["master"], platform=platforms["master"]
+        )
+        resp = clients[client].patch(
             reverse("platform-detail", args=[organizations["master"].pk, platforms["master"].pk]),
             {
                 "short_name": "platform",
@@ -382,14 +509,15 @@ class TestPlatformAPI:
                 "provider": "provider",
             },
         )
-        assert resp.status_code == 403
+        assert resp.status_code == code
 
+    @pytest.mark.parametrize("user,status", (("admin2", 403), ("master_admin", 200), ("su", 200)))
     def test_update_platform_when_disabled(
-        self, basic1, clients, organizations, client, platforms, settings
+        self, basic1, clients, organizations, platforms, settings, user, status
     ):
         settings.ALLOW_USER_CREATED_PLATFORMS = False
 
-        resp = clients["su"].patch(
+        resp = clients[user].patch(
             reverse(
                 "platform-detail", args=[organizations["standalone"].pk, platforms["standalone"].pk]
             ),
@@ -400,7 +528,99 @@ class TestPlatformAPI:
                 "provider": "provider",
             },
         )
-        assert resp.status_code == 403
+        assert resp.status_code == status
+
+    @pytest.mark.parametrize("allow_user_created_platforms", (True, False))
+    def test_update_platform_for_organization_report_types(
+        self,
+        basic1,
+        clients,
+        organizations,
+        data_sources,
+        report_types,
+        counter_report_types,
+        platforms,
+        credentials,
+        settings,
+        allow_user_created_platforms,
+    ):
+        settings.ALLOW_USER_CREATED_PLATFORMS = allow_user_created_platforms
+        platform = platforms["standalone"]
+        org_id = organizations["standalone"].pk
+        credentials["standalone_br1_jr1"].use_counter_reports_from_platform = True
+        credentials["standalone_br1_jr1"].save()
+
+        credentials["standalone_tr"].use_counter_reports_from_platform = False
+        credentials["standalone_tr"].save()
+
+        credentials["standalone_ir51"].use_counter_reports_from_platform = True
+        credentials["standalone_ir51"].save()
+
+        platform.knowledgebase = KNOWLEDGEBASE
+        platform.save()
+
+        # Platform counter reports are updated manualy
+        resp = clients["master_admin"].patch(
+            reverse("platform-detail", args=[org_id, platform.pk]),
+            {
+                "counter_reports_source": "manual",
+                "counter_reports": [counter_report_types["ir"].pk, counter_report_types["tr51"].pk],
+            },
+        )
+        assert resp.status_code == 200
+        assert set(platform.counter_reports.values_list("counter_version", "code")) == {
+            (5, "IR"),
+            (51, "TR"),
+        }, "report types are manually set"
+
+        # check credentials to see the updates
+        assert (
+            len(
+                credentials["standalone_br1_jr1"].counter_reports.values_list(
+                    "counter_version", "code"
+                )
+            )
+            == 0
+        ), "C4 creds were unset"
+        assert set(
+            credentials["standalone_tr"].counter_reports.values_list("counter_version", "code")
+        ) == {(5, "TR")}, "C5 creds were not modified"
+        assert set(
+            credentials["standalone_ir51"].counter_reports.values_list("counter_version", "code")
+        ) == {(51, "TR")}, "C51 creds were update"
+
+        # Platform counter reports are updated from knowledgebase
+        resp = clients["master_admin"].patch(
+            reverse("platform-detail", args=[org_id, platform.pk]),
+            {
+                "counter_reports_source": "knowledgebase",
+                "counter_reports": [counter_report_types["ir"].pk, counter_report_types["tr51"].pk],
+            },
+        )
+        assert resp.status_code == 200
+
+        assert set(platform.counter_reports.values_list("counter_version", "code")) == {
+            (5, "PR"),
+            (5, "TR"),
+            (51, "DR"),
+            (51, "IR"),
+        }, "report types are based on knowledgebase"
+
+        # check credentials to see the updates
+        assert (
+            len(
+                credentials["standalone_br1_jr1"].counter_reports.values_list(
+                    "counter_version", "code"
+                )
+            )
+            == 0
+        ), "C4 creds are still unset"
+        assert set(
+            credentials["standalone_tr"].counter_reports.values_list("counter_version", "code")
+        ) == {(5, "TR")}, "C5 creds were not modified"
+        assert set(
+            credentials["standalone_ir51"].counter_reports.values_list("counter_version", "code")
+        ) == {(51, "IR"), (51, "DR")}, "C51 creds were updated"
 
     @pytest.mark.parametrize("allow_user_created_platforms", (True, False))
     @pytest.mark.parametrize("delete_credentials", (True, False))

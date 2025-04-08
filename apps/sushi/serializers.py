@@ -1,3 +1,5 @@
+import typing
+
 from core.models import UL_CONS_STAFF
 from core.serializers import UserSimpleSerializer
 from django.db.models import Q
@@ -146,10 +148,25 @@ class SushiCredentialsSerializer(ModelSerializer):
             "has_51_provider",
             "last_updated_by",
             "last_updated",
+            "use_counter_reports_from_platform",
         )
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF
+
+    def alter_sushi_credentials_based_on_platform(
+        self, validated_data, creds: typing.Optional[SushiCredentials] = None
+    ):
+        if validated_data.get("use_counter_reports_from_platform"):
+            if not creds:
+                # should be present in validated data
+                platform: Platform = validated_data["platform"]
+                counter_version = validated_data["counter_version"]
+            else:
+                counter_version = creds.counter_version
+                platform = creds.platform
+
+            validated_data["counter_reports"] = platform.get_counter_reports(counter_version)
 
     def update(self, instance: SushiCredentials, validated_data):
         # `forced` attribute is not a part of a credentails model
@@ -176,6 +193,7 @@ class SushiCredentialsSerializer(ModelSerializer):
         submitter = validated_data.pop("submitter", None) or self.context["request"].user
         if not instance.can_edit(submitter):
             raise PermissionDenied("User is not allowed to edit this object - it is locked.")
+        self.alter_sushi_credentials_based_on_platform(validated_data, instance)
         result: SushiCredentials = super().update(instance, validated_data)
         result.last_updated_by = submitter
         result.save()
@@ -203,6 +221,7 @@ class SushiCredentialsSerializer(ModelSerializer):
                 "version is allowed."
             )
         submitter = validated_data.pop("submitter")
+        self.alter_sushi_credentials_based_on_platform(validated_data)
         result = super().create(validated_data)
         result.last_updated_by = submitter
         result.save()

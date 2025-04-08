@@ -8,11 +8,13 @@ from rest_framework.fields import (
     DateTimeField,
     HiddenField,
     JSONField,
+    ReadOnlyField,
     SerializerMethodField,
     URLField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import IntegerField, ModelSerializer, Serializer
+from sushi.models import CounterReportPlatform, CounterReportType
 
 from .models import Author, Item, Platform, Title, TitleOverlapBatch
 
@@ -31,9 +33,26 @@ class DataSourceSerializer(ModelSerializer):
         fields = ("short_name", "organization", "type")
 
 
+class CounterReportPlatformSerializer(ModelSerializer):
+    pk = ReadOnlyField(source="counter_report.pk")
+    code = ReadOnlyField(source="counter_report.code")
+    name = ReadOnlyField(source="counter_report.name")
+    counter_version = ReadOnlyField(source="counter_report.counter_version")
+
+    class Meta:
+        model = CounterReportPlatform
+        fields = ("pk", "code", "name", "counter_version")
+
+
 class PlatformSerializer(ModelSerializer):
     ext_id = IntegerField(read_only=True)
     source = DataSourceSerializer(read_only=True)
+    counter_reports = PrimaryKeyRelatedField(
+        queryset=CounterReportType.objects.all(), many=True, read_only=False, write_only=True
+    )
+    counter_reports_long = CounterReportPlatformSerializer(
+        many=True, source="counterreportplatform_set", read_only=True
+    )
 
     class Meta:
         model = Platform
@@ -48,6 +67,9 @@ class PlatformSerializer(ModelSerializer):
             "source",
             "counter_registry_id",
             "sushi_arrival_stats",
+            "counter_reports",
+            "counter_reports_long",
+            "counter_reports_source",
         )
 
 
@@ -55,6 +77,9 @@ class AllPlatformSerializer(ModelSerializer):
     ext_id = IntegerField(read_only=True)
     source = DataSourceSerializer(read_only=True)
     has_raw_parser = BooleanField(read_only=True)
+    counter_reports_long = CounterReportPlatformSerializer(
+        many=True, source="counterreportplatform_set", read_only=True
+    )
 
     class Meta:
         model = Platform
@@ -69,6 +94,8 @@ class AllPlatformSerializer(ModelSerializer):
             "source",
             "has_raw_parser",
             "counter_registry_id",
+            "counter_reports_long",
+            "counter_reports_source",
         )
 
 

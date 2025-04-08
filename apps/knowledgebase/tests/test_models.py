@@ -20,7 +20,7 @@ from publications.logic import knowledgebase
 from publications.models import Platform, PlatformInterestReport
 from scheduler.models import FetchIntention
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, SushiCredentials
+from sushi.models import AttemptStatus, CounterReportPlatform, SushiCredentials
 
 from knowledgebase.models import (
     ParserDefinitionImportAttempt,
@@ -516,6 +516,112 @@ class TestPlatformImportAttempt:
 
         assert FetchIntention.objects.count() == 1, "Intention created"
         assert FetchIntention.objects.last().start_date.strftime("%Y-%m-%d") == "2019-11-01"
+
+    @pytest.mark.parametrize(
+        "counter_reports_source,use_counter_reports_from_platform,platform_updated,creds_updated",
+        (
+            ("knowledgebase", True, True, True),
+            ("knowledgebase", False, True, False),
+            ("manual", True, False, False),
+            ("manual", False, False, False),
+        ),
+    )
+    def test_process_credentials_update(
+        self,
+        data_sources,
+        report_types,
+        counter_report_types,
+        organizations,
+        counter_reports_source,
+        use_counter_reports_from_platform,
+        platform_updated,
+        creds_updated,
+    ):
+        p1 = PlatformFactory(
+            short_name="AAP",
+            ext_id=328,
+            source=data_sources["brain"],
+            counter_reports_source=counter_reports_source,
+        )
+        CounterReportPlatform.objects.create(platform=p1, counter_report=counter_report_types["ir"])
+        p2 = PlatformFactory(
+            short_name="AACR",
+            ext_id=327,
+            source=data_sources["brain"],
+            counter_reports_source="manual",
+        )
+        CounterReportPlatform.objects.create(platform=p2, counter_report=counter_report_types["ir"])
+        p3 = PlatformFactory(
+            short_name="APS",
+            ext_id=339,
+            source=data_sources["brain"],
+            counter_reports_source="knowledgebase",
+        )
+        CounterReportPlatform.objects.create(platform=p3, counter_report=counter_report_types["ir"])
+
+        creds_affected = CredentialsFactory(
+            platform=p1,
+            url="https://something.else1",
+            counter_version=5,
+            use_counter_reports_from_platform=use_counter_reports_from_platform,
+            organization=organizations["standalone"],
+            enabled=True,
+        )
+        creds_affected.counter_reports.add(counter_report_types["dr"])
+
+        creds_manual = CredentialsFactory(
+            platform=p1,
+            url="https://something.else2",
+            counter_version=5,
+            use_counter_reports_from_platform=False,
+            organization=organizations["branch"],
+            enabled=True,
+        )
+        creds_manual.counter_reports.add(counter_report_types["pr"])
+
+        creds_empty = CredentialsFactory(
+            platform=p1,
+            url="https://something.else2",
+            counter_version=51,
+            use_counter_reports_from_platform=True,
+            organization=organizations["branch"],
+            enabled=True,
+        )
+        creds_empty.counter_reports.add(counter_report_types["tr51"])
+
+        attempt = PlatformImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process(PLATFORM_INPUT_DATA)
+
+        p1.refresh_from_db()
+        p2.refresh_from_db()
+        p3.refresh_from_db()
+
+        if platform_updated:
+            assert set(p1.counter_reports.values_list("counter_version", "code")) == {
+                (5, "TR"),
+                (4, "JR1"),
+            }
+        else:
+            assert set(p1.counter_reports.values_list("counter_version", "code")) == {(5, "IR")}
+        assert set(p2.counter_reports.values_list("counter_version", "code")) == {(5, "IR")}
+        assert set(p3.counter_reports.values_list("counter_version", "code")) == set()
+
+        if creds_updated:
+            assert set(creds_affected.counter_reports.values_list("counter_version", "code")) == {
+                (5, "TR")
+            }
+        else:
+            # affected credentials can be either
+            # IR - if platform report types were not synced
+            # or DR when it were synced
+            assert set(
+                creds_affected.counter_reports.values_list("counter_version", "code")
+            ).issubset({(5, "DR"), (5, "IR")})
+        assert set(creds_manual.counter_reports.values_list("counter_version", "code")) == {
+            (5, "PR")
+        }
+        assert set(creds_empty.counter_reports.values_list("counter_version", "code")) == set()
 
 
 @pytest.mark.django_db

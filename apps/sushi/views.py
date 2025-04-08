@@ -92,6 +92,7 @@ class SushiCredentialsViewSet(ModelViewSet):
             .annotate_can_update()
             .annotate_has_51_provider()
             .prefetch_related("counterreportstocredentials_set__counter_report")
+            .prefetch_related("platform__counterreportplatform_set__counter_report")
             .select_related("organization", "platform", "platform__source", "last_updated_by")
         )
         return qs

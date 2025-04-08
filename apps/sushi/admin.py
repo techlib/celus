@@ -243,3 +243,10 @@ class CounterReportsToCredentialsAdmin(admin.ModelAdmin):
         "credentials",
         "counter_report",
     ]
+
+
+@admin.register(models.CounterReportPlatform)
+class CounterReportPlatformAdmin(admin.ModelAdmin):
+    search_fields = ["platform__name", "platform__short_name", "counter_report__code"]
+    list_display = ["platform", "counter_report"]
+    list_filter = ["counter_report", "platform"]

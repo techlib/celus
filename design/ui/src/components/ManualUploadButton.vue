@@ -9,11 +9,11 @@ cs:
 </i18n>
 
 <template>
-  <span>
+  <div>
     <v-tooltip location="bottom">
       <template v-slot:activator="{ props }">
         <v-btn
-          @click="go()"
+          @click="openDialog"
           :text="text"
           :size="small ? 'small' : 'default'"
           :color="color"
@@ -26,7 +26,7 @@ cs:
       </template>
       {{ $t("add") }}
     </v-tooltip>
-    <v-dialog v-model="showDialog" v-if="showDialog" max-width="640px">
+    <v-dialog v-model="showDialog" max-width="640px">
       <PlatformSelectionWidget allow-create>
         <template v-slot:actions>
           <v-btn @click="showDialog = false" variant="flat" elevation="2">{{
@@ -35,7 +35,7 @@ cs:
         </template>
       </PlatformSelectionWidget>
     </v-dialog>
-  </span>
+  </div>
 </template>
 
 <script>
@@ -56,7 +56,7 @@ export default {
     };
   },
   methods: {
-    go() {
+    openDialog() {
       this.showDialog = true;
     },
   },

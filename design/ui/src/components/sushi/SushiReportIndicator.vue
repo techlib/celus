@@ -8,6 +8,9 @@
         :style="{ width: '100%', display: 'flex', 'align-items': 'center' }"
       >
         <span :class="anyIcon ? 'pr-1' : ''">{{ report.code }}</span>
+        <span v-if="showVersion"
+          >: {{ counterVersionToStr(report.counter_version) }}</span
+        >
         <span v-if="showName && report.name" class="font-weight-light me-2"
           >: {{ report.name }}</span
         >
@@ -71,6 +74,8 @@
 </template>
 
 <script>
+import { counterVersionToStr } from "@/libs/sushi";
+
 export default {
   name: "SushiReportIndicator",
 
@@ -97,6 +102,10 @@ export default {
       default: null,
     },
     showName: {
+      default: false,
+      type: Boolean,
+    },
+    showVersion: {
       default: false,
       type: Boolean,
     },
@@ -151,6 +160,10 @@ export default {
         (this.lastHarvestableMonth && this.showLastHarvestableMonth)
       );
     },
+  },
+
+  methods: {
+    counterVersionToStr,
   },
 };
 </script>

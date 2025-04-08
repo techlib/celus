@@ -50,10 +50,12 @@ from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
+from sushi.models import CounterReportPlatform
 from tags.models import Tag
 
 from config.permissions import IsAuthenticatedWithOptional2FA
 from publications.models import (
+    CounterReportSource,
     Item,
     Platform,
     PlatformTitle,
@@ -117,6 +119,14 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
         return (
             self.request.user.accessible_platforms(organization=organization)
             .select_related("source", "source__organization")
+            .prefetch_related(
+                Prefetch(
+                    "counterreportplatform_set",
+                    queryset=CounterReportPlatform.objects.select_related(
+                        "counter_report", "platform"
+                    ),
+                )
+            )
             .order_by("name")
             .annotate(
                 has_raw_parser=Exists(
@@ -188,19 +198,18 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
         if self.action in ["create", "delete_all_data"]:
             organization_id = self.kwargs["organization_pk"]
             Permission = generate_permission(organization_id)
-            permission_classes = [e & Permission for e in permission_classes]
+            permission_classes = [
+                SuperuserOrAdminPermission | (e & Permission) for e in permission_classes
+            ]
         elif self.action in ["update", "partial_update"]:
             obj = get_object_or_404(Platform, pk=self.kwargs["pk"])
             if obj.source and obj.source.organization:
                 Permission = generate_permission(obj.source.organization.pk)
-                permission_classes = [e & Permission for e in permission_classes]
+                permission_classes = [
+                    SuperuserOrAdminPermission | (e & Permission) for e in permission_classes
+                ]
             else:
-                # disallow updating platform without organization
-                class Permission:
-                    def has_permission(self, *args, **kwargs):
-                        return False
-
-                permission_classes = [Permission]
+                permission_classes = [SuperuserOrAdminPermission]
 
         return [permission() for permission in permission_classes]
 
@@ -233,15 +242,27 @@ class PlatformViewSet(CreateModelMixin, UpdateModelMixin, ReadOnlyModelViewSet):
         platform = serializer.save(ext_id=None, source=source)
         platform.create_default_interests()
 
+        # Update related report types based on knowledgebase
+        if platform.counter_reports_source == CounterReportSource.KNOWLEDGEBASE:
+            Platform.objects.filter(pk=platform.pk).update_counter_reports_from_knowledgebase()
+
     def perform_update(self, serializer):
         serializer.is_valid()  # -> sets validated_data
         platform = self.get_object()
-        self._short_name_check(
-            serializer.validated_data["short_name"], platform.source, platform.pk
-        )
+        if "short_name" in serializer.validated_data:
+            self._short_name_check(
+                serializer.validated_data["short_name"], platform.source, platform.pk
+            )
         serializer.save(
             ext_id=None, source=self.get_object().source
         )  # source can be selected only on create
+
+        # Update related report types based on knowledgebase
+        if serializer.instance.counter_reports_source == CounterReportSource.KNOWLEDGEBASE:
+            Platform.objects.filter(pk=platform.pk).update_counter_reports_from_knowledgebase()
+
+        #  update sushi credential's counter reports
+        serializer.instance.sushicredentials_set.update_report_types_based_on_platform()
 
     def get_queryset(self):
         """

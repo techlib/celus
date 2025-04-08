@@ -31,7 +31,7 @@ cs:
     <v-dialog v-model="showDialog" :max-width="dialogMaxWidth">
       <PlatformEditDialog
         v-if="showDialog"
-        @close="cancelEdit()"
+        @close="cancelEdit"
         @saved="platformSaved"
         key="add"
       ></PlatformEditDialog>

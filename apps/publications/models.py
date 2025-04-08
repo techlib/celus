@@ -3,7 +3,7 @@ import tempfile
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import BinaryIO, Callable, Optional
+from typing import BinaryIO, Callable, List, Optional
 
 import magic
 from celus_nigiri.record import Author as NigiriAuthor
@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
+from django.db.transaction import atomic
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -51,6 +52,58 @@ def default_stats():
     return DEFAULT_ARRIVAL_STATS.copy()
 
 
+class CounterReportSource(models.TextChoices):
+    KNOWLEDGEBASE = "knowledgebase", _("Knowledgebase")
+    MANUAL = "manual", _("Manual")
+
+
+DEFAULT_COUNTER_REPORT_TYPES = {
+    4: ["BR1", "BR2", "BR3", "DB1", "DB2", "JR1", "JR2", "PR1"],
+    5: ["TR", "DR", "PR"],
+    51: ["TR", "DR", "PR"],
+}
+
+
+class PlatformQuerySet(models.QuerySet):
+    @atomic
+    def update_counter_reports_from_knowledgebase(self) -> int:
+        """Updates CounterReportPlatform structs based on knowledgebase"""
+        from sushi.models import CounterReportPlatform, CounterReportType
+
+        platforms = self.filter(counter_reports_source=CounterReportSource.KNOWLEDGEBASE)
+        crp_map = {e.pk: [] for e in platforms}
+        for crp in CounterReportPlatform.objects.filter(platform__in=platforms):
+            crp_map[crp.platform.pk].append(crp)
+
+        crt_map = {(e.counter_version, e.code): e for e in CounterReportType.objects.all()}
+
+        modified = 0
+        for platform in platforms:
+            crps = crp_map[platform.pk]
+            modified = False
+            for version, code in kb.get_counter_reports(platform.knowledgebase):
+                # make sure that all links exists
+                if crt := crt_map.get((version, code)):
+                    _, created = CounterReportPlatform.objects.get_or_create(
+                        platform=platform, counter_report=crt
+                    )
+                    if created:
+                        modified = True
+                    crps = [
+                        e
+                        for e in crps
+                        if (version, code)
+                        != (e.counter_report.counter_version, e.counter_report.code)
+                    ]
+
+            # Remove extras
+            CounterReportPlatform.objects.filter(pk__in=[e.pk for e in crps]).delete()
+
+            modified += 1 if modified or crps else 0
+
+        return modified
+
+
 class Platform(models.Model):
     ext_id = models.PositiveIntegerField(blank=True, null=True)
     short_name = models.CharField(max_length=100)
@@ -76,6 +129,18 @@ class Platform(models.Model):
         blank=True,
         help_text="Stats about when a specific percentage of reports are typically available",
     )
+    counter_reports_source = models.CharField(
+        max_length=20,
+        choices=CounterReportSource.choices,
+        default=CounterReportSource.KNOWLEDGEBASE,
+    )
+    counter_reports = models.ManyToManyField(
+        "sushi.CounterReportType",
+        through="sushi.CounterReportPlatform",
+        related_name="sushicredentials_via_platform",
+    )
+
+    objects = PlatformQuerySet.as_manager()
 
     class Meta:
         ordering = ("short_name",)
@@ -198,7 +263,7 @@ class Platform(models.Model):
         else:
             return platform_slug
 
-    def update_related_credentials(self) -> int:
+    def update_related_credentials_url(self) -> int:
         count = 0
         for creds in self.sushicredentials_set.filter(auto_update_url=True):
             if url := kb.get_url(self.knowledgebase, creds.counter_version):
@@ -206,6 +271,12 @@ class Platform(models.Model):
                     count += 1
 
         return count
+
+    def get_counter_reports(self, counter_version: int) -> List["models.CounterReportType"]:
+        if counter_reports := self.counter_reports.filter(counter_version=counter_version):
+            return list(counter_reports)
+        else:
+            return []
 
 
 class PubTypeMixin(models.Model):

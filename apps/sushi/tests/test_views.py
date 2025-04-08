@@ -140,6 +140,7 @@ class TestSushiCredentialsViewSet:
         sc = SushiCredentials.objects.get()
         assert sc.last_updated_by == users["admin1"]
         assert sc.counter_reports.count() == 1
+        assert sc.use_counter_reports_from_platform is False
         assert sc.title == title
 
     def test_create_action_with_duplicated_credentials(
@@ -252,11 +253,39 @@ class TestSushiCredentialsViewSet:
         url = reverse("sushi-credentials-detail", args=(credentials.pk,))
         new_rt1 = counter_report_type_named("new1")
         new_rt2 = counter_report_type_named("new2")
+        new_rt3 = counter_report_type_named("new3")
         resp = clients["admin1"].patch(url, {"counter_reports": [new_rt1.pk, new_rt2.pk]})
         assert resp.status_code == 200
         credentials.refresh_from_db()
         assert credentials.counter_reports.count() == 2
         assert {cr.pk for cr in credentials.counter_reports.all()} == {new_rt1.pk, new_rt2.pk}
+
+        # Try to update counter reports based on platform
+        platforms["root"].counter_reports.add(new_rt2)
+        platforms["root"].counter_reports.add(new_rt3)
+        resp = clients["admin1"].patch(
+            url,
+            {
+                "use_counter_reports_from_platform": True,
+                "counter_reports": [
+                    new_rt1.pk,
+                    new_rt2.pk,
+                ],  # these counter report will be overriden
+            },
+        )
+        assert resp.status_code == 200
+        credentials.refresh_from_db()
+        assert credentials.counter_reports.count() == 2
+        assert {cr.pk for cr in credentials.counter_reports.all()} == {new_rt2.pk, new_rt3.pk}
+
+        # Clear counter reports from the platform
+        platforms["root"].counter_reports.set([])
+        resp = clients["admin1"].patch(url, {"use_counter_reports_from_platform": True})
+        assert resp.status_code == 200
+        credentials.refresh_from_db()
+        assert (
+            credentials.counter_reports.count() == 0
+        ), "credentials should not contain any report types"
 
     def test_destroy_locked_higher(self, basic1, organizations, platforms, clients):
         """

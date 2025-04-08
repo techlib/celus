@@ -994,7 +994,6 @@ import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import { counterVersionToStr } from "@/libs/sushi";
 import { isoDateTimeFormat } from "@/libs/dates";
 import { userToString } from "@/libs/user";
-import { template } from "lodash";
 
 export default {
   name: "SushiCredentialsManagementWidget",

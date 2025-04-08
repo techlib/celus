@@ -14,7 +14,7 @@ MIDDLEWARE = (
         "debug_toolbar.middleware.DebugToolbarMiddleware"
         # there is a bug in the QueryCountMiddleware -https://github.com/bradmontgomery/django-querycount/issues/32
         # temporarily disabling it
-        # 'querycount.middleware.QueryCountMiddleware',
+        # "querycount.middleware.QueryCountMiddleware",
     ]
     + MIDDLEWARE[-1:]  # noqa F405
 )
