@@ -17,7 +17,7 @@
     clear-icon="fas fa-times"
     density="default"
     :menu-props="{ eager: true }"
-    return-object
+    :return-object="returnObject"
   >
     <template v-slot:item="{ props, item }">
       <v-list-item v-bind="props" title="">

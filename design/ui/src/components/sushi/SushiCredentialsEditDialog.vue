@@ -298,6 +298,7 @@ cs:
                     v-model="platform"
                     :label="$t('platform')"
                     :loading="loadingPlatforms"
+                    return-object
                     class="platform_select"
                     ref="platformField"
                   >
