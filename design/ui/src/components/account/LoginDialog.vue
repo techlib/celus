@@ -78,15 +78,17 @@ cs:
     >
       <v-card>
         <v-card-title class="headline">{{ $t("not_logged_in") }}</v-card-title>
-        <v-card-text>
-          <div>{{ $t("not_logged_in_internal_text") }}</div>
+        <v-card-text class="pb-0">
+          <div class="title_description text-disabled">
+            {{ $t("not_logged_in_internal_text") }}
+          </div>
           <v-alert
             v-if="allowSignUp"
             color="primary"
             variant="outlined"
             class="mt-3"
           >
-            <v-icon class="pr-3">far fa-hand-point-right</v-icon>
+            <v-icon class="mr-3" size="small">far fa-hand-point-right</v-icon>
             <i18n-t keypath="signup" tag="span" class="text--secondary">
               <template #register_here>
                 <a @click="currentTab = 'register'" v-text="$t('register')"></a>
@@ -524,5 +526,9 @@ a {
   font-weight: 400;
   line-height: 1.375rem;
   letter-spacing: 0.0071428571em;
+}
+
+.title_description {
+  font-size: 14px;
 }
 </style>
