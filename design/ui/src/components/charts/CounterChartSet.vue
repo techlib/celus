@@ -100,6 +100,8 @@ cs:
           border="end"
           border-color
           elevation="2"
+          class="mb-4"
+          variant="text"
         >
           {{ $t("no_chart_types_available") }}
         </v-alert>
@@ -110,6 +112,7 @@ cs:
           class="mb-4"
           border-color
           elevation="2"
+          variant="text"
         >
           {{ $t("no_reports_available_for_title") }}
         </v-alert>

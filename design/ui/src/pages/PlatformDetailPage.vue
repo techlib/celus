@@ -188,7 +188,12 @@ cs:
         </v-col>
       </v-row>
     </v-container>
-    <v-alert v-if="unconnectedPlatform" type="warning" variant="outlined">
+    <v-alert
+      v-if="unconnectedPlatform"
+      class="mb-4"
+      type="warning"
+      variant="outlined"
+    >
       {{ $t("unconnected_platform", { platform: unconnectedPlatform.name }) }}
     </v-alert>
     <section class="mb-5" v-if="platformObj">
@@ -200,7 +205,7 @@ cs:
       >
       </AnnotationsWidget>
     </section>
-    <v-card>
+    <v-card elevation="0">
       <v-tabs
         v-model="activeTab"
         bg-color="#f5f5f5"
@@ -256,9 +261,14 @@ cs:
           </section>
           <section v-if="platform && !platform.title_count">
             <v-container fluid class="px-4">
-              <v-alert elevation="2" border="end" type="warning" border-color>{{
-                $t("no_info")
-              }}</v-alert>
+              <v-alert
+                elevation="2"
+                border="end"
+                type="warning"
+                border-color
+                variant="text"
+                >{{ $t("no_info") }}</v-alert
+              >
             </v-container>
           </section>
         </v-window-item>

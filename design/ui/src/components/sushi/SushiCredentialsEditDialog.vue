@@ -694,6 +694,7 @@ cs:
                     color="warning"
                     variant="outlined"
                     @click="markFixed(true)"
+                    class="mt-4"
                     >{{ $t("mark_fixed") }}</v-btn
                   >
                 </v-alert>
