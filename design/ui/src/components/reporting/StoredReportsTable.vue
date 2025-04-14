@@ -22,7 +22,25 @@
           single-select
         >
           <template #top>
-            <v-row class="d-flex align-center">
+            <v-row class="align-center pt-0 my-0">
+              <v-col cols="auto">
+                <v-checkbox
+                  v-model="overrideDates"
+                  :label="$t('actions.override_dates')"
+                  density="compact"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="auto">
+                <v-checkbox
+                  v-model="overrideOrganizations"
+                  :label="$t('actions.override_organizations')"
+                  density="compact"
+                  hide-details
+                />
+              </v-col>
+            </v-row>
+            <v-row class="align-center pt-0 my-0">
               <v-col cols="auto">
                 <v-btn
                   color="primary"
@@ -398,6 +416,8 @@ export default {
       selectedRowDim: null,
       orderBy: [{ key: "name", order: "asc" }],
       selectedRows: [],
+      overrideDates: false,
+      overrideOrganizations: false,
     };
   },
 
@@ -483,6 +503,9 @@ export default {
   methods: {
     ...mapActions({
       showSnackbar: "showSnackbar",
+      changeForceHideDateRangeSelector: "changeForceHideDateRangeSelector",
+      changeForceHideOrganizationSelector:
+        "changeForceHideOrganizationSelector",
     }),
     isoDateTimeFormatSpans,
     userToString,
@@ -637,6 +660,31 @@ export default {
   async mounted() {
     await this.fetchReportTypes();
     await this.fetchData();
+  },
+  watch: {
+    overrideDates: {
+      handler() {
+        console.log("overrideDates", this.$router.currentRoute.value.name);
+        this.changeForceHideDateRangeSelector({
+          hide: !this.overrideDates,
+          route: this.$router.currentRoute.value.name,
+        });
+      },
+      immediate: true,
+    },
+    overrideOrganizations: {
+      handler() {
+        console.log(
+          "overrideOrganizations",
+          this.$router.currentRoute.value.name,
+        );
+        this.changeForceHideOrganizationSelector({
+          hide: !this.overrideOrganizations,
+          route: this.$router.currentRoute.value.name,
+        });
+      },
+      immediate: true,
+    },
   },
 };
 </script>

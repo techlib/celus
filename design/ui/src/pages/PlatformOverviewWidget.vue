@@ -254,7 +254,7 @@ export default {
       handler() {
         this.changeForceHideDateRangeSelector({
           hide: this.viewType === "cost" ? true : false,
-          route: this.$router.currentRoute.name,
+          route: this.$router.currentRoute.value.name,
         });
       },
       immediate: true,

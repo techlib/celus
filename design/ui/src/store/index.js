@@ -138,6 +138,7 @@ export default new Vuex.Store({
     eventWorker: null,
     ws: null, // web socket for notifications
     forceDisableOrganizationSelector: {},
+    forceHideOrganizationSelector: {},
     forceHideDateRangeSelector: {},
     otpRequired: false,
     bootUpFinishedInternal: false,
@@ -823,6 +824,9 @@ export default new Vuex.Store({
     async changeForceDisableOrganizationSelector(context, { hide, route }) {
       context.commit("setForceDisableOrganizationSelector", { hide, route });
     },
+    async changeForceHideOrganizationSelector(context, { hide, route }) {
+      context.commit("setForceHideOrganizationSelector", { hide, route });
+    },
     async changeForceHideDateRangeSelector(context, { hide, route }) {
       context.commit("setForceHideDateRangeSelector", { hide, route });
     },
@@ -912,11 +916,12 @@ export default new Vuex.Store({
       state.ws = ws;
     },
     setForceDisableOrganizationSelector(state, { hide, route }) {
-      // Vue.set(state.forceDisableOrganizationSelector, route, hide);
       state.forceDisableOrganizationSelector[route] = hide;
     },
+    setForceHideOrganizationSelector(state, { hide, route }) {
+      state.forceHideOrganizationSelector[route] = hide;
+    },
     setForceHideDateRangeSelector(state, { hide, route }) {
-      // Vue.set(state.forceHideDateRangeSelector, route, hide);
       state.forceHideDateRangeSelector[route] = hide;
     },
     setOtpRequired(state, { required }) {

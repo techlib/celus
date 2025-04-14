@@ -1574,7 +1574,7 @@ export default {
       let hide = !!this.privatePlaformForOrganizationPk;
       this.changeForceDisableOrganizationSelector({
         hide: hide,
-        route: this.$router.currentRoute.name,
+        route: this.$router.currentRoute.value.name,
       });
       // set organization when no organization is selected for private platform
       if (!this.currentOrganization && hide) {

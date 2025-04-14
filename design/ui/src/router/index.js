@@ -272,8 +272,8 @@ const routes = [
     name: "flexireports",
     component: () => import("../pages/FlexibleReportsPage.vue"),
     meta: {
-      hideOrganizationSelector: true,
-      hideDateRangeSelector: true,
+      hideOrganizationSelector: false, // the page will hide it depending on internal logic
+      hideDateRangeSelector: false, // the page will hide it depending on internal logic
       title: "pages.flexi_reports",
     },
   },

@@ -308,6 +308,7 @@ export default {
       footerImages: (state) => state.siteConfig.footerImages,
       unreadEventCount: (state) => state.events.unreadCount,
       forceDisableOrganizationSelector: "forceDisableOrganizationSelector",
+      forceHideOrganizationSelector: "forceHideOrganizationSelector",
       forceHideDateRangeSelector: "forceHideDateRangeSelector",
     }),
     ...mapGetters({
@@ -363,13 +364,17 @@ export default {
     disableOrganizationSelector() {
       return !!this.forceDisableOrganizationSelector[this.$route.name];
     },
+    hideOrganizationSelector() {
+      return !!this.forceHideOrganizationSelector[this.$route.name];
+    },
     hideDateRangeSelector() {
       return !!this.forceHideDateRangeSelector[this.$route.name];
     },
     showOrganizationSelector() {
       return (
         this.$vuetify.display.mdAndUp &&
-        !this.$route.meta.hideOrganizationSelector
+        !this.$route.meta.hideOrganizationSelector &&
+        !this.hideOrganizationSelector
       );
     },
     showDateRangeSelector() {

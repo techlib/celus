@@ -261,6 +261,8 @@ en:
     delete: Delete
     download: Download
     edit: Edit
+    override_dates: Override dates
+    override_organizations: Override organizations
     proceed: Proceed
     refresh: Refresh
     reharvest: Reharvest
@@ -666,6 +668,8 @@ cs:
     delete: Smazat
     download: Stáhnout
     edit: Editovat
+    override_dates: Přepsat období
+    override_organizations: Přepsat organizace
     proceed: Provést
     refresh: Aktualizovat
     reharvest: Znovu stáhnout
