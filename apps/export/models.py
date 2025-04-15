@@ -8,11 +8,7 @@ from django.core.cache import cache
 from django.db import models
 from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.utils.timezone import now
-from logs.logic.reporting.export import (
-    FlexibleDataExcelExporter,
-    FlexibleDataExcelExporterNoCharts,
-    FlexibleDataZipCSVExporter,
-)
+from logs.logic.reporting.export import format_to_exporter
 from logs.logic.reporting.filters import DateDimensionFilter
 from logs.logic.reporting.helpers import user_visible_tags
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
@@ -132,13 +128,6 @@ class ExportBase(models.Model):
             self.extra_info["file_size"] = self.output_file.size
             self.status = self.FINISHED
         self.save()
-
-
-format_to_exporter = {
-    FileFormat.XLSX: FlexibleDataExcelExporter,
-    FileFormat.XLSX_NO_CHARTS: FlexibleDataExcelExporterNoCharts,
-    FileFormat.ZIP_CSV: FlexibleDataZipCSVExporter,
-}
 
 
 class FlexibleDataExport(ExportBase):

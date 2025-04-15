@@ -406,6 +406,7 @@ export default new Vuex.Store({
       if (state.user !== null && state.organizations !== null) {
         return true;
       }
+      console.log("letAxiosThrough IS FALSE", state.user, state.organizations);
       return false;
     },
     bootUpFinished(state) {

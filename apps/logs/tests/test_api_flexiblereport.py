@@ -1,11 +1,12 @@
 import pytest
 from core.logic.serialization import b64json
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
 from tags.fake_data import TagForTitleFactory
 
-from logs.models import FlexibleReport
+from logs.models import FlexibleReport, FlexibleReportUserEmail
 from test_scenarios.basic import users  # noqa
 
 
@@ -47,6 +48,102 @@ class TestFlexibleReportAPI:
         resp = client.get(url)
         assert resp.status_code == 200
         assert accessible_reports == {rec["name"] for rec in resp.json()}
+
+    @pytest.mark.parametrize(
+        ["access_level", "user_to_count"],
+        [
+            [
+                "consortium",
+                {
+                    "user1": 1,  # himself
+                    "user2": 1,  # himself
+                    "admin1": 1,  # himself
+                    "admin2": 1,  # himself
+                    "master_admin": 6,  # himself + 4 normal users + master_user
+                    "master_user": 1,  # himself
+                    "su": 6,  # himself + 4 normal users + master_user
+                },
+            ],
+            [
+                "organization",
+                {
+                    "user1": 1,  # himself
+                    "user2": 0,  # cannot see
+                    "admin1": 2,  # himself + user1
+                    "admin2": 0,  # cannot see
+                    "master_admin": 3,  # himself + 2 normal users
+                    "master_user": 1,  # himself
+                    "su": 3,  # himself + 2 normal users
+                },
+            ],
+            [
+                "user",
+                {
+                    "user1": 0,  # cannot see
+                    "user2": 0,  # cannot see
+                    "admin1": 1,  # himself
+                    "admin2": 0,  # cannot see
+                    "master_admin": 0,  # cannot see
+                    "master_user": 0,  # cannot see
+                    "su": 0,  # cannot see
+                },
+            ],
+        ],
+    )
+    def test_mailing_count(
+        self, client, organizations, users, access_level, user_to_count, settings
+    ):
+        """
+        Test that the mailing count is correctly set and reflects who is looking.
+        """
+        org_master, org_normal, org_normal2 = organizations
+        settings.MASTER_ORGANIZATIONS = [org_master.internal_id]
+
+        # link users and organizations - we do not user `basic1` because some of the fixtures
+        # conflict with the ones used by `basic1`
+        users["master_admin"].organizations.add(org_master, through_defaults={"is_admin": True})
+        users["master_user"].organizations.add(org_master, through_defaults={"is_admin": False})
+        users["admin1"].organizations.add(org_normal, through_defaults={"is_admin": True})
+        users["admin2"].organizations.add(org_normal2, through_defaults={"is_admin": True})
+        users["user1"].organizations.add(org_normal, through_defaults={"is_admin": False})
+        users["user2"].organizations.add(org_normal2, through_defaults={"is_admin": False})
+
+        # set up the report
+        owner = users["admin1"] if access_level == "user" else None
+        owner_organization = org_normal if access_level == "organization" else None
+        report = FlexibleReport.objects.create(owner=owner, owner_organization=owner_organization)
+        # create mailing for all users
+        for user, count in user_to_count.items():
+            if count == 0:
+                with pytest.raises(PermissionDenied):
+                    # the user cannot see the report, thus cannot create a mailing
+                    FlexibleReportUserEmail.objects.create(flexible_report=report, user=users[user])
+            else:
+                FlexibleReportUserEmail.objects.create(flexible_report=report, user=users[user])
+        # check that the mailing count is correct for the detail view
+        url = reverse("flexible-report-detail", args=[report.pk])
+        for user, count in user_to_count.items():
+            client.force_login(users[user])
+            resp = client.get(url)
+            if count == 0:
+                assert resp.status_code == 404
+            else:
+                assert resp.status_code == 200
+                assert (
+                    resp.json()["mailing_count"] == count
+                ), f"user {user} should see {count} mailing"
+        # check that the mailing count is correct for the list view
+        url = reverse("flexible-report-list")
+        for user, count in user_to_count.items():
+            client.force_login(users[user])
+            resp = client.get(url)
+            if count == 0:
+                assert len(resp.json()) == 0
+            else:
+                assert len(resp.json()) == 1
+                assert (
+                    resp.json()[0]["mailing_count"] == count
+                ), f"user {user} should see {count} mailing"
 
     def test_create(self, admin_client, admin_user):
         resp = admin_client.post(

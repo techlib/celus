@@ -145,13 +145,10 @@ class Organization(MPTTModel):
         """
         q_direct_admins = Q(userorganization__organization=self, userorganization__is_admin=True)
         if include_superusers:
-            q_superusers = Q(is_superuser=True)
-            q_master_admin = Q(
-                userorganization__organization__internal_id__in=settings.MASTER_ORGANIZATIONS,
-                userorganization__is_admin=True,
-            )
-            return User.objects.filter(q_direct_admins | q_superusers | q_master_admin)
-        return User.objects.filter(q_direct_admins)
+            return (
+                User.objects.filter(q_direct_admins) | User.objects.filter_consortium_admins()
+            ).distinct()
+        return User.objects.filter(q_direct_admins).distinct()
 
 
 class OrganizationAltName(models.Model):

@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.cache import cache
 from django.db import models
-from django.db.models import BooleanField, Exists, OuterRef, Value
+from django.db.models import BooleanField, Exists, OuterRef, Q, Value
 from django.db.models.functions import Lower
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -20,6 +20,9 @@ from django_celery_results.models import TaskResult
 
 from core.exceptions import FileConsistencyError
 from core.logic.url import extract_organization_id_from_request_query
+
+if typing.TYPE_CHECKING:
+    from organizations.models import Organization
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +143,14 @@ class UserQuerySet(models.QuerySet):
         else:
             return self.annotate(_email_verified=Exists(verified_email_addresses))
 
+    def filter_consortium_admins(self):
+        q_superusers = Q(is_superuser=True)
+        q_master_admin = Q(
+            userorganization__organization__internal_id__in=settings.MASTER_ORGANIZATIONS,
+            userorganization__is_admin=True,
+        )
+        return self.filter(q_superusers | q_master_admin)
+
 
 class CelusUserManager(UserManager):
     def get_queryset(self):
@@ -147,6 +158,9 @@ class CelusUserManager(UserManager):
 
     def annotate_email_verified(self):
         return self.get_queryset().annotate_email_verified()
+
+    def filter_consortium_admins(self):
+        return self.get_queryset().filter_consortium_admins()
 
 
 class User(AbstractUser):
@@ -302,7 +316,7 @@ class User(AbstractUser):
             else:
                 return REL_UNREL_USER
 
-    def admin_organizations(self):
+    def admin_organizations(self) -> models.QuerySet["Organization"]:
         from organizations.models import Organization, UserOrganization
 
         if self.is_superuser or self.is_admin_of_master_organization:

@@ -41,7 +41,7 @@
     "vue-router": "^4.5.0",
     "vue3-gravatar": "^3.0.0",
     "vue3-i18n": "^1.1.5",
-    "vuetify": "^3.6.7",
+    "vuetify": "^3.8.1",
     "vuetify3-confirm": "^0.0.13",
     "vuex": "^4.1.0",
     "vuex-persist": "^3.1.3",

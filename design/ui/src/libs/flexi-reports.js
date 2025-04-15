@@ -123,6 +123,7 @@ class FlexiReport {
     this.createdBy = null;
     this.lastUpdated = null;
     this.lastUpdatedBy = null;
+    this.mailingCount = 0;
     // overrides - these are typically assigned later on by the UI
     // when the user activates the override mode
     this.dateOverride = null;
@@ -169,6 +170,7 @@ class FlexiReport {
     report.created = data.created;
     report.createdBy = data.created_by;
     report.ownerOrganization = data.owner_organization;
+    report.mailingCount = data.mailing_count;
     await report.readConfig(data.config, allReportTypes);
     return report;
   }

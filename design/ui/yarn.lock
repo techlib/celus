@@ -6496,7 +6496,7 @@ __metadata:
     vue-router: "npm:^4.5.0"
     vue3-gravatar: "npm:^3.0.0"
     vue3-i18n: "npm:^1.1.5"
-    vuetify: "npm:^3.6.7"
+    vuetify: "npm:^3.8.1"
     vuetify3-confirm: "npm:^0.0.13"
     vuex: "npm:^4.1.0"
     vuex-persist: "npm:^3.1.3"
@@ -6986,14 +6986,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vuetify@npm:^3.6.7":
-  version: 3.7.15
-  resolution: "vuetify@npm:3.7.15"
+"vuetify@npm:^3.8.1":
+  version: 3.8.2
+  resolution: "vuetify@npm:3.8.2"
   peerDependencies:
     typescript: ">=4.7"
-    vite-plugin-vuetify: ">=1.0.0"
-    vue: ^3.3.0
-    webpack-plugin-vuetify: ">=2.0.0"
+    vite-plugin-vuetify: ">=2.1.0"
+    vue: ^3.5.0
+    webpack-plugin-vuetify: ">=3.1.0"
   peerDependenciesMeta:
     typescript:
       optional: true
@@ -7001,7 +7001,7 @@ __metadata:
       optional: true
     webpack-plugin-vuetify:
       optional: true
-  checksum: 10c0/76e5493cdd8835fab54f34427f70901ee2d17f220f05f76a5610fbee4cfabb9e07dd58198f21548f804025d6eda0b8b5a7e021250c80f9e693d72fa55dab062a
+  checksum: 10c0/039fb73ed8c8f25cc408b401779652083c00b6dcb57dd02dbea7365e34bf4b50672504e38040796b8ca8217df9900e8568a9fb66315b9852af77efa7928169b4
   languageName: node
   linkType: hard
 

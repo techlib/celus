@@ -12,3 +12,10 @@ class FileFormat(models.TextChoices):
             return "xlsx"
         else:
             return "zip"
+
+    @classmethod
+    def content_type(cls, value):
+        if value in (cls.XLSX, cls.XLSX_NO_CHARTS):
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        else:
+            return "application/zip"

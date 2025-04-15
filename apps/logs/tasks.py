@@ -52,7 +52,14 @@ from logs.logic.materialized_reports import (
     sync_materialized_reports,
     update_report_approx_record_count,
 )
-from logs.models import ImportBatchSyncLog, ManualDataUpload, MduMethod, MduState
+from logs.models import (
+    FlexibleReportUserEmail,
+    ImportBatchSyncLog,
+    ManualDataUpload,
+    MduMethod,
+    MduState,
+)
+from logs.serializers import FlexibleReportUserEmailNewSerializer
 
 logger = logging.getLogger(__file__)
 
@@ -531,3 +538,33 @@ def find_split_accesslogs_with_the_same_title_task():
             "Found split accesslogs with the same title",
             f"Stats: {stats}\n\nTo fix the issue, manual invervention is needed.",
         )
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def send_report_mailing_raw_task(data: dict):
+    """
+    Send a report mailing using a dict of raw data as input.
+    """
+    logger.info("Sending report mailing: %s", data)
+    serializer = FlexibleReportUserEmailNewSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    logger.info("Serializer is valid: %s", serializer.validated_data)
+    # the serializer creates the instance and saves it to the database
+    # therefore we create the instance manually here - we don't want to save it
+    FlexibleReportUserEmail(**serializer.validated_data).send_email()
+
+
+@celery.shared_task
+@logged_task
+@email_if_fails
+def send_due_report_mailings_task():
+    """
+    Send due report mailings
+    """
+    for fru in FlexibleReportUserEmail.objects.all().select_for_update(nowait=True):
+        # next_send is a property, so we need to evaluate it for each object
+        if fru.next_send <= now().date():
+            logger.info("Sending due report mailing: #%d; %s", fru.pk, fru)
+            fru.send_email()

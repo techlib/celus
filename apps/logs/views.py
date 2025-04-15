@@ -12,7 +12,7 @@ from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, last_month, parse_month
 from core.logic.serialization import parse_b64json
 from core.logic.type_conversion import to_bool
-from core.models import REL_ORG_ADMIN, REL_UNREL_USER, DataSource
+from core.models import REL_ORG_ADMIN, REL_UNREL_USER, DataSource, User
 from core.permissions import (
     CanAccessOrganizationFromGETAttrs,
     CanAccessOrganizationRelatedObjectPermission,
@@ -22,6 +22,7 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     SuperuserOrMasterUserPermission,
 )
+from core.serializers import UserSerializerForMailing
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
@@ -86,6 +87,7 @@ from logs.models import (
     AccessLog,
     DimensionText,
     FlexibleReport,
+    FlexibleReportUserEmail,
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
@@ -100,6 +102,8 @@ from logs.serializers import (
     DimensionSerializer,
     DimensionTextSerializer,
     FlexibleReportSerializer,
+    FlexibleReportUserEmailCreateSerializer,
+    FlexibleReportUserEmailSerializer,
     ImportBatchSerializer,
     ImportBatchVerboseSerializer,
     InterestGroupSerializer,
@@ -118,7 +122,11 @@ from .logic.data_coverage import DataCoverageExtractor
 from .logic.reporting.helpers import user_visible_tags
 from .logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from .permissions import AccessiblePlatformFromOrganization
-from .tasks import export_raw_data_task, sync_organizationplatform_records_task
+from .tasks import (
+    export_raw_data_task,
+    send_report_mailing_raw_task,
+    sync_organizationplatform_records_task,
+)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -1421,12 +1429,18 @@ class FlexibleReportViewSet(ModelViewSet):
     filter_backends = [PrimaryDimensionFlexiReportFilter]
 
     def get_queryset(self):
-        return FlexibleReport.objects.filter(
-            Q(owner=self.request.user)  # owned by user
-            | Q(owner__isnull=True, owner_organization__isnull=True)  # completely public
-            | Q(
-                owner_organization__in=self.request.user.accessible_organizations()
-            )  # assigned to owner's organization
+        return (
+            FlexibleReport.objects.filter(
+                Q(owner=self.request.user)  # owned by user
+                | Q(owner__isnull=True, owner_organization__isnull=True)  # completely public
+                | Q(
+                    owner_organization__in=self.request.user.accessible_organizations()
+                )  # assigned to owner's organization
+            )
+            .annotate(
+                max_mailing_count=Count("flexiblereportuseremail")
+            )  # upper bound for mailing count
+            .select_related("owner", "owner_organization", "last_updated_by", "created_by")
         )
 
     def _preprocess_config(self, request):
@@ -1537,3 +1551,116 @@ class FlexibleReportViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         self._check_update_permissions(request, self.get_object(), delete=True)
         return super().destroy(request, *args, **kwargs)
+
+    def _add_mailing_count(self, queryset, request):
+        for rec in queryset:
+            if rec.max_mailing_count > 0:
+                rec.mailing_count = FlexibleReportUserEmail.objects.filter(
+                    flexible_report=rec, user__in=self.view_users_queryset(rec, request.user)
+                ).count()
+            else:
+                rec.mailing_count = 0
+
+    def list(self, request, *args, **kwargs):
+        """
+        Custom list to add the mailing count to the response.
+        Unfortunately, it has to be done object by object.
+        """
+        # The queryset is already annotated with the max_mailing_count which is an upper bound
+        # for the mailing count. Thus if the value is 0, we can be sure that no mailing has been
+        # created yet and we can skip the count query.
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            self._add_mailing_count(page, request)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        self._add_mailing_count(queryset, request)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Custom retrieve to add the mailing count to the response
+        """
+        instance = self.get_object()
+        instance.mailing_count = FlexibleReportUserEmail.objects.filter(
+            flexible_report=instance, user__in=self.view_users_queryset(instance, request.user)
+        ).count()
+        return Response(self.get_serializer(instance).data)
+
+    def view_users_queryset(self, report: FlexibleReport, user: User):
+        """
+        Return a queryset of users that the current user can see as related to the report.
+        """
+        if user not in report.users_with_edit_access():
+            # if the user does not have edit access, they can only see themselves
+            return User.objects.filter(pk=user.pk)
+        # if the user has edit access, they can see all other users with view access
+        # but not (other) consortium admins
+        consortium_admins = User.objects.filter_consortium_admins().exclude(pk=user.pk)
+        return report.users_with_view_access().exclude(pk__in=consortium_admins)
+
+    @action(methods=["GET"], detail=True, url_path="mailings", url_name="mailings")
+    def list_mailings(self, request, pk):
+        """
+        List all report mailings for a given report
+        """
+        report: FlexibleReport = self.get_object()
+        visible_users = self.view_users_queryset(report, request.user)
+        frus = FlexibleReportUserEmail.objects.filter(
+            flexible_report=report, user__in=visible_users
+        ).select_related("user")
+
+        return Response(FlexibleReportUserEmailSerializer(frus, many=True).data)
+
+    @action(methods=["GET"], detail=True, url_path="view-users", url_name="view-users")
+    def view_users(self, request, pk):
+        """
+        Return all users that can view the report, excluding other consortium admins.
+        """
+        return Response(
+            UserSerializerForMailing(
+                self.view_users_queryset(self.get_object(), request.user), many=True
+            ).data
+        )
+
+
+class FlexibleReportUserEmailViewSet(ModelViewSet):
+    serializer_class = FlexibleReportUserEmailSerializer
+    filter_backends = [PrimaryDimensionFlexiReportFilter]
+
+    def get_queryset(self):
+        return FlexibleReportUserEmail.objects.filter(user__in=self.request.user.accessible_users())
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return FlexibleReportUserEmailCreateSerializer
+        return super().get_serializer_class()
+
+    @action(methods=["POST"], detail=False, url_path="test")
+    def test(self, request):
+        """
+        Just send the email, don't save the instance to the database
+        """
+        # pre-validate the data before sending it to the task
+        serializer = FlexibleReportUserEmailCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # check permissions
+        # check that the user has access to the report
+        fr = serializer.validated_data["flexible_report"]
+        target_user = serializer.validated_data["user"]
+        if request.user not in fr.users_with_view_access():
+            raise PermissionDenied("You do not have permission to perform this action.")
+        # check that user can send to the target user
+        if target_user not in request.user.accessible_users():
+            raise PermissionDenied("You do not have permission to perform this action.")
+        # check that the target user has access to the report
+        if target_user not in fr.users_with_view_access():
+            raise PermissionDenied("You do not have permission to perform this action.")
+
+        send_report_mailing_raw_task.delay(request.data)
+        return Response({"message": "Email sent", "success": True}, status=HTTP_200_OK)

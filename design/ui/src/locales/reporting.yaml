@@ -27,6 +27,7 @@ en:
   add_report: Add report
   create_report: Create report
   error_details: Error details
+  mailing_preferences_tt: Mailing preferences
   show_zero_rows: Include rows with zero usage
   show_zero_rows_trend_mode: Include rows with zero base usage
   show_zero_rows_no: Only rows with non-zero usage
@@ -55,7 +56,38 @@ en:
     base_period: Base period
     compared_period: Compared period
     period_length_warning: The base period has different length from the compared period. This may lead to unexpected results.
-
+  period_unit:
+    month: 0 months | 1 month | {count} months
+    quarter: 0 quarters | 1 quarter | {count} quarters
+    half_year: 0 half years | 1 half year | {count} half years
+    year: 0 years | 1 year | {count} years
+  frequency_label: Report mailing frequency
+  frequency_label_short: Frequency
+  frequency_and_periods_label: Report mailing frequency and number of periods
+  frequency:
+    M: Monthly
+    Q: Quarterly
+    H: Half-yearly
+    Y: Yearly
+  periods:
+    M: months
+    Q: quarters
+    H: half years
+    Y: years
+  frequency_tt: Frequency of the report mailing
+  number_of_periods: "# of periods"
+  number_of_periods_tt: Number of periods ({period}) to include in the report mailing
+  send_one_time_email_tt: Send one-time email with report export
+  delete_mailing_tt: Cancel regular report mailing
+  one_time_email_sent: One-time email with report export was sent
+  error_sending_one_time_email: Error sending one-time email with report export
+  mailing_activated: Regular report mailing was activated
+  mailing_deactivated: Regular report mailing was deactivated
+  mailing_updated: Regular report mailing was updated
+  next_send: Next send date
+  next_send_tt: Next send date is one month after the end of the most recent period.
+  fiscal_period: Fiscal period
+  fiscal_period_tt: Base period calculation on fiscal year rather than calendar year
 cs:
   access_level_tt:
     user: Soukromý report - viditelný pouze pro vás
@@ -85,6 +117,7 @@ cs:
   add_report: Přidat report
   create_report: Vytvořit report
   error_details: Detaily chyby
+  mailing_preferences_tt: Nastavení odesílání reportů
   show_zero_rows: Zahrnout i řádky s nulovým využitím
   show_zero_rows_trend_mode: Zahrnout i řádky s nulovým využitím v základním období
   show_zero_rows_no: Jen řádky s nenulovým využitím
@@ -113,3 +146,34 @@ cs:
     base_period: Základní období
     compared_period: Porovnávané období
     period_length_warning: Základní období má jinou délku než porovnávané období. To může vést k neočekávaným výsledkům.
+  period_unit:
+    month: "{count} měsíc | {count} měsíce | {count} měsíců"
+    quarter: "{count} čtvrtletí | {count} čtvrtletí | {count} čtvrtletí"
+    half_year: "{count} pololetí | {count} pololetí | {count} pololetí"
+    year: "{count} rok | {count} roky | {count} let"
+  frequency_label: Frekvence odesílání reportů
+  frequency_and_periods_label: Frekvence odesílání reportů a počet období
+  frequency_label_short: Frekvence
+  frequency:
+    M: Měsíčně
+    Q: Čtvrtletně
+    H: Pololetně
+    Y: Ročně
+  periods:
+    M: měsíce
+    Q: čtvrtletí
+    H: pololetí
+    Y: roky
+  frequency_tt: Frekvence odesílání reportů
+  number_of_periods_tt: Počet období ({period}) které budou odesílány v jednom reportu
+  send_one_time_email_tt: Odeslat jednorázový email s exportem reportu
+  delete_mailing_tt: Zrušit pravidelné odesílání reportů
+  one_time_email_sent: Jednorázový email s exportem reportu byl odeslán
+  error_sending_one_time_email: Chyba při odesílání jednorázového emailu s exportem reportu
+  mailing_activated: Pravidelné odesílání reportů bylo aktivováno
+  mailing_deactivated: Pravidelné odesílání reportů bylo deaktivováno
+  mailing_updated: Pravidelné odesílání reportů bylo aktualizováno
+  next_send: Následující odeslání
+  next_send_tt: Následující odeslání proběhne měsíc po skončení předchozího období.
+  fiscal_period: Fiskální období
+  fiscal_period_tt: Má být výpočet období založen na fiskálním roku místo kalendářního?

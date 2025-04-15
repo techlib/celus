@@ -381,6 +381,7 @@ CELERY_TASK_ROUTES = {
     "logs.tasks.prepare_preflights": {"queue": "preflight"},
     "logs.tasks.process_outstanding_import_batch_sync_logs_task": {"queue": "celery"},
     "logs.tasks.reprocess_mdu_task": {"queue": "import"},
+    "logs.tasks.send_due_report_mailings_task": {"queue": "export"},
     "logs.tasks.smart_interest_sync_task": {"queue": "interest"},
     "logs.tasks.sync_materialized_reports_task": {"queue": "interest"},
     "logs.tasks.sync_organizationplatform_records_task": {"queue": "celery"},
@@ -546,6 +547,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "sushi.tasks.send_harvesting_reports_task",
         "schedule": crontab(day_of_month="1", hour="0", minute="1"),  # on each month start
         "options": {"expires": 60 * 60},
+    },
+    "send_due_report_mailings_task": {
+        # in the present version of the code, the task only makes sense on the last day of the month
+        # but to make sure that if we change the code, the task is not run on the wrong day,
+        # we run it every day - it will just do nothing if there are no mailings to send
+        "task": "logs.tasks.send_due_report_mailings_task",
+        "schedule": crontab(hour="4", minute=randmin(0, 59)),  # every day at 4:00-4:59
+        "options": {"expires": 24 * 60 * 60},
     },
     "send_grouped_harvesting_reports_task": {
         "task": "sushi.tasks.send_grouped_harvesting_reports_task",

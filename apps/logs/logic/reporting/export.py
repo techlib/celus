@@ -17,6 +17,7 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.utils.translation import pgettext
+from export.enums import FileFormat
 from mptt.models import MPTTModelBase
 from organizations.models import Organization
 from tags.models import Tag, TagScope, UserTagClass
@@ -770,3 +771,10 @@ class FlexibleDataExcelExporterNoCharts(FlexibleDataExcelExporter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.include_charts = False
+
+
+format_to_exporter = {
+    FileFormat.XLSX: FlexibleDataExcelExporter,
+    FileFormat.XLSX_NO_CHARTS: FlexibleDataExcelExporterNoCharts,
+    FileFormat.ZIP_CSV: FlexibleDataZipCSVExporter,
+}

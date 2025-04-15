@@ -8,11 +8,11 @@ target-version = "py38"
 
 [tool.ruff.lint]
 ignore = [
-    "A001", # Variable `Warning` is shadowing a Python builtin
-    "A002", # Argument `id` is shadowing a Python builtin
-    "A003", # Class attribute `list` is shadowing a Python builtin
-    "DJ008",  # model does not have __str__ method
-    "F811", # redefinition of unused '...'
+    "A001",  # Variable `Warning` is shadowing a Python builtin
+    "A002",  # Argument `id` is shadowing a Python builtin
+    "A003",  # Class attribute `list` is shadowing a Python builtin
+    "DJ008", # model does not have __str__ method
+    "F811",  # redefinition of unused '...'
 ]
 select = [
     'A',  # flake8-builtins
@@ -23,10 +23,13 @@ select = [
     'I',  # isort
     'W',  # pycodestyle - warnings
 ]
-fixable = ['I001']  # isort: imports are incorrectly sorted
+fixable = [
+    'I001',
+    'F401',
+] # I001: imports are incorrectly sorted, F401: unused import
 
 [tool.ruff.lint.per-file-ignores]
-"test_*.py" = ["B011"]  # test files should have asserts
+"test_*.py" = ["B011"] # test files should have asserts
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
@@ -39,9 +42,12 @@ skip-magic-trailing-comma = true
 name = "celus"
 version = "8.0.4"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
-authors = ["Beda Kosata <beda@bigdigdata.com>", "Stepan Henek <stepan@bigdigdata.com>"]
+authors = [
+    "Beda Kosata <beda@bigdigdata.com>",
+    "Stepan Henek <stepan@bigdigdata.com>",
+]
 license = "MIT"
-package-mode=false
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8.9"
@@ -59,11 +65,11 @@ django-autocomplete-light = "~3.11.0"
 django-cachalot = "~2.6.1"
 django-celery-results = "~2.5.0"
 django-colorfield = "^0.9.0"
-django-impersonate =  "~1.9.1"
+django-impersonate = "~1.9.1"
 django-import-export = "^3.0.2"
 django-ipware = "^5.0.0"
 django-modeltranslation = "~0.18.7"
-django-mptt = "~0.14.0"  # django-mptt 0.15 requires python 3.9
+django-mptt = "~0.14.0" # django-mptt 0.15 requires python 3.9
 django-ntfy = "~0.1.1"
 django-otp = "~1.5.0"
 django-postgres-copy = "^2.7.0"
@@ -78,17 +84,17 @@ hcube = "0.26.1"
 isbnlib = "^3.10.3"
 lz4 = "~4.3.2"
 mrml = "~0.2.0"
-numpy = [   # keeps numpy-2.0.0 from being installed - pandas does not pin numpy correctly
-    {version = "^1.24.4", python = "3.8"},
-    {version = "^1.26.4", python = ">=3.9"}
+numpy = [ # keeps numpy-2.0.0 from being installed - pandas does not pin numpy correctly
+    { version = "^1.24.4", python = "3.8" },
+    { version = "^1.26.4", python = ">=3.9" },
 ]
 openpyxl = "~3.1.2"
-pandas = "^2.0.3"  # pandas 2.1 requires python 3.9
+pandas = "^2.0.3" # pandas 2.1 requires python 3.9
 Pillow = "^10.0.1"
 prometheus-client = "^0.17.1"
 psutil = "~5.9.4"
 psycopg2-binary = "~2.9.1"
-pycountry= "24.6.1"
+pycountry = "24.6.1"
 pydantic = "^2"
 pyparsing = "^3.0.9"
 python-dateutil = "^2.8.2"
@@ -119,7 +125,7 @@ factory-boy = "^3.2.1"
 Faker = "^19.3.0"
 filelock = "^3.12.2"
 freezegun = "^1.2.2"
-pre-commit = "^3.5.0"  # pre-commit 3.6 requires python 3.9
+pre-commit = "^3.5.0"                                     # pre-commit 3.6 requires python 3.9
 pydot = "^1.4.2"
 pyfakefs = "^5.0.0"
 pytest = "^8.3.3"
@@ -130,17 +136,15 @@ pytest-random-order = "^1.1.0"
 pytest-xdist = "^3.3.0"
 requests-mock = "~1.11.0"
 ruff = "^0.6.9"
-sphinx = "^7.1.0"  # sphinx 7.2 requires python 3.9
-watchdog = {extras = ["watchmedo"], version = "^3.0.0"}
+sphinx = "^7.1.0"                                         # sphinx 7.2 requires python 3.9
+watchdog = { extras = ["watchmedo"], version = "^3.0.0" }
 
 [tool.deptry]
 known_first_party = ["test_scenarios"]
 
 [tool.deptry.per_rule_ignores]
 # some top level imports are not detected properly by deptry
-DEP001 = [
-    "config",
-]
+DEP001 = ["config"]
 # the following are used internally by django
 DEP002 = [
     'colorlog',
@@ -150,7 +154,7 @@ DEP002 = [
     'django-redis',
     'django-test-migrations',
     'lz4',
-    'numpy',  # used through pandas
+    'numpy',                  # used through pandas
     'Pillow',
     'psycopg2-binary',
     'python-decouple',
@@ -167,7 +171,7 @@ DEP004 = [
     "freezegun",
     "faker",
     "factory",
-    "clickhouse_driver",  # used to setup the test tables
-    "filelock",  # used to lock clickhouse test from writing over each other
-    "requests_mock"
+    "clickhouse_driver", # used to setup the test tables
+    "filelock",          # used to lock clickhouse test from writing over each other
+    "requests_mock",
 ]

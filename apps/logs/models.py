@@ -1,9 +1,11 @@
 import logging
 import os
 import re
+import tempfile
 import typing
 from collections import Counter
 from copy import deepcopy
+from datetime import date
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -12,6 +14,7 @@ import magic
 from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
 from core.exceptions import ModelUsageError
+from core.logic.dates import month_end, month_start
 from core.models import (
     UL_ROBOT,
     USER_LEVEL_CHOICES,
@@ -21,9 +24,16 @@ from core.models import (
     User,
 )
 from core.models import where_to_store as core_where_to_store
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
-from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ObjectDoesNotExist,
+    PermissionDenied,
+    ValidationError,
+)
+from django.core.mail import EmailMessage
 from django.db import models, transaction
 from django.db.models import (
     Count,
@@ -42,6 +52,7 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+from export.enums import FileFormat
 from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.aggregation import Sum as HSum
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
@@ -57,12 +68,14 @@ from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Item, Platform, Title
 
-import logs
-
 from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongState
 
 logger = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from sushi.models import CounterReportType
+
+    from logs.logic.reporting import FlexibleDataSlicer
 
 DIMENSION_COUNT = 8
 
@@ -772,7 +785,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         )[0]
 
     @property
-    def crt(self) -> typing.Optional["logs.models.CounterReportType"]:
+    def crt(self) -> typing.Optional["CounterReportType"]:
         try:
             return self.report_type.counterreporttype
         except ObjectDoesNotExist:
@@ -797,7 +810,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         return (stats_dict, Counter(stats_dict["total"]), list(stats_dict["dimensions"].keys()))
 
-    def get_nibbler_output(self) -> (NibblerOutput, MduMethod):
+    def get_nibbler_output(self) -> typing.Tuple[NibblerOutput, MduMethod]:
         if self.method == MduMethod.RAW:
             # Parsing raw data using nibbler (user can't pick report type)
 
@@ -1134,6 +1147,10 @@ class ManualDataUploadImportBatch(models.Model):
 
 
 class FlexibleReport(models.Model):
+    """
+    Represents a stored report from the reporting module.
+    """
+
     class Level(Enum):
         PRIVATE = 1
         ORGANIZATION = 2
@@ -1307,7 +1324,7 @@ class FlexibleReport(models.Model):
                 ret.append(ob)
         return ret
 
-    def used_report_types(self) -> [ReportType]:
+    def used_report_types(self) -> typing.List[ReportType]:
         rt_filters = [
             f for f in self.report_config.get("filters", []) if f["dimension"] == "report_type"
         ]
@@ -1315,6 +1332,299 @@ class FlexibleReport(models.Model):
         for rt_filter in rt_filters:
             rts += list(ReportType.objects.filter(short_name__in=rt_filter["values"]))
         return rts
+
+    def users_with_view_access(self) -> QuerySet[User]:
+        """
+        Returns a queryset of users who have view access to this report
+        """
+        if self.owner:
+            return User.objects.filter(pk=self.owner.pk) | User.objects.filter_consortium_admins()
+        elif self.owner_organization:
+            return self.owner_organization.users.all() | User.objects.filter_consortium_admins()
+        return User.objects.all()  # consortium reports are visible to all users
+
+    def users_with_edit_access(self) -> QuerySet[User]:
+        """
+        Returns a queryset of users who have edit access to this report
+        """
+        if self.owner:
+            return User.objects.filter(pk=self.owner.pk) | User.objects.filter_consortium_admins()
+        elif self.owner_organization:
+            return self.owner_organization.admins(include_superusers=True)
+        # consortium reports can be edited only by consortium admins
+        return User.objects.filter_consortium_admins()
+
+
+class FrequencyChoices(models.TextChoices):
+    MONTHLY = "M", "Monthly"
+    QUARTERLY = "Q", "Quarterly"
+    HALF_YEARLY = "H", "Half-yearly"
+    YEARLY = "Y", "Yearly"
+
+    @classmethod
+    def to_timedelta(cls, frequency: str) -> relativedelta:
+        if frequency == cls.MONTHLY:
+            return relativedelta(months=1)
+        elif frequency == cls.QUARTERLY:
+            return relativedelta(months=3)
+        elif frequency == cls.HALF_YEARLY:
+            return relativedelta(months=6)
+        elif frequency == cls.YEARLY:
+            return relativedelta(years=1)
+        else:
+            raise ValueError(f"Unknown frequency: {frequency}")
+
+
+class FlexibleReportUserEmail(CreatedUpdatedMixin, models.Model):
+    """
+    Stores configuration of user preference for receiving periodic exports from a flexible report.
+
+    This model can function in two modes:
+    - as a standard model saved into the database and used for periodic exports
+    - as a one-time model for a one-time export. In that case, it is not saved into the database
+    """
+
+    flexible_report = models.ForeignKey(FlexibleReport, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="flexible_report_emails"
+    )
+    file_format = models.CharField(
+        max_length=16, choices=FileFormat.choices, default=FileFormat.XLSX
+    )
+    frequency = models.CharField(
+        max_length=1, choices=FrequencyChoices.choices, default=FrequencyChoices.MONTHLY
+    )
+    fiscal_period = models.BooleanField(
+        default=False, help_text="If True, the frequency is interpreted relative to the fiscal year"
+    )
+    number_of_periods = models.PositiveSmallIntegerField(default=1)
+    last_sent = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return (
+            f"{self.flexible_report.name} - {self.user.email} "
+            f"({self.number_of_periods}x{self.frequency})"
+        )
+
+    def save(self, *args, **kwargs):
+        self._check_access()
+        self._check_number_of_periods()
+        super().save(*args, **kwargs)
+
+    @property
+    def first_month(self) -> int:
+        """
+        First month of the period.
+        """
+        if self.fiscal_period:
+            # fiscal year start is stored as month in js format (0-11)
+            return self.user.extra_data.get("fiscal_year_start_month", 0) + 1
+        return 1
+
+    @property
+    def last_period_end(self) -> date:
+        """
+        Last period end is the end of the period closest to current date.
+        """
+        return self.period_end(now().date())
+
+    @property
+    def next_send(self) -> date:
+        """
+        The next time this mailing should be sent.
+
+        Note: this is a property rather than a stored value because it depends on
+        several other values (frequency, fiscal_period and user fiscal year start)
+        and updating it in the database after each relevant change would be a pain
+        """
+        out = self.plan_next_send()
+        if self.last_sent and out <= self.last_sent.date():
+            # if the mail was already sent today (this is a feature of the computation)
+            # use tomorrow as the reference date
+            out = self.plan_next_send(ref_date=self.last_sent.date() + relativedelta(days=1))
+        return out
+
+    def period_end(self, ref_date: date) -> date:
+        """
+        Returns the end of the period closest to the reference date.
+        """
+        end_of_last_whole_month = month_end(ref_date - relativedelta(months=1))
+        period_delta = FrequencyChoices.to_timedelta(self.frequency)
+        # last finished period end date
+        if self.frequency == FrequencyChoices.MONTHLY:
+            return end_of_last_whole_month
+        elif self.frequency in (
+            FrequencyChoices.QUARTERLY,
+            FrequencyChoices.HALF_YEARLY,
+            FrequencyChoices.YEARLY,
+        ):
+            month_diff = end_of_last_whole_month.month - self.first_month + 1
+            shift = month_diff % (period_delta.months + 12 * period_delta.years)
+            return month_end(end_of_last_whole_month - relativedelta(months=shift))
+        else:
+            raise ValueError(f"Unknown frequency: {self.frequency}")
+
+    def plan_next_send(self, ref_date: typing.Optional[date] = None) -> date:
+        """
+        Next send is one month after the end of the period closest to current date.
+        For example, if it is 2025-04-20:
+          - monthly report should be sent on 2025-04-30
+          - quarterly report should be sent on 2025-07-31
+          - half-yearly report should be sent on 2025-07-31
+          - yearly report should be sent on 2026-01-31
+        """
+        ref_date = ref_date or now().date()
+        # period_end is the end of month; we add one month
+        out = month_end(self.period_end(ref_date) + relativedelta(months=1))
+        # if out is before the reference date, we need to add one more period
+        if out < ref_date:
+            out += FrequencyChoices.to_timedelta(self.frequency)
+        # we use month_end to protect against potential surprises from dateutil
+        return month_end(out)
+
+    def _check_access(self):
+        if self.flexible_report.owner_id and self.flexible_report.owner_id != self.user_id:
+            raise PermissionDenied("You are not allowed to create a mailing for this report")
+        if (
+            self.flexible_report.owner_organization_id
+            and not self.user.accessible_organizations()
+            .filter(pk=self.flexible_report.owner_organization_id)
+            .exists()
+        ):
+            raise PermissionDenied("You are not allowed to create a mailing for this report")
+
+    def has_access(self) -> bool:
+        """
+        Check if the user has access to the report.
+        """
+        try:
+            self._check_access()
+        except PermissionDenied:
+            return False
+        return True
+
+    def _check_number_of_periods(self):
+        if self.flexible_report.report_config.get("trend_mode") and self.number_of_periods % 2 != 0:
+            raise ValidationError("Trend mode requires an even number of periods")
+
+    def _date_filter_start(self) -> date:
+        """
+        Returns the start date of the date filter.
+        """
+        return month_start(
+            self.last_period_end  # month end
+            - FrequencyChoices.to_timedelta(self.frequency) * self.number_of_periods  # months back
+            + relativedelta(days=15)  # 15 days to the future to ensure new month
+        )
+
+    def _create_date_filter_simple(self) -> dict:
+        """
+        Create a date filter based on the settings in this model. Used in non-trend mode.
+        """
+        return {
+            "dimension": "date",
+            "start": str(self._date_filter_start()),
+            "end": str(self.last_period_end),
+        }
+
+    def _create_date_filter_trend(self) -> typing.Tuple[dict, dict]:
+        """
+        Create two date filters based on the settings in this model. Used in trend mode.
+        """
+        # split the period into two halves
+        half_period = FrequencyChoices.to_timedelta(self.frequency) * (self.number_of_periods // 2)
+        base_start = self._date_filter_start()
+        base_end = base_start + half_period - relativedelta(days=1)
+        compared_start = base_start + half_period
+        compared_end = self.last_period_end
+        return (
+            {"dimension": "date", "start": str(base_start), "end": str(base_end)},
+            {"dimension": "date", "start": str(compared_start), "end": str(compared_end)},
+        )
+
+    def adjust_dates(self, config: dict) -> dict:
+        """
+        Adjust the dates in the config to match the settings in this model
+        """
+        if self.flexible_report.report_config.get("trend_mode"):
+            # in trend mode, we need to split the periods into two halves and
+            # create two different date filters
+            base_filter, compared_filter = self._create_date_filter_trend()
+            config["base_subset_filters"] = [base_filter]
+            config["compared_subset_filters"] = [compared_filter]
+        else:
+            date_filter = self._create_date_filter_simple()
+            # if date filter is already present, replace it, otherwise add it
+            for i, fltr in enumerate(config["filters"]):
+                if fltr["dimension"] == "date":
+                    config["filters"][i] = date_filter
+                    break
+            else:
+                config["filters"].append(date_filter)
+        return config
+
+    def prepare_export(self, outfile: typing.BinaryIO):
+        from logs.logic.reporting.export import format_to_exporter
+        from logs.logic.reporting.helpers import user_visible_tags
+        from logs.logic.reporting.slicer import FlexibleDataSlicer
+
+        config = self.flexible_report.deserialize_slicer_config()
+        config = self.adjust_dates(config)
+        slicer = FlexibleDataSlicer.create_from_config(config)
+        slicer.tag_filter = user_visible_tags(self.user, selected_tag_class=slicer.tag_class)
+        slicer.add_extra_organization_filter(self.user.accessible_organizations())
+        export_cls = format_to_exporter[self.file_format]
+        exporter = export_cls(
+            slicer,
+            report_name=self.flexible_report.name,
+            report_owner=self.user,
+            include_tags=True,
+            include_row_totals=config.get("row_totals", True),
+            include_col_totals=config.get("col_totals", True),
+        )
+        return exporter.stream_data_to_sink(outfile)
+
+    def send_email(self):
+        try:
+            self._check_access()
+        except PermissionDenied:
+            # this should not happen, because the mailing object should not be created
+            # in the first place if the user does not have access
+            # and it should be removed from the database if the user loses access
+            #
+            # but in case it happens, we want to log the fact that the user does not have access
+            from core.tasks import async_mail_admins
+
+            logger.warning(
+                f"User {self.user.email} does not have access to report #{self.flexible_report_id}"
+            )
+            async_mail_admins.delay(
+                f"User {self.user.email} does not have access to report #{self.flexible_report_id}",
+                "Sending report was attempted but failed due to permission issues. This should not "
+                "happen and it indicates a bug.",
+            )
+            raise
+        # prepare the export
+        ext = FileFormat.file_extension(self.file_format)
+        email = EmailMessage(
+            subject=f'Report "{self.flexible_report.name}"',
+            body=f"Please find attached the report {self.flexible_report.name}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[self.user.email],
+        )
+        with tempfile.NamedTemporaryFile(delete=False) as outfile:
+            self.prepare_export(outfile)
+            outfile.seek(0)
+            email.attach(
+                filename=f"{self.flexible_report.name}.{ext}",
+                content=outfile.read(),
+                mimetype=FileFormat.content_type(self.file_format),
+            )
+            email.send()
+        self.last_sent = now()
+        if self.pk:
+            # only save if the object already exists
+            self.save()
 
 
 class ImportBatchSyncLog(CreatedUpdatedMixin, models.Model):

@@ -13,7 +13,7 @@ router.register(r"interest-groups", views.InterestGroupViewSet)
 router.register(r"dimension-text", views.DimensionTextViewSet, basename="dimension-text")
 router.register(r"flexible-report", views.FlexibleReportViewSet, basename="flexible-report")
 router.register(r"counter-data-export", views.CounterExportView, basename="counter-data-export")
-
+router.register(r"report-mailing", views.FlexibleReportUserEmailViewSet, basename="report-mailing")
 urlpatterns = [
     path(
         "chart-data-raw/<report_type_id>/", views.Counter5DataView.as_view(), name="chart_data_raw"

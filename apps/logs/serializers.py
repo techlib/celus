@@ -40,6 +40,7 @@ from .models import (
     Dimension,
     DimensionText,
     FlexibleReport,
+    FlexibleReportUserEmail,
     ImportBatch,
     InterestGroup,
     ManualDataUpload,
@@ -529,6 +530,7 @@ class FlexibleReportSerializer(ModelSerializer):
     )
     created_by = UserSimpleSerializer(read_only=True, many=False, allow_null=True)
     last_updated_by = UserSimpleSerializer(read_only=True, many=False, allow_null=True)
+    mailing_count = IntegerField(read_only=True)
 
     class Meta:
         model = FlexibleReport
@@ -546,6 +548,7 @@ class FlexibleReportSerializer(ModelSerializer):
             "created_by_id",
             "report_config",
             "config",
+            "mailing_count",
         )
 
     def create(self, validated_data):
@@ -564,3 +567,60 @@ class PlatformInterestReportSerializer(ModelSerializer):
     class Meta:
         model = Platform
         fields = ("interest_reports", "pk", "ext_id", "short_name", "name", "provider", "url")
+
+
+class FlexibleReportUserEmailNewSerializer(ModelSerializer):
+    last_sent = DateField(read_only=True)
+
+    class Meta:
+        model = FlexibleReportUserEmail
+        fields = (
+            "pk",
+            "flexible_report",
+            "user",
+            "frequency",
+            "fiscal_period",
+            "number_of_periods",
+            "last_sent",
+        )
+
+
+class FlexibleReportUserEmailSerializer(ModelSerializer):
+    user = UserSimpleSerializer(read_only=True)
+    last_updated_by = UserSimpleSerializer(read_only=True)
+
+    class Meta:
+        model = FlexibleReportUserEmail
+        fields = (
+            "pk",
+            "flexible_report",
+            "user",
+            "frequency",
+            "fiscal_period",
+            "number_of_periods",
+            "last_sent",
+            "next_send",
+            "last_updated_by",
+            "last_updated",
+        )
+
+    def create(self, validated_data):
+        validated_data["last_updated_by_id"] = self.context["request"].user.pk
+        return super().create(validated_data)
+
+    def update(self, instance: FlexibleReportUserEmail, validated_data):
+        validated_data["last_updated_by_id"] = self.context["request"].user.pk
+        return super().update(instance, validated_data)
+
+
+class FlexibleReportUserEmailCreateSerializer(FlexibleReportUserEmailSerializer):
+    user = PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
+
+    def validate(self, attrs):
+        fr: FlexibleReport = attrs.get(
+            "flexible_report", self.instance.flexible_report if self.instance else None
+        )
+        if fr and fr.report_config.get("trend_mode"):
+            if attrs["number_of_periods"] % 2 != 0:
+                raise ValidationError("Number of periods cannot be odd if trend mode is active")
+        return attrs

@@ -144,6 +144,17 @@ class UserSimpleSerializer(ModelSerializer):
         fields = ("pk", "username", "ext_id", "first_name", "last_name", "email")
 
 
+class UserSerializerForMailing(ModelSerializer):
+    fiscal_year_start_month = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ("pk", "username", "first_name", "last_name", "email", "fiscal_year_start_month")
+
+    def get_fiscal_year_start_month(self, obj: User) -> typing.Optional[int]:
+        return obj.extra_data.get("fiscal_year_start_month", None)
+
+
 class UserExtraDataSerializer(Serializer):
     basic_tour_finished = BooleanField(required=False, allow_null=True, default=None)
     last_dismissed_release = CharField(required=False, allow_null=True, default=None, max_length=20)

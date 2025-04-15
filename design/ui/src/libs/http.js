@@ -76,7 +76,10 @@ axios.interceptors.request.use(async (config) => {
   // only let requests marked as privileged unless state.letAxiosThrough is true
   // this helps to let requests wait until all the required setup is done (user is logged
   // in, some basic data is loaded, etc.)
-  if (store.getters.letAxiosThrough || config.privileged) {
+  if (
+    (store.state.user !== null && store.state.organizations !== null) ||
+    config.privileged
+  ) {
     return config;
   }
   const watcher = new Promise((resolve) => {

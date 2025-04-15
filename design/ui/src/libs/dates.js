@@ -158,6 +158,11 @@ function counterGuaranteedPeriodStart() {
   return ymDateFormat(counterGuaranteedPeriodStartDate());
 }
 
+function getMonthAbbreviation(monthNumber, locale = "en") {
+  const date = new Date(2020, monthNumber, 1);
+  return date.toLocaleString(locale, { month: "short" });
+}
+
 export {
   isoDateFormat,
   monthFirstDay,
@@ -180,4 +185,5 @@ export {
   lastCoveredYearDate,
   counterGuaranteedPeriodStartDate,
   counterGuaranteedPeriodStart,
+  getMonthAbbreviation,
 };

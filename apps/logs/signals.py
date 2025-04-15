@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db import IntegrityError
 from django.db.models.signals import post_delete, post_save
@@ -8,12 +10,16 @@ from publications.models import PlatformInterestReport
 from logs.constants import ACTION_INTEREST_CHANGE
 from logs.logic.clickhouse import delete_import_batch_from_clickhouse
 from logs.models import (
+    FlexibleReport,
+    FlexibleReportUserEmail,
     ImportBatch,
     ImportBatchSyncLog,
     LastAction,
     OrganizationPlatform,
     ReportInterestMetric,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_delete, sender=ImportBatch)
@@ -58,3 +64,21 @@ def store_last_action_interest_change_pir(sender, instance, using, **kwargs):
 @receiver([post_delete, post_save], sender=ReportInterestMetric)
 def store_last_action_interest_change_rim(sender, instance, using, **kwargs):
     LastAction.update_action(ACTION_INTEREST_CHANGE)
+
+
+@receiver(post_save, sender=FlexibleReport)
+def remove_flexible_report_user_emails_without_access(sender, instance, using, **kwargs):
+    # go over all related mailing objects and revalidate their access level
+    # if the access level is now incompatible, remove the mailing object
+    for fru in FlexibleReportUserEmail.objects.filter(flexible_report=instance).select_related(
+        "user"
+    ):
+        if not fru.has_access():
+            logger.info(
+                "Removing FlexibleReportUserEmail %s because the user %s does not have access to "
+                "the report %s anymore",
+                fru.pk,
+                fru.user.pk,
+                instance.pk,
+            )
+            fru.delete()

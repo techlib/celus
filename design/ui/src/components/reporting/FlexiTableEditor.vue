@@ -50,6 +50,8 @@ en:
   metric_sum_warning_title: The configured report potentially sums several metrics together.
   metric_sum_warning_detail: This can lead to misleading results as metrics may overlap each other. To prevent this, add metric into columns or split-by, or add a metric filter with a single value.
   apply_standard_filters: Apply standard filters
+  save_report_with_mailing_objects_confirm_title: Confirm saving of report with periodic export mailing
+  save_report_with_mailing_objects_confirm: This report has periodic mailing of exports set up. Any changes will be reflected in the next export. Do you want to continue?
 
 cs:
   run_report: Spustit report
@@ -96,6 +98,8 @@ cs:
   metric_sum_warning_title: Konfigurovaný report potenciálně sčítá několik metrik dohromady.
   metric_sum_warning_detail: To může vést k zavádějícím výsledkům, protože metriky se mohou překrývat. Řešením je přidání metriku do sloupců nebo split-by, nebo přidání filtru metrik s jedinou hodnotou.
   apply_standard_filters: Aplikovat standardní filtry
+  save_report_with_mailing_objects_confirm_title: Potvrďte uložení reportu s periodickým odesíláním exportu
+  save_report_with_mailing_objects_confirm: Tento report má nastaveno periodické odesílání exportu. Jakmile budou provedeny změny, budou se projevit v příštím odeslání. Opravdu chcete pokračovat?
 </i18n>
 
 <template>
@@ -1072,6 +1076,7 @@ export default {
       coverageData: null,
       initialLoad: true,
       reportViews: [], // list of standard views associated with selected rt
+      mailingCount: 0,
     };
   },
 
@@ -1453,6 +1458,23 @@ export default {
       if (!this.formValid) {
         return;
       }
+      // if the report has some mailing objects, ask user to confirm saving
+      if (this.mailingCount > 0) {
+        const confirm = await this.$confirm(
+          this.$t("save_report_with_mailing_objects_confirm"),
+          {
+            title: this.$t("save_report_with_mailing_objects_confirm_title"),
+            buttonTrueText: this.$t("save"),
+            buttonFalseText: this.$t("cancel"),
+            icon: "far fa-hdd",
+            width: 600,
+            color: "primary",
+          },
+        );
+        if (!confirm) {
+          return;
+        }
+      }
       if (this.canGetData) {
         try {
           // update order by based on the current state of output table
@@ -1487,6 +1509,7 @@ export default {
           this.setupInProgress = true;
           let resp = await axios.get(`/api/flexible-report/${this.reportPk}/`);
           this.loadSettings(resp.data);
+          this.mailingCount = resp.data.mailing_count;
           this.$nextTick(() => (this.setupInProgress = false));
         } catch (error) {
           this.showSnackbar({

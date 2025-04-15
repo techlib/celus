@@ -159,7 +159,31 @@
                 </v-list-item>
               </v-list>
             </v-menu>
-            <v-tooltip location="bottom">
+
+            <!-- show edit button if the user has permission, otherwise show view button -->
+            <v-tooltip
+              location="bottom"
+              v-if="item.canEdit(user, organizations)"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  variant="text"
+                  density="comfortable"
+                  color="rgba(0, 0, 0, 0.54)"
+                  icon
+                  :to="{
+                    name: 'flexireport',
+                    params: { reportId: item.pk },
+                    query: { edit: true },
+                  }"
+                  v-bind="props"
+                >
+                  <v-icon size="x-small">fa fa-edit</v-icon>
+                </v-btn>
+              </template>
+              {{ $t("edit_report_tt") }}
+            </v-tooltip>
+            <v-tooltip location="bottom" v-else>
               <template #activator="{ props }">
                 <v-btn
                   variant="text"
@@ -174,26 +198,7 @@
               </template>
               {{ $t("view_report_tt") }}
             </v-tooltip>
-            <v-tooltip location="bottom">
-              <template #activator="{ props }">
-                <v-btn
-                  variant="text"
-                  density="comfortable"
-                  color="rgba(0, 0, 0, 0.54)"
-                  icon
-                  :to="{
-                    name: 'flexireport',
-                    params: { reportId: item.pk },
-                    query: { edit: true },
-                  }"
-                  v-bind="props"
-                  :disabled="!item.canEdit(user, organizations)"
-                >
-                  <v-icon size="x-small">fa fa-edit</v-icon>
-                </v-btn>
-              </template>
-              {{ $t("edit_report_tt") }}
-            </v-tooltip>
+
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <v-btn
@@ -209,6 +214,33 @@
               </template>
               {{ $t("copy_report_tt") }}
             </v-tooltip>
+
+            <!-- mailing preferences button -->
+            <v-tooltip location="bottom">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="secondary"
+                  variant="text"
+                  density="comfortable"
+                  icon
+                  @click="startMailing(item)"
+                >
+                  <v-badge
+                    :model-value="!!item.mailingCount"
+                    :content="item.mailingCount"
+                    size="small"
+                    floating
+                    color="primary"
+                  >
+                    <v-icon size="x-small">fa fa-envelope</v-icon>
+                  </v-badge>
+                </v-btn>
+              </template>
+              {{ $t("mailing_preferences_tt") }}
+            </v-tooltip>
+
+            <!-- delete button -->
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <v-btn
@@ -301,7 +333,7 @@
             <span v-html="isoDateTimeFormatSpans(item.lastUpdated)"></span>
           </template>
 
-          <template v-slot:item.lastUpdatedBy="{ item }">
+          <template #item.lastUpdatedBy="{ value, item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <span v-bind="props">
@@ -414,6 +446,16 @@
       @error="copyError"
       @copySuccess="afterCopy"
     ></CopyReportDialog>
+    <v-dialog
+      v-model="showMailingPreferences"
+      v-if="showMailingPreferences"
+      max-width="1320"
+    >
+      <ReportMailingPreferences
+        :report="activeReport"
+        @close="showMailingPreferences = false"
+      />
+    </v-dialog>
   </v-container>
 </template>
 
@@ -431,6 +473,7 @@ import CopyReportDialog from "@/components/reporting/CopyReportDialog";
 import { mergeProps } from "vue";
 import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import ReportMailingPreferences from "@/components/reporting/ReportMailingPreferences.vue";
 import DateRangeText from "@/components/util/DateRangeText.vue";
 
 export default {
@@ -443,6 +486,7 @@ export default {
     CopyReportDialog,
     FlexiTableOutput,
     ExportMonitorWidget,
+    ReportMailingPreferences,
     DateRangeText,
   },
 
@@ -470,6 +514,7 @@ export default {
       selectedRowDim: null,
       orderBy: [{ key: "name", order: "asc" }],
       selectedRows: [],
+      showMailingPreferences: false,
       overrideDates: false,
       overrideOrganizations: false,
     };
@@ -734,6 +779,27 @@ export default {
           "bg-teal-lighten-5": isSelected,
         },
       };
+    },
+    startMailing(report) {
+      this.activeReport = report;
+      this.showMailingPreferences = true;
+    },
+  },
+
+  watch: {
+    async showMailingPreferences() {
+      if (!this.showMailingPreferences && this.activeReport) {
+        // reload the active report
+        try {
+          let resp = await axios.get(
+            `/api/flexible-report/${this.activeReport.pk}/`,
+          );
+          this.activeReport.mailingCount = resp.data.mailing_count;
+          this.activeReport = null;
+        } catch (error) {
+          console.error(error);
+        }
+      }
     },
   },
 
