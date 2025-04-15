@@ -20,26 +20,9 @@
           v-model:sort-by="orderBy"
           filter-mode="union"
           single-select
+          :cell-props="cellProps"
         >
           <template #top>
-            <v-row class="align-center pt-0 my-0">
-              <v-col cols="auto">
-                <v-checkbox
-                  v-model="overrideDates"
-                  :label="$t('actions.override_dates')"
-                  density="compact"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="auto">
-                <v-checkbox
-                  v-model="overrideOrganizations"
-                  :label="$t('actions.override_organizations')"
-                  density="compact"
-                  hide-details
-                />
-              </v-col>
-            </v-row>
             <v-row class="align-center pt-0 my-0">
               <v-col cols="auto">
                 <v-btn
@@ -47,10 +30,31 @@
                   :to="{ name: 'flexitable', query: { wantsSave: true } }"
                 >
                   <v-icon size="small" class="mr-2">fa fa-plus</v-icon>
-                  {{ $t("add_report") }}
+                  {{ $t("create_report") }}
                 </v-btn>
               </v-col>
               <v-spacer></v-spacer>
+
+              <v-col cols="auto">
+                <v-switch
+                  v-model="overrideDates"
+                  :label="$t('actions.override_dates')"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+              </v-col>
+              <v-col cols="auto">
+                <v-switch
+                  v-model="overrideOrganizations"
+                  :label="$t('actions.override_organizations')"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+              </v-col>
+            </v-row>
+            <v-row class="align-center pt-0 my-0">
               <!-- visibility filter -->
               <v-col cols="6" md="3" lg="3" xl="2">
                 <v-select
@@ -79,6 +83,7 @@
                   </template>
                 </v-select>
               </v-col>
+
               <!-- primary dim filter -->
               <v-col cols="6" md="3" lg="3" xl="2">
                 <v-select
@@ -91,6 +96,8 @@
                   :label="$t('title_fields.primary_dimension')"
                 ></v-select>
               </v-col>
+              <v-spacer></v-spacer>
+              <!-- search -->
               <v-col cols="6" md="3" lg="3" xl="2">
                 <v-text-field
                   v-model="search"
@@ -102,6 +109,7 @@
               </v-col>
             </v-row>
           </template>
+
           <template #item.actions="{ item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
@@ -226,6 +234,7 @@
               ></ExportMonitorWidget>
             </span>
           </template>
+
           <template #item.accessLevel="{ item }">
             <span>
               <v-tooltip location="bottom">
@@ -238,6 +247,7 @@
               </v-tooltip>
             </span>
           </template>
+
           <template #item.name="{ item }">
             <v-menu
               v-if="item.canEdit(user, organizations)"
@@ -252,6 +262,7 @@
                     v-bind="{ ...menuProps, ...hoverProps }"
                     @click="openDialog(item)"
                     :style="{ cursor: isHovering ? 'pointer' : '' }"
+                    :class="{ 'font-weight-bold': selectedRows.includes(item) }"
                   >
                     {{ item.name }}
                   </span>
@@ -272,8 +283,8 @@
               </v-card>
             </v-menu>
             <span v-else>{{ item.name }}</span>
-            <!-- </div> -->
           </template>
+
           <template #item.primaryDimension.name="{ item }">
             {{ item.primaryDimension.getName($i18n) }}
             <v-tooltip location="bottom">
@@ -285,10 +296,12 @@
               {{ $t("tag_roll_up_tt") }}
             </v-tooltip>
           </template>
+
           <template #item.lastUpdated="{ item }">
             <span v-html="isoDateTimeFormatSpans(item.lastUpdated)"></span>
           </template>
-          <template v-slot:item.lastUpdatedBy="{ value, item }">
+
+          <template v-slot:item.lastUpdatedBy="{ item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <span v-bind="props">
@@ -322,6 +335,7 @@
               </span>
             </v-tooltip>
           </template>
+
           <template #expanded-row="{ item, columns }">
             <tr class="item_expanded_space">
               <td></td>
@@ -330,6 +344,7 @@
               </td>
             </tr>
           </template>
+
           <template #item.data-table-expand="{ item }">
             <v-btn @click="toggleExpand(item)" icon size="small" variant="text">
               <v-icon size="small">
@@ -342,17 +357,54 @@
         </v-data-table>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row v-if="activeReport">
       <v-col>
-        <h2 v-if="activeReport" class="text-h5">
+        <v-divider></v-divider>
+      </v-col>
+    </v-row>
+    <v-row v-if="activeReport">
+      <v-col cols="auto">
+        <h2 class="text-h5">
           <span>{{ $t("labels.report_output") }}: </span>
           <span class="font-weight-light">{{ activeReport.name }}</span>
         </h2>
       </v-col>
+      <v-spacer></v-spacer>
+      <v-col v-if="overrideDates" class="align-self-end" cols="auto">
+        <strong class="mr-2">{{ $t("labels.overridden_dates") }}:</strong>
+        <span v-if="activeReport.trendMode">
+          <span class="mr-2 font-weight-light"
+            >{{ $t("trend_mode.base_period") }}:</span
+          >
+          <DateRangeText
+            :start="activeReport.getEffectiveBaseSubsetDateRange().start"
+            :end="activeReport.getEffectiveBaseSubsetDateRange().end"
+          />
+          <span class="mx-2 font-weight-light"
+            >{{ $t("trend_mode.compared_period") }}:</span
+          >
+          <DateRangeText
+            :start="activeReport.getEffectiveComparedSubsetDateRange().start"
+            :end="activeReport.getEffectiveComparedSubsetDateRange().end"
+          />
+        </span>
+        <span v-else>
+          <DateRangeText :start="startDate" :end="endDate" />
+        </span>
+      </v-col>
+      <v-col v-if="overrideOrganizations" class="align-self-end" cols="auto">
+        <strong>{{ $t("labels.overridden_organization") }}:</strong>
+        {{ selectedOrganization.name }}
+      </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <FlexiTableOutput ref="outputTable"></FlexiTableOutput>
+        <FlexiTableOutput
+          ref="outputTable"
+          :context-override-dates="overrideDates"
+          :context-override-organization="overrideOrganizations"
+          interactive-context-override
+        ></FlexiTableOutput>
       </v-col>
     </v-row>
     <CopyReportDialog
@@ -366,7 +418,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import axios from "axios";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import { dimensionMixin } from "@/mixins/dimensions";
@@ -379,6 +431,7 @@ import CopyReportDialog from "@/components/reporting/CopyReportDialog";
 import { mergeProps } from "vue";
 import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import DateRangeText from "@/components/util/DateRangeText.vue";
 
 export default {
   name: "StoredReportsTable",
@@ -390,6 +443,7 @@ export default {
     CopyReportDialog,
     FlexiTableOutput,
     ExportMonitorWidget,
+    DateRangeText,
   },
 
   data() {
@@ -422,7 +476,13 @@ export default {
   },
 
   computed: {
-    ...mapState(["user", "organizations"]),
+    ...mapState(["user", "organizations", "selectedOrganizationId"]),
+    ...mapGetters({
+      startDate: "dateRangeStartText",
+      endDate: "dateRangeEndText",
+      endDateExplicit: "dateRangeExplicitEndText",
+      selectedOrganization: "selectedOrganization",
+    }),
     rowDims() {
       let out = new Map();
       this.reports.forEach((r) =>
@@ -433,9 +493,6 @@ export default {
         value: ref,
       }));
     },
-    // name() {
-    //   return this.fltr.dimension.getName(this.$i18n);
-    // },
     headers() {
       return [
         {
@@ -584,6 +641,16 @@ export default {
       await this.$refs.outputTable.updateOutput(report);
     },
     async runExport(report, format) {
+      if (this.overrideDates) {
+        report.setDateOverride(this.startDate, this.endDate);
+      }
+      if (this.overrideOrganizations) {
+        report.setOrganizationOverride(
+          this.selectedOrganizationId > 0
+            ? this.selectedOrganizationId
+            : undefined,
+        );
+      }
       let urlParams = {
         ...report.urlParams(),
         format: format,
@@ -655,6 +722,15 @@ export default {
     arrowIcon(isSelected) {
       return isSelected ? "fa fa-angle-double" : "fa fa-angle";
     },
+    cellProps({ item }) {
+      const isSelected = this.selectedRows.includes(item);
+      return {
+        class: {
+          "font-weight-bold": isSelected,
+          "bg-teal-lighten-5": isSelected,
+        },
+      };
+    },
   },
 
   async mounted() {
@@ -664,26 +740,42 @@ export default {
   watch: {
     overrideDates: {
       handler() {
-        console.log("overrideDates", this.$router.currentRoute.value.name);
         this.changeForceHideDateRangeSelector({
           hide: !this.overrideDates,
           route: this.$router.currentRoute.value.name,
         });
+        // hide the export progress bar to ensure the export is consistent
+        // with the override dates
+        this.exportHandle = null;
       },
       immediate: true,
     },
     overrideOrganizations: {
       handler() {
-        console.log(
-          "overrideOrganizations",
-          this.$router.currentRoute.value.name,
-        );
         this.changeForceHideOrganizationSelector({
           hide: !this.overrideOrganizations,
           route: this.$router.currentRoute.value.name,
         });
+        // hide the export progress bar to ensure the export is consistent
+        // with the override organizations
+        this.exportHandle = null;
       },
       immediate: true,
+    },
+    selectedOrganizationId() {
+      if (this.overrideOrganizations) {
+        this.exportHandle = null;
+      }
+    },
+    dateRangeStartText() {
+      if (this.overrideDates) {
+        this.exportHandle = null;
+      }
+    },
+    dateRangeEndText() {
+      if (this.overrideDates) {
+        this.exportHandle = null;
+      }
     },
   },
 };

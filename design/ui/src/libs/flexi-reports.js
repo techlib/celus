@@ -1,6 +1,8 @@
 import { implicitDimensions } from "@/mixins/dimensions";
 import axios from "axios";
 import { toBase64JSON } from "@/libs/serialization";
+import { ymDateParse, ymDateFormat } from "@/libs/dates";
+import { differenceInMonths, addMonths } from "date-fns";
 
 class Dimension {
   /*
@@ -121,6 +123,10 @@ class FlexiReport {
     this.createdBy = null;
     this.lastUpdated = null;
     this.lastUpdatedBy = null;
+    // overrides - these are typically assigned later on by the UI
+    // when the user activates the override mode
+    this.dateOverride = null;
+    this.organizationOverride = null;
   }
 
   get accessLevel() {
@@ -248,8 +254,77 @@ class FlexiReport {
     return new Dimension(ref);
   }
 
-  urlParams(filterOverride = null) {
+  setDateOverride(start, end) {
+    this.dateOverride = { start, end };
+  }
+
+  setOrganizationOverride(organization) {
+    this.organizationOverride = organization;
+  }
+
+  clearDateOverride() {
+    this.dateOverride = null;
+  }
+
+  clearOrganizationOverride() {
+    this.organizationOverride = null;
+  }
+
+  getSplitOverrideDateRange() {
+    // we need to split the date range into base and compared
+    // split the date range into two equal parts
+    // if the number of months is odd, one month is removed from the end
+    // of the first part and added to the start of the second part
+    let startDate = ymDateParse(this.dateOverride.start);
+    let endDate = ymDateParse(this.dateOverride.end);
+    let months = differenceInMonths(endDate, startDate) + 1;
+    let half = Math.floor(months / 2);
+    if (half === 0) {
+      // date range is too short and cannot be split
+      // return the same date range for both parts
+      return {
+        baseStart: startDate,
+        baseEnd: startDate,
+        comparedStart: startDate,
+        comparedEnd: startDate,
+      };
+    }
+    let baseStart = startDate;
+    let baseEnd = addMonths(startDate, half - 1);
+    let comparedStart = addMonths(baseEnd, 1);
+    let comparedEnd = addMonths(baseEnd, half);
+    return {
+      baseStart,
+      baseEnd,
+      comparedStart,
+      comparedEnd,
+    };
+  }
+
+  getEffectiveBaseSubsetDateRange() {
+    if (this.dateOverride) {
+      let { baseStart, baseEnd } = this.getSplitOverrideDateRange();
+      return { start: ymDateFormat(baseStart), end: ymDateFormat(baseEnd) };
+    }
+    return this.baseSubsetDateRange;
+  }
+
+  getEffectiveComparedSubsetDateRange() {
+    if (this.dateOverride) {
+      let { comparedStart, comparedEnd } = this.getSplitOverrideDateRange();
+      return {
+        start: ymDateFormat(comparedStart),
+        end: ymDateFormat(comparedEnd),
+      };
+    }
+    return this.comparedSubsetDateRange;
+  }
+
+  urlParams() {
     let filters = {};
+    let baseFilters = {};
+    let comparedFilters = {};
+
     this.filters.forEach((item) => {
       if (item.start || item.end) {
         filters[item.dimension.ref] = { start: item.start, end: item.end };
@@ -262,9 +337,24 @@ class FlexiReport {
       }
     });
     filters["report_type"] = this.reportTypes.map((item) => item.pk);
-    if (filterOverride) {
-      filters = { ...filters, ...filterOverride };
+
+    // deal with trend mode
+    if (this.trendMode) {
+      baseFilters = { date: this.getEffectiveBaseSubsetDateRange() };
+      comparedFilters = { date: this.getEffectiveComparedSubsetDateRange() };
     }
+
+    // deal with overrides
+    if (this.dateOverride && !this.trendMode) {
+      // trend mode is dealt with above
+      filters = { ...filters, date: this.dateOverride };
+    }
+    if (this.organizationOverride !== null) {
+      // undefined means "do not send this parameter", so it may remove a filter
+      // from organization if one is set in the original report
+      filters = { ...filters, organization: this.organizationOverride };
+    }
+
     return {
       primary_dimension: this.primaryDimension.ref,
       filters: toBase64JSON(filters),
@@ -281,10 +371,10 @@ class FlexiReport {
       show_untagged_remainder: this.showUntaggedRemainder,
       trend_mode: this.trendMode,
       base_subset_filters: this.trendMode
-        ? toBase64JSON({ date: this.baseSubsetDateRange })
+        ? toBase64JSON(baseFilters)
         : undefined, // undefined means "do not send this parameter"
       compared_subset_filters: this.trendMode
-        ? toBase64JSON({ date: this.comparedSubsetDateRange })
+        ? toBase64JSON(comparedFilters)
         : undefined, // undefined means "do not send this parameter"
     };
   }

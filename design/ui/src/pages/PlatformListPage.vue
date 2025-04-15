@@ -71,7 +71,9 @@ cs:
           <v-card-text class="full_screen">
             <FlexiTableOutput
               ref="flexiTableWidget"
-              context-override
+              context-override-organization
+              context-override-dates
+              interactive-context-override
             ></FlexiTableOutput>
           </v-card-text>
         </v-card>

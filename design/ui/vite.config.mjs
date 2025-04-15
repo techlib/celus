@@ -46,7 +46,7 @@ export default defineConfig({
       strictMessage: false,
       include: resolve(dirname(fileURLToPath(import.meta.url)), "locales/**"),
     }),
-    // vueDevTools(),
+    vueDevTools(),
   ],
   define: { "process.env": {} },
   resolve: {

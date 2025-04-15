@@ -25,6 +25,7 @@ en:
   original_title: Original title
   new_title: New title
   add_report: Add report
+  create_report: Create report
   error_details: Error details
   show_zero_rows: Include rows with zero usage
   show_zero_rows_trend_mode: Include rows with zero base usage
@@ -82,6 +83,7 @@ cs:
   original_title: Původní název
   new_title: Nový název
   add_report: Přidat report
+  create_report: Vytvořit report
   error_details: Detaily chyby
   show_zero_rows: Zahrnout i řádky s nulovým využitím
   show_zero_rows_trend_mode: Zahrnout i řádky s nulovým využitím v základním období

@@ -140,10 +140,12 @@ cs:
             class="py-10 px-5"
           ></v-skeleton-loader>
         </template>
+
         <template #item.tag="{ item }">
           <TagChip :tag="item.tag" show-class small v-if="item.pk"></TagChip>
           <span v-else class="text--secondary">{{ item.tag }}</span>
         </template>
+
         <template #item.assignedTags="{ item }">
           <TagChip
             v-for="tag in objIdToTags.get(item.pk)"
@@ -153,12 +155,14 @@ cs:
             show-class
           ></TagChip>
         </template>
+
         <template #item.reldiff="{ item }">
           <span>
             {{ formatPercentage(item.reldiff) }}
             <TrendArrow :diff="item.reldiff"></TrendArrow>
           </span>
         </template>
+
         <template
           #body.append="{ columns }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
@@ -190,6 +194,7 @@ cs:
             </td>
           </tr>
         </template>
+
         <template #footer.prepend>
           <v-btn
             @click="togglePopOut"
@@ -206,6 +211,7 @@ cs:
           </v-btn>
         </template>
       </v-data-table-server>
+
       <ReportingChart
         v-else
         :data="dataWithRemainder"
@@ -218,6 +224,7 @@ cs:
         "
       ></ReportingChart>
     </div>
+
     <div v-else-if="errorCode">
       <v-card>
         <v-card-title>
@@ -259,6 +266,8 @@ import tags from "@/mixins/tags";
 import TrendArrow from "@/components/reporting/TrendArrow.vue";
 import { smartMonthRange } from "@/libs/dates";
 import { useGoTo } from "vuetify";
+import { differenceInMonths, addMonths } from "date-fns";
+import { ymDateParse } from "@/libs/dates";
 
 export default {
   name: "FlexiTableOutput",
@@ -270,7 +279,10 @@ export default {
     showRowTotals: { default: false, type: Boolean },
     // if the organization and selected dates should be used from the UI,
     // and not from the report, set this to true
-    contextOverride: { default: false, type: Boolean },
+    contextOverrideOrganization: { default: false, type: Boolean },
+    contextOverrideDates: { default: false, type: Boolean },
+    // in interactive mode, the data is reloaded immediately when the context is changed
+    interactiveContextOverride: { default: false, type: Boolean },
   },
 
   setup() {
@@ -325,6 +337,7 @@ export default {
     ...mapGetters({
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
+      dateRangeExplicitEndText: "dateRangeExplicitEndText",
     }),
     ...mapState({
       selectedOrganizationId: "selectedOrganizationId",
@@ -343,9 +356,11 @@ export default {
     },
     headersFromData() {
       if (this.report.trendMode) {
-        const baseHeader = smartMonthRange(this.report.baseSubsetDateRange);
+        const baseHeader = smartMonthRange(
+          this.report.getEffectiveBaseSubsetDateRange(),
+        );
         const comparedHeader = smartMonthRange(
-          this.report.comparedSubsetDateRange,
+          this.report.getEffectiveComparedSubsetDateRange(),
         );
         return [
           { title: baseHeader, value: "base", align: "end" },
@@ -505,6 +520,9 @@ export default {
     remainderVisible() {
       return this.row === "tag" && this.report.showUntaggedRemainder;
     },
+    contextOverride() {
+      return this.contextOverrideOrganization || this.contextOverrideDates;
+    },
     itemsPerPageOptions() {
       return this.contextOverride ? [10, 20, 50, 100, -1] : [10, 20, 50, 100];
     },
@@ -612,22 +630,8 @@ export default {
     async fetchData() {
       if (!this.report) return;
       this.remainder = null;
-      // prepare the request params
-      let filterOverride = null;
-      if (this.contextOverride && !this.report.trendMode) {
-        filterOverride = {
-          date: { start: this.dateRangeStart, end: this.dateRangeEnd },
-        };
-        if (this.selectedOrganizationId === null) {
-          // we do not want to do anything if no org is selected and contextOverride is true
-          return;
-        }
-        if (this.selectedOrganizationId !== -1) {
-          filterOverride.organization = [this.selectedOrganizationId];
-        }
-      }
       let params = {
-        ...this.report.urlParams(filterOverride),
+        ...this.report.urlParams(),
         page_size: this.itemsPerPage,
         page: this.page,
         order_by: this.ordering,
@@ -863,8 +867,28 @@ export default {
       }
       this.prevOptions = { ...newOptions };
     },
+    applyOverridesToReport() {
+      if (this.report) {
+        if (this.contextOverrideDates) {
+          this.report.setDateOverride(
+            this.dateRangeStart,
+            this.dateRangeExplicitEndText,
+          );
+        } else {
+          this.report.clearDateOverride();
+        }
+        if (this.contextOverrideOrganization) {
+          this.report.setOrganizationOverride(
+            this.selectedOrganizationId > 0
+              ? this.selectedOrganizationId
+              : undefined,
+          );
+        } else {
+          this.report.clearOrganizationOverride();
+        }
+      }
+    },
   },
-
   watch: {
     showRowTotals(newVal) {
       if (this.report) {
@@ -879,19 +903,37 @@ export default {
       this.fetchData();
     },
     dateRangeStart() {
-      if (this.contextOverride) {
+      this.applyOverridesToReport();
+      if (this.interactiveContextOverride) {
         this.fetchData();
       }
     },
     dateRangeEnd() {
-      if (this.contextOverride) {
+      this.applyOverridesToReport();
+      if (this.interactiveContextOverride) {
         this.fetchData();
       }
     },
     selectedOrganizationId() {
-      if (this.contextOverride) {
+      this.applyOverridesToReport();
+      if (this.interactiveContextOverride) {
         this.fetchData();
       }
+    },
+    contextOverrideDates() {
+      this.applyOverridesToReport();
+      if (this.interactiveContextOverride) {
+        this.fetchData();
+      }
+    },
+    contextOverrideOrganization() {
+      this.applyOverridesToReport();
+      if (this.interactiveContextOverride) {
+        this.fetchData();
+      }
+    },
+    report() {
+      this.applyOverridesToReport();
     },
   },
 };

@@ -185,6 +185,8 @@ en:
     on: On
     organization: Organization
     overlap: Overlap
+    overridden_dates: Date override
+    overridden_organization: Organization override
     platform: Platform
     platform_filter: Platform filter
     position: Position
@@ -593,6 +595,8 @@ cs:
     on: Zapnuto
     organization: Organizace
     overlap: Překryv
+    overridden_dates: Přepsané období
+    overridden_organization: Přepsaná organizace
     platform: Platforma
     platform_filter: Filtr platformy
     position: Pozice
