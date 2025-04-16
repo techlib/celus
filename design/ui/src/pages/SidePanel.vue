@@ -84,6 +84,7 @@ export default {
       celusVersion: "celusVersion",
       isRawImportEnabled: "isRawImportEnabled",
       allowUserManagement: "allowUserManagement",
+      usesRegistryBackend: "usesRegistryBackend",
     }),
     isSuperuser() {
       return this.user && this.user.is_superuser;
@@ -294,6 +295,12 @@ export default {
                   // icon: "fa fa-terminal",
                   linkTo: "management-commands",
                   show: this.isSuperuser,
+                },
+                {
+                  title: this.$i18n.t("pages.counter_registry"),
+                  // icon: "far fa-list-alt",
+                  linkTo: "counter-registry",
+                  show: this.showManagementStuff && this.usesRegistryBackend,
                 },
               ],
             },

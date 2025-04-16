@@ -101,6 +101,15 @@ INSTALLED_APPS = [
     "allauth.account",
 ]
 
+try:
+    import django_celus_registry  # noqa
+except ImportError:
+    USES_REGISTRY_BACKEND = False
+else:
+    USES_REGISTRY_BACKEND = config("USES_REGISTRY_BACKEND", cast=bool, default=False)
+    INSTALLED_APPS += ["django_celus_registry", "counter_registry"]
+
+
 DISABLE_CACHALOT = config("DISABLE_CACHALOT", cast=bool, default=False)
 if not DISABLE_CACHALOT:
     INSTALLED_APPS.append("cachalot")
@@ -405,7 +414,13 @@ CELERY_TASK_ROUTES = {
     "tags.tasks.tagging_batch_assign_tag_task": {"queue": "celery"},
     "tags.tasks.tagging_batch_preflight_task": {"queue": "celery"},
     "tags.tasks.tagging_batch_unassign_task": {"queue": "celery"},
+    "django_celus_registry.tasks.update_registry_models": {"queue": "celery"},
 }
+
+
+if USES_REGISTRY_BACKEND:
+    CELERY_TASK_ROUTES["django_celus_registry.tasks.update_registry_models"] = {"queue": "celery"}
+
 
 # FlexibleDataExport settings
 EXPORT_DELETING_PERIOD = timedelta(days=config("EXPORT_DELETING_DAYS", cast=int, default=7))
@@ -561,6 +576,13 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"expires": 60 * 60},
     },
 }
+
+if USES_REGISTRY_BACKEND:
+    CELERY_BEAT_SCHEDULE["update_registry_models_task"] = {
+        "task": "update_registry_models.tasks.update_registry_models",
+        "schedule": crontab(hour="2", minute=randmin()),  # between 2:00 and 2:59
+        "options": {"expires": 60 * 60},
+    }
 
 # add ERMS related tasks
 ERMS_CELERY_SCHEDULE = {
@@ -1013,4 +1035,5 @@ EXPORTED_SETTINGS = [
     "REPORT_TYPES_WITHOUT_COVERAGE",
     "SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL",
     "USES_ERMS",
+    "USES_REGISTRY_BACKEND",
 ]

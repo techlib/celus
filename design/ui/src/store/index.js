@@ -421,6 +421,11 @@ export default createStore({
     otpEnabled(state) {
       return state.basicInfo.OTP_ENABLED;
     },
+    usesRegistryBackend(state) {
+      if ("USES_REGISTRY_BACKEND" in state.basicInfo) {
+        return state.basicInfo["USES_REGISTRY_BACKEND"];
+      }
+    },
   },
 
   actions: {

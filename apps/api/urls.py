@@ -88,3 +88,6 @@ if settings.DEBUG:
         path("openapi.json", schema_view, name="openapi-schema"),
         path("redoc", views.RedocView.as_view()),
     ] + urlpatterns
+
+if settings.USES_REGISTRY_BACKEND:
+    urlpatterns.append(path("counter_registry/", include("counter_registry.urls")))

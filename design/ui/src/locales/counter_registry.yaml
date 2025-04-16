@@ -1,0 +1,53 @@
+en:
+  counter_registry:
+    platform_differences: Here you can observe differences between your platforms and platforms from the COUNTER Registry
+    name: Name
+    short_name: Short name
+    provider: Provider
+    url: URL
+    in_registry: In COUNTER registry
+    in_celus: Current value
+    counter_reports: Reports
+    trigger_update: Apply changes from registry
+    notes: Notes
+    missing_url: SUSHI URL is not present in neither CELUS or COUNTER registry.
+    columns:
+      url: URL
+      short_name: Short name
+      name: Name
+      provider: Provider
+      sushi_services: SUSHI services
+      notes: Notes
+    filter: Filter
+    filters:
+      all: All
+      different: Different
+      missing: Missing
+      same: Same
+
+cs:
+  counter_registry:
+    platform_differences: Zde si můžete prohlédnou rozdíly, které mají vaše platformy oproti platformám v COUNTER Registry.
+    name: Jméno
+    short_name: Krátké jméno
+    provider: Poskytovatel
+    url: URL
+    in_registry: V COUNTER registru
+    in_celus: Současná hodnota
+    counter_reports: Reporty
+    trigger_update: Použij změny z registru
+    notes: Poznámky
+    missing_url: SUSHI URL není možné najít v CELUSu ani v COUNTER registru.
+    columns:
+      url: URL
+      short_name: Krátné jméno
+      name: Jméno
+      provider: Poskytovatel
+      sushi_services: SUSHI zlužby
+      notes: Poznámky
+    filter: Filtr
+    filters:
+      all: Všechny
+      different: Rozdílné
+      missing: Chybějící
+      same: Stejné

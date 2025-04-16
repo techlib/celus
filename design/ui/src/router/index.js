@@ -218,7 +218,15 @@ const routes = [
       title: "pages.account_management",
     },
   },
-
+  {
+    path: "/counter-registry/",
+    name: "counter-registry",
+    component: () => import("../pages/CounterRegistry.vue"),
+    meta: {
+      hideDateRangeSelector: true,
+      title: "pages.counter_registry",
+    },
+  },
   {
     path: "/analytics/overlap",
     name: "overlap-analysis",

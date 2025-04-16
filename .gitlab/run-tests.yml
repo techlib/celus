@@ -76,3 +76,34 @@ tests:load_initial_data:
   rules: *on_python_changes_rules
   tags:
     - bdd
+
+tests:run_tests:registry:
+  stage: tests
+  needs: []
+  image: registry.gitlab.com/big-dig-data/celus/celus-test:latest
+  services:
+    - postgres
+    - redis
+  variables:
+    DJANGO_SETTINGS_MODULE: config.settings.test_registry
+    POSTGRES_DB: celus
+    POSTGRES_USER: celus
+    POSTGRES_PASSWORD: celus
+    POSTGRES_HOST: postgres
+    REDIS_URL: "redis://redis:6379/1"
+    CELERY_BROKER_URL: "redis://redis:6379/"
+  before_script:
+    - poetry install --no-root -E registry
+  script:
+    - cp .env.example .env
+    - poetry run pytest --counter-registry -v --create-db --junitxml=report.xml --cov=counter_registry --cov-report=xml --cov-report=term apps/
+  artifacts:
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  coverage: /^TOTAL.*\s+([^\s]+)%$/
+  rules: *on_python_changes_rules
+  tags:
+    - bdd

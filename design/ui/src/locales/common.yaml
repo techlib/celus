@@ -50,6 +50,7 @@ en:
     user_page: User page
     whats_new: What's new
     user_management: User management
+    counter_registry: COUNTER Registry
   menu: Menu
   organization: Organization
   platform: Platform
@@ -460,6 +461,7 @@ cs:
     user_page: Uživatelská stránka
     whats_new: Co je nového
     user_management: Správa uživatelů
+    counter_registry: COUNTER Registr
   menu: Menu
   organization: Organizace
   platform: Platforma

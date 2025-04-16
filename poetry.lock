@@ -1047,6 +1047,23 @@ celery = ">=5.2.7,<6.0"
 Django = ">=3.2.18"
 
 [[package]]
+name = "django-celus-registry"
+version = "0.1.1"
+description = "A simple scaper which download plublic data from the registry of COUNTER project"
+optional = true
+python-versions = ">=3.8"
+files = [
+    {file = "django_celus_registry-0.1.1-py3-none-any.whl", hash = "sha256:b7aef36a7d6244996ff07a42cda03d6092da223ba372edd9c8e4a56552892502"},
+    {file = "django_celus_registry-0.1.1.tar.gz", hash = "sha256:a484f7cdedbec77c54a1ff443b4a41a44f643c66e516a0315779a8172c39a738"},
+]
+
+[package.dependencies]
+celery = ">=5.4.0"
+django = ">=4.2.6"
+djangorestframework = ">=3.14.0"
+requests = ">=2.31.0"
+
+[[package]]
 name = "django-colorfield"
 version = "0.9.0"
 description = "color field for django models with a nice color-picker in the admin."
@@ -2353,8 +2370,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.20.3", markers = "python_version < \"3.10\""},
-    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
+    {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -4207,7 +4224,10 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 [package.extras]
 cffi = ["cffi (>=1.11)"]
 
+[extras]
+registry = ["django-celus-registry"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.9"
-content-hash = "0b005c2b3d60c648da449499dcc2c55e5136a2aeef17d590bde7bdfba853974a"
+content-hash = "3cd6c634b44dfb11a31f9116fb6fdee48a9fd18ab1dcc461539a30625eb862c4"

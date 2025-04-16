@@ -64,6 +64,7 @@ django-anymail = "^10.2"
 django-autocomplete-light = "~3.11.0"
 django-cachalot = "~2.6.1"
 django-celery-results = "~2.5.0"
+django-celus-registry = {version="~0.1.1", optional=true}
 django-colorfield = "^0.9.0"
 django-impersonate = "~1.9.1"
 django-import-export = "^3.0.2"
@@ -138,6 +139,9 @@ requests-mock = "~1.11.0"
 ruff = "^0.6.9"
 sphinx = "^7.1.0"                                         # sphinx 7.2 requires python 3.9
 watchdog = { extras = ["watchmedo"], version = "^3.0.0" }
+
+[tool.poetry.extras]
+registry = ["django-celus-registry"]
 
 [tool.deptry]
 known_first_party = ["test_scenarios"]

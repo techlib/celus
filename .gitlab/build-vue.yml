@@ -4,6 +4,8 @@ build:vue:
     - job: "tests:test_js"
     - job: "tests:run_tests"
       optional: true
+    - job: "tests:run_tests:registry"
+      optional: true
     - job: "tests:load_initial_data"
       optional: true
   image: node:20

@@ -98,3 +98,27 @@ def isolated_cache_in_parallel_test_run(worker_id, settings):
     from django.test.signals import clear_cache_handlers
 
     clear_cache_handlers(setting="CACHES")
+
+
+# Counter registry tests configuration
+def pytest_addoption(parser):
+    parser.addoption(
+        "--counter-registry",
+        action="store_true",
+        dest="counter_registry",
+        default=False,
+        help="run counter_registry tests",
+    )
+
+
+def pytest_configure(config):
+    if config.option.counter_registry:
+        if markexpr := getattr(config.option, "markexpr", None):
+            config.option.markexpr = markexpr + " and counter_registry"
+        else:
+            config.option.markexpr = "counter_registry"
+    else:
+        if markexpr := getattr(config.option, "markexpr", None):
+            config.option.markexpr = markexpr + " and not counter_registry"
+        else:
+            config.option.markexpr = "not counter_registry"
