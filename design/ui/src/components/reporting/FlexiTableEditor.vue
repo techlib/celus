@@ -1772,11 +1772,11 @@ export default {
   },
 
   watch: {
-    // possibleRows(newVal) {
-    //   if (this.splitBy && !newVal.includes(this.splitBy)) {
-    //     this.splitBy = null;
-    //   }
-    // },
+    possibleRows(newVal) {
+      if (this.splitBy && !newVal.includes(this.splitBy)) {
+        this.splitBy = null;
+      }
+    },
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
       if (!this.setupInProgress) {
