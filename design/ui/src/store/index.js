@@ -1,4 +1,4 @@
-import Vuex from "vuex";
+import { createStore } from "vuex";
 import axios from "axios";
 import Cookies from "js-cookie";
 import addMonths from "date-fns/addMonths";
@@ -29,8 +29,6 @@ import endOfMonth from "date-fns/endOfMonth";
 import router from "@/router";
 import { min } from "lodash";
 
-// Vue.use(Vuex);
-
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   reducer: (state) => ({
@@ -44,51 +42,10 @@ const vuexLocal = new VuexPersistence({
     if (value) {
       if (key === "vuex") {
         if (value.dateRangeEnd) {
-          // if (typeof value.dateRangeEnd === "object") {
-          //   value.dateRangeEnd = new Date(
-          //     value.dateRangeEnd.year,
-          //     value.dateRangeEnd.month - 1
-          //   );
-          // } else {
           value.dateRangeEnd = parseDateTime(value.dateRangeEnd);
-          // }
         }
         if (value.dateRangeStart) {
-          // if (typeof value.dateRangeStart === "object") {
-          //   value.dateRangeStart = new Date(
-          //     value.dateRangeStart.year,
-          //     value.dateRangeStart.month - 1
-          //   );
-
-          // } else {
           value.dateRangeStart = parseDateTime(value.dateRangeStart);
-          // }
-        }
-        if (value.dateRangeIndex && !value.dateRangeName) {
-          // old version of vuex-persist
-          const oldRanges = [
-            "date_range.current_plus_2y_back",
-            "date_range.current_plus_1y_back",
-            "date_range.previous_year",
-            "date_range.previous_2_years",
-            "date_range.last_12_mo",
-            "date_range.all_available",
-            "date_range.custom",
-          ];
-          value.dateRangeName = oldRanges[value.dateRangeIndex];
-        }
-        if (value.dateRangeIndex && !value.dateRangeName) {
-          // old version of vuex-persist
-          const oldRanges = [
-            "date_range.current_plus_2y_back",
-            "date_range.current_plus_1y_back",
-            "date_range.previous_year",
-            "date_range.previous_2_years",
-            "date_range.last_12_mo",
-            "date_range.all_available",
-            "date_range.custom",
-          ];
-          value.dateRangeName = oldRanges[value.dateRangeIndex];
         }
       }
     }
@@ -96,8 +53,9 @@ const vuexLocal = new VuexPersistence({
   },
 });
 
-export default new Vuex.Store({
+export default createStore({
   plugins: [vuexLocal.plugin],
+
   modules: {
     cancellation,
     interest,
@@ -107,41 +65,44 @@ export default new Vuex.Store({
     pageSettings,
     events,
   },
-  state: {
-    latestPublishedRelease: null,
-    user: null,
-    invalidUser: false,
-    snackbarShow: false,
-    snackbarContent: null,
-    snackbarColor: null,
-    loginError: null,
-    organizations: null,
-    selectedOrganizationId: null,
-    dateRangeStart: null,
-    dateRangeEnd: null,
-    defaultDateRangeName: "date_range.current_plus_2y_back",
-    defaultFYDateRangeName: "date_range.ongoing_and_previous_fy",
-    dateRangeName: "date_range.current_plus_2y_back",
-    fiscalYearStart: 0,
-    numberFormat: {
-      notation: "fixed",
-      precision: 1,
-    },
-    showLoginDialog: false,
-    newCelusVersion: null,
-    appLanguage: "en",
-    basicInfo: {},
-    backendReady: false,
-    bootUpMessage: "loading_basic_data",
-    et: false,
-    highlightDateRangeSelector: false,
-    eventWorker: null,
-    ws: null, // web socket for notifications
-    forceDisableOrganizationSelector: {},
-    forceHideOrganizationSelector: {},
-    forceHideDateRangeSelector: {},
-    otpRequired: false,
-    bootUpFinishedInternal: false,
+
+  state() {
+    return {
+      latestPublishedRelease: null,
+      user: null,
+      invalidUser: false,
+      snackbarShow: false,
+      snackbarContent: null,
+      snackbarColor: null,
+      loginError: null,
+      organizations: null,
+      selectedOrganizationId: null,
+      dateRangeStart: null,
+      dateRangeEnd: null,
+      defaultDateRangeName: "date_range.current_plus_2y_back",
+      defaultFYDateRangeName: "date_range.ongoing_and_previous_fy",
+      dateRangeName: "date_range.current_plus_2y_back",
+      fiscalYearStart: 0,
+      numberFormat: {
+        notation: "fixed",
+        precision: 1,
+      },
+      showLoginDialog: false,
+      newCelusVersion: null,
+      appLanguage: "en",
+      basicInfo: {},
+      backendReady: false,
+      bootUpMessage: "loading_basic_data",
+      et: false,
+      highlightDateRangeSelector: false,
+      eventWorker: null,
+      ws: null, // web socket for notifications
+      forceDisableOrganizationSelector: {},
+      forceHideOrganizationSelector: {},
+      forceHideDateRangeSelector: {},
+      otpRequired: false,
+      bootUpFinishedInternal: false,
+    };
   },
 
   getters: {
@@ -406,7 +367,6 @@ export default new Vuex.Store({
       if (state.user !== null && state.organizations !== null) {
         return true;
       }
-      console.log("letAxiosThrough IS FALSE", state.user, state.organizations);
       return false;
     },
     bootUpFinished(state) {
