@@ -1773,9 +1773,14 @@ export default {
 
   watch: {
     possibleRows(newVal) {
-      if (this.splitBy && !newVal.includes(this.splitBy)) {
+      const newIds = newVal.map((dim) => dim.id);
+      // check if the splitBy is still valid
+      if (this.splitBy && !newIds.includes(this.splitBy)) {
         this.splitBy = null;
       }
+      // check if columns are still valid (for example if report type gets hidden
+      // when only one report type is selected)
+      this.columns = this.columns.filter((dim) => newIds.includes(dim));
     },
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
@@ -1790,11 +1795,13 @@ export default {
       this.fetchAccessibleTags();
     },
     splitBy() {
-      this.columns = this.columns.filter((dim) => dim !== this.splitBy);
-      if (this.row === this.splitBy) {
-        this.row = this.possibleRows.find(
-          (item) => item.id !== this.splitBy,
-        ).id;
+      if (this.splitBy) {
+        this.columns = this.columns.filter((dim) => dim !== this.splitBy);
+        if (this.row === this.splitBy) {
+          this.row = this.possibleRows.find(
+            (item) => item.id !== this.splitBy,
+          ).id;
+        }
       }
     },
     selectedReportTypes() {
@@ -1811,10 +1818,6 @@ export default {
             this.translators[dimName] = this.translators.explicitDimension;
           });
         }
-        // remove groups that are for explicit dimensions
-        explicitDimensions.forEach((dim) => {
-          this.columns = this.columns.filter((item) => item !== dim);
-        });
       }
       this.fetchCoverageData();
       this.reportViews = [];
