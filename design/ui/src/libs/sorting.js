@@ -16,36 +16,17 @@ function getNamedObjectSorter(locale) {
 }
 
 function djangoToDataTableOrderBy(djangoOrderBy) {
-  let sortBy = [];
-  let sortDesc = [];
+  let out = [];
   if (djangoOrderBy) {
     djangoOrderBy.forEach((item) => {
       if (item.startsWith("-")) {
-        sortBy.push(item.substring(1));
-        sortDesc.push(true);
+        out.push({ key: item.substring(1), order: "desc" });
       } else {
-        sortBy.push(item);
-        sortDesc.push(false);
+        out.push({ key: item, order: "asc" });
       }
     });
   }
-  return { sortBy: sortBy, sortDesc: sortDesc };
+  return out;
 }
 
-function dataTableToDjangoOrderBy({ sortBy, sortDesc }) {
-  let ret = [];
-  if (sortBy) {
-    sortBy.forEach((item, index) => {
-      let prefix = sortDesc[index] ? "-" : "";
-      ret.push(prefix + item);
-    });
-  }
-  return ret;
-}
-
-export {
-  getNamedObjectSorter,
-  localizedNamer,
-  djangoToDataTableOrderBy,
-  dataTableToDjangoOrderBy,
-};
+export { getNamedObjectSorter, localizedNamer, djangoToDataTableOrderBy };

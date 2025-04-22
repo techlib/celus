@@ -118,6 +118,7 @@ cs:
         :fixed-header="popped"
         :height="popped ? 'calc(100vh - 72px)' : null"
         @update:options="updateOptions"
+        v-model:sort-by="sortBy"
         :style="
           popped
             ? {
@@ -307,6 +308,7 @@ export default {
       page: 1,
       itemsPerPage: 10,
       prevOptions: {},
+      sortBy: [{ key: "_total", desc: true }],
       ordering: "-_total",
       baseWidth: 0,
       remainder: null,
@@ -809,7 +811,13 @@ export default {
       this.errorDetails = details;
     },
     setOrdering(report) {
-      let ob = djangoToDataTableOrderBy(report.orderBy);
+      this.sortBy = djangoToDataTableOrderBy(report.orderBy);
+      if (report.orderBy && report.orderBy.length) {
+        // set ordering immediately, otherwise it would be done after the
+        // table calls updateOptions, which would cause inconsistency
+        // in the fetchData call immediately after setOrdering
+        this.ordering = report.orderBy[0];
+      }
     },
     updateSize() {
       this.baseWidth = this.$refs.base.clientWidth;

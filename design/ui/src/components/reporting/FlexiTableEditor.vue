@@ -949,7 +949,6 @@ import reportTypes from "@/mixins/reportTypes";
 import { FlexiReport } from "@/libs/flexi-reports";
 import ReportLoadingWidget from "@/components/reporting/ReportLoadingWidget";
 import isEqual from "lodash/isEqual";
-import { dataTableToDjangoOrderBy } from "@/libs/sorting";
 import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
 import formRulesMixin from "@/mixins/formRulesMixin";
 import {
@@ -1435,13 +1434,8 @@ export default {
     },
     updateOrderByFromOutputTable() {
       // update order by based on the current state of output table
-      if (
-        this.$refs.outputTable &&
-        this.$refs.outputTable.$data.options.sortBy
-      ) {
-        this.orderBy = dataTableToDjangoOrderBy(
-          this.$refs.outputTable.$data.options,
-        );
+      if (this.$refs.outputTable && this.$refs.outputTable.ordering) {
+        this.orderBy = [this.$refs.outputTable.ordering];
       }
     },
     async firstSave(name, description, access) {
