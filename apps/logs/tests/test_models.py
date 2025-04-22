@@ -7,7 +7,7 @@ from publications.fake_data import PlatformFactory
 
 from logs.fake_data import ImportBatchFactory, ReportTypeFactory
 from logs.logic.reporting.filters import ExplicitDimensionFilter, ForeignKeyDimensionFilter
-from logs.logic.reporting.slicer import FlexibleDataSlicer
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import (
     Dimension,
     DimensionText,
@@ -154,6 +154,18 @@ class TestFlexibleReport:
         fr = FlexibleReport.create_from_slicer(slicer)
         assert fr.resolve_explicit_dimension("dim1").short_name == "dim1name"
         assert fr.resolve_explicit_dimension("dim2").short_name == "dim2name"
+
+    def test_resolve_explicit_dimension_with_multiple_report_types(self, flexible_slicer_test_data):
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
+        fr = FlexibleReport.create_from_slicer(slicer)
+        assert fr.resolve_explicit_dimension("dim1").short_name == "dim1name"
+        with pytest.raises(SlicerConfigError) as exc_info:
+            # this should raise an error because "dim2" is not present in both report types
+            fr.resolve_explicit_dimension("dim2")
+            assert exc_info.value.code == SlicerConfigErrorCode.E113
 
     def test_used_report_types(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(primary_dimension="platform")

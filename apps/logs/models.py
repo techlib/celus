@@ -1255,16 +1255,25 @@ class FlexibleReport(models.Model):
     def config(self):
         return self.deserialize_slicer_config()
 
-    def resolve_explicit_dimension(self, dim_name: str) -> Dimension:
+    def resolve_explicit_dimension(self, dim_name: str) -> typing.Optional[Dimension]:
         """
         When dimension is called `dimX`, its meaning cannot be resolved without checking which
         report_type is active for this report. This is what we do here.
         """
         if dim_name.startswith("dim"):
             # this is an explicit dimension
-            rts = self.used_report_types()
-            if len(rts) == 1:
-                return rts[0].dimension_by_attr_name(dim_name)
+            if rts := self.used_report_types():
+                # the dimension should be common to all report types
+                # but we want to ensure that
+                dims = {rt.dimension_by_attr_name(dim_name) for rt in rts}
+                if len(dims) > 1:
+                    from logs.logic.reporting.slicer import SlicerConfigError, SlicerConfigErrorCode
+
+                    raise SlicerConfigError(
+                        code=SlicerConfigErrorCode.E113,
+                        message="Dimension is not common to all used report types",
+                    )
+                return dims.pop()
         return None
 
     @classmethod

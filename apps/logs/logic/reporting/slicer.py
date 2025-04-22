@@ -46,7 +46,7 @@ from logs.logic.reporting.filters import (
     TagClassDimensionFilter,
     TagDimensionFilter,
 )
-from logs.models import AccessLog, DimensionText, ReportType
+from logs.models import AccessLog, Dimension, DimensionText, ReportType
 
 
 class FlexibleDataSlicer:
@@ -802,13 +802,21 @@ class FlexibleDataSlicer:
                 message="`split_by` must be set up when `part` argument is given",
             )
 
-    def resolve_explicit_dimension(self, dim_ref: str):
+    def resolve_explicit_dimension(self, dim_ref: str) -> Optional[Dimension]:
         rts = self.involved_report_types()
-        if rts and len(rts) == 1:
-            return rts[0].dimension_by_attr_name(dim_ref)
+        if rts:
+            # the dimension should be common to all report types
+            # but we want to ensure that
+            dims = {rt.dimension_by_attr_name(dim_ref) for rt in rts}
+            if len(dims) > 1:
+                raise SlicerConfigError(
+                    code=SlicerConfigErrorCode.E113,
+                    message="Dimension is not common to all used report types",
+                )
+            return dims.pop()
         return None
 
-    def involved_report_types(self) -> [ReportType]:
+    def involved_report_types(self) -> List[ReportType]:
         """
         Returns a list of report types that are part of the query if there is any filter on them.
         If there is no filter, None is returned.
@@ -1122,6 +1130,7 @@ class SlicerConfigErrorCode(Enum):
     E110 = "E110"
     E111 = "E111"
     E112 = "E112"
+    E113 = "E113"
 
     def __str__(self):
         return self.value
@@ -1143,6 +1152,7 @@ class SlicerConfigError(Exception):
     E110: Part was specified without `split_by` being active.
     E111: Only date filters are supported for subsets in trend mode.
     E112: There are too many possible parts, please refine you configuration.
+    E113: Dimension is not common to all used report types.
     """
 
     def __init__(self, message, code: SlicerConfigErrorCode, *args, details=None, **kwargs):

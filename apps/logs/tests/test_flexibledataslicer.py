@@ -27,7 +27,7 @@ from logs.logic.reporting.filters import (
     TagClassDimensionFilter,
     TagDimensionFilter,
 )
-from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError
+from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import (
     AccessLog,
     DimensionText,
@@ -1244,6 +1244,17 @@ class TestFlexibleDataSlicerOther:
         assert coverage["base"]["ib_max"] == 9
         assert coverage["compared"]["ib_count"] == 9
         assert coverage["compared"]["ib_max"] == 9
+
+    def test_resolve_explicit_dimension_with_multiple_report_types(self, flexible_slicer_test_data):
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
+        assert slicer.resolve_explicit_dimension("dim1").short_name == "dim1name"
+        with pytest.raises(SlicerConfigError) as exc_info:
+            # this should raise an error because "dim2" is not present in both report types
+            slicer.resolve_explicit_dimension("dim2")
+            assert exc_info.value.code == SlicerConfigErrorCode.E113
 
 
 @pytest.mark.django_db
