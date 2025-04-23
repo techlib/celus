@@ -289,16 +289,31 @@
               eager
             >
               <template #activator="{ props: menuProps }">
-                <v-hover v-slot="{ isHovering, props: hoverProps }">
-                  <span
-                    v-bind="{ ...menuProps, ...hoverProps }"
-                    @click="openDialog(item)"
-                    :style="{ cursor: isHovering ? 'pointer' : '' }"
-                    :class="{ 'font-weight-bold': selectedRows.includes(item) }"
-                  >
-                    {{ item.name }}
-                  </span>
-                </v-hover>
+                <div class="d-flex align-center">
+                  <v-hover v-slot="{ isHovering, props: hoverProps }">
+                    <span
+                      v-bind="{ ...menuProps, ...hoverProps }"
+                      @click="openDialog(item)"
+                      :style="{ cursor: isHovering ? 'pointer' : '' }"
+                      :class="{
+                        'font-weight-bold': selectedRows.includes(item),
+                      }"
+                    >
+                      {{ item.name }}
+                    </span>
+                  </v-hover>
+                  <v-tooltip v-if="item.description" location="bottom">
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        size="x-small"
+                        class="ml-1 text-info"
+                        >fas fa-info-circle</v-icon
+                      >
+                    </template>
+                    <div style="max-width: 50vw">{{ item.description }}</div>
+                  </v-tooltip>
+                </div>
               </template>
               <v-card>
                 <v-card-text>
