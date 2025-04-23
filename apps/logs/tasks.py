@@ -325,9 +325,13 @@ def prepare_preflight(mdu_id: int):
         return
 
     except UnicodeDecodeError as e:
-        mdu.log = str(e)
+        encoded = str(e).encode("unicode_escape")
+        mdu.log = encoded
         mdu.error = "unicode-decode"
-        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
+        mdu.error_details = {
+            "exception": encoded.decode(),
+            "traceback": traceback.format_exc().encode("unicode_escape").decode(),
+        }
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
@@ -336,7 +340,7 @@ def prepare_preflight(mdu_id: int):
         mdu.log = "\n\n".join(repr(i) for i in e.errors)
         mdu.error = "nibbler"
         mdu.error_details = {
-            "exception": str(e),
+            "exception": str(e).encode("unicode_escape").decode(),
             "traceback": traceback.format_exc(),
             "nibbler": [i.dict() for i in e.errors],
         }
@@ -366,9 +370,13 @@ Traceback: {traceback.format_exc()}
             error = "unknown-report-type"
         elif isinstance(e, MultipleReportTypes):
             error = "multiple-report-type"
-        mdu.log = body
+
+        mdu.log = body.encode("unicode_escape")
         mdu.error = error
-        mdu.error_details = {"exception": str(e), "traceback": traceback.format_exc()}
+        mdu.error_details = {
+            "exception": str(e).encode("unicode_escape").decode(),
+            "traceback": traceback.format_exc().encode("unicode_escape").decode(),
+        }
         mdu.when_processed = now()
         mdu.state = MduState.PREFAILED
         mdu.save()
