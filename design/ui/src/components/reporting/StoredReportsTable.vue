@@ -44,7 +44,7 @@
                   color="primary"
                 />
               </v-col>
-              <v-col cols="auto">
+              <v-col cols="auto" v-if="showOrganizationOverride">
                 <v-switch
                   v-model="overrideOrganizations"
                   :label="$t('actions.override_organizations')"
@@ -554,6 +554,10 @@ export default {
     },
     twoPanes() {
       return this.$vuetify.display.lgAndUp;
+    },
+    showOrganizationOverride() {
+      // the user must have access to more than one organization
+      return Object.values(this.organizations).length > 1;
     },
   },
 
