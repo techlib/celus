@@ -544,6 +544,8 @@ export default {
           },
           ...organizations,
         ];
+      } else {
+        return organizations;
       }
     },
     showImpersonate() {
