@@ -2921,6 +2921,9 @@ class TestItemViewSet:
         items = ItemFactory.create_batch(
             10, usage=True, usage__organization=org, usage__title=title
         )
+        items.append(
+            ItemFactory(name="qweasdzxc", usage=True, usage__organization=org, usage__title=title)
+        )
         # create some extra items that should not be in the response
         ItemFactory.create_batch(4, usage__organization=org)
         ItemFactory.create_batch(5, usage__title=title)
@@ -2933,6 +2936,15 @@ class TestItemViewSet:
         item_ids = {item.pk for item in items}
         for rec in data:
             assert rec["pk"] in item_ids
+
+        # Try to search
+        resp = master_user_client.get(
+            reverse("organization-title-items-list", args=[org.pk, title.pk]),
+            data={"search": "weasdzx"},
+        )
+        data = resp.json()["results"]
+        assert len(data) == 1
+        assert data[0]["pk"] == items[-1].pk
 
     def test_item_detail(self, master_user_client, interest_rt):
         item = ItemFactory()

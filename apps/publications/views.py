@@ -39,6 +39,7 @@ from pandas import DataFrame
 from recache.util import recache_queryset
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.renderers import JSONRenderer
@@ -1089,7 +1090,8 @@ class OrganizationAltNameViewSet(CreateModelMixin, DestroyModelMixin, GenericVie
 
 class ItemViewSet(ReadOnlyModelViewSet):
     serializer_class = ItemSerializer
-    filter_backends = [PkMultiValueFilterBackend, OrderByFilter, PubTypeFilter]
+    filter_backends = [SearchFilter, PkMultiValueFilterBackend, OrderByFilter, PubTypeFilter]
+    search_fields = ["name", "doi", "issn", "eissn", "isbn", "authors__name"]
     pagination_class = StandardResultsSetPagination
 
     def __init__(self, *args, **kwargs):

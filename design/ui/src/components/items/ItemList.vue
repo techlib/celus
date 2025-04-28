@@ -20,22 +20,25 @@ cs:
             :label="$t('pub_type_filter')"
             :items="pubTypes"
             v-model="selectedPubType"
+            item-title="text"
+            item-value="value"
+            min-width="245px"
+            density="comfortable"
           >
-            <template v-slot:item="{ item }">
-              <v-icon
-                v-text="item.icon + ' fa-fw'"
-                class="mr-2"
-                size="small"
-              ></v-icon>
-              {{ item.text }}
+            <template v-slot:item="{ props, item }">
+              <v-list-item v-bind="props">
+                <template v-slot:prepend>
+                  <v-icon size="small" class="mr-2"
+                    >{{ item.raw.icon }} fa-fw</v-icon
+                  >
+                </template>
+              </v-list-item>
             </template>
             <template v-slot:selection="{ item }">
-              <v-icon
-                v-text="item.icon + ' fa-fw'"
-                class="mr-2"
-                size="small"
-              ></v-icon>
-              {{ item.text }}
+              <v-icon size="small" class="mr-2"
+                >{{ item.raw.icon }} fa-fw</v-icon
+              >
+              {{ item.raw.text }}
             </template>
           </v-select>
         </v-col>
@@ -43,13 +46,18 @@ cs:
         <v-col cols="auto">
           <v-text-field
             v-model="searchDebounced"
-            append-icon="fa-search"
             :label="$t('labels.search')"
             single-line
             hide-details
             clearable
             clear-icon="fa-times"
-          ></v-text-field>
+            min-width="245px"
+            density="comfortable"
+          >
+            <template v-slot:append-inner>
+              <v-icon size="small">fa fa-search</v-icon>
+            </template>
+          </v-text-field>
         </v-col>
       </v-row>
     </v-card-title>
@@ -65,10 +73,9 @@ cs:
       :items-per-page-options="[10, 25, 50, 100]"
       :items-length="totalItemCount"
       :must-sort="true"
-      :items-per-page="itemsPerPage"
-      :sort-by="orderBy"
-      :page="page"
-      :sort-desc="orderDesc"
+      v-model:items-per-page="itemsPerPage"
+      v-model:sort-by="orderBy"
+      v-model:page="page"
       :no-data-text="$t('no_records')"
       density="default"
     >
@@ -116,12 +123,12 @@ cs:
         <span
           v-if="item.interests && item.interests.loading"
           class="fas fa-spinner fa-spin subdued"
-          :key="ig.pk"
+          :key="`loading-${ig.pk}`"
         ></span>
-        <span v-else-if="item.interests" :key="ig.pk">
+        <span v-else-if="item.interests" :key="`value-${ig.pk}`">
           {{ formatInteger(item.interests[ig.short_name]) }}
         </span>
-        <span v-else :key="ig.pk">-</span>
+        <span v-else :key="`empty-${ig.pk}`">-</span>
       </template>
     </v-data-table-server>
   </v-card>
@@ -162,8 +169,12 @@ export default {
       searchString: "",
       cancelTokenSource: null,
       // table state
-      orderBy: this.orderInterest ? this.orderInterest : "name",
-      orderDesc: !!this.orderInterest,
+      orderBy: [
+        {
+          key: this.orderInterest || "name",
+          order: !this.orderInterest ? "asc" : "desc",
+        },
+      ],
       page: 1,
       itemsPerPage: 25,
       // state tracking support
@@ -178,11 +189,7 @@ export default {
         },
         {
           name: "orderBy",
-          type: String,
-        },
-        {
-          name: "orderDesc",
-          type: Boolean,
+          type: Object,
         },
         {
           name: "page",
@@ -216,34 +223,40 @@ export default {
     headers() {
       let base = [
         {
-          text: this.$i18n.t("title_fields.name"),
+          title: this.$i18n.t("title_fields.name"),
           value: "name",
+          sortable: true,
         },
         {
-          text: this.$i18n.t("title_fields.type"),
+          title: this.$i18n.t("title_fields.type"),
           value: "pub_type",
+          sortable: true,
         },
         {
-          text: this.$i18n.t("title_fields.isbn"),
+          title: this.$i18n.t("title_fields.isbn"),
           value: "isbn",
+          sortable: true,
         },
         {
-          text: this.$i18n.t("title_fields.issn"),
+          title: this.$i18n.t("title_fields.issn"),
           value: "issn",
+          sortable: true,
         },
         {
-          text: this.$i18n.t("title_fields.eissn"),
+          title: this.$i18n.t("title_fields.eissn"),
           value: "eissn",
+          sortable: true,
         },
         {
-          text: this.$i18n.t("title_fields.doi"),
+          title: this.$i18n.t("title_fields.doi"),
           value: "doi",
+          sortable: true,
         },
       ];
 
       for (let ig of this.activeInterestGroups) {
         base.push({
-          text: ig.name,
+          title: ig.name,
           value: "interests." + ig.short_name,
           class: "wrap text-xs-right",
           align: "right",
@@ -263,7 +276,8 @@ export default {
       return base + "item/";
     },
     fullUrl() {
-      let sortBy = this.orderBy;
+      let sortBy = this.orderBy[0].key;
+      let orderBy = this.orderBy[0].order;
       if (sortBy) {
         if (sortBy.startsWith("interests.")) {
           sortBy = sortBy.replace("interests.", "");
@@ -274,9 +288,9 @@ export default {
         query: {
           page_size: this.itemsPerPage,
           order_by: sortBy,
-          desc: this.orderDesc,
+          desc: orderBy === "desc" ? "true" : "false",
           page: this.page,
-          q: this.search ?? "",
+          search: this.search ?? "",
           pub_type: this.selectedPubType || "",
           start: this.dateRangeStart,
           end: this.dateRangeEnd,
@@ -287,7 +301,7 @@ export default {
       let all = {
         text: this.$t("pub_type.all"),
         value: null,
-        icon: "fa-expand",
+        icon: "fa fa-expand",
       };
       return [
         all,
@@ -366,9 +380,6 @@ export default {
       this.page = 1;
     },
     orderBy() {
-      this.page = 1;
-    },
-    orderDesc() {
       this.page = 1;
     },
     selectedPubType() {
