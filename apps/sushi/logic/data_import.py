@@ -134,7 +134,9 @@ def import_sushi_credentials_new(
 
     organization_objects = Organization.objects.all()
     db_organizations = {org.internal_id: org for org in organization_objects}
-    db_organizations.update({org.name_en.lower(): org for org in organization_objects})
+    db_organizations.update(
+        {org.name_en.lower(): org for org in organization_objects if org.name_en is not None}
+    )
 
     def to_clean_str(value):
         if value is None:
