@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [8.1.0]  - 2025-04-30
+
+This is an intermediate release for CzechELib. It will be released later as part of 9.0.0.
+
+### Added
+
+#### Frontend
+
+* support for sending report exports via email was added - both one-off and periodic
+* support for overriding the context of stored reports when running them was added - allows changing
+  of date range and organization for stored reports without modifying them.
+* monthly email with an overview of recent harvesting activities was added
+* description field was added to saved reports
+* information about the last person who edited SUSHI credentials was added to the credentials list
+* support for optionally synchronizing platforms with the COUNTER registry was added
+
+
+### Changes
+
+#### Frontend
+
+* the frontend was upgraded from Vue 2 + Vuetify 2 to Vue 3 + Vuetify 3. This is a major upgrade
+  with significant changes.
+* interest computation algorithm and data structure were reworked. Interest newly contains `Access_Type` and `Access_Method` dimensions. Interest definition is no longer platform specific.
+* report type definition was moved from SUSHI credentials for platform with the possibility
+  of overriding it in SUSHI.
+
+#### Backend
+
+* CLI script for dealing with "split access logs" was optimized for lower memory consumption
+* the use of pandas renderers is newly limited to only a few relevant views
+
+
+### Fixed
+
+#### Frontend
+
+* trend-mode switch is now correctly disabled in the read-only view of the report
+
+#### Backend
+
+* processing of reports containing null characters no longer crashes on saving of the error report
+* error preventing reports containing report type comparison from being exported was fixed
+
+
+
 ## [8.0.4]  - 2025-03-20
 
 ### Changes

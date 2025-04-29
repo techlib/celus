@@ -1,3 +1,31 @@
+- version: 8.1.0
+  title:
+    en: Preview release 8.1.0
+    cs: Předběžné vydání 8.1.0
+  text:
+    en: |
+      - Interest computation redesign
+      - Sending of reports via email
+      - Parametrization of stored reports
+      - Monthly harvesting overview emails
+      - Synchronization of platforms with the COUNTER Registry
+      - Report types assigned directly to platform for easier SUSHI configuration
+      - Major front-end library upgrade
+      - Many other smaller improvements and fixes
+    cs: |
+      - Změna výpočtu zájmu
+      - Zasílání reportů emailem
+      - Parametrizované reporty
+      - Měsíční email s přehledem úspěšnosti sklízení dat
+      - Synchronizace platforem s COUNTER Registem
+      - Reporty přiřazené přímo k platformě pro zjednodušení konfigurace SUSHI
+      - Významný upgrade front-endové knihovny
+      - Mnoho menších vylepšení a oprav
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 8.0.4
   title:
     en: Bugfix release 8.0.4
