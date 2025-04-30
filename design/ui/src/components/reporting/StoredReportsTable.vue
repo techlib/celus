@@ -787,27 +787,6 @@ export default {
   },
 
   watch: {
-    async showMailingPreferences() {
-      if (!this.showMailingPreferences && this.activeReport) {
-        // reload the active report
-        try {
-          let resp = await axios.get(
-            `/api/flexible-report/${this.activeReport.pk}/`,
-          );
-          this.activeReport.mailingCount = resp.data.mailing_count;
-          this.activeReport = null;
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    },
-  },
-
-  async mounted() {
-    await this.fetchReportTypes();
-    await this.fetchData();
-  },
-  watch: {
     overrideDates: {
       handler() {
         this.changeForceHideDateRangeSelector({
@@ -847,6 +826,25 @@ export default {
         this.exportHandle = null;
       }
     },
+    async showMailingPreferences() {
+      console.log("showMailingPreferences", this.showMailingPreferences);
+      if (!this.showMailingPreferences && this.activeReport) {
+        // reload the active report
+        try {
+          let resp = await axios.get(
+            `/api/flexible-report/${this.activeReport.pk}/`,
+          );
+          this.activeReport.mailingCount = resp.data.mailing_count;
+          this.activeReport = null;
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    },
+  },
+  async mounted() {
+    await this.fetchReportTypes();
+    await this.fetchData();
   },
 };
 </script>

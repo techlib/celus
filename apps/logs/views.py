@@ -1598,7 +1598,7 @@ class FlexibleReportViewSet(ModelViewSet):
         # if the user has edit access, they can see all other users with view access
         # but not (other) consortium admins
         consortium_admins = User.objects.filter_consortium_admins().exclude(pk=user.pk)
-        return report.users_with_view_access().exclude(pk__in=consortium_admins)
+        return report.users_with_view_access().exclude(pk__in=consortium_admins).distinct()
 
     @action(methods=["GET"], detail=True, url_path="mailings", url_name="mailings")
     def list_mailings(self, request, pk):
@@ -1620,7 +1620,10 @@ class FlexibleReportViewSet(ModelViewSet):
         """
         return Response(
             UserSerializerForMailing(
-                self.view_users_queryset(self.get_object(), request.user), many=True
+                self.view_users_queryset(self.get_object(), request.user).order_by(
+                    "last_name", "first_name", "email", "username", "pk"
+                ),
+                many=True,
             ).data
         )
 
