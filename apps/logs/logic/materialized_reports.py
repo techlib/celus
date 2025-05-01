@@ -7,6 +7,8 @@ from django.db.models.expressions import F, RawSQL
 from django.db.models.functions import Cast
 from django.db.transaction import atomic
 
+from logs.logic.copy_from_saving import insert_new_accesslogs
+
 from ..models import AccessLog, ImportBatch, ReportType
 
 logger = logging.getLogger(__name__)
@@ -132,11 +134,11 @@ def create_materialized_accesslogs_for_importbatches(
         .values("import_batch_id", *keep)
         .annotate(value=Sum("value"))
     )
-    to_insert = [AccessLog(report_type=rt, **log) for log in query]
-    AccessLog.objects.bulk_create(to_insert)
+    to_insert = list(query)
+    insert_new_accesslogs(to_insert, report_type_id=rt.pk)
     for ib in ibs:
         ib.materialization_data[f"r{rt.pk}"] = time()
-        ib.save(update_fields=["materialization_data"])
+    ImportBatch.objects.bulk_update(ibs, ["materialization_data"])
     return len(to_insert)
 
 

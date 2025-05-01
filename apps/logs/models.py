@@ -259,6 +259,10 @@ class ReportType(models.Model):
     def is_interest_rt(self) -> bool:
         return self.short_name == "interest" and self.source is None
 
+    @cached_property
+    def materialized_subreport_types(self) -> typing.List["ReportType"]:
+        return list(ReportType.objects.filter(materialization_spec__base_report_type=self))
+
 
 class ReportMaterializationSpec(models.Model):
     """

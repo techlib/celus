@@ -4,6 +4,8 @@ Stuff related to the artificial (materialized) report type 'interest' and its co
 
 import logging
 from collections import Counter, defaultdict
+from dataclasses import dataclass, field
+from datetime import date
 from functools import lru_cache
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -12,8 +14,13 @@ from django.conf import settings
 from django.db.models import Case, Count, Exists, F, Max, OuterRef, Q, QuerySet, Sum, Value, When
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
+from hcube.api.models.aggregation import Sum as HSum
+from hcube.api.models.transforms import Map, RawMap
+from organizations.models import Organization
+from publications.models import Platform
 
 from logs.constants import ACTION_INTEREST_CHANGE, ACTION_INTEREST_SMART_SYNC
+from logs.cubes import AccessLogCube, ch_backend
 from logs.logic.clickhouse import delete_interest_from_import_batches
 from logs.logic.interest.definitions import INTEREST_EXTRA_DIMENSIONS
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
@@ -72,10 +79,14 @@ def sync_interest_for_import_batch(
     interest_rt: ReportType,
     skip_clickhouse_sync=False,
     interest_computer: Optional["InterestComputer"] = None,
+    assume_no_old_interest=False,
 ) -> Counter:
     """
     Passing InterestComputer is an optimization because it caches some data from the DB
     thus reducing the number of DB queries.
+
+    When assume_no_old_interest is True, we assume that no previous interest data is present
+    and thus we do not need to compare the data with existing interest data.
     """
     start = time()
     stats = Counter()
@@ -83,29 +94,37 @@ def sync_interest_for_import_batch(
     if superseding_ib := find_superseding_import_batch(import_batch):
         stats["superseded_import_batch"] += 1
         import_batch.interest_ib = superseding_ib
-        remove_interest_from_import_batches([import_batch.pk], interest_rt)  # remove old interest
+        if not assume_no_old_interest:
+            # remove old interest
+            remove_interest_from_import_batches([import_batch.pk], interest_rt)
         import_batch.save()
         return stats
 
     # prepare the data
     ic = interest_computer or InterestComputer(interest_rt)
     new_log_dicts = ic.extract_interest_from_import_batch(import_batch)
-    # compare it with existing data
-    accesslog_keys = (
-        "organization_id",
-        "metric_id",
-        "platform_id",
-        "target_id",
-        "item_id",
-        "date",
-        *interest_rt.explicit_dimensions,
-    )
-    old_log_dicts = import_batch.accesslog_set.filter(report_type=interest_rt).values(
-        "pk", *accesslog_keys
-    )
-    really_new, to_delete_pks, same = fast_compare_existing_and_new_records(
-        old_log_dicts, new_log_dicts, accesslog_keys
-    )
+    if assume_no_old_interest:
+        # if we assume that no interest data is present, we can just create all new logs
+        really_new = new_log_dicts
+        to_delete_pks = set()
+        same = 0
+    else:
+        # compare it with existing data
+        accesslog_keys = (
+            "organization_id",
+            "metric_id",
+            "platform_id",
+            "target_id",
+            "item_id",
+            "date",
+            *interest_rt.explicit_dimensions,
+        )
+        old_log_dicts = import_batch.accesslog_set.filter(report_type=interest_rt).values(
+            "pk", *accesslog_keys
+        )
+        really_new, to_delete_pks, same = fast_compare_existing_and_new_records(
+            old_log_dicts, new_log_dicts, accesslog_keys
+        )
     # create new, remove old
     if really_new:
         AccessLog.objects.bulk_create(
@@ -171,6 +190,34 @@ def find_superseding_import_batch(import_batch: ImportBatch) -> Optional[ImportB
         if rt.id in ib_rts:
             return next(ib for ib in ibs if ib.report_type_id == rt.id)
     raise ValueError("This should never happen - no superseding import batch found")
+
+
+def find_superseding_import_batches(
+    report_type: ReportType, organization: Organization, platform: Platform
+) -> Dict[date, ImportBatch]:
+    """
+    Find the superseding import batches for the given import batches.
+    The result is a dict mapping the date to the superseding import batch.
+    """
+    # report types are ordered by their position in the hierarchy - most important
+    # report types first
+    superseding_report_types = get_report_type_superseding_report_types(report_type)
+    out = {}
+    for ib in ImportBatch.objects.filter(
+        report_type__in=superseding_report_types,
+        organization_id=organization.id,
+        platform_id=platform.id,
+    ):
+        if ib.date not in out:
+            out[ib.date] = ib
+        else:
+            # multiple import batches for the same date - keep the one with the highest
+            # positioned report type
+            if superseding_report_types.index(ib.report_type) < superseding_report_types.index(
+                out[ib.date].report_type
+            ):
+                out[ib.date] = ib
+    return out
 
 
 def get_report_type_superseding_report_types(report_type: ReportType) -> List[ReportType]:
@@ -256,6 +303,13 @@ def find_superseded_import_batches(import_batch: ImportBatch) -> QuerySet[Import
     )
 
 
+@dataclass
+class DimensionMapping:
+    dim_attr: str
+    mappings: List[Tuple[List[int], int]] = field(default_factory=list)
+    default: int = 0
+
+
 class InterestComputer:
     """
     Computes interest for a given import batch. An instance can be reused for multiple
@@ -268,27 +322,68 @@ class InterestComputer:
     # when post-processing the accesslog data in `extract_interest_from_import_batch`
     EXTRA_DIM_PREFIX = "XX_"
 
-    def __init__(self, interest_rt: ReportType):
+    def __init__(
+        self,
+        interest_rt: ReportType,
+        organization: Optional[Organization] = None,
+        report_type: Optional[ReportType] = None,
+    ):
+        """
+        When `organization` is given, we can cache some data between interest computations
+        for the same organization.
+        When `report_type` is given, we can cache data between interest computations
+        for the same report type.
+        """
         self.interest_rt = interest_rt
-
+        self.organization = organization
+        self.report_type = report_type
         self.rt_dim = self.interest_rt.dim_name_to_dim_attr("Original_Report_Type")
         self.metric_dim = self.interest_rt.dim_name_to_dim_attr("Original_Metric")
+
+        # cache some extra data if organization or report_type is given
+        self.interest_profile = self.organization.get_interest_profile() if organization else None
+        self.annotations = (
+            self.prepare_report_type_interest_dimension_annotations(
+                self.report_type, self.interest_rt
+            )
+            if report_type
+            else None
+        )
+        self.interest_definitions = (
+            self.get_interest_definitions(self.interest_profile, self.report_type)
+            if self.interest_profile and self.report_type
+            else None
+        )
 
     def extract_interest_from_import_batch(self, import_batch: ImportBatch) -> List[Dict]:
         """
         The return list contains dictionaries that contain data for accesslog creation,
         but without the report_type and import_batch fields
         """
+        # make sure that the organization and report type match if they were given
+        if self.organization and import_batch.organization != self.organization:
+            raise ValueError(
+                "Import batch organization does not match the organization for which the interest "
+                "computer was created"
+            )
+        if self.report_type and import_batch.report_type != self.report_type:
+            raise ValueError(
+                "Import batch report type does not match the report type for which the interest "
+                "computer was created"
+            )
+
         new_logs = []
-        interest_profile = import_batch.organization.get_interest_profile()
-        annotations = self.prepare_report_type_interest_dimensions(
+        interest_profile = self.interest_profile or import_batch.organization.get_interest_profile()
+        annotations = self.annotations or self.prepare_report_type_interest_dimension_annotations(
             import_batch.report_type, self.interest_rt
         )
         orig_rt_text = self.get_orig_rt_text(import_batch.report_type)
 
-        for metric, ig, filters in self.get_interest_definitions(
+        interest_definitions = self.interest_definitions or self.get_interest_definitions(
             interest_profile, import_batch.report_type
-        ):
+        )
+
+        for metric, ig, filters in interest_definitions:
             orig_metric_text = self.get_orig_metric_text(metric)
 
             qs = (
@@ -317,6 +412,162 @@ class InterestComputer:
                     new_log_dict[self.metric_dim] = orig_metric_text.pk
 
                 # strip X from the keys
+                for key in list(new_log_dict.keys()):
+                    if key.startswith(self.EXTRA_DIM_PREFIX):
+                        new_log_dict[key[len(self.EXTRA_DIM_PREFIX) :]] = new_log_dict.pop(key)
+
+                # metric is the one defined by the interest group
+                new_log_dict["metric_id"] = ig.metric_id
+                new_logs.append(new_log_dict)
+        return new_logs
+
+    def extract_interest_from_import_batches(
+        self, import_batches: QuerySet[ImportBatch]
+    ) -> List[Dict]:
+        """
+        This is an optimized version of `extract_interest_from_import_batch` which works on
+        a list of import batches with the assumption that the interest definition is the same
+        for all batches, because the organization and report type are the same.
+        """
+        # make sure that the organization and report type match if they were given
+        if not self.organization:
+            raise ValueError(
+                "This method requires that the InterestComputer was created with an organization"
+            )
+        if not self.report_type:
+            raise ValueError(
+                "This method requires that the InterestComputer was created with a report type"
+            )
+
+        logger.info("Extracting interest from %d import batches", import_batches.count())
+
+        new_logs = []
+        annotations = self.annotations
+        orig_rt_text = self.get_orig_rt_text(self.report_type)
+
+        interest_definitions = self.interest_definitions
+
+        for metric, ig, filters in interest_definitions:
+            orig_metric_text = self.get_orig_metric_text(metric)
+
+            qs = (
+                AccessLog.objects.filter(
+                    *filters,
+                    import_batch_id__in=import_batches,
+                    report_type=self.report_type,
+                    metric_id=metric.id,
+                )
+                .annotate(**annotations)
+                .values(
+                    "import_batch_id",
+                    "organization_id",
+                    "metric_id",
+                    "platform_id",
+                    "target_id",
+                    "item_id",
+                    "date",
+                    *annotations.keys(),
+                )
+                .annotate(value=Sum("value"))
+            )
+
+            for new_log_dict in qs:
+                # rt_dim is the original report type dimension
+                if self.rt_dim:
+                    new_log_dict[self.rt_dim] = orig_rt_text.pk
+                # metric_dim is the original metric dimension
+                if self.metric_dim:
+                    new_log_dict[self.metric_dim] = orig_metric_text.pk
+
+                # strip EXTRA_DIM_PREFIX from the keys
+                for key in list(new_log_dict.keys()):
+                    if key.startswith(self.EXTRA_DIM_PREFIX):
+                        new_log_dict[key[len(self.EXTRA_DIM_PREFIX) :]] = new_log_dict.pop(key)
+
+                # metric is the one defined by the interest group
+                new_log_dict["metric_id"] = ig.metric_id
+                new_logs.append(new_log_dict)
+        return new_logs
+
+    def extract_interest_from_import_batches_ch(
+        self, import_batches: QuerySet[ImportBatch]
+    ) -> List[Dict]:
+        """
+        This is an optimized version of `extract_interest_from_import_batch` which works on
+        a list of import batches with the assumption that the interest definition is the same
+        for all batches, because the organization and report type are the same.
+
+        This version uses ClickHouse to compute the interest.
+        """
+        # make sure that the organization and report type match if they were given
+        if not self.organization:
+            raise ValueError(
+                "This method requires that the InterestComputer was created with an organization"
+            )
+        if not self.report_type:
+            raise ValueError(
+                "This method requires that the InterestComputer was created with a report type"
+            )
+        logger.info("Extracting interest from %d import batches", import_batches.count())
+
+        new_logs = []
+        orig_rt_text = self.get_orig_rt_text(self.report_type)
+
+        transformations = {}
+        for dim_attr, mapping in self._prepare_report_type_interest_dimensions_mappings(
+            self.report_type, self.interest_rt
+        ).items():
+            if mapping.dim_attr:
+                transformations[dim_attr] = Map(
+                    mapping.dim_attr,
+                    {k: v for src_values, v in mapping.mappings for k in src_values},
+                    default=mapping.default,
+                )
+            else:
+                transformations[dim_attr] = RawMap(mapping.default)  # map to single value
+
+        interest_definitions = self.interest_definitions
+
+        for metric, ig, filters in interest_definitions:
+            orig_metric_text = self.get_orig_metric_text(metric)
+
+            qs = (
+                AccessLogCube.query()
+                .filter(
+                    *filters,
+                    import_batch_id__in=[ib.pk for ib in import_batches],
+                    report_type_id=self.report_type.pk,
+                    metric_id=metric.id,
+                )
+                .transform(**transformations)
+                .group_by(
+                    "import_batch_id",
+                    "organization_id",
+                    "metric_id",
+                    "platform_id",
+                    "target_id",
+                    "item_id",
+                    "date",
+                    *transformations.keys(),
+                )
+                .aggregate(value=HSum("value"))
+            )
+
+            for new_log_rec in ch_backend.get_records(qs):
+                new_log_dict = new_log_rec._asdict()
+                # rt_dim is the original report type dimension
+                if self.rt_dim:
+                    new_log_dict[self.rt_dim] = orig_rt_text.pk
+                # metric_dim is the original metric dimension
+                if self.metric_dim:
+                    new_log_dict[self.metric_dim] = orig_metric_text.pk
+                # check for zero values in target_id and item_id
+                if new_log_dict["target_id"] == 0:
+                    new_log_dict["target_id"] = None
+                if new_log_dict["item_id"] == 0:
+                    new_log_dict["item_id"] = None
+
+                # strip EXTRA_DIM_PREFIX from the keys
                 for key in list(new_log_dict.keys()):
                     if key.startswith(self.EXTRA_DIM_PREFIX):
                         new_log_dict[key[len(self.EXTRA_DIM_PREFIX) :]] = new_log_dict.pop(key)
@@ -356,9 +607,9 @@ class InterestComputer:
 
     @classmethod
     @lru_cache(maxsize=100)  # noqa: B019, I know what I am doing
-    def prepare_report_type_interest_dimensions(
+    def _prepare_report_type_interest_dimensions_mappings(
         cls, report_type: ReportType, interest_rt: ReportType
-    ) -> Dict[str, Case]:
+    ) -> Dict[str, DimensionMapping]:
         """
         Returns a mapping between interest dimensions and original accesslog dimensions
         """
@@ -377,27 +628,50 @@ class InterestComputer:
             ):
                 raise ValueError(f"No mapping found for dimension {dim_name}")
 
-            whens = []
-            for dest_name, src_names in idvm.mapping.items():
-                dest_value = DimensionText.objects.get_or_create(
-                    dimension=idvm.interest_rtdim.dimension, text=dest_name
-                )[0].pk
-                src_values = [
-                    DimensionText.objects.get_or_create(
-                        dimension=idvm.source_rtdim.dimension, text=src_name
+            if idvm.mapping:
+                mapping = DimensionMapping(
+                    dim_attr=report_type.dim_to_dim_attr(idvm.source_rtdim.dimension)
+                )
+                for dest_name, src_names in idvm.mapping.items():
+                    dest_value = DimensionText.objects.get_or_create(
+                        dimension=idvm.interest_rtdim.dimension, text=dest_name
                     )[0].pk
-                    for src_name in src_names
-                ]
+                    src_values = [
+                        DimensionText.objects.get_or_create(
+                            dimension=idvm.source_rtdim.dimension, text=src_name
+                        )[0].pk
+                        for src_name in src_names
+                    ]
+                    logger.debug("Mapping: %s: %s -> %s", mapping.dim_attr, src_values, dest_value)
+                    mapping.mappings.append((src_values, dest_value))
+            else:
+                # no mapping, use the default value
+                mapping = DimensionMapping(dim_attr=None)
 
-                dim_attr = report_type.dim_to_dim_attr(idvm.source_rtdim.dimension)
-                logger.debug("Mapping: %s: %s -> %s", dim_attr, src_values, dest_value)
-                whens.append(When(**{f"{dim_attr}__in": src_values}, then=Value(dest_value)))
-            default = DimensionText.objects.get_or_create(
+            mapping.default = DimensionText.objects.get_or_create(
                 dimension=idvm.interest_rtdim.dimension, text=idvm.default_value
             )[0].pk
-            out[
-                cls.EXTRA_DIM_PREFIX + interest_rt.dim_to_dim_attr(idvm.interest_rtdim.dimension)
-            ] = Case(*whens, default=Value(default))
+            out[interest_rt.dim_to_dim_attr(idvm.interest_rtdim.dimension)] = mapping
+
+        return out
+
+    @classmethod
+    @lru_cache(maxsize=100)  # noqa: B019, I know what I am doing
+    def prepare_report_type_interest_dimension_annotations(
+        cls, report_type: ReportType, interest_rt: ReportType
+    ) -> Dict[str, Case]:
+        """
+        Returns a mapping between interest dimensions and original accesslog dimensions
+        """
+        out = {}
+        for dim_attr, mapping in cls._prepare_report_type_interest_dimensions_mappings(
+            report_type, interest_rt
+        ).items():
+            whens = [
+                When(**{f"{mapping.dim_attr}__in": src_values}, then=Value(dest_value))
+                for src_values, dest_value in mapping.mappings
+            ]
+            out[cls.EXTRA_DIM_PREFIX + dim_attr] = Case(*whens, default=Value(mapping.default))
         return out
 
     @classmethod

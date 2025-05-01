@@ -15,12 +15,12 @@ from django.conf import settings
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from organizations.models import Organization
-from postgres_copy import CopyMapping
 from publications.logic.item_management import ItemManager
 from publications.logic.title_management import TitleManager
 from publications.models import Platform, PlatformTitle
 from sushi.models import SushiFetchAttempt
 
+from logs.logic.copy_from_saving import IBCopyMapping
 from logs.logic.get_or_create_with_map import get_or_create_with_map
 from logs.logic.interest.computation import (
     find_superseded_import_batches,
@@ -516,20 +516,6 @@ def create_platformtitle_links_from_accesslogs(accesslogs: List[AccessLog]) -> L
         for rec in (data - possible_clashing)
     ]
     return PlatformTitle.objects.bulk_create(to_create, ignore_conflicts=True)
-
-
-class IBCopyMapping(CopyMapping):
-    """
-    The original CopyMapping is not thread-safe as it always uses the same temporary
-    table. This version uses a table name dependent on the import batch ID, which should
-    be safe enough for our use case.
-    """
-
-    def __init__(self, model, csv_path_or_obj, ib_id, **kwargs):
-        # the third argument is mapping, which is detected automatically from the CSV
-        # header, so we just pass an empty dict here
-        super().__init__(model, csv_path_or_obj, {}, **kwargs)
-        self.temp_table_name = f"{self.temp_table_name}_{ib_id}"
 
 
 def ingest_import_batch_data(import_batch: ImportBatch, file_content: StringIO):

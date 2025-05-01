@@ -39,6 +39,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--fix-it", dest="fix_it", action="store_true")
         parser.add_argument("--delete-extra", dest="delete_extra", action="store_true")
+        parser.add_argument(
+            "--no-sync",
+            dest="no_sync",
+            action="store_true",
+            help="Do not sync data for new materialized reports - useful when you know you will "
+            "recompute the data later",
+        )
 
     @atomic
     def handle(self, *args, **options):
@@ -114,10 +121,13 @@ class Command(BaseCommand):
 
         # compute data for new report types
         if new_mat_rts:
-            logger.info("Syncing data for new materialized reports, this may take a while")
-            sync_materialized_reports(
-                ReportType.objects.filter(pk__in=[rt.pk for rt in new_mat_rts])
-            )
+            if options["no_sync"]:
+                logger.warning("Skipping sync of materialized reports - data will not be updated")
+            else:
+                logger.info("Syncing data for new materialized reports, this may take a while")
+                sync_materialized_reports(
+                    ReportType.objects.filter(pk__in=[rt.pk for rt in new_mat_rts])
+                )
 
     @classmethod
     def exclude_to_keeps(cls, exclude: [str]) -> dict:

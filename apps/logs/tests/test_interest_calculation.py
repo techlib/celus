@@ -13,6 +13,7 @@ from publications.fake_data import PlatformFactory, TitleFactory
 from publications.models import Platform
 from publications.tests.conftest import interest_groups, interest_rt  # noqa - fixture
 
+from logs.cubes import AccessLogCube, create_ch_backend
 from logs.fake_data import (
     ImportBatchFactory,
     ImportBatchFullFactory,
@@ -28,6 +29,7 @@ from logs.logic.interest.computation import (
     _find_unprocessed_batches,
     fast_compare_existing_and_new_records,
     find_superseded_import_batches,
+    find_superseding_import_batches,
     get_report_type_superseding_report_types,
     get_report_types_superseded_by_report_type,
     sync_interest_for_import_batch,
@@ -41,6 +43,7 @@ from logs.models import (
     Dimension,
     DimensionText,
     InterestConfig,
+    InterestDimensionValueMapping,
     InterestProfile,
     Metric,
     ReportInterestMetric,
@@ -315,7 +318,7 @@ class TestInterestCalculation:
         assert interest_rt.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
 
     @pytest.mark.django_db(transaction=True)
-    def test_sync_interest_for_import_batch_with_iterest_materialized_views(
+    def test_sync_interest_for_import_batch_with_interest_materialized_views(
         self, counter_records, organizations, interest_rt, report_type_nd, settings
     ):
         """
@@ -811,6 +814,45 @@ class TestRealWorldInterestCalculation:
             assert AccessLog.objects.count() == 2, "2 access logs"
             assert AccessLog.objects.filter(report_type=interest_rt).count() == 1, "1 interest log"
 
+    @pytest.mark.parametrize(
+        ["tested_rt", "expected"],
+        [
+            ("TR51", "IR51"),
+            ("IR51", None),
+            ("TR", "IR51"),
+            ("JR1", "IR51"),
+            ("BR2", "IR51"),
+            ("DB1", "DR51"),
+            ("DR51", None),
+            ("DR", "DR51"),
+            ("IR_M1", "IR51"),
+        ],
+    )
+    def test_find_superseding_import_batches(
+        self, interest_rt, interest_groups, tested_rt, expected
+    ):
+        """
+        Test that find_superseding_import_batches returns the correct list of import batches
+        - even if there are multiple import batches for the same date - the one with the highest
+        positioned report type should be returned
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        # create import batches for the same date and for all report types
+        for rt in ReportType.objects.all().exclude(short_name="interest"):
+            ImportBatchFactory(
+                organization=organization, platform=platform, report_type=rt, date="2024-01-01"
+            )
+        # get the tested report type
+        rt = ReportType.objects.get(short_name=tested_rt)
+        ibs = find_superseding_import_batches(rt, organization, platform)
+        if expected:
+            assert ibs[date(2024, 1, 1)].report_type.short_name == expected
+        else:
+            assert len(ibs) == 0
+
     @pytest.mark.parametrize("pr_version", ["PR", "PR51"])
     def test_report_interest_metric_for_pr_is_deleted(
         self, interest_rt, interest_groups, pr_version
@@ -1065,3 +1107,187 @@ class TestSupportCode:
         assert same == 2
         assert add == [{"a": 50, "b": 60}, {"a": 40, "b": 70}]
         assert remove == {3}
+
+
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
+class TestRecomputeInterestCLI:
+    @pytest.mark.parametrize("interest_profile", [None, "total", "unique"])
+    def test_recompute_force_interest_with_profiles(
+        self, interest_groups, interest_rt, interest_profile, clickhouse_on_off
+    ):
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # now compute interest
+        organization = OrganizationFactory()
+        if interest_profile:
+            InterestConfig.objects.create(
+                organization=organization,
+                interest_profile=InterestProfile.objects.get(short_name=interest_profile),
+            )
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="TR51")
+        dates = {"start": "2024-01-01", "end": "2024-01-31"}
+        dimension_data = {
+            "Data_Type": "Book",
+            "Access_Type": "Free_To_Read",
+            "Access_Method": "Normal",
+        }
+        crs = [
+            CounterRecord(
+                value=2,
+                title="Title1",
+                metric="Total_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+            CounterRecord(
+                value=1,
+                title="Title1",
+                metric="Unique_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+        ]
+        import_counter_records(report_type, organization, platform, crs)
+
+        # delete the interest data from accesslog
+        AccessLog.objects.filter(report_type=interest_rt).delete(i_know_what_i_am_doing=True)
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 0
+        if clickhouse_on_off:
+            ch_backend = create_ch_backend()
+            ch_backend.delete_records(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+            assert (
+                ch_backend.get_count(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+                == 0
+            )
+
+        call_command("recompute_interest", "-f")
+
+        assert AccessLog.objects.count() == 3, "two normal, one interest"
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 1, "one interest log"
+        al = AccessLog.objects.filter(report_type=interest_rt).first()
+        assert al.value == 1 if interest_profile == "unique" else 2
+        assert al.organization == organization
+        assert al.platform == platform
+
+        assert DimensionText.objects.get(id=al.dim1).text == "TR51"
+        assert (
+            DimensionText.objects.get(id=al.dim2).text == "Unique_Item_Requests"
+            if interest_profile == "unique"
+            else "Total_Item_Requests"
+        )
+        assert DimensionText.objects.get(id=al.dim3).text == "Free"
+        assert DimensionText.objects.get(id=al.dim4).text == "Normal"
+
+        # check clickhouse was synced
+        if clickhouse_on_off:
+            ch_backend = create_ch_backend()
+            assert (
+                ch_backend.get_count(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+                == 1
+            )
+            rec = ch_backend.get_one_record(
+                AccessLogCube.query().filter(report_type_id=interest_rt.pk)
+            )
+            assert DimensionText.objects.get(id=rec.dim1).text == "TR51"
+            assert DimensionText.objects.get(id=rec.dim2).text == (
+                "Unique_Item_Requests" if interest_profile == "unique" else "Total_Item_Requests"
+            )
+            assert DimensionText.objects.get(id=rec.dim3).text == "Free"
+            assert DimensionText.objects.get(id=rec.dim4).text == "Normal"
+
+    @pytest.mark.parametrize("interest_profile", [None, "total", "unique"])
+    def test_recompute_force_interest_with_profiles_and_no_mappings(
+        self, interest_groups, interest_rt, interest_profile, clickhouse_on_off
+    ):
+        """
+        Tests the recompute_interest cli command, but simulates situation where there are no
+        mappings for Access_Type and Access_Method stored with the report types and default
+        values are used.
+
+        This test is here to guard against regression where the interest computation would
+        compute null values for Access_Type and Access_Method instead of using the default values.
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # delete the mappings - only the non-default ones
+        InterestDimensionValueMapping.objects.exclude(source_rtdim__isnull=True).delete()
+        # now compute interest
+        organization = OrganizationFactory()
+        if interest_profile:
+            InterestConfig.objects.create(
+                organization=organization,
+                interest_profile=InterestProfile.objects.get(short_name=interest_profile),
+            )
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="TR51")
+        dates = {"start": "2024-01-01", "end": "2024-01-31"}
+        dimension_data = {
+            "Data_Type": "Book",
+            "Access_Type": "Free_To_Read",
+            "Access_Method": "Normal",
+        }
+        crs = [
+            CounterRecord(
+                value=2,
+                title="Title1",
+                metric="Total_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+            CounterRecord(
+                value=1,
+                title="Title1",
+                metric="Unique_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+        ]
+        import_counter_records(report_type, organization, platform, crs)
+
+        # delete the interest data from accesslog
+        AccessLog.objects.filter(report_type=interest_rt).delete(i_know_what_i_am_doing=True)
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 0
+        if clickhouse_on_off:
+            ch_backend = create_ch_backend()
+            ch_backend.delete_records(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+            assert (
+                ch_backend.get_count(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+                == 0
+            )
+
+        call_command("recompute_interest", "-f")
+
+        assert AccessLog.objects.count() == 3, "two normal, one interest"
+        assert AccessLog.objects.filter(report_type=interest_rt).count() == 1, "one interest log"
+        al = AccessLog.objects.filter(report_type=interest_rt).first()
+        assert al.value == 1 if interest_profile == "unique" else 2
+        assert al.organization == organization
+        assert al.platform == platform
+
+        assert DimensionText.objects.get(id=al.dim1).text == "TR51"
+        assert (
+            DimensionText.objects.get(id=al.dim2).text == "Unique_Item_Requests"
+            if interest_profile == "unique"
+            else "Total_Item_Requests"
+        )
+        assert DimensionText.objects.get(id=al.dim3).text == "Controlled", "default value"
+        assert DimensionText.objects.get(id=al.dim4).text == "Normal", "default value"
+
+        # check clickhouse was synced
+        if clickhouse_on_off:
+            ch_backend = create_ch_backend()
+            assert (
+                ch_backend.get_count(AccessLogCube.query().filter(report_type_id=interest_rt.pk))
+                == 1
+            )
+            rec = ch_backend.get_one_record(
+                AccessLogCube.query().filter(report_type_id=interest_rt.pk)
+            )
+            assert DimensionText.objects.get(id=rec.dim1).text == "TR51"
+            assert DimensionText.objects.get(id=rec.dim2).text == (
+                "Unique_Item_Requests" if interest_profile == "unique" else "Total_Item_Requests"
+            )
+            assert DimensionText.objects.get(id=rec.dim3).text == "Controlled", "default value"
+            assert DimensionText.objects.get(id=rec.dim4).text == "Normal", "default value"
