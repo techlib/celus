@@ -31,7 +31,6 @@ export default defineConfig({
         configFile: "src/styles/settings.scss",
       },
     }),
-    vueDevTools(),
     ViteFonts({
       google: {
         families: [
@@ -47,7 +46,7 @@ export default defineConfig({
       strictMessage: false,
       include: resolve(dirname(fileURLToPath(import.meta.url)), "locales/**"),
     }),
-    vueDevTools(),
+    vueDevTools({ componentInspector: false }),
   ],
   define: { "process.env": {} },
   resolve: {
