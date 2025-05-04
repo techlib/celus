@@ -12,6 +12,8 @@ from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
+from django_otp.plugins.otp_email.models import EmailDevice
+from events.models import Event
 from export.models import FlexibleDataExport
 from impersonate.models import ImpersonationLog
 from knowledgebase.models import PlatformImportAttempt, RouterSyncAttempt
@@ -93,6 +95,8 @@ class Command(BaseCommand):
             LastAction,
             Session,
             Token,
+            Event,
+            EmailDevice,
         ):
             self.stderr.write(self.style.WARNING(f"Deleting {model.__name__}"))
             count, details = model.objects.all().delete()
