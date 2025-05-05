@@ -1237,14 +1237,18 @@ files = [
 ]
 
 [[package]]
-name = "django-querycount"
-version = "0.8.3"
-description = "Middleware that Prints the number of DB queries to the runserver console."
+name = "django-query-counter"
+version = "0.4.0"
+description = "Debug tool to print sql queries count to the console"
 optional = false
 python-versions = "*"
 files = [
-    {file = "django-querycount-0.8.3.tar.gz", hash = "sha256:0782484e8a1bd29498fa0195a67106e47cdcc98fafe80cebb1991964077cb694"},
+    {file = "django-query-counter-0.4.0.tar.gz", hash = "sha256:0bb84eef7ae0c39034ae1d3d2fc3e419f86d115d78f5d0805cd036a8907c150c"},
+    {file = "django_query_counter-0.4.0-py3-none-any.whl", hash = "sha256:ad85e03671f7b63ed6eb126244c7bb552249901611d7765dfa975657bf586fbf"},
 ]
+
+[package.dependencies]
+tabulate = "*"
 
 [[package]]
 name = "django-redis"
@@ -3740,6 +3744,20 @@ xlsx = ["openpyxl (>=2.6.0)"]
 yaml = ["pyyaml"]
 
 [[package]]
+name = "tabulate"
+version = "0.9.0"
+description = "Pretty-print tabular data"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
+    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+]
+
+[package.extras]
+widechars = ["wcwidth"]
+
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -4230,4 +4248,4 @@ registry = ["django-celus-registry"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.9"
-content-hash = "3cd6c634b44dfb11a31f9116fb6fdee48a9fd18ab1dcc461539a30625eb862c4"
+content-hash = "3ff7c4f9d68a9dc6e7a1aaf05678f53906b592fee8cb38bdd47daef150873f75"
