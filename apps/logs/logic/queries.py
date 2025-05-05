@@ -3,7 +3,7 @@ Functions that help in constructing django queries
 """
 
 import logging
-from typing import Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 from charts.models import ReportDataView
 from core.logic.dates import date_filter_from_params
@@ -87,7 +87,7 @@ def extract_accesslog_attr_query_params(
 
 
 def test_possible_materialized_report_use(
-    query_params: {}, other_used_dimensions: Optional[Iterable] = None
+    query_params: Dict[str, Any], other_used_dimensions: Optional[Iterable] = None
 ) -> Optional[ReportType]:
     """
     Try to find a suitable materialized report for the one that is present in query params.
@@ -114,7 +114,7 @@ def test_possible_materialized_report_use(
 
 
 def replace_report_type_with_materialized(
-    query_params: {}, other_used_dimensions: Optional[Iterable] = None
+    query_params: Dict[str, Any], other_used_dimensions: Optional[Iterable] = None
 ) -> bool:
     """
     Takes a list of parameters that would be passed as filter to Accesslog.objects.filter
@@ -356,6 +356,7 @@ class StatsComputer:
             self.dim_raw_name_to_name[self.sec_dim_name] = self.io_sec_dim_name
         # add filter for dates
         query_params.update(date_filter_from_params(self.params))
+        exclude_query_params = {}
         # add interest config filters if interest is the report type
         if self.used_report_type and self.used_report_type == ReportType.objects.get_interest_rt():
             # get interest config - either the default one or the one for the organization
@@ -364,12 +365,18 @@ class StatsComputer:
                 ic = Organization.objects.get(pk=org_filter).get_interest_config()
             else:
                 ic = InterestConfig.objects.default()
-            query_params.update(ic.get_interest_filters())
+            filters, exclude_filters = ic.get_interest_filters()
+            query_params.update(filters)
+            exclude_query_params.update(exclude_filters)
 
         # maybe use materialized report if available
         extra_dims = {self.prim_dim_name}
         if self.sec_dim_name:
             extra_dims.add(self.sec_dim_name)
+        # add exclude filters to the extra dimensions
+        for dim in exclude_query_params:
+            extra_dims.add(dim)
+
         rt_change = replace_report_type_with_materialized(
             query_params, other_used_dimensions=extra_dims
         )
@@ -379,6 +386,8 @@ class StatsComputer:
 
         # construct the query
         query = AccessLog.objects.filter(**query_params)
+        if exclude_query_params:
+            query = query.exclude(**exclude_query_params)
         if self.report_type and isinstance(self.report_type, ReportDataView):
             query = query.filter(**self.report_type.accesslog_filters)
         return query

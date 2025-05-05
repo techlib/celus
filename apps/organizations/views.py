@@ -320,13 +320,14 @@ For more info see Django admin: {request.build_absolute_uri(
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)
 
-    def _overlap_accesslog_filters(self, request, pk) -> Tuple[str, dict, dict]:
+    def _overlap_accesslog_filters(self, request, pk) -> Tuple[str, dict, dict, dict]:
         """
         Returns
 
         * a string with SQL WHERE part,
         * a dictionary with parameters for the WHERE part,
-        * a dictionary with filters for the AccessLog query as used by Django ORM.
+        * a dictionary with positive filters for the AccessLog query as used by Django ORM,
+        * a dictionary with negative filters for the AccessLog query as used by Django ORM.
 
         All are related to accesslogs filters applied to the request and used for overlap analysis.
         """
@@ -353,17 +354,22 @@ For more info see Django admin: {request.build_absolute_uri(
             ic = InterestConfig.objects.default()
         # handle interest config
         ic_filters = {}
-        for fltr, values in ic.get_interest_filters().items():
-            ic_filters[fltr] = values
-            dim, mod = fltr.split("__")
-            if mod == "in":
-                where_parts.append(f"{dim} IN %(dim_values_{dim})s")
-                where_params[f"dim_values_{dim}"] = tuple(values)
-            elif mod == "not_in":
-                where_parts.append(f"{dim} NOT IN %(dim_values_{dim})s")
-                where_params[f"dim_values_{dim}"] = tuple(values)
-            else:
-                raise ValueError(f"Invalid filter: {fltr}")
+        ic_neg_filters = {}
+        for negated, fltrs in zip((False, True), ic.get_interest_filters()):
+            for fltr, values in fltrs.items():
+                if negated:
+                    ic_neg_filters[fltr] = values
+                else:
+                    ic_filters[fltr] = values
+                dim, mod = fltr.split("__")
+                if mod == "in":
+                    if negated:
+                        where_parts.append(f"{dim} NOT IN %(dim_values_{dim})s")
+                    else:
+                        where_parts.append(f"{dim} IN %(dim_values_{dim})s")
+                    where_params[f"dim_values_{dim}"] = tuple(values)
+                else:
+                    raise ValueError(f"Invalid filter: {fltr}")
 
         if where_part := " AND ".join(where_parts):
             where_part = "WHERE " + where_part
@@ -378,6 +384,7 @@ For more info see Django admin: {request.build_absolute_uri(
                 **date_filter,
                 **ic_filters,
             },
+            ic_neg_filters,
         )
 
     @action(detail=True, url_path="platform-overlap")
@@ -385,7 +392,7 @@ For more info see Django admin: {request.build_absolute_uri(
         """
         API that returns a specific reply for platform-platform overlap analysis
         """
-        where_sql, where_params, _dj_filters = self._overlap_accesslog_filters(request, pk)
+        where_sql, where_params, *_unused = self._overlap_accesslog_filters(request, pk)
 
         query = f"""
           SELECT A."platform_id",
@@ -431,7 +438,9 @@ For more info see Django admin: {request.build_absolute_uri(
         This view uses similar approach to the previous one - most of the calculation is done
         by a hand-crafted raw SQL query.
         """
-        where_sql, where_params, accesslog_filters = self._overlap_accesslog_filters(request, pk)
+        where_sql, where_params, accesslog_filters, accesslog_neg_filters = (
+            self._overlap_accesslog_filters(request, pk)
+        )
 
         query = f"""
         SELECT X.platform_id,
@@ -475,9 +484,10 @@ For more info see Django admin: {request.build_absolute_uri(
                     cache.set(cache_key, pid_to_counts, timeout=5 * 60)
 
         # overall interest
-        replace_report_type_with_materialized(accesslog_filters)
+        replace_report_type_with_materialized({**accesslog_filters, **accesslog_neg_filters})
         total_overlap_interests = (
             AccessLog.objects.filter(**accesslog_filters)
+            .exclude(**accesslog_neg_filters)
             .values("platform")
             .annotate(interest=Coalesce(Sum("value"), 0))
         )
@@ -501,7 +511,11 @@ For more info see Django admin: {request.build_absolute_uri(
 
     @action(detail=True, url_path="titles-on-multiple-platforms")
     def titles_on_multiple_platforms(self, request, pk):
-        where_sql, where_params, accesslog_filters = self._overlap_accesslog_filters(request, pk)
+        # _accesslog_neg_filters is not used here because it contains only interest-specific
+        # filters which are not relevant for the titles-on-multiple-platforms query
+        where_sql, where_params, accesslog_filters, _accesslog_neg_filters = (
+            self._overlap_accesslog_filters(request, pk)
+        )
 
         # pagination and ordering parameters
         page = int(request.query_params.get("page", 1))

@@ -794,7 +794,7 @@ class InterestConfigQuerySet(models.QuerySet):
 
 
 class InterestConfig(CreatedUpdatedMixin, models.Model):
-    """ReportType
+    """
     Describes how interest should be computed for an organization.
     """
 
@@ -828,17 +828,25 @@ class InterestConfig(CreatedUpdatedMixin, models.Model):
     def __str__(self):
         return f"{self.organization or 'default'} / {self.interest_profile}"
 
-    def get_interest_filters(self) -> typing.Dict[str, list]:
+    def get_interest_filters(self) -> typing.Tuple[typing.Dict[str, list], typing.Dict[str, list]]:
+        """
+        Returns a tuple of two dictionaries:
+        - the first dictionary contains the filters for the interest report type
+        - the second dictionary contains the negated (exclude) filters for the interest report type
+        """
         interest_rt = ReportType.objects.get_interest_rt()
         filters = {}
+        negated_filters = {}
         for filter in self.interest_filters.all():
             interest_dim_attr = interest_rt.dim_to_dim_attr(filter.dimension)
             values = DimensionText.objects.filter(
                 dimension=filter.dimension, text__in=filter.values
             ).values_list("pk", flat=True)
-            mod = "__in" if not filter.negated else "__not_in"
-            filters[interest_dim_attr + mod] = list(values)
-        return filters
+            if filter.negated:
+                negated_filters[interest_dim_attr + "__in"] = list(values)
+            else:
+                filters[interest_dim_attr + "__in"] = list(values)
+        return filters, negated_filters
 
 
 class InterestFilter(CreatedUpdatedMixin, models.Model):

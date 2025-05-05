@@ -2894,6 +2894,41 @@ class TestItemViewSet:
         assert len(data) == 1, "There is only one item"
         assert data[0]["interests"]["full_text"] == exp_value
 
+    @pytest.mark.parametrize(
+        ["org_in_query", "org_has_config", "exp_value"],
+        [
+            (True, True, 1),  # org has two filters, value is 1
+            (True, False, 6),  # org used default config with one filter, value is 9
+            (False, True, 6),  # all orgs, global config is used, value is 9
+            (False, False, 6),  # all orgs, global config is used, value is 9
+            (True, None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_item_list_with_interest_config_negated_filter(
+        self,
+        master_user_client,
+        real_world_item_data_with_interest_and_configs,
+        org_in_query,
+        org_has_config,
+        exp_value,
+    ):
+        """
+        Same as the test above, but with a negated filter for the global config.
+        """
+        org = real_world_item_data_with_interest_and_configs["organization"]
+        global_config = real_world_item_data_with_interest_and_configs["global_interest_config"]
+        global_config.interest_filters.all().update(negated=True)
+        if not org_has_config:
+            real_world_item_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                global_config.delete()
+        url = reverse("organization-item-list", args=[org.pk if org_in_query else -1])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) == 1, "There is only one item"
+        assert data[0]["interests"]["full_text"] == exp_value
+
     def test_item_list_for_org_platform_title(self, master_user_client, interest_rt):
         pl = PlatformFactory()
         org = OrganizationFactory()

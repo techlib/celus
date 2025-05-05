@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import Max, Min
@@ -29,14 +29,21 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
         self.dump_id_formatter = dump_id_formatter
         self.interest_rt = ReportType.objects.get_interest_rt()
         self._interest_metric_ids = [m.pk for m in get_interest_metrics_implying_availability()]
-        self._interest_config_filters = self.interest_config_filters()
+        self._interest_config_filters, self._negated_interest_config_filters = (
+            self.interest_config_filters()
+        )
 
     def org_filter(self):
         if self.organization:
             return {"organization_id": self.organization.pk}
         return {}
 
-    def interest_config_filters(self):
+    def interest_config_filters(self) -> Tuple[dict, dict]:
+        """
+        Returns a tuple of two dictionaries. The first dictionary contains the filters
+        that are used to filter the accesslog. The second dictionary contains the filters
+        that are used to exclude the accesslog.
+        """
         if self.organization:
             ic = self.organization.get_interest_config()
         else:
@@ -53,13 +60,17 @@ class CsvTitleListOverlapReader(CsvReaderMixin, TitleListReader):
         Note: this method is called for each batch of titles, so we want to avoid repeating
         the same queries.
         """
-        title_ids_query = AccessLog.objects.filter(
-            report_type=self.interest_rt,
-            metric_id__in=self._interest_metric_ids,
-            target_id__isnull=False,
-            **self.org_filter(),
-            **self._interest_config_filters,
-        ).values("target_id")
+        title_ids_query = (
+            AccessLog.objects.filter(
+                report_type=self.interest_rt,
+                metric_id__in=self._interest_metric_ids,
+                target_id__isnull=False,
+                **self.org_filter(),
+                **self._interest_config_filters,
+            )
+            .exclude(**self._negated_interest_config_filters)
+            .values("target_id")
+        )
         qs = Title.objects.filter(pk__in=title_ids_query)
         return qs
 

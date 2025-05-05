@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Tuple, Union
 
 from core.models import User
 from django.http import Http404
@@ -55,7 +55,7 @@ def extend_query_filter(filter_dict: dict, prefix: str) -> dict:
 
 def get_organization_related_accesslog_filters_for_interest(
     org_id: Union[str, int], user: User, clickhouse: bool = False
-) -> dict:
+) -> Tuple[dict, dict]:
     org_filter = organization_filter_from_org_id(org_id, user, clickhouse=clickhouse)
     if org_filter:
         # if there is a filter, it means that the organization_pk is not -1
@@ -64,5 +64,5 @@ def get_organization_related_accesslog_filters_for_interest(
         ic = org.get_interest_config()
     else:
         ic = InterestConfig.objects.default()
-    interest_filters = ic.get_interest_filters()
-    return {**org_filter, **interest_filters}
+    interest_filters, negated_interest_filters = ic.get_interest_filters()
+    return {**org_filter, **interest_filters}, negated_interest_filters

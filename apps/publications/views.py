@@ -385,15 +385,18 @@ class PlatformInterestViewSet(ViewSet):
         return interest_rt, interest_annot_params
 
     def get_queryset(self, request, organization_pk):
-        org_filters = get_organization_related_accesslog_filters_for_interest(
+        org_filters, exclude_filters = get_organization_related_accesslog_filters_for_interest(
             organization_pk, request.user
         )
         date_filter_params = date_filter_from_params(request.GET)
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
         accesslog_filter = {"report_type": interest_rt, **org_filters, **date_filter_params}
-        replace_report_type_with_materialized(accesslog_filter)
+        replace_report_type_with_materialized(
+            accesslog_filter, other_used_dimensions=exclude_filters.keys()
+        )
         result = (
             AccessLog.objects.filter(**accesslog_filter)
+            .exclude(**exclude_filters)
             .values("platform")
             .annotate(**interest_annot_params)
         )
@@ -510,8 +513,13 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
     def _extra_filters(self):
         return {}
 
-    def _extra_accesslog_filters(self):
-        return {}
+    def _extra_accesslog_filters(self) -> typing.Tuple[dict, dict]:
+        """
+        Returns a tuple of two dictionaries. The first dictionary contains the filters
+        that are used to filter the accesslog. The second dictionary contains the filters
+        that are used to exclude the accesslog.
+        """
+        return {}, {}
 
     def _annotations(self):
         return {}
@@ -565,14 +573,23 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
         # we evaluate this here as it might be important for the _extra_accesslog_filters method
         extra_filters = self._extra_filters()
         # put together filters for accesslogs
-        accesslog_filter = {**self._extra_accesslog_filters()}
+        # because this view is about titles, not accesslogs, the accesslog filters are
+        # here only for annotation purposes. Thus it is assumed that when a sub-class
+        # (or mixin) implements `_extra_accesslog_filters`, it will use the filtered
+        # accesslogs stored in `relevant_accesslogs` field for additional annotations
+        # (such as summing them up) by implementing the `_annotations` method.
+        # It does not make sense otherwise.
+        accesslog_filter, exclude_filters = self._extra_accesslog_filters()
         title_qs = Title.objects.all()
-        if accesslog_filter:
+        if accesslog_filter or exclude_filters:
             # we have some filters for accesslog - this means we have to add the relevant
             # accesslogs to the queryset
             accesslog_filter.update(**extend_query_filter(self.date_filter, "accesslog__"))
+            condition = Q(**accesslog_filter)
+            if exclude_filters:
+                condition &= ~Q(**exclude_filters)
             title_qs = title_qs.annotate(
-                relevant_accesslogs=FilteredRelation("accesslog", condition=Q(**accesslog_filter))
+                relevant_accesslogs=FilteredRelation("accesslog", condition=condition)
             )
         # construct the whole query
         # joining together platformtitle and accesslog is problematic, because there are
@@ -634,7 +651,7 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
         """
         Should return only titles for specific organization and platform
         """
-        org_filters = get_organization_related_accesslog_filters_for_interest(
+        org_filters, exclude_filters = get_organization_related_accesslog_filters_for_interest(
             self.kwargs.get("organization_pk"), self.request.user
         )
         date_filter = date_filter_from_params(self.request.GET)
@@ -653,6 +670,7 @@ class TitleInterestBriefViewSet(ReadOnlyModelViewSet):
                 **date_filter,
                 **org_filters,
             )
+            .exclude(**exclude_filters)
             .values("target_id")
             .exclude(target_id__isnull=True)
             .annotate(interest=Sum("value"))
@@ -696,7 +714,7 @@ class TitleInterestMixin:
         self.interest_metrics = get_interest_metrics()
 
     def _extra_accesslog_filters(self):
-        filters = super()._extra_accesslog_filters()
+        filters, exclude_filters = super()._extra_accesslog_filters()
         filters["accesslog__report_type_id"] = self.interest_rt.pk
         if hasattr(self, "platform") and self.platform:
             filters["accesslog__platform_id"] = self.platform.pk
@@ -706,9 +724,12 @@ class TitleInterestMixin:
             ic = org.get_interest_config()
         else:
             ic = InterestConfig.objects.default()
-        interest_filters = extend_query_filter(ic.get_interest_filters(), "accesslog__")
+        interest_filters, negated_interest_filters = ic.get_interest_filters()
+        interest_filters = extend_query_filter(interest_filters, "accesslog__")
+        negated_interest_filters = extend_query_filter(negated_interest_filters, "accesslog__")
         filters.update(**interest_filters)
-        return filters
+        exclude_filters.update(**negated_interest_filters)
+        return filters, exclude_filters
 
     def _annotations(self):
         annotations = super()._annotations()
@@ -904,7 +925,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         date_filter = date_filter_from_params(self.request.GET)
 
         # -- interest config --
-        org_filters = get_organization_related_accesslog_filters_for_interest(
+        org_filters, exclude_filters = get_organization_related_accesslog_filters_for_interest(
             self.kwargs.get("organization_pk"),
             self.request.user,
             clickhouse=self.request.USE_CLICKHOUSE,
@@ -913,6 +934,11 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         if self.request.USE_CLICKHOUSE and not pub_type_arg:
             from hcube.api.models.aggregation import Sum as HSum
 
+            negated_filters = {
+                f"{k.split('__')[0]}__not_in": v
+                for k, v in exclude_filters.items()
+                if k.endswith("__in")
+            }
             query = (
                 AccessLogCube.query()
                 .filter(
@@ -920,6 +946,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
                     metric_id=interest_metric.pk,
                     target_id__not_in=[0],
                     **org_filters,
+                    **negated_filters,
                 )
                 .group_by("target_id")
                 .aggregate(**{interest_type_name: HSum("value")})
@@ -955,6 +982,7 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
             records = (
                 Title.objects.all()
                 .filter(**date_filter, **filters)
+                .exclude(**extend_query_filter(exclude_filters, "accesslog__"))
                 .annotate(**interest_annot_params)
                 .order_by(f"-{interest_type_name}")
             )[:10]
@@ -985,11 +1013,11 @@ class InterestByPlatformMixin:
             )
 
     def _extra_accesslog_filters(self):
-        filters = super()._extra_accesslog_filters()
+        filters, exclude_filters = super()._extra_accesslog_filters()
         filters["accesslog__report_type_id"] = self.interest_rt.pk
         if self.org_filter:
             filters["accesslog__organization_id"] = self.org_filter.get("organization__pk")
-        return filters
+        return filters, exclude_filters
 
     def _annotations(self):
         annotations = super()._annotations()
@@ -1142,11 +1170,14 @@ class ItemViewSet(ReadOnlyModelViewSet):
         if org_filter:  # if the filter is not empty, it means that the organization id is valid
             org = Organization.objects.get(pk=self.organization_id)
             ic = org.get_interest_config()
-        accesslog_filter.update(extend_query_filter(ic.get_interest_filters(), "accesslog__"))
+        interest_filters, negated_interest_filters = ic.get_interest_filters()
+        accesslog_filter.update(extend_query_filter(interest_filters, "accesslog__"))
+        negated_interest_filters = extend_query_filter(negated_interest_filters, "accesslog__")
 
-        qs = qs.annotate(
-            relevant_accesslogs=FilteredRelation("accesslog", condition=Q(**accesslog_filter))
-        )
+        condition = Q(**accesslog_filter)
+        if negated_interest_filters:
+            condition &= ~Q(**negated_interest_filters)
+        qs = qs.annotate(relevant_accesslogs=FilteredRelation("accesslog", condition=condition))
         interest_annot_params = {
             im.short_name: Coalesce(
                 Sum("relevant_accesslogs__value", filter=Q(relevant_accesslogs__metric=im)), 0
