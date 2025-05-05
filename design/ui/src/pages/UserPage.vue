@@ -1,3 +1,4 @@
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
   is_superuser: Superuser
@@ -43,7 +44,8 @@ en:
     send_grouped: Send the latest harvest report for all organizations.
   entire_consortium: Entire Consortium
   entire_consortium_description: This record represent setting for all organizations in consortium.
-
+  user_settings: User settings
+  user_settings_description: This block allows you to change your user settings
 cs:
   is_superuser: Superuživatel
   is_admin_of_master_organization: Správce konzorciálního týmu
@@ -88,6 +90,8 @@ cs:
     send_grouped: Odeslat zprávu za stahování za poslední měsíc pro všechny organizace.
   entire_consortium: Celé konzorcium
   entire_consortium_description: Tento záznam vyjadřuje nastavení pro všechny organizace v konzorciu.
+  user_settings: Uživatelské nastavení
+  user_settings_description: Tato část umožňuje změnu nastavení uživatele.
 </i18n>
 
 <template>
@@ -298,6 +302,28 @@ cs:
         </v-data-table>
       </v-col>
     </v-row>
+    <v-divider thickness="4" color="secondary" opacity="0.4" class="my-12" />
+    <div>
+      <h2 class="text-center">{{ $t("user_settings") }}</h2>
+      <span class="font-weight-light mt-2 mb-4 text-center">
+        {{ $t("user_settings_description") }}
+      </span>
+      <div class="d-flex justify-space-between align-center">
+        <div>
+          <v-icon size="small" color="primary" class="mb-1"
+            >fa fa-calendar-alt</v-icon
+          >
+          {{ $t("labels.fiscal_year_start_month") }}
+        </div>
+        <v-select
+          max-width="200px"
+          :items="months"
+          item-title="text"
+          item-value="value"
+          v-model="fyStart"
+        ></v-select>
+      </div>
+    </div>
     <v-divider
       thickness="4"
       color="secondary"
@@ -488,6 +514,10 @@ export default {
     ...mapState({
       organizations: "organizations",
       user: "user",
+      fiscalYearStart: "fiscalYearStart",
+      defaultDateRangeName: "defaultDateRangeName",
+      dateRangeName: "dateRangeName",
+      defaultFYDateRangeName: "defaultFYDateRangeName",
     }),
     ...mapGetters({
       loggedIn: "loggedIn",
@@ -523,6 +553,23 @@ export default {
           sortable: false,
         },
       ];
+    },
+    months() {
+      let out = [];
+      for (let i = 0; i < 12; i++) {
+        let d = new Date(2020, i, 1);
+        const month = d.toLocaleString("en", { month: "long" });
+        out.push({ text: month, value: i });
+      }
+      return out;
+    },
+    fyStart: {
+      get() {
+        return this.fiscalYearStart;
+      },
+      set(value) {
+        this.setFiscalYearStart(value);
+      },
     },
     organizationList() {
       let organizations = Object.values(this.organizations).filter(
@@ -603,6 +650,8 @@ export default {
       logout: "logout",
       loadUserData: "loadUserData",
       showSnackbar: "showSnackbar",
+      setFiscalYearStart: "setFiscalYearStart",
+      changeDateRangeObject: "changeDateRangeObject",
     }),
     cancelUserEditDialog() {
       this.showUserEditDialog = false;
@@ -798,6 +847,22 @@ export default {
     if (this.showImpersonate) {
       this.loadImpersonate();
     }
+  },
+  watch: {
+    fiscalYearStart: {
+      handler(newValue, oldValue) {
+        if (newValue !== oldValue) {
+          if (oldValue === 0) {
+            this.changeDateRangeObject(this.defaultFYDateRangeName);
+          } else if (newValue === 0 && this.dateRangeName.includes("fy")) {
+            this.changeDateRangeObject(this.defaultDateRangeName);
+          } else {
+            this.changeDateRangeObject(this.dateRangeName);
+          }
+        }
+      },
+      immediate: true,
+    },
   },
 };
 </script>
