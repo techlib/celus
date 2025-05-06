@@ -3,10 +3,15 @@
 
 # {% blocktranslate with month=last_month|date:"F" %}New Issues - {{ month }} - Broken Credentials{% endblocktranslate %} ({{ newly_broken|length }})
 {% translate 'New issues which appeared in the previous month.' %}
-{% translate 'Platform' %},{% translate "Counter Version"%}
+{% translate 'Organization' %},{% translate 'Platform' %},{% translate "Counter Version"%}
 {% for creds in newly_broken %}{{ creds.organization }},{{ creds.platform }},{{ creds.counter_version_repr }}
 {% empty %}{% blocktranslate with month=last_month|date:"F" %}No newly broken credentials in {{ month }}.{% endblocktranslate %}{% endfor %}
 
+# {% trans 'Empty data' %} ({{ empty_data|length }})
+{% blocktranslate with month=last_month|date:"F" %}Credentials for which empty data was harvested in {{ month }}.{% endblocktranslate %}
+{% translate 'Platform' %},{% translate "Counter Version"%}
+{% for creds in empty_data %}{{ creds.organization }},{{ creds.platform }},{{ creds.counter_version_repr }}
+{% empty %}{% blocktranslate with month=last_month|date:"F" %}No empty data downloaded in {{ month }}.{% endblocktranslate %}{% endfor %}
 
 # {% blocktranslate with month=month|date:"F" %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ overall_success_rate|floatformat }} %
 {% blocktranslate with month=month|date:"F" last_month=last_month|date:"F" %}Percentage of {{ month }} usage successfully harvested in {{ last_month }}{% endblocktranslate %}

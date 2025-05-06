@@ -2,23 +2,27 @@
 This module should test the functionality of harvest reports.
 """
 
+from datetime import date
+
 import pytest
 from core.models import User
 from django.urls import reverse
 from freezegun import freeze_time
-from logs.fake_data import ImportBatchFactory
+from logs.fake_data import ImportBatchFactory, ImportBatchFullFactory
 from organizations.models import Organization, UserOrganization
 
 from sushi import tasks
 from sushi.fake_data import CounterReportsToCredentialsFactory, FetchAttemptFactory
 from sushi.logic.email import send_grouped_harvest_reports, send_harvest_reports
 from sushi.logic.harvest_reports import make_harvest_reports
+from sushi.models import AttemptStatus
 from test_scenarios.basic import (
     basic1,  # noqa
     clients,  # noqa
     counter_report_types,  # noqa
     data_sources,  # noqa
     identities,  # noqa
+    metrics,  # noqa
     organizations,  # noqa
     platforms,  # noqa
     report_types,  # noqa
@@ -27,7 +31,7 @@ from test_scenarios.basic import (
 
 
 @pytest.fixture
-def report_data(organizations, platforms, report_types, counter_report_types):
+def report_data(organizations, platforms, report_types, counter_report_types, metrics):
     with freeze_time("2025-01-03 12:00:00"):  # setting timestamp of broken attempt
         # broken credentials
         CounterReportsToCredentialsFactory(
@@ -43,16 +47,16 @@ def report_data(organizations, platforms, report_types, counter_report_types):
         credentials__platform=platforms["empty"],
         counter_report=counter_report_types["dr51"],
     )
-    CounterReportsToCredentialsFactory(
+    cred1 = CounterReportsToCredentialsFactory(
         credentials__organization=organizations["branch"],
         credentials__platform=platforms["brain"],
         counter_report=counter_report_types["jr1"],
-    )
-    CounterReportsToCredentialsFactory(
+    ).credentials
+    cred2 = CounterReportsToCredentialsFactory(
         credentials__organization=organizations["standalone"],
         credentials__platform=platforms["shared"],
         counter_report=counter_report_types["pr51"],
-    )
+    ).credentials
 
     with freeze_time("2025-02-03 12:00:00"):  # setting timestamp of broken attempt
         # broken report type
@@ -62,18 +66,44 @@ def report_data(organizations, platforms, report_types, counter_report_types):
             counter_report=counter_report_types["dr"],
         ).set_broken(FetchAttemptFactory(start_date="2025-01-01", end_date="2025-01-31"), "sushi")
 
-    ImportBatchFactory(
-        organization=organizations["branch"],
-        platform=platforms["brain"],
-        report_type=report_types["jr1"],
-        date="2025-01-01",
+    # Empty data
+    FetchAttemptFactory(
+        status=AttemptStatus.NO_DATA,
+        import_batch=ImportBatchFactory(
+            organization=organizations["branch"],
+            platform=platforms["brain"],
+            report_type=report_types["jr1"],
+            date="2025-01-01",
+        ),
+        start_date=date(2025, 1, 1),
+        credentials=cred1,
     )
 
-    ImportBatchFactory(
-        organization=organizations["root"],
-        platform=platforms["shared"],
-        report_type=report_types["pr1"],
-        date="2025-01-01",
+    # With data
+    FetchAttemptFactory(
+        status=AttemptStatus.SUCCESS,
+        import_batch=ImportBatchFullFactory(
+            organization=organizations["standalone"],
+            platform=platforms["shared"],
+            report_type=report_types["pr51"],
+            date="2025-01-01",
+            create_accesslogs__metrics=[metrics["metric1"], metrics["metric2"]],
+        ),
+        start_date=date(2025, 1, 1),
+        credentials=cred2,
+    )
+
+    # unrelated data
+    FetchAttemptFactory(
+        status=AttemptStatus.SUCCESS,
+        import_batch=ImportBatchFullFactory(
+            organization=organizations["root"],
+            platform=platforms["shared"],
+            report_type=report_types["pr1"],
+            date="2025-01-01",
+            create_accesslogs__metrics=[metrics["metric1"]],
+        ),
+        start_date=date(2025, 1, 1),
     )
 
 
@@ -93,25 +123,36 @@ class TestMakingReports:
         assert reports[0].success_rate == 1 / 3 * 100, "one out of three"
         assert len(reports[0].credentials) == 3
         assert reports[0].credentials[0].is_verified is False
+        assert reports[0].credentials[0].has_empty_data is False
         assert reports[0].credentials[0].broken_since.date().isoformat() == "2025-01-03"
         assert reports[0].credentials[1].is_verified is False
         assert reports[0].credentials[1].broken_since is None
-        assert reports[0].credentials[2].is_verified is False
+        assert reports[0].credentials[1].has_empty_data is False
+        assert reports[0].credentials[2].is_verified is True
         assert reports[0].credentials[2].broken_since is None
+        assert reports[0].credentials[2].has_empty_data is True
+        assert reports[0].data_counts.empty == 1
+        assert reports[0].data_counts.missing == 2
 
         assert reports[1].organization.name == "root"
         assert reports[1].month.isoformat() == "2025-01-01"
         assert reports[1].success_rate is None, "no credentials empty success_rate"
         assert len(reports[1].credentials) == 0
+        assert reports[1].data_counts.empty == 0
+        assert reports[1].data_counts.missing == 0
 
         assert reports[2].organization.name == "standalone"
         assert reports[2].month.isoformat() == "2025-01-01"
-        assert reports[2].success_rate == 0.0, "no successfull downloads"
+        assert reports[2].success_rate == 50.0, "one out of two"
         assert len(reports[2].credentials) == 2
-        assert reports[2].credentials[0].is_verified is False
+        assert reports[2].credentials[0].is_verified is True
         assert reports[2].credentials[0].broken_since is None
+        assert reports[2].credentials[0].has_empty_data is False
         assert reports[2].credentials[1].is_verified is False
         assert reports[2].credentials[1].broken_since.date().isoformat() == "2025-02-03"
+        assert reports[2].credentials[1].has_empty_data is False
+        assert reports[2].data_counts.empty == 0
+        assert reports[2].data_counts.missing == 1
 
 
 @pytest.mark.django_db

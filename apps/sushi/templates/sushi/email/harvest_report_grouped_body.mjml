@@ -40,6 +40,35 @@
     <mj-section>
       <mj-column border="1px solid #eee" border-radius="10px">
         <mj-text>
+          <h3 style="margin-bottom: 0">{% translate 'Empty data' %} ({{ empty_data|length }})</h3>
+          <p><i>{% blocktranslate with month=last_month|date:"F" %}Credentials for which empty data was harvested in {{ month }}.{% endblocktranslate %}</i></p>
+        </mj-text>
+{% if empty_data|length %}
+         <mj-table color="#555" align="center">
+            <tr style="border-bottom: 1px solid #ddd">
+                <th style="width: 33%; text-align: left">{% translate 'Organization' %}</th>
+                <th style="width: 33%; text-align: left">{% translate 'Platform' %}</th>
+                <th style="width: 33%; text-align: center">{% translate 'Counter Version' %}</th>
+            </tr>
+  {% for creds in empty_data %}
+            <tr>
+                <td style="text-align: left; padding: 3px;">{{ creds.organization }}</td>
+                <td style="text-align: left"><a href="{{ celus_url }}/admin/sushi-credentials?platformFilter={{ creds.platform.id }}&counterVersion={{ creds.counter_version }}">{{ creds.platform }}</a></td>
+                <td style="text-align: center">{{ creds.counter_version_repr }}</td>
+            </tr>
+  {% endfor %}
+         </mj-table>
+{% else %}
+         <mj-text>
+           <p>{% blocktranslate with month=last_month|date:"F" %}No empty data downloaded in {{ month }}.{% endblocktranslate %}</p>
+         </mj-text>
+{% endif %}
+      </mj-column>
+    </mj-section>
+
+    <mj-section>
+      <mj-column border="1px solid #eee" border-radius="10px">
+        <mj-text>
           <h3 style="margin-bottom: 0">{% blocktranslate with month=month|date:"F"|title %}{{ month }} Data Harvesting Success Rate{% endblocktranslate %}: {{ overall_success_rate|floatformat }} %</h3>
           <p>
             <i>{% blocktranslate with month=month|date:"F" last_month=last_month|date:"F" %}Percentage of {{ month }} usage successfully harvested in {{ last_month }}{% endblocktranslate %}</i>

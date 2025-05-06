@@ -53,6 +53,7 @@ def _make_harvest_report_message(
     ]
     broken = [e for e in harvest_report.credentials if e.broken_since]
     unverified = [e for e in harvest_report.credentials if not e.is_verified]
+    empty_data = [e for e in harvest_report.credentials if e.has_empty_data]
 
     subject = render_to_string(
         "sushi/email/harvest_report_subject.txt",
@@ -70,6 +71,7 @@ def _make_harvest_report_message(
         "harvest_report": harvest_report,
         "celus_url": celus_url,
         "newly_broken": newly_broken,
+        "empty_data": empty_data,
         "unverified_count": len(unverified),
         "broken_count": len(broken),
         "issue_count": len(broken) + len(unverified),
@@ -118,6 +120,7 @@ def _make_grouped_harvest_report_message(
     ]
     broken = [e for e in all_credentials if e.broken_since]
     unverified = [e for e in all_credentials if not e.is_verified]
+    empty_data = [e for e in all_credentials if e.has_empty_data]
 
     subject = render_to_string(
         "sushi/email/harvest_report_grouped_subject.txt",
@@ -133,6 +136,7 @@ def _make_grouped_harvest_report_message(
         "harvest_reports": harvest_reports,
         "celus_url": celus_url,
         "newly_broken": newly_broken,
+        "empty_data": empty_data,
         "unverified_count": len(unverified),
         "broken_count": len(broken),
         "issue_count": len(broken) + len(unverified),
