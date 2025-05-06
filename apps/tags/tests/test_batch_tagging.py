@@ -47,6 +47,10 @@ plain_test_file = Path(__file__).parent / "../../../test-data/tagging_batch/plai
 plain_test_file_with_tags = (
     Path(__file__).parent / "../../../test-data/tagging_batch/plain-title-list-with-tags.csv"
 )
+plain_test_file_with_tags_multiline = (
+    Path(__file__).parent
+    / "../../../test-data/tagging_batch/plain-title-list-with-tags-multiline.csv"
+)
 plain_test_file_with_tags_too_long_tag = (
     Path(__file__).parent
     / "../../../test-data/tagging_batch/plain-title-list-with-tags-too-long-tag.csv"
@@ -452,6 +456,29 @@ class TestBatchTaggingWithTagsInFile:
         tb.unassign_tag()
         assert tc.tag_set.count() == len(used_tags), "tags are not deleted"
         assert TitleTag.objects.count() == 0, "title tags are deleted - titles untagged"
+
+    def test_tagging_batch_tagging_with_more_lines_per_title(self, inmemory_media, users):
+        t1 = TitleFactory.create(isbn="9780787960186")
+        t2 = TitleFactory.create(issn="1234-5678")
+        t3 = TitleFactory.create(eissn="1234-5679")
+        tc = TagClassFactory.create(scope=TagScope.TITLE)
+        tb = TaggingBatchFactory.create(
+            tag_class=tc,
+            source_file=plain_test_file_with_tags_multiline,
+            state=TaggingBatchState.PREPROCESSING,
+        )
+        tb.do_preflight()
+        assert tb.state == TaggingBatchState.PREFLIGHT
+        tb.state = TaggingBatchState.IMPORTING
+        assert tc.tag_set.count() == 0
+        assert TitleTag.objects.count() == 0
+        tb.assign_tag()
+        assert tb.state == TaggingBatchState.IMPORTED
+        # check that the titles are tagged
+        assert t1.tags.count() == 1, "tagged once"
+        assert t2.tags.count() == 2, "tagged twice"
+        assert t3.tags.count() == 0, "not tagged"
+        assert {t.name for t in t2.tags.all()} == {"hroch", "koza"}, "correct tags"
 
     def test_tagging_batch_retagging(self, inmemory_media, users):
         """
