@@ -430,7 +430,7 @@ export default {
             if (reportType.broken !== null || item.broken !== null) {
               item[reportType.code].state = ATTEMPT_BUG;
             } else if (
-              this.selectedMonth < (reportType.last_harvestable_month || "")
+              this.selectedMonth < (item.last_harvestable_month || "")
             ) {
               item[reportType.code].state = ATTEMPT_NOT_HARVESTABLE;
             }

@@ -181,7 +181,7 @@ cs:
               <span
                 v-if="
                   row.months[month] === 'expired' &&
-                  row.rt.last_harvestable_month_user_id
+                  row.cred.last_harvestable_month_user_id
                 "
               >
                 {{ $t("sushi.state_desc.last_harvestable_month_set_by_user") }}
@@ -189,7 +189,7 @@ cs:
               <span
                 v-else-if="
                   row.months[month] === 'expired' &&
-                  row.rt.last_harvestable_month_attempt_id
+                  row.cred.last_harvestable_month_attempt_id
                 "
               >
                 {{
@@ -262,8 +262,8 @@ export default {
             // only selected report types
             if (!this.selectedReportTypes.includes(rt.id)) continue;
             let monthData = {};
-            const last_harvestable_month = rt.last_harvestable_month
-              ? rt.last_harvestable_month.slice(0, 7)
+            const last_harvestable_month = cred.last_harvestable_month
+              ? cred.last_harvestable_month.slice(0, 7)
               : null;
             for (let month of this.months) {
               if (rt.broken || cred.broken) {
@@ -403,8 +403,8 @@ export default {
       return (
         !report.broken &&
         !credentials.broken &&
-        (!report.last_harvestable_month ||
-          report.last_harvestable_month <= month)
+        (!credentials.last_harvestable_month ||
+          credentials.last_harvestable_month <= month)
       );
     },
   },

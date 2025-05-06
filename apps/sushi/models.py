@@ -437,9 +437,36 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         max_length=BLAKE_HASH_SIZE * 2, help_text="Current hash of model attributes"
     )
 
+    last_harvestable_month = models.DateField(
+        help_text="When we know that data before this date are not available", null=True
+    )
+    last_harvestable_month_attempt = models.ForeignKey(
+        "sushi.SushiFetchAttempt",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="modified_harvestable_month_credentials",
+        blank=True,
+    )
+    last_harvestable_month_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="modified_harvestable_month_credentials",
+    )
+
     objects = SushiCredentialsQuerySet.as_manager()
 
     class Meta:
+        constraints = (
+            CheckConstraint(
+                check=~(
+                    models.Q(last_harvestable_month_attempt__isnull=False)
+                    & models.Q(last_harvestable_month_user__isnull=False)
+                ),
+                name="last_harvestable_month_by_attempt_vs_user",
+            ),
+        )
         unique_together = (("organization", "platform", "counter_version", "title"),)
         verbose_name_plural = "Sushi credentials"
 
@@ -465,6 +492,36 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 )
 
             super().save(*args, **kwargs)
+
+    def update_last_harvestable_month_by_attempt(self, attempt: "SushiFetchAttempt") -> bool:
+        """Update last_harvestable_month by attempt which reports that it no longer contains data
+        (3032)"""
+        if not self.last_harvestable_month or self.last_harvestable_month <= attempt.start_date:
+            self.last_harvestable_month_user = None
+            self.last_harvestable_month_attempt = attempt
+            self.last_harvestable_month = month_start(attempt.start_date) + relativedelta(months=1)
+            # Update just SushiCredentials instance without triggering signal
+            # (no FetchIntention updates)
+            SushiCredentials.objects.bulk_update(
+                [self],
+                fields=[
+                    "last_harvestable_month",
+                    "last_harvestable_month_attempt",
+                    "last_harvestable_month_user",
+                ],
+            )
+            return True
+        return False
+
+    def update_last_harvestable_month_by_user(self, user: User, date: Optional[date]) -> bool:
+        """Update last_harvestable_month by user"""
+        if self.last_harvestable_month != date or self.last_harvestable_month_user != user:
+            self.last_harvestable_month_attempt = None
+            self.last_harvestable_month_user = user
+            self.last_harvestable_month = date
+            self.save()
+            return True
+        return False
 
     @property
     def counter_version_repr(self):
@@ -1412,53 +1469,12 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
 class CounterReportsToCredentials(BrokenCredentialsMixin):
     credentials = models.ForeignKey(SushiCredentials, on_delete=models.CASCADE)
     counter_report = models.ForeignKey(CounterReportType, on_delete=models.CASCADE)
-    last_harvestable_month = models.DateField(
-        help_text="When we know that data before this date are not available", null=True
-    )
-    last_harvestable_month_attempt = models.ForeignKey(
-        SushiFetchAttempt,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="cr2c_last_harvestable_month",
-        blank=True,
-    )
-    last_harvestable_month_user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True
-    )
 
     class Meta:
         constraints = (
-            CheckConstraint(
-                check=~(
-                    models.Q(last_harvestable_month_attempt__isnull=False)
-                    & models.Q(last_harvestable_month_user__isnull=False)
-                ),
-                name="last_harvestable_month_by_attempt_vs_user",
-            ),
             UniqueConstraint(fields=["credentials", "counter_report"], name="unique_creds_to_cr"),
         )
         verbose_name_plural = "Counter reports to credentials"
-
-    def update_last_harvestable_month_by_attempt(self, attempt: SushiFetchAttempt) -> bool:
-        """Update last_harvestable_month by attempt which reports that it no longer contains data
-        (3032)"""
-        if not self.last_harvestable_month or self.last_harvestable_month <= attempt.start_date:
-            self.last_harvestable_month_user = None
-            self.last_harvestable_month_attempt = attempt
-            self.last_harvestable_month = month_start(attempt.start_date) + relativedelta(months=1)
-            self.save()
-            return True
-        return False
-
-    def update_last_harvestable_month_by_user(self, user: User, date: Optional[date]) -> bool:
-        """Update last_harvestable_month by user"""
-        if self.last_harvestable_month != date or self.last_harvestable_month_user != user:
-            self.last_harvestable_month_attempt = None
-            self.last_harvestable_month_user = user
-            self.last_harvestable_month = date
-            self.save()
-            return True
-        return False
 
 
 class CounterReportPlatform(CreatedUpdatedMixin, models.Model):

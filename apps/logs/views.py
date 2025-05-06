@@ -896,7 +896,7 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
                 months = org_platform_to_month.get((cr.organization_id, cr.platform_id), [])
 
                 # Try to limit months by last_harvestable_month
-                if last_harvestable_month := cr.filtered_cr2c[0].last_harvestable_month:
+                if last_harvestable_month := cr.last_harvestable_month:
                     months = [m for m in months if m >= last_harvestable_month]
 
                 out.append(

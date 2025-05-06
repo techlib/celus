@@ -481,7 +481,8 @@ export default {
                   can_harvest:
                     row.can_harvest &&
                     ym >=
-                      (this.lastHarvestableMonthMap[counterReport.code] || ""),
+                      (this.credentials.last_harvestable_month.slice(0, 7) ||
+                        ""),
                   broken:
                     row.broken ||
                     !!(this.credentials && this.credentials.broken),
@@ -589,13 +590,6 @@ export default {
     },
     totalCount() {
       return this.processedData.length;
-    },
-    lastHarvestableMonthMap() {
-      return Object.fromEntries(
-        this.credentials.counter_reports_long
-          .filter((e) => !!e.last_harvestable_month)
-          .map((e) => [e.code, e.last_harvestable_month]),
-      );
     },
     selectedItemsMarkableAsEmpty() {
       // selected items that are failed and older than one month

@@ -1,3 +1,10 @@
+<i18n lang="yaml">
+en:
+  multiple-values: Several different values
+cs:
+  multiple-values: Více různých hodnot
+</i18n>
+
 <template>
   <v-menu
     v-model="menuOpen"
@@ -16,6 +23,7 @@
         clear-icon="fa fa-times"
         :disabled="disabled"
         hide-details
+        @click:clear="dateUpdated"
       >
         <template #prepend>
           <v-icon color="#aaaaaa">far fa-calendar-alt</v-icon>
@@ -49,18 +57,24 @@ export default {
     clearable: { required: false, type: Boolean, default: true },
     minMonth: { required: false, type: String, default: null },
     maxMonth: { required: false, type: String, default: null },
+    multipleValues: { required: false, type: Boolean, default: false },
   },
 
   data() {
+    let showMultipleValues = this.multipleValues;
     return {
       menuOpen: false,
       date: null,
+      showMultipleValues: showMultipleValues,
     };
   },
 
   computed: {
     monthText: {
       get() {
+        if (this.showMultipleValues) {
+          return this.$t("multiple-values");
+        }
         if (this.date)
           return ymDateFormat(new Date(this.date.year, this.date.month));
         return "";
@@ -91,9 +105,16 @@ export default {
     },
   },
 
+  methods: {
+    dateUpdated() {
+      this.showMultipleValues = false;
+      this.$emit("update:modelValue", this.monthText);
+    },
+  },
+
   watch: {
     date() {
-      this.$emit("update:modelValue", this.monthText);
+      this.dateUpdated();
     },
     modelValue: {
       immediate: true,
@@ -104,6 +125,8 @@ export default {
             year: date.getFullYear(),
             month: date.getMonth(),
           };
+        } else {
+          this.date = null;
         }
       },
     },

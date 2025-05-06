@@ -829,11 +829,8 @@ class FetchIntention(models.Model):
         Handle status which indicates that data are no longer avialable
         """
 
-        # Update last_harvestable_month of CounterReportsToCredentials model
-        if cr2c := CounterReportsToCredentials.objects.filter(
-            counter_report=self.counter_report, credentials=self.credentials
-        ).first():
-            cr2c.update_last_harvestable_month_by_attempt(self.attempt)
+        # Update last_harvestable_month of related credentials
+        self.credentials.update_last_harvestable_month_by_attempt(self.attempt)
 
         # Cancel all same intentions with lower start_dates within the same harvest
         for e in self.harvest.intentions.filter(

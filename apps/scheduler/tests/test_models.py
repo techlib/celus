@@ -1206,12 +1206,10 @@ class TestScheduler:
         assert fi3.when_processed is None, "Third intention is not processed"
         assert fi3.attempt is None
 
-        cr2c = CounterReportsToCredentials.objects.get(
-            counter_report=counter_report_types["tr"], credentials=credentials["standalone_tr"]
-        )
-        assert cr2c.last_harvestable_month == date(2020, 3, 1)
-        assert cr2c.last_harvestable_month_attempt == fi2.attempt
-        assert cr2c.last_harvestable_month_user is None
+        counter_report_types["tr"].refresh_from_db()
+        assert credentials["standalone_tr"].last_harvestable_month == date(2020, 3, 1)
+        assert credentials["standalone_tr"].last_harvestable_month_attempt == fi2.attempt
+        assert credentials["standalone_tr"].last_harvestable_month_user is None
 
     def test_run_next_ordering(self, monkeypatch, credentials, counter_report_types):
         def mocked_fetch_report(*args, **kwargs):

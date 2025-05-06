@@ -817,9 +817,9 @@ class TestImportBatchesAPI:
         assert broken_cr.broken == "sushi"
 
         # update last_harvestable_month
-        CounterReportType.objects.get(
-            code=rt, counter_version=cv
-        ).counterreportstocredentials_set.update(last_harvestable_month=last_harvestable_month)
+        CounterReportType.objects.get(code=rt, counter_version=cv).sushicredentials_set.update(
+            last_harvestable_month=last_harvestable_month
+        )
 
         # the test itself
         resp = clients["su"].get(

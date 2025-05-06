@@ -671,119 +671,114 @@ class TestCounterReportsToCredentials:
         report_types,
         counter_report_types,
     ):
-        cr2c_user_user = CounterReportsToCredentials.objects.get(
-            credentials=credentials["standalone_tr"], counter_report=counter_report_types["tr"]
-        )
-        cr2c_attempt_attempt = CounterReportsToCredentials.objects.get(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["br1"],
-        )
-        cr2c_user_attempt = CounterReportsToCredentials.objects.get(
-            credentials=credentials["standalone_br1_jr1"],
-            counter_report=counter_report_types["jr1"],
-        )
-        cr2c_attempt_user = CounterReportsToCredentials.objects.get(
-            credentials=credentials["branch_pr"], counter_report=counter_report_types["pr"]
-        )
-
-        assert cr2c_user_user.last_harvestable_month is None
-        assert cr2c_user_user.last_harvestable_month_attempt is None
-        assert cr2c_user_user.last_harvestable_month_user is None
-        assert cr2c_attempt_attempt.last_harvestable_month is None
-        assert cr2c_attempt_attempt.last_harvestable_month_attempt is None
-        assert cr2c_attempt_attempt.last_harvestable_month_user is None
-        assert cr2c_user_attempt.last_harvestable_month is None
-        assert cr2c_user_attempt.last_harvestable_month_attempt is None
-        assert cr2c_user_attempt.last_harvestable_month_user is None
+        assert credentials["standalone_tr"].last_harvestable_month is None
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user is None
+        assert credentials["standalone_br1_jr1"].last_harvestable_month is None
+        assert credentials["standalone_br1_jr1"].last_harvestable_month_attempt is None
+        assert credentials["standalone_br1_jr1"].last_harvestable_month_user is None
+        assert credentials["branch_pr"].last_harvestable_month is None
+        assert credentials["branch_pr"].last_harvestable_month_attempt is None
+        assert credentials["branch_pr"].last_harvestable_month_user is None
 
         # 1) None - > User
-        cr2c_user_user.update_last_harvestable_month_by_user(
+        credentials["standalone_tr"].update_last_harvestable_month_by_user(
             users["master_admin"], date(2020, 1, 1)
         )
-        assert cr2c_user_user.last_harvestable_month == date(2020, 1, 1)
-        assert cr2c_user_user.last_harvestable_month_attempt is None
-        assert cr2c_user_user.last_harvestable_month_user == users["master_admin"]
+        assert credentials["standalone_tr"].last_harvestable_month == date(2020, 1, 1)
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user == users["master_admin"]
 
         # 1) User - > User
-        cr2c_user_user.update_last_harvestable_month_by_user(users["su"], date(2019, 1, 1))
-        assert cr2c_user_user.last_harvestable_month == date(2019, 1, 1)
-        assert cr2c_user_user.last_harvestable_month_attempt is None
-        assert cr2c_user_user.last_harvestable_month_user == users["su"]
+        credentials["standalone_tr"].update_last_harvestable_month_by_user(
+            users["su"], date(2019, 1, 1)
+        )
+        assert credentials["standalone_tr"].last_harvestable_month == date(2019, 1, 1)
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user == users["su"]
 
         # 1) User - > None
-        cr2c_user_user.update_last_harvestable_month_by_user(users["master_admin"], None)
-        assert cr2c_user_user.last_harvestable_month is None
-        assert cr2c_user_user.last_harvestable_month_attempt is None
-        assert cr2c_user_user.last_harvestable_month_user == users["master_admin"]
+        credentials["standalone_tr"].update_last_harvestable_month_by_user(
+            users["master_admin"], None
+        )
+        assert credentials["standalone_tr"].last_harvestable_month is None
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user == users["master_admin"]
 
         # 2) None -> Attempt
         fa1 = FetchAttemptFactory.create(
-            credentials=cr2c_attempt_attempt.credentials, start_date=date(2021, 1, 1)
+            credentials=credentials["branch_pr"], start_date=date(2021, 1, 1)
         )
-        assert cr2c_attempt_attempt.update_last_harvestable_month_by_attempt(fa1) is True
-        assert cr2c_attempt_attempt.last_harvestable_month == date(2021, 2, 1)
-        assert cr2c_attempt_attempt.last_harvestable_month_attempt == fa1
-        assert cr2c_attempt_attempt.last_harvestable_month_user is None
+        assert credentials["branch_pr"].update_last_harvestable_month_by_attempt(fa1) is True
+        assert credentials["branch_pr"].last_harvestable_month == date(2021, 2, 1)
+        assert credentials["branch_pr"].last_harvestable_month_attempt == fa1
+        assert credentials["branch_pr"].last_harvestable_month_user is None
 
         # 2) Attempt -> Attempt (older)
         fa2 = FetchAttemptFactory.create(
-            credentials=cr2c_attempt_attempt.credentials, start_date=date(2020, 1, 1)
+            credentials=credentials["branch_pr"], start_date=date(2020, 1, 1)
         )
-        assert cr2c_attempt_attempt.update_last_harvestable_month_by_attempt(fa2) is False
-        assert cr2c_attempt_attempt.last_harvestable_month == date(
+        assert credentials["branch_pr"].update_last_harvestable_month_by_attempt(fa2) is False
+        assert credentials["branch_pr"].last_harvestable_month == date(
             2021, 2, 1
         ), "date does not change"
-        assert cr2c_attempt_attempt.last_harvestable_month_attempt == fa1
-        assert cr2c_attempt_attempt.last_harvestable_month_user is None
+        assert credentials["branch_pr"].last_harvestable_month_attempt == fa1
+        assert credentials["branch_pr"].last_harvestable_month_user is None
 
         # 2) Attempt -> Attempt (newer)
         fa3 = FetchAttemptFactory.create(
-            credentials=cr2c_attempt_attempt.credentials, start_date=date(2022, 1, 1)
+            credentials=credentials["branch_pr"], start_date=date(2022, 1, 1)
         )
-        assert cr2c_attempt_attempt.update_last_harvestable_month_by_attempt(fa3) is True
-        assert cr2c_attempt_attempt.last_harvestable_month == date(2022, 2, 1)
-        assert cr2c_attempt_attempt.last_harvestable_month_attempt == fa3
-        assert cr2c_attempt_attempt.last_harvestable_month_user is None
+        assert credentials["branch_pr"].update_last_harvestable_month_by_attempt(fa3) is True
+        assert credentials["branch_pr"].last_harvestable_month == date(2022, 2, 1)
+        assert credentials["branch_pr"].last_harvestable_month_attempt == fa3
+        assert credentials["branch_pr"].last_harvestable_month_user is None
 
         # 3) None -> User
-        cr2c_user_attempt.update_last_harvestable_month_by_user(
+        credentials["standalone_tr"].update_last_harvestable_month_by_user(
             users["master_admin"], date(2021, 1, 1)
         )
-        assert cr2c_user_attempt.last_harvestable_month == date(2021, 1, 1)
-        assert cr2c_user_attempt.last_harvestable_month_attempt is None
-        assert cr2c_user_attempt.last_harvestable_month_user == users["master_admin"]
+        assert credentials["standalone_tr"].last_harvestable_month == date(2021, 1, 1)
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user == users["master_admin"]
 
         # 3) User -> Attempt (older)
         fa4 = FetchAttemptFactory.create(
-            credentials=cr2c_user_attempt.credentials, start_date=date(2020, 1, 1)
+            credentials=credentials["standalone_tr"], start_date=date(2020, 1, 1)
         )
-        assert cr2c_user_attempt.update_last_harvestable_month_by_attempt(fa4) is False
-        assert cr2c_user_attempt.last_harvestable_month == date(2021, 1, 1), "date does not change"
-        assert cr2c_user_attempt.last_harvestable_month_attempt is None
-        assert cr2c_user_attempt.last_harvestable_month_user == users["master_admin"]
+        assert credentials["standalone_tr"].update_last_harvestable_month_by_attempt(fa4) is False
+        assert credentials["standalone_tr"].last_harvestable_month == date(
+            2021, 1, 1
+        ), "date does not change"
+        assert credentials["standalone_tr"].last_harvestable_month_attempt is None
+        assert credentials["standalone_tr"].last_harvestable_month_user == users["master_admin"]
 
         # 3) User -> Attempt (newer)
         fa5 = FetchAttemptFactory.create(
-            credentials=cr2c_user_attempt.credentials, start_date=date(2022, 1, 1)
+            credentials=credentials["standalone_tr"], start_date=date(2022, 1, 1)
         )
-        assert cr2c_user_attempt.update_last_harvestable_month_by_attempt(fa5) is True
-        assert cr2c_user_attempt.last_harvestable_month == date(2022, 2, 1)
-        assert cr2c_user_attempt.last_harvestable_month_attempt == fa5
-        assert cr2c_user_attempt.last_harvestable_month_user is None
+        assert credentials["standalone_tr"].update_last_harvestable_month_by_attempt(fa5) is True
+        assert credentials["standalone_tr"].last_harvestable_month == date(2022, 2, 1)
+        assert credentials["standalone_tr"].last_harvestable_month_attempt == fa5
+        assert credentials["standalone_tr"].last_harvestable_month_user is None
 
         # 4) None -> Attempt
         fa6 = FetchAttemptFactory.create(
-            credentials=cr2c_attempt_user.credentials, start_date=date(2021, 1, 1)
+            credentials=credentials["standalone_br1_jr1"], start_date=date(2021, 1, 1)
         )
-        assert cr2c_attempt_user.update_last_harvestable_month_by_attempt(fa6) is True
-        assert cr2c_attempt_user.last_harvestable_month == date(2021, 2, 1)
-        assert cr2c_attempt_user.last_harvestable_month_attempt == fa6
-        assert cr2c_attempt_user.last_harvestable_month_user is None
+        assert (
+            credentials["standalone_br1_jr1"].update_last_harvestable_month_by_attempt(fa6) is True
+        )
+        assert credentials["standalone_br1_jr1"].last_harvestable_month == date(2021, 2, 1)
+        assert credentials["standalone_br1_jr1"].last_harvestable_month_attempt == fa6
+        assert credentials["standalone_br1_jr1"].last_harvestable_month_user is None
 
         # 4) Attempt -> User (older)
-        cr2c_attempt_user.update_last_harvestable_month_by_user(
+        credentials["standalone_br1_jr1"].update_last_harvestable_month_by_user(
             users["master_admin"], date(2020, 1, 1)
         )
-        assert cr2c_attempt_user.last_harvestable_month == date(2020, 1, 1)
-        assert cr2c_attempt_user.last_harvestable_month_attempt is None
-        assert cr2c_attempt_user.last_harvestable_month_user == users["master_admin"]
+        assert credentials["standalone_br1_jr1"].last_harvestable_month == date(2020, 1, 1)
+        assert credentials["standalone_br1_jr1"].last_harvestable_month_attempt is None
+        assert (
+            credentials["standalone_br1_jr1"].last_harvestable_month_user == users["master_admin"]
+        )

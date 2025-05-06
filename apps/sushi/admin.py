@@ -65,6 +65,7 @@ class SushiCredentialsAdmin(CreatedUpdatedAdminMixin, ExportActionMixin, Version
         "display_counter_version",
         "customer_id",
         "requestor_id",
+        "last_harvestable_month",
         "enabled",
     ]
     list_filter = ["enabled", "broken", "counter_version", "organization", "platform"]
@@ -75,6 +76,8 @@ class SushiCredentialsAdmin(CreatedUpdatedAdminMixin, ExportActionMixin, Version
         "last_updated_by",
         "created",
         "last_updated",
+        "last_harvestable_month_user",
+        "last_harvestable_month_attempt",
     ]
     resource_class = SushiCredentialsResource  # for django-import-export
 
@@ -228,21 +231,9 @@ class SushiFetchAttemptAdmin(admin.ModelAdmin):
 
 @admin.register(models.CounterReportsToCredentials)
 class CounterReportsToCredentialsAdmin(admin.ModelAdmin):
-    list_display = [
-        "credentials",
-        "counter_report",
-        "broken",
-        "last_harvestable_month",
-        "last_harvestable_month_user",
-    ]
+    list_display = ["credentials", "counter_report", "broken"]
     list_filter = ["broken", "counter_report", "credentials__platform", "credentials__organization"]
-    readonly_fields = [
-        "first_broken_attempt",
-        "last_harvestable_month_user",
-        "last_harvestable_month_attempt",
-        "credentials",
-        "counter_report",
-    ]
+    readonly_fields = ["first_broken_attempt", "credentials", "counter_report"]
 
 
 @admin.register(models.CounterReportPlatform)

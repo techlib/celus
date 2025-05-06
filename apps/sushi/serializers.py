@@ -32,8 +32,7 @@ from .models import (
 )
 
 
-class UpdateAssignedCounterReportsSerializer(Serializer):
-    counter_report_id = IntegerField(min_value=1, required=True)
+class UpdateLastHarvestableMonthSerializer(Serializer):
     credentials_id = IntegerField(min_value=1, required=True)
     last_harvestable_month = DateField(allow_null=True, required=True)
 
@@ -71,17 +70,7 @@ class CounterReportsToCredentialsSerializer(ModelSerializer):
 
     class Meta:
         model = CounterReportsToCredentials
-        fields = (
-            "id",
-            "code",
-            "name",
-            "counter_version",
-            "report_type",
-            "broken",
-            "last_harvestable_month",
-            "last_harvestable_month_user_id",
-            "last_harvestable_month_attempt_id",
-        )
+        fields = ("id", "code", "name", "counter_version", "report_type", "broken")
 
 
 class SushiCredentialsSerializer(ModelSerializer):
@@ -149,10 +138,20 @@ class SushiCredentialsSerializer(ModelSerializer):
             "last_updated_by",
             "last_updated",
             "use_counter_reports_from_platform",
+            "last_harvestable_month",
+            "last_harvestable_month_user_id",
+            "last_harvestable_month_attempt_id",
         )
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF
+
+    def last_harvestable_month_hook(
+        self, validated_data, creds: typing.Optional[SushiCredentials] = None
+    ):
+        if "last_harvestable_month" in validated_data:
+            validated_data["last_harvestable_month_user_id"] = self.context["request"].user.pk
+            validated_data["last_harvestable_month_attempt_id"] = None
 
     def alter_sushi_credentials_based_on_platform(
         self, validated_data, creds: typing.Optional[SushiCredentials] = None
@@ -194,6 +193,7 @@ class SushiCredentialsSerializer(ModelSerializer):
         if not instance.can_edit(submitter):
             raise PermissionDenied("User is not allowed to edit this object - it is locked.")
         self.alter_sushi_credentials_based_on_platform(validated_data, instance)
+        self.last_harvestable_month_hook(validated_data, instance)
         result: SushiCredentials = super().update(instance, validated_data)
         result.last_updated_by = submitter
         result.save()
@@ -222,6 +222,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             )
         submitter = validated_data.pop("submitter")
         self.alter_sushi_credentials_based_on_platform(validated_data)
+        self.last_harvestable_month_hook(validated_data)
         result = super().create(validated_data)
         result.last_updated_by = submitter
         result.save()

@@ -676,20 +676,9 @@ cs:
           }}</strong>
         </template>
         <template #item.last_harvestable_month="{ item }">
-          <div
-            v-for="rec in extractLastHarvestableMonth(
-              item.counter_reports_long,
-            )"
-            :key="rec.fake_id"
-          >
-            <span v-if="rec.month">{{ rec.month }}</span>
-            <v-badge
-              v-if="rec.count > 0"
-              :content="rec.count"
-              inline
-              color="primary"
-            ></v-badge>
-          </div>
+          <span v-if="item.last_harvestable_month">{{
+            item.last_harvestable_month.slice(0, 7)
+          }}</span>
         </template>
         <template #item.actions="{ item }">
           <v-btn
@@ -942,11 +931,12 @@ cs:
       v-if="showLastHarvestableMonthDialog"
       max-width="600px"
     >
-      <CounterReportLastHarvestableMonthWidget
+      <LastHarvestableMonthWidget
         :credentials="checkedCredentials"
-        @close="closeLastHarvestableMonthDialog"
+        @close="showLastHarvestableMonthDialog = false"
+        @apply="applyLastHarvestableMonthDialog"
         update-backend
-      ></CounterReportLastHarvestableMonthWidget>
+      ></LastHarvestableMonthWidget>
     </v-dialog>
 
     <v-dialog
@@ -981,7 +971,7 @@ import Cookies from "js-cookie";
 import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
 import CheckMark from "@/components/util/CheckMark";
-import CounterReportLastHarvestableMonthWidget from "@/components/sushi/CounterReportLastHarvestableMonthWidget";
+import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
 import CloneCredentialsToNewerWidget from "@/components/sushi/CloneCredentialsToNewerWidget";
 import MarkCredentialsAsFixedWidget from "@/components/sushi/MarkCredentialsAsFixedWidget";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
@@ -1004,7 +994,7 @@ export default {
     PlatformSelector,
     CloneCredentialsToNewerWidget,
     MarkCredentialsAsFixedWidget,
-    CounterReportLastHarvestableMonthWidget,
+    LastHarvestableMonthWidget,
     SushiAttemptListWidget,
     SushiCredentialsEditDialog,
     SushiCredentialsDataDialog,
@@ -1231,10 +1221,7 @@ export default {
         .filter(
           (item) =>
             this.withLastHarvestableMonthSet === null ||
-            this.withLastHarvestableMonthSet ===
-              item.counter_reports_long.some(
-                (e) => e.last_harvestable_month != null,
-              ),
+            this.withLastHarvestableMonthSet === !!item.last_harvestable_month,
         )
         .filter(this.createSearchFilter())
         .filter((item) =>
@@ -1479,8 +1466,8 @@ export default {
       this.selectedCredentials = null;
       this.showDataDialog = false;
     },
-    closeLastHarvestableMonthDialog(refresh) {
-      if (refresh) {
+    applyLastHarvestableMonthDialog({ updated }) {
+      if (updated > 0) {
         this.loadSushiCredentialsList();
         this.checkedRows = [];
       }
@@ -1574,26 +1561,6 @@ export default {
         return true;
       }
       return filter;
-    },
-    extractLastHarvestableMonth(counter_reports) {
-      let count = 0;
-      let month = null;
-      for (const crt of counter_reports) {
-        if (crt.last_harvestable_month) {
-          month =
-            month !== null && month < crt.last_harvestable_month
-              ? month
-              : crt.last_harvestable_month;
-          count += 1;
-        }
-      }
-      return [
-        {
-          fake_id: "fake_id",
-          month: month ? month.slice(0, 7) : null,
-          count: count > 1 ? `+${count - 1}` : null,
-        },
-      ];
     },
     warnSameCredentials(creds) {
       if (this.consortialInstall) {

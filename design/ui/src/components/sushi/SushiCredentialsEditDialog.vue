@@ -65,8 +65,6 @@ en:
     If you know that data is not available before a certain date, you can set this date here. CELUS will use this information
     and not try to harvest data before this date.
   last_harvestable_month_tt_disabled: To select the last harvestable month, please choose at least one report type.
-  last_harvestable_month_updated: Information about last harvestable month was successfully updated
-  last_harvestable_month_error: It was not possible to update information about last harvestable month
   auto_update_url_text_off: Set URL manually
   auto_update_url_text_on: URL will be set automatically based on platform metadata
   auto_update_url_hint: URL is automatically managed by CELUS based on the platform metadata
@@ -134,8 +132,6 @@ cs:
     Pokud víte, že data nejsou dostupná před určitým datem, můžete toto datum nastavit zde. CELUS bude tuto informaci používat a
     nebude se snažit data stáhnout před tímto datem.
   last_harvestable_month_tt_disabled: Pro výběr posledního stáhnutelného měsíce vyberte alespoň jeden typ reportu.
-  last_harvestable_month_updated: Informace o posledním stáhnutelném měsíci byla úspěšně aktualizována
-  last_harvestable_month_error: Informace o posledním stáhnutelném měsíci nebylo možné aktualizovat
   auto_update_url_text_off: Nastavit URL ručně
   auto_update_url_text_on: URL bude nastavena automaticky z metadat platformy
   auto_update_url_hint: URL je automaticky spravována CELUSem na základě metadat platformy
@@ -579,7 +575,9 @@ cs:
                       <template #activator="{ props }">
                         <div class="calendar_button" v-bind="props">
                           <v-btn
-                            color="primary"
+                            :color="
+                              lastHarvestableMonthUpdated ? 'info' : 'primary'
+                            "
                             @click="showLastHarvestableMonthDialog = true"
                             size="small"
                             icon="fas fa-calendar-alt"
@@ -872,12 +870,11 @@ cs:
           </v-card>
         </v-dialog>
         <v-dialog v-model="showLastHarvestableMonthDialog" max-width="500px">
-          <LastHarvestableMonthEntryWidget
-            v-model="reportToLastHarvestableMonth"
-            :counter-reports-ordered="selectedReportTypeObjs"
-            @close="closeLastHarvestableMonthDialog"
-            @apply="updateLastHarvestableMonth"
-          ></LastHarvestableMonthEntryWidget>
+          <LastHarvestableMonthWidget
+            :credentials="[credentials]"
+            @close="showLastHarvestableMonthDialog = false"
+            @apply="applyLastHarvestableMonthDialog"
+          ></LastHarvestableMonthWidget>
         </v-dialog>
         <v-dialog v-model="showPlatformEditDialog" v-if="editablePlatform">
           <PlatformEditDialog
@@ -902,7 +899,7 @@ import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
 import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
-import LastHarvestableMonthEntryWidget from "@/components/sushi/LastHarvestableMonthEntryWidget.vue";
+import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
 import ItemBadge from "@/components/util/ItemBadge";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import formRulesMixin from "@/mixins/formRulesMixin";
@@ -916,7 +913,7 @@ export default {
   components: {
     PlatformEditDialog,
     PlatformSelector,
-    LastHarvestableMonthEntryWidget,
+    LastHarvestableMonthWidget,
     HarvesterIPAddressList,
     RegistryIcon,
     HarvestSelectedWidget,
@@ -983,6 +980,10 @@ export default {
       title: credentials ? credentials.title : "",
       loadingPlatforms: false,
       loadingReportTypes: false,
+      lastHarvestableMonthUpdated: false,
+      lastHarvestableMonth: credentials
+        ? credentials.last_harvestable_month
+        : null,
       valid: false,
       saving: false,
       useCasesData: [],
@@ -1063,10 +1064,13 @@ export default {
         data.url = this.url;
       }
       if (this.credentials) {
-        data["id"] = this.credentials.pk;
+        data.id = this.credentials.pk;
       } else {
-        data["platform_id"] = this.platform.pk;
-        data["organization_id"] = this.organization.pk;
+        data.platform_id = this.platform.pk;
+        data.organization_id = this.organization.pk;
+      }
+      if (this.lastHarvestableMonthUpdated) {
+        data.last_harvestable_month = this.lastHarvestableMonth || null;
       }
       return data;
     },
@@ -1345,19 +1349,6 @@ export default {
       this.allReportTypes.forEach((item) => {
         item.pk = item.id;
         item.long_name = item.name ? `${item.code}: ${item.name}` : item.code;
-        if (this.credentials) {
-          const reportRec = this.credentials.counter_reports_long.find(
-            (e) => e.id === item.id,
-          );
-
-          item.last_harvestable_month = reportRec?.last_harvestable_month
-            ? reportRec.last_harvestable_month.slice(0, 7)
-            : null;
-          item.last_harvestable_month_user_id =
-            reportRec?.last_harvestable_month_user_id || null;
-          item.last_harvestable_month_attempt_id =
-            reportRec?.last_harvestable_month_attempt_id || null;
-        }
       });
     },
     async loadOrganizations() {
@@ -1468,7 +1459,6 @@ export default {
           color: "success",
         });
         this.$emit("update-credentials", response.data);
-        await this.saveLastHarvestableMonths();
         return response.data;
       } catch (error) {
         // Show waring for same credentials
@@ -1502,27 +1492,6 @@ export default {
       } finally {
         this.saving = false;
       }
-    },
-    async saveLastHarvestableMonths() {
-      const data = this.selectedReportTypeObjs.map((e) => ({
-        credentials_id: this.credentials.pk,
-        counter_report_id: e.id,
-        last_harvestable_month: e.last_harvestable_month
-          ? `${e.last_harvestable_month}-01`
-          : null,
-      }));
-      try {
-        await axios.post(
-          "/api/sushi-credentials/update-assigned-counter-reports/",
-          data,
-        );
-      } catch (error) {
-        await this.showSnackbar({
-          content: this.$t("last_harvestable_month_error"),
-          color: "error",
-        });
-      }
-      await this.reloadCredentials();
     },
     async markFixed(markReports) {
       if (this.credentials) {
@@ -1782,7 +1751,10 @@ export default {
       }
       return `${base}reports/${rt.code.toLowerCase()}/?${searchParams.toString()}`;
     },
-    closeLastHarvestableMonthDialog() {
+    applyLastHarvestableMonthDialog({ values }) {
+      this.lastHarvestableMonthUpdated = true;
+      // there should be should be only one credentials
+      this.lastHarvestableMonth = values[0].last_harvestable_month;
       this.showLastHarvestableMonthDialog = false;
     },
     closeEditPlatformDialog() {
@@ -1801,16 +1773,6 @@ export default {
       if (this.useCounterReportsFromPlatform) {
         this.fillSelectedReportTypesBasedOnPlatform();
       }
-    },
-    updateLastHarvestableMonth(data) {
-      Object.entries(data).forEach(([key, value]) => {
-        // we want == here because key may be a string and id is an int
-        const report = this.allReportTypes.find((e) => e.id == key);
-        if (report) {
-          report.last_harvestable_month = value;
-        }
-      });
-      this.showLastHarvestableMonthDialog = false;
     },
     toggleAutoUpdateUrl() {
       this.autoUpdateUrl = !this.autoUpdateUrl;
