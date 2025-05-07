@@ -27,7 +27,9 @@ from logs.logic.interest.computation import (
     _find_report_type_metric_disconnect,
     _find_unprocessed_batches,
     fast_compare_existing_and_new_records,
+    find_superseded_import_batches,
     get_report_type_superseding_report_types,
+    get_report_types_superseded_by_report_type,
     sync_interest_for_import_batch,
 )
 from logs.logic.materialized_reports import (
@@ -701,6 +703,70 @@ class TestRealWorldInterestCalculation:
         call_command("check_interest_definitions", "--fix-it")
         rt = ReportType.objects.get(short_name=rt)
         assert [t.short_name for t in get_report_type_superseding_report_types(rt)] == expected
+
+    @pytest.mark.parametrize(
+        ["rt", "expected"],
+        [
+            ("TR", ["JR1", "BR2"]),
+            ("TR51", ["TR", "JR1", "BR2"]),
+            ("IR51", ["TR51", "TR", "JR1", "BR2", "IR_M1"]),
+            ("DR51", ["DR", "DB1"]),
+            ("DR", ["DB1"]),
+            ("JR1", []),
+            ("BR2", []),
+            ("IR_M1", []),
+        ],
+    )
+    def test_get_report_types_superseded_by_report_type(
+        self, interest_rt, interest_groups, rt, expected
+    ):
+        """
+        Test that get_report_types_superseded_by_report_type returns the correct list of
+        report types
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        rt = ReportType.objects.get(short_name=rt)
+        assert {t.short_name for t in get_report_types_superseded_by_report_type(rt)} == set(
+            expected
+        )
+
+    @pytest.mark.parametrize(
+        ["ref_rt", "expected"],
+        [
+            ("TR", []),  # the lowest in the hierarchy - no superseding
+            ("TR51", ["TR"]),  # direct superseding
+            ("IR51", ["TR51", "TR"]),  # indirect superseding
+        ],
+    )
+    def test_find_superseded_import_batches(self, organizations, ref_rt, expected):
+        """
+        Test that find_superseded_import_batches returns the correct list of import batches.
+        Tests both direct and indirect (over multiple report types) superseding.
+        """
+        organization = organizations[0]
+        platform = PlatformFactory()
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        tr = ReportType.objects.get(short_name="TR")
+        tr_51 = ReportType.objects.get(short_name="TR51")
+        ir_51 = ReportType.objects.get(short_name="IR51")
+        br1 = ReportType.objects.get(short_name="BR1")
+        # create import batches for all report types
+        tr_to_ib = {
+            rt.short_name: ImportBatchFactory(
+                organization=organization, platform=platform, report_type=rt, date="2024-01-01"
+            )
+            for rt in [tr, tr_51, ir_51]
+        }
+        # extra import batch for BR1 - it is for a different month, so it should not be found
+        # in any of the results
+        ImportBatchFactory(
+            organization=organization, platform=platform, report_type=br1, date="2024-02-01"
+        )
+        # now test the function
+        ref_ib = tr_to_ib[ref_rt]
+        assert set(find_superseded_import_batches(ref_ib)) == set(tr_to_ib[rt] for rt in expected)
 
     @pytest.mark.parametrize(
         ["existing_tr", "clashes"], [[None, False], ["IR51", True], ["TR51", True]]

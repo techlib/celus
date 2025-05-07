@@ -3,7 +3,7 @@ Stuff related to the artificial (materialized) report type 'interest' and its co
 """
 
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from functools import lru_cache
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -179,8 +179,9 @@ def get_report_type_superseding_report_types(report_type: ReportType) -> List[Re
     """
     id_to_superseding_rt = {
         rt.id: rt.superseded_by
-        for rt in ReportType.objects.all().select_related("superseded_by")
-        if rt.superseded_by
+        for rt in ReportType.objects.filter(superseded_by__isnull=False).select_related(
+            "superseded_by"
+        )
     }
     superseding_rts = []
     while report_type := id_to_superseding_rt.get(report_type.id):
@@ -191,6 +192,26 @@ def get_report_type_superseding_report_types(report_type: ReportType) -> List[Re
             break
     superseding_rts.reverse()  # the first one should be the highest in the hierarchy
     return superseding_rts
+
+
+def get_report_types_superseded_by_report_type(report_type: ReportType) -> List[ReportType]:
+    """
+    Returns a list of report types that are superseded by the given report type
+    """
+    id_to_superseded = defaultdict(list)
+    for rt in ReportType.objects.filter(superseded_by__isnull=False).select_related(
+        "superseded_by"
+    ):
+        id_to_superseded[rt.superseded_by_id].append(rt)
+    out = list(id_to_superseded.get(report_type.id, []))  # copy the list
+    newly_added = set(out)
+    while newly_added:
+        rt = newly_added.pop()
+        for new_rt in id_to_superseded.get(rt.id, []):
+            if new_rt not in out:
+                out.append(new_rt)
+                newly_added.add(new_rt)
+    return out
 
 
 def fast_compare_existing_and_new_records(
@@ -226,10 +247,11 @@ def find_superseded_import_batches(import_batch: ImportBatch) -> QuerySet[Import
     Find all import batches for which interest is superseded by the given import batch
     and thus need recomputation
     """
+    superseded_rts = get_report_types_superseded_by_report_type(import_batch.report_type)
     return ImportBatch.objects.filter(
         organization_id=import_batch.organization_id,
         platform_id=import_batch.platform_id,
-        report_type__superseded_by=import_batch.report_type,
+        report_type__in=superseded_rts,
         date=import_batch.date,
     )
 
