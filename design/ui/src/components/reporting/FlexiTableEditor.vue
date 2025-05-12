@@ -1680,7 +1680,7 @@ export default {
         this.coverageData = await this.reportObject.getCoverage();
     },
     goToCoverageOverview() {
-      this.$router.push({
+      const routerCoverageOverview = this.$router.resolve({
         name: "data-coverage-overview",
         query: {
           rtid:
@@ -1689,6 +1689,7 @@ export default {
               : undefined,
         },
       });
+      window.open(routerCoverageOverview.href, "_blank");
     },
     async fetchReportViews() {
       if (this.selectedReportTypes.length === 1) {
