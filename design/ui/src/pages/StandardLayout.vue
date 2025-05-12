@@ -9,13 +9,14 @@ en:
   impersonated: You are currently impersonating another user.
   context_help_tt: Click for a link to the CELUS knowledge base for this page
   click_for_more_info: Click for more information about the release
-
+  knowledge_base: Knowledge base
 cs:
   releases: Vydání CELUSu
   email_not_verified: Vaše emailová adresa není ověřená
   context_help_tt: Kliknutím přejdete na stránku s nápovědou k této stránce
   impersonated: Právě zosobňujete jiného uživatele.
   click_for_more_info: Klikněte pro více informací o vydání
+  knowledge_base: Informační báze
 </i18n>
 
 <template>
@@ -213,7 +214,6 @@ cs:
           <template #activator="{ props }">
             <v-btn
               color="info"
-              icon
               size="small"
               position="fixed"
               location="bottom right"
@@ -221,8 +221,10 @@ cs:
               target="_blank"
               :href="helpLink"
               class="fixed_button"
+              rounded
             >
-              <v-icon>fa fa-question fa-2x</v-icon>
+              {{ $t("knowledge_base") }}
+              <v-icon size="small" class="ml-2">fa fa-truck-medical</v-icon>
             </v-btn>
           </template>
           {{ helpText || $t("context_help_tt") }}
