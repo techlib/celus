@@ -1,3 +1,21 @@
+- version: 8.0.5
+  title:
+    en: Bugfix release 8.0.5
+    cs: Opravná verze 8.0.5
+  text:
+    en: |
+      - Export error was fixed in reporting when using explicit dimension filter (YOP, Data_Type, etc.) in report type comparison
+      - Import of manual data uploads with NULL characters in the title was fixed
+      - Several other small fixes and improvements were introduced
+    cs: |
+      - Byla opravena chyba v exportu z reportingu při použití explicitní dimenze filtru (YOP, Data_Type, atd.) při porovnání typů reportů
+      - Byla opravena chyba při importu ručních datových sad s NULL znaky v titulu
+      - Bylo provedeno několik dalších drobných oprav a vylepšení
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 8.1.0
   title:
     en: Preview release 8.1.0

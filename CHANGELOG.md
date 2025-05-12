@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.5] - 2025-05-13
+
+### Changes
+
+#### Backend
+
+- extend the cleanup_database management command to clean more models
+- improve logging of fixing split access logs - more memory efficient + more logging
+- add admin interface for managing FlexibleDataAPIExports
+
+### Fixed
+
+#### Backend
+
+- fix error when exporting report type comparison with explicit dimension filter (YOP, Data_Type, etc.)
+- small fix for occasional test failures
+- fix storing of manual data uploads with NULL characters in the title crashing the import
+- handle UnsupportedMediaType exception in request logging
+
+
 ## [8.1.0] - 2025-04-30
 
 This is an intermediate release for CzechELib. It will be released later as part of 9.0.0.
