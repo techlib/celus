@@ -881,14 +881,14 @@ export default {
       this.$nextTick(() => {
         // we want to give vue time to show the scroll btn
         const btn = document.getElementById("scrollBtn");
-        if (btn) btn.classList.add("pulse");
+        if (btn) btn.classList.add("pulse", "special_pulse");
       });
       // deactivate the pulsing after 5 seconds
       setTimeout(() => {
         // we look for the element again as it may have been removed
         // or added in the meantime
         const btn = document.getElementById("scrollBtn");
-        if (btn) btn.classList.remove("pulse");
+        if (btn) btn.classList.remove("pulse", "special_pulse");
       }, 5000);
     },
     showHarvestDialog() {
@@ -944,24 +944,19 @@ export default {
   border-radius: 7px 7px 0 0;
 }
 
-.pulse {
-  animation: pulse-animation 750ms 5;
+.special_pulse {
+  --pulse-duration: 750ms !important;
+  --pulse-iteration-count: 5 !important;
+  --pulse-box-shadow-start: rgb(255, 196, 0, 0) !important;
+  --pulse-background-start: #ffc400 !important;
+  --translate-y-start: 0 !important;
+  --pulse-spread-end: 10px !important;
+  --pulse-box-shadow-mid: rgb(255, 196, 0, 0.5) !important;
+  --translate-y-mid: 0 !important;
+  --pulse-box-shadow-end: rgba(0, 0, 0, 0) !important;
+  --translate-y-end: 0 !important;
 }
 
-@keyframes pulse-animation {
-  0% {
-    box-shadow: 0 0 0 0 rgb(255, 196, 0, 0);
-    background-color: #ffc400;
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgb(255, 196, 0, 0.5);
-    background-color: darkorange;
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 12, 8, 0);
-    background-color: #ffc400;
-  }
-}
 :deep(div.v-progress-linear__buffer) {
   opacity: 0.5 !important;
 }

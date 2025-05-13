@@ -208,3 +208,38 @@ a {
   line-height: 1.25rem;
   font-family: "Roboto", sans-serif !important;
 }
+
+.pulse {
+  animation: pulse-animation 750ms 5;
+
+  --pulse-duration: 750ms;
+  --pulse-iteration-count: 20;
+  --pulse-box-shadow-start: rgba(0, 160, 100, 0.3);
+  --pulse-background-start: rgba(0, 160, 100, 0.3);
+  --translate-y-start: 0;
+  --pulse-spread-end: 30px;
+  --pulse-box-shadow-mid: rgba(0, 0, 0, 0);
+  --translate-y-mid: -8px;
+  --pulse-box-shadow-end: rgba(0, 0, 0, 0);
+  --translate-y-end: 0;
+
+  animation-name: pulse-animation;
+  animation-duration: var(--pulse-duration);
+  animation-iteration-count: var(--pulse-iteration-count);
+}
+
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px var(--pulse-box-shadow-start);
+    background-color: var(--pulse-background-start);
+    transform: translateY(var(--translate-y-start));
+  }
+  50% {
+    box-shadow: 0 0 0 var(--pulse-spread-end) var(--pulse-box-shadow-mid);
+    transform: translateY(var(--translate-y-mid));
+  }
+  100% {
+    box-shadow: 0 0 0 0px var(--pulse-box-shadow-end);
+    transform: translateY(var(--translate-y-end));
+  }
+}

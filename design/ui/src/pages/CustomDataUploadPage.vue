@@ -21,7 +21,7 @@ en:
   upload: Upload
   tab_chart: Chart
   tab_data: Data
-  import: Import
+  finish_import: Finish import
   confirm: Confirm
   report_type: Report type
   thats_all: That is all. The data were imported.
@@ -90,7 +90,7 @@ cs:
   upload: Nahrát
   tab_chart: Graf
   tab_data: Data
-  import: Importovat
+  finish_import: Dokončit import
   confirm: Potvrdit
   report_type: Typ reportu
   thats_all: To je vše. Data byla úspěšně importována.
@@ -659,14 +659,15 @@ cs:
                 variant="elevated"
                 @click="triggerImportData()"
                 color="primary"
+                class="pulse"
                 :loading="state === 'importing' || importing"
                 :disabled="
                   (preflightData && !!preflightData.clashing_months.length) ||
                   preflighting
                 "
               >
-                <v-icon size="small" class="pr-6">fa fa-cogs</v-icon>
-                {{ $t("import") }}
+                <v-icon size="small" class="pr-6">fa fa-gears</v-icon>
+                {{ $t("finish_import") }}
               </v-btn>
               <v-btn
                 v-else

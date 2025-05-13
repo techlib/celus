@@ -399,24 +399,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.pulse {
-  animation: pulse-animation 750ms 20;
-}
-
 .delete_btn {
   :deep(.v-icon) {
     font-size: 18px;
-  }
-}
-
-@keyframes pulse-animation {
-  0% {
-    box-shadow: 0 0 0 0px rgba(0, 160, 100, 0.3);
-    background-color: rgba(0, 160, 100, 0.3);
-  }
-  100% {
-    box-shadow: 0 0 0 30px rgba(0, 0, 0, 0);
-    margin-bottom: 8px;
   }
 }
 </style>
