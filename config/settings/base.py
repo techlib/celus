@@ -325,6 +325,9 @@ CLICKHOUSE_PASSWORD = config("CLICKHOUSE_PASSWORD", default="celus")
 CLICKHOUSE_HOST = config("CLICKHOUSE_HOST", default="localhost")
 CLICKHOUSE_PORT = config("CLICKHOUSE_PORT", default=9000, cast=int)
 CLICKHOUSE_SECURE = config("CLICKHOUSE_SECURE", default=False, cast=bool)
+# in clickhouse-driver above 0.2.8, the default is True, but we use self-signed certificates
+# in production, so we need a way to disable the verification
+CLICKHOUSE_VERIFY = config("CLICKHOUSE_VERIFY", default=False, cast=bool)
 
 # 256k chars is the default max limit of clickhouse query
 # it can be increased by setting max_query_size in config.xml, so we make it configurable.
@@ -703,6 +706,8 @@ CLICKHOUSE_LOGGING_PORT = config("CLICKHOUSE_LOGGING_PORT", default=CLICKHOUSE_P
 CLICKHOUSE_LOGGING_SECURE = config(
     "CLICKHOUSE_LOGGING_SECURE", default=CLICKHOUSE_SECURE, cast=bool
 )
+CLICKHOUSE_LOGGING_VERIFY = config("CLICKHOUSE_LOGGING_VERIFY", default=False, cast=bool)
+
 # we buffer logging messages in redis, so we can send them to clickhouse in batches
 # the following defines the redis instance to use
 REQUEST_LOGGING_REDIS_HOST = config("REQUEST_LOGGING_REDIS_HOST", default="localhost")

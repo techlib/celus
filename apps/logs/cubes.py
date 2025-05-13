@@ -21,6 +21,7 @@ def create_ch_backend():
         host=settings.CLICKHOUSE_HOST,
         port=settings.CLICKHOUSE_PORT,
         secure=settings.CLICKHOUSE_SECURE,
+        verify=settings.CLICKHOUSE_VERIFY,
     )
 
 

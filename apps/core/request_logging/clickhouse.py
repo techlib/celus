@@ -161,5 +161,6 @@ def get_logging_backend():
         host=settings.CLICKHOUSE_LOGGING_HOST,
         port=settings.CLICKHOUSE_LOGGING_PORT,
         secure=settings.CLICKHOUSE_LOGGING_SECURE,
+        verify=settings.CLICKHOUSE_LOGGING_VERIFY,
     )
     return RequestLogCube.backend
