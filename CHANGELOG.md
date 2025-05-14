@@ -5,8 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## [8.1.0]  - 2025-04-30
+## [8.1.0] - 2025-04-30
 
 This is an intermediate release for CzechELib. It will be released later as part of 9.0.0.
 
@@ -14,686 +13,638 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 #### Frontend
 
-* support for sending report exports via email was added - both one-off and periodic
-* support for overriding the context of stored reports when running them was added - allows changing
+- support for sending report exports via email was added - both one-off and periodic
+- support for overriding the context of stored reports when running them was added - allows changing
   of date range and organization for stored reports without modifying them.
-* monthly email with an overview of recent harvesting activities was added
-* description field was added to saved reports
-* information about the last person who edited SUSHI credentials was added to the credentials list
-* support for optionally synchronizing platforms with the COUNTER registry was added
-
+- monthly email with an overview of recent harvesting activities was added
+- description field was added to saved reports
+- information about the last person who edited SUSHI credentials was added to the credentials list
+- support for optionally synchronizing platforms with the COUNTER registry was added
 
 ### Changes
 
 #### Frontend
 
-* the frontend was upgraded from Vue 2 + Vuetify 2 to Vue 3 + Vuetify 3. This is a major upgrade
+- the frontend was upgraded from Vue 2 + Vuetify 2 to Vue 3 + Vuetify 3. This is a major upgrade
   with significant changes.
-* interest computation algorithm and data structure were reworked. Interest newly contains `Access_Type` and `Access_Method` dimensions. Interest definition is no longer platform specific.
-* report type definition was moved from SUSHI credentials for platform with the possibility
+- interest computation algorithm and data structure were reworked. Interest newly contains `Access_Type` and `Access_Method` dimensions. Interest definition is no longer platform specific.
+- report type definition was moved from SUSHI credentials for platform with the possibility
   of overriding it in SUSHI.
 
 #### Backend
 
-* CLI script for dealing with "split access logs" was optimized for lower memory consumption
-* the use of pandas renderers is newly limited to only a few relevant views
-
+- CLI script for dealing with "split access logs" was optimized for lower memory consumption
+- the use of pandas renderers is newly limited to only a few relevant views
 
 ### Fixed
 
 #### Frontend
 
-* trend-mode switch is now correctly disabled in the read-only view of the report
+- trend-mode switch is now correctly disabled in the read-only view of the report
 
 #### Backend
 
-* processing of reports containing null characters no longer crashes on saving of the error report
-* error preventing reports containing report type comparison from being exported was fixed
+- processing of reports containing null characters no longer crashes on saving of the error report
+- error preventing reports containing report type comparison from being exported was fixed
 
-
-
-## [8.0.4]  - 2025-03-20
+## [8.0.4] - 2025-03-20
 
 ### Changes
 
 #### Backend
 
-* enforce that `ImportBatch.date` is not null
-* make it possible to batch edit organizations in the Django admin by uploading a CSV file
-* remove `dateparser` from python requirements
+- enforce that `ImportBatch.date` is not null
+- make it possible to batch edit organizations in the Django admin by uploading a CSV file
+- remove `dateparser` from python requirements
 
 ### Fixed
 
 #### Frontend
 
-* properly display platform filter of C5.1 credentials in sushi edit dialog
-* fix incorrect Czech text after successful copy of a report
-* reload credentials once harvest dialog in DataOverview is closed in order to update broken state
+- properly display platform filter of C5.1 credentials in sushi edit dialog
+- fix incorrect Czech text after successful copy of a report
+- reload credentials once harvest dialog in DataOverview is closed in order to update broken state
   of the credentials
-* deleting tag class in UI enforces update of the tag class list
-* fix error in websocket transmission of events with count data
+- deleting tag class in UI enforces update of the tag class list
+- fix error in websocket transmission of events with count data
 
 #### Backend
 
-* ensure that tags are preserved when merging titles
-* fix loading of C5.1 credentials from file incorrectly assigning C5.0 reports to the credentials
+- ensure that tags are preserved when merging titles
+- fix loading of C5.1 credentials from file incorrectly assigning C5.0 reports to the credentials
 
-
-## [8.0.3]  - 2025-02-22
+## [8.0.3] - 2025-02-22
 
 ### Changes
 
 #### Backend
 
-* locking mechanism used in interest recomputation was optimized for higher throughput and more
+- locking mechanism used in interest recomputation was optimized for higher throughput and more
   reliable operation
 
 ### Fixed
 
 #### Frontend
 
-* end-date used in Coverage overview and Reporting was capped to the last finished month when
+- end-date used in Coverage overview and Reporting was capped to the last finished month when
   a custom date range ending in future is selected - fixes coverage computation in such cases
-* error in display of interest in platform-platform overlap causing numbers over 100% sometimes
+- error in display of interest in platform-platform overlap causing numbers over 100% sometimes
   appearing was fixed
 
 #### Backend
 
-* the celus-nigiri package was updated to fix error in the short-long date format fallback
+- the celus-nigiri package was updated to fix error in the short-long date format fallback
   mechanism
 
-
-## [8.0.2]  - 2025-02-18
+## [8.0.2] - 2025-02-18
 
 ### Changes
 
 #### Frontend
 
-* IPEDS special report was updated to the 2024 version
-* it is now possible to mark reports as fixed when they were marked as broken incorrectly or fixed
+- IPEDS special report was updated to the 2024 version
+- it is now possible to mark reports as fixed when they were marked as broken incorrectly or fixed
 
 ### Fixed
 
 #### Frontend
 
-* filtering by name and publication type was fixed for the "titles on multiple platforms" view
+- filtering by name and publication type was fixed for the "titles on multiple platforms" view
 
 #### Backend
 
-* fallback to full date format when short date format fails was fixed to work correctly
-* import of COUNTER 5 standard views from file was fixed
+- fallback to full date format when short date format fails was fixed to work correctly
+- import of COUNTER 5 standard views from file was fixed
 
-
-
-## [8.0.1]  - 2025-02-07
+## [8.0.1] - 2025-02-07
 
 ### Changes
 
 #### Frontend
 
-* credentials upgradable to 5.1 were split into two groups depending on the presence of C5.1
+- credentials upgradable to 5.1 were split into two groups depending on the presence of C5.1
   record in the knowledgebase
-* the cloning dialog was extended to contain more information and also discourage users from blindly
+- the cloning dialog was extended to contain more information and also discourage users from blindly
   cloning all the credentials regardless of the knowledgebase record
-* cloning of broken credentials was disallowed
-
+- cloning of broken credentials was disallowed
 
 #### Backend
 
-* when harvesting using full dates (2025-01-01) fails with 3020, CELUS will try short version
+- when harvesting using full dates (2025-01-01) fails with 3020, CELUS will try short version
   (2025-01) as a backup before giving up
-* heuristics was added to replace /r5 with /r51 when cloning credentials without a knowledgebase
+- heuristics was added to replace /r5 with /r51 when cloning credentials without a knowledgebase
   record
 
-
 ### Fixed
 
 #### Frontend
 
-* bug preventing newly cloned credentials from being harvested when a credentials filter is applied
+- bug preventing newly cloned credentials from being harvested when a credentials filter is applied
   was fixed
-
 
 #### Backend
 
-* synchronization of harvest data with the knowledgebase was fixed to properly aggregate data before
+- synchronization of harvest data with the knowledgebase was fixed to properly aggregate data before
   uploading it to the knowledgebase
-* generation of OTP tokens was fixed for cases where impersonation is used by a user with 2FA
+- generation of OTP tokens was fixed for cases where impersonation is used by a user with 2FA
   disabled
-* error in reporting export when coverage is empty was fixed
+- error in reporting export when coverage is empty was fixed
 
-
-## [8.0.0]  - 2025-01-31
-
+## [8.0.0] - 2025-01-31
 
 ### Added
 
 #### Frontend
 
-* support for COUNTER 5.1 was added
-* a button to easily clone existing COUNTER 5 credentials to COUNTER 5.1 was added
-* reporting was extended to allow comparison of two report types side by side
-* a new specialized report for CAUL (Council of Australian University Librarians) was added
+- support for COUNTER 5.1 was added
+- a button to easily clone existing COUNTER 5 credentials to COUNTER 5.1 was added
+- reporting was extended to allow comparison of two report types side by side
+- a new specialized report for CAUL (Council of Australian University Librarians) was added
 
 #### Backend
 
-* several command line scripts were added to help with COUNTER 5.1 migration
-
+- several command line scripts were added to help with COUNTER 5.1 migration
 
 ### Changes
 
 #### Frontend
 
-* the "problematic only" filter was replaced by a "potential issues" dropdown to show credentials
+- the "problematic only" filter was replaced by a "potential issues" dropdown to show credentials
   needing attention for different types of reasons
-* the "Save & Verify" button was removed from the SUSHI credentials dialog - the functionality
+- the "Save & Verify" button was removed from the SUSHI credentials dialog - the functionality
   is now part of the "Save" function
-* report selection in charts was split to two separate dropdowns - one for type of report and one
+- report selection in charts was split to two separate dropdowns - one for type of report and one
   for the report itself
-* reporting was extended to allow filtering and grouping by explicit dimensions when two reports
+- reporting was extended to allow filtering and grouping by explicit dimensions when two reports
   are used - provided the dimensions are the same in both reports and map to the same db column
-* data coverage percentage is rounded to the lower integer (floor) to prevent misleading
+- data coverage percentage is rounded to the lower integer (floor) to prevent misleading
   information about the completeness of the data (100% coverage is now only shown when all data is
   present)
-* when tag names longer than 200 characters are submitted in a title list, the user is warned
+- when tag names longer than 200 characters are submitted in a title list, the user is warned
   about the limit and the tagging fails
 
 #### Backend
 
-* BOM (Byte Order Mark) is newly added to COUNTER export according to COUNTER recommendation
-* interest synchronization when new superseding reports are added was optimized to prevent
+- BOM (Byte Order Mark) is newly added to COUNTER export according to COUNTER recommendation
+- interest synchronization when new superseding reports are added was optimized to prevent
   unnecessary recalculations
-* case-insensitive matching of proprietary IDs is used when matching titles during data import
-
+- case-insensitive matching of proprietary IDs is used when matching titles during data import
 
 ### Fixed
 
 #### Frontend
 
-* pagination is correctly reset to 1 when filters are changed in the event list
-* missing "delete" button was added to the list of manually uploaded reports
-* properly handle cases when a background error occurs during title list processing - the task
+- pagination is correctly reset to 1 when filters are changed in the event list
+- missing "delete" button was added to the list of manually uploaded reports
+- properly handle cases when a background error occurs during title list processing - the task
   should no longer appear as "running" indefinitely
 
 #### Backend
 
-* command line script to clean up orphaned data files was fixed to clean files from directories
+- command line script to clean up orphaned data files was fixed to clean files from directories
   without any existing attempts
-* query used in reporting when titles are viewed in trend mode was optimized with a 10x speedup
-* specialized report export was fixed to properly show end date of the data range
+- query used in reporting when titles are viewed in trend mode was optimized with a 10x speedup
+- specialized report export was fixed to properly show end date of the data range
   (last instead of first day of the month)
-* ISBNs in COUNTER export are now correctly hyphenated
-* the `find_split_accesslogs_with_the_same_title_task` celery task was fixed to correctly send
+- ISBNs in COUNTER export are now correctly hyphenated
+- the `find_split_accesslogs_with_the_same_title_task` celery task was fixed to correctly send
   emails when intervention is needed
-* OOM (Out Of Memory) errors in Postgres during title merging on large installations were
+- OOM (Out Of Memory) errors in Postgres during title merging on large installations were
   circumvented by performing updates batches
-* when consortium admin is performing download of SUSHI credentials template file for one
+- when consortium admin is performing download of SUSHI credentials template file for one
   organization, do not include private platforms from other organizations
 
-
-
-## [7.0.1]  - 2024-12-18
+## [7.0.1] - 2024-12-18
 
 ### Added
 
 #### Frontend
 
-* consortium admins can newly mark several SUSHI credentials at once as fixed
-* new users without any data are newly directed to the SUSHI management page from the title and
+- consortium admins can newly mark several SUSHI credentials at once as fixed
+- new users without any data are newly directed to the SUSHI management page from the title and
   platform lists
-
 
 ### Changes
 
 #### Frontend
 
-* the capitalization of the name `CELUS` was unified throughout the application
-* `Platform filter` was renamed to `Platform` in the SUSHI management page
-* cleanup was performed in the frontend code (e.g. empty `class` and `color` attributes were
+- the capitalization of the name `CELUS` was unified throughout the application
+- `Platform filter` was renamed to `Platform` in the SUSHI management page
+- cleanup was performed in the frontend code (e.g. empty `class` and `color` attributes were
   removed, html fragments were removed from translation strings)
-* unique user email addresses are now enforced regardless of the case of the email address and the
+- unique user email addresses are now enforced regardless of the case of the email address and the
   verification status of the email address
 
 #### Backend
 
-* user created platforms are not included when computing the generic SUSHI data arrival statistics
+- user created platforms are not included when computing the generic SUSHI data arrival statistics
   (which is used for platforms without enough data to compute the statistics from the past)
 
-
 ### Fixed
 
 #### Frontend
 
-* a more useful error message is shown when an admin tries to add a user with an email address
+- a more useful error message is shown when an admin tries to add a user with an email address
   already in use
-* error handling for uploading non-COUNTER data was improved to show a more useful error messages
+- error handling for uploading non-COUNTER data was improved to show a more useful error messages
 
 #### Backend
 
-* potential conflicts when doing platform-title cleanup are now ignored to prevent bogus errors
-* uploading non-COUNTER data with Japanese (SHIFT_JIS) encoding was fixed
+- potential conflicts when doing platform-title cleanup are now ignored to prevent bogus errors
+- uploading non-COUNTER data with Japanese (SHIFT_JIS) encoding was fixed
 
-
-
-## [7.0.0]  - 2024-10-16
+## [7.0.0] - 2024-10-16
 
 ### Added
 
 #### Frontend
 
-* SUSHI management page now shows statistics about the day of month when the data typically becomes
+- SUSHI management page now shows statistics about the day of month when the data typically becomes
   available
-* the platform selector widget was improved to allow for searching by both short and long names
-* links to individual titles added to annotated CSV files are newly split to individual columns
+- the platform selector widget was improved to allow for searching by both short and long names
+- links to individual titles added to annotated CSV files are newly split to individual columns
   to allow the links to render correctly in Excel
-* an option to only allow consortial managers to manage users was added
-* make it possible to create a custom platform from the dropdown when uploading data manually
-* more information was added to the list of stored reports in reporting (author, etc.)
-* tag class was added to the detailed information for title lists used tagging by tag names from
+- an option to only allow consortial managers to manage users was added
+- make it possible to create a custom platform from the dropdown when uploading data manually
+- more information was added to the list of stored reports in reporting (author, etc.)
+- tag class was added to the detailed information for title lists used tagging by tag names from
   the uploaded file
-* warning is newly shown when the same credentials are used for multiple platforms, or by multiple
+- warning is newly shown when the same credentials are used for multiple platforms, or by multiple
   organizations (in consortial installations)
 
-
 #### Backend
 
-* support for storing items and related usage was added - it is considered beta and is not yet
+- support for storing items and related usage was added - it is considered beta and is not yet
   exposed in the UI
-
 
 ### Changes
 
 #### Frontend
 
-* overlap analysis was reworked to only use types of interest which imply title availability
+- overlap analysis was reworked to only use types of interest which imply title availability
   on a platform - not denials.
-* the 'Add platform' button was removed from the platform list page (it confused people into
+- the 'Add platform' button was removed from the platform list page (it confused people into
   thinking it added platform to the displayed list)
-* links to knowledgebase on non-COUNTER list page were redesigned to be more visible
-* server-side pagination is used when listing manual data uploads to speed up the page load
-* SUSHI yearly overview dialog was reworked to show 2 years by default and allow up to 5 years
+- links to knowledgebase on non-COUNTER list page were redesigned to be more visible
+- server-side pagination is used when listing manual data uploads to speed up the page load
+- SUSHI yearly overview dialog was reworked to show 2 years by default and allow up to 5 years
   to be displayed on a single page
-* in reporting, the maximum number of displayed parts was limited to 1000 to prevent performance
+- in reporting, the maximum number of displayed parts was limited to 1000 to prevent performance
   issues
-* the SUSHI management page was reworked for new users to include an introductory video
-* the 'SUSHI status' dashboard panel was reworked to show a hungry CELUS logo when no SUSHI is
+- the SUSHI management page was reworked for new users to include an introductory video
+- the 'SUSHI status' dashboard panel was reworked to show a hungry CELUS logo when no SUSHI is
   set up yet
-
 
 #### Backend
 
-* data harvest planning was reworked to use statistics of past harvests to better predict when
+- data harvest planning was reworked to use statistics of past harvests to better predict when
   the data will be available
-* when a SUSHI URL of a platform is updated automatically from the knowledgebase, the last two
+- when a SUSHI URL of a platform is updated automatically from the knowledgebase, the last two
   months are automatically harvested if the data is missing
-
 
 ### Fixed
 
 #### Frontend
 
-* platform selector on the SUSHI month overview page did not work correctly
-* date range selector is hidden when displaying the cost tab on the platform page
-* use lowercase report names in debug SUSHI URLs in the SUSHI credentials dialog
+- platform selector on the SUSHI month overview page did not work correctly
+- date range selector is hidden when displaying the cost tab on the platform page
+- use lowercase report names in debug SUSHI URLs in the SUSHI credentials dialog
 
 #### Backend
 
-* the number of queries run by the `update_for_month` harvest planning function was reduced
+- the number of queries run by the `update_for_month` harvest planning function was reduced
   significantly
-* fix false warning about 'Dropping inconsistent order by "_total"'
-* more resilient parsing of /etc/os-releases was implemented
-* use django's standard smtp email backend for error handling when mailgun is not used
-* error was fixed when tagging titles from a file containing explicit tag names and using a tag
+- fix false warning about 'Dropping inconsistent order by "\_total"'
+- more resilient parsing of /etc/os-releases was implemented
+- use django's standard smtp email backend for error handling when mailgun is not used
+- error was fixed when tagging titles from a file containing explicit tag names and using a tag
   class owned by an organization
-* 'too many open files' error was fixed in reporting when exporting report with many parts into
+- 'too many open files' error was fixed in reporting when exporting report with many parts into
   Excel format
-* platform short-name uniqueness is newly enforced even when updating existing platforms
+- platform short-name uniqueness is newly enforced even when updating existing platforms
 
-
-
-
-## [6.1.2]  - 2024-08-08
+## [6.1.2] - 2024-08-08
 
 ### Added
 
 #### Frontend
 
-* in reporting, it is now possible to order the rows by the row totals
-* in reporting, when "merge rows by tag" is active, it is now possible to order the results by the
+- in reporting, it is now possible to order the rows by the row totals
+- in reporting, when "merge rows by tag" is active, it is now possible to order the results by the
   tag name
-
 
 ### Changes
 
 #### Frontend
 
-* when "merge rows by tag" is active, tags from classes which have been marked as hidden by the user
+- when "merge rows by tag" is active, tags from classes which have been marked as hidden by the user
   are no longer shown in the report - unless the class was explicitly selected by the user
-* after email verification, the user is automatically redirected to the dashboard without needing to
+- after email verification, the user is automatically redirected to the dashboard without needing to
   click on a button
-* the "Introductory tour" feature was removed (it was buggy anyway)
-* when removing users from the UI, the account is actually deleted when removed from the last
+- the "Introductory tour" feature was removed (it was buggy anyway)
+- when removing users from the UI, the account is actually deleted when removed from the last
   organization
-* clashing import batches (usually in situations where the same data is requested while a download
+- clashing import batches (usually in situations where the same data is requested while a download
   is in progress) are not shown by default in the list of downloads
 
 #### Backend
 
-* a one-second delay was added between downloads from the same SUSHI URL to ease the load on fast
+- a one-second delay was added between downloads from the same SUSHI URL to ease the load on fast
   SUSHI servers (thanks to ScholarlyIQ for reporting this issue)
-
 
 ### Fixed
 
 #### Frontend
 
-* an error in reporting causing unresponsive "Run report" button when report type was changed
+- an error in reporting causing unresponsive "Run report" button when report type was changed
   under specific conditions was fixed
 
 #### Backend
 
-* a bug causing CELUS not to respect the 1020 (too many requests) SUSHI exception was fixed
+- a bug causing CELUS not to respect the 1020 (too many requests) SUSHI exception was fixed
   (thanks to ScholarlyIQ for reporting this issue)
 
-
-## [6.1.1]  - 2024-06-28
+## [6.1.1] - 2024-06-28
 
 ### Added
 
 #### Backend
 
-* a CLI script was added to export and import fetch attempts to aid with accidental data deletion
+- a CLI script was added to export and import fetch attempts to aid with accidental data deletion
   recovery
-* support for user invitations when external SSO is enabled was added
-
+- support for user invitations when external SSO is enabled was added
 
 ### Changes
 
 #### Backend
 
-* various dash types (n-dash, m-dash, minus) are now normalized to a single character during
+- various dash types (n-dash, m-dash, minus) are now normalized to a single character during
   ISSN and eISSN normalization
-* deleting data from Clickhouse was optimized to delete more than one import batch at once
-
+- deleting data from Clickhouse was optimized to delete more than one import batch at once
 
 ### Fixed
 
 #### Frontend
 
-* export to COUNTER format was made visible to non-admin users
-* endless loop in websocket reauthentication when the user session expires was fixed
-* bug causing errors when saved report with platforms in rows was modified to merge rows by tags
+- export to COUNTER format was made visible to non-admin users
+- endless loop in websocket reauthentication when the user session expires was fixed
+- bug causing errors when saved report with platforms in rows was modified to merge rows by tags
   was fixed (result ordering is invalidated when row merging is toggled)
-* a typo in the documentation leading to incorrect API endpoint URL was fixed
-* COUNTER registry domain name was updated to the new one (fixes CORS issues)
+- a typo in the documentation leading to incorrect API endpoint URL was fixed
+- COUNTER registry domain name was updated to the new one (fixes CORS issues)
 
 #### Backend
 
-* loading of Excel files with credentials which do not include row number information
+- loading of Excel files with credentials which do not include row number information
   (as produced by Google Sheets) was fixed
-* extra safety features were added to the necronomicon app for deleting data (remove unfinished
+- extra safety features were added to the necronomicon app for deleting data (remove unfinished
   batches after one day, re-check stats before delete, etc.)
 
-
-
-## [6.1.0]  - 2024-05-23
+## [6.1.0] - 2024-05-23
 
 ### Added
 
 #### Frontend
 
-* make it possible to apply filters from standard reports to full reports in reporting with one click
-* warn users against possible metric summation in reporting
-* make it possible to use proprietary IDs for matching titles in title tagging and title overlap
+- make it possible to apply filters from standard reports to full reports in reporting with one click
+- warn users against possible metric summation in reporting
+- make it possible to use proprietary IDs for matching titles in title tagging and title overlap
 
 #### Backend
 
-* statistics of events was added to the exported prometheus metrics
-* make it possible for a superadmin to disable second factor authentication for a user
-* improve Django admin for events
-* API endpoint for getting output of a stored report was added
-* send notifications about regular reprocessing of internal title lists to superusers
+- statistics of events was added to the exported prometheus metrics
+- make it possible for a superadmin to disable second factor authentication for a user
+- improve Django admin for events
+- API endpoint for getting output of a stored report was added
+- send notifications about regular reprocessing of internal title lists to superusers
 
 ### Changes
 
 #### Frontend
 
-* change display of report type selection in charts, etc.
-  * show full reports first
-  * call full reports "full reports" (not customizable reports)
-  * only add real standard views to the standard views section
-* prefer full reports when showing charts for individual import batches or manual data uploads
-* better error message was added when uploading an incompatible XLS file
+- change display of report type selection in charts, etc.
+  - show full reports first
+  - call full reports "full reports" (not customizable reports)
+  - only add real standard views to the standard views section
+- prefer full reports when showing charts for individual import batches or manual data uploads
+- better error message was added when uploading an incompatible XLS file
 
 #### Backend
 
-* metadata from SUSHI responses are extracted during download rather than during import
-* cleanup in SUSHI harvesting code was performed and some unused code was removed
-* use skip-magic-trailing-comma for ruff format
-* the `django-prometheus` library was removed from the project
+- metadata from SUSHI responses are extracted during download rather than during import
+- cleanup in SUSHI harvesting code was performed and some unused code was removed
+- use skip-magic-trailing-comma for ruff format
+- the `django-prometheus` library was removed from the project
 
 ### Fixed
 
 #### Frontend
 
-* on title page, make sure the title is loaded before trying to show proprietary IDs
-* missing values in chart tooltips under specific conditions were fixed
-* fix pagination of the events list with a large number of events
-* second factor authentication display was fixed for superusers without verified email
+- on title page, make sure the title is loaded before trying to show proprietary IDs
+- missing values in chart tooltips under specific conditions were fixed
+- fix pagination of the events list with a large number of events
+- second factor authentication display was fixed for superusers without verified email
 
 #### Backend
 
-* deterministic selection of titles during data import when several candidates with equal score are
+- deterministic selection of titles during data import when several candidates with equal score are
   present was introduced
-* do not use ContentFile when storing C4 reports
-* do not create events about title list reprocessing if the list is not owned by a user (e.g. for
+- do not use ContentFile when storing C4 reports
+- do not create events about title list reprocessing if the list is not owned by a user (e.g. for
   internal title lists)
-* make sure that a valid email OTP device exists for each user after login
-* get around a race-condition in locking the next tagging batch to reprocess
-* unused OTP plugins were removed reducing the number of queries to the database per request
+- make sure that a valid email OTP device exists for each user after login
+- get around a race-condition in locking the next tagging batch to reprocess
+- unused OTP plugins were removed reducing the number of queries to the database per request
 
-
-## [6.0.0]  - 2024-04-24
+## [6.0.0] - 2024-04-24
 
 ### Added
 
 #### Frontend
 
-* system of "events" for in-app notifications was introduced
-* possibility to export data in COUNTER format was added to the platform page (under Data management)
-* it is now possible to mark unsuccessful harvests as empty data under "SUSHI management"/"Overview"
-* fiscal year based data ranges were added to the data range selector with the possibility to
+- system of "events" for in-app notifications was introduced
+- possibility to export data in COUNTER format was added to the platform page (under Data management)
+- it is now possible to mark unsuccessful harvests as empty data under "SUSHI management"/"Overview"
+- fiscal year based data ranges were added to the data range selector with the possibility to
   select the start month of a fiscal year
-* data coverage information was added to exports from the reporting module
-* email-based two-factor authentication was added to all accounts
-* more details about SUSHI exceptions is now shown for individual harvests
-* when uploading reports for multiple organizations, information about organizations with clashing
+- data coverage information was added to exports from the reporting module
+- email-based two-factor authentication was added to all accounts
+- more details about SUSHI exceptions is now shown for individual harvests
+- when uploading reports for multiple organizations, information about organizations with clashing
   data is now shown
-* list of proprietary IDs was added to the title detail page
-* tags can be now created directly from the title list creation dialog
-
+- list of proprietary IDs was added to the title detail page
+- tags can be now created directly from the title list creation dialog
 
 #### Backend
 
-* CLI script was added for creating internal tagging batches from a CSV file
-* a welcome event is created when a user account is created
-* an introductory event for existing users was added
-
+- CLI script was added for creating internal tagging batches from a CSV file
+- a welcome event is created when a user account is created
+- an introductory event for existing users was added
 
 ### Changes
 
 #### Frontend
 
-* unless manually changed, the SUSHI server URL will be taken from the platform metadata and
+- unless manually changed, the SUSHI server URL will be taken from the platform metadata and
   automatically updated when the platform is updated
-* search was enabled in the platform filter selector on the SUSHI status page
-* import of "CELUS format" was removed from the import format options (unless turned on in the settings)
+- search was enabled in the platform filter selector on the SUSHI status page
+- import of "CELUS format" was removed from the import format options (unless turned on in the settings)
 
 #### Backend
 
-* clickhouse integration has been modified in several ways
-  * plain MergeTree engine with lightweight deletes is used in favor of CollapsingMergeTree
-  * synchronization between the main database and Clickhouse was optimized and fixed for cases
+- clickhouse integration has been modified in several ways
+  - plain MergeTree engine with lightweight deletes is used in favor of CollapsingMergeTree
+  - synchronization between the main database and Clickhouse was optimized and fixed for cases
     where titles were merged together
-  * dictionaries were added to make mapping of integer IDs to strings possible
-* it is now possible to get the knowledgebase API key from settings instead of storing it in the
+  - dictionaries were added to make mapping of integer IDs to strings possible
+- it is now possible to get the knowledgebase API key from settings instead of storing it in the
   database
-* add extra info into the request logs about use of API key authentication and content of error
+- add extra info into the request logs about use of API key authentication and content of error
   responses
-* more SUSHI exceptions are newly considered as partial data
-* username and organization name were added to the subjects of emails about new registrations
-* some obsolete settings were removed
-* specialized code to add Scopus title list tags was removed - standard tagging may be used instead
-
+- more SUSHI exceptions are newly considered as partial data
+- username and organization name were added to the subjects of emails about new registrations
+- some obsolete settings were removed
+- specialized code to add Scopus title list tags was removed - standard tagging may be used instead
 
 ### Fixed
 
 #### Frontend
 
-* a bug in reporting leading to incorrect number of possible values being shown after a text search
+- a bug in reporting leading to incorrect number of possible values being shown after a text search
   was used was fixed
-* do not show the user edit dialog unless ALLOW_USER_MANAGEMENT=True - edit attempts would cause
+- do not show the user edit dialog unless ALLOW_USER_MANAGEMENT=True - edit attempts would cause
   errors otherwise
-* the date selector widget is properly hidden on pages where it is not needed
-* translations for the account management page were fixed
-* display of data from one harvest/manual upload no longer displays the whole selected date range,
+- the date selector widget is properly hidden on pages where it is not needed
+- translations for the account management page were fixed
+- display of data from one harvest/manual upload no longer displays the whole selected date range,
   but rather the range of the data itself
-* debug links to the SUSHI server are now shown only for COUNTER 5 (and higher) credentials
-* bug preventing change of tag class visibility under certain conditions was fixed
-* coverage display on platform page with non-COUNTER data no longer causes errors
+- debug links to the SUSHI server are now shown only for COUNTER 5 (and higher) credentials
+- bug preventing change of tag class visibility under certain conditions was fixed
+- coverage display on platform page with non-COUNTER data no longer causes errors
 
 #### Backend
 
-* extra check for existing data is done before a planned attempt to harvest data is made - fixes
+- extra check for existing data is done before a planned attempt to harvest data is made - fixes
   creation of clashing import batches for newly verified credentials
-* normalize emails before checking them using the Octopus protocol
-* fix email verification for installations where both password and shibboleth authentication are
+- normalize emails before checking them using the Octopus protocol
+- fix email verification for installations where both password and shibboleth authentication are
   enabled
-* only consider user's main email address when checking email verification status
+- only consider user's main email address when checking email verification status
 
-
-## [5.10.0]  - 2024-02-28
+## [5.10.0] - 2024-02-28
 
 ### Added
 
 #### Frontend
 
-* support for the 2023 version of the ACRL IPEDS report was added to the list of specialized reports
-* a built-in OA (Open Access) tag class was added with two tags (DOAJ and DOAB) marking titles as
+- support for the 2023 version of the ACRL IPEDS report was added to the list of specialized reports
+- a built-in OA (Open Access) tag class was added with two tags (DOAJ and DOAB) marking titles as
   listed in the respective directories
 
 ### Fixed
 
 #### Frontend
 
-* algorithm for detection of the last covered year was fixed to match previous year in February
+- algorithm for detection of the last covered year was fixed to match previous year in February
   (not March)
-* when uploading a source file in an unsupported format, a more helpful error message is now shown
-* error display in the ReportViewSelector was fixed
+- when uploading a source file in an unsupported format, a more helpful error message is now shown
+- error display in the ReportViewSelector was fixed
 
 #### Backend
 
-* reporting module export was fixed to only include tags visible to the user
-* Clickhouse version used in Gitlab CI was fixed to get around a bug in the latest version
+- reporting module export was fixed to only include tags visible to the user
+- Clickhouse version used in Gitlab CI was fixed to get around a bug in the latest version
 
-
-## [5.9.1]  - 2024-01-23
+## [5.9.1] - 2024-01-23
 
 ### Changes
 
 #### Frontend
 
-* the frontend code was updated to compile using node 18; support for version 16 was dropped
+- the frontend code was updated to compile using node 18; support for version 16 was dropped
 
 #### Backend
 
-* the overlap computation was optimized to use less memory and be faster
-* a more effective method is used to list all tags visible to a user resulting in slight performance
+- the overlap computation was optimized to use less memory and be faster
+- a more effective method is used to list all tags visible to a user resulting in slight performance
   improvement
-* the API for external access was extended to allow COUNTER registry IDs for platform identification
-* a more compact method of passing list of object IDs is used to request list of tags associated
+- the API for external access was extended to allow COUNTER registry IDs for platform identification
+- a more compact method of passing list of object IDs is used to request list of tags associated
   with them. This fixes a problem with some URL strings being too long for the server on large CELUS
   installations
-
 
 ### Fixed
 
 #### Frontend
 
-* error when too large a file is uploaded to the title list page is now handled more gracefully
-* error when uploading table data in a file with an unrecognized encoding is now handled
+- error when too large a file is uploaded to the title list page is now handled more gracefully
+- error when uploading table data in a file with an unrecognized encoding is now handled
   more gracefully
-* the coverage widget was fixed not to offer harvesting of missing data to read-only users
-* when manually uploading data for a platform which is private to one organization, the
+- the coverage widget was fixed not to offer harvesting of missing data to read-only users
+- when manually uploading data for a platform which is private to one organization, the
   organization is now automatically selected and cannot be changed
-* alignment of icons in the application top bar was fixed
+- alignment of icons in the application top bar was fixed
 
 #### Backend
 
-* problem with the platform overlap computation over-reporting the number of titles under specific
+- problem with the platform overlap computation over-reporting the number of titles under specific
   conditions when viewed for the whole consortium was fixed
-* the language preference API endpoint was fixed after Django upgrade
-* access of read-only users to harvesting data and harvest processing was reviewed and fixed where
+- the language preference API endpoint was fixed after Django upgrade
+- access of read-only users to harvesting data and harvest processing was reviewed and fixed where
   necessary
-* several minor inconsistencies in the platform-title support table were fixed
-* inconsistencies between the main database and clickhouse caused by title merging were fixed
-* potential race condition in creating organization-platform links was fixed
+- several minor inconsistencies in the platform-title support table were fixed
+- inconsistencies between the main database and clickhouse caused by title merging were fixed
+- potential race condition in creating organization-platform links was fixed
 
-
-## [5.9.0]  - 2023-12-05
+## [5.9.0] - 2023-12-05
 
 ### Added
 
 #### Frontend
 
-* interface for managing organization users was added to organization admins
-* reharvesting of data is now possible directly from the harvest dialog
-* report selection was added to the harvest dialog to allow for limiting the harvest to a subset
+- interface for managing organization users was added to organization admins
+- reharvesting of data is now possible directly from the harvest dialog
+- report selection was added to the harvest dialog to allow for limiting the harvest to a subset
   of reports
-* values of filters are now shown on the report and export list pages - no need to open the report detail
-* filtering of reports by row dimension and visibility was added to the report list page
-* when running a report directly from the report list, the current report is newly highlighted
-* two new states were added to the montly SUSHI status overview to indicate broken and past last
+- values of filters are now shown on the report and export list pages - no need to open the report detail
+- filtering of reports by row dimension and visibility was added to the report list page
+- when running a report directly from the report list, the current report is newly highlighted
+- two new states were added to the montly SUSHI status overview to indicate broken and past last
   harvestable month credentials
 
 #### Backend
 
-* NTFY integration was added for admin notifications
-
+- NTFY integration was added for admin notifications
 
 ### Changes
 
 #### Frontend
 
-* menu entry `non-COUNTER platforms` was renamed to `non-SUSHI platforms` to better reflect the
+- menu entry `non-COUNTER platforms` was renamed to `non-SUSHI platforms` to better reflect the
   nature of the platforms listed there
-* autocomplete is now used for selecting platforms when uploading data manually
-* during an ongoing harvest, progress checks with the backend are done progressively less often
+- autocomplete is now used for selecting platforms when uploading data manually
+- during an ongoing harvest, progress checks with the backend are done progressively less often
   to reduce the load on the server
-* default logo was changed from "CELUS Plus" to "CELUS"
-* logic for displaying platforms in the list of non-COUNTER platforms was changed to use info about
+- default logo was changed from "CELUS Plus" to "CELUS"
+- logic for displaying platforms in the list of non-COUNTER platforms was changed to use info about
   presence of support web article
-* Excel files incorrectly detected as 'application/CDFV2' are now accepted as XLSX files
-
+- Excel files incorrectly detected as 'application/CDFV2' are now accepted as XLSX files
 
 #### Backend
 
-* the `pycounter` library was replaced by our internal fork (`celus-pycounter`)
-* all internal git based dependencies were replaced by pip based dependencies
-* ratelimitting was added to admin emails
-* a separate list of customer care admins was added for specific notifications (e.g. user registration)
-
+- the `pycounter` library was replaced by our internal fork (`celus-pycounter`)
+- all internal git based dependencies were replaced by pip based dependencies
+- ratelimitting was added to admin emails
+- a separate list of customer care admins was added for specific notifications (e.g. user registration)
 
 ### Fixed
 
 #### Frontend
 
-* handling of errors connecting to the CDN in presence of security proxies was fixed
-* more graceful handling of situations where uploaded file contains more than one report was added
+- handling of errors connecting to the CDN in presence of security proxies was fixed
+- more graceful handling of situations where uploaded file contains more than one report was added
 
-
-
-## [5.8.1]  - 2023-11-07
+## [5.8.1] - 2023-11-07
 
 ### Fixed
 
@@ -702,8 +653,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - error importing COUNTER 5 reports with missing `Performance` key was fixed
 - error importing some COUNTER 5 reports when Python 3.8 was used was fixed
 
-
-## [5.8.0]  - 2023-11-03
+## [5.8.0] - 2023-11-03
 
 ### Added
 
@@ -728,7 +678,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - support for importing data from XLS (older Excel format) files was added
 
-
 ### Changes
 
 #### Frontend
@@ -747,7 +696,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - API key based authentication was sped up by using a newer version of the corresponding library
 - CSV processing throughout CELUS was unified to use the same library
 
-
 ### Fixed
 
 #### Frontend
@@ -760,8 +708,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - creation of organization-platform link records was fixed to work more reliably
 - processing of title lists containing the BOM character was fixed
 
-
-## [5.7.1]  - 2023-09-07
+## [5.7.1] - 2023-09-07
 
 ### Fixed
 
@@ -777,9 +724,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - the command line script `export_analytical` no longer crashes when output file is not explicitly
   specified
 
-
-
-## [5.7.0]  - 2023-08-28
+## [5.7.0] - 2023-08-28
 
 ### Added
 
@@ -799,7 +744,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - user django admin now contains number of associated organizations and limits data sources in
   filter to the used ones
 - cli script for computing statistics about saved reports was added
-
 
 ### Changes
 
@@ -837,9 +781,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - CSV files with BOM are now properly parsed when uploading title lists
 - fix reporting coverage error when date range has open end and no data are available
 
-
-
-## [5.6.0]  - 2023-08-03
+## [5.6.0] - 2023-08-03
 
 ### Added
 
@@ -857,7 +799,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - a CLI script for exporting all usage data into a CSV file for ingestion into an analytical
   database was added
 
-
 ### Changes
 
 #### Frontend
@@ -874,7 +815,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - it is now possible to change the organization during a preflight of manually importing data
 - naming of stored reports was moved into a dialog to make it more obvious
 
-
 #### Backend
 
 - handling of the 3040 SUSHI exception was changed - data get ingested immediately and re-harvest
@@ -883,7 +823,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   problematic report is disabled
 - Clickhouse support was added to the external API `PlatformReportView` endpoint
 - performance of the `clean_obsolete_platform_title_links` celery task was improved
-
 
 ### Fixed
 
@@ -904,8 +843,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - cachalot caching was disabled during exports from reporting to prevent large memory consumption
 - memory consumption of reporting exports was reduced
 
-
-## [5.5.2]  - 2023-06-12
+## [5.5.2] - 2023-06-12
 
 ### Added
 
@@ -927,7 +865,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - the `source` field was removed from the Dimension model
 - organization and platform names are now sanitized before being used as part of file names
 
-
 ### Fixed
 
 #### Backend
@@ -937,8 +874,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - reporting sometimes incorrectly used materialized report which was missing the queried dimension
   when generating list of possible dimension values
 
-
-## [5.5.1]  - 2023-05-25
+## [5.5.1] - 2023-05-25
 
 ### Added
 
@@ -958,8 +894,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 - when viewing a list of titles, the page newly resets to the first page when the user changes
   the filters - this prevents the user from being stuck on a page with no results
 
-
-## [5.5.0]  - 2023-05-16
+## [5.5.0] - 2023-05-16
 
 ### Added
 
@@ -981,7 +916,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 #### Backend
 
 - prometheus metrics were extended to include database object counts for common models
-
 
 ### Changes
 
@@ -1036,8 +970,7 @@ This is an intermediate release for CzechELib. It will be released later as part
   organization
 - production deployment no longer uses the browseable API view
 
-
-## [5.4.0]  - 2023-04-12
+## [5.4.0] - 2023-04-12
 
 ### Added
 
@@ -1058,7 +991,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - logging of celery tasks into an external database was added
 
-
 ### Changes
 
 #### Frontend
@@ -1068,7 +1000,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - the `Specialized reports` section was reworked to allow for more reports to be added in the
   future and to improve the export functionality
 - link to the tags documentation was changed to point to the knowledgebase
-
 
 #### Backend
 
@@ -1082,7 +1013,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   and use case-insensitive matching of platform names
 - scheduling of new harvests was improved to reduce the number of database queries and run faster
 
-
 ### Fixed
 
 #### Frontend
@@ -1091,7 +1021,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   platforms were not taken into account
 - when creating tag class with permissions depending on the organization, the organization was not
   properly sent to the backend resulting in a permission error
-
 
 #### Backend
 
@@ -1113,7 +1042,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - error in specialized reports caused by multiple metrics with the same name was fixed (fixes
   problems with the Rebiun report on run.celus.one)
 
-
 ## [5.3.0] - 2023-03-08
 
 ### Added
@@ -1128,7 +1056,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - it is now possible to delete a user-created platform together with all its data
 - release dates were added to the changelog and releases pages
 
-
 ### Changes
 
 #### Frontend
@@ -1142,7 +1069,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - when the `nibbler` library is used to parse COUNTER data, CELUS now does more check on the report
   header to prevent user errors in selecting the correct report
 
-
 ### Fixed
 
 #### Frontend
@@ -1150,8 +1076,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - infinite loading of content of an empty harvest was fixed
 - error in reporting causing occasional errors when reloading data after report change was fixed
 - error which prevented some users from leaving impersonification mode was fixed
-
-
 
 ## [5.2.2] - 2023-02-17
 
@@ -1169,7 +1093,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 #### Documentation
 
 - new section about external access to CELUS was added
-
 
 ### Changes
 
@@ -1189,7 +1112,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - the way Clickhouse tables are created was changed to use a separate CLI script
 - unused `primary_dimension` attribute was removed from the `ReportDataView` model
 
-
 ### Fixes
 
 #### Frontend
@@ -1201,7 +1123,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - periodic synchronization with the knowledgebase was fixed to include all synchronized models
 - allow `null` in `interest_group` when downloading report types from knowledgebase API
 - deleting of past celery task results was blocked by a foreign_key which was removed
-
 
 ## [5.2.1] - 2023-02-02
 
@@ -1239,7 +1160,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - missing `counter_registry_id` field was added to the platforms API endpoint
 - synchronization with the knowledge base was made more robust
 
-
 ## [5.2.0] - 2023-01-18
 
 ### Added
@@ -1257,7 +1177,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 #### Backend
 
 - a periodic task was added to sync report types and parser definitions with the knowledgebase
-
 
 ### Changes
 
@@ -1284,7 +1203,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - the number of queries in the `month-overview` API endpoint was reduced
 
-
 ## [5.1.1] - 2023-01-05
 
 ### Fixed
@@ -1296,14 +1214,12 @@ This is an intermediate release for CzechELib. It will be released later as part
 - optimization: make sure the platform list only loads tags once
 - optimize the loading time of platform page by using smarter approach to stored reports
 
-
 #### Backend
 
 - optimization: reduce the memory footprint of the CLI script for removing unused titles
 - optimization: reduce the number of queries in PlatformViewSet to improve performance
 - optimization: optimize speed of the annotations endpoint
 - fix bug in the `delete_batches_targets` celery task
-
 
 ## [5.1.0] - 2022-12-19
 
@@ -1333,7 +1249,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - support for asynchronous deleting of platforms and organizations was added to the django admin
 - the backend now sends email notification to admins when a new organization is created by a user
 
-
 ### Changes
 
 #### Frontend
@@ -1342,7 +1257,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   selected organization and date range
 - All organizations are now selected by default in the first session of consortium admin (instead of
   the first organization in the list)
-
 
 ### Fixed
 
@@ -1370,7 +1284,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - when creating custom platforms, the source is properly set to the organization-specific source,
   not the source used for the organization itself.
 
-
 ## [5.0.1] - 2022-11-29
 
 ### Fixed
@@ -1385,8 +1298,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 #### Backend
 
 - deleting from Clickhouse was fixed to avoid slow performance for some queries
-
-
 
 ## [5.0.0] - 2022-11-22
 
@@ -1427,7 +1338,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   available slots at once
 - documentation was updated with parts about tags and tagging
 
-
 #### Backend
 
 - a script was added for finding and removing import batches without data and for resolving
@@ -1437,7 +1347,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   knowledgebase
 - automatic resolving of differences between database and clickhouse was added to the CLI script
 - celery task for periodic checking of sync between database and clickhouse was added
-
 
 ### Changes
 
@@ -1456,7 +1365,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   current user
 - possible crash in reporting XLSX export was fixed when a report was empty
 
-
 #### Backend
 
 - COUNTER 5 report processing was made stricter to avoid errors on publisher side
@@ -1473,7 +1381,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - allow syncing of report type dimensions with the knowledgebase if the report type is not yet
   used in any usage data
 - unique_together database constraints were added to the `ReportInterestMetric` model
-
 
 ### Fixed
 
@@ -1502,7 +1409,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - automatic resync with clickhouse after a previous sync failed was fixed
 - detection of differences between the database and clickhouse was fixed to cover all cases
 
-
 ## [4.7.1] - 2022-11-21
 
 ### Added
@@ -1511,7 +1417,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - celery task for periodic checking of database-clickhouse synchronization was added
 - automatic resolving of differences between database and clickhouse was added into the CLI command
-
 
 ### Fixed
 
@@ -1525,7 +1430,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - some missed cases where detection of database-clickhouse difference did not work correctly were
   fixed
 
-
 ## [4.7.0] - 2022-10-24
 
 ### Added
@@ -1535,14 +1439,12 @@ This is an intermediate release for CzechELib. It will be released later as part
 - add missing reader for IR_M1 reports in table form
 - update CLI script `check_report_type_dimensions` to also create missing COUNTER reports
 
-
 ### Changes
 
 #### Backend
 
 - allow deleting of user accounts from Django admin by allowing deleting of impersonation logs
 - use constant memory mode when creating Excel exports in reporting
-
 
 ### Fixed
 
@@ -1565,7 +1467,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - properly store owner attributes when saving a new report
 - skip custom platforms from other organizations when importing SUSHI credentials using CLI
 
-
 ## [4.6.2] - 2022-07-28
 
 ### Fixed
@@ -1583,7 +1484,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   ones without it.
 - the code for merging titles was sped up to avoid "timeouts" in celery jobs
 
-
 ## [4.6.1] - 2022-07-21
 
 ### Fixed
@@ -1592,8 +1492,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - visiting a page of a title with ISBN caused the user to be logged out due to an error when
   fetching cover image data from Google. The cover image functionality was removed to fix the issue.
-
-
 
 ## [4.6.0] - 2022-07-18
 
@@ -1613,7 +1511,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 - support was added for retrieving report type information from knowledgebase
 - a CLI script was added to move credentials with all the associated data into a new custom platform
-
 
 ### Changes
 
@@ -1652,7 +1549,6 @@ This is an intermediate release for CzechELib. It will be released later as part
 - marking SUSHI credentials as broken no longer lead to duplication of stored extra parameters
 - access rights to the SUSHI credentials API endpoint was fixed to only include admin users
 - the django admin list interface for import batches now shows `date` instead of `user`
-
 
 ## [4.5.0] - 2022-06-20
 
@@ -1922,7 +1818,7 @@ This is an intermediate release for CzechELib. It will be released later as part
 
 #### Frontend
 
-- *SUSHI harvesting dashboard widget* and *SUSHI status page* were fixed not to include incorrect
+- _SUSHI harvesting dashboard widget_ and _SUSHI status page_ were fixed not to include incorrect
   `Waiting` entries for reports successfully harvested
 
 #### Backend
@@ -2392,7 +2288,6 @@ This is an intermediate release for CzechELib. It will be released later as part
   files in chunks
 - translation admin is properly used for all models using database translations
 - uniform report type ordering is used in the SUSHI data view
-
 
 ## [3.0.2] - 2021-04-26
 
