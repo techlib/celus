@@ -575,8 +575,18 @@ def send_due_report_mailings_task():
     """
     Send due report mailings
     """
-    for fru in FlexibleReportUserEmail.objects.all().select_for_update(nowait=True):
+    for fru in FlexibleReportUserEmail.objects.all():
         # next_send is a property, so we need to evaluate it for each object
         if fru.next_send <= now().date():
-            logger.info("Sending due report mailing: #%d; %s", fru.pk, fru)
-            fru.send_email()
+            with atomic():
+                if (
+                    fru := FlexibleReportUserEmail.objects.select_for_update(skip_locked=True)
+                    .filter(pk=fru.pk)
+                    .first()
+                ):
+                    logger.info("Sending due report mailing: #%d; %s", fru.pk, fru)
+                    fru.send_email()
+                else:
+                    logger.warning(
+                        "FlexibleReportUserEmail #%d is being processed by another worker", fru.pk
+                    )

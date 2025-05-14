@@ -425,6 +425,9 @@ class TestReportMailingSending:
                 number_of_periods=3,
             )
 
+    @pytest.mark.django_db(
+        transaction=True
+    )  # needed to make select_for_update work as in production
     def test_send_due_mailing(self, flexible_reports, mailoutbox):
         """
         Test that a due mailing task performs as expected
