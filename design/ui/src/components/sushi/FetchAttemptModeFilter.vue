@@ -4,7 +4,7 @@ en:
   modes:
     all: All
     current: Current
-    success_and_current: Successful & current
+    success_and_current: Successful + current
   tooltips:
     all: Displays all attempts matching criteria
     current: Discards attempts for older versions of SUSHI credentials
@@ -15,7 +15,7 @@ cs:
   modes:
     all: Všechny
     current: Aktuální
-    success_and_current: Úspěšné & aktuální
+    success_and_current: Úspěšné + aktuální
   tooltips:
     all: Zobrazí všechny pokusy odpovídající tomuto zobrazení
     current: Vynechá pokusy, které byly vytvořeny se staršími verzemi přihlašovacích údajů k SUSHI
