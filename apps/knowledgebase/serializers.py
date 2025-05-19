@@ -52,6 +52,7 @@ class ParserDefinitionSerializer(serializers.Serializer):
     metrics_to_skip = serializers.JSONField(required=True)
     titles_to_skip = serializers.JSONField(required=True)
     dimensions_to_skip = serializers.JSONField(required=True)
+    dimensions_validators = serializers.JSONField(required=False)
     metric_aliases = serializers.JSONField(required=True)
     metric_value_extraction_overrides = serializers.JSONField(required=True)
     available_metrics = serializers.JSONField(required=True, allow_null=True)

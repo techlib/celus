@@ -575,7 +575,7 @@ def parser_definitions(data_sources, platforms, metrics, report_types):
         id=1,
         source=data_sources["brain"],
         definition=json.loads(
-            nibbler_definitions.DateBasedDefinition(
+            nibbler_definitions.GenericDefinition(
                 parser_name="parser1",
                 data_format=nibbler_data_headers.DataFormatDefinition(
                     name=report_types["custom1"].short_name, id=report_types["custom1"].ext_id
@@ -587,7 +587,7 @@ def parser_definitions(data_sources, platforms, metrics, report_types):
                     ]
                 ),
                 areas=[
-                    nibbler_definitions.DateBasedAreaDefinition(
+                    nibbler_definitions.GenericAreaDefinition(
                         data_headers=nibbler_data_headers.DataHeaders(
                             roles=[
                                 nibbler_sources.DateSource(
