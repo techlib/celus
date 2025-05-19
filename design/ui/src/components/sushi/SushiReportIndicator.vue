@@ -44,6 +44,10 @@
         <v-icon size="small" color="error">fa fa-exclamation-triangle</v-icon>
         {{ $t("sushi.broken_report_type_desc") }}
       </div>
+      <div v-if="derivedFromPlatform">
+        <v-icon size="small" color="info" class="mr-1">fa fa-cogs</v-icon>
+        {{ $t("sushi.report_type_from_platform.derived") }}
+      </div>
       <div v-if="inRegistry">
         <v-icon size="small" v-if="inRegistry" color="counterRegistry"
           >fa fa-registered</v-icon
@@ -95,6 +99,10 @@ export default {
       type: Boolean,
     },
     IsAutocomplete: {
+      default: false,
+      type: Boolean,
+    },
+    derivedFromPlatform: {
       default: false,
       type: Boolean,
     },

@@ -45,6 +45,7 @@ from .serializers import (
     SushiCredentialsNoSameGlobalSerializer,
     SushiCredentialsNoSameInOrgSerializer,
     SushiCredentialsSerializer,
+    SwitchToPlatformsReportTypesSerializer,
     UnsetBrokenSerializer,
     UpdateLastHarvestableMonthSerializer,
 )
@@ -539,6 +540,34 @@ class SushiCredentialsViewSet(ModelViewSet):
         )
         records = MonthOverviewSerializer(query, many=True).data
         return Response(records)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="switch-to-platforms-report-types",
+        serializer_class=SwitchToPlatformsReportTypesSerializer,
+    )
+    def switch_to_platforms_report_types(self, request):
+        serializer = SwitchToPlatformsReportTypesSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        credentials_ids = [e["credentials_id"] for e in serializer.validated_data]
+
+        with transaction.atomic():
+            credentials = self.get_queryset().filter(pk__in=credentials_ids)
+            updated_count = credentials.filter(use_counter_reports_from_platform=False).update(
+                use_counter_reports_from_platform=True
+            )
+            matched_count = credentials.count()
+
+            credentials.update_report_types_based_on_platform()
+
+        return Response(
+            {
+                "matched": matched_count,
+                "updated": updated_count,
+                "unmatched": len(set(credentials_ids)) - matched_count,
+            }
+        )
 
 
 class CounterReportTypeViewSet(ReadOnlyModelViewSet):

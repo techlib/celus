@@ -363,3 +363,7 @@ class SushiFetchAttemptFlatSerializer(ModelSerializer):
 
 class SushiCleanupSerializer(Serializer):
     older_than = DateTimeField(required=False)
+
+
+class SwitchToPlatformsReportTypesSerializer(Serializer):
+    credentials_id = IntegerField(min_value=1, required=True)

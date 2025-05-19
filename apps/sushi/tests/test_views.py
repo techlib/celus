@@ -1139,3 +1139,58 @@ class TestSushiCredentialsViewSet:
 
         new_cr = SushiCredentials.objects.get(counter_version=51)
         assert new_cr.url.endswith(exp_end)
+
+    def test_switch_to_platforms_report_types(
+        self, basic1, credentials, users, clients, counter_report_types
+    ):
+        SushiCredentials.objects.update(use_counter_reports_from_platform=False)
+
+        url = reverse("sushi-credentials-switch-to-platforms-report-types")
+        # Empty
+        resp = clients["admin2"].post(url, [], format="json")
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 0, "unmatched": 0, "matched": 0}
+        assert all(
+            e.use_counter_reports_from_platform is False for e in SushiCredentials.objects.all()
+        )
+
+        resp = clients["admin2"].post(
+            url,
+            [
+                {"credentials_id": credentials["standalone_tr"].pk},
+                {"credentials_id": credentials["standalone_tr"].pk},
+            ],
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 1, "unmatched": 0, "matched": 1}
+        credentials["standalone_tr"].refresh_from_db()
+        assert credentials["standalone_tr"].use_counter_reports_from_platform is True
+        assert all(
+            e.use_counter_reports_from_platform is False
+            for e in SushiCredentials.objects.exclude(pk=credentials["standalone_tr"].pk)
+        )
+
+        resp = clients["admin2"].post(
+            url,
+            [
+                {"credentials_id": credentials["branch_pr"].pk},
+                {"credentials_id": credentials["standalone_tr"].pk},
+                {"credentials_id": 99999999},
+            ],
+            format="json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"updated": 0, "unmatched": 2, "matched": 1}
+        credentials["standalone_tr"].refresh_from_db()
+        credentials["branch_pr"].refresh_from_db()
+        assert credentials["standalone_tr"].use_counter_reports_from_platform is True
+        assert (
+            credentials["branch_pr"].use_counter_reports_from_platform is False
+        ), "admin2 is not allowed to updated branch_pr"
+        assert all(
+            e.use_counter_reports_from_platform is False
+            for e in SushiCredentials.objects.exclude(
+                pk__in=[credentials["standalone_tr"].pk, credentials["branch_pr"].pk]
+            )
+        )

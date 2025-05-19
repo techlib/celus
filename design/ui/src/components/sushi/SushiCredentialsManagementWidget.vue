@@ -70,6 +70,7 @@ en:
     can_update_verified: COUNTER 5 credentials which can be cloned to COUNTER 5.1 and platform is known to support COUNTER 5.1
     duplicated: Same credentials are used multiple times
   last_updated_tooltip: Credentials were last updated by {user} on {time}.
+  report_types_derived_from_platform_set: Report types are used from platform for selected credentials.
 
 cs:
   add_new: Přidat nové SUSHI
@@ -136,6 +137,7 @@ cs:
     can_update_verified: COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1 a platforma má ověřenou podporu COUNTER 5.1
     duplicated: Stejné přístupové údaje jsou použity vícekrát
   last_updated_tooltip: Přístupové údaje byly naposledy upraveny uživatelem {user} dne {time}.
+  report_types_derived_from_platform_set: Typy reportů jsou odvozeny od platformy pro vybrané přístupové údaje.
 </i18n>
 
 <template>
@@ -397,6 +399,7 @@ cs:
                       <v-btn
                         v-bind="{ ...menuProps, ...tooltipProps }"
                         color="defaultButton"
+                        :loading="moreActionsLoading"
                         >…</v-btn
                       >
                     </template>
@@ -408,7 +411,10 @@ cs:
                               testChecked('showLastHarvestableMonthDialog')
                             "
                             v-bind="props"
-                            :disabled="checkedCredentials.length === 0"
+                            :disabled="
+                              checkedCredentials.length === 0 ||
+                              moreActionsLoading
+                            "
                           >
                             <v-list-item-title>
                               <v-icon
@@ -431,7 +437,14 @@ cs:
                       </v-tooltip>
                       <v-tooltip location="bottom" max-width="600px">
                         <template #activator="{ props }">
-                          <v-list-item @click="triggerMarkFixed" v-bind="props">
+                          <v-list-item
+                            :disabled="
+                              checkedBrokenCredentials.length === 0 ||
+                              moreActionsLoading
+                            "
+                            @click="triggerMarkFixed"
+                            v-bind="props"
+                          >
                             <v-list-item-title>
                               <v-icon
                                 class="mr-2"
@@ -449,6 +462,34 @@ cs:
                           </v-list-item>
                         </template>
                         {{ $t("sushi.mark_as_fixed.tooltip") }}
+                      </v-tooltip>
+                      <v-tooltip location="bottom" max-width="600px">
+                        <template #activator="{ props }">
+                          <v-list-item
+                            :disabled="
+                              checkedWithManualReportTypes.length === 0 ||
+                              moreActionsLoading
+                            "
+                            @click="triggerReportTypesFromPlatform"
+                            v-bind="props"
+                          >
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                                >fa fa-cogs</v-icon
+                              >
+                              {{ $t("sushi.report_type_from_platform.derive") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedWithManualReportTypes.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
+                          </v-list-item>
+                        </template>
+                        {{ $t("sushi.report_type_from_platform.tooltip") }}
                       </v-tooltip>
                     </v-list>
                   </v-menu>
@@ -631,11 +672,18 @@ cs:
             v-for="(report, index) in item.counter_reports_long"
             :key="index"
             class="mr-1 px-2"
-            :color="report.broken ? '#888888' : 'teal'"
+            :color="
+              report.broken || item.use_counter_reports_from_platform
+                ? '#888888'
+                : 'teal'
+            "
             variant="outlined"
             label
           >
-            <SushiReportIndicator :report="report"></SushiReportIndicator>
+            <SushiReportIndicator
+              :report="report"
+              :derived-from-platform="item.use_counter_reports_from_platform"
+            ></SushiReportIndicator>
           </v-chip>
         </template>
         <template #item.counter_version="{ item }">
@@ -1048,6 +1096,7 @@ export default {
       exportAllCredentialsUrl:
         "/api/sushi-credentials/export-all-credentials/?export_all=true",
       platformFilter: null,
+      moreActionsLoading: false,
       // table options
       page: 1,
       itemsPerPage: 25,
@@ -1267,6 +1316,11 @@ export default {
     },
     checkedUpdatableCredentials() {
       return this.checkedCredentials.filter((e) => e.can_update && !e.broken);
+    },
+    checkedWithManualReportTypes() {
+      return this.checkedCredentials.filter(
+        (e) => !e.use_counter_reports_from_platform,
+      );
     },
   },
 
@@ -1514,7 +1568,38 @@ export default {
         });
       }
     },
-
+    async triggerReportTypesFromPlatform() {
+      if (this.checkedWithManualReportTypes.length > 0) {
+        this.moreActionsLoading = true;
+        try {
+          let response = await axios.post(
+            "/api/sushi-credentials/switch-to-platforms-report-types/",
+            this.checkedWithManualReportTypes.map((e) => {
+              return {
+                credentials_id: e.pk,
+              };
+            }),
+          );
+          if (response.data.updated > 0) {
+            this.showSnackbar({
+              content: this.$t("report_types_derived_from_platform_set"),
+              color: "success",
+            });
+            this.loadSushiCredentialsList();
+            this.checkedRows = [];
+          }
+        } catch (error) {
+          this.showSnackbar({
+            content:
+              "Could not switch credentials to use counter reports from platform: " +
+              error,
+            color: "error",
+          });
+        } finally {
+          this.moreActionsLoading = false;
+        }
+      }
+    },
     triggerCloneToNewer() {
       if (this.checkedUpdatableCredentials.length > 0) {
         this.showCloneToNewerDialog = true;
