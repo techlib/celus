@@ -48,8 +48,7 @@ cs:
         (report &&
           report.splitBy &&
           splitParts.length &&
-          currentPart &&
-          formattedData.length !== 0)
+          currentPart !== undefined)
       "
     >
       <!-- part selector -->
@@ -313,7 +312,7 @@ export default {
       cancelTokenSource: null,
       justFetchingParams: null,
       splitParts: [],
-      currentPart: null,
+      currentPart: undefined,
       loadingParts: false,
       totalParts: 0,
       view: "table",
@@ -527,7 +526,11 @@ export default {
       return this.contextOverride ? [10, 20, 50, 100, -1] : [10, 20, 50, 100];
     },
     noPartAvailable() {
-      return this.report.splitBy && !this.currentPart && !this.loadingParts;
+      return (
+        this.report.splitBy &&
+        this.currentPart === undefined &&
+        !this.loadingParts
+      );
     },
     partsCropped() {
       return this.totalParts > this.splitParts.length;
@@ -545,7 +548,7 @@ export default {
       if (this.report.splitBy) {
         await this.getSplitParts();
       } else {
-        this.currentPart = null;
+        this.currentPart = undefined;
       }
 
       if (this.noPartAvailable) {
@@ -616,10 +619,16 @@ export default {
         });
         if (
           this.splitParts.length &&
-          (!this.currentPart ||
+          (this.currentPart === undefined ||
             !this.splitParts.find((item) => item.id === this.currentPart))
-        )
+        ) {
+          console.log(
+            "setting current part to",
+            this.splitParts[0],
+            this.splitParts[0].id,
+          );
           this.currentPart = this.splitParts[0].id;
+        }
       }
       this.updateSize();
       this.loadingParts = false;
@@ -636,7 +645,7 @@ export default {
         page: this.page,
         order_by: this.ordering,
       };
-      if (this.report.splitBy && this.currentPart) {
+      if (this.report.splitBy && this.currentPart !== undefined) {
         params["part"] = toBase64JSON([this.currentPart]);
       }
 
