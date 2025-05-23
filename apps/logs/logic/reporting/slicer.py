@@ -641,9 +641,11 @@ class FlexibleDataSlicer:
             return self.get_possible_dimension_values_queryset(self.group_by)
         return None
 
-    def get_parts_queryset(self):
+    def get_parts_queryset(self, use_clickhouse=False):
         if self.split_by:
-            return self.get_possible_dimension_values_queryset(self.split_by)
+            return self.get_possible_dimension_values_queryset(
+                self.split_by, use_clickhouse=use_clickhouse
+            )
         return None
 
     def get_data(self, lang="en", part: Optional[list] = None) -> QuerySet[dict]:

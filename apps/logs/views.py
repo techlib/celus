@@ -1344,6 +1344,10 @@ class FlexibleSlicerView(FlexibleSlicerBaseView):
             part = request.query_params.get("part") if slicer.split_by else None
             if part:
                 part = parse_b64json(part)
+                if isinstance(part, list):
+                    part = [e or None for e in part]  # convert 0 to None for django compatibility
+                if settings.DEBUG:
+                    print("part:", part)
             data = slicer.get_data(part=part, lang=request.user.language)
         except SlicerConfigError as e:
             return Response(
@@ -1403,15 +1407,32 @@ class FlexibleSlicerPossibleValuesView(FlexibleSlicerBaseView):
 class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
     def get(self, request):
         slicer = self.create_slicer(request)
-        qs = slicer.get_parts_queryset()
-        cropped = False
         count = 0
-        if qs:
-            count = qs.count()
+        if request.USE_CLICKHOUSE:
+            from logs.cubes import ch_backend
+
+            if qs := slicer.get_parts_queryset(use_clickhouse=True):
+                count = ch_backend.get_count(qs)
+        else:
+            if qs := slicer.get_parts_queryset():
+                count = qs.count()
+        cropped = False
+        if count:
             if count > slicer.MAXIMUM_POSSIBLE_PARTS:
                 qs = qs[: slicer.MAXIMUM_POSSIBLE_PARTS]
                 cropped = True
-        return Response({"count": count, "values": qs or [], "cropped": cropped})
+            # get values
+            if request.USE_CLICKHOUSE:
+                # we need to convert 0 to None for django compatibility
+                # and we remove the score field which is only available in clickhouse
+                values = [
+                    {k: v or None for k, v in rec._asdict().items()}  # if k != "score"}
+                    for rec in ch_backend.get_records(qs)
+                ]
+            else:
+                values = qs
+            return Response({"count": count, "values": values, "cropped": cropped})
+        return Response({"count": 0, "values": [], "cropped": False})
 
 
 class FlexibleSlicerCoverageView(FlexibleSlicerBaseView):
