@@ -202,6 +202,13 @@ class HarvestViewSet(
                         f"is broken for credentials"
                     }
                 )
+
+            if intention["end_date"] >= timezone.now().date():
+                date_str = intention["end_date"].strftime("%Y-%m")
+                raise ValidationError(
+                    {credentials.pk: f"Can't download unfinished month {date_str}"}
+                )
+
             seen_combinations.add(key)
 
     def create(self, request, *args, **kwargs):

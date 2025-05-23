@@ -1,12 +1,12 @@
 import json
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 from core.logic.dates import last_month, month_end
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.timezone import now
+from freezegun import freeze_time
 from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import ImportBatchFullFactory
@@ -298,6 +298,54 @@ class TestHarvestAPI:
             credentials["standalone_tr"].url,
             credentials["standalone_br1_jr1"].url,
         }
+
+    @pytest.mark.parametrize(
+        "today,status",
+        (
+            (date(2025, 1, 1), 400),
+            (date(2025, 1, 15), 400),
+            (date(2025, 1, 31), 400),
+            (date(2025, 2, 1), 201),
+        ),
+    )
+    def test_create_harvest_in_future(
+        self, basic1, clients, harvests, credentials, counter_report_types, today, status
+    ):
+        url = reverse("harvest-list")
+        harvests_count = Harvest.objects.count()
+
+        with freeze_time(
+            datetime(today.year, today.month, today.day, 0, 0, 0, 0, tzinfo=timezone.utc)
+        ):
+            resp = clients["master_admin"].post(
+                url,
+                json.dumps(
+                    {
+                        "intentions": [
+                            {
+                                "credentials": credentials["branch_pr"].pk,
+                                "counter_report": counter_report_types["pr"].pk,
+                                "start_date": "2024-12-01",
+                                "end_date": "2024-12-31",
+                            },
+                            {
+                                "credentials": credentials["standalone_br1_jr1"].pk,
+                                "counter_report": counter_report_types["br1"].pk,
+                                "start_date": "2025-01-01",
+                                "end_date": "2025-01-31",
+                            },
+                        ]
+                    }
+                ),
+                content_type="application/json",
+            )
+
+        assert resp.status_code == status
+        if status == 400:
+            assert set(resp.data.keys()) == {
+                credentials["standalone_br1_jr1"].pk
+            }, "display affected credentials"
+            assert Harvest.objects.count() == harvests_count, "no harvest created"
 
     @pytest.mark.parametrize("user_type", ["master_admin", "admin2"])
     @pytest.mark.django_db(transaction=True)
@@ -661,7 +709,7 @@ class TestHarvestFetchIntentionAPI:
             return resp.json()
 
         assert len(get_data(None)) == 3
-        just_now = now()
+        just_now = timezone.now()
         assert len(get_data(just_now)) == 0
         # only latest_intentions are returned by the API, so we pick one and update it
         intention = harvests["anonymous"].intentions.latest_intentions()[0]
@@ -689,7 +737,7 @@ class TestHarvestFetchIntentionAPI:
             return resp.json()
 
         assert len(get_data(None)) == 3
-        just_now = now()
+        just_now = timezone.now()
         assert len(get_data(just_now)) == 0
         intention = harvests["anonymous"].intentions.all()[0]
         intention.last_updated = just_now
