@@ -91,7 +91,7 @@ export default {
       possibleValues: [],
       possibleValueCount: 0,
       try: null,
-      // selectedValues: this.modelValue,
+      selectedValues: this.modelValue,
       loading: false,
       search: "",
       useTwoPanes: false,
@@ -123,14 +123,6 @@ export default {
           total: this.possibleValueCount,
         });
       }
-    },
-    selectedValues: {
-      get() {
-        return this.modelValue;
-      },
-      set(newValue) {
-        this.$emit("update:modelValue", newValue);
-      },
     },
     searchDebounced: {
       get() {
@@ -291,8 +283,8 @@ export default {
         this.fetchPossibleValues();
       }
     },
-    value() {
-      this.selectedValues = this.value;
+    modelValue() {
+      this.selectedValues = this.modelValue;
     },
   },
 

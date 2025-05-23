@@ -1426,7 +1426,7 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
                 # we need to convert 0 to None for django compatibility
                 # and we remove the score field which is only available in clickhouse
                 values = [
-                    {k: v or None for k, v in rec._asdict().items()}  # if k != "score"}
+                    {k: v or None for k, v in rec._asdict().items() if k != "score"}
                     for rec in ch_backend.get_records(qs)
                 ]
             else:

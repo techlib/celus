@@ -29,7 +29,6 @@ cs:
 
 <script>
 import YearEntry from "@/components/util/YearEntry";
-import isEqual from "lodash/isEqual";
 
 export default {
   name: "FromToYearEntry",

@@ -622,11 +622,6 @@ export default {
           (this.currentPart === undefined ||
             !this.splitParts.find((item) => item.id === this.currentPart))
         ) {
-          console.log(
-            "setting current part to",
-            this.splitParts[0],
-            this.splitParts[0].id,
-          );
           this.currentPart = this.splitParts[0].id;
         }
       }
