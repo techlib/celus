@@ -49,9 +49,9 @@ en:
       during harvesting of data which indicate credentials are correct, but report is not supported.
       Automatic harvesting is disabled for such reports.
     report_type_from_platform:
-      derive: Derive report type from platform
-      derived: This report type is derived from platform.
-      tooltip: Report types from platform will be used for selected credentials.
+      derive: Use reports from platform
+      derived: List of reports is managed by platform.
+      tooltip: Selected credentials will automatically harvest all reports associated with the corresponding platform.
     knowledgebase_report_type_desc: This report was successfully harvested by other users for this platform.
     registry_report_type_desc: According to the COUNTER registry, this report is supported by the selected platform.
     mark_as_fixed:
@@ -128,9 +128,9 @@ cs:
       přihlašovací údaje jsou funkční, ale report není podporovaný.
       Automatické stahování je pro tyto reporty vypnuté.
     report_type_from_platform:
-      derive: Nastav typy reportů podle platformy
-      derived: Typ reportu je odvozen od platformy.
-      tooltip: Pro vybrané přístupové údaje budou nastaveny typy reportů podle platformy.
+      derive: Použít reporty z platformy
+      derived: Seznam reportů je spravován platformou.
+      tooltip: Pro vybrané přihlašovací údaje budou automaticky stahovány všechny reporty spojené s danou platformou.
     knowledgebase_report_type_desc: Tento report byl na této platformě úspěšně stažený jiným uživatelem.
     registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.
     mark_as_fixed:

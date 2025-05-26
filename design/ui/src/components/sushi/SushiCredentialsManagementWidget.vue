@@ -672,13 +672,19 @@ cs:
             v-for="(report, index) in item.counter_reports_long"
             :key="index"
             class="mr-1 px-2"
+            :class="
+              item.use_counter_reports_from_platform
+                ? 'font-weight-regular'
+                : 'font-weight-bold'
+            "
             :color="
               report.broken || item.use_counter_reports_from_platform
-                ? '#888888'
-                : 'teal'
+                ? '#444444'
+                : 'teal-darken-2'
             "
-            variant="outlined"
+            variant="tonal"
             label
+            size="small"
           >
             <SushiReportIndicator
               :report="report"
