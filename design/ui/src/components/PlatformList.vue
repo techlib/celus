@@ -79,7 +79,22 @@ cs:
               }"
               >{{ item.name || item.short_name }}
             </router-link>
+            <v-tooltip location="bottom" v-if="item.source?.organization">
+              <template v-slot:activator="{ props }">
+                <v-chip
+                  color="warning"
+                  size="x-small"
+                  class="ml-2 text-lowercase"
+                  variant="flat"
+                  v-bind="props"
+                >
+                  {{ $t("labels.custom") }}
+                </v-chip>
+              </template>
+              {{ item.source.organization.name }}
+            </v-tooltip>
           </template>
+
           <template #item.title_count="{ item }">
             <span
               v-if="item.title_count === 'loading'"
