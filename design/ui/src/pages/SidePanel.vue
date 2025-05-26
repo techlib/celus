@@ -162,6 +162,10 @@ export default {
                 {
                   title: this.$i18n.t("pages.flexi_reports"),
                   linkTo: "flexireports",
+                  chip: {
+                    title: this.$t("labels.new_menu_item"),
+                    color: "error",
+                  },
                 },
                 {
                   title: this.$t("pages.exports"),
@@ -170,10 +174,6 @@ export default {
                 {
                   title: this.$t("pages.specialized_reports"),
                   linkTo: "specialized-reports",
-                  chip: {
-                    title: this.$t("labels.new_menu_item"),
-                    color: "error",
-                  },
                 },
               ],
             },
@@ -195,10 +195,6 @@ export default {
                   title: this.$i18n.t("pages.title_list_overlap"),
                   // icon: "fa fa-list",
                   linkTo: "title-list-overlap",
-                  chip: {
-                    title: this.$t("labels.new_menu_item"),
-                    color: "error",
-                  },
                 },
               ],
             },
@@ -249,20 +245,12 @@ export default {
               title: this.$t("pages.supported_non_counter_platforms"),
               icon: "fas fa-file-excel",
               linkTo: "supported-non-counter-platforms",
-              chip: {
-                title: this.$t("labels.new_menu_item"),
-                color: "error",
-              },
               show: this.showAdminStuff && this.isRawImportEnabled,
             },
             {
               title: this.$t("pages.data_coverage_overview"),
               icon: "fa fa-sitemap",
               linkTo: "data-coverage-overview",
-              chip: {
-                title: this.$t("labels.new_menu_item"),
-                color: "error",
-              },
               show: true,
             },
           ],
