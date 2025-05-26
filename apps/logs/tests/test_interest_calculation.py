@@ -211,6 +211,7 @@ class TestInterestCalculation:
         assert old_ib1.date == date(2018, 1, 1)
         assert old_ib2.date == date(2018, 2, 1)
         assert old_ib1.interest_ib == ibs_new[0], "interest is superseded by new"
+        assert old_ib1.interest_timestamp is not None, "interest timestamp is set"
         assert old_ib2.interest_ib == old_ib2, "contains its own interest"
         assert old_ib1.accesslog_set.count() == 2, "2 normal + no interest logs in first batch"
         assert old_ib2.accesslog_set.count() == 2, "1 normal + 1 interest logs in second batch"

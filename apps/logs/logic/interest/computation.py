@@ -94,6 +94,7 @@ def sync_interest_for_import_batch(
     if superseding_ib := find_superseding_import_batch(import_batch):
         stats["superseded_import_batch"] += 1
         import_batch.interest_ib = superseding_ib
+        import_batch.interest_timestamp = now()
         if not assume_no_old_interest:
             # remove old interest
             remove_interest_from_import_batches([import_batch.pk], interest_rt)
