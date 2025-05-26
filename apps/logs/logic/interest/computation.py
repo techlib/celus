@@ -724,7 +724,10 @@ def remove_interest_from_import_batches(
     def delete_in_clickhouse():
         delete_interest_from_import_batches(interest_rt, import_batch_ids)
 
-    if settings.CLICKHOUSE_SYNC_ACTIVE:
+    if settings.CLICKHOUSE_SYNC_ACTIVE and deleted[0] > 0:
+        # do not try to delete from clickhouse if there were no records to delete
+        # in PostgreSQL - this would put unnecessary load on ClickHouse which is not
+        # very good at deleting data
         on_commit(delete_in_clickhouse)
     return Counter({"deleted_accesslogs": deleted[0]})
 
