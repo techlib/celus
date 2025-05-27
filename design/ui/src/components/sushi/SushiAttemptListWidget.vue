@@ -28,31 +28,22 @@ cs:
         <v-row v-if="!intentionId">
           <v-col cols="12" md="6">
             <SushiCredentialsOverviewHeaderWidget
-              :organization="organization"
-              :platform="platform"
-              :report="report"
-              :counter-version="counterVersion"
-              :month="month"
-              :from-date="fromDate"
+              v-if="credentials"
+              :credentials-name="credentials.title"
+              :organization="credentials.organization"
+              :platform="credentials.platform"
+              :counter-version="credentials.counter_version"
             ></SushiCredentialsOverviewHeaderWidget>
           </v-col>
           <v-spacer></v-spacer>
-          <v-col cols="12" md="6">
-            <v-container fluid class="pa-0">
-              <v-row justify="end">
-                <v-col cols="auto" class="py-0">
-                  <FetchAttemptModeFilter
-                    v-model="historyMode"
-                  ></FetchAttemptModeFilter>
-                </v-col>
-              </v-row>
-            </v-container>
+          <v-col cols="12" md="6" lg="4" xl="3">
+            <FetchAttemptModeFilter v-model="historyMode" />
           </v-col>
         </v-row>
         <v-row>
           <v-col>
             <v-data-table-server
-              :items="filteredIntentions"
+              :items="intentions"
               :headers="headers"
               v-model:expanded="expandedRows"
               item-key="pk"
@@ -81,13 +72,7 @@ cs:
                   </v-icon>
                 </v-btn>
               </template>
-              <template #item.counter_report_verbose.counter_version="{ item }">
-                <strong>{{
-                  counterVersionToStr(
-                    item.counter_report_verbose.counter_version,
-                  )
-                }}</strong>
-              </template>
+
               <template #item.status="{ item }">
                 <SushiFetchIntentionStateIcon
                   :intention="item"
@@ -242,7 +227,6 @@ import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCreden
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
-import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -256,12 +240,6 @@ export default {
   },
   props: {
     credentials: { required: false },
-    organization: { required: false },
-    platform: { required: false },
-    report: { required: false },
-    counterVersion: { required: false },
-    fromDate: { required: false },
-    month: { required: false },
     intentionId: { required: false },
   },
   data() {
@@ -269,24 +247,16 @@ export default {
       intentions: [],
       expandedRows: [],
       intentionCount: 0,
-      showSuccess: true,
-      showFailure: true,
-      orderBy: [{ key: "timestamp", order: "asc" }],
+      orderBy: [{ key: "timestamp", order: "desc" }],
       pageSize: 5,
       page: 1,
       showBatchDialog: false,
       selectedBatch: null,
       dialogType: "",
       loading: false,
-      hideObsolete: true,
       historyMode: "success_and_current",
       orderingRemap: new Map([
         ["counter_report_verbose.code", "counter_report__code"],
-        [
-          "counter_report_verbose.counter_version",
-          "counter_report__counter_version",
-        ],
-        ["organization.name", "credentials__organization__name"],
       ]),
     };
   },
@@ -295,33 +265,10 @@ export default {
       if (this.intentionId) {
         return `/api/scheduler/intention/${this.intentionId}`;
       }
-      if (
-        !(this.organization || this.platform || this.report || this.credentials)
-      ) {
+      if (!this.credentials) {
         return "";
       }
-      let base = `/api/scheduler/intention/?format=json&attempt=1&mode=${this.historyMode}`;
-      if (this.credentials) {
-        base += `&credentials=${this.credentials.pk}`;
-      }
-      if (this.organization) {
-        base += `&organization=${this.organization.pk}`;
-      }
-      if (this.platform) {
-        base += `&platform=${this.platform.pk}`;
-      }
-      if (this.report) {
-        base += `&report=${this.report.pk}`;
-      }
-      if (this.fromDate) {
-        base += `&date_from=${this.fromDate}`;
-      }
-      if (this.month) {
-        base += `&month=${this.month.pk}`;
-      }
-      if (this.counterVersion) {
-        base += `&counter_version=${this.counterVersion}`;
-      }
+      let base = `/api/scheduler/intention/?format=json&attempt=1&mode=${this.historyMode}&credentials=${this.credentials.pk}`;
       // sorting
       base += `&page_size=${this.pageSize}&page=${this.page}`;
       if (this.orderBy.length) {
@@ -368,47 +315,19 @@ export default {
           value: "error_code",
           key: "error_code",
         },
-      ];
-      if (!this.organization) {
-        ret.push({
-          title: this.$t("organization"),
-          value: "organization.name",
-          key: "organization.name",
-        });
-      }
-      if (!this.report) {
-        ret.push({
+        {
           title: this.$t("report"),
           value: "counter_report_verbose.code",
           key: "counter_report_verbose.code",
-        });
-      }
-      if (!this.counterVersion) {
-        ret.push({
-          title: this.$t("title_fields.counter_version"),
-          value: "counter_report_verbose.counter_version",
-          align: "center",
-          sortable: true,
-        });
-      }
-      ret.push({
-        title: this.$t("title_fields.actions"),
-        value: "actions",
-        key: "actions",
-        sortable: false,
-      });
-
+        },
+        {
+          title: this.$t("title_fields.actions"),
+          value: "actions",
+          key: "actions",
+          sortable: false,
+        },
+      ];
       return ret;
-    },
-    filteredIntentions() {
-      let out = this.intentions;
-      if (!this.showSuccess) {
-        out = out.filter((item) => !item.processing_success);
-      }
-      if (!this.showFailure) {
-        out = out.filter((item) => item.processing_success);
-      }
-      return out;
     },
   },
   methods: {
@@ -416,9 +335,6 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
-    counterVersionToStr(value) {
-      return counterVersionToStr(value);
-    },
     toggleExpand(item) {
       const index = this.expandedRows.indexOf(item.pk);
       if (index > -1) {
