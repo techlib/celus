@@ -37,7 +37,10 @@ cs:
           </v-col>
           <v-spacer></v-spacer>
           <v-col cols="12" md="6" lg="4" xl="3">
-            <FetchAttemptModeFilter v-model="historyMode" />
+            <FetchAttemptModeFilter
+              v-model="historyMode"
+              @update:modelValue="page = 1"
+            />
           </v-col>
         </v-row>
         <v-row>

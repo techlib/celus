@@ -463,6 +463,7 @@ export default {
         {
           title: this.$t("title_fields.counter_version"),
           value: "counter_report_version",
+          key: "counter_report_version",
           align: "center",
         },
         {

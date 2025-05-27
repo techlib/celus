@@ -82,6 +82,7 @@ cs:
           style="min-width: 220px"
           :items="filterFinishedList"
           v-model="filterFinished"
+          @update:modelValue="page = 1"
           :label="$t('filter.finished.title')"
         ></v-select>
       </v-col>
@@ -90,6 +91,7 @@ cs:
           style="min-width: 220px"
           :items="filterManualList"
           v-model="filterManual"
+          @update:modelValue="page = 1"
           :label="$t('filter.manual.title')"
         ></v-select>
       </v-col>
@@ -98,6 +100,7 @@ cs:
           style="min-width: 220px"
           :items="filterBrokenList"
           v-model="filterBroken"
+          @update:modelValue="page = 1"
           :label="$t('filter.broken.title')"
         ></v-select>
       </v-col>
@@ -105,6 +108,7 @@ cs:
         <MonthEntry
           v-model="filterMonth"
           :label="$t('filter.month')"
+          @update:modelValue="page = 1"
           clearable
           :max-month="`${new Date()}`"
         ></MonthEntry>
@@ -116,6 +120,7 @@ cs:
           v-model="filterPlatforms"
           :label="$t('filter.platforms')"
           :loading="loadingPlatforms"
+          @update:modelValue="page = 1"
           return-object
           multiple
           closable-chips
@@ -356,16 +361,6 @@ export default {
           broken = "0";
           break;
       }
-      // let month =
-      //   typeof this.startDate === "object" &&
-      //   this.startDate !== null &&
-      //   "month" in this.startDate
-      //     ? `${this.filterMonth.year}-${
-      //         this.filterMonth.month <= 8
-      //           ? `0${this.filterMonth.month + 1}`
-      //           : this.filterMonth.month + 1
-      //       }`
-      //     : this.filterMonth || undefined;
       let month = null;
       if (
         typeof this.filterMonth === "object" &&
