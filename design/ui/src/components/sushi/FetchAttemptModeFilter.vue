@@ -65,7 +65,7 @@ export default {
 
   watch: {
     mode() {
-      this.$emit("update:modelValue", this.modelValue);
+      this.$emit("update:modelValue", this.mode.value);
     },
   },
 };

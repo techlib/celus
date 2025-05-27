@@ -4,26 +4,18 @@
 
 <i18n lang="yaml">
 en:
-  sushi_fetch_attempts: Sushi fetch attempts
+  sushi_fetch_attempts: SUSHI fetch attempts
   timestamp: Time of attempt
-  show_success: Show successful
-  show_failure: Show failures
   show_raw_data: Show raw data
   show_chart: Show charts
-  not_older_than: Not older than
-  counter_version: Counter version
   data_file: Data file
   used_url: Used URL
 
 cs:
-  sushi_fetch_attempts: Pokusy o stažení Sushi
+  sushi_fetch_attempts: Pokusy o stažení SUSHI
   timestamp: Čas pokusu
-  show_success: Zobrazit úspěšné
-  show_failure: Zobrazit neúspěšné
   show_raw_data: Zobrazit data
   show_chart: Zobrazit grafy
-  not_older_than: Ne starší než
-  counter_version: Verze Counter
   data_file: Datový soubor
   used_url: Použitá URL
 </i18n>
@@ -66,7 +58,6 @@ cs:
               item-key="pk"
               item-value="pk"
               v-model:sort-by="orderBy"
-              @sort-desc="orderDesc"
               v-model:items-per-page="pageSize"
               :loading="loading"
               :items-per-page-options="[5, 10, 25]"
@@ -271,7 +262,6 @@ export default {
     counterVersion: { required: false },
     fromDate: { required: false },
     month: { required: false },
-    counterVersion: { required: false },
     intentionId: { required: false },
   },
   data() {
@@ -282,7 +272,6 @@ export default {
       showSuccess: true,
       showFailure: true,
       orderBy: [{ key: "timestamp", order: "asc" }],
-      orderDesc: [true],
       pageSize: 5,
       page: 1,
       showBatchDialog: false,
@@ -293,7 +282,10 @@ export default {
       historyMode: "success_and_current",
       orderingRemap: new Map([
         ["counter_report_verbose.code", "counter_report__code"],
-        ["counter_report_verbose.code", "counter_report__code"],
+        [
+          "counter_report_verbose.counter_version",
+          "counter_report__counter_version",
+        ],
         ["organization.name", "credentials__organization__name"],
       ]),
     };
@@ -336,13 +328,10 @@ export default {
         // some order_by's have to be remapped for the backend to understand it
         let order_by_param =
           typeof this.orderBy === "object" ? this.orderBy[0].key : this.orderBy;
-        console.debug(order_by_param, this.orderingRemap.has(order_by_param));
         if (this.orderingRemap.has(order_by_param))
           order_by_param = this.orderingRemap.get(order_by_param);
         base += `&order_by=${order_by_param}`;
-        if (this.orderDesc.length) {
-          base += `&desc=${this.orderDesc[0]}`;
-        }
+        base += `&desc=${this.orderBy[0].order == "desc"}`;
       }
       return base;
     },
@@ -399,6 +388,7 @@ export default {
           title: this.$t("title_fields.counter_version"),
           value: "counter_report_verbose.counter_version",
           align: "center",
+          sortable: true,
         });
       }
       ret.push({
