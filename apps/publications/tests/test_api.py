@@ -54,7 +54,7 @@ from tags.fake_data import TagForTitleFactory
 from tags.models import AccessibleBy
 
 from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
-from publications.models import Platform, PlatformTitle, Title
+from publications.models import Item, Platform, PlatformTitle, Title
 from test_scenarios.basic import *  # noqa - fixtures
 
 KNOWLEDGEBASE = {
@@ -2781,21 +2781,27 @@ class TestItemViewSet:
     def test_item_list_no_filter_pagination_order_by(
         self, master_user_client, interest_rt, order_by, desc
     ):
-        items = ItemFactory.create_batch(10)
+        items = [ItemFactory(name="Abc edf 2"), ItemFactory(name="Abcedf 1")]
+        items.extend(ItemFactory.create_batch(8))
         resp = master_user_client.get(
             reverse("global-items-list"), {"order_by": order_by, "desc": desc}
         )
+
         assert resp.status_code == 200
         data = resp.json()["results"]
-        assert len(data) == len(items)
-        item_ids = {item.pk for item in items}
-        for i, rec in enumerate(data):
-            assert rec["pk"] in item_ids
-            if i > 0:
-                if desc == "true":
-                    assert rec[order_by] <= data[i - 1][order_by]
-                else:
-                    assert rec[order_by] >= data[i - 1][order_by]
+
+        # can't order data using python because
+        # in postgres "test 9" > "test0"
+        # in python "test 9" < "test0"
+        ordered = list(
+            Item.objects.filter(pk__in=[e.pk for e in items])
+            .order_by(("-" if desc == "true" else "") + order_by)
+            .values_list(order_by, flat=True)
+        )
+
+        assert len(data) == len(ordered)
+        for rec, value in zip(data, ordered):
+            assert rec[order_by] == value
 
     @pytest.mark.parametrize(
         ["date_from", "date_to", "exp_count"],
