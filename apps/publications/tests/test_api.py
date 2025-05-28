@@ -2104,6 +2104,77 @@ class TestPlatformInterestAPI:
         assert len(data) == 1
         assert data[0]["full_text"] == exp_value
 
+    @pytest.mark.parametrize(
+        ["org_has_config", "exp_value"],
+        [
+            (True, 1),  # org has two filters, value is 1
+            (False, 9),  # org used default config with one filter, value is 9
+            (None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_platform_interest_by_year(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_has_config,
+        exp_value,
+    ):
+        org = real_world_data_with_interest_and_configs["organization"]
+        platform = real_world_data_with_interest_and_configs["platform"]
+        tr = real_world_data_with_interest_and_configs["tr"]
+        interest_rt = real_world_data_with_interest_and_configs["interest_rt"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+
+        assert tr.accesslog_set.count() == 4
+        assert tr.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        assert interest_rt.accesslog_set.count() == 4
+        url = reverse("platform-interest-list-by-year", args=[org.pk])
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["date__year"] == 2024
+        assert data[0]["full_text"] == exp_value
+        assert data[0]["platform"] == platform.pk
+
+    @pytest.mark.parametrize(
+        ["org_has_config", "exp_value"],
+        [
+            (True, 1),  # org has two filters, value is 1
+            (False, 9),  # org used default config with one filter, value is 9
+            (None, 15),  # there is neither org nor global config, value is 15
+        ],
+    )
+    def test_platform_interest_by_year_detail(
+        self,
+        master_user_client,
+        real_world_data_with_interest_and_configs,
+        org_has_config,
+        exp_value,
+    ):
+        org = real_world_data_with_interest_and_configs["organization"]
+        platform = real_world_data_with_interest_and_configs["platform"]
+        tr = real_world_data_with_interest_and_configs["tr"]
+        interest_rt = real_world_data_with_interest_and_configs["interest_rt"]
+        if not org_has_config:
+            real_world_data_with_interest_and_configs["org_interest_config"].delete()
+            if org_has_config is None:
+                real_world_data_with_interest_and_configs["global_interest_config"].delete()
+
+        assert tr.accesslog_set.count() == 4
+        assert tr.accesslog_set.aggregate(Sum("value"))["value__sum"] == 15
+        assert interest_rt.accesslog_set.count() == 4
+        url = reverse("platform-interest-by-year", args=(org.pk, platform.pk))
+        resp = master_user_client.get(url)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["date__year"] == 2024
+        assert data[0]["full_text"] == exp_value
+
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("basic1")

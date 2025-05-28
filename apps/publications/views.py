@@ -433,30 +433,47 @@ class PlatformInterestViewSet(ViewSet):
             return Response(data[0])
         return Response({})
 
-    @action(detail=True, url_path="by-year")
-    def by_year(self, request, pk, organization_pk):
+    def _get_by_year_data(self, request, organization_pk, platform_id=None):
+        """Helper method to get interest data grouped by year.
+
+        Args:
+            request: The request object
+            organization_pk: The organization primary key
+            platform_id: Optional platform ID to filter by
+
+        Returns:
+            QuerySet with interest data grouped by year
+        """
         interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        org_filters = self._get_organization_related_accesslog_filters(request, organization_pk)
-        accesslog_filter = {"report_type": interest_rt, "platform_id": pk, **org_filters}
-        replace_report_type_with_materialized(accesslog_filter)
-        result = (
+        org_filters, exclude_filters = get_organization_related_accesslog_filters_for_interest(
+            organization_pk, request.user
+        )
+        accesslog_filter = {"report_type": interest_rt, **org_filters}
+        if platform_id:
+            accesslog_filter["platform_id"] = platform_id
+
+        replace_report_type_with_materialized(
+            accesslog_filter, other_used_dimensions=exclude_filters.keys()
+        )
+        values = ["date__year"]
+        if not platform_id:
+            values.append("platform")
+
+        return (
             AccessLog.objects.filter(**accesslog_filter)
-            .values("date__year")
+            .exclude(**exclude_filters)
+            .values(*values)
             .annotate(**interest_annot_params)
         )
+
+    @action(detail=True, url_path="by-year")
+    def by_year(self, request, pk, organization_pk):
+        result = self._get_by_year_data(request, organization_pk, platform_id=pk)
         return Response(result)
 
     @action(detail=False, url_path="by-year")
     def list_by_year(self, request, organization_pk):
-        interest_rt, interest_annot_params = self.get_report_type_and_filters()
-        org_filters = self._get_organization_related_accesslog_filters(request, organization_pk)
-        accesslog_filter = {"report_type": interest_rt, **org_filters}
-        replace_report_type_with_materialized(accesslog_filter)
-        result = (
-            AccessLog.objects.filter(**accesslog_filter)
-            .values("platform", "date__year")
-            .annotate(**interest_annot_params)
-        )
+        result = self._get_by_year_data(request, organization_pk)
         return Response(result)
 
 
