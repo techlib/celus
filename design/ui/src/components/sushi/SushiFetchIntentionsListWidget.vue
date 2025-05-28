@@ -32,6 +32,7 @@ en:
     never: Can't be run
   harvest_not_found: The requested harvest was not found
   used_url: Used URL
+  play_sushi_hunter: Help CELUS eat some SUSHI while you wait
 
 cs:
   currently_downloading: Data ještě nejsou k dispozici - vyčkejte prosím, až budou stáhnutá. Může to trvat od sekund po jednotky minut.
@@ -63,10 +64,14 @@ cs:
     never: Nelze pustit
   harvest_not_found: Požadované stahování nebylo nalezeno
   used_url: Použitá URL
+  play_sushi_hunter: Pomozte CELUSu se SUSHI zatímco čekáte
 </i18n>
 
 <template>
   <v-container fluid class="pt-0 pb-0">
+    <v-dialog v-model="showPacmanDialog" max-width="700px">
+      <SushiLoaderGame @close="showPacmanDialog = false" />
+    </v-dialog>
     <v-row>
       <v-col>
         <v-alert
@@ -164,6 +169,21 @@ cs:
                       </span>
                     </template>
                     {{ $t("sushi.state_desc." + rec.state) }}
+                  </v-tooltip>
+
+                  <v-tooltip location="bottom">
+                    <template #activator="{ props }">
+                      <v-btn
+                        v-bind="props"
+                        icon="fas fa-gamepad"
+                        size="small"
+                        variant="text"
+                        @click="openPacmanGame"
+                        color="primary"
+                        class="ml-3"
+                      ></v-btn>
+                    </template>
+                    <span>{{ $t("play_sushi_hunter") }}</span>
                   </v-tooltip>
                 </v-col>
                 <v-col cols="6" sm="4" lg="3">
@@ -355,10 +375,16 @@ import CheckMark from "@/components/util/CheckMark";
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
+import SushiLoaderGame from "@/components/sushi/SushiLoaderGame";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
-  components: { AttemptExtractedData, CheckMark, FetchIntentionStatusIcon },
+  components: {
+    AttemptExtractedData,
+    CheckMark,
+    FetchIntentionStatusIcon,
+    SushiLoaderGame,
+  },
   props: {
     harvestId: {
       required: false,
@@ -373,6 +399,7 @@ export default {
   data() {
     return {
       loading: false,
+      showPacmanDialog: false,
       loadingActions: {
         trigger: [],
         cancel: [],
@@ -605,6 +632,10 @@ export default {
 
     cancelUrl(pk) {
       return `${this.intentionsUrl}/${pk}/cancel/`;
+    },
+
+    openPacmanGame() {
+      this.showPacmanDialog = true;
     },
 
     async forceRun(intention) {
