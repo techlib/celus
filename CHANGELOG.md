@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.0] - 2025-06-02
+
+### Added
+
+#### Frontend
+
+- support for sending report exports via email was added - both one-off and periodic
+- support for overriding the context of stored reports when running them was added - allows changing
+  of date range and organization for stored reports without modifying them.
+- monthly email with an overview of recent harvesting activities was added
+- report type definition was moved from SUSHI credentials for platform with the possibility
+  of overriding it in SUSHI.
+- description field was added to saved reports
+- information about the last person who edited SUSHI credentials was added to the credentials list
+- display which report types are used from platform in SUSHI credentials list + allow setting it in batch
+- add custom label to custom platforms in platform list
+
+### Changes
+
+#### Frontend
+
+- the frontend was upgraded from Vue 2 + Vuetify 2 to Vue 3 + Vuetify 3. This is a major upgrade
+  with significant changes.
+- interest computation algorithm and data structure were reworked. Interest newly contains `Access_Type` and `Access_Method` dimensions. Interest definition is no longer platform specific.
+- update SushiCredentialsManagementWidget styles and change localization for report types
+- big cleanup in SUSHI attempt list
+- change icon and text in showHelpButton
+- last harvestable month per credentials
+
+#### Backend
+
+- CLI script for dealing with "split access logs" was optimized for lower memory consumption
+- the use of pandas renderers is newly limited to only a few relevant views
+- update nibbler to 12.2.0 and make sure that 'dimensions_validators' can be configured
+- deleting from clickhouse during interest recomputation was optimized to prevent unnecessary load
+- add support for clickhouse into getting possible split parts in reporting
+
+### Fixed
+
+#### Frontend
+
+- trend-mode switch is now correctly disabled in the read-only view of the report
+- make sure that page is set to 1 when filtering of attempt list changes
+- fix attempt list ordering and filtering
+- allow records in reporting split by which have null value
+- don't allow create harvests for unfinished months
+
+#### Backend
+
+- fix a test that was sometimes failing due to different python vs postgres ordering
+
 ## [8.0.5] - 2025-05-13
 
 ### Changes
@@ -23,7 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - small fix for occasional test failures
 - fix storing of manual data uploads with NULL characters in the title crashing the import
 - handle UnsupportedMediaType exception in request logging
-
 
 ## [8.1.0] - 2025-04-30
 
