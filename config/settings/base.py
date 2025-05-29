@@ -685,6 +685,7 @@ LOGGING = {
         "celus_nibbler": {"level": "INFO"},
         "factory": {"level": "INFO"},
         "faker": {"level": "INFO"},
+        "clickhouse_driver": {"level": "INFO"},
     },
     "formatters": {
         "colored": {"()": "colorlog.ColoredFormatter", "format": "%(log_color)s%(message)s"}
