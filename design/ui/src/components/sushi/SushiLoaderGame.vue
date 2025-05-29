@@ -7,7 +7,9 @@
         <span class="score">Score: {{ score }}</span>
       </div>
     </v-card-title>
-    <v-card-subtitle>Help CELUS with SUSHI</v-card-subtitle>
+    <v-card-subtitle>
+      Help CELUS eat as much SUSHI as possible before the bugs get him!
+    </v-card-subtitle>
     <v-card-text>
       <div class="game-container">
         <!-- Labyrinth -->
@@ -1351,20 +1353,18 @@ export default {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < playerRadius + 10) {
-          // If player has invincibility, don't die but still check if bug is vulnerable
-          if (this.playerInvincible) {
-            // If the bug is vulnerable, remove it and add points
-            if (bug.vulnerable) {
-              bug.x = -100; // Move it off-screen (effectively removing it)
-              bug.y = -100;
-              this.score += 50; // Bonus points for eating a bug
-            }
-            return; // Skip game over when invincible
+          if (bug.vulnerable) {
+            bug.x = -100; // Move it off-screen (effectively removing it)
+            bug.y = -100;
+            this.score += 50; // Bonus points for eating a bug
+            // Game does not end, bug is eaten.
+          } else if (this.playerInvincible) {
+            // Bug is NOT vulnerable, BUT player IS invincible.over.
+          } else {
+            // Bug is NOT vulnerable, AND player is NOT invincible.
+            this.gameOver = true;
+            this.stopPacmanGame();
           }
-
-          // Game over when player collides with a bug and not invincible
-          this.gameOver = true;
-          this.stopPacmanGame();
         }
       });
     },
