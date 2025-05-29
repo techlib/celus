@@ -1,21 +1,19 @@
 - version: 9.0.0
   title:
-    en: Major upgrade with Item Report, regular email reports, improved interest computation, and more in CELUS 9.0.0
-    cs: Velká aktualizace s Item Report, pravidelnými emailovými reporty, vylepšeným výpočtem zájmu a dalšími novinkami v CELUSu 9.0.0
+    en: Major upgrade with regular email reports, improved interest computation, and much more in CELUS 9.0.0
+    cs: Velká aktualizace s pravidelnými emailovými reporty, vylepšeným výpočtem zájmu a mnohem víc v CELUSu 9.0.0
   text:
     en: |
-      - **Item Report** - CELUS now supports Item Report from COUNTER 5.1
       - **Monthly harvesting overview** - receive a monthly email with a summary of your harvesting activities
-      - **Email reports** - you can now send reports via email, both one-off and periodic
+      - **Email reports** - you can now send reports via email, either directly or set up a periodic schedule
       - **Flexible report context** - stored reports can now be run with different date ranges and organizations without modifying them
       - **Improved interest computation** - interest computation was completely rewritten and newly supports Item Report
       - **Platform report types** - report types are now assigned directly to platforms, making SUSHI configuration easier
       - **Major frontend upgrade** - the entire user interface was modernized with Vue 3 and Vuetify 3
       - Many other improvements and fixes were introduced
     cs: |
-      - **Item Report** - CELUS nyní podporuje Item Report z COUNTER 5.1
       - **Měsíční přehled sklízení** - dostávejte měsíční email se shrnutím vašich sklízení dat
-      - **Emailové reporty** - nyní můžete posílat reporty emailem, jednorázově i pravidelně
+      - **Emailové reporty** - nyní můžete posílat reporty emailem, buď rovnou nebo nastavit pravidelný plán
       - **Flexibilní kontext reportů** - uložené reporty lze nyní spouštět s různými časovými rozsahy a organizacemi bez jejich úpravy
       - **Vylepšený vypočet zájmu** - výpočet zájmu byl kompletně přepracován a nově podporuje Item Report
       - **Typy reportů na platformách** - typy reportů jsou nyní přiřazeny přímo k platformám, což zjednodušuje konfiguraci SUSHI
