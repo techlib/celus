@@ -17,7 +17,7 @@ en:
   change_percent: Change %
   pop_out: Expand to full screen
   parts_cropped: There are too many parts ({count}), showing only the first {max}. Note - unless the number of parts is reduced, export will fail.
-
+  no_data_for_chart: No data to display in the chart.
 cs:
   detail: Detail
   error: Chyba
@@ -32,6 +32,7 @@ cs:
   change_percent: Změna %
   pop_out: Roztáhnout na celou obrazovku
   parts_cropped: Report obsahuje příliš mnoho částí ({count}), zobrazuji pouze prvních {max}. Poznámka - pokud počet částí nesnížíte, export selže.
+  no_data_for_chart: Žádná data pro zobrazení v grafu.
 </i18n>
 
 <template>
@@ -211,17 +212,22 @@ cs:
         </template>
       </v-data-table-server>
 
-      <ReportingChart
-        v-else
-        :data="dataWithRemainder"
-        :primary-dimension="row"
-        :secondary-dimension="report.groupBy[0]?.ref"
-        :series="chartSeries"
-        :type="row.startsWith('date') ? 'histogram' : 'bar'"
-        :height="
-          (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
-        "
-      ></ReportingChart>
+      <div v-else>
+        <ReportingChart
+          v-if="totalRowCount"
+          :data="dataWithRemainder"
+          :primary-dimension="row"
+          :secondary-dimension="report.groupBy[0]?.ref"
+          :series="chartSeries"
+          :type="row.startsWith('date') ? 'histogram' : 'bar'"
+          :height="
+            (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
+          "
+        ></ReportingChart>
+        <v-alert v-else type="info" variant="outlined">
+          {{ $t("no_data_for_chart") }}
+        </v-alert>
+      </div>
     </div>
 
     <div v-else-if="errorCode">

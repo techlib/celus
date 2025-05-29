@@ -82,10 +82,6 @@ export default {
       type: String,
       required: true,
     },
-    secondaryDimension: {
-      type: String,
-      required: true,
-    },
   },
   data() {
     return {
