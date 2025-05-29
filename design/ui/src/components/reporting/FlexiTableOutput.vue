@@ -81,7 +81,7 @@ cs:
             item-value="id"
             variant="outlined"
             density="compact"
-            width="250px"
+            max-width="800px"
           ></v-autocomplete>
           <v-alert v-if="partsCropped" type="warning" variant="outlined">
             {{

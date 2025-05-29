@@ -1425,8 +1425,14 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
             if request.USE_CLICKHOUSE:
                 # we need to convert 0 to None for django compatibility
                 # and we remove the score field which is only available in clickhouse
+                # we also strip the _id suffix from the keys if it is there,
+                # bacause it is not present when using django backend
                 values = [
-                    {k: v or None for k, v in rec._asdict().items() if k != "score"}
+                    {
+                        k[:-3] if k.endswith("_id") else k: v or None
+                        for k, v in rec._asdict().items()
+                        if k != "score"
+                    }
                     for rec in ch_backend.get_records(qs)
                 ]
             else:

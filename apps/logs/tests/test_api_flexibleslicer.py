@@ -75,6 +75,9 @@ class TestSlicerAPI:
         assert len(data["results"]) == 1
         assert data["results"][0]["pk"] == organization.pk
 
+    @pytest.mark.clickhouse
+    @pytest.mark.usefixtures("clickhouse_on_off")
+    @pytest.mark.django_db(transaction=True)
     def test_parts_api(self, flexible_slicer_test_data, admin_client):
         """
         Tests that the /parts/ endpoint for getting possible parts after splitting works
@@ -91,6 +94,9 @@ class TestSlicerAPI:
         data = resp.json()
         assert data["count"] == 3
         assert len(data["values"]) == 3
+        assert {rec["platform"] for rec in data["values"]} == {
+            p.pk for p in flexible_slicer_test_data["platforms"]
+        }
 
     def test_parts_api_with_filter(self, flexible_slicer_test_data, admin_client):
         """
