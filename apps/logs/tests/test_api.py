@@ -16,6 +16,7 @@ from core.tests.conftest import (  # noqa - fixtures
     master_admin_identity,
     valid_identity,
 )
+from django.core.management import call_command
 from django.db.models import Max, Min
 from django.urls import reverse
 from freezegun import freeze_time
@@ -46,6 +47,8 @@ from logs.models import (
     Dimension,
     DimensionText,
     ImportBatch,
+    InterestConfig,
+    InterestProfile,
     MduMethod,
     Metric,
     ReportInterestMetric,
@@ -1023,7 +1026,7 @@ class TestReportInterestMetricAPI:
     def test_get_report_interest_metric(
         self, authenticated_client, platforms, report_types, metrics, interests
     ):
-        url = reverse("reporttype-list")
+        url = reverse("report-interest-metric-list")
         resp = authenticated_client.get(url)
         assert resp.status_code == 200
         data = {e["short_name"]: e for e in resp.json()}
@@ -1031,6 +1034,96 @@ class TestReportInterestMetricAPI:
         assert len(data["DR"]["interest_metric_set"]) == 0
         assert len(data["JR1"]["interest_metric_set"]) == 2
         assert len(data["BR2"]["interest_metric_set"]) == 1
+
+    @pytest.mark.parametrize("interest_profile", ["total", "unique"])
+    def test_report_interest_metric_list(self, master_admin_client, interest_profile):
+        """
+        Test that the report-type-interest-metrics endpoint returns the correct data
+        """
+        # prepare the report types and interest definitions
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # set the default interest profile
+        ic = InterestConfig.objects.get(organization=None)
+        ic.interest_profile = InterestProfile.objects.get(short_name=interest_profile)
+        ic.save()
+        # get the data
+        resp = master_admin_client.get(reverse("report-interest-metric-list"))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 19
+        tr = next(tr for tr in data if tr["short_name"] == "TR")
+        assert tr is not None
+        tr_metrics = {m["metric"]["short_name"] for m in tr["interest_metric_set"]}
+        if interest_profile == "total":
+            assert "Total_Item_Requests" in tr_metrics
+            assert "Unique_Item_Requests" not in tr_metrics
+            assert "No_License" in tr_metrics, "no license is profile agnostic"
+            assert "Limit_Exceeded" in tr_metrics, "limit exceeded is profile agnostic"
+        else:
+            assert "Total_Item_Requests" not in tr_metrics
+            assert "Unique_Item_Requests" in tr_metrics
+            assert "No_License" in tr_metrics, "no license is profile agnostic"
+            assert "Limit_Exceeded" in tr_metrics, "limit exceeded is profile agnostic"
+
+    @pytest.mark.parametrize(
+        ["org_interest_profile", "global_interest_profile", "expected_metrics"],
+        [
+            ("total", "unique", ["Total_Item_Requests", "No_License", "Limit_Exceeded"]),
+            ("unique", "total", ["Unique_Item_Requests", "No_License", "Limit_Exceeded"]),
+            (None, "total", ["Total_Item_Requests", "No_License", "Limit_Exceeded"]),
+            (None, "unique", ["Unique_Item_Requests", "No_License", "Limit_Exceeded"]),
+        ],
+    )
+    def test_report_interest_metric_list_with_org(
+        self,
+        master_admin_client,
+        organizations,
+        org_interest_profile,
+        global_interest_profile,
+        expected_metrics,
+    ):
+        """
+        Test that the report-type-interest-metrics endpoint returns the correct data when
+        organization is specified and has its own interest config.
+        """
+        # prepare the report types and interest definitions
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+
+        # set the global interest profile
+        global_ic = InterestConfig.objects.get(organization=None)
+        global_ic.interest_profile = InterestProfile.objects.get(short_name=global_interest_profile)
+        global_ic.save()
+
+        # set up organization-specific interest config if needed
+        org = organizations["branch"]
+        if org_interest_profile:
+            InterestConfig.objects.create(
+                organization=org,
+                interest_profile=InterestProfile.objects.get(short_name=org_interest_profile),
+            )
+        else:
+            # ensure no org-specific config exists
+            InterestConfig.objects.filter(organization=org).delete()
+
+        # get the data with organization specified
+        resp = master_admin_client.get(
+            reverse("report-interest-metric-list"), {"organization_id": org.pk}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 19
+        tr = next(tr for tr in data if tr["short_name"] == "TR")
+        assert tr is not None
+        tr_metrics = {m["metric"]["short_name"] for m in tr["interest_metric_set"]}
+
+        # verify the metrics match what we expect based on the interest profile
+        for expected_metric in expected_metrics:
+            assert expected_metric in tr_metrics, f"Expected metric {expected_metric} not found"
+
+        # verify no unexpected metrics are present
+        assert len(tr_metrics) == len(expected_metrics), "Unexpected metrics found"
 
 
 @pytest.mark.django_db

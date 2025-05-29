@@ -148,7 +148,6 @@ const routes = [
     name: "interest-overview",
     component: () => import("../pages/InterestOverviewPage.vue"),
     meta: {
-      hideOrganizationSelector: true,
       hideDateRangeSelector: true,
       title: "pages.interest_overview",
     },

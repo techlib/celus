@@ -89,6 +89,7 @@ from logs.models import (
     FlexibleReport,
     FlexibleReportUserEmail,
     ImportBatch,
+    InterestConfig,
     InterestGroup,
     ManualDataUpload,
     ManualDataUploadImportBatch,
@@ -205,18 +206,34 @@ class MetricViewSet(ReadOnlyModelViewSet):
 
 class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
     serializer_class = ReportTypeInterestSerializer
-    queryset = (
-        ReportType.objects.exclude_materialized()
-        .exclude(short_name="interest", source__isnull=True)
-        .prefetch_related(
-            "interest_metrics",
-            Prefetch(
-                "reportinterestmetric_set",
-                queryset=ReportInterestMetric.objects.select_related("metric", "interest_group"),
-            ),
-            "controlled_metrics",
+
+    def get_queryset(self):
+        # Get organization ID from query params if present
+        org_id = self.request.query_params.get("organization_id")
+
+        # Get the appropriate interest config
+        if org_id:
+            try:
+                org = Organization.objects.get(pk=org_id)
+                ic = org.get_interest_config()
+            except Organization.DoesNotExist:
+                ic = InterestConfig.objects.default()
+        else:
+            ic = InterestConfig.objects.default()
+
+        return (
+            ReportType.objects.exclude_materialized()
+            .exclude(short_name="interest", source__isnull=True)
+            .prefetch_related(
+                "interest_metrics",
+                Prefetch(
+                    "reportinterestmetric_set",
+                    queryset=ReportInterestMetric.objects.filter(
+                        Q(interest_profile=ic.interest_profile) | Q(interest_profile__isnull=True)
+                    ).select_related("metric", "interest_group"),
+                ),
+            )
         )
-    )
 
 
 class DimensionTextViewSet(ReadOnlyModelViewSet):

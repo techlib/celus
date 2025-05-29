@@ -6,7 +6,6 @@ en:
     reports: Reports
     report_types: Report types
     metrics: Metrics
-    target_metrics: Target metrics
     interest_type: Interest type
     record_count: Record count
     all: All reports
@@ -26,7 +25,6 @@ cs:
     reports: Reporty
     report_types: Typy reportů
     metrics: Metriky
-    target_metrics: Cílové metriky
     interest_type: Typ zájmu
     record_count: Počet záznamů
     all: Všechny reporty
@@ -123,33 +121,16 @@ cs:
                     v-text="$t('labels.source_metric')"
                     class="source_metric"
                   ></th>
-                  <th>
-                    {{ $t("labels.interest_metric") }}
-                    <v-tooltip location="bottom center">
-                      <template #activator="{ props }">
-                        <v-icon color="info" size="small" v-bind="props"
-                          >fa fa-info-circle</v-icon
-                        >
-                      </template>
-                      {{ $t("tt.interest_metric") }}
-                    </v-tooltip>
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(metric, index) in item.interest_metric_set"
-                  :key="index"
+                  v-for="metric in item.interest_metric_set"
+                  :key="`${item.pk}-${metric.metric.pk}`"
                   style="height: 32px"
                 >
                   <td>{{ metric.interest_group.name }}</td>
                   <td>{{ metric.metric.short_name }}</td>
-                  <td v-if="metric.target_metric" class="font-italic">
-                    {{ metric.target_metric.name }}
-                  </td>
-                  <td v-else>
-                    {{ metric.metric.short_name }}
-                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -221,6 +202,7 @@ export default {
   computed: {
     ...mapState({
       lang: "appLanguage",
+      selectedOrganizationId: "selectedOrganizationId",
     }),
     headers() {
       return [
@@ -278,7 +260,11 @@ export default {
     async fetchReportData() {
       const url = "api/report-interest-metric/";
       this.loading = true;
-      const { response } = await this.http({ url });
+      const params = {};
+      if (this.selectedOrganizationId) {
+        params.organization_id = this.selectedOrganizationId;
+      }
+      const { response } = await this.http({ url, params });
       this.loading = false;
       if (response) {
         this.items = response.data;
@@ -320,15 +306,6 @@ export default {
         if (match(im.metric[`name_${this.lang}`], search)) {
           return true;
         }
-        if (!!im.target_metric && match(im.target_metric.short_name, search)) {
-          return true;
-        }
-        if (
-          !!im.target_metric &&
-          match(im.target_metric[`name_${this.lang}`], search)
-        ) {
-          return true;
-        }
         if (!!im.interest_group && match(im.interest_group.name, search)) {
           return true;
         }
@@ -336,6 +313,15 @@ export default {
       return false;
     },
   },
+
+  watch: {
+    selectedOrganizationId: {
+      handler() {
+        this.fetchReportData();
+      },
+    },
+  },
+
   mounted() {
     this.fetchReportData();
   },

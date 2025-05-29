@@ -217,7 +217,6 @@ cs:
           v-if="totalRowCount"
           :data="dataWithRemainder"
           :primary-dimension="row"
-          :secondary-dimension="report.groupBy[0]?.ref"
           :series="chartSeries"
           :type="row.startsWith('date') ? 'histogram' : 'bar'"
           :height="
