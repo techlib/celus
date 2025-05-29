@@ -80,7 +80,7 @@
             'player-flashing': playerFlashing,
           }"
         >
-          <img src="/favicon.png" alt="Player" />
+          <img src="@/assets/celus-C.png" alt="Player" />
         </div>
 
         <!-- Active power-up indicator -->
@@ -144,6 +144,8 @@
 <script>
 export default {
   name: "SushiLoaderGame",
+
+  emits: ["close"],
 
   data() {
     return {
