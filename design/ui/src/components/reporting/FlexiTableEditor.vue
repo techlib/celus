@@ -120,7 +120,11 @@ cs:
           </v-col>
           <v-col cols="8" md="5">
             <section class="d-flex align-center description_report">
-              <v-dialog max-width="800" class="edit_description_dialog">
+              <v-dialog
+                v-model="showDescriptionDialog"
+                max-width="800"
+                class="edit_description_dialog"
+              >
                 <template v-slot:activator="{ props: activatorProps }">
                   <v-tooltip
                     location="bottom"
@@ -167,7 +171,7 @@ cs:
                   <v-card :title="$t('report_description')">
                     <v-card-text>
                       <v-textarea
-                        v-model="reportDescription"
+                        v-model="newReportDescription"
                         class="font-weight-light text-h5"
                         :label="$t('report_description')"
                         :readonly="readOnly"
@@ -177,8 +181,14 @@ cs:
                     <v-card-actions>
                       <v-btn
                         variant="elevated"
-                        :text="$t('actions.close')"
-                        @click="isActive.value = false"
+                        :text="$t('actions.cancel')"
+                        @click="cancelDescriptionEdit"
+                      ></v-btn>
+                      <v-btn
+                        variant="elevated"
+                        color="primary"
+                        :text="$t('actions.apply')"
+                        @click="saveDescription"
                       ></v-btn>
                     </v-card-actions>
                   </v-card>
@@ -1084,6 +1094,8 @@ export default {
       reportViews: [], // list of standard views associated with selected rt
       mailingCount: 0,
       accessLevelValid: true,
+      showDescriptionDialog: false,
+      newReportDescription: "",
     };
   },
 
@@ -1773,6 +1785,13 @@ export default {
         });
       }
     },
+    saveDescription() {
+      this.reportDescription = this.newReportDescription;
+      this.showDescriptionDialog = false;
+    },
+    cancelDescriptionEdit() {
+      this.showDescriptionDialog = false;
+    },
   },
 
   async mounted() {
@@ -1938,6 +1957,11 @@ export default {
       // we want to invalidate the ordering because primary dimension
       // effectively changes with tag roll up
       this.orderBy = [];
+    },
+    showDescriptionDialog(newValue) {
+      if (newValue === true) {
+        this.newReportDescription = this.reportDescription;
+      }
     },
   },
 };
