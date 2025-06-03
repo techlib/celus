@@ -481,7 +481,7 @@ export default {
                   can_harvest:
                     row.can_harvest &&
                     ym >=
-                      (this.credentials.last_harvestable_month.slice(0, 7) ||
+                      (this.credentials.last_harvestable_month?.slice(0, 7) ||
                         ""),
                   broken:
                     row.broken ||
