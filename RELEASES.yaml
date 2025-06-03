@@ -1,3 +1,21 @@
+- version: 9.0.1
+  title:
+    en: Hotfix release 9.0.1
+    cs: Horká oprava 9.0.1
+  text:
+    en: |
+      - Fix ordering of titles when using a bookmarked URL from previous version of CELUS
+      - Fix display of yearly data in SUSHI management / Overview
+      - Fix error in reporting when getting list of parts in combination with tag filters
+    cs: |
+      - Opraveno řazení titulů při použití záložky z předchozí verze CELUSu
+      - Opraveno zobrazení ročních dat v SUSHI management / Přehled
+      - Opravena chyba v reportingu při získávání seznamu částí v kombinaci s filtry podle štítků
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 9.0.0
   title:
     en: Major upgrade with regular email reports, improved interest computation, and much more in CELUS 9.0.0

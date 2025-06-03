@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [9.0.0] - 2025-06-02
+## [9.0.1] - 2025-06-03
+
+### Fixed
+
+#### Frontend
+
+- fix ordering of titles when using a bookmarked URL from previous version of CELUS
+- fix display of yearly data in SUSHI management / Overview
+- reintroduce Sentry integration
+
+#### Backend
+
+- fall back to django ORM when clickhouse cannot handle the query when getting list of parts in reporting
+
+## [9.0.0] - 2025-06-01
 
 ### Added
 
