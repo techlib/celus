@@ -323,7 +323,7 @@ export default {
       totalParts: 0,
       view: "table",
       page: 1,
-      itemsPerPage: 10,
+      itemsPerPage: 20,
       prevOptions: {},
       sortBy: [{ key: "_total", desc: true }],
       ordering: "-_total",
