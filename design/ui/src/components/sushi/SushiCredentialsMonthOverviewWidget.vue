@@ -177,10 +177,14 @@ cs:
                       :class="!item.enabled || item.broken ? 'red--text' : ''"
                       v-bind="props"
                     >
-                      <v-icon v-if="item.broken" size="small" color="warning"
+                      <v-icon
+                        v-if="item.broken"
+                        size="small"
+                        color="warning"
+                        class="mr-1"
                         >fa fa-exclamation-triangle</v-icon
                       >
-                      <v-icon v-if="!item.enabled" size="x-small"
+                      <v-icon v-if="!item.enabled" size="x-small" class="mr-1"
                         >fa fa-unlink</v-icon
                       >
                       <strong>{{
@@ -288,7 +292,7 @@ export default {
       hideSuccessful: false,
       selectedPlatform: null,
       showInactive: false,
-      stateFilter: null,
+      stateFilter: this.$route.query.state || null,
     };
   },
   computed: {
@@ -298,7 +302,7 @@ export default {
     selectedDatePicker: {
       get() {
         const [year, month] = this.selectedMonth.split("-");
-        return { month: month - 1, year: year };
+        return { month: parseInt(month, 10) - 1, year: parseInt(year, 10) };
       },
       set(value) {
         this.selectedMonth = `${value.year}-${String(value.month + 1).padStart(
@@ -644,6 +648,11 @@ export default {
     this.loadReportTypes();
     this.loadSushiCredentialsList();
     this.loadIntentions();
+    if (this.$route.query.state) {
+      if (this.$route.query.state.includes("broken")) {
+        this.stateFilter = "bug";
+      }
+    }
   },
 };
 </script>

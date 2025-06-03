@@ -10,7 +10,7 @@
     <slot name="no-data"></slot>
   </div>
   <div v-else :style="{ height: height - 20 + 'px' }">
-    <v-chart :option="option"></v-chart>
+    <v-chart :option="option" @click="routeClick"></v-chart>
     <slot name="data-footer"></slot>
   </div>
 </template>
@@ -148,6 +148,17 @@ export default {
   },
 
   methods: {
+    routeClick(event) {
+      if (event.data) {
+        this.$router.push({
+          path: "/admin/sushi-by-month/",
+          query: {
+            state: event.data.id,
+            month: this.month,
+          },
+        });
+      }
+    },
     async loadSushiCredentialsList() {
       this.loadingCredentials = true;
       try {
