@@ -134,7 +134,7 @@ cs:
     </v-dialog>
     <v-container>
       <v-row>
-        <v-col cols="2">
+        <v-col cols="12" sm="6" lg="4">
           <v-autocomplete
             v-if="orgItems.length > 1"
             v-model="selectedOrganization"
@@ -150,7 +150,7 @@ cs:
       <v-row>
         <v-col>
           <v-btn
-            :disabled="!(isAdmin || user.is_superuser)"
+            :disabled="!(isAdmin || showManagementStuff)"
             @click="showCreateDialog = true"
             class="ml-2 mt-3"
             color="primary"
@@ -220,7 +220,7 @@ cs:
                 <span> {{ $t("send_invitation") }}</span>
               </v-tooltip>
             </template>
-            <template v-if="user.is_superuser" #item.superactions="{ item }">
+            <template v-if="showSuperActions" #item.superactions="{ item }">
               <v-tooltip max-width="600px" location="bottom">
                 <template v-slot:activator="{ props }">
                   <v-icon
@@ -276,6 +276,8 @@ export default {
     ...mapGetters({
       orgItems: "organizationItems", //accessible organizations
       orgSelected: "selectedOrganization", //globally selected org
+      showManagementStuff: "showManagementStuff",
+      allowEmailLogin: "allowEmailLogin",
     }),
 
     orgList() {
@@ -288,6 +290,12 @@ export default {
         (org) => org.pk == this.selectedOrganization,
       );
       return orgMatch.is_admin;
+    },
+
+    showSuperActions() {
+      // super actions now contain only verification email sending,
+      // so we do not want to show them if email login is not allowed
+      return this.showManagementStuff && this.allowEmailLogin;
     },
 
     headers() {
@@ -315,7 +323,7 @@ export default {
           sortable: false,
         },
       ];
-      if (this.user.is_superuser) {
+      if (this.showSuperActions) {
         baseHeaders.push({
           title: this.$t("superactions"),
           value: "superactions",

@@ -282,6 +282,12 @@ export default createStore({
         return state.basicInfo["ALLOW_CELUS_FORMAT_IMPORT"];
       }
     },
+    allowEmailLogin(state) {
+      if ("ALLOW_EMAIL_LOGIN" in state.basicInfo) {
+        return state.basicInfo["ALLOW_EMAIL_LOGIN"];
+      }
+      return false;
+    },
     allowSignUp(state) {
       if ("ALLOW_USER_REGISTRATION" in state.basicInfo) {
         return state.basicInfo["ALLOW_USER_REGISTRATION"];
