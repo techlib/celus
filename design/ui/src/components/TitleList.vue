@@ -431,10 +431,14 @@ export default {
       if (this.url) {
         let sortBy = this.orderBy[0].key;
         let orderBy = this.orderBy[0].order;
+        let sort = "";
         if (sortBy) {
           if (sortBy.startsWith("interests.")) {
             sortBy = sortBy.replace("interests.", "");
           }
+          sort = `&order_by=${sortBy}&desc=${
+            orderBy === "desc" ? true : false
+          }`;
         }
         let tags = "";
         if (this.selectedTags.length) {
@@ -442,11 +446,9 @@ export default {
         }
         return (
           this.url +
-          `&page_size=${this.itemsPerPage}&order_by=${sortBy}&desc=${
-            orderBy === "desc" ? true : false
-          }&page=${this.page}&q=${this.search ?? ""}&pub_type=${
-            this.selectedPubType || ""
-          }${tags}`
+          `&page_size=${this.itemsPerPage}&page=${this.page}&q=${
+            this.search ?? ""
+          }&pub_type=${this.selectedPubType || ""}${tags}${sort}`
         );
       }
       return this.url;
