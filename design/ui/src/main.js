@@ -17,6 +17,7 @@ import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 import "@/styles/settings.scss";
 import VueGravatar from "vue3-gravatar";
+import * as Sentry from "@sentry/vue";
 
 window.Buffer = Buffer;
 
@@ -46,6 +47,17 @@ import { registerPlugins } from "@/plugins";
 const app = createApp(App);
 
 registerPlugins(app);
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_URL_JS,
+  integrations: [],
+  release: import.meta.env.VITE_GIT_COMMITHASH
+    ? `celus-${import.meta.env.VITE_GIT_COMMITHASH}`
+    : "",
+  environment: import.meta.env.VITE_SENTRY_ENVIRONMENT
+    ? import.meta.env.VITE_SENTRY_ENVIRONMENT
+    : "",
+});
 
 app.use(i18n);
 app.use(confirm, {

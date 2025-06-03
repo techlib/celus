@@ -16,6 +16,7 @@ build:vue:
     - export "VITE_GIT_BRANCH=${CI_COMMIT_REF_NAME:-$CI_COMMIT_SHA}"
       # Sentry environment is read based on current branch and variables defined by gitlab
     - export "SENTRY_ENVIRONMENT=${CI_COMMIT_BRANCH}"
+    - export "VITE_SENTRY_ENVIRONMENT=${CI_COMMIT_BRANCH}"
   script:
     - cd design/ui
     - corepack enable
