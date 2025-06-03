@@ -42,7 +42,16 @@ export default {
         this.watchedAttrs.forEach((attr) => {
           // the key could be in the .var attr, if not, use the .name
           const key = attr.var || attr.name;
-          const value = val[key];
+          let value = val[key];
+          if (attr.validator) {
+            value = attr.validator(value);
+            if (value === undefined) {
+              console.warn(
+                `the attribute \`validator\` of item \`${attr.name}\` returned an undefined value`,
+              );
+              return;
+            }
+          }
           if (value !== undefined) {
             switch (attr.type) {
               case Object:

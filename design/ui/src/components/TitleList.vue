@@ -108,7 +108,7 @@ cs:
       :items="filteredTitles"
       :items-length="totalTitleCount"
       :loading="loading"
-      :must-sort="true"
+      must-sort
       v-model:sort-by="orderBy"
       v-model:page="page"
       :no-data-text="emptyDataText"
@@ -301,11 +301,21 @@ export default {
         },
         {
           name: "orderBy",
-          type: Object,
-        },
-        {
-          name: "orderDesc",
-          type: Boolean,
+          type: Array,
+          validator: (value) => {
+            // should return a fixed value
+            // when a string is passed in, we will set it as the `key` of the first item
+            // this is here for backward compatibility with the old vue2 code
+            if (typeof value === "string") {
+              return [
+                {
+                  key: value,
+                  order: "asc",
+                },
+              ];
+            }
+            return value;
+          },
         },
         {
           name: "page",
@@ -564,9 +574,6 @@ export default {
       this.page = 1;
     },
     orderBy() {
-      this.page = 1;
-    },
-    orderDesc() {
       this.page = 1;
     },
     selectedTags() {
