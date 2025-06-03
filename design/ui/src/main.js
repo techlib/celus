@@ -49,6 +49,7 @@ const app = createApp(App);
 registerPlugins(app);
 
 Sentry.init({
+  app,
   dsn: import.meta.env.VITE_SENTRY_URL_JS,
   integrations: [],
   release: import.meta.env.VITE_GIT_COMMITHASH
@@ -57,6 +58,7 @@ Sentry.init({
   environment: import.meta.env.VITE_SENTRY_ENVIRONMENT
     ? import.meta.env.VITE_SENTRY_ENVIRONMENT
     : "",
+  sendDefaultPii: true,
 });
 
 app.use(i18n);
