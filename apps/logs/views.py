@@ -44,6 +44,7 @@ from django.db.transaction import atomic, on_commit
 from django.http import JsonResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.views import View
+from hcube.api.models.query import CubeQuery
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
 from pandas import DataFrame
@@ -1425,11 +1426,17 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
     def get(self, request):
         slicer = self.create_slicer(request)
         count = 0
-        if request.USE_CLICKHOUSE:
+        use_clickhouse = request.USE_CLICKHOUSE  # may change in the course of the query
+        if use_clickhouse:
             from logs.cubes import ch_backend
 
             if qs := slicer.get_parts_queryset(use_clickhouse=True):
-                count = ch_backend.get_count(qs)
+                if not isinstance(qs, CubeQuery):
+                    # clickhouse was not able to handle the query, we got a django queryset
+                    use_clickhouse = False
+                    count = qs.count()
+                else:
+                    count = ch_backend.get_count(qs)
         else:
             if qs := slicer.get_parts_queryset():
                 count = qs.count()
@@ -1439,7 +1446,7 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
                 qs = qs[: slicer.MAXIMUM_POSSIBLE_PARTS]
                 cropped = True
             # get values
-            if request.USE_CLICKHOUSE:
+            if use_clickhouse:
                 # we need to convert 0 to None for django compatibility
                 # and we remove the score field which is only available in clickhouse
                 # we also strip the _id suffix from the keys if it is there,

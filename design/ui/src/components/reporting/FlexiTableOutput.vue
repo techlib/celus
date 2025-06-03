@@ -83,6 +83,7 @@ cs:
             variant="outlined"
             density="compact"
             max-width="800px"
+            min-width="320px"
           ></v-autocomplete>
           <v-alert v-if="partsCropped" type="warning" variant="outlined">
             {{

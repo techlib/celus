@@ -642,10 +642,24 @@ class FlexibleDataSlicer:
         return None
 
     def get_parts_queryset(self, use_clickhouse=False):
+        """
+        This can return either a CubeQuery or a Django queryset. The calling code should be able
+        to handle both cases. Even if `use_clickhouse` is True, the returned queryset may be a
+        Django queryset if the query is too complex for clickhouse.
+        """
         if self.split_by:
-            return self.get_possible_dimension_values_queryset(
-                self.split_by, use_clickhouse=use_clickhouse
-            )
+            try:
+                return self.get_possible_dimension_values_queryset(
+                    self.split_by, use_clickhouse=use_clickhouse
+                )
+            except ClickhouseIncompatibleFilter:
+                # clickhouse cannot be used for this case, fall back to django ORM
+                #
+                # Note: this should only happen if the query involves too many tagged titles
+                # or a very loose text filter, so it should not be a common case
+                return self.get_possible_dimension_values_queryset(
+                    self.split_by, use_clickhouse=False
+                )
         return None
 
     def get_data(self, lang="en", part: Optional[list] = None) -> QuerySet[dict]:
