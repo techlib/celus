@@ -40,20 +40,22 @@
     cs: Velká aktualizace s pravidelnými emailovými reporty, vylepšeným výpočtem zájmu a mnohem víc v CELUSu 9.0.0
   text:
     en: |
-      - **Monthly harvesting overview** - receive a monthly email with a summary of your harvesting activities
-      - **Email reports** - you can now send reports via email, either directly or set up a periodic schedule
-      - **Flexible report context** - stored reports can now be run with different date ranges and organizations without modifying them
+      - **[Monthly harvesting overview](https://support.celus.net/support/solutions/articles/103000355160)** - receive a monthly email with a summary of your harvesting activities
+      - **[Email reports](https://support.celus.net/support/solutions/articles/103000355306)** - you can now send reports via email, either directly or set up a periodic schedule
+      - **[Flexible report context](https://support.celus.net/support/solutions/articles/103000355449)** - stored reports can now be run with different date ranges and organizations without modifying them
       - **Improved interest computation** - interest computation was completely rewritten and newly supports Item Report
       - **Platform report types** - report types are now assigned directly to platforms, making SUSHI configuration easier
       - **Major frontend upgrade** - the entire user interface was modernized with Vue 3 and Vuetify 3
+      - Support for **15 new non-COUNTER platforms** was added
       - Many other improvements and fixes were introduced
     cs: |
-      - **Měsíční přehled sklízení** - dostávejte měsíční email se shrnutím vašich sklízení dat
-      - **Emailové reporty** - nyní můžete posílat reporty emailem, buď rovnou nebo nastavit pravidelný plán
-      - **Flexibilní kontext reportů** - uložené reporty lze nyní spouštět s různými časovými rozsahy a organizacemi bez jejich úpravy
+      - **[Měsíční přehled sklízení](https://support.celus.net/support/solutions/articles/103000355160)** - dostávejte měsíční email se shrnutím vašich sklízení dat
+      - **[Emailové reporty](https://support.celus.net/support/solutions/articles/103000355306)** - nyní můžete posílat reporty emailem, buď rovnou nebo nastavit pravidelný plán
+      - **[Flexibilní kontext reportů](https://support.celus.net/support/solutions/articles/103000355449)** - uložené reporty lze nyní spouštět s různými časovými rozsahy a organizacemi bez jejich úpravy
       - **Vylepšený vypočet zájmu** - výpočet zájmu byl kompletně přepracován a nově podporuje Item Report
       - **Typy reportů na platformách** - typy reportů jsou nyní přiřazeny přímo k platformám, což zjednodušuje konfiguraci SUSHI
       - **Velký upgrade frontendu** - celé uživatelské rozhraní bylo modernizováno pomocí Vue 3 a Vuetify 3
+      - Byla přidána podpora pro **15 nových non-COUNTER platforem**
       - Bylo provedeno mnoho dalších vylepšení a oprav
 
   is_new_feature: TRUE
