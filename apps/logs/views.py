@@ -1,7 +1,9 @@
 import operator
+import traceback
 from collections import Counter
 from datetime import date
 from functools import reduce
+from logging import getLogger
 from pprint import pprint
 from typing import Any, Dict, Optional, Tuple
 
@@ -23,6 +25,7 @@ from core.permissions import (
     SuperuserOrMasterUserPermission,
 )
 from core.serializers import UserSerializerForMailing
+from core.tasks import async_mail_admins
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
@@ -129,6 +132,8 @@ from .tasks import (
     send_report_mailing_raw_task,
     sync_organizationplatform_records_task,
 )
+
+logger = getLogger(__name__)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -1430,7 +1435,20 @@ class FlexibleSlicerSplitParts(FlexibleSlicerBaseView):
         if use_clickhouse:
             from logs.cubes import ch_backend
 
-            if qs := slicer.get_parts_queryset(use_clickhouse=True):
+            try:
+                qs = slicer.get_parts_queryset(use_clickhouse=True)
+            except Exception as e:
+                logger.error(
+                    "Error when getting parts with clickhouse, falling back to django: "
+                    f"{e}\n{traceback.format_exc()}"
+                )
+                async_mail_admins.delay(
+                    "Error when getting parts with clickhouse (fallback to django applied)",
+                    f"Error: {e}\n\n{traceback.format_exc()}",
+                )
+                use_clickhouse = False
+                qs = slicer.get_parts_queryset()
+            if qs:
                 if not isinstance(qs, CubeQuery):
                     # clickhouse was not able to handle the query, we got a django queryset
                     use_clickhouse = False
