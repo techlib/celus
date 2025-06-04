@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.2] - 2025-06-04
+
+### Changes
+
+#### Frontend
+
+- add cancel and apply buttons to report description dialog
+- change the default number of rows per page in reporting from 10to 20
+- disable fiscal month checkbox when monthly reporting is selected
+
+### Fixed
+
+#### Frontend
+
+- fix display of metric names in charts on platform detail page
+- fix consortium admin not being able to add new users to organization
+
+#### Backend
+
+- apply generic fix for cases when clickhouse cannot handle the query when getting list of parts in reporting
+
 ## [9.0.1] - 2025-06-03
 
 ### Fixed

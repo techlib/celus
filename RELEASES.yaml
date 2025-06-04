@@ -1,3 +1,21 @@
+- version: 9.0.2
+  title:
+    en: Hotfix release 9.0.2
+    cs: Horká oprava 9.0.2
+  text:
+    en: |
+      - Fix more errors when getting list of parts in reporting
+      - Fix display of metric names in charts on platform detail page
+      - Fix consortium admin not being able to add new users to organization
+    cs: |
+      - Opraveny další chyby při získávání seznamu částí v reportingu
+      - Opraveno zobrazení názvů metrik v grafech na stránce podrobností o platformě
+      - Opravena chyba kdy administrátor konzorcia nemohl přidávat nové uživatele do organizace
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 9.0.1
   title:
     en: Hotfix release 9.0.1
