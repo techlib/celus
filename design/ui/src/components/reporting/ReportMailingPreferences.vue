@@ -15,6 +15,7 @@ en:
   you: "You"
   toggle_active_tt: "Toggle to activate or deactivate regular mailing of report export by email"
   fiscal_period_tt: "Use fiscal year as basis for reporting"
+  fiscal_period_irrelevant_tt: "Use fiscal year as basis for reporting - irrelevant when monthly reporting is selected"
   fiscal_month_tt: "User fiscal year start month"
   fiscal_month_irrelevant_tt: "User fiscal year start month - irrelevant when monthly reporting is selected"
 cs:
@@ -29,6 +30,7 @@ cs:
   you: "Vy"
   toggle_active_tt: "Přepnutím se aktivuje nebo deaktivuje periodické odesílání reportu"
   fiscal_period_tt: "Použít fiskální rok jako základ pro odesílání"
+  fiscal_period_irrelevant_tt: "Použít fiskální rok jako základ pro odesílání - nepoužitelný, pokud je vybráno měsíční odesílání"
   fiscal_month_tt: "Uživatelský měsíc začátku fiskálního roku"
   fiscal_month_irrelevant_tt: "Uživatelský měsíc začátku fiskálního roku - nepoužitelný, pokud je vybráno měsíční odesílání"
 </i18n>
@@ -55,15 +57,28 @@ cs:
                 v-model:numberOfPeriods="numberOfPeriods"
                 :trend-mode="trendMode"
               />
-              <span v-if="showFiscalPeriod">
-                <v-checkbox
-                  v-model="fiscalPeriod"
-                  :label="$t('fiscal_period')"
-                  density="compact"
-                  hide-details
-                  class="mt-1 ml-4"
-                />
-              </span>
+              <v-tooltip
+                :text="
+                  selectedFrequency === 'M'
+                    ? $t('fiscal_period_irrelevant_tt')
+                    : $t('fiscal_period_tt')
+                "
+                location="bottom"
+                v-if="showFiscalPeriod"
+              >
+                <template #activator="{ props }">
+                  <v-span v-bind="props">
+                    <v-checkbox
+                      v-model="fiscalPeriod"
+                      :label="$t('fiscal_period')"
+                      density="compact"
+                      hide-details
+                      class="mt-1 ml-4"
+                      :disabled="selectedFrequency === 'M'"
+                    />
+                  </v-span>
+                </template>
+              </v-tooltip>
             </div>
           </v-card>
         </v-col>
@@ -147,24 +162,29 @@ cs:
         <template #item.mailing.fiscal_period="{ item }">
           <div class="d-flex align-center">
             <v-tooltip
-              :text="$t('fiscal_period_tt')"
-              location="bottom"
               v-if="item.mailing"
+              :text="
+                item.mailing.frequency === 'M'
+                  ? $t('fiscal_period_irrelevant_tt')
+                  : $t('fiscal_period_tt')
+              "
+              location="bottom"
             >
               <template #activator="{ props }">
-                <v-checkbox
-                  v-model="item.mailing.fiscal_period"
-                  v-bind="props"
-                  density="compact"
-                  hide-details
-                  @change="updateMailing(item)"
-                  :disabled="item.mailing.frequency === 'M'"
-                ></v-checkbox>
+                <span v-bind="props">
+                  <v-checkbox
+                    v-model="item.mailing.fiscal_period"
+                    density="compact"
+                    hide-details
+                    @change="updateMailing(item)"
+                    :disabled="item.mailing.frequency === 'M'"
+                  ></v-checkbox>
+                </span>
               </template>
             </v-tooltip>
             <v-tooltip
               :text="
-                item.mailing.frequency === 'M'
+                item.mailing && item.mailing.frequency === 'M'
                   ? $t('fiscal_month_irrelevant_tt')
                   : $t('fiscal_month_tt')
               "
