@@ -5,7 +5,7 @@ release:sentry:
     name: getsentry/sentry-cli
   variables:
     SENTRY_URL: https://sentry.bigdigdata.com/
-    SENTRY_ORG: bigdigdata
+    SENTRY_ORG: bdd
     SENTRY_LOG_LEVEL: debug
   script:
     - sentry-cli releases new -p celus-plus -p celus-plus-js celus-$CI_COMMIT_SHA
