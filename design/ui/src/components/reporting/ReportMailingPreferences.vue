@@ -14,7 +14,9 @@ en:
     and/or send report export by email immediately.
   you: "You"
   toggle_active_tt: "Toggle to activate or deactivate regular mailing of report export by email"
-  fiscal_period_tt: "User fiscal year start month"
+  fiscal_period_tt: "Use fiscal year as basis for reporting"
+  fiscal_month_tt: "User fiscal year start month"
+  fiscal_month_irrelevant_tt: "User fiscal year start month - irrelevant when monthly reporting is selected"
 cs:
   active: "Aktivní"
   inactive: "Periodické odesílání neaktivní"
@@ -26,7 +28,9 @@ cs:
     reportů a/nebo jednorázově odeslat export reportu.
   you: "Vy"
   toggle_active_tt: "Přepnutím se aktivuje nebo deaktivuje periodické odesílání reportu"
-  fiscal_period_tt: "Uživatelský měsíc začátku fiskálního roku"
+  fiscal_period_tt: "Použít fiskální rok jako základ pro odesílání"
+  fiscal_month_tt: "Uživatelský měsíc začátku fiskálního roku"
+  fiscal_month_irrelevant_tt: "Uživatelský měsíc začátku fiskálního roku - nepoužitelný, pokud je vybráno měsíční odesílání"
 </i18n>
 
 <template>
@@ -154,11 +158,16 @@ cs:
                   density="compact"
                   hide-details
                   @change="updateMailing(item)"
+                  :disabled="item.mailing.frequency === 'M'"
                 ></v-checkbox>
               </template>
             </v-tooltip>
             <v-tooltip
-              :text="$t('fiscal_period_tt')"
+              :text="
+                item.mailing.frequency === 'M'
+                  ? $t('fiscal_month_irrelevant_tt')
+                  : $t('fiscal_month_tt')
+              "
               location="bottom"
               v-if="item.fiscal_year_start_month"
             >
