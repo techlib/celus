@@ -80,6 +80,12 @@ class MetricSerializer(ModelSerializer):
         model = Metric
         fields = ("pk", "short_name", "name", "name_en", "name_cs")
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get("name") == "":
+            data["name"] = data.get("short_name", "")
+        return data
+
 
 class DimensionSerializer(OrganizationSourceExtractingMixin, ModelSerializer):
     class Meta:
