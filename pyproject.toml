@@ -65,7 +65,7 @@ django-anymail = "^10.2"
 django-autocomplete-light = "~3.11.0"
 django-cachalot = "~2.6.1"
 django-celery-results = "~2.5.0"
-django-celus-registry = { version = "~0.1.1", optional = true }
+django-celus-registry = "~0.1.1"
 django-colorfield = "^0.9.0"
 django-impersonate = "~1.9.1"
 django-import-export = "^3.0.2"

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+import logging
 import socket
 import sys
 from datetime import timedelta
@@ -26,6 +27,8 @@ from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from . import get_version
+
+logger = logging.getLogger(__name__)
 
 # make random always the same based on celus instance (hostname)
 seed(socket.gethostname())
@@ -104,6 +107,7 @@ INSTALLED_APPS = [
 try:
     import django_celus_registry  # noqa
 except ImportError:
+    logger.warning("django_celus_registry not found, forcing USES_REGISTRY_BACKEND=False")
     USES_REGISTRY_BACKEND = False
 else:
     USES_REGISTRY_BACKEND = config("USES_REGISTRY_BACKEND", cast=bool, default=False)
