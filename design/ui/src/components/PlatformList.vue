@@ -49,7 +49,7 @@ cs:
       <v-spacer></v-spacer>
       <v-col class="pt-0">
         <v-text-field
-          v-model="search"
+          v-model="searchDebounced"
           append-inner-icon="fa fa-search"
           :label="$t('labels.search')"
           single-line
@@ -65,7 +65,6 @@ cs:
           v-else
           :items="visiblePlatforms"
           :headers="headers"
-          :search="search"
           :page="page"
           :items-per-page="itemsPerPage"
           v-model:sort-by="orderBy"
@@ -212,6 +211,7 @@ import { intersection } from "lodash";
 import stateTracking from "@/mixins/stateTracking";
 import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 import { counterVersionToStr } from "@/libs/sushi";
+import debounce from "lodash/debounce";
 
 export default {
   name: "PlatformList",
@@ -285,6 +285,14 @@ export default {
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
     }),
+    searchDebounced: {
+      get() {
+        return this.search;
+      },
+      set: debounce(function (value) {
+        this.search = value;
+      }, 500),
+    },
     headers() {
       let base = [
         {
@@ -351,8 +359,10 @@ export default {
     },
     visiblePlatforms() {
       // filter platforms by tag
+      let filteredPlatforms = this.platforms;
+
       if (this.selectedTags.length > 0) {
-        return this.platforms.filter((pl) => {
+        filteredPlatforms = filteredPlatforms.filter((pl) => {
           if (this.objIdToTags.has(pl.pk)) {
             const tags = this.objIdToTags.get(pl.pk).map((tag) => tag.pk);
             if (intersection(tags, this.selectedTags).length) {
@@ -362,7 +372,17 @@ export default {
           return false;
         });
       }
-      return this.platforms;
+
+      if (this.search) {
+        const searchToLow = this.search.toLowerCase();
+        filteredPlatforms = filteredPlatforms.filter((pl) => {
+          const name = (pl.name || "").toLowerCase();
+          const shortName = (pl.short_name || "").toLowerCase();
+          return name.includes(searchToLow) || shortName.includes(searchToLow);
+        });
+      }
+
+      return filteredPlatforms;
     },
   },
 

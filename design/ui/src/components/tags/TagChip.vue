@@ -19,7 +19,7 @@ export default {
   components: { TagChipSimple },
 
   props: {
-    tag: { required: true, type: Object },
+    tag: { required: true, type: [Object, Number] },
     hideTooltip: {
       default: false,
       type: Boolean,

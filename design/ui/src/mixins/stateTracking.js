@@ -102,14 +102,10 @@ export default {
         if (!isEqual(newVal, oldVal)) {
           // push state to history
           console.debug("store state in history", newVal);
-          history.replaceState(
-            {},
-            "",
-            this.$router.resolve({
-              path: this.$route.path,
-              query: toBase64Object(newVal),
-            }).href,
-          );
+          this.$router.replace({
+            path: this.$route.path,
+            query: toBase64Object(newVal),
+          });
         }
       },
       deep: true,
