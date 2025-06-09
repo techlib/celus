@@ -94,12 +94,12 @@ cs:
               :headers="headers"
               :items-per-page-options="itemsPerPageOptions"
               :loading="loadingDownloads"
-              @update:options="tableOptions"
+              @update:options="handleTableOptionsUpdate"
               v-model:items-per-page="itemsPerPage"
               :calculate-widths="true"
               v-model="checkedItem"
               v-model:page="page"
-              v-model:sort-by="tableOptions.sortBy"
+              v-model:sort-by="sortBy"
             >
               <template v-slot:item="row">
                 <tr>
@@ -423,26 +423,24 @@ export default {
       fetchedData: [],
       loadingDownloads: false,
       page: 1,
-      tableOptions: {
-        sortBy: [{ key: "year", order: "desc" }],
-        sortDesc: [true],
-      },
+      sortBy: [{ key: "year", order: "desc" }],
       checkedItem: [],
       currentHarvest: null,
       showHarvestDialog: false,
       showConfirmDeleteDialog: false,
       showMarkEmptyDialog: false,
       deleteMode: false,
+      itemsPerPage: 0,
     };
   },
   computed: {
     itemsPerPageOptions() {
+      if (this.counterReports.length === 0) {
+        return [0];
+      }
       return [...Array(5).keys()].map(
         (i) => (i + 1) * this.counterReports.length,
       );
-    },
-    itemsPerPage() {
-      return this.counterReports.length * 2; // 2 years by default
     },
     credentialsDataUrl() {
       if (this.credentials && this.credentials.pk) {
@@ -614,6 +612,11 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    handleTableOptionsUpdate(options) {
+      if (options.sortBy) {
+        this.sortBy = options.sortBy;
+      }
+    },
     updateButtonSelection(newValues, key, value) {
       if (!this.buttonsSelected[key]) {
         this.buttonsSelected[key] = [];
@@ -753,7 +756,7 @@ export default {
       let pageIdx = this.page - 1;
       let itemsPerPage = this.itemsPerPage;
 
-      if (this.tableOptions.sortBy[0].order === "desc") {
+      if (this.sortBy[0].order === "desc") {
         pageIdx = this.processedData.length - (pageIdx + 1) * itemsPerPage;
         if (pageIdx < 0) pageIdx = 0;
       }
@@ -806,6 +809,12 @@ export default {
     deleteMode() {
       this.validateSelection();
       //this.buttonsSelected = {};
+    },
+    counterReports: {
+      handler(newReports) {
+        this.itemsPerPage = newReports.length * 2;
+      },
+      immediate: true,
     },
   },
 };
