@@ -224,7 +224,7 @@ cs:
             (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
           "
         ></ReportingChart>
-        <v-alert v-else type="info" variant="outlined">
+        <v-alert v-else-if="!loading" type="info" variant="outlined">
           {{ $t("no_data_for_chart") }}
         </v-alert>
       </div>
