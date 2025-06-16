@@ -46,6 +46,7 @@ en:
   entire_consortium_description: This record represent setting for all organizations in consortium.
   user_settings: User settings
   user_settings_description: This block allows you to change your user settings
+  fiscal_year_start_changed: First month of fiscal year has been changed.
 cs:
   is_superuser: Superuživatel
   is_admin_of_master_organization: Správce konzorciálního týmu
@@ -92,6 +93,7 @@ cs:
   entire_consortium_description: Tento záznam vyjadřuje nastavení pro všechny organizace v konzorciu.
   user_settings: Uživatelské nastavení
   user_settings_description: Tato část umožňuje změnu nastavení uživatele.
+  fiscal_year_start_changed: První měsíc fiskálního roku byl změněn.
 </i18n>
 
 <template>
@@ -858,6 +860,12 @@ export default {
             this.changeDateRangeObject(this.defaultDateRangeName);
           } else {
             this.changeDateRangeObject(this.dateRangeName);
+            if (oldValue !== undefined) {
+              this.showSnackbar({
+                content: this.$t("fiscal_year_start_changed"),
+                color: "success",
+              });
+            }
           }
         }
       },
