@@ -1,3 +1,4 @@
+<i18n lang="yaml" src="@/locales/common.yaml"></i18n>
 <i18n lang="yaml">
 en:
   multiple-values: Several different values
@@ -22,8 +23,8 @@ cs:
         :clearable="clearable"
         clear-icon="fa fa-times"
         :disabled="disabled"
-        hide-details
         @click:clear="dateUpdated"
+        :error-messages="validatePair ? errorMessages : []"
       >
         <template #prepend>
           <v-icon color="#aaaaaa">far fa-calendar-alt</v-icon>
@@ -36,8 +37,6 @@ cs:
       month-picker
       inline
       auto-apply
-      :min-date="minMonthDate"
-      :max-date="maxMonthDate"
     ></VueDatePicker>
   </v-menu>
 </template>
@@ -58,6 +57,7 @@ export default {
     minMonth: { required: false, type: String, default: null },
     maxMonth: { required: false, type: String, default: null },
     multipleValues: { required: false, type: Boolean, default: false },
+    validatePair: { required: false, type: Boolean, default: false },
   },
 
   data() {
@@ -102,6 +102,14 @@ export default {
         return ymDateParse(this.maxMonth);
       }
       return null;
+    },
+    errorMessages() {
+      if (this.modelValue) {
+        const dateValue = ymDateParse(this.modelValue);
+        return this.maxMonthDate !== null && dateValue > this.maxMonthDate
+          ? this.$t("errors.error_start_after_end")
+          : null;
+      }
     },
   },
 

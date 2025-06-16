@@ -20,13 +20,13 @@ cs:
         :max-month="endMonth"
         :disabled="disabled"
         :clearable="clearable"
+        validate-pair
       ></MonthEntry>
     </span>
     <span class="pr-3" :style="computedStyle">
       <MonthEntry
         v-model="endMonth"
         :label="textEnd"
-        :min-month="startMonth"
         :disabled="disabled"
         :clearable="clearable"
       ></MonthEntry>

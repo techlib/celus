@@ -405,6 +405,7 @@ en:
     enable_notifications_tt: Enable system notifications. You will be notified about new events even if you are not currently using CELUS.
   errors:
     file_too_large: The uploaded file is too large
+    error_start_after_end: Start date must precede end date.
   options:
     all: All
   overlap_analysis:
@@ -815,7 +816,8 @@ cs:
     enable_notifications: Zapnout notifikace
     enable_notifications_tt: Zapnout systémové notifikace. Budete upozorněni na nové události i když právě nepoužíváte CELUS.
   errors:
-    file_too_large: The uploaded file is too large
+    file_too_large: Nahrávaný soubor je příliš velký
+    error_start_after_end: Počáteční datum musí být před koncovým datem.
   options:
     all: Všechny
   overlap_analysis:

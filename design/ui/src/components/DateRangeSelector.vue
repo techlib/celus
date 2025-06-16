@@ -48,18 +48,16 @@
       <v-col cols="12" :sm="6">
         <DatePicker
           v-model="start"
-          :max-date="endRaw"
           :label="$t('title_fields.start_date')"
+          :max-date="endRaw"
+          validate-pair
+          @validity-updated="handleValidityUpdated"
         >
         </DatePicker>
       </v-col>
       <!-- end date selector -->
       <v-col cols="12" :sm="6">
-        <DatePicker
-          v-model="end"
-          :min-date="startRaw"
-          :label="$t('title_fields.end_date')"
-        >
+        <DatePicker v-model="end" :label="$t('title_fields.end_date')">
         </DatePicker>
       </v-col>
     </v-row>
@@ -81,6 +79,7 @@ export default {
       menuEnd: false,
     };
   },
+  emits: ["validityUpdated"],
   computed: {
     ...mapState({
       dateRangeName: "dateRangeName",
@@ -155,6 +154,9 @@ export default {
         return this.$t("today");
       }
     },
+    handleValidityUpdated(value) {
+      this.$emit("validityUpdated", value);
+    },
   },
 };
 </script>
@@ -165,9 +167,5 @@ export default {
 }
 .justify-content-end {
   justify-content: flex-end;
-}
-
-:deep(.v-input__details) {
-  display: none;
 }
 </style>

@@ -10,12 +10,12 @@
   >
     <template v-slot:activator="{ props }">
       <v-text-field
-        :hide-details="hideDetails"
         :model-value="selectedDateText"
         :label="label"
         v-bind="props"
         :style="styleField"
         readonly
+        :error-messages="validatePair ? errorMessages : []"
       >
         <template v-slot:prepend>
           <slot name="prepend">
@@ -34,13 +34,12 @@
       </v-text-field>
     </template>
     <VueDatePicker
-      :max-date="maxDate"
-      :min-date="minDate"
       v-model="dateValue"
       :locale="$i18n.locale"
       month-picker
       inline
       auto-apply
+      :max-date="maxDateLimit"
     >
     </VueDatePicker>
   </v-menu>
@@ -58,7 +57,12 @@ export default {
     hideDetails: { type: String },
     prependIcon: { type: String, default: "fa fa-calendar" },
     styleField: { type: String },
+    validatePair: { type: Boolean, default: false },
+    maxDateLimit: { default: null },
   },
+
+  emits: ["validityUpdated"],
+
   data() {
     return {
       menuOpen: false,
@@ -76,6 +80,20 @@ export default {
         return `${this.dateValue.year}-${monthStr}`;
       } else {
         return this.dateValue;
+      }
+    },
+    errorMessages() {
+      if (this.modelValue) {
+        const dateValue =
+          typeof this.modelValue === "object"
+            ? new Date(this.modelValue.year, this.modelValue.month)
+            : this.modelValue;
+        const errors = [];
+        if (dateValue > this.maxDate) {
+          errors.push(this.$t("errors.error_start_after_end"));
+        }
+        this.$emit("validityUpdated", errors.length > 0);
+        return errors;
       }
     },
   },
@@ -114,9 +132,5 @@ export default {
 }
 .justify-content-end {
   justify-content: flex-end;
-}
-
-:deep(.v-input__details) {
-  display: none;
 }
 </style>

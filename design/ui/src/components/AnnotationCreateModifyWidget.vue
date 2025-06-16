@@ -63,6 +63,7 @@ cs:
                 v-model="formattedStartDateComputed"
                 :label="$t('title_fields.start_date')"
                 prepend-icon="fa fa-calendar"
+                :error-messages="validateDateRange()"
                 readonly
                 v-bind="props"
               ></v-text-field>
@@ -71,7 +72,6 @@ cs:
               v-model="startDate"
               :locale="$i18n.locale"
               :enable-time-picker="false"
-              :max-date="endDate"
               inline
               auto-apply
             ></VueDatePicker>
@@ -101,7 +101,6 @@ cs:
               v-model="endDate"
               :enable-time-picker="false"
               :locale="$i18n.locale"
-              :min-date="startDate"
               inline
               auto-apply
             ></VueDatePicker>
@@ -347,6 +346,14 @@ export default {
       } else {
         this.postData();
       }
+    },
+    validateDateRange() {
+      const startDateObj = this.startDate ? new Date(this.startDate) : null;
+      const endDateObj = this.endDate ? new Date(this.endDate) : null;
+
+      return startDateObj && endDateObj && startDateObj > endDateObj
+        ? this.$t("errors.error_start_after_end")
+        : null;
     },
     formatDateToDDMMYYYY(date) {
       if (!date) return "";

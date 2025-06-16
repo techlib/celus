@@ -13,7 +13,6 @@ cs:
     :label="label"
     item-title="text"
     item-value="modelValue"
-    :item-props="isDisabled"
     :disabled="disabled"
     clearable
     density="default"
@@ -46,9 +45,6 @@ export default {
     },
     updateYear(value) {
       this.$emit("update:modelValue", value);
-    },
-    isDisabled(item) {
-      return { disabled: item.disabled };
     },
   },
   watch: {

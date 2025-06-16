@@ -45,7 +45,11 @@ cs:
                 <v-row class="small subdued">
                   <DateRangeText :start="start" :end="end"></DateRangeText>
                 </v-row>
-                <v-dialog v-model="showDialog" max-width="640px">
+                <v-dialog
+                  v-model="showDialog"
+                  max-width="640px"
+                  :persistent="persistent"
+                >
                   <v-card>
                     <v-card-title
                       class="d-flex justify-space-between align-center"
@@ -68,13 +72,19 @@ cs:
                     </v-card-title>
                     <v-divider class="mt-2"></v-divider>
                     <v-card-text class="pt-4">
-                      <DateRangeSelector></DateRangeSelector>
+                      <DateRangeSelector
+                        @validity-updated="handleValidityUpdated"
+                      ></DateRangeSelector>
                     </v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
-                      <v-btn color="primary" text @click="showDialog = false">{{
-                        $t("close")
-                      }}</v-btn>
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="showDialog = false"
+                        :disabled="persistent"
+                        >{{ $t("close") }}</v-btn
+                      >
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -107,6 +117,7 @@ export default {
   data() {
     return {
       showDialog: false,
+      persistent: false,
     };
   },
   computed: {
@@ -148,6 +159,9 @@ export default {
       setFiscalYearStart: "setFiscalYearStart",
       changeDateRangeObject: "changeDateRangeObject",
     }),
+    handleValidityUpdated(value) {
+      this.persistent = value;
+    },
   },
   watch: {
     fiscalYearStart: {

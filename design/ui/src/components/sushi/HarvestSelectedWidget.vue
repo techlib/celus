@@ -35,7 +35,8 @@ cs:
           :disabled="started"
           v-model="startDate"
           :max-date="EndDateText"
-          hide-details="auto"
+          validate-pair
+          @validity-updated="handleValidityUpdated"
           :label="$t('title_fields.start_date')"
         >
         </DatePicker>
@@ -44,7 +45,6 @@ cs:
         <DatePicker
           :disabled="started"
           v-model="endDate"
-          :min-date="StartDateText"
           :max-date="finishedMonth"
           hide-details="auto"
           :label="$t('title_fields.end_date')"
@@ -56,7 +56,9 @@ cs:
           @click="startHarvest()"
           color="primary"
           width="100%"
-          :disabled="!totalReportCount || !slotsReady || slotsFree === 0"
+          :disabled="
+            !totalReportCount || !slotsReady || slotsFree === 0 || errorValidate
+          "
         >
           {{
             slotsFree === 0
@@ -207,6 +209,7 @@ export default {
       slotsReady: false,
       showDeleteDialog: false,
       finishedMonth: null,
+      errorValidate: false,
     };
   },
 
@@ -380,6 +383,9 @@ export default {
       if (this.$refs.intentionsList) {
         this.$refs.intentionsList.stop();
       }
+    },
+    handleValidityUpdated(value) {
+      this.errorValidate = value;
     },
   },
 

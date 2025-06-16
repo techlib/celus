@@ -34,7 +34,7 @@ cs:
           <v-col cols="6" sm="4" md="3" lg="2">
             <DatePicker
               v-model="selectedDatePicker"
-              :max-date="lastMonth"
+              :max-date-limit="lastMonth"
               :label="$t('month')"
               :styleField="'min-width: 170px'"
             >
