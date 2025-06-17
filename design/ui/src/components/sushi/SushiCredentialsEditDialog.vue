@@ -1289,7 +1289,7 @@ export default {
     },
     canShowDebugLinks() {
       // Links for C4 sushi are not working properly
-      return this.showManagementStuff && this.counterVersion5X;
+      return this.counterVersion5X;
     },
     counterVersion5X() {
       return this.counterVersion === 5 || this.counterVersion === 51;
