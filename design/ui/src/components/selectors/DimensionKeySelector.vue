@@ -24,8 +24,6 @@ cs:
       :rules="rules"
       :hint="hint"
       persistent-hint
-      chips
-      closable-chips
       :disabled="disabled || readOnly"
       clearable
       clear-icon="fa fa-times"
@@ -34,6 +32,29 @@ cs:
     >
       <template v-slot:item="{ props, item }">
         <v-list-item v-bind="props" :title="item.raw.text"></v-list-item>
+      </template>
+      <template v-slot:chip="{ props, item }">
+        <v-chip
+          v-bind="props"
+          :closable="!disabled && !readOnly"
+          @click:close="
+            selectedValues = selectedValues.filter(
+              (v) => v !== item.raw[dimension],
+            )
+          "
+        >
+          <template v-if="loading">
+            <v-progress-circular
+              indeterminate
+              size="16"
+              width="2"
+              class="mr-2"
+            ></v-progress-circular>
+          </template>
+          <template v-else>
+            {{ item.raw.text }}
+          </template>
+        </v-chip>
       </template>
     </v-autocomplete>
     <div v-else class="full-width">
@@ -232,7 +253,7 @@ export default {
         this.possibleValues.forEach(
           (item) => (item["text"] = item[this.dimension]),
         );
-        this.possibleValues.sort((a, b) => a.text > b.text);
+        this.possibleValues.sort((a, b) => a.text.localeCompare(b.text));
       }
     },
     async itemIdValidator(ids) {
