@@ -281,55 +281,54 @@
           </template>
 
           <template #item.name="{ item }">
-            <v-menu
-              v-if="item.canEdit(user, organizations)"
-              :modelValue="activeItem === item"
-              offset-y
-              @click:outside="closeDialog"
-              eager
-            >
-              <template #activator="{ props: menuProps }">
-                <div class="d-flex align-center">
-                  <v-hover v-slot="{ isHovering, props: hoverProps }">
-                    <span
-                      v-bind="{ ...menuProps, ...hoverProps }"
-                      @click="openDialog(item)"
-                      :style="{ cursor: isHovering ? 'pointer' : '' }"
-                      :class="{
-                        'font-weight-bold': selectedRows.includes(item),
-                      }"
-                    >
-                      {{ item.name }}
-                    </span>
-                  </v-hover>
-                  <v-tooltip v-if="item.description" location="bottom">
-                    <template #activator="{ props }">
-                      <v-icon
-                        v-bind="props"
-                        size="x-small"
-                        class="ml-1 text-info"
-                        >fas fa-info-circle</v-icon
+            <div class="d-flex align-center">
+              <v-menu
+                v-if="item.canEdit(user, organizations)"
+                :modelValue="activeItem === item"
+                offset-y
+                @click:outside="closeDialog"
+                eager
+              >
+                <template #activator="{ props: menuProps }">
+                  <div class="d-flex align-center">
+                    <v-hover v-slot="{ isHovering, props: hoverProps }">
+                      <span
+                        v-bind="{ ...menuProps, ...hoverProps }"
+                        @click="openDialog(item)"
+                        :style="{ cursor: isHovering ? 'pointer' : '' }"
+                        :class="{
+                          'font-weight-bold': selectedRows.includes(item),
+                        }"
                       >
-                    </template>
-                    <div style="max-width: 50vw">{{ item.description }}</div>
-                  </v-tooltip>
-                </div>
-              </template>
-              <v-card>
-                <v-card-text>
-                  <v-text-field
-                    v-model="editedName"
-                    :label="$t('change_name')"
-                    @keyup.enter="saveNewName(item.pk, editedName)"
-                    @click.stop
-                    :width="editedName.length * 8 + 'px'"
-                    min-width="170px"
-                    hide-details
-                  ></v-text-field>
-                </v-card-text>
-              </v-card>
-            </v-menu>
-            <span v-else>{{ item.name }}</span>
+                        {{ item.name }}
+                      </span>
+                    </v-hover>
+                  </div>
+                </template>
+                <v-card>
+                  <v-card-text>
+                    <v-text-field
+                      v-model="editedName"
+                      :label="$t('change_name')"
+                      @keyup.enter="saveNewName(item.pk, editedName)"
+                      @click.stop
+                      :width="editedName.length * 8 + 'px'"
+                      min-width="170px"
+                      hide-details
+                    ></v-text-field>
+                  </v-card-text>
+                </v-card>
+              </v-menu>
+              <span v-else>{{ item.name }}</span>
+              <v-tooltip v-if="item.description" location="bottom">
+                <template #activator="{ props }">
+                  <v-icon v-bind="props" size="x-small" class="ml-1 text-info"
+                    >fas fa-info-circle</v-icon
+                  >
+                </template>
+                <div style="max-width: 50vw">{{ item.description }}</div>
+              </v-tooltip>
+            </div>
           </template>
 
           <template #item.primaryDimension.name="{ item }">
