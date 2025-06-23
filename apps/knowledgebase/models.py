@@ -288,6 +288,7 @@ class PlatformImportAttempt(ImportAttempt):
                     counter_version=models.F("counter_report__counter_version"),
                 )
                 .values("platform_id", "counter_report_code", "counter_version")
+                .filter(platform_id__isnull=False)
                 .annotate(
                     urls=ArrayAgg("short_url", distinct=True, ordering=models.F("short_url").asc())
                 )
