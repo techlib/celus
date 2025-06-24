@@ -42,6 +42,7 @@ axios.interceptors.response.use(
         error.response?.request?.responseURL &&
         error.response?.request?.responseURL.startsWith(window.location.origin)
       ) {
+        store.dispatch("cleanUserData");
         store.dispatch("setShowLoginDialog", { show: true });
       }
     } else if (
@@ -53,10 +54,18 @@ axios.interceptors.response.use(
         new_version: error.response.headers["celus-version"],
       });
     } else if (typeof error.response === "undefined") {
-      // we are getting redirected to the EduID login page, but 302 is transparent for us
-      // (the browser handles it on its own) and the error we get does not have any response
-      // because it is caused by CORS violation when we try to get the eduid login page
-      store.dispatch("setShowLoginDialog", { show: true });
+      // this may be any of different errors:
+      //  - CORS issue (when accessing the CDN or sentry)
+      //  - network issue
+      //  - CORS issue caused by EduID session expiration and silent redirect to eduid.cz
+      //
+      // Because the EduID issue is best handled by properly configuring the server
+      // (allowing assets to be accessed without authentication, using 401 in /api responses)
+      // we assume EduID does not need to be handled here and just log the error
+      console.error(
+        "Unknown error (CORS, network, etc.) - ignoring",
+        error.config?.url,
+      );
     }
     return Promise.reject(error);
   },

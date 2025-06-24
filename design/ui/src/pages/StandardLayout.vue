@@ -327,7 +327,7 @@ export default {
       if (this.latestPublishedRelease?.version) {
         return (
           this.latestPublishedRelease.version !==
-          this.user.extra_data.last_seen_release
+          this.user?.extra_data?.last_seen_release
         );
       } else {
         return false;
@@ -337,7 +337,7 @@ export default {
       if (this.latestPublishedRelease?.version) {
         return (
           this.latestPublishedRelease.version !==
-          this.user.extra_data.last_dismissed_release
+          this.user?.extra_data?.last_dismissed_release
         );
       } else {
         return false;
@@ -390,7 +390,11 @@ export default {
       return !!this.helpLink;
     },
     gravatar() {
-      const hash = md5(this.user.email.trim().toLowerCase());
+      const email = this.user?.email?.trim();
+      if (!email) {
+        return null;
+      }
+      const hash = md5(email.toLowerCase());
       return `https://www.gravatar.com/avatar/${hash}?d=mp&s=40`;
     },
   },
