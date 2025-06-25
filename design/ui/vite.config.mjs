@@ -19,6 +19,7 @@ const devURLBase = "http://127.0.0.1:8015/";
 export default defineConfig({
   build: {
     outDir: process.env.OUTPUT_DIR || "../../apps/core/static/",
+    sourcemap: true,
   },
   plugins: [
     vue({
