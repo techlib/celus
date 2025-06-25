@@ -229,7 +229,7 @@ cs:
           </template>
           {{ helpText || $t("context_help_tt") }}
         </v-tooltip>
-        <router-view :key="$route.fullPath" v-if="loggedIn"></router-view>
+        <router-view v-if="loggedIn"></router-view>
         <v-snackbar v-model="snackbarShow" :color="snackbarColor">
           {{ snackbarText }}
           <template #action="{ attrs }">
@@ -430,12 +430,14 @@ export default {
 
     $route: {
       immediate: true,
-      handler(to) {
+      handler(to, old) {
         document.title = to.meta?.title
           ? this.$t(to.meta.title) + " – CELUS"
           : "CELUS";
         this.helpLink = null;
-        this.fetchHelpLink();
+        if (to.name !== old?.name) {
+          this.fetchHelpLink();
+        }
       },
     },
   },
