@@ -284,15 +284,16 @@ export default {
           url: `/api/annotations/${this.selectedAnnotation.pk}`,
         });
       this.showDeleteDialog = false;
-      this.$emit("updated");
+      this.$emit("updated", this.options);
     },
     annotationSaved() {
       this.showEditDialog = false;
       this.selectedAnnotation = {};
-      this.$emit("updated");
+      this.$emit("updated", this.options);
       this.$refs.widget.clean();
     },
     handleUpdateOptions(options) {
+      this.options = options;
       this.$emit("updated", options);
     },
   },
