@@ -468,9 +468,10 @@ export default {
         if (this.selectedTags.length) {
           tags = "&tags=" + this.selectedTags.join(",");
         }
+        const safeItemsPerPage = Math.max(1, this.itemsPerPage);
         return (
           this.url +
-          `&page_size=${this.itemsPerPage}&page=${this.page}&q=${
+          `&page_size=${safeItemsPerPage}&page=${this.page}&q=${
             this.search ?? ""
           }&pub_type=${this.selectedPubType || ""}${tags}${sort}`
         );

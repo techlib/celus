@@ -518,8 +518,17 @@ For more info see Django admin: {request.build_absolute_uri(
         )
 
         # pagination and ordering parameters
-        page = int(request.query_params.get("page", 1))
-        page_size = int(request.query_params.get("page_size", 25))
+        try:
+            page = int(request.query_params.get("page", 1))
+            page_size = int(request.query_params.get("page_size", 25))
+        except (ValueError, TypeError):
+            raise BadRequestException(
+                "Page and page_size parameters must be valid integers"
+            ) from None
+        if page < 1:
+            raise BadRequestException("Page number must be at least 1")
+        if page_size < 1:
+            raise BadRequestException("Page size must be at least 1")
         where_params["limit"] = page_size
         where_params["offset"] = (page - 1) * page_size
         order_by = request.query_params.get("order_by", "total_interest")

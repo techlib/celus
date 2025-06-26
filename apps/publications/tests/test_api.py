@@ -1997,6 +1997,30 @@ class TestTitlesOnMultiplePlatforms:
         data = resp.json()["results"]
         assert {e["name"] for e in data} == names
 
+    @pytest.mark.parametrize(
+        "params,expected_status",
+        [
+            ({"page_size": -1}, 400),
+            ({"page": -1}, 400),
+            ({"page_size": 0}, 400),
+            ({"page": 0}, 400),
+            ({"page_size": "invalid"}, 400),
+            ({"page": "invalid"}, 400),
+            ({"page": 0, "page_size": 0}, 400),
+            ({"page": -1, "page_size": -1}, 400),
+            ({"page": "bad", "page_size": "also_bad"}, 400),
+            ({"page": 1, "page_size": 10}, 200),
+        ],
+    )
+    def test_titles_on_multiple_platforms_pagination_validation(
+        self, admin_client, overlaping_data, params, expected_status
+    ):
+        org = overlaping_data["org"]
+        base_url = reverse("organization-titles-on-multiple-platforms", args=[org.pk])
+
+        resp = admin_client.get(base_url, params)
+        assert resp.status_code == expected_status
+
 
 @pytest.mark.django_db
 class TestPlatformInterestAPI:
