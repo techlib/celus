@@ -53,8 +53,8 @@ package-mode = false
 python = "^3.8.9"
 
 celery = "~5.4.0"
-celus-nibbler = "~12.2.0"
-celus-nigiri = "~4.0.6"
+celus-nibbler = "~12.2.1"
+celus-nigiri = "~4.1.0"
 celus-pycounter = "~4.1.0"
 clickhouse-driver = "0.2.9"
 colorlog = "^6.7.0"

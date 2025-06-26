@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import requests
 import requests_mock
 from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
@@ -653,3 +654,32 @@ class TestSushiFetching:
             attempt.refresh_from_db()
             cr2c.refresh_from_db()
             assert cr2c.is_broken() == breaks_report
+
+    def test_user_agent(
+        self, counter_report_types, organizations, platforms, settings, monkeypatch
+    ):
+        """Tests whether HTTP User-Agent is properly set"""
+        credentials = CredentialsFactory(
+            organization=organizations["empty"],
+            platform=platforms["empty"],
+            counter_version=5,
+            url="https://example.com/sushi/",
+            customer_id="CCCCCCC",
+            requestor_id="RRRRRRR",
+            api_key="AAAAAAAA",
+        )
+        crt = counter_report_types["tr"]
+        CounterReportsToCredentials.objects.create(credentials=credentials, counter_report=crt)
+
+        settings.HARVESTER_USER_AGENT = "My-Agent 1.0"
+
+        res = {}
+
+        def get_handler(self, *args, **kwargs):
+            res["agent_matches"] = self.headers["User-Agent"] == "My-Agent 1.0"
+
+        monkeypatch.setattr(requests.Session, "get", get_handler)
+
+        credentials.fetch_report(crt, start_date="2016-01-01", end_date="2016-01-31")
+
+        assert res["agent_matches"]

@@ -863,6 +863,10 @@ SITE_ID = config("SITE_ID", cast=int, default=1)
 HARVESTER_IPV4_ADDRESSES = config("HARVESTER_IPV4_ADDRESSES", cast=Csv(), default="")
 HARVESTER_IPV6_ADDRESSES = config("HARVESTER_IPV6_ADDRESSES", cast=Csv(), default="")
 
+# User Agent which will be used to harvest data
+# When empty, default nigiri User Agent will be used
+HARVESTER_USER_AGENT = config("HARVESTER_USER_AGENT", default="")
+
 # Some internal CELUS config values
 # The number of records that should be processed at once in import_counter_records
 # it influences RAM consumption and speed.

@@ -182,7 +182,7 @@ class CounterReportType(models.Model):
     report_type = models.OneToOneField("logs.ReportType", on_delete=models.CASCADE)
     active = models.BooleanField(
         default=True,
-        help_text="When turned off, this type of report will not be " "automatically downloaded",
+        help_text="When turned off, this type of report will not be automatically downloaded",
     )
 
     class Meta:
@@ -656,8 +656,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             )
         if owner_level < level:
             raise PermissionDenied(
-                f"User {user} does not have high enough privileges "
-                f"to lock {self} to level {level}"
+                f"User {user} does not have high enough privileges to lock {self} to level {level}"
             )
         with reversion.create_revision():
             self.lock_level = level
@@ -693,6 +692,12 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             "customer_id": self.customer_id,
         }
         extra = deepcopy(self.extra_params) or {}
+
+        # if `HARVESTER_USER_AGENT` is not set, nigiri will use a default value
+        # otherwise use provided value
+        if self.counter_version != 4 and settings.HARVESTER_USER_AGENT:
+            attrs["user_agent"] = settings.HARVESTER_USER_AGENT
+
         if self.api_key:
             extra["api_key"] = self.api_key
         if self.http_password and self.http_username and self.counter_version == 4:
@@ -916,9 +921,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         self, client, counter_report, start_date, end_date, file_data
     ) -> Counter5ReportBase:
         params = self._build_params(client, counter_report)
-        report = client.get_report_data(
-            counter_report.code, start_date, end_date, output_content=file_data, params=params
-        )
+        kwargs = {"output_content": file_data, "params": params}
+        report = client.get_report_data(counter_report.code, start_date, end_date, **kwargs)
         return report
 
     def _fetch_report_v5(
