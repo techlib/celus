@@ -296,7 +296,7 @@ class HarvestIntentionViewSet(ReadOnlyModelViewSet):
 
     @action(methods=["POST"], detail=True, url_path="cancel")
     def cancel(self, request, pk, harvest_pk):
-        intention = self.get_queryset().get(pk=pk)
+        intention = self.get_object()
         if not intention.cancel():
             return Response(
                 data={"error": f"intention {pk} can't be canceled"},

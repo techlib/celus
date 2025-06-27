@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 import pytest
 from core.logic.dates import last_month, month_end
-from django.db.models import Sum
+from django.db.models import Max, Sum
 from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
@@ -947,6 +947,17 @@ class TestHarvestFetchIntentionAPI:
             assert intention.canceled is True
         else:
             assert intention.canceled is False
+
+    @pytest.mark.parametrize(
+        "user", ["master_admin", "master_user", "user1", "user2", "admin1", "admin2"]
+    )
+    def test_cancel_with_nonexistent_intention(self, basic1, harvests, clients, user):
+        # pk__max is None if there are no intentions
+        max_pk = FetchIntention.objects.aggregate(Max("pk")).get("pk__max") or 999999
+        url = reverse("harvest-intention-cancel", args=(harvests["admin1"].pk, max_pk + 1))
+
+        resp = clients[user].post(url, {})
+        assert resp.status_code == 404, "intention not found"
 
 
 @pytest.mark.django_db()
