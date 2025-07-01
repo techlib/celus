@@ -95,24 +95,32 @@ function anyDateToYm(date) {
 }
 
 function smartMonthRange({ start, end }) {
-  start = startOfMonth(smartDateParse(start));
-  end = smartDateParse(end, true);
-  if (
-    start.getMonth() === 0 &&
-    isEqual(endOfDay(lastDayOfYear(end)), endOfDay(end))
-  ) {
-    if (getYear(start) === getYear(end)) {
-      return `${getYear(start)}`;
-    } else {
-      return `${getYear(start)} - ${getYear(end)}`;
+  if (!!start && !!end) {
+    start = startOfMonth(smartDateParse(start));
+    end = smartDateParse(end, true);
+    if (
+      start.getMonth() === 0 &&
+      isEqual(endOfDay(lastDayOfYear(end)), endOfDay(end))
+    ) {
+      if (getYear(start) === getYear(end)) {
+        return `${getYear(start)}`;
+      } else {
+        return `${getYear(start)} - ${getYear(end)}`;
+      }
     }
+    let ymStart = ymDateFormat(start);
+    let ymEnd = ymDateFormat(end);
+    if (ymStart === ymEnd) {
+      return ymStart;
+    }
+    return `${ymStart} - ${ymEnd}`;
+  } else if (!!start) {
+    start = startOfMonth(smartDateParse(start));
+    return `> ${ymDateFormat(start)}`;
+  } else {
+    end = smartDateParse(end, true);
+    return `< ${ymDateFormat(end)}`;
   }
-  let ymStart = ymDateFormat(start);
-  let ymEnd = ymDateFormat(end);
-  if (ymStart === ymEnd) {
-    return ymStart;
-  }
-  return `${ymStart} - ${ymEnd}`;
 }
 
 function lastFinishedMonthDate() {
