@@ -174,7 +174,6 @@
                   :to="{
                     name: 'flexireport',
                     params: { reportId: item.pk },
-                    query: { edit: true },
                   }"
                   v-bind="props"
                 >

@@ -13,7 +13,6 @@ en:
   column_order_tt: This number shows the position which this dimension will occupy in the column header. It is based on the order in which the checkboxes are checked.
   download_on_separate_page: You can find all exports on the {exports_page} page.
   select_report_type: First select at least one report type.
-  unlock_tt: Unlock the report for editing.
   save_success: Report was successfully saved.
   report_title: Report title
   report_description: Report description
@@ -62,7 +61,6 @@ cs:
   column_order_tt: Toto číslo ukazuje pořadí v jakém bude tento rozměr uveden v hlavičce sloupců. Číslo je dané pořadím v jakém byla políčka zaškrtnuta.
   download_on_separate_page: Všechny exporty najdete na stránce {exports_page}.
   select_report_type: Nejprve vyberte alespoň jeden typ reportu.
-  unlock_tt: Odemknout report pro editaci.
   save_success: Report byl úspěšně uložen.
   report_title: Název reportu
   report_description: Popis reportu
@@ -248,27 +246,6 @@ cs:
               item-value="id"
               :disabled="readOnly"
             ></v-select>
-          </v-col>
-          <v-col
-            v-if="readOnly && canEdit"
-            cols="auto"
-            class="align-self-center"
-          >
-            <v-tooltip location="bottom">
-              <template #activator="{ props }">
-                <v-btn
-                  elevation="2"
-                  icon
-                  size="small"
-                  color="primary"
-                  @click="edit = true"
-                  v-bind="props"
-                >
-                  <v-icon size="small">fa fa-edit</v-icon>
-                </v-btn>
-              </template>
-              {{ $t("unlock_tt") }}
-            </v-tooltip>
           </v-col>
         </v-row>
         <v-row v-if="reportViews.length">
@@ -1078,7 +1055,6 @@ export default {
       orderBy: [],
       owner: null,
       ownerOrganization: null,
-      edit: !this.reportId || "edit" in this.$route.query,
       wantsSave: !!this.reportId || "wantsSave" in this.$route.query,
       showZeroRows: false,
       showTotals: true,
@@ -1127,7 +1103,7 @@ export default {
       },
     },
     readOnly() {
-      return !this.edit || !this.canEdit;
+      return !this.canEdit;
     },
     possibleRows() {
       let base = [...this.dimensions, ...this.explicitDims];
@@ -1523,7 +1499,6 @@ export default {
             params: {
               reportId: this.reportPk,
             },
-            query: this.readOnly ? {} : { edit: 1 },
           });
           window.history.replaceState({}, null, location.href);
           this.showSnackbar({
