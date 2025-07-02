@@ -7,13 +7,12 @@ en:
     name: Name
     provider: Provider
     title_count: Title / database count
-    sushi_available: SUSHI active
+    sushi_available: SUSHI
     notes: " "
     actions: Actions
-  sushi_present: SUSHI is available and active for this platform
-  no_sushi: SUSHI is not activated for this platform and selected organization
-  sushi_for_version: "SUSHI for COUNTER version {version} is available"
-  sushi_for_version_outside: "SUSHI not managed by consortium for COUNTER version {version} is available"
+  sushi_credentials_configured_consortium: "SUSHI credentials for COUNTER {version} are configured and managed by consortium"
+  sushi_credentials_configured_organization: "SUSHI credentials for COUNTER {version} are configured and managed by the organization"
+  sushi_credentials_configured: "SUSHI credentials for COUNTER {version} are configured"
   annotations_available: |
     There are annotations for this platform and the current date range. Go to the
     platform page for details.
@@ -24,13 +23,12 @@ cs:
     name: Název
     provider: Poskytovatel
     title_count: Počet titulů a databází
-    sushi_available: Aktivní SUSHI
+    sushi_available: SUSHI
     notes: " "
     actions: Akce
-  sushi_present: SUSHI je pro tuto platformu aktivní
-  no_sushi: SUSHI není pro tuto platformu a vybranou organizaci aktivní
-  sushi_for_version: "SUSHI pro verzi {version} COUNTERu je k dispozici"
-  sushi_for_version_outside: "SUSHI nespravované konsorciem pro verzi {version} COUNTERu je k dispozici"
+  sushi_credentials_configured_consortium: "SUSHI přihlašovací údaje pro COUNTER {version} jsou nakonfigurovány a spravovány konsorciem"
+  sushi_credentials_configured_organization: "SUSHI přihlašovací údaje pro COUNTER {version} jsou nakonfigurovány a spravovány organizací"
+  sushi_credentials_configured: "SUSHI přihlašovací údaje pro COUNTER {version} jsou nakonfigurovány"
   annotations_available: |
     Pro tuto platformu a vybrané časové období byly uloženy poznámky.
     Na stránce platformy zjistíte detaily.
@@ -147,18 +145,35 @@ cs:
               <template v-slot:activator="{ props }">
                 <span v-bind="props" class="mr-3 subdued"
                   >{{ counterVersionToStr(record.version)
-                  }}{{ record.outside_consortium ? "*" : "" }}</span
+                  }}{{
+                    consortialInstall && record.outside_consortium ? "*" : ""
+                  }}</span
                 >
               </template>
-              <template v-if="record.outside_consortium">
-                <i18n-t keypath="sushi_for_version_outside" tag="span">
-                  <template v-slot:version>
-                    {{ counterVersionToStr(record.version) }}
-                  </template>
-                </i18n-t>
+              <template v-if="consortialInstall">
+                <template v-if="record.outside_consortium">
+                  <i18n-t
+                    keypath="sushi_credentials_configured_organization"
+                    tag="span"
+                  >
+                    <template v-slot:version>
+                      {{ counterVersionToStr(record.version) }}
+                    </template>
+                  </i18n-t>
+                </template>
+                <template v-else>
+                  <i18n-t
+                    keypath="sushi_credentials_configured_consortium"
+                    tag="span"
+                  >
+                    <template v-slot:version>
+                      {{ counterVersionToStr(record.version) }}
+                    </template>
+                  </i18n-t>
+                </template>
               </template>
               <template v-else>
-                <i18n-t keypath="sushi_for_version" tag="span">
+                <i18n-t keypath="sushi_credentials_configured" tag="span">
                   <template v-slot:version>
                     {{ counterVersionToStr(record.version) }}
                   </template>
@@ -284,6 +299,7 @@ export default {
       formatNumber: "formatNumber",
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
       showManagementStuff: "showManagementStuff",
+      consortialInstall: "consortialInstall",
     }),
     ...mapGetters("interest", {
       activeInterestGroups: "selectedGroupObjects",
