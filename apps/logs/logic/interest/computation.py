@@ -618,6 +618,10 @@ class InterestComputer:
         for dim_name in INTEREST_EXTRA_DIMENSIONS:
             dim = Dimension.objects.get(short_name=dim_name)
 
+            # if the dimension is not in the interest report type, we can skip it
+            if not interest_rt.dim_name_to_dim_attr(dim_name):
+                continue
+
             if not (
                 idvm := InterestDimensionValueMapping.objects.filter(
                     Q(source_rtdim__report_type=report_type) | Q(source_rtdim__isnull=True),
@@ -690,13 +694,15 @@ class InterestComputer:
             fltrs = []
             for fltr in rim.filters.all():
                 dim_attr = report_type.dim_to_dim_attr(fltr.dimension)
-                q = Q(
-                    **{
-                        f"{dim_attr}__in": DimensionText.objects.filter(
-                            dimension=fltr.dimension, text__in=fltr.values
-                        ).values_list("pk", flat=True)
-                    }
+                dim_ids = list(
+                    DimensionText.objects.filter(
+                        dimension=fltr.dimension, text__in=fltr.values
+                    ).values_list("pk", flat=True)
                 )
+                q = Q(**{f"{dim_attr}__in": dim_ids})
+                if None in fltr.values:
+                    # none is special
+                    q |= Q(**{f"{dim_attr}__isnull": True})
                 if fltr.negated:
                     q = ~q
                 fltrs.append(q)

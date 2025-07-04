@@ -819,8 +819,8 @@ class InterestConfig(CreatedUpdatedMixin, models.Model):
         # only one default interest config is allowed
         constraints = [
             UniqueConstraint(
-                fields=["organization"],
-                condition=Q(organization=None),
+                # we coalesce null to 0, so that we can use it in the unique constraint
+                Coalesce("organization", models.Value(0)),
                 name="only_one_default_interest_config",
             )
         ]

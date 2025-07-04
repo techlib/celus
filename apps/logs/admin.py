@@ -319,3 +319,48 @@ class InterestConfigAdmin(admin.ModelAdmin):
 
     def filters(self, obj: models.InterestConfig):
         return "; ".join(str(e) for e in obj.interest_filters.all())
+
+
+@admin.register(models.InterestDimensionValueMapping)
+class InterestDimensionValueMappingAdmin(admin.ModelAdmin):
+    list_display = ["interest_rtdim", "source_rtdim", "default_value"]
+    list_filter = ["interest_rtdim__report_type", "interest_rtdim__dimension"]
+    search_fields = [
+        "interest_rtdim__report_type__short_name",
+        "interest_rtdim__dimension__short_name",
+    ]
+    list_select_related = [
+        "interest_rtdim__report_type",
+        "interest_rtdim__dimension",
+        "source_rtdim__report_type",
+        "source_rtdim__dimension",
+    ]
+
+
+@admin.register(models.InterestFilter)
+class InterestFilterAdmin(admin.ModelAdmin):
+    list_display = ["interest_config", "filter"]
+    list_filter = ["interest_config__organization", "filter__dimension"]
+    search_fields = ["interest_config__organization__name", "filter__dimension__short_name"]
+    list_select_related = ["interest_config__organization", "filter__dimension"]
+
+
+@admin.register(models.ReportInterestMetricFilter)
+class ReportInterestMetricFilterAdmin(admin.ModelAdmin):
+    list_display = ["report_interest_metric", "filter"]
+    list_filter = [
+        "report_interest_metric__report_type",
+        "report_interest_metric__metric",
+        "filter__dimension",
+    ]
+    search_fields = [
+        "report_interest_metric__report_type__short_name",
+        "report_interest_metric__metric__short_name",
+        "filter__dimension__short_name",
+    ]
+    list_select_related = [
+        "report_interest_metric__report_type",
+        "report_interest_metric__metric",
+        "report_interest_metric__interest_group",
+        "filter__dimension",
+    ]

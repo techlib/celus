@@ -26,7 +26,7 @@ from logs.models import AccessLog, ImportBatch, ReportType
 logger = logging.getLogger(__name__)
 
 
-def recompute_interest_force(queryset=None) -> Counter:
+def recompute_interest_force(queryset=None, no_clickhouse=False) -> Counter:
     """
     This is a private copy of `recompute_interest_by_batch` from `logic.interest.computation`.
     It is highly optimized and is indended for cases when we need very fast recomputation of
@@ -95,7 +95,7 @@ def recompute_interest_force(queryset=None) -> Counter:
             ibs.update(interest_timestamp=None)
 
             new_stats = sync_interest_for_report_type_organization_platform(
-                report_type, organization, platform, computer
+                report_type, organization, platform, computer, no_clickhouse=no_clickhouse
             )
             # update clickhouse
             if settings.CLICKHOUSE_SYNC_ACTIVE:
@@ -126,6 +126,7 @@ def sync_interest_for_report_type_organization_platform(
     organization: Organization,
     platform: Platform,
     interest_computer: "InterestComputer",
+    no_clickhouse=False,
 ) -> Counter:
     """
     We assume no old interest data is present.
@@ -159,7 +160,7 @@ def sync_interest_for_report_type_organization_platform(
 
     # extract interest from import batches
     start = monotonic()
-    if settings.CLICKHOUSE_SYNC_ACTIVE:
+    if settings.CLICKHOUSE_QUERY_ACTIVE and not no_clickhouse:
         new_log_dicts = interest_computer.extract_interest_from_import_batches_ch(import_batches)
     else:
         new_log_dicts = interest_computer.extract_interest_from_import_batches(import_batches)
@@ -226,9 +227,15 @@ class Command(BaseCommand):
             "-r", dest="report_type", help="short name of the report_type to process"
         )
         parser.add_argument(
-            "-o", dest="organization", help="short name of the organization to process"
+            "-o", dest="organization", help="short name or ID of the organization to process"
         )
         parser.add_argument("-f", dest="force", action="store_true", help="force recomputation")
+        parser.add_argument(
+            "--no-clickhouse",
+            action="store_true",
+            help="do not query clickhouse - useful when clickhouse may be out of sync or the sync "
+            "crashes with it",
+        )
 
     def handle(self, *args, **options):
         filters = {}
@@ -237,9 +244,14 @@ class Command(BaseCommand):
         if options["report_type"]:
             filters["report_type_id"] = ReportType.objects.get(short_name=options["report_type"]).pk
         if options["organization"]:
-            filters["organization_id"] = Organization.objects.get(
-                short_name=options["organization"]
-            ).pk
+            # Try to get organization by ID first, then by short_name
+            try:
+                org_id = int(options["organization"])
+                organization = Organization.objects.get(pk=org_id)
+            except (ValueError, Organization.DoesNotExist):
+                # If not an ID or not found, try by short_name
+                organization = Organization.objects.get(short_name=options["organization"])
+            filters["organization_id"] = organization.pk
 
         qs = ImportBatch.objects.filter(**filters)
         start = monotonic()
@@ -248,7 +260,7 @@ class Command(BaseCommand):
 
         if options["force"]:
             # pre-delete all interest data
-            stats = recompute_interest_force(qs)
+            stats = recompute_interest_force(qs, no_clickhouse=options["no_clickhouse"])
         else:
             stats = recompute_interest_by_batch(qs)
 
