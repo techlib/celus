@@ -19,6 +19,9 @@
       v-model:expanded="expanded"
       expand-icon="fas fa-caret-down"
     >
+      <template #headers="{ columns }">
+        <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
+      </template>
       <template #top>
         <div class="d-flex px-1 align-center">
           <v-btn color="primary" @click="uploadNew()">
@@ -167,6 +170,7 @@ import stateTracking from "@/mixins/stateTracking";
 import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
 import { formatInteger } from "@/libs/numbers";
 import { userToString } from "../../libs/user";
+import TableCustomSort from "../tables/TableCustomSort.vue";
 
 export default {
   name: "TaggingBatchList",
@@ -175,6 +179,7 @@ export default {
     TaggingBatchStats,
     TagChip,
     TaggingBatchProcessingWidget,
+    TableCustomSort,
   },
   mixins: [cancellation, stateTracking],
 
@@ -234,6 +239,7 @@ export default {
           title: this.$i18n.t("labels.created"),
           value: "created",
           key: "created",
+          order: "reverse",
         },
         {
           title: this.$i18n.t("labels.last_updated_by"),
@@ -255,12 +261,14 @@ export default {
           value: "preflight.rows_total",
           align: "end",
           key: "preflight.rows_total",
+          order: "reverse",
         },
         {
           title: this.$i18n.t("titles"),
           value: "preflight.unique_matched_titles",
           align: "end",
           key: "preflight.unique_matched_titles",
+          order: "reverse",
         },
         {
           title: this.$i18n.t("title_fields.actions"),

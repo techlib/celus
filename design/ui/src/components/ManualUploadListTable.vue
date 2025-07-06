@@ -81,6 +81,12 @@ cs:
         :items-per-page-options="[10, 25, 50]"
       >
         <!-- v-model:sort-by="orderByCr" -->
+        <template #headers="{ columns }">
+          <TableCustomSort
+            :columns="columns"
+            v-model:externalOrderBy="orderByCr"
+          />
+        </template>
         <template #item.user.last_name="{ item }">
           {{ userToString(item.user) }}
         </template>
@@ -340,6 +346,7 @@ import { userToString } from "../libs/user";
 import MDUChart from "@/components/MDUChart";
 import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "ManualUploadListTable",
@@ -350,6 +357,7 @@ export default {
     MDUChart,
     ManualUploadState,
     AccessLogList,
+    TableCustomSort,
   },
 
   data() {
@@ -367,8 +375,6 @@ export default {
       platforms: [],
       counts: null,
       mduCount: 0,
-      sortBy: "created",
-      sortDesc: true,
       page: 1,
       pageSize: 10,
       watchedAttrs: [
@@ -385,12 +391,10 @@ export default {
           type: Array,
         },
         {
-          name: "sortBy",
-          type: String,
+          name: "orderByCr",
+          type: Array,
         },
         {
-          name: "sortDesc",
-          type: Boolean,
           alwaysTrack: true,
         },
       ],
@@ -414,6 +418,7 @@ export default {
           title: this.$t("title_fields.uploaded"),
           value: "created",
           key: "created",
+          order: "reverse",
         },
         {
           title: this.$t("platform"),
@@ -508,7 +513,7 @@ export default {
       if (this.filterPlatforms.length > 0) {
         params.platform_ids = `${this.filterPlatforms}`;
       }
-      if (this.sortBy != null) {
+      if (this.orderByCr.length > 0) {
         let orderBy = this.orderByCr[0]
           ? this.orderByCr[0].key.replace(".", "__")
           : "created";

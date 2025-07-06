@@ -115,6 +115,9 @@ cs:
       class="auto-table"
       variant="comfortable"
     >
+      <template #headers="{ columns }">
+        <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
+      </template>
       <template #item.name="{ item }">
         <router-link
           v-if="platformId"
@@ -242,6 +245,7 @@ import tags from "@/mixins/tags";
 import TagChip from "@/components/tags/TagChip";
 import stateTracking from "@/mixins/stateTracking";
 import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "TitleList",
@@ -254,6 +258,7 @@ export default {
     ShortenText,
     SimplePie,
     NoDataInTableWidget,
+    TableCustomSort,
   },
 
   props: {
@@ -396,6 +401,7 @@ export default {
         base.push({
           title: this.$i18n.t("title_fields.ratios"),
           value: "ratios",
+          key: "ratios",
           sortable: false,
           // class: "auto-width",
           // cellClass: "auto-width",
@@ -403,18 +409,21 @@ export default {
         base.push({
           title: this.$i18n.t("title_fields.platforms"),
           value: "platforms",
+          key: "platforms",
           sortable: false,
         });
         base.push({
           title: this.$i18n.t("title_fields.platform_count"),
           value: "platform_count",
           key: "platform_count",
+          order: "reverse",
         });
         base.push({
           title: this.$i18n.t("title_fields.total_interest"),
           value: "total_interest",
           align: "end",
           key: "total_interest",
+          order: "reverse",
         });
       } else {
         for (let ig of this.activeInterestGroups) {
@@ -424,11 +433,13 @@ export default {
             class: "wrap text-xs-right",
             align: "end",
             key: "interests." + ig.short_name,
+            order: "reverse",
           });
         }
         base.push({
           title: this.$t("labels.tags"),
           value: "tags",
+          key: "tags",
           sortable: false,
         });
       }
@@ -439,8 +450,11 @@ export default {
     },
     fullUrl() {
       if (this.url) {
-        let sortBy = this.orderBy[0].key;
-        let orderBy = this.orderBy[0].order;
+        let sortBy =
+          this.orderBy[0]?.key ||
+          (this.orderInterest ? this.orderInterest : "name");
+        let orderBy =
+          this.orderBy[0]?.order || (!this.orderInterest ? "asc" : "desc");
         let sort = "";
         if (sortBy) {
           if (sortBy.startsWith("interests.")) {
@@ -573,8 +587,21 @@ export default {
     itemsPerPage() {
       this.page = 1;
     },
-    orderBy() {
-      this.page = 1;
+    orderBy: {
+      // if user-defined ordering is switched off, we automatically turn on
+      // ordering by name on mount
+      handler(newOrderBy) {
+        if (!newOrderBy || newOrderBy.length === 0) {
+          this.orderBy = [
+            {
+              key: this.orderInterest ? this.orderInterest : "name",
+              order: !this.orderInterest ? "asc" : "desc",
+            },
+          ];
+        }
+        this.page = 1;
+      },
+      deep: true,
     },
     selectedTags() {
       this.page = 1;

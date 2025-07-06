@@ -12,11 +12,15 @@ cs:
     :items="formattedRows"
     :items-per-page="itemsPerPage"
     :items-per-page-options="[itemsPerPage]"
+    v-model:sort-by="orderBy"
     class="chart-data-table"
   >
+    <template #headers="{ columns }">
+      <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
+    </template>
     <template #body.append="{ headers }">
       <tr class="totals">
-        <th v-for="(total, i) in totals" :key="i" class="text-right">
+        <th v-for="(total, i) in totals" :key="i" class="text-end">
           <span v-if="headers[0][i].value !== primaryDimension"
             >{{ formatInteger(total) }}
           </span>
@@ -29,9 +33,19 @@ cs:
 
 <script>
 import { formatInteger } from "../libs/numbers";
-
+import TableCustomSort from "./tables/TableCustomSort.vue";
 export default {
   name: "ChartDataTable",
+
+  data() {
+    return {
+      orderBy: [],
+    };
+  },
+
+  components: {
+    TableCustomSort,
+  },
 
   props: {
     columns: {
@@ -50,7 +64,25 @@ export default {
   computed: {
     headers() {
       return this.columns.map((x) => {
-        return { title: x, value: x, align: "end", key: x };
+        const isNumericColumn = x !== this.primaryDimension;
+        return {
+          title: x,
+          value: x,
+          align: "end",
+          key: x,
+          sortable: true,
+          order: "reverse",
+          ...(isNumericColumn && {
+            sortRaw(a, b) {
+              const aValue = Number(a[x]?.toString().replace(/\s/g, "")) || 0;
+              const bValue = Number(b[x]?.toString().replace(/\s/g, "")) || 0;
+              if (aValue < bValue) return -1;
+              if (aValue > bValue) return 1;
+              return 0;
+            },
+          }),
+        };
+        // return { title: x, value: x, align: "end", key: x };
       });
     },
     totals() {

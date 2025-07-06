@@ -111,6 +111,12 @@ cs:
           :loading="loading"
           v-model:sort-by="sortBy"
         >
+          <template #headers="{ columns }">
+            <TableCustomSort
+              :columns="columns"
+              v-model:externalOrderBy="sortBy"
+            />
+          </template>
           <template #item.name="props">
             <router-link
               :to="{
@@ -226,10 +232,11 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import { formatInteger, smartFormatFloat } from "../libs/numbers";
 import axios from "axios";
 import EditPriceDialog from "./EditPriceDialog";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "PlatformCostList",
-  components: { EditPriceDialog },
+  components: { EditPriceDialog, TableCustomSort },
   props: {
     loading: {},
     platforms: {},
@@ -268,6 +275,7 @@ export default {
           title: this.$i18n.t("columns.name"),
           value: "name",
           key: "name",
+          sortable: true,
         },
       ];
       for (let ig of this.activeInterestGroups) {
@@ -277,6 +285,15 @@ export default {
           class: "wrap text-xs-right",
           align: "end",
           key: "interests." + ig.short_name,
+          sortable: true,
+          order: "reverse",
+          sortRaw(a, b) {
+            const valA = a.yearInterest?.[ig.short_name];
+            const valB = b.yearInterest?.[ig.short_name];
+            if (valA === undefined || valA === null || valA === "-") return -1;
+            if (valB === undefined || valB === null || valB === "-") return 1;
+            return (Number(valA) || 0) - (Number(valB) || 0);
+          },
         });
       }
       base.push({
@@ -284,6 +301,8 @@ export default {
         value: "price",
         align: "end",
         key: "price",
+        sortable: true,
+        order: "reverse",
       });
       for (let ig of this.activeInterestGroups) {
         base.push({
@@ -292,6 +311,7 @@ export default {
           class: "wrap text-xs-right",
           align: "end",
           key: "pricePerUnitInterest." + ig.short_name,
+          sortable: false,
         });
       }
       for (let ig of this.activeInterestGroups) {

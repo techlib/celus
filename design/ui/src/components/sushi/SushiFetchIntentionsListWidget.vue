@@ -91,7 +91,14 @@ cs:
           item-value="pk"
           expand-icon="fas fa-caret-down"
           :loading="loading"
+          v-model:sort-by="orderBy"
         >
+          <template #headers="{ columns }">
+            <TableCustomSort
+              :columns="columns"
+              v-model:externalOrderBy="orderBy"
+            />
+          </template>
           <template
             v-for="h in headers"
             :key="h.value"
@@ -376,6 +383,7 @@ import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
 import SushiLoaderGame from "@/components/sushi/SushiLoaderGame";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "SushiFetchIntentionsListWidget",
@@ -384,6 +392,7 @@ export default {
     CheckMark,
     FetchIntentionStatusIcon,
     SushiLoaderGame,
+    TableCustomSort,
   },
   props: {
     harvestId: {
@@ -400,6 +409,7 @@ export default {
     return {
       loading: false,
       showPacmanDialog: false,
+      orderBy: [],
       loadingActions: {
         trigger: [],
         cancel: [],
@@ -492,22 +502,26 @@ export default {
           value: "counter_report_version",
           key: "counter_report_version",
           align: "center",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.start_date"),
           value: "start_date",
           key: "start_date",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.end_date"),
           value: "end_date",
           key: "end_date",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.not_before"),
           value: "notBefore",
           key: "notBefore",
           tooltip: this.$t("not_before_tooltip"),
+          order: "reverse",
         },
         {
           title: this.$t("labels.finished"),

@@ -11,17 +11,25 @@
     v-model:items-per-page="ipp"
     :items-per-page-options="[10, 25, 50]"
   >
+    <template #headers="{ columns }">
+      <TableCustomSort :columns="columns" v-model:externalOrderBy="sortBy" />
+    </template>
   </v-data-table-server>
 </template>
 
 <script>
 import { mapActions } from "vuex";
 import cancellation from "@/mixins/cancellation";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "AccessLogList",
 
   mixins: [cancellation],
+
+  components: {
+    TableCustomSort,
+  },
 
   props: {
     // one of the following two has to be set
@@ -48,6 +56,7 @@ export default {
           title: this.$i18n.t("labels.date"),
           value: "date",
           key: "date",
+          order: "reverse",
         },
         ...(this.showOrganization
           ? [
@@ -74,6 +83,7 @@ export default {
           title: this.$i18n.t("labels.value"),
           value: "value",
           key: "value",
+          order: "reverse",
         },
       ];
       return out.filter(

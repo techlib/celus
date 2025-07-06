@@ -105,11 +105,18 @@ cs:
         :items="tableData"
         item-value="pk"
         :headers="headers"
+        v-model:sort-by="sortBy"
         show-select
         v-if="!(loading || preparingData)"
         items-per-page="-1"
         density="compact"
       >
+        <template #headers="{ columns }">
+          <TableCustomSort
+            :columns="columns"
+            v-model:externalOrderBy="sortBy"
+          />
+        </template>
         <template #item.titleCount="{ item }">
           {{ formatInteger(item.titleCount) }}
         </template>
@@ -135,6 +142,7 @@ import { formatInteger } from "@/libs/numbers";
 import { pubTypes } from "@/libs/pub-types";
 import TitleTypeFilterWidget from "@/components/TitleTypeFilterWidget";
 import LoaderWidget from "@/components/util/LoaderWidget";
+import TableCustomSort from "@/components/tables/TableCustomSort.vue";
 
 /* vue-echarts */
 import { use } from "echarts/core";
@@ -152,6 +160,7 @@ export default {
     LoaderWidget,
     TitleTypeFilterWidget,
     VChart,
+    TableCustomSort,
   },
 
   data() {
@@ -166,6 +175,7 @@ export default {
       loadingPlatformTitles: null,
       preparingData: null,
       selectedPubTypes: [...pubTypes.map((item) => item.code)],
+      sortBy: [],
     };
   },
 
@@ -217,24 +227,28 @@ export default {
           value: "titleCount",
           key: "titleCount",
           align: "end",
+          order: "reverse",
         },
         {
           title: this.$t("unique_title_count"),
           value: "uniqueTitleCount",
           key: "uniqueTitleCount",
           align: "end",
+          order: "reverse",
         },
         {
           title: this.$t("title_interest"),
           value: "titleInterest",
           key: "titleInterest",
           align: "end",
+          order: "reverse",
         },
         {
           title: this.$t("unique_title_interest"),
           value: "uniqueInterest",
           key: "uniqueInterest",
           align: "end",
+          order: "reverse",
         },
       ];
     },
@@ -310,7 +324,10 @@ export default {
             data: [
               {
                 type: "rate",
-                value: this.selectedTitleCount / this.totalTitleCount,
+                value:
+                  this.totalTitleCount > 0
+                    ? this.selectedTitleCount / this.totalTitleCount
+                    : 0,
                 name: this.$t("labels.title_count_short"),
               },
             ],
@@ -326,7 +343,10 @@ export default {
             data: [
               {
                 type: "rate",
-                value: this.selectedInterest / this.totalInterest,
+                value:
+                  this.totalInterest > 0
+                    ? this.selectedInterest / this.totalInterest
+                    : 0,
                 name: this.$t("interest"),
               },
             ],

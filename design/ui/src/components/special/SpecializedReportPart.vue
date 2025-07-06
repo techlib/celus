@@ -92,10 +92,15 @@ cs:
         item-key="pk"
         :headers="tableColumns"
         v-model:sort-by="orderBy"
-        sort-desc
         class="main_table"
         density="default"
       >
+        <template #headers="{ columns }">
+          <TableCustomSort
+            :columns="columns"
+            v-model:externalOrderBy="orderBy"
+          />
+        </template>
         <template #item.total="{ item }">
           <span class="item_total">
             {{ formatInteger(item.total) }}
@@ -117,10 +122,11 @@ import { mapGetters } from "vuex";
 import { formatInteger } from "@/libs/numbers";
 import cloneDeep from "lodash/cloneDeep";
 import ReportPartParams from "@/components/special/ReportPartParams";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "SpecializedReportPart",
-  components: { ReportPartParams },
+  components: { ReportPartParams, TableCustomSort },
   mixins: [cancellation],
 
   props: {
@@ -164,7 +170,7 @@ export default {
       nonZeroOnly: true,
       selectedStage: this.stages.length - 1,
       palette: ["#000000", "#9C27B0", "#4CAF50", "#3F51B5", "#E91E63"],
-      orderBy: [{ key: "total", order: "asc" }],
+      orderBy: [{ key: "total", order: "desc" }],
     };
   },
 
@@ -191,27 +197,38 @@ export default {
         {
           title: this.$t("labels.platform"),
           value: "primary_obj",
+          key: "primary_obj",
           align: "start",
-          sortable: true,
         },
         {
           title: this.$t("labels.source"),
           value: "source_name",
-          sortable: true,
+          key: "source_name",
+          sortable: false,
         },
         {
           title: this.$t("labels.total"),
           value: "total",
+          key: "total",
           align: "end",
           sortable: true,
+          order: "reverse",
         },
         ...this.dateRange.map((date) => {
           return {
             title: date,
             value: `monthly_data.${date}`,
+            key: `monthly_data.${date}`,
             align: "end",
             sortable: true,
             cellClass: "font-weight-light",
+            order: "reverse",
+            sortRaw: (a, b) => {
+              return (
+                Number(a.monthly_data[date].replace(/[,\s]/g, "")) -
+                Number(b.monthly_data[date].replace(/[,\s]/g, ""))
+              );
+            },
           };
         }),
       ];

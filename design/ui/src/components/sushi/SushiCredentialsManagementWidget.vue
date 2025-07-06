@@ -1110,7 +1110,7 @@ export default {
       orderBy: [
         { key: "organization", order: "asc" },
         { key: "platform.name", order: "asc" },
-        { key: "counter_version", order: "asc" },
+        { key: "counter_version", order: "desc" },
       ],
       // state tracking support
       watchedAttrs: [

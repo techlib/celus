@@ -59,6 +59,12 @@ cs:
               v-model:page="page"
               density="default"
             >
+              <template #headers="{ columns }">
+                <TableCustomSort
+                  :columns="columns"
+                  v-model:externalOrderBy="orderBy"
+                />
+              </template>
               <template #item.data-table-expand="{ item }">
                 <v-btn
                   icon
@@ -230,6 +236,7 @@ import SushiCredentialsOverviewHeaderWidget from "@/components/sushi/SushiCreden
 import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
+import TableCustomSort from "../tables/TableCustomSort.vue";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -240,6 +247,7 @@ export default {
     ImportBatchChart,
     FetchAttemptModeFilter,
     SushiCredentialsOverviewHeaderWidget,
+    TableCustomSort,
   },
   props: {
     credentials: { required: false },
@@ -302,16 +310,19 @@ export default {
           title: this.$t("timestamp"),
           value: "timestamp",
           key: "timestamp",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.start_date"),
           value: "start_date",
           key: "start_date",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.end_date"),
           value: "end_date",
           key: "end_date",
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.error_code"),

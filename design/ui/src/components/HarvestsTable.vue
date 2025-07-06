@@ -142,8 +142,14 @@ cs:
           v-model:page="page"
           :items-length="totalCount"
           :must-sort="true"
-          v-model:sort-by="tableOptions.sortBy"
+          v-model:sort-by="sortBy"
         >
+          <template #headers="{ columns }">
+            <TableCustomSort
+              :columns="columns"
+              v-model:externalOrderBy="sortBy"
+            />
+          </template>
           <template #footer.prepend="">
             <v-btn
               size="x-small"
@@ -281,6 +287,7 @@ import {
 import CheckMark from "@/components/util/CheckMark";
 import MonthEntry from "@/components/util/MonthEntry";
 import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "HarvestsTable",
@@ -290,6 +297,7 @@ export default {
     SushiFetchIntentionsListWidget,
     CheckMark,
     MonthEntry,
+    TableCustomSort,
   },
 
   props: {
@@ -312,9 +320,7 @@ export default {
       filterBroken: "",
       filterPlatforms: [],
       totalCount: 0,
-      tableOptions: {
-        sortBy: [{ key: "pk", order: "desc" }],
-      },
+      sortBy: [{ key: "pk", order: "desc" }],
       page: 1,
       itemsPerPage: 10,
     };
@@ -380,33 +386,38 @@ export default {
       } else {
         month = this.filterMonth.year || undefined;
       }
-      let sortBy = this.tableOptions.sortBy.length
-        ? this.tableOptions.sortBy[0]
-        : "";
+      let sortBy = this.sortBy.length
+        ? this.sortBy[0]
+        : { key: "pk", order: "desc" };
+
+      let orderBy = sortBy.key;
+      let desc = sortBy.order === "desc";
+
       switch (sortBy.key) {
         case "finishedRatio":
-          sortBy = [{ key: "finished", order: "desc" }];
+          orderBy = "finished";
           break;
         case "manual":
-          sortBy = [{ key: "automatic", order: "desc" }];
+          orderBy = "automatic";
           break;
         case "lastAttempt":
-          sortBy = [{ key: "last_attempt_date", order: "desc" }];
+          orderBy = "last_attempt_date";
           break;
         case "attempts":
-          sortBy = [{ key: "attempt_count", order: "desc" }];
+          orderBy = "attempt_count";
           break;
         case "month":
-          sortBy = [{ key: "start_date", order: "desc" }];
+          orderBy = "start_date";
           break;
       }
+
       return this.$router.resolve({
         path: "/api/scheduler/harvest/",
         query: {
           page: this.page,
           page_size: this.itemsPerPage,
-          order_by: sortBy.key,
-          desc: sortBy.order === "desc" ? true : false,
+          order_by: orderBy,
+          desc: desc,
           finished,
           automatic,
           month,
@@ -423,6 +434,7 @@ export default {
           key: "pk",
           class: "wrap",
           sortable: true,
+          order: "reverse",
         },
       ];
       const headersTail = [
@@ -437,41 +449,54 @@ export default {
           key: "created",
           class: "wrap",
           sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.last_processed"),
           value: "last_processed",
           key: "last_processed",
           class: "wrap",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.manual"),
           value: "manual",
           key: "manual",
           class: "wrap",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.month"),
           value: "month",
-          key: "start_date",
+          key: "month",
           class: "wrap",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.finished"),
           value: "finishedRatio",
           key: "finishedRatio",
           align: "end",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.attempts"),
           value: "attempts",
           key: "attempts",
           align: "end",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("table_header.last_attempt"),
           value: "lastAttempt",
           key: "lastAttempt",
+          sortable: true,
+          order: "reverse",
         },
       ];
       let headersMiddle = [];

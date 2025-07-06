@@ -79,6 +79,9 @@ cs:
       :no-data-text="$t('no_records')"
       density="default"
     >
+      <template #headers="{ columns }">
+        <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
+      </template>
       <template #item.name="{ item }">
         <router-link
           v-if="platformId"
@@ -144,13 +147,14 @@ import ShortenText from "@/components/ShortenText";
 import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
 import DoiLink from "@/components/util/DoiLink.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "ItemList",
 
   mixins: [cancellation, stateTracking],
 
-  components: { DoiLink, ShortenText },
+  components: { DoiLink, ShortenText, TableCustomSort },
 
   props: {
     platformId: { required: false },
@@ -260,6 +264,8 @@ export default {
           value: "interests." + ig.short_name,
           class: "wrap text-xs-right",
           align: "right",
+          order: "reverse",
+          sortable: true,
         });
       }
       return base;
@@ -276,8 +282,11 @@ export default {
       return base + "item/";
     },
     fullUrl() {
-      let sortBy = this.orderBy[0].key;
-      let orderBy = this.orderBy[0].order;
+      let sortBy =
+        this.orderBy[0]?.key ||
+        (this.orderInterest ? this.orderInterest : "name");
+      let orderBy =
+        this.orderBy[0]?.order || (!this.orderInterest ? "asc" : "desc");
       if (sortBy) {
         if (sortBy.startsWith("interests.")) {
           sortBy = sortBy.replace("interests.", "");
@@ -379,8 +388,19 @@ export default {
     itemsPerPage() {
       this.page = 1;
     },
-    orderBy() {
-      this.page = 1;
+    orderBy: {
+      handler(newOrderBy) {
+        if (!newOrderBy || newOrderBy.length === 0) {
+          this.orderBy = [
+            {
+              key: this.orderInterest ? this.orderInterest : "name",
+              order: !this.orderInterest ? "asc" : "desc",
+            },
+          ];
+        }
+        this.page = 1;
+      },
+      deep: true,
     },
     selectedPubType() {
       this.page = 1;

@@ -28,6 +28,9 @@ cs:
     return-object
     density="default"
   >
+    <template #headers="{ columns }">
+      <TableCustomSort :columns="columns" v-model:externalOrderBy="sortBy" />
+    </template>
     <template #item.data-table-expand="{ item }">
       <v-icon
         @click="toggleExpanded(item)"
@@ -200,6 +203,7 @@ import EventImportanceSelect from "@/components/events/EventImportanceSelect.vue
 import stateTracking from "@/mixins/stateTracking";
 import { mapActions, mapState } from "vuex";
 import { marked } from "marked";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "EventList",
@@ -208,6 +212,7 @@ export default {
     EventImportanceSelect,
     EventCategoryMark,
     EventImportanceIcon,
+    TableCustomSort,
   },
 
   mixins: [cancellation, stateTracking],
@@ -289,6 +294,7 @@ export default {
           value: "created",
           width: "10rem",
           sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("events.title"),
@@ -314,6 +320,7 @@ export default {
           value: "expiration_date",
           key: "expiration_date",
           sortable: true,
+          order: "reverse",
         },
       ];
     },

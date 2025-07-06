@@ -342,7 +342,14 @@ cs:
             show-select
             item-key="platform"
             item-value="platform"
+            v-model:sort-by="sortBy"
           >
+            <template #headers="{ columns }">
+              <TableCustomSort
+                :columns="columns"
+                v-model:externalOrderBy="sortBy"
+              />
+            </template>
             <template #item.records="{ item }">
               {{ item.records.length }}
             </template>
@@ -435,6 +442,7 @@ import CoverageCard from "@/components/coverage/CoverageCard.vue";
 import stateTracking from "@/mixins/stateTracking";
 import { counterVersionToStr } from "@/libs/sushi";
 import { useGoTo } from "vuetify";
+import TableCustomSort from "@/components/tables/TableCustomSort.vue";
 
 export default {
   name: "DataCoverageOverviewPage",
@@ -446,6 +454,7 @@ export default {
     SushiFetchIntentionsListWidget,
     CompositionBar,
     CoverageMap,
+    TableCustomSort,
   },
 
   setup() {
@@ -468,6 +477,7 @@ export default {
       harvestId: null,
       refreshingSelected: false,
       isDetailVisible: false,
+      sortBy: [],
       // state tracking support
       watchedAttrs: [
         {
@@ -638,18 +648,24 @@ export default {
     },
     harvestablePlatformsHeaders() {
       return [
-        { title: this.$t("labels.platform"), value: "platform", key: "value" },
+        {
+          title: this.$t("labels.platform"),
+          value: "platform",
+          key: "value",
+        },
         {
           title: this.$t("labels.credentials"),
           value: "records",
           key: "records",
           align: "end",
+          order: "reverse",
         },
         {
           title: this.$t("labels.months"),
           value: "monthCount",
           key: "monthCount",
           align: "end",
+          order: "reverse",
         },
       ];
     },

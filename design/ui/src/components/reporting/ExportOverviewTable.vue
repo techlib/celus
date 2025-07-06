@@ -15,6 +15,9 @@
     v-model:sort-by="orderBy"
     density="default"
   >
+    <template #headers="{ columns }">
+      <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
+    </template>
     <template #top>
       <v-col>
         <v-btn @click="fetchData" color="primary">
@@ -121,10 +124,11 @@ import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import { EXPORT_ERROR, EXPORT_FINISHED } from "@/libs/flexi-reports";
 import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 
 export default {
   name: "ExportOverviewTable",
-  components: { ReportSpecOverview, ExportMonitorWidget },
+  components: { ReportSpecOverview, ExportMonitorWidget, TableCustomSort },
   mixins: [reportTypes, translators],
 
   data() {
@@ -154,8 +158,17 @@ export default {
           sortable: false,
           align: "start",
         },
-        { title: this.$t("labels.date"), value: "created", key: "created" },
-        { title: this.$t("labels.report_name"), value: "name", key: "name" },
+        {
+          title: this.$t("labels.date"),
+          value: "created",
+          key: "created",
+          order: "reverse",
+        },
+        {
+          title: this.$t("labels.report_name"),
+          value: "name",
+          key: "name",
+        },
         {
           title: this.$t("labels.rows"),
           value: "primaryDimension",
@@ -171,6 +184,7 @@ export default {
           value: "fileSize",
           key: "fileSize",
           align: "end",
+          order: "reverse",
         },
         {
           title: this.$t("labels.file_format"),
@@ -182,7 +196,12 @@ export default {
           value: "outputFile",
           sortable: false,
         },
-        { title: this.$t("expires_in"), value: "expiresIn", key: "expiresIn" },
+        {
+          title: this.$t("expires_in"),
+          value: "expiresIn",
+          key: "expiresIn",
+          order: "reverse",
+        },
       ];
     },
     twoPanes() {

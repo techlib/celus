@@ -55,6 +55,7 @@ cs:
     :items-per-page-options="[50, 100, -1]"
     :custom-filter="searchFilter"
     class="auto-table"
+    v-model:sort-by="orderBy"
   >
     <template #top>
       <v-row>
@@ -92,6 +93,9 @@ cs:
           </v-text-field>
         </v-col>
       </v-row>
+    </template>
+    <template #headers="{ columns }">
+      <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
     </template>
     <template #item.data-table-expand="{ item }">
       <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
@@ -180,13 +184,14 @@ import cancellation from "@/mixins/cancellation";
 import ReportInterestGroups from "@/components/ReportInterestGroups";
 import { mapState } from "vuex";
 import { formatInteger } from "@/libs/numbers";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "InterestOverviewMetrics",
 
   mixins: [cancellation],
 
-  components: { ReportInterestGroups, ReportChip },
+  components: { ReportInterestGroups, ReportChip, TableCustomSort },
 
   data() {
     return {
@@ -196,6 +201,7 @@ export default {
       loading: false,
       interestGroups: [],
       selectedGroup: null,
+      orderBy: [],
     };
   },
 
@@ -227,6 +233,7 @@ export default {
           value: "approx_record_count",
           key: "approx_record_count",
           align: "end",
+          order: "reverse",
         },
       ];
     },

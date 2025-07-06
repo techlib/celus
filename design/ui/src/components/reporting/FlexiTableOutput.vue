@@ -160,6 +160,13 @@ cs:
           ></v-skeleton-loader>
         </template>
 
+        <template #headers="{ columns }">
+          <TableCustomSort
+            :columns="columns"
+            v-model:externalOrderBy="sortBy"
+          />
+        </template>
+
         <template #item.tag="{ item }">
           <TagChip :tag="item.tag" show-class small v-if="item.pk"></TagChip>
           <span v-else class="text--secondary">{{ item.tag }}</span>
@@ -291,11 +298,18 @@ import { smartMonthRange } from "@/libs/dates";
 import { useGoTo } from "vuetify";
 import { differenceInMonths, addMonths } from "date-fns";
 import { ymDateParse } from "@/libs/dates";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
 
 export default {
   name: "FlexiTableOutput",
-  components: { TrendArrow, TagChip, ReportingChart, OutlinedContainer },
+  components: {
+    TrendArrow,
+    TagChip,
+    ReportingChart,
+    TableCustomSort,
+    OutlinedContainer,
+  },
   mixins: [translators, cancellation, tags],
 
   props: {
@@ -344,7 +358,7 @@ export default {
       page: 1,
       itemsPerPage: 20,
       prevOptions: {},
-      sortBy: [{ key: "_total", desc: true }],
+      sortBy: [{ key: "_total", order: "desc" }],
       ordering: "-_total",
       baseWidth: 0,
       remainder: null,
@@ -416,6 +430,7 @@ export default {
             value: "_total",
             sortable: true,
             align: "end",
+            order: "reverse",
             sortRaw(a, b) {
               if (
                 Number(a._total.replace(/\s/g, "")) <
@@ -440,6 +455,7 @@ export default {
             cellProps: {
               class: "data-col",
             },
+            order: "reverse",
             sortRaw(a, b) {
               if (
                 Number(a[item.value].replace(/\s/g, "")) <
@@ -457,6 +473,7 @@ export default {
         let titleHeaders = this.activeTitleColumns.map((key) => ({
           title: this.$t("title_fields." + key),
           value: "target__" + key,
+          order: "reverse",
         }));
         let tagHeaders = this.taggableRow
           ? [

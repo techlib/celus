@@ -70,6 +70,12 @@ cs:
           v-model:sort-by="orderBy"
           class="custom-header"
         >
+          <template #headers="{ columns }">
+            <TableCustomSort
+              :columns="columns"
+              v-model:externalOrderBy="orderBy"
+            />
+          </template>
           <template #item.name="{ item }">
             <router-link
               :to="{
@@ -212,6 +218,7 @@ import stateTracking from "@/mixins/stateTracking";
 import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 import { counterVersionToStr } from "@/libs/sushi";
 import debounce from "lodash/debounce";
+import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
   name: "PlatformList",
@@ -221,6 +228,7 @@ export default {
     TagSelector,
     TagChip,
     PlatformEditDialog,
+    TableCustomSort,
   },
 
   mixins: [cancellation, tags, stateTracking],
@@ -243,8 +251,7 @@ export default {
       // table options
       page: 1,
       itemsPerPage: -1,
-      orderBy: [{ key: "name", order: this.orderDesc ? "desc" : "asc" }],
-      orderDesc: false,
+      orderBy: [{ key: "name", order: "asc" }],
       // state tracking support
       watchedAttrs: [
         {
@@ -263,10 +270,6 @@ export default {
         {
           name: "orderBy",
           type: Object,
-        },
-        {
-          name: "orderDesc",
-          type: Boolean,
         },
         {
           name: "selectedTags",
@@ -321,6 +324,7 @@ export default {
           class: "wrap",
           align: "end",
           key: "title_count",
+          order: "reverse",
         },
       ];
       for (let ig of this.activeInterestGroups) {
@@ -330,6 +334,7 @@ export default {
           class: "wrap text-xs-right",
           align: "end",
           key: "interests." + ig.short_name,
+          order: "reverse",
         });
       }
       base.push({
