@@ -124,6 +124,7 @@ en:
     ongoing_fy: Ongoing fiscal year
     previous_2_years: Last two finished years
     previous_year: Previous year
+    current_year: Current year
   date_range_desc:
     current_plus_2y_back: Matches the COUNTER data retention period
     custom: Manually select the data range
@@ -537,6 +538,7 @@ cs:
     ongoing_fy: Probíhající fiskální rok
     previous_2_years: Předchozí dva kalendářní roky
     previous_year: Předchozí kalendářní rok
+    current_year: Aktuální rok
   date_range_desc:
     current_plus_2y_back: Odpovídá retenční periodě pro COUNTER data
     custom: Manuální volba zobrazeného období

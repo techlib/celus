@@ -171,6 +171,11 @@ export default createStore({
           start: addMonths(new Date(), -12),
           end: null,
         },
+        {
+          name: "date_range.current_year",
+          start: startOfYear(new Date()),
+          end: null,
+        },
       ];
       if (state.fiscalYearStart !== 0) {
         // add fiscal year based ranges - those are reactive to the fiscal year start
