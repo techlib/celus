@@ -5,10 +5,17 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django_celus_registry import models as orig_models
 
-from .models import Platform, PlatformExtras, SushiService
+from .models import (
+    CounterRegistryProfile,
+    NotificationEvent,
+    Platform,
+    PlatformExtras,
+    SushiService,
+)
 
 admin.site.unregister(orig_models.Platform)
 admin.site.unregister(orig_models.SushiService)
+admin.site.unregister(orig_models.Notification)
 
 
 class ReportsInline(admin.TabularInline):
@@ -111,3 +118,61 @@ class PlatformExtrasAdmin(admin.ModelAdmin):
 
     pretty_knowledgebase.allow_tags = True
     pretty_knowledgebase.short_description = "Knowledgebase"
+
+
+@admin.register(NotificationEvent)
+class NotificationEventAdmin(admin.ModelAdmin):
+    list_display = ("subject", "start_date", "end_date", "platform")
+    select_related = ("notification", "event")
+
+    @admin.display(description="subject", ordering="notification__subject")
+    def subject(self, obj):
+        return obj.notification.subject
+
+    @admin.display(description="start_date", ordering="notification__start_date")
+    def start_date(self, obj):
+        return obj.notification.start_date
+
+    @admin.display(description="end_date", ordering="notification__end_date")
+    def end_date(self, obj):
+        return obj.notification.end_date
+
+    @admin.display(description="platform", ordering="event__platform__name")
+    def platform(self, obj):
+        if obj.event.platform:
+            return obj.event.platform.name
+        return ""
+
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+    def has_change_permission(self, *args, **kwargs):
+        return False
+
+
+@admin.register(CounterRegistryProfile)
+class CounterRegistryProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "events_from_counter_registry", "last_registry_event_date")
+    readonly_fields = ("user",)
+    select_related = ("user",)
+
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+
+@admin.register(orig_models.Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+    def has_change_permission(self, *args, **kwargs):
+        return False

@@ -18,6 +18,7 @@ from core.tests.conftest import (  # noqa - fixtures
 from django.core.management import call_command
 from django.db.models import Sum
 from django.urls import reverse
+from events.fake_data import EventFactory
 from logs.fake_data import (
     AccessLogFactory,
     ImportBatchFactory,
@@ -2341,6 +2342,17 @@ class TestAllPlatformsAPI:
             assert plat_source_type_org.pk not in resp_pks
         else:
             assert plat_source_type_org.pk in resp_pks
+
+    @pytest.mark.parametrize("has_event,count", [(True, 1), (False, 1), (None, 2)])
+    def test_all_platform_has_event_param(self, clients, has_event, count):
+        Platform.objects.all().delete()
+        PlatformFactory(source=None)
+        EventFactory(platform=PlatformFactory(source=None))
+
+        fltr = {} if has_event is None else {"has_event": has_event}
+        resp = clients["admin1"].get(reverse("all-platforms-list", args=[-1]), fltr)
+        assert resp.status_code == 200
+        assert len(resp.data) == count
 
     @pytest.mark.parametrize(
         ["client", "status", "organization", "available"],

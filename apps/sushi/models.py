@@ -1405,6 +1405,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
                         f"as broken as a result of a harvesting error.",
                         importance=EventImportance.HIGH,
                         category=EventCategory.SUSHI,
+                        platform=self.credentials.platform,
                     )
             else:
                 Event.create_for_users(
@@ -1415,6 +1416,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
                     f"as broken as a result of a harvesting error.",
                     importance=EventImportance.HIGH,
                     category=EventCategory.SUSHI,
+                    platform=self.credentials.platform,
                 )
 
     def any_success_lately(self, days: int = 15) -> bool:

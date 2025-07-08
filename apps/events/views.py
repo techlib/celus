@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
-from events.event_filters import CategoryFilter, ImportanceFilter, ReadStatusFilter
+from events.event_filters import CategoryFilter, ImportanceFilter, PlatformFilter, ReadStatusFilter
 from events.models import (
     Event,
     EventCategory,
@@ -31,14 +31,21 @@ class UserEventsViewSet(viewsets.ReadOnlyModelViewSet):
         ReadStatusFilter,
         SearchFilter,
         OrderByFilter,
+        PlatformFilter,
     ]
     search_fields = ["title", "description"]
 
     def get_queryset(self):
-        return self.request.user.assigned_events.active().annotate(
-            read=Exists(
-                UserEvent.objects.filter(user=self.request.user, event=OuterRef("pk"), read=True)
+        return (
+            self.request.user.assigned_events.active()
+            .annotate(
+                read=Exists(
+                    UserEvent.objects.filter(
+                        user=self.request.user, event=OuterRef("pk"), read=True
+                    )
+                )
             )
+            .select_related("platform")
         )
 
     @action(detail=True, methods=["post"], url_path="mark-read")

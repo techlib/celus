@@ -98,7 +98,7 @@ tests:run_tests:registry:
     REDIS_URL: "redis://redis:6379/1"
     CELERY_BROKER_URL: "redis://redis:6379/"
   before_script:
-    - poetry install --no-root -E registry
+    - poetry install --no-root
   script:
     - cp .env.example .env
     - poetry run pytest --counter-registry -v --create-db --junitxml=report.xml --cov=counter_registry --cov-report=xml --cov-report=term apps/

@@ -21,3 +21,10 @@ class ReadStatusFilter(filters.BaseFilterBackend):
         if read := request.query_params.get("read", ""):
             queryset = queryset.filter(read=to_bool(read))
         return queryset
+
+
+class PlatformFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if platform := request.query_params.get("platform", ""):
+            queryset = queryset.filter(platform__pk=platform)
+        return queryset

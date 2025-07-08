@@ -1,17 +1,20 @@
 import logging
 import typing
 
-from core.models import DataSource
+from core.models import DataSource, User
+from dateutil.relativedelta import relativedelta
 from django.db.models import (
     CASCADE,
     BooleanField,
     Case,
     CharField,
+    DateTimeField,
     Exists,
     F,
     IntegerField,
     JSONField,
     Manager,
+    Max,
     Model,
     OneToOneField,
     OuterRef,
@@ -23,7 +26,11 @@ from django.db.models import (
     Value,
     When,
 )
+from django.db.transaction import atomic
+from django.template.loader import render_to_string
+from django.utils.timezone import now
 from django_celus_registry import models as proxied_models
+from events.models import Event, EventCategory, EventImportance
 from publications import models as publications_models
 from sushi import models as sushi_models
 
@@ -241,3 +248,117 @@ class PlatformExtras(Model):
     platform = OneToOneField(Platform, on_delete=CASCADE)
     notes = TextField(blank=True)
     knowledgebase = JSONField()
+
+
+class NotificationQuerySet(QuerySet):
+    @atomic
+    def sync_events(self):
+        # Create events for the notification
+        events = []
+        existing_ids = NotificationEvent.objects.values_list("notification_id", flat=True)
+        notification_ids = []
+        platform_map = {
+            e.counter_registry_id: e.pk
+            for e in publications_models.Platform.objects.filter(counter_registry_id__isnull=False)
+        }
+        for notification in (
+            proxied_models.Notification.objects.exclude(pk__in=existing_ids)
+            .select_related("sushi_service")
+            .order_by("published_date")
+        ):
+            notification_ids.append(notification.id)
+            # TODO format notification message
+            reports = ", ".join(
+                [f"{e['report_id']} (R{e['counter_release']})" for e in notification.reports]
+            )
+            message = render_to_string(
+                "counter_registry/event.md", {"notification": notification, "reports": reports}
+            )
+            importance = (
+                EventImportance.HIGH if notification.type == "DATA EDIT" else EventImportance.NORMAL
+            )
+            # prepare event
+            events.append(
+                Event(
+                    created=notification.published_date,
+                    title=notification.subject,
+                    description=message.strip(),
+                    platform_id=notification.sushi_service
+                    and platform_map.get(notification.sushi_service.platform_id),
+                    category=EventCategory.PLATFORM_INFO,
+                    importance=importance,
+                    expiration_date=(notification.published_date + relativedelta(years=1)),
+                )
+            )
+
+        if not events:
+            return
+
+        # create notification to event link
+        created_events = Event.objects.bulk_create(events)
+        new_notification_events = []
+        for notification_id, event in zip(notification_ids, created_events):
+            new_notification_events.append(
+                NotificationEvent(notification_id=notification_id, event_id=event.id)
+            )
+        NotificationEvent.objects.bulk_create(new_notification_events)
+
+    @atomic
+    def assign_to_users(self):
+        users_and_since = []
+        profile_ids = []
+        # We are using this to show only events which are not that old
+        default_since = now() - relativedelta(years=1)
+        for user in User.objects.all():
+            # make sure that every user has a profile
+            profile, _ = CounterRegistryProfile.objects.get_or_create(user=user)
+
+            # collect the users and their last event
+            if profile.events_from_counter_registry:
+                profile_ids.append(profile.pk)
+                users_and_since.append((user, profile.last_registry_event_date or default_since))
+
+        # iterate through published notifications
+        for ne in self.filter(notification__published_date__isnull=False):
+            users = [
+                user for user, since in users_and_since if since < ne.notification.published_date
+            ]
+            ne.event.assign_to_users(users)
+
+        # update profiles
+        if max_date := self.aggregate(max_date=Max("notification__published_date"))["max_date"]:
+            CounterRegistryProfile.objects.filter(pk__in=profile_ids).update(
+                last_registry_event_date=max_date
+            )
+
+
+class NotificationManager(Manager):
+    def get_queryset(self):
+        related_platforms = publications_models.Platform.objects.filter(
+            counter_registry_id=OuterRef("notification__sushi_service__platform_id")
+        )
+        return (
+            super()
+            .get_queryset()
+            .annotate(
+                related_platform=Subquery(
+                    related_platforms.values_list("pk", flat=True)[:1], output_field=IntegerField()
+                )
+            )
+        )
+
+
+class CounterRegistryProfile(Model):
+    user = OneToOneField(User, on_delete=CASCADE, unique=True)
+    events_from_counter_registry = BooleanField(default=True)
+    last_registry_event_date = DateTimeField(null=True, blank=True)
+
+
+class NotificationEvent(Model):
+    notification = OneToOneField(proxied_models.Notification, on_delete=CASCADE, unique=True)
+    event = OneToOneField(Event, on_delete=CASCADE, unique=True)
+
+    objects = NotificationManager.from_queryset(NotificationQuerySet)()
+
+    def __str__(self):
+        return f"NotificationEvent {self.notification_id} - {self.event_id}"

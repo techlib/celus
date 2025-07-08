@@ -65,7 +65,7 @@ django-anymail = "^13.0.1"
 django-autocomplete-light = "~3.12.1"
 django-cachalot = "~2.8.0"
 django-celery-results = "~2.6.0"
-django-celus-registry = "~0.1.1"
+django-celus-registry = "~0.4.0"
 django-colorfield = "^0.14.0"
 django-impersonate = "~1.9.1"
 django-import-export = "^4.3.9"
@@ -137,9 +137,6 @@ ruff = "^0.12.7"
 sphinx = "^7.2"
 watchdog = { extras = ["watchmedo"], version = "^6.0.0" }
 tuna = "^0.5.11"
-
-[tool.poetry.extras]
-registry = ["django-celus-registry"]
 
 [tool.deptry]
 known_first_party = ["test_scenarios"]

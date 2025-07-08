@@ -1,3 +1,4 @@
+from publications.serializers import SimplePlatformSerializer
 from rest_framework import fields, serializers
 
 from events.models import Event, EventCategory, EventImportance, UserEvent
@@ -5,6 +6,7 @@ from events.models import Event, EventCategory, EventImportance, UserEvent
 
 class EventSerializer(serializers.ModelSerializer):
     read = serializers.BooleanField(read_only=True)  # created in a query
+    platform = SimplePlatformSerializer(read_only=True)
 
     class Meta:
         model = Event
@@ -46,3 +48,4 @@ class UserEventFilterSerializer(serializers.Serializer):
     read = DefaultEmptyBooleanField(required=False)
     importance = serializers.ChoiceField(choices=EventImportance.choices, required=False)
     category = serializers.ChoiceField(choices=EventCategory.choices, required=False)
+    platform = serializers.IntegerField(required=False)

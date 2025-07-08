@@ -439,8 +439,8 @@ export default createStore({
       return state.basicInfo.OTP_ENABLED;
     },
     usesRegistryBackend(state) {
-      if ("USES_REGISTRY_BACKEND" in state.basicInfo) {
-        return state.basicInfo["USES_REGISTRY_BACKEND"];
+      if ("USE_REGISTRY_AS_KNOWLEDGEBASE" in state.basicInfo) {
+        return state.basicInfo["USE_REGISTRY_AS_KNOWLEDGEBASE"];
       }
     },
   },

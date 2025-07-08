@@ -90,5 +90,5 @@ if settings.DEBUG:
         path("redoc", views.RedocView.as_view()),
     ] + urlpatterns
 
-if settings.USES_REGISTRY_BACKEND:
+if settings.USE_REGISTRY_AS_KNOWLEDGEBASE:
     urlpatterns.append(path("counter_registry/", include("counter_registry.urls")))

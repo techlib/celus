@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
+from publications.fake_data import PlatformFactory
 
 from events.fake_data import EventFactory, UserEventFactory
 from events.models import (
@@ -148,6 +149,33 @@ class TestEventListAPI:
             for rec in data["results"]
         )
 
+    @pytest.mark.parametrize("platform_filter,count", ((None, 15), ("P1", 3), ("P2", 5)))
+    def test_user_events_platform_filter(self, admin_client, admin_user, platform_filter, count):
+        platforms = {
+            "P1": PlatformFactory.create(name="P1"),
+            "P2": PlatformFactory.create(name="P2"),
+        }
+        UserEvent.objects.all().delete()  # make sure that no user events exist
+        events1 = EventFactory.create_batch(3, platform=platforms["P1"])
+        events2 = EventFactory.create_batch(5, platform=platforms["P2"])
+        events3 = EventFactory.create_batch(7, platform=None)
+        EventFactory.create_batch(11)
+        for e in events1 + events2 + events3:
+            e.assign_to_users([admin_user])
+
+        response = admin_client.get(
+            reverse("user-events-list"),
+            {"platform": platforms[platform_filter].pk} if platform_filter else {},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == count
+        assert len(data["results"]) == count
+        if platform_filter:
+            assert all(
+                rec["platform"]["pk"] == platforms[platform_filter].pk for rec in data["results"]
+            )
+
     @pytest.mark.parametrize("desc", (True, False))
     @pytest.mark.parametrize("order_by", ("created", "title", "read"))
     def test_user_events_list_sorting(self, admin_client, admin_user, order_by, desc):
@@ -220,6 +248,11 @@ class TestEventListAPI:
                             {"importance": 10, "count": 5},
                             {"importance": 20, "count": 3},
                         ],
+                        "platform": [
+                            {"platform": None, "count": 5},
+                            {"platform": "P1", "count": 2},
+                            {"platform": "P2", "count": 1},
+                        ],
                     },
                 ),
                 True,
@@ -240,11 +273,21 @@ class TestEventListAPI:
                             {"importance": 10, "count": 3},
                             {"importance": 20, "count": 2},
                         ],
+                        "platform": [
+                            {"platform": None, "count": 2},
+                            {"platform": "P1", "count": 2},
+                            {"platform": "P2", "count": 1},
+                        ],
                     },
                 ),
                 True,
             ),
-            ("2023-03-03", {}, (0, 0, {"category": [], "importance": [], "read": []}), False),
+            (
+                "2023-03-03",
+                {},
+                (0, 0, {"category": [], "importance": [], "read": [], "platform": []}),
+                False,
+            ),
             (
                 "2023-01-03",
                 {"read": True},
@@ -260,6 +303,11 @@ class TestEventListAPI:
                         "importance": [
                             {"importance": 10, "count": 3},
                             {"importance": 20, "count": 2},
+                        ],
+                        "platform": [
+                            {"platform": None, "count": 2},
+                            {"platform": "P1", "count": 2},
+                            {"platform": "P2", "count": 1},
                         ],
                     },
                 ),
@@ -281,6 +329,10 @@ class TestEventListAPI:
                             {"importance": 10, "count": 3},
                             {"importance": 20, "count": 1},
                         ],
+                        "platform": [
+                            {"platform": None, "count": 2},
+                            {"platform": "P1", "count": 2},
+                        ],
                     },
                 ),
                 True,
@@ -301,6 +353,7 @@ class TestEventListAPI:
                             {"importance": 10, "count": 5},
                             {"importance": 20, "count": 3},
                         ],
+                        "platform": [{"platform": None, "count": 3}],
                     },
                 ),
                 True,
@@ -321,6 +374,26 @@ class TestEventListAPI:
                             {"importance": 10, "count": 2},
                             {"importance": 20, "count": 1},
                         ],
+                        "platform": [{"platform": "P1", "count": 2}],
+                    },
+                ),
+                True,
+            ),
+            (
+                "2023-01-03",
+                {"platform": "P1"},
+                (
+                    8,
+                    3,
+                    {
+                        "read": [{"read": True, "count": 2}],
+                        "category": [{"category": "sushi", "count": 2}],
+                        "importance": [{"importance": 10, "count": 2}],
+                        "platform": [
+                            {"platform": None, "count": 5},
+                            {"platform": "P1", "count": 2},
+                            {"platform": "P2", "count": 1},
+                        ],
                     },
                 ),
                 True,
@@ -332,6 +405,10 @@ class TestEventListAPI:
         Tests that the stats action works as expected. It should only show events that are
         active = not expired.
         """
+        platforms = {"P1": PlatformFactory(short_name="P1"), "P2": PlatformFactory(short_name="P2")}
+        # Convert platform name to id
+        if platform_name := filters.get("platform"):
+            filters["platform"] = platforms[platform_name].pk
         with freeze_time("2023-01-01"):
             UserEvent.objects.all().delete()  # make sure that no user events exist
 
@@ -372,6 +449,7 @@ class TestEventListAPI:
                 event__expiration_date="2023-03-01",
                 event__category=EventCategory.SUSHI,
                 event__importance=EventImportance.NORMAL,
+                event__platform=platforms["P1"],
             )
             UserEventFactory.create_batch(
                 1,
@@ -380,6 +458,7 @@ class TestEventListAPI:
                 event__expiration_date="2023-03-01",
                 event__category=EventCategory.OVERLAP,
                 event__importance=EventImportance.NORMAL,
+                event__platform=platforms["P2"],
             )
             UserEventFactory.create_batch(
                 1,
@@ -401,6 +480,15 @@ class TestEventListAPI:
                 UserEvent.objects.order_by("event_id").last().event_id if last_exists else None
             )
 
+            # platform name => id
+            filter_counts["platform"] = [
+                {
+                    "count": e["count"],
+                    "platform": platforms.get(e["platform"]) and platforms[e["platform"]].pk,
+                }
+                for e in filter_counts["platform"]
+            ]
+
             # Sort counts so the test can be fully deterministic
             data["counts"]["read"] = sorted(data["counts"]["read"], key=lambda x: x["read"])
             data["counts"]["importance"] = sorted(
@@ -408,6 +496,10 @@ class TestEventListAPI:
             )
             data["counts"]["category"] = sorted(
                 data["counts"]["category"], key=lambda x: x["category"]
+            )
+
+            data["counts"]["platform"] = sorted(
+                data["counts"]["platform"], key=lambda x: x["platform"] or 0
             )
             assert data["counts"] == filter_counts
 

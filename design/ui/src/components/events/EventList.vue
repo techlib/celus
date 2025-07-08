@@ -37,15 +37,15 @@ cs:
         @toggle-select-all="toggleSelectAll"
       />
     </template>
+
     <template #item.data-table-expand="{ item }">
-      <v-icon
-        @click="toggleExpanded(item)"
-        :class="{ rotated: expanded.includes(item) }"
-        class="expand_icon"
-      >
-        fa fa-caret-down
-      </v-icon>
+      <v-btn @click="toggleExpanded(item)" icon size="small" variant="text">
+        <v-icon size="small">
+          fa fa-angle-{{ expanded.includes(item) ? "down" : "right" }}
+        </v-icon>
+      </v-btn>
     </template>
+
     <template #item.read="{ item }">
       <v-icon
         v-if="item.read"
@@ -88,6 +88,9 @@ cs:
       <span v-if="item.expiration_date">{{
         isoDateFormat(parseDateTime(item.expiration_date))
       }}</span>
+    </template>
+    <template #item.platform="{ item }">
+      <span>{{ item.platform?.name || item.platform?.short_name || "" }}</span>
     </template>
     <template v-slot:expanded-row="{ columns, item }">
       <tr class="item_expanded_space">
@@ -166,6 +169,14 @@ cs:
             </template>
           </v-select>
         </v-col>
+        <v-col cols="12" md="4" lg="3" xl="2">
+          <PlatformSelector
+            :platforms="platformList"
+            v-model="filterPlatform"
+            :loading="loadingPlatforms"
+          >
+          </PlatformSelector>
+        </v-col>
         <v-spacer></v-spacer>
         <v-col cols="12" md="4" lg="3" xl="2">
           <v-text-field
@@ -200,21 +211,22 @@ cs:
 </template>
 
 <script>
-import cancellation from "@/mixins/cancellation";
+import EventCategoryMark from "@/components/events/EventCategoryMark.vue";
+import EventCategorySelect from "@/components/events/EventCategorySelect.vue";
+import EventImportanceIcon from "@/components/events/EventImportanceIcon.vue";
+import EventImportanceSelect from "@/components/events/EventImportanceSelect.vue";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort";
 import {
   isoDateFormat,
   isoDateTimeFormatSpans,
   parseDateTime,
 } from "@/libs/dates";
-import EventImportanceIcon from "@/components/events/EventImportanceIcon.vue";
-import EventCategoryMark from "@/components/events/EventCategoryMark.vue";
-import debounce from "lodash/debounce";
-import EventCategorySelect from "@/components/events/EventCategorySelect.vue";
-import EventImportanceSelect from "@/components/events/EventImportanceSelect.vue";
+import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
-import { mapActions, mapState } from "vuex";
+import debounce from "lodash/debounce";
 import { marked } from "marked";
-import TableCustomSort from "@/components/tables/TableCustomSort";
+import { mapActions, mapState } from "vuex";
 
 export default {
   name: "EventList",
@@ -224,6 +236,7 @@ export default {
     EventCategoryMark,
     EventImportanceIcon,
     TableCustomSort,
+    PlatformSelector,
   },
 
   mixins: [cancellation, stateTracking],
@@ -232,13 +245,16 @@ export default {
     return {
       events: [],
       selectedEvents: [],
+      platformList: [],
       eventCount: 0,
       loading: false,
+      loadingPlatforms: false,
       expanded: [],
       search: "",
       filterCategory: null,
       filterImportance: null,
       filterRead: null,
+      filterPlatform: null,
       sortBy: [{ key: "created", order: "desc" }],
       page: 1,
       pageSize: 10,
@@ -264,11 +280,10 @@ export default {
           name: "sortBy",
           type: Object,
         },
-        // {
-        //   name: "sortDesc",
-        //   type: Boolean,
-        //   alwaysTrack: true,
-        // },
+        {
+          name: "filterPlatform",
+          type: Number,
+        },
       ],
     };
   },
@@ -308,6 +323,12 @@ export default {
           order: "reverse",
         },
         {
+          title: this.$t("platform"),
+          value: "platform",
+          key: "platform",
+          sortable: true,
+        },
+        {
           title: this.$t("events.title"),
           value: "title",
           key: "title",
@@ -345,6 +366,9 @@ export default {
       }
       if (this.filterRead != null) {
         params.push(`read=${this.filterRead}`);
+      }
+      if (this.filterPlatform != null) {
+        params.push(`platform=${this.filterPlatform}`);
       }
       if (this.sortBy != null && Array.isArray(this.sortBy) && this.sortBy[0]) {
         params.push(`order_by=${this.sortBy[0].key}`);
@@ -523,10 +547,30 @@ export default {
         this.selectedEvents = [];
       }
     },
+    async fetchPlatforms() {
+      this.platformList = [];
+      this.loadingPlatforms = true;
+      let result = await this.http({
+        url: "/api/organization/-1/all-platform/?has_event=true",
+      });
+      this.loadingPlatforms = false;
+      if (!result.error) {
+        this.platformList = result.response.data;
+        this.platformList.sort((a, b) => {
+          let atext = a.name || a.short_name;
+          let btext = b.name || b.short_name;
+          return atext.localeCompare(btext);
+        });
+      }
+    },
   },
 
   created() {
     this.fetchEvents();
+  },
+
+  mounted() {
+    this.fetchPlatforms();
   },
 
   watch: {
@@ -548,19 +592,17 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 div.event-text {
   p {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
   }
-}
 
-.expand_icon {
-  color: rgba(0, 0, 0, 0.6);
-  transition: transform 0.3s;
-}
-
-.rotated {
-  transform: rotate(180deg);
+  hr {
+    margin: 1rem 0;
+    border: none;
+    background-color: #ddd;
+    height: 1px;
+  }
 }
 </style>

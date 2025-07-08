@@ -213,36 +213,38 @@ class UserEventQuerySet(models.QuerySet):
         read: Optional[bool] = None,
         category: Optional[EventCategory] = None,
         importance: Optional[EventImportance] = None,
+        platform: Optional[int] = None,
         events: Optional[models.QuerySet[Event]] = None,
     ) -> dict:
         qs = self.active()
         event_filter = Q(event__in=events) if events is not None else Q()
-        read_agg_filter = (Q(event__category=category) if category is not None else Q()) & (
-            Q(event__importance=importance) if importance is not None else Q()
-        )
-        category_agg_filter = (
-            Q(event__importance=importance) if importance is not None else Q()
-        ) & (Q(read=read) if read is not None else Q())
-        importance_agg_filter = (Q(event__category=category) if category is not None else Q()) & (
-            Q(read=read) if read is not None else Q()
-        )
+        q_category = Q(event__category=category) if category is not None else Q()
+        q_importance = Q(event__importance=importance) if importance is not None else Q()
+        q_platform = Q(event__platform__pk=platform) if platform is not None else Q()
+        q_read = Q(read=read) if read is not None else Q()
         counts = {
             "read": list(
-                qs.filter(read_agg_filter & event_filter)
+                qs.filter(q_category & q_importance & q_platform & event_filter)
                 .values("read")
                 .annotate(count=Count("event_id", distinct=True))
             ),
             "importance": list(
-                qs.filter(importance_agg_filter & event_filter)
+                qs.filter(q_category & q_read & q_platform & event_filter)
                 .values("event__importance")
                 .annotate(importance=F("event__importance"), count=Count("event_id", distinct=True))
                 .values("count", "importance")
             ),
             "category": list(
-                qs.filter(category_agg_filter & event_filter)
+                qs.filter(q_importance & q_read & q_platform & event_filter)
                 .values("event__category")
                 .annotate(category=F("event__category"), count=Count("event_id", distinct=True))
                 .values("category", "count")
+            ),
+            "platform": list(
+                qs.filter(q_category & q_importance & q_read & event_filter)
+                .values("event__platform")
+                .annotate(platform=F("event__platform__pk"), count=Count("event_id", distinct=True))
+                .values("platform", "count")
             ),
         }
         res = dict(
