@@ -1070,9 +1070,10 @@ class FlexibleDataSlicer:
             rt_cov = cov_data.get((), {})  # empty tuple for no split-by
             coverage["ib_count"] = coverage.get("ib_count", 0) + rt_cov.get("ib_count", 0)
             coverage["ib_max"] = coverage.get("ib_max", 0) + rt_cov.get("ib_max", 0)
-        coverage["ratio"] = (
-            coverage["ib_count"] / coverage["ib_max"] if coverage["ib_max"] else None
-        )
+        if ib_max := coverage.get("ib_max", 0):
+            coverage["ratio"] = coverage["ib_count"] / ib_max
+        else:
+            coverage["ratio"] = None
         return coverage
 
     def get_coverage(self) -> Optional[dict]:

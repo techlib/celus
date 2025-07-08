@@ -1245,6 +1245,27 @@ class TestFlexibleDataSlicerOther:
         assert coverage["compared"]["ib_count"] == 9
         assert coverage["compared"]["ib_max"] == 9
 
+    def test_report_coverage_with_empty_involved_report_types(self, flexible_slicer_test_data):
+        """
+        Test that get_coverage handles the case when involved_report_types returns an empty list
+        without raising KeyError or ZeroDivisionError
+        """
+        # Create a slicer
+        slicer = FlexibleDataSlicer(primary_dimension="platform")
+
+        # Mock the involved_report_types method to return an empty list
+        from unittest.mock import patch
+
+        with patch.object(slicer, "involved_report_types", return_value=[]):
+            # This should not raise any exceptions (KeyError or ZeroDivisionError)
+            coverage = slicer.get_coverage()
+
+            # Verify the structure is correct
+            assert "overall" in coverage
+            assert coverage["overall"].get("ib_count") is None
+            assert coverage["overall"].get("ib_max") is None
+            assert coverage["overall"]["ratio"] is None
+
     def test_resolve_explicit_dimension_with_multiple_report_types(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(primary_dimension="platform")
         slicer.add_filter(
