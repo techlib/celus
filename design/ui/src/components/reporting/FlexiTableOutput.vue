@@ -8,7 +8,7 @@ en:
   error: Error
   error_code: Error code
   error_intro: The following error was reported during the preparation of the report.
-  available_parts: Select part - {count} available | Select part - {count} available | Select part - {count} available
+  available_parts: "Split by: {splitby} - {count} available | Split by: {splitby} - {count} available | Split by: {splitby} - {count} available"
   loading_parts: Loading list of parts
   remainder: Remainder without any tags
   no_data: No data matching the current setup was found.
@@ -23,7 +23,7 @@ cs:
   error: Chyba
   error_code: Kód chyby
   error_intro: Následující chyba byla nahlášena při přípravě požadovaného reportu.
-  available_parts: Vyberte část - {count} možnost | Vyberte část - {count} možnosti | Vyberte část - {count} možností
+  available_parts: "Rozdělit podle: {splitby} - {count} možnost | Rozdělit podle: {splitby} - {count} možnosti | Rozdělit podle: {splitby} - {count} možností"
   loading_parts: Nahrávám seznam částí
   remainder: Zbytek bez přiřazeného štítku
   no_data: Nebyla nalezena žádná data odpovídající aktuálnímu nastavení.
@@ -55,35 +55,52 @@ cs:
       <!-- part selector -->
       <div class="d-flex py-4 justify-space-between">
         <div v-if="report.splitBy && splitParts.length">
-          <v-slide-group v-if="partsSideBySide" v-model="currentPart">
-            <v-slide-group-item
-              v-for="item in splitParts"
-              :key="item.id"
-              v-slot="{ isSelected, toggle }"
-              :value="item.id"
-            >
-              <v-btn
-                @click="toggle"
-                :value="isSelected"
-                variant="outlined"
-                class="years_report"
-                tile
-                :class="[isSelected ? 'active-button' : '']"
-                >{{ item.title }}
-              </v-btn>
-            </v-slide-group-item>
-          </v-slide-group>
+          <OutlinedContainer
+            :label="
+              $tc('available_parts', {
+                count: splitParts.length,
+                splitby:
+                  report.splitBy.names[$i18n.locale] || $t(report.splitBy.name),
+              })
+            "
+            v-if="partsSideBySide"
+          >
+            <v-slide-group v-model="currentPart">
+              <v-slide-group-item
+                v-for="item in splitParts"
+                :key="item.id"
+                v-slot="{ isSelected, toggle }"
+                :value="item.id"
+              >
+                <v-btn
+                  @click="toggle"
+                  :value="isSelected"
+                  variant="outlined"
+                  class="years_report"
+                  tile
+                  :class="[isSelected ? 'active-button' : '']"
+                  >{{ item.title }}
+                </v-btn>
+              </v-slide-group-item>
+            </v-slide-group>
+          </OutlinedContainer>
           <!-- if there are too many parts, use a select -->
           <v-autocomplete
             v-else
             :items="splitParts"
             v-model="currentPart"
-            :label="$tc('available_parts', splitParts.length)"
+            :label="
+              $tc('available_parts', {
+                count: splitParts.length,
+                splitby:
+                  report.splitBy.names[$i18n.locale] || $t(report.splitBy.name),
+              })
+            "
             item-value="id"
             variant="outlined"
             density="compact"
-            max-width="800px"
-            min-width="320px"
+            max-width="450px"
+            min-width="370px"
           ></v-autocomplete>
           <v-alert v-if="partsCropped" type="warning" variant="outlined">
             {{
@@ -273,10 +290,11 @@ import { smartMonthRange } from "@/libs/dates";
 import { useGoTo } from "vuetify";
 import { differenceInMonths, addMonths } from "date-fns";
 import { ymDateParse } from "@/libs/dates";
+import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
 
 export default {
   name: "FlexiTableOutput",
-  components: { TrendArrow, TagChip, ReportingChart },
+  components: { TrendArrow, TagChip, ReportingChart, OutlinedContainer },
   mixins: [translators, cancellation, tags],
 
   props: {
