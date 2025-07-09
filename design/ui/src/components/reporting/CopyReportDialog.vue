@@ -9,6 +9,7 @@
     <ReportNamingWidget
       :loading="justCopying"
       :name="newTitle"
+      :description="report.description"
       v-model:ownership-type="ownershipType"
       @cancel="show = false"
       @update="copyReport"
@@ -56,11 +57,12 @@ export default {
     ...mapState(["user"]),
   },
   methods: {
-    async copyReport(title, access) {
+    async copyReport({ title, description, access }) {
       this.justCopying = true;
       let newReport = cloneDeep(this.report);
       newReport.pk = null;
       newReport.name = title;
+      newReport.description = description;
       newReport.owner = access.owner;
       newReport.ownerOrganization = access.owner_organization;
       try {

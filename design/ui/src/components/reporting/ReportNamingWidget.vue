@@ -16,7 +16,6 @@
           ref="title"
         ></v-text-field>
         <v-textarea
-          v-if="!copyReport"
           v-model="newDescription"
           :label="$t('labels.description')"
           class="mt-2"
@@ -65,6 +64,7 @@ export default {
 
   props: {
     name: { type: String, required: false, default: "" },
+    description: { type: String, required: false, default: "" },
     ownershipType: { type: String, required: false, default: "user" },
     loading: { type: Boolean, required: false },
     submitText: { type: String, required: false },
@@ -77,12 +77,12 @@ export default {
     reportAccess: { type: String, required: false },
     createdOrg: { type: Number, required: false },
   },
-  emits: ["update"],
+  emits: ["update", "cancel"],
   data() {
     return {
       newTitle: this.name,
       valid: false,
-      newDescription: "",
+      newDescription: this.description,
     };
   },
 
@@ -107,12 +107,11 @@ export default {
       this.$emit("cancel");
     },
     update() {
-      this.$emit(
-        "update",
-        this.newTitle,
-        this.newDescription,
-        this.$refs.accessLevel.valueFromData,
-      );
+      this.$emit("update", {
+        title: this.newTitle,
+        description: this.newDescription,
+        access: this.$refs.accessLevel.valueFromData,
+      });
     },
   },
 };

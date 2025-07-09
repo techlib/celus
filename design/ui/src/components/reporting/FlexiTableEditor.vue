@@ -1438,8 +1438,8 @@ export default {
         this.orderBy = [this.$refs.outputTable.ordering];
       }
     },
-    async firstSave(name, description, access) {
-      this.reportName = name;
+    async firstSave({ title, description, access }) {
+      this.reportName = title;
       this.reportDescription = description;
       this.owner = access.owner;
       this.ownerOrganization = access.owner_organization;

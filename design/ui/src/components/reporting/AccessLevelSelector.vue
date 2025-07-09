@@ -206,15 +206,27 @@ export default {
     ownershipType(newValue) {
       this.ownershipType = newValue;
       if (newValue === "org") {
-        const firstAdminOrg = this.organizationItems.find(
-          (item) => item.is_admin,
-        );
-        if (firstAdminOrg) {
-          this.selectedOrganization = firstAdminOrg.pk;
-        } else if (this.createdOrg) {
-          this.selectedOrganization = this.createdOrg;
-        } else {
-          this.selectedOrganization = null;
+        if (
+          !this.copyReport ||
+          !this.availableOrganizations.some(
+            (org) => org.value === this.selectedOrganization,
+          )
+        ) {
+          const firstAdminOrg = this.organizationItems.find(
+            (item) => item.is_admin,
+          );
+          if (firstAdminOrg) {
+            this.selectedOrganization = firstAdminOrg.pk;
+          } else if (
+            this.createdOrg &&
+            this.availableOrganizations.some(
+              (org) => org.value === this.createdOrg,
+            )
+          ) {
+            this.selectedOrganization = this.createdOrg;
+          } else {
+            this.selectedOrganization = null;
+          }
         }
       }
       this.$emit("update:modelValue", this.valueFromData);
