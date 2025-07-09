@@ -75,11 +75,16 @@ class TestMaximusSync:
         for d in out:
             assert d in check
 
-    def test_get_users(self):
+    @pytest.mark.parametrize(
+        "otp_enabled,skip_2fa,expected",
+        ((True, True, True), (True, False, False), (False, True, None), (False, False, None)),
+    )
+    def test_get_users(self, otp_enabled, skip_2fa, expected, settings):
+        settings.OTP_ENABLED = otp_enabled
         assert get_users() == []
 
         date_joined = DateTimeField().to_representation(timezone.now())
-        u1 = User.objects.create(username="a", date_joined=date_joined)
+        u1 = User.objects.create(username="a", date_joined=date_joined, skip_2fa=skip_2fa)
         check = (
             {
                 "ext_id": u1.id,
@@ -90,6 +95,7 @@ class TestMaximusSync:
                 "date_joined": date_joined,
                 "last_login": None,
                 "is_active": True,
+                "skip_2fa": expected,
             },
         )
         out = json.loads(json.dumps(get_users()))
@@ -104,6 +110,7 @@ class TestMaximusSync:
             email="bob@bobster.com",
             date_joined=date_joined,
             is_active=False,
+            skip_2fa=skip_2fa,
         )
         check = (
             {
@@ -115,6 +122,7 @@ class TestMaximusSync:
                 "date_joined": date_joined,
                 "last_login": None,
                 "is_active": True,
+                "skip_2fa": expected,
             },
             {
                 "ext_id": u2.id,
@@ -125,6 +133,7 @@ class TestMaximusSync:
                 "date_joined": date_joined,
                 "last_login": None,
                 "is_active": False,
+                "skip_2fa": expected,
             },
         )
         out = json.loads(json.dumps(get_users()))

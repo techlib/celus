@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import requests
 from django.conf import settings
@@ -15,6 +16,12 @@ logger = logging.getLogger(__name__)
 
 class CelusUserSerializer(serializers.ModelSerializer):
     ext_id = serializers.IntegerField(source="id")
+    skip_2fa = serializers.SerializerMethodField()
+
+    def get_skip_2fa(self, obj: User) -> Optional[bool]:
+        if not settings.OTP_ENABLED:
+            return None
+        return obj.skip_2fa
 
     class Meta:
         model = User
@@ -27,6 +34,7 @@ class CelusUserSerializer(serializers.ModelSerializer):
             "date_joined",
             "last_login",
             "is_active",
+            "skip_2fa",
         )
 
 
