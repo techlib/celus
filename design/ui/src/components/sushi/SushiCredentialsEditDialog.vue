@@ -32,7 +32,10 @@ en:
     were connection issues that have been resolved in the meantime), you can manually mark them as fixed.
   mark_fixed: Mark fixed
   mark_fixed_success: Credentials were marked as fixed
-  broken_reports_warning: Some active reports have been marked as broken by CELUS - they are probably not supported by this platform. Fix it by deactivating them or if you are sure you can mark them as fixed.
+  broken_reports_warning: |
+    Some active reports have been marked as broken by CELUS - they are probably not supported by this platform.
+    Either deactivate them or, if you are sure they are supported, you can use the button below to mark them as fixed.
+    Note that if the report is not supported, it will break again during the next harvest.
   url_hint_no_report: "URL should not contain the '/reports/' part and anything beyond this. For example 'https://example.com/sushi5/reports/tr?customer_id=1' should be cropped to 'https://example.com/sushi5/'"
   url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
   invalid_url: Please enter a valid URL
@@ -99,7 +102,10 @@ cs:
     který mohl způsobit jejich označení), můžete je ručně označit jako opravené.
   mark_fixed: Označit jako opravené
   mark_fixed_success: Přihlašovací údaje byly označeny jako opravené
-  broken_reports_warning: Některé aktivní reporty CELUS označil jako nefunkční - pravděpodobně nejsou na této platformě podporovány. Toto upozornění odstraníte jejich deaktivací. Případně pokud jste si jisti, můžete je označit jako opravené.
+  broken_reports_warning: |
+    Některé aktivní reporty CELUS označil jako nefunkční - pravděpodobně nejsou na této platformě podporováné.
+    Můžete je buď odstranit nebo případně, pokud jste si jisti že jsou podporovány, můžete je označit jako opravené.
+    Pokud report není podporován, bude označen jako nefunkční během příštího stahování.
   url_hint_no_report: "URL by neměla obsahovat část s '/reports/' a cokoliv po ní. Např. 'https://example.com/sushi5/reports/tr?customer_id=1' by mělo být zkráceno na 'https://example.com/sushi5/'"
   url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
   invalid_url: Prosím zadejte platné URL
@@ -1146,8 +1152,8 @@ export default {
       return null;
     },
     knowledgebaseReportTypes() {
-      if (this.currentKnowledgebase) {
-        let providers = this.activePlatform.knowledgebase.providers.filter(
+      if (this.currentKnowledgebase?.providers) {
+        let providers = this.currentKnowledgebase.providers.filter(
           (provider) => provider.counter_version == this.counterVersion,
         );
         if (providers.length > 0) {
@@ -1211,13 +1217,12 @@ export default {
       return null;
     },
     brokenReports() {
-      let res = [];
       if (this.credentials) {
-        return !!this.selectedReportTypes.filter((item) =>
+        return this.selectedReportTypes.filter((item) =>
           this.isBroken({ id: item }),
-        ).length;
+        );
       }
-      return res;
+      return [];
     },
     anyBrokenReports() {
       return this.brokenReports.length > 0;
@@ -1496,7 +1501,7 @@ export default {
     async markFixed(markReports) {
       if (this.credentials) {
         let data = { credentials_id: this.credentials.pk };
-        if (this.brokenReports && markReports) {
+        if (this.anyBrokenReports && markReports) {
           data.counter_reports = this.brokenReports.map((item) => item.id);
         }
         try {
