@@ -849,7 +849,6 @@ export default {
             `/api/flexible-report/${this.activeReport.pk}/`,
           );
           this.activeReport.mailingCount = resp.data.mailing_count;
-          this.activeReport = null;
         } catch (error) {
           console.error(error);
         }
