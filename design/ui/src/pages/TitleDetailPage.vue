@@ -270,10 +270,12 @@ cs:
         </v-container>
       </v-tabs-window-item>
       <v-tabs-window-item value="items" v-if="enableItems">
+        <InterestGroupSelector class="px-4"></InterestGroupSelector>
         <ItemList
           :organization-id="selectedOrganization.pk"
           :platform-id="platformId"
           :title-id="titleId"
+          :order-interest="orderInterest"
         ></ItemList>
       </v-tabs-window-item>
     </v-tabs-window>
@@ -290,6 +292,7 @@ import { formatInteger } from "@/libs/numbers";
 import cancellation from "@/mixins/cancellation";
 import TagCard from "@/components/tags/TagCard";
 import ItemList from "@/components/items/ItemList.vue";
+import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 
 export default {
   name: "TitleDetailPage",
@@ -299,6 +302,7 @@ export default {
     DataExportWidget,
     CounterChartSet,
     AnnotationsWidget,
+    InterestGroupSelector,
   },
   mixins: [cancellation],
   props: {
@@ -332,6 +336,9 @@ export default {
       dateRangeStart: "dateRangeStartText",
       dateRangeEnd: "dateRangeEndText",
       enableItems: "enableItems",
+    }),
+    ...mapGetters("interest", {
+      activeInterestGroups: "selectedGroupObjects",
     }),
     isReady() {
       return this.selectedOrganization && this.titleId;
@@ -419,6 +426,13 @@ export default {
     },
     selectedOrganizationId() {
       return this.selectedOrganization.pk;
+    },
+    orderInterest() {
+      // The interest that should be used for sorting the titles
+      if (this.activeInterestGroups.length) {
+        return this.activeInterestGroups[0].short_name;
+      }
+      return null;
     },
   },
   methods: {

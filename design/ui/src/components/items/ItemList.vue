@@ -77,14 +77,14 @@ cs:
       v-model:sort-by="orderBy"
       v-model:page="page"
       :no-data-text="$t('no_records')"
-      density="default"
+      density="compact"
     >
       <template #headers="{ columns }">
         <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
       </template>
       <template #item.name="{ item }">
         <router-link
-          v-if="platformId"
+          v-if="platformId && titleId"
           :to="{
             name: 'platform-title-item-detail',
             params: {
@@ -97,10 +97,19 @@ cs:
           <ShortenText :text="item.name" :length="50"></ShortenText>
         </router-link>
         <router-link
-          v-else
+          v-else-if="titleId"
           :to="{
             name: 'title-item-detail',
             params: { titleId: titleId, itemId: item.pk },
+          }"
+        >
+          <ShortenText :text="item.name"></ShortenText>
+        </router-link>
+        <router-link
+          v-else
+          :to="{
+            name: 'platform-item-detail',
+            params: { platformId: platformId, itemId: item.pk },
           }"
         >
           <ShortenText :text="item.name"></ShortenText>
@@ -237,6 +246,13 @@ export default {
           sortable: true,
         },
         {
+          title: this.$i18n.t("labels.publication_date"),
+          value: "publication_date",
+          sortable: true,
+          order: "reverse",
+          align: "end",
+        },
+        {
           title: this.$i18n.t("title_fields.isbn"),
           value: "isbn",
           sortable: true,
@@ -262,8 +278,9 @@ export default {
         base.push({
           title: ig.name,
           value: "interests." + ig.short_name,
-          class: "wrap text-xs-right",
-          align: "right",
+          class: "wrap text-xs-end",
+          align: "end",
+          key: "interests." + ig.short_name,
           order: "reverse",
           sortable: true,
         });
@@ -295,6 +312,7 @@ export default {
       return this.$router.resolve({
         path: this.url,
         query: {
+          interest: true,
           page_size: this.itemsPerPage,
           order_by: sortBy,
           desc: orderBy === "desc" ? "true" : "false",

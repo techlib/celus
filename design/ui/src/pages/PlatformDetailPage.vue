@@ -222,6 +222,10 @@ cs:
           <v-icon class="mr-2">fa fa-bars</v-icon>
           <span>{{ $t("titles") }}</span>
         </v-tab>
+        <v-tab value="items" v-if="platform && enableItems">
+          <v-icon class="mr-2">fa fa-list</v-icon>
+          <span>{{ $t("labels.items") }}</span>
+        </v-tab>
         <v-tab value="coverage" v-if="platform">
           <v-icon class="mr-2">fas fa-layer-group</v-icon>
           <span>{{ $t("series.data_coverage") }}</span>
@@ -271,6 +275,14 @@ cs:
               >
             </v-container>
           </section>
+        </v-window-item>
+        <v-window-item value="items" v-if="platform && enableItems">
+          <InterestGroupSelector class="px-4"></InterestGroupSelector>
+          <ItemList
+            :organization-id="selectedOrganizationId"
+            :platform-id="platformId"
+            :order-interest="orderInterest"
+          ></ItemList>
         </v-window-item>
         <v-window-item value="coverage">
           <section v-if="platform">
@@ -467,6 +479,7 @@ import TagCard from "@/components/tags/TagCard";
 import CoverageOverviewWidget from "@/components/charts/CoverageOverviewWidget";
 import SushiArrivalCurve from "@/components/charts/SushiArrivalCurve.vue";
 import stateTracking from "@/mixins/stateTracking";
+import ItemList from "@/components/items/ItemList.vue";
 
 export default {
   name: "PlatformDetailPage",
@@ -488,6 +501,7 @@ export default {
     AddAnnotationButton,
     InterestGroupSelector,
     RawDataExportWidget,
+    ItemList,
   },
 
   props: {

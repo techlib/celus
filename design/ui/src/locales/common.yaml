@@ -190,6 +190,7 @@ en:
     overlap: Overlap
     overridden_dates: Date override
     overridden_organization: Organization override
+    parent_title: Parent title | Parent titles
     platform: Platform
     platform_filter: Platform filter
     position: Position
@@ -605,6 +606,7 @@ cs:
     overlap: Překryv
     overridden_dates: Přepsané období
     overridden_organization: Přepsaná organizace
+    parent_title: Nadřazený titul | Nadřazené tituly
     platform: Platforma
     platform_filter: Filtr platformy
     position: Pozice

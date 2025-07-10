@@ -291,6 +291,12 @@ class ComparisonResult:
     def is_ok(self):
         return not any(key for key in self.stats.keys() if key != "ok")
 
+    def __str__(self):
+        return (
+            f"ComparisonResult(ibs_to_resync={len(self.import_batches_to_resync)}, "
+            f"ibs_to_delete={len(self.import_batches_to_delete)}, stats={self.stats})"
+        )
+
 
 @needs_clickhouse_sync
 def compare_db_with_clickhouse() -> ComparisonResult:

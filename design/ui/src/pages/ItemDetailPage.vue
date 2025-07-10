@@ -28,7 +28,7 @@
             <th>{{ $t("platform") }}</th>
             <td>{{ platformName }}</td>
           </tr>
-          <tr>
+          <tr v-if="this.titleId">
             <th>{{ $t("title") }}</th>
             <td>{{ titleName }}</td>
           </tr>
@@ -55,10 +55,26 @@
               <DoiLink :doi="item.doi"></DoiLink>
             </td>
           </tr>
-          <template v-if="item">
+          <template v-if="title">
             <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
               <th>{{ $t("title_fields." + prop) }}</th>
               <td>{{ title[prop] }}</td>
+            </tr>
+          </template>
+          <template v-else-if="item">
+            <tr v-for="(prop, index) in ['isbn', 'issn', 'eissn']" :key="index">
+              <th>{{ $t("title_fields." + prop) }}</th>
+              <td>
+                <router-link
+                  :to="{
+                    name: 'title-list',
+                    query: {
+                      search: item[prop],
+                    },
+                  }"
+                  >{{ item[prop] }}</router-link
+                >
+              </td>
             </tr>
           </template>
           <tr v-if="item">
@@ -116,22 +132,44 @@
           </tr>
         </table>
       </v-col>
+      <v-col cols="auto" v-if="item && item.parent_titles.length > 0">
+        <table class="overview-card elevation-2">
+          <tr class="header">
+            <th
+              colspan="2"
+              v-text="$tc('labels.parent_title', item.parent_titles.length)"
+            ></th>
+          </tr>
+          <tr v-for="t in item.parent_titles" :key="t.pk">
+            <td>
+              <router-link
+                :to="{ name: 'title-detail', params: { titleId: t.pk } }"
+                >{{ t.name }}</router-link
+              >
+            </td>
+          </tr>
+        </table>
+      </v-col>
     </v-row>
     <section>
-      <v-container>
+      <v-container fluid>
         <v-row>
           <v-col>
             <h3>{{ $t("overview") }}</h3>
           </v-col>
         </v-row>
-        <CounterChartSet
-          :platform-id="platformId"
-          :title-id="titleId"
-          :item-id="itemId"
-          :report-views-url="reportViewsUrl"
-          scope="title"
-        >
-        </CounterChartSet>
+        <v-row>
+          <v-col>
+            <CounterChartSet
+              :platform-id="platformId"
+              :title-id="titleId"
+              :item-id="itemId"
+              :report-views-url="reportViewsUrl"
+              scope="title"
+            >
+            </CounterChartSet>
+          </v-col>
+        </v-row>
       </v-container>
     </section>
   </v-container>
@@ -201,7 +239,7 @@ export default {
       return "";
     },
     breadcrumbs() {
-      if (this.platformId) {
+      if (this.platformId && this.titleId) {
         return [
           {
             text: this.$t("pages.platforms"),
@@ -220,6 +258,23 @@ export default {
             linkParams: {
               platformId: this.platformId,
               titleId: this.titleId,
+            },
+          },
+          {
+            text: this.itemName,
+          },
+        ];
+      } else if (this.platformId) {
+        return [
+          {
+            text: this.$t("pages.platforms"),
+            linkName: "platform-list",
+          },
+          {
+            text: this.platformName,
+            linkName: "platform-detail",
+            linkParams: {
+              platformId: this.platformId,
             },
           },
           {
@@ -246,7 +301,7 @@ export default {
     },
     itemInterestUrl() {
       if (this.itemInterestUrlNoDates) {
-        return `${this.itemInterestUrlNoDates}?start=${this.dateRangeStart}&end=${this.dateRangeEnd}`;
+        return `${this.itemInterestUrlNoDates}?start=${this.dateRangeStart}&end=${this.dateRangeEnd}&interest=true&parent_titles=true`;
       }
       return null;
     },
@@ -258,6 +313,12 @@ export default {
           // this is the case when no platform is specified
           return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/item/${this.itemId}/`;
         }
+      } else if (this.selectedOrganization && this.itemId) {
+        if (this.platformId) {
+          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/item/${this.itemId}/`;
+        } else {
+          return `/api/organization/${this.selectedOrganization.pk}/item/${this.itemId}/`;
+        }
       }
       return null;
     },
@@ -268,13 +329,8 @@ export default {
       return null;
     },
     reportViewsUrl() {
-      if (this.selectedOrganization && this.titleId) {
-        if (this.platformId) {
-          return `/api/organization/${this.selectedOrganization.pk}/platform/${this.platformId}/title/${this.titleId}/item/${this.itemId}/report-views/`;
-        } else {
-          // this is the case when no platform is specified
-          return `/api/organization/${this.selectedOrganization.pk}/title/${this.titleId}/item/${this.itemId}/report-views/`;
-        }
+      if (this.itemInterestUrlNoDates) {
+        return `${this.itemInterestUrlNoDates}report-views/`;
       }
       return null;
     },

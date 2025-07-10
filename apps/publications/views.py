@@ -1,4 +1,5 @@
 import typing
+from itertools import chain
 
 from allauth.utils import build_absolute_uri
 from api.auth import extract_org_from_request_api_key
@@ -8,15 +9,19 @@ from charts.serializers import ReportDataViewSerializer
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
 from core.logic.dates import date_filter_from_params, parse_month
+from core.logic.type_conversion import to_bool
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
 from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, Exists, FilteredRelation, OuterRef, Prefetch, Q, Sum
 from django.db.models.functions import Coalesce
+from hcube.api.models.aggregation import ArrayAgg as HArrayAgg
 from hcube.api.models.aggregation import Count as CubeCount
+from hcube.api.models.aggregation import Sum as HSum
 from logs.cubes import AccessLogCube, ch_backend
 from logs.filters import OrderByFilter
 from logs.logic.interest.structure import (
@@ -851,9 +856,11 @@ class ItemReportDataViewViewSet(BaseReportDataViewViewSet):
     """
 
     def _extra_filters(self, org_filter):
-        title = get_object_or_404(Title.objects.all(), pk=self.kwargs["title_pk"])
         item = get_object_or_404(Item.objects.all(), pk=self.kwargs["item_pk"])
-        out = {"target": title, "item": item}
+        out = {"item": item}
+        if "title_pk" in self.kwargs:
+            title = get_object_or_404(Title.objects.all(), pk=self.kwargs["title_pk"])
+            out["target"] = title
         if platform_id := self.kwargs.get("platform_pk"):
             out["platform"] = get_object_or_404(Platform.objects.all(), pk=platform_id)
         return out
@@ -949,8 +956,6 @@ class TopTitleInterestViewSet(ReadOnlyModelViewSet):
         )
 
         if self.request.USE_CLICKHOUSE and not pub_type_arg:
-            from hcube.api.models.aggregation import Sum as HSum
-
             negated_filters = {
                 f"{k.split('__')[0]}__not_in": v
                 for k, v in exclude_filters.items()
@@ -1146,6 +1151,15 @@ class ItemViewSet(ReadOnlyModelViewSet):
         self.organization_id = None
         self.platform_id = None
         self.title_id = None
+        self.filters_ = {}
+
+    @property
+    def add_interest(self):
+        return to_bool(self.request.query_params.get("interest"))
+
+    @property
+    def add_parent_titles(self):
+        return to_bool(self.request.query_params.get("parent_titles"))
 
     def get_queryset(self):
         self.organization_id = self.kwargs.get("organization_pk")
@@ -1157,7 +1171,12 @@ class ItemViewSet(ReadOnlyModelViewSet):
         ic = InterestConfig.objects.default()
         org_filter = {}
         if self.organization_id:
-            org_filter = organization_filter_from_org_id(self.organization_id, self.request.user)
+            # clickhouse=True will use oranization_id instead of organization__pk
+            # which is completely compatible with both Django and ClickHouse in this case
+            # (it is used only in AccessLog query)
+            org_filter = organization_filter_from_org_id(
+                self.organization_id, self.request.user, clickhouse=True
+            )
             fltrs.update(org_filter)
 
         if self.platform_id:
@@ -1178,44 +1197,99 @@ class ItemViewSet(ReadOnlyModelViewSet):
                 .values_list("item_id", flat=True)
             )
             qs = qs.filter(pk__in=item_ids)
+            self.filters_ = fltrs
 
         # add interest annotations
-        accesslog_filter = extend_query_filter(fltrs, "accesslog__")
-        accesslog_filter["accesslog__report_type_id"] = self.interest_rt.pk
-        # add interest config filters
-        ic = InterestConfig.objects.default()
-        if org_filter:  # if the filter is not empty, it means that the organization id is valid
-            org = Organization.objects.get(pk=self.organization_id)
-            ic = org.get_interest_config()
-        interest_filters, negated_interest_filters = ic.get_interest_filters()
-        accesslog_filter.update(extend_query_filter(interest_filters, "accesslog__"))
-        negated_interest_filters = extend_query_filter(negated_interest_filters, "accesslog__")
+        if self.add_interest:
+            # only when interest is explicitly requested, we add interest annotations
+            accesslog_filter = extend_query_filter(fltrs, "accesslog__")
+            accesslog_filter["accesslog__report_type_id"] = self.interest_rt.pk
+            # add interest config filters
+            ic = InterestConfig.objects.default()
+            if org_filter:  # if the filter is not empty, it means that the organization id is valid
+                org = Organization.objects.get(pk=self.organization_id)
+                ic = org.get_interest_config()
+            interest_filters, negated_interest_filters = ic.get_interest_filters()
+            accesslog_filter.update(extend_query_filter(interest_filters, "accesslog__"))
+            negated_interest_filters = extend_query_filter(negated_interest_filters, "accesslog__")
 
-        condition = Q(**accesslog_filter)
-        if negated_interest_filters:
-            condition &= ~Q(**negated_interest_filters)
-        qs = qs.annotate(relevant_accesslogs=FilteredRelation("accesslog", condition=condition))
-        interest_annot_params = {
-            im.short_name: Coalesce(
-                Sum("relevant_accesslogs__value", filter=Q(relevant_accesslogs__metric=im)), 0
-            )
-            for im in self.interest_metrics
-        }
-        qs = qs.annotate(**interest_annot_params)
+            condition = Q(**accesslog_filter)
+            if negated_interest_filters:
+                condition &= ~Q(**negated_interest_filters)
+            qs = qs.annotate(relevant_accesslogs=FilteredRelation("accesslog", condition=condition))
+            interest_annot_params = {
+                im.short_name: Coalesce(
+                    Sum("relevant_accesslogs__value", filter=Q(relevant_accesslogs__metric=im)), 0
+                )
+                for im in self.interest_metrics
+            }
+            qs = qs.annotate(**interest_annot_params)
         return qs
 
-    def _transform_interests(self, record):
-        record.interests = {
-            im.short_name: getattr(record, im.short_name) for im in self.interest_metrics
-        }
+    def _postprocess_record(self, record):
+        if self.add_interest:
+            record.interests = {
+                im.short_name: getattr(record, im.short_name) for im in self.interest_metrics
+            }
         return record
+
+    def _map_item_ids_to_title_ids(
+        self, item_ids: typing.List[int]
+    ) -> typing.Dict[int, typing.List[int]]:
+        """
+        Find all titles that are associated with the given list of item ids.
+        It uses the AccessLog model with filters applied to the query matching the `filters_`
+        attribute used in the ItemViewSet.
+
+        When available, it uses ClickHouse to get the title ids.
+        """
+        if self.request.USE_CLICKHOUSE:
+            qs = (
+                AccessLogCube.query()
+                .filter(item_id__in=item_ids, **self.filters_)
+                .group_by("item_id")
+                .aggregate(title_ids=HArrayAgg(distinct="target_id"))
+            )
+            return {
+                rec.item_id: [title_id for title_id in rec.title_ids if title_id]
+                for rec in ch_backend.get_records(qs)
+            }
+        else:
+            qs = (
+                AccessLog.objects.filter(item_id__in=item_ids, **self.filters_)
+                .values("item_id")
+                .annotate(title_ids=ArrayAgg("target_id", distinct=True))
+            )
+            return {
+                rec["item_id"]: [title_id for title_id in rec["title_ids"] if title_id]
+                for rec in qs
+            }
+
+    def _map_item_ids_to_titles(
+        self, item_ids: typing.List[int]
+    ) -> typing.Dict[int, typing.List[Title]]:
+        item_id_to_title_ids = self._map_item_ids_to_title_ids(item_ids)
+        title_ids = set(chain.from_iterable(item_id_to_title_ids.values()))
+        title_ids_to_titles = Title.objects.filter(pk__in=title_ids).in_bulk()
+        return {
+            item_id: [title_ids_to_titles[title_id] for title_id in item_id_to_title_ids[item_id]]
+            for item_id in item_ids
+        }
 
     def paginate_queryset(self, queryset):
         qs = super().paginate_queryset(queryset)
         for record in qs:
-            self._transform_interests(record)
+            self._postprocess_record(record)
+        if self.add_parent_titles:
+            item_id_to_titles = self._map_item_ids_to_titles([record.pk for record in qs])
+            for record in qs:
+                record.parent_titles = item_id_to_titles[record.pk]
         return qs
 
     def get_object(self):
         ret = super().get_object()
-        return self._transform_interests(ret)
+        self._postprocess_record(ret)
+        if self.add_parent_titles:
+            item_id_to_titles = self._map_item_ids_to_titles([ret.pk])
+            ret.parent_titles = item_id_to_titles[ret.pk]
+        return ret

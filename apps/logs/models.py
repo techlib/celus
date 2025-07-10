@@ -7,7 +7,7 @@ from collections import Counter
 from copy import deepcopy
 from datetime import date
 from enum import Enum
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from celus_nibbler import PoopStats
@@ -104,8 +104,7 @@ class ReportTypeQuerySet(models.QuerySet):
         # methods are all copied
         return self._get_interest_rt()
 
-    # TODO: switch to just functools.cache, once we do not need support for Python 3.8
-    @lru_cache  # noqa B019 - caching a method without an argument, so no memory leak
+    @cache  # noqa B019 - caching a method without an argument, so no memory leak
     def _get_interest_rt(self):
         # we use get_or_create to make sure interest is always present
         # this is mostly for tests, because in production it should be always present

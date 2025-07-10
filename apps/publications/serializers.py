@@ -233,6 +233,7 @@ class AuthorSerializer(ModelSerializer):
 class ItemSerializer(ModelSerializer):
     interests = JSONField(read_only=True)
     authors = AuthorSerializer(many=True, read_only=True)
+    parent_titles = TitleSerializer(many=True, read_only=True)
 
     class Meta:
         model = Item
@@ -249,4 +250,5 @@ class ItemSerializer(ModelSerializer):
             "proprietary_ids",
             "authors",
             "interests",
+            "parent_titles",
         )

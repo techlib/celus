@@ -144,6 +144,18 @@ const routes = [
     },
   },
   {
+    path: "/platforms/:platformId/item/:itemId",
+    name: "platform-item-detail",
+    component: () => import("../pages/ItemDetailPage.vue"),
+    props: (route) => ({
+      platformId: Number.parseInt(route.params.platformId, 10),
+      itemId: Number.parseInt(route.params.itemId, 10),
+    }),
+    meta: {
+      title: "pages.item_detail",
+    },
+  },
+  {
     path: "/interests",
     name: "interest-overview",
     component: () => import("../pages/InterestOverviewPage.vue"),

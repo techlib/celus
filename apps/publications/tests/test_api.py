@@ -2833,12 +2833,16 @@ class TestTitleInterestViewSet:
 
 @pytest.mark.django_db
 class TestItemViewSet:
+    @pytest.mark.parametrize("interest", [True, False, None])
     def test_item_list_no_filter(
-        self, master_user_client, interest_rt, django_assert_max_num_queries
+        self, master_user_client, interest_rt, django_assert_max_num_queries, interest
     ):
         items = ItemFactory.create_batch(30)
+        params = {}
+        if interest is not None:
+            params["interest"] = interest
         with django_assert_max_num_queries(25):
-            resp = master_user_client.get(reverse("global-items-list"))
+            resp = master_user_client.get(reverse("global-items-list"), params)
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == len(items)
@@ -2852,7 +2856,10 @@ class TestItemViewSet:
             assert rec["issn"] == item.issn
             assert rec["eissn"] == item.eissn
             assert rec["isbn"] == item.isbn
-            assert "interests" in rec
+            if interest:
+                assert "interests" in rec
+            else:
+                assert "interests" not in rec
             assert "authors" in rec
 
     @pytest.mark.parametrize(["page_size", "expected_count"], [(5, 5), (15, 10)])
@@ -2948,15 +2955,27 @@ class TestItemViewSet:
         for rec in data:
             assert rec["pk"] in item_ids or rec["pk"] in extra_item_ids
 
-    def test_item_list_for_org_platform(self, master_user_client, interest_rt):
+    @pytest.mark.parametrize("interest", [True, False, None])
+    @pytest.mark.parametrize("parent_titles", [True, False, None])
+    def test_item_list_for_org_platform(
+        self, master_user_client, interest_rt, interest, parent_titles
+    ):
+        """
+        Test that the item list API returns the correct items for a given organization and platform.
+        """
         pl = PlatformFactory()
         org = OrganizationFactory()
         items = ItemFactory.create_batch(10, usage__platform=pl, usage__organization=org)
         # create some extra items that should not be in the response
         ItemFactory.create_batch(3, usage__platform=pl)
         ItemFactory.create_batch(4, usage__organization=org)
+        params = {}
+        if interest is not None:
+            params["interest"] = interest
+        if parent_titles is not None:
+            params["parent_titles"] = parent_titles
         resp = master_user_client.get(
-            reverse("organization-platform-items-list", args=[org.pk, pl.pk])
+            reverse("organization-platform-items-list", args=[org.pk, pl.pk]), params
         )
         assert resp.status_code == 200
         data = resp.json()["results"]
@@ -2964,6 +2983,14 @@ class TestItemViewSet:
         item_ids = {item.pk for item in items}
         for rec in data:
             assert rec["pk"] in item_ids
+            if interest:
+                assert "interests" in rec
+            else:
+                assert "interests" not in rec
+            if parent_titles:
+                assert "parent_titles" in rec
+            else:
+                assert "parent_titles" not in rec
 
     @pytest.mark.parametrize(
         ["org_in_query", "org_has_config", "exp_value"],
@@ -2989,7 +3016,7 @@ class TestItemViewSet:
             if org_has_config is None:
                 real_world_item_data_with_interest_and_configs["global_interest_config"].delete()
         url = reverse("organization-item-list", args=[org.pk if org_in_query else -1])
-        resp = master_user_client.get(url)
+        resp = master_user_client.get(url, {"interest": True})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 1, "There is only one item"
@@ -3024,7 +3051,7 @@ class TestItemViewSet:
             if org_has_config is None:
                 global_config.delete()
         url = reverse("organization-item-list", args=[org.pk if org_in_query else -1])
-        resp = master_user_client.get(url)
+        resp = master_user_client.get(url, {"interest": True})
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 1, "There is only one item"
@@ -3082,9 +3109,13 @@ class TestItemViewSet:
         assert len(data) == 1
         assert data[0]["pk"] == items[-1].pk
 
-    def test_item_detail(self, master_user_client, interest_rt):
+    @pytest.mark.parametrize("interest", [True, False, None])
+    def test_item_detail(self, master_user_client, interest_rt, interest):
         item = ItemFactory()
-        resp = master_user_client.get(reverse("global-items-detail", args=[item.pk]))
+        params = {}
+        if interest is not None:
+            params["interest"] = interest
+        resp = master_user_client.get(reverse("global-items-detail", args=[item.pk]), params)
         assert resp.status_code == 200
         data = resp.json()
         assert data["pk"] == item.pk
@@ -3093,7 +3124,10 @@ class TestItemViewSet:
         assert data["issn"] == item.issn
         assert data["eissn"] == item.eissn
         assert data["isbn"] == item.isbn
-        assert "interests" in data
+        if interest:
+            assert "interests" in data
+        else:
+            assert "interests" not in data
         assert "authors" in data
 
     @pytest.mark.parametrize(["pub_type", "exp_count"], [("J", 3), ("B", 7), ("", 10), ("X", 0)])

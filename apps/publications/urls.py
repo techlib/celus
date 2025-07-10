@@ -56,6 +56,11 @@ platform_sub_router.register(
 platform_sub_router.register(
     "report-views", views.PlatformReportDataViewViewSet, basename="platform-report-data-views"
 )
+platform_sub_router.register("item", views.ItemViewSet, basename="organization-platform-items")
+platform_item_sub_router = NestedSimpleRouter(platform_sub_router, r"item", lookup="item")
+platform_item_sub_router.register(
+    "report-views", views.ItemReportDataViewViewSet, basename="platform-item-report-data-views"
+)
 
 platform_title_sub_router = NestedSimpleRouter(platform_sub_router, r"title", lookup="title")
 platform_title_sub_router.register(
@@ -76,8 +81,6 @@ platform_title_item_sub_router.register(
     basename="platform-title-item-report-data-views",
 )
 
-platform_sub_router.register("item", views.ItemViewSet, basename="organization-platform-items")
-
 root_router.register(r"platform", views.GlobalPlatformsViewSet, basename="global-platforms")
 root_router.register(r"title", views.GlobalTitleViewSet, basename="global-titles")
 
@@ -96,3 +99,4 @@ urlpatterns += title_sub_router.urls
 urlpatterns += platform_title_sub_router.urls
 urlpatterns += platform_title_item_sub_router.urls
 urlpatterns += title_item_sub_router.urls
+urlpatterns += platform_item_sub_router.urls
