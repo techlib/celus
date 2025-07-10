@@ -13,7 +13,7 @@ cs:
       :key="group.pk"
       :class="
         highlightGroupId && group.pk === highlightGroupId
-          ? 'green--text font-weight-medium'
+          ? 'font-weight-medium text-info'
           : ''
       "
     >

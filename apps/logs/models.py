@@ -197,6 +197,8 @@ class ReportType(models.Model):
     def dimensions_sorted(self) -> typing.List["Dimension"]:
         if self.materialization_spec:
             return self.materialization_spec.base_report_type.dimensions_sorted
+        if (dim_prefetched := getattr(self, "dim_set_prefetched", None)) is not None:
+            return [dim.dimension for dim in dim_prefetched]
         return list(self.dimensions.all().order_by("reporttypetodimension__position"))
 
     @cached_property

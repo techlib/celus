@@ -11,11 +11,12 @@ router.register(
 )
 router.register(r"import-batch", views.ImportBatchViewSet, basename="import-batch")
 router.register(r"manual-data-upload", views.ManualDataUploadViewSet, basename="manual-data-upload")
-router.register(r"interest-groups", views.InterestGroupViewSet)
+router.register(r"interest-groups", views.InterestGroupViewSet, basename="interest-group")
 router.register(r"dimension-text", views.DimensionTextViewSet, basename="dimension-text")
 router.register(r"flexible-report", views.FlexibleReportViewSet, basename="flexible-report")
 router.register(r"counter-data-export", views.CounterExportView, basename="counter-data-export")
 router.register(r"report-mailing", views.FlexibleReportUserEmailViewSet, basename="report-mailing")
+
 urlpatterns = [
     path(
         "chart-data-raw/<report_type_id>/", views.Counter5DataView.as_view(), name="chart_data_raw"
@@ -62,6 +63,9 @@ urlpatterns = [
         views.FlexibleSlicerCoverageView.as_view(),
         name="flexible-slicer-coverage",
     ),
-]
-
-urlpatterns += router.urls
+    path(
+        "interest-computation-description/",
+        views.InterestComputationDescriptionView.as_view(),
+        name="interest-computation-description",
+    ),
+] + router.urls

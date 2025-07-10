@@ -18,7 +18,6 @@ from publications.logic.knowledgebase import (
     get_provider_for_counter_version,
     is_report_type_whitelisted,
 )
-from publications.models import Platform
 from publications.serializers import (
     DataSourceSerializer,
     PlatformSerializer,
@@ -41,11 +40,15 @@ from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportTyp
 from .models import (
     AccessLog,
     Dimension,
+    DimensionFilter,
     DimensionText,
     FlexibleReport,
     FlexibleReportUserEmail,
     ImportBatch,
+    InterestConfig,
+    InterestDimensionValueMapping,
     InterestGroup,
+    InterestProfile,
     ManualDataUpload,
     MduMethod,
     Metric,
@@ -217,6 +220,15 @@ class ReportTypeSerializer(ModelSerializer):
         return result
 
 
+class InterestFilterSerializer(ModelSerializer):
+    dimension = DimensionSerializer(read_only=True)
+    dimension_name = StringRelatedField(source="dimension")
+
+    class Meta:
+        model = DimensionFilter
+        fields = ("pk", "dimension", "dimension_name", "values", "negated")
+
+
 class ReportInterestMetricSerializer(ModelSerializer):
     interest_group = InterestGroupSerializer(read_only=True)
     metric = MetricSerializer(read_only=True)
@@ -224,6 +236,13 @@ class ReportInterestMetricSerializer(ModelSerializer):
     class Meta:
         model = ReportInterestMetric
         fields = ("metric", "report_type", "interest_group")
+
+
+class ReportInterestMetricWithFiltersSerializer(ReportInterestMetricSerializer):
+    filters = InterestFilterSerializer(many=True, read_only=True)
+
+    class Meta(ReportInterestMetricSerializer.Meta):
+        fields = ReportInterestMetricSerializer.Meta.fields + ("filters",)
 
 
 class ReportTypeExtendedSerializer(ModelSerializer):
@@ -253,9 +272,11 @@ class ReportTypeExtendedSerializer(ModelSerializer):
 
 
 class ReportTypeInterestSerializer(ModelSerializer):
-    interest_metric_set = ReportInterestMetricSerializer(
+    interest_metric_set = ReportInterestMetricWithFiltersSerializer(
         many=True, read_only=True, source="reportinterestmetric_set"
     )
+    is_counter = BooleanField(read_only=True)
+    record_count = IntegerField(read_only=True)
 
     class Meta:
         model = ReportType
@@ -267,7 +288,8 @@ class ReportTypeInterestSerializer(ModelSerializer):
             "name_en",
             "desc",
             "interest_metric_set",
-            "approx_record_count",
+            "record_count",
+            "is_counter",
         )
 
 
@@ -615,14 +637,6 @@ class FlexibleReportSerializer(ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class PlatformInterestReportSerializer(ModelSerializer):
-    interest_reports = ReportTypeInterestSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Platform
-        fields = ("interest_reports", "pk", "ext_id", "short_name", "name", "provider", "url")
-
-
 class FlexibleReportUserEmailNewSerializer(ModelSerializer):
     last_sent = DateField(read_only=True)
 
@@ -678,3 +692,115 @@ class FlexibleReportUserEmailCreateSerializer(FlexibleReportUserEmailSerializer)
             if attrs["number_of_periods"] % 2 != 0:
                 raise ValidationError("Number of periods cannot be odd if trend mode is active")
         return attrs
+
+
+# Interest computation description serializers
+class InterestDimensionMappingSerializer(ModelSerializer):
+    interest_dimension = StringRelatedField(source="interest_rtdim.dimension")
+    source_dimension = StringRelatedField(source="source_rtdim.dimension")
+    source_report_type = StringRelatedField(source="source_rtdim.report_type")
+
+    class Meta:
+        model = InterestDimensionValueMapping
+        fields = (
+            "pk",
+            "interest_dimension",
+            "source_dimension",
+            "source_report_type",
+            "default_value",
+            "mapping",
+        )
+
+
+class InterestGroupDetailSerializer(ModelSerializer):
+    metric = MetricSerializer(read_only=True)
+
+    class Meta:
+        model = InterestGroup
+        fields = (
+            "pk",
+            "short_name",
+            "name",
+            "important",
+            "position",
+            "implies_availability",
+            "metric",
+        )
+
+
+class ReportInterestMetricDetailSerializer(ModelSerializer):
+    metric = MetricSerializer(read_only=True)
+    interest_group = InterestGroupDetailSerializer(read_only=True)
+    filters = InterestFilterSerializer(many=True, read_only=True)
+    report_type = ReportTypeSimpleSerializer(read_only=True)
+
+    class Meta:
+        model = ReportInterestMetric
+        fields = (
+            "pk",
+            "metric",
+            "interest_group",
+            "interest_profile",
+            "filters",
+            "report_type",
+            "created",
+            "last_modified",
+        )
+
+
+class InterestProfileDetailSerializer(ModelSerializer):
+    class Meta:
+        model = InterestProfile
+        fields = ("pk", "short_name", "name", "desc")
+
+
+class InterestConfigDetailSerializer(ModelSerializer):
+    interest_profile = InterestProfileDetailSerializer(read_only=True)
+    interest_filters = InterestFilterSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = InterestConfig
+        fields = (
+            "pk",
+            "organization",
+            "interest_profile",
+            "interest_filters",
+            "created",
+            "last_updated",
+        )
+
+
+class ReportTypeForHierarchySerializer(ModelSerializer):
+    superseded_by = PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = ReportType
+        fields = ("pk", "short_name", "name", "superseded_by")
+
+
+class InterestComputationDescriptionSerializer(Serializer):
+    """Serializer for the interest computation description API endpoint"""
+
+    # Organization info
+    organization = OrganizationSerializer(read_only=True)
+    organization_name = StringRelatedField(source="organization")
+
+    # Interest configuration
+    interest_config = InterestConfigDetailSerializer(read_only=True)
+
+    # Report type hierarchy
+    report_type_hierarchy = ReportTypeForHierarchySerializer(many=True, read_only=True)
+
+    # Interest definitions by report type
+    interest_definitions = ReportInterestMetricDetailSerializer(many=True, read_only=True)
+
+    # Dimension mappings
+    dimension_mappings = InterestDimensionMappingSerializer(many=True, read_only=True)
+
+
+class InterestGroupDefinitionsSerializer(Serializer):
+    report_types = ReportTypeForHierarchySerializer(many=True, read_only=True)
+    interest_group = InterestGroupDetailSerializer(read_only=True)
+
+    class Meta:
+        fields = ("report_types", "interest_group")

@@ -2,7 +2,7 @@
 
 <i18n lang="yaml">
 en:
-  report_to_metrics: Report type ⭢ Metrics
+  report_to_metrics: Report Metrics
   interest_metrics_intro: |
     The following table shows metrics assigned to individual reports which define the interest
     for that particular report. If a report does not have a metric assigned, no interest will
@@ -10,15 +10,37 @@ en:
   interest_metrics_intro2: |
     Metrics are assigned to different interest groups/types. These define for which type of interest
     a metric will be used.
+  hierarchy_visualization: Report Hierarchy
+  hierarchy_visualization_intro: |
+    Explore the complex relationships between report types and how interest computation flows through the system.
+    This interactive visualization shows the hierarchy of report types, their superseding relationships, and the
+    associated interest definitions and dimension mappings.
+  hierarchy_visualization_intro2: |
+    Click the button below to open the interactive hierarchy visualization in a new page.
+  open_hierarchy_visualization: Open Hierarchy Visualization
+  hierarchy_visualization_note: |
+    The visualization provides an interactive tree diagram showing how report types relate to each other,
+    which ones have interest definitions, and how dimension mappings work across the hierarchy.
 
 cs:
-  report_to_metrics: Typy reportů ⭢ Metriky
+  report_to_metrics: Metriky reportů
   interest_metrics_intro: |
     Následující tabulka ukazuje metriky přiřazené k jednotlivým reportům, které definují zájem
     pro daný report. Pokud nemá report vybranou žádnou metriku, nebude pro něj vypočítáván zájem.
   interest_metrics_intro2: |
     Metriky mohou být přiřazeny k různým skupinám/typům zájmu. Ty definují pro jaký typ zájmu budou
     data z dané metriky započítána.
+  hierarchy_visualization: Vizualizace hierarchie
+  hierarchy_visualization_intro: |
+    Prozkoumejte složité vztahy mezi typy reportů a jak tok výpočtu zájmu prochází systémem.
+    Tato interaktivní vizualizace ukazuje hierarchii typů reportů, jejich nahrazující vztahy a
+    související definice zájmu a mapování dimenzí.
+  hierarchy_visualization_intro2: |
+    Klikněte na tlačítko níže pro otevření interaktivní vizualizace hierarchie na nové stránce.
+  open_hierarchy_visualization: Otevřít vizualizaci hierarchie
+  hierarchy_visualization_note: |
+    Vizualizace poskytuje interaktivní stromový diagram ukazující, jak se typy reportů vztahují k sobě,
+    které mají definice zájmu a jak funguje mapování dimenzí napříč hierarchií.
 </i18n>
 
 <template>
@@ -42,6 +64,14 @@ cs:
           >
             <v-tab
               :class="{
+                'tab-active': tab === 'hierarchy',
+                'tab-inactive': tab !== 'hierarchy',
+              }"
+              value="hierarchy"
+              >{{ $t("hierarchy_visualization") }}</v-tab
+            >
+            <v-tab
+              :class="{
                 'tab-active': tab === 'metrics',
                 'tab-inactive': tab !== 'metrics',
               }"
@@ -60,6 +90,13 @@ cs:
                   </v-card-text>
                 </v-card>
               </v-window-item>
+              <v-window-item value="hierarchy">
+                <v-card flat>
+                  <v-card-text>
+                    <InterestOverviewHierarchy></InterestOverviewHierarchy>
+                  </v-card-text>
+                </v-card>
+              </v-window-item>
             </v-window>
           </v-card-text>
         </v-card>
@@ -69,16 +106,17 @@ cs:
 </template>
 
 <script>
+import InterestOverviewHierarchy from "@/components/InterestOverviewHierarchy";
 import InterestOverviewMetrics from "@/components/InterestOverviewMetrics";
 
 export default {
   name: "InterestOverview",
 
-  components: { InterestOverviewMetrics },
+  components: { InterestOverviewMetrics, InterestOverviewHierarchy },
 
   data() {
     return {
-      tab: "metrics",
+      tab: "hierarchy",
     };
   },
 };

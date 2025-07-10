@@ -67,7 +67,7 @@ cs:
                 v-if="showFiscalPeriod"
               >
                 <template #activator="{ props }">
-                  <v-span v-bind="props">
+                  <span v-bind="props">
                     <v-checkbox
                       v-model="fiscalPeriod"
                       :label="$t('fiscal_period')"
@@ -76,7 +76,7 @@ cs:
                       class="mt-1 ml-4"
                       :disabled="selectedFrequency === 'M'"
                     />
-                  </v-span>
+                  </span>
                 </template>
               </v-tooltip>
             </div>
@@ -244,10 +244,10 @@ cs:
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
-import cancellation from "@/mixins/cancellation";
-import MailingFrequencyWidget from "./MailingFrequencyWidget.vue";
 import { getMonthAbbreviation } from "@/libs/dates";
+import cancellation from "@/mixins/cancellation";
+import { mapActions, mapState } from "vuex";
+import MailingFrequencyWidget from "./MailingFrequencyWidget.vue";
 
 export default {
   name: "ReportMailingPreferences",

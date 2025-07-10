@@ -30,7 +30,14 @@ from logs.logic.interest.structure import (
     get_interest_metrics_implying_availability,
 )
 from logs.logic.queries import replace_report_type_with_materialized
-from logs.models import AccessLog, InterestConfig, InterestGroup, Metric, ReportType
+from logs.models import (
+    AccessLog,
+    InterestConfig,
+    InterestGroup,
+    Metric,
+    ReportType,
+    ReportTypeToDimension,
+)
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import (
@@ -165,14 +172,20 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
             conditions |= Q(source__organization=organization)
         report_types = (
             ReportType.objects.filter(conditions)
+            .exclude_materialized()
             .distinct()
-            .select_related("counterreporttype")
+            .select_related("counterreporttype", "source", "source__organization")
             .prefetch_related(
                 "reportinterestmetric_set__metric",
                 "reportinterestmetric_set__interest_group",
-                "source",
-                "source__organization",
                 "controlled_metrics",
+                Prefetch(
+                    "reporttypetodimension_set",
+                    queryset=ReportTypeToDimension.objects.select_related("dimension").order_by(
+                        "position"
+                    ),
+                    to_attr="dim_set_prefetched",
+                ),
             )
         )
 

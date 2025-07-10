@@ -46,7 +46,7 @@ from django.db.models import (
     prefetch_related_objects,
 )
 from django.db.models import IntegerField as DbIntegerField
-from django.db.models.functions import Extract
+from django.db.models.functions import Coalesce, Extract
 from django.db.transaction import atomic, on_commit
 from django.http import JsonResponse, StreamingHttpResponse
 from django.urls import reverse
@@ -95,6 +95,7 @@ from logs.models import (
     FlexibleReportUserEmail,
     ImportBatch,
     InterestConfig,
+    InterestDimensionValueMapping,
     InterestGroup,
     ManualDataUpload,
     ManualDataUploadImportBatch,
@@ -113,6 +114,8 @@ from logs.serializers import (
     FlexibleReportUserEmailSerializer,
     ImportBatchSerializer,
     ImportBatchVerboseSerializer,
+    InterestComputationDescriptionSerializer,
+    InterestGroupDefinitionsSerializer,
     InterestGroupSerializer,
     ManualDataUploadSerializer,
     ManualDataUploadVerboseSerializer,
@@ -219,28 +222,41 @@ class ReportInterestMetricViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         # Get organization ID from query params if present
-        org_id = self.request.query_params.get("organization_id")
+        org_filter = organization_filter_from_org_id(
+            self.request.query_params.get("organization_id"), self.request.user, clickhouse=True
+        )
 
         # Get the appropriate interest config
-        if org_id:
+        if org_filter:
             try:
-                org = Organization.objects.get(pk=org_id)
+                org = Organization.objects.get(pk=org_filter["organization_id"])
                 ic = org.get_interest_config()
             except Organization.DoesNotExist:
                 ic = InterestConfig.objects.default()
+            record_count_annotation = Sum(
+                "importbatch__record_count",
+                filter=Q(importbatch__organization_id=org_filter["organization_id"]),
+            )
         else:
             ic = InterestConfig.objects.default()
+            record_count_annotation = Sum("importbatch__record_count")
 
         return (
             ReportType.objects.exclude_materialized()
             .exclude(short_name="interest", source__isnull=True)
+            .annotate(
+                is_counter=Exists(CounterReportType.objects.filter(report_type=OuterRef("pk")))
+            )
+            .annotate(record_count=Coalesce(record_count_annotation, 0))
             .prefetch_related(
                 "interest_metrics",
                 Prefetch(
                     "reportinterestmetric_set",
                     queryset=ReportInterestMetric.objects.filter(
                         Q(interest_profile=ic.interest_profile) | Q(interest_profile__isnull=True)
-                    ).select_related("metric", "interest_group"),
+                    )
+                    .select_related("metric", "interest_group")
+                    .prefetch_related("filters", "filters__dimension"),
                 ),
             )
         )
@@ -1339,6 +1355,30 @@ class InterestGroupViewSet(ReadOnlyModelViewSet):
     queryset = InterestGroup.objects.all()
     serializer_class = InterestGroupSerializer
 
+    @action(methods=["GET"], detail=True, url_path="definitions")
+    def definitions(self, request, pk):
+        ig = self.get_object()
+        report_types_with_interest = (
+            ReportType.objects.filter(reportinterestmetric__interest_group=ig)
+            .filter(
+                Q(superseded_by__isnull=False)
+                | Q(
+                    id__in=ReportType.objects.filter(superseded_by__isnull=False).values(
+                        "superseded_by"
+                    )
+                )
+                | Q(counterreporttype__isnull=False)
+            )
+            .distinct()
+            .prefetch_related("superseded_by", "interest_metrics")
+            .order_by("short_name")
+        )
+        return Response(
+            InterestGroupDefinitionsSerializer(
+                {"report_types": report_types_with_interest, "interest_group": ig}
+            ).data
+        )
+
 
 class FlexibleSlicerBaseView(APIView):
     def create_slicer(self, request):
@@ -1702,12 +1742,14 @@ class FlexibleReportUserEmailViewSet(ModelViewSet):
     filter_backends = [PrimaryDimensionFlexiReportFilter]
 
     def get_queryset(self):
-        return FlexibleReportUserEmail.objects.filter(user__in=self.request.user.accessible_users())
+        return FlexibleReportUserEmail.objects.filter(
+            user__in=self.request.user.accessible_users()
+        ).select_related("flexible_report")
 
     def get_serializer_class(self):
         if self.action == "create":
             return FlexibleReportUserEmailCreateSerializer
-        return super().get_serializer_class()
+        return FlexibleReportUserEmailSerializer
 
     @action(methods=["POST"], detail=False, url_path="test")
     def test(self, request):
@@ -1733,6 +1775,88 @@ class FlexibleReportUserEmailViewSet(ModelViewSet):
 
         send_report_mailing_raw_task.delay(request.data)
         return Response({"message": "Email sent", "success": True}, status=HTTP_200_OK)
+
+
+class InterestComputationDescriptionView(APIView):
+    """
+    API endpoint that provides a comprehensive description of how interest is computed
+    for a given organization or globally.
+
+    This endpoint returns:
+    - Organization information and interest configuration
+    - Report type hierarchy showing which reports supersede others
+    - Interest definitions showing which metrics define interest for each report type
+    - Dimension mappings showing how source data is mapped to interest dimensions
+    - Filters applied to source data to compute different types of interest
+    - Summary statistics of the configuration
+    """
+
+    def get(self, request):
+        """
+        Get interest computation description for an organization or global settings.
+
+        Query parameters:
+        - organization_id: Optional organization ID. If not provided, returns global settings.
+        """
+        organization = None
+        # Get organization if specified
+        if organization_id := request.GET.get("organization_id"):
+            if not request.user.accessible_organizations().filter(pk=organization_id).exists():
+                raise PermissionDenied("You don't have access to this organization")
+            organization = Organization.objects.get(pk=organization_id)
+            interest_config = organization.get_interest_config()
+        else:
+            interest_config = InterestConfig.objects.default()
+
+        interest_profile = interest_config.interest_profile
+
+        # Get all report types that have interest definitions AND are part of the hierarchy
+        # (either superseded by another report type or supersede another report type)
+        report_types_with_interest = (
+            ReportType.objects.filter(reportinterestmetric__isnull=False)
+            .filter(
+                Q(superseded_by__isnull=False)
+                | Q(
+                    id__in=ReportType.objects.filter(superseded_by__isnull=False).values(
+                        "superseded_by"
+                    )
+                )
+            )
+            .distinct()
+            .prefetch_related("superseded_by", "interest_metrics")
+            .order_by("short_name")
+        )
+
+        # Get interest definitions for the profile
+        interest_definitions = (
+            ReportInterestMetric.objects.filter(
+                Q(interest_profile=interest_profile) | Q(interest_profile__isnull=True),
+                report_type__in=report_types_with_interest,
+            )
+            .select_related("metric", "interest_group", "interest_profile")
+            .prefetch_related("filters__dimension")
+        )
+
+        # Get dimension mappings
+        interest_rt = ReportType.objects.get_interest_rt()
+        dimension_mappings = InterestDimensionValueMapping.objects.filter(
+            interest_rtdim__report_type=interest_rt
+        ).select_related(
+            "interest_rtdim__dimension", "source_rtdim__dimension", "source_rtdim__report_type"
+        )
+
+        # Prepare response data
+        response_data = {
+            "organization": organization,
+            "interest_config": interest_config,
+            "report_type_hierarchy": list(report_types_with_interest),
+            "interest_definitions": list(interest_definitions),
+            "dimension_mappings": list(dimension_mappings),
+        }
+
+        # Serialize the response
+        serializer = InterestComputationDescriptionSerializer(response_data)
+        return Response(serializer.data)
 
 
 class MduHeatmapDataView(MduAccessLogViewMixin, AccessLogListViewBase):

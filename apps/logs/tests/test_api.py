@@ -6,6 +6,7 @@ from io import StringIO
 from unittest.mock import Mock, patch
 
 import pytest
+from celus_nigiri import CounterRecord
 from core.logic.dates import month_end, month_start
 from core.tests.conftest import (  # noqa - fixtures
     admin_identity,  # noqa - fixtures
@@ -20,6 +21,7 @@ from django.core.management import call_command
 from django.db.models import Max, Min
 from django.urls import reverse
 from freezegun import freeze_time
+from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
 from publications.fake_data import ItemFactory, PlatformFactory, TitleFactory
 from publications.tests.conftest import interest_rt  # noqa - fixtures
@@ -27,7 +29,7 @@ from publications.tests.test_api import (  # noqa - fixtures
     real_world_data_with_interest,
     real_world_data_with_interest_and_configs,
 )
-from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.fake_data import CounterReportTypeFactory, CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 
 from logs.fake_data import (
@@ -1046,17 +1048,102 @@ class TestImportBatchViewSet:
 
 @pytest.mark.django_db
 class TestReportInterestMetricAPI:
+    @pytest.mark.parametrize(
+        ["user_type", "has_access"],
+        [
+            ["no_user", None],
+            ["invalid", None],
+            ["unrelated", False],
+            ["related_user", False],
+            ["related_admin", False],
+            ["master_user", True],
+            ["superuser", True],
+        ],
+    )
     def test_get_report_interest_metric(
-        self, authenticated_client, platforms, report_types, metrics, interests
+        self,
+        client_by_user_type,
+        user_type,
+        has_access,
+        platforms,
+        report_types,
+        metrics,
+        interests,
     ):
+        # add a counter report type for the TR report type
+        CounterReportTypeFactory.create(report_type=report_types["tr"])
+        # get the data
+        client, org = client_by_user_type(user_type)
         url = reverse("report-interest-metric-list")
-        resp = authenticated_client.get(url)
-        assert resp.status_code == 200
-        data = {e["short_name"]: e for e in resp.json()}
-        assert len(data["TR"]["interest_metric_set"]) == 2
-        assert len(data["DR"]["interest_metric_set"]) == 0
-        assert len(data["JR1"]["interest_metric_set"]) == 2
-        assert len(data["BR2"]["interest_metric_set"]) == 1
+        resp = client.get(url)
+        if has_access:
+            assert resp.status_code == 200
+            data = {e["short_name"]: e for e in resp.json()}
+            assert len(data["TR"]["interest_metric_set"]) == 2
+            assert data["TR"]["is_counter"] is True
+            assert "record_count" in data["TR"], "check that the record count field is present"
+            assert len(data["DR"]["interest_metric_set"]) == 0
+            assert data["DR"]["is_counter"] is False, "no counter report type exists for DR"
+            assert len(data["JR1"]["interest_metric_set"]) == 2
+            assert data["JR1"]["is_counter"] is False, "no counter report type exists for JR1"
+            assert len(data["BR2"]["interest_metric_set"]) == 1
+            assert data["BR2"]["is_counter"] is False, "no counter report type exists for BR2"
+        elif has_access is None:
+            assert resp.status_code == 401
+        else:
+            assert resp.status_code == 404
+
+    # Added test with organization query param
+    @pytest.mark.parametrize(
+        ["user_type", "has_access"],
+        [
+            ["no_user", None],
+            ["invalid", None],
+            ["unrelated", False],
+            ["related_user", True],
+            ["related_admin", True],
+            ["master_user", True],
+            ["superuser", True],
+        ],
+    )
+    def test_get_report_interest_metric_with_org_param(
+        self,
+        client_by_user_type,
+        user_type,
+        has_access,
+        platforms,
+        report_types,
+        metrics,
+        interests,
+    ):
+        """
+        Same as test_get_report_interest_metric, but supplies ?organization=<org.pk> query param.
+        Should work for all users who have a visible organization context.
+        """
+        # add a counter report type for the TR report type
+        CounterReportTypeFactory.create(report_type=report_types["tr"])
+        client, org = client_by_user_type(user_type)
+        url = reverse("report-interest-metric-list")
+
+        # filter by org ID if available otherwise use dummy
+        org_pk = org.pk if org else 11111111
+        resp = client.get(f"{url}?organization_id={org_pk}")
+        if has_access:
+            assert resp.status_code == 200
+            data = {e["short_name"]: e for e in resp.json()}
+            assert len(data["TR"]["interest_metric_set"]) == 2
+            assert data["TR"]["is_counter"] is True
+            assert "record_count" in data["TR"], "check that the record count field is present"
+            assert len(data["DR"]["interest_metric_set"]) == 0
+            assert data["DR"]["is_counter"] is False, "no counter report type exists for DR"
+            assert len(data["JR1"]["interest_metric_set"]) == 2
+            assert data["JR1"]["is_counter"] is False, "no counter report type exists for JR1"
+            assert len(data["BR2"]["interest_metric_set"]) == 1
+            assert data["BR2"]["is_counter"] is False, "no counter report type exists for BR2"
+        elif has_access is None:
+            assert resp.status_code == 401
+        else:
+            assert resp.status_code == 404
 
     @pytest.mark.parametrize("interest_profile", ["total", "unique"])
     def test_report_interest_metric_list(self, master_admin_client, interest_profile):
@@ -1147,6 +1234,54 @@ class TestReportInterestMetricAPI:
 
         # verify no unexpected metrics are present
         assert len(tr_metrics) == len(expected_metrics), "Unexpected metrics found"
+
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_report_interest_metric_list_record_count_computation(
+        self, master_admin_client, clickhouse_on_off
+    ):
+        """
+        Uses real-world report types and interest definitions to test that the record count
+        computation is correct - both for clickhouse and for django.
+        """
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        # now compute interest
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        report_type = ReportType.objects.get(short_name="TR51")
+        dates = {"start": "2024-01-01", "end": "2024-01-31"}
+        dimension_data = {
+            "Data_Type": "Book",
+            "Access_Type": "Free_To_Read",
+            "Access_Method": "Normal",
+        }
+        crs = [
+            CounterRecord(
+                value=2,
+                title="Title1",
+                metric="Total_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+            CounterRecord(
+                value=1,
+                title="Title1",
+                metric="Unique_Item_Requests",
+                dimension_data=dimension_data,
+                **dates,
+            ),
+        ]
+        import_counter_records(report_type, organization, platform, crs)
+        resp = master_admin_client.get(
+            reverse("report-interest-metric-list"), {"organization_id": organization.pk}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        tr51_record = next(tr for tr in data if tr["short_name"] == "TR51")
+        assert tr51_record["record_count"] == 2
+        tr_record = next(tr for tr in data if tr["short_name"] == "TR")
+        assert tr_record["record_count"] == 0
 
 
 @pytest.mark.django_db

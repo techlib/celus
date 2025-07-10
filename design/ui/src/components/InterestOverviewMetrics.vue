@@ -8,14 +8,18 @@ en:
     metrics: Metrics
     interest_type: Interest type
     record_count: Record count
-    all: All reports
-    undefined: Without metric
+    all: All interest types
+    undefined: Reports without metric
     interest_group_filter: Interest type filter
     source_metric: Source metric
     interest_metric: Interest metric
     no_metric: No metric is assigned as defining interest
+    counter_only: COUNTER reports only
+    non_zero_only: Reports with non-zero record count only
+    is_not: IS NOT
+    is_one_of: IS ONE OF
   tt:
-    record_count: Please note that the number of records may be up to one day old
+    record_count: Number of database records associated with the report
     interest_metric: |
       Metric from source report may be remapped to a different metric name in
       interest. Such cases are marked by italic font.
@@ -27,14 +31,18 @@ cs:
     metrics: Metriky
     interest_type: Typ zájmu
     record_count: Počet záznamů
-    all: Všechny reporty
+    all: Všechny typy zájmu
     undefined: Bez definované metriky
     interest_group_filter: Filtr typu zájmu
     source_metric: Zdrojová metrika
     interest_metric: Metrika zájmu
     no_metric: Není přiřazena žádná metrika definující zájem
+    counter_only: Pouze COUNTER reporty
+    non_zero_only: Pouze reporty s nenulovým počtem záznamů
+    is_not: NENÍ MEZI
+    is_one_of: JE JEDEN Z
   tt:
-    record_count: Počet záznamů je jen orientační - může být až jeden den starý
+    record_count: Počet databázových záznamů pro tento report
     interest_metric: |
       Metrika ze zdrojových dat může být v zájmu přemapována na jiné jméno. Tyto
       případy jsou zvýrazněny kurzívou.
@@ -79,8 +87,24 @@ cs:
             </template>
           </v-select>
         </v-col>
+        <v-col cols="auto" class="align-self-center pb-4">
+          <v-checkbox
+            v-model="counterOnly"
+            :label="$t('labels.counter_only')"
+            color="primary"
+            hide-details
+          />
+        </v-col>
+        <v-col cols="auto" class="align-self-center pb-4">
+          <v-checkbox
+            v-model="nonZeroOnly"
+            :label="$t('labels.non_zero_only')"
+            color="primary"
+            hide-details
+          />
+        </v-col>
         <v-spacer></v-spacer>
-        <v-col cols="4">
+        <v-col cols="12" sm="6" md="4" lg="3">
           <v-text-field
             style="min-width: 85px"
             v-model="search"
@@ -94,9 +118,11 @@ cs:
         </v-col>
       </v-row>
     </template>
+
     <template #headers="{ columns }">
       <TableCustomSort :columns="columns" v-model:externalOrderBy="orderBy" />
     </template>
+
     <template #item.data-table-expand="{ item }">
       <v-btn icon variant="text" size="small" @click="toggleExpand(item)">
         <v-icon>
@@ -106,6 +132,7 @@ cs:
         </v-icon>
       </v-btn>
     </template>
+
     <template #expanded-row="{ columns, item }">
       <tr class="item_expanded_space">
         <td :colspan="columns.length" class="pa-2">
@@ -125,6 +152,7 @@ cs:
                     v-text="$t('labels.source_metric')"
                     class="source_metric"
                   ></th>
+                  <th v-text="$t('labels.filters')" class="filters"></th>
                 </tr>
               </thead>
               <tbody>
@@ -135,6 +163,45 @@ cs:
                 >
                   <td>{{ metric.interest_group.name }}</td>
                   <td>{{ metric.metric.short_name }}</td>
+                  <td>
+                    <div v-for="filter in metric.filters" :key="filter.pk">
+                      <v-icon
+                        v-if="filter.negated"
+                        icon="fa fa-minus-circle"
+                        size="x-small"
+                        color="red-darken-2"
+                        class="mb-1"
+                      ></v-icon>
+                      <v-icon
+                        v-else
+                        icon="fa fa-plus-circle"
+                        size="x-small"
+                        color="green-darken-2"
+                        class="mb-1"
+                      ></v-icon>
+
+                      <span class="font-weight-normal ml-2">{{
+                        filter.dimension.short_name
+                      }}</span>
+                      <span
+                        class="mx-2 font-weight-medium"
+                        :class="
+                          filter.negated
+                            ? 'text-red-darken-2'
+                            : 'text-green-darken-2'
+                        "
+                      >
+                        {{
+                          filter.negated
+                            ? $t("labels.is_not")
+                            : $t("labels.is_one_of")
+                        }}
+                      </span>
+                      <span class="font-italic">
+                        {{ filter.values.join("; ") }}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -155,12 +222,11 @@ cs:
         :max-count="3"
       ></ReportInterestGroups>
     </template>
-    <template #item.approx_record_count="{ item }">
-      <span class="text-caption">{{
-        formatInteger(item.approx_record_count)
-      }}</span>
+    <template #item.record_count="{ item }">
+      <span class="text-caption">{{ formatInteger(item.record_count) }}</span>
     </template>
-    <template #header.approx_record_count="{ column }">
+
+    <template #header.record_count="{ column }">
       <v-tooltip location="bottom">
         <template #activator="{ props }">
           {{ column.title }}
@@ -180,10 +246,10 @@ cs:
 
 <script>
 import ReportChip from "@/components/reporting/ReportChip";
-import cancellation from "@/mixins/cancellation";
 import ReportInterestGroups from "@/components/ReportInterestGroups";
-import { mapState } from "vuex";
 import { formatInteger } from "@/libs/numbers";
+import cancellation from "@/mixins/cancellation";
+import { mapState } from "vuex";
 import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
@@ -202,6 +268,8 @@ export default {
       interestGroups: [],
       selectedGroup: null,
       orderBy: [],
+      counterOnly: false,
+      nonZeroOnly: true,
     };
   },
 
@@ -230,27 +298,32 @@ export default {
         },
         {
           title: this.$i18n.t("labels.record_count"),
-          value: "approx_record_count",
-          key: "approx_record_count",
+          value: "record_count",
+          key: "record_count",
           align: "end",
           order: "reverse",
         },
       ];
     },
     visibleItems() {
+      let items = this.items;
+      if (this.counterOnly) {
+        items = items.filter((item) => item.is_counter);
+      }
+      if (this.nonZeroOnly) {
+        items = items.filter((item) => item.record_count > 0);
+      }
       if (this.selectedGroup === -1) {
-        return this.items.filter(
-          (item) => item.interest_metric_set.length === 0,
-        );
+        return items.filter((item) => item.interest_metric_set.length === 0);
       }
       if (this.selectedGroup) {
-        return this.items.filter((item) =>
+        return items.filter((item) =>
           item.interest_metric_set.find(
             (im) => im.interest_group.pk === this.selectedGroup,
           ),
         );
       }
-      return this.items;
+      return items;
     },
   },
 
