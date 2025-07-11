@@ -14,13 +14,13 @@ repos:
     hooks:
       - id: ruff-format
         name: ruff formatter
-        entry: ruff format
+        entry: poetry run ruff format
         language: system
         types: [python]
 
       - id: ruff
         name: ruff linter
-        entry: ruff check --fix
+        entry: poetry run ruff check --fix
         language: system
         types: [python]
 
@@ -32,14 +32,14 @@ repos:
 
       - id: django-migrations
         name: Check django migrations
-        entry: python manage.py makemigrations --check --no-input
+        entry: poetry run python manage.py makemigrations --check --no-input
         language: system
         types: [python]
         pass_filenames: false
 
       - id: deptry
         name: Check pyproject.toml dependencies
-        entry: deptry apps
+        entry: poetry run deptry apps
         language: system
         files: ^pyproject\.toml$
         pass_filenames: false
