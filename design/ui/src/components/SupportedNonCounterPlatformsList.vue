@@ -111,15 +111,15 @@ export default {
     headers() {
       let ret = [
         {
-          title: this.$t("title_fields.short_name"),
-          value: "short_name",
-          key: "short_name",
-          sortable: true,
-        },
-        {
           title: this.$t("title_fields.name"),
           value: "name",
           key: "name",
+          sortable: true,
+        },
+        {
+          title: this.$t("title_fields.short_name"),
+          value: "short_name",
+          key: "short_name",
           sortable: true,
         },
         {
