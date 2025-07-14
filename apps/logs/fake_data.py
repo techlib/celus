@@ -194,7 +194,7 @@ class ManualDataUploadFullFactory(ManualDataUploadFactory):
             return
 
         if obj.is_processed:
-            ib = ImportBatchFullFactory.create(
+            ib = ImportBatchFullFactory(
                 organization=obj.organization, platform=obj.platform, report_type=obj.report_type
             )
             obj.import_batches.set([ib])
