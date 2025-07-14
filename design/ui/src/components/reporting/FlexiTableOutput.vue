@@ -64,6 +64,7 @@ cs:
               })
             "
             v-if="partsSideBySide"
+            border-color="transparent"
           >
             <v-slide-group v-model="currentPart">
               <v-slide-group-item

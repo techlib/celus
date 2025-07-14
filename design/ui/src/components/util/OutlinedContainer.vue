@@ -1,5 +1,5 @@
 <template>
-  <div class="outlined-container">
+  <div class="outlined-container" :style="{ borderColor: borderColor }">
     <div class="container-label">
       {{ label }}
     </div>
@@ -17,13 +17,16 @@ export default {
       type: String,
       required: true,
     },
+    borderColor: {
+      type: String,
+      default: "#00000020",
+    },
   },
 };
 </script>
 
 <style scoped lang="scss">
 .outlined-container {
-  border: 1px solid #00000020;
   border-radius: 10px;
   padding: 12px 12px 8px 12px;
   margin-bottom: 8px;
@@ -31,6 +34,7 @@ export default {
   position: relative;
   display: inline-block;
   width: fit-content;
+  border: 1px solid;
 }
 
 .outlined-container .container-label {
