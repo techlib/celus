@@ -12,7 +12,9 @@
             class="px-0"
           >
             <v-list-item :avatar="true">
-              <v-icon color="error">fa fa-exclamation-circle</v-icon>
+              <v-icon color="error" class="my-1"
+                >fa fa-exclamation-circle</v-icon
+              >
             </v-list-item>
             <v-list-item class="error_text">{{ error }}</v-list-item>
           </v-list-item>
@@ -65,5 +67,18 @@ export default {
 }
 .error_text {
   font-size: 14px;
+  max-width: 500px;
+}
+
+@media (max-width: 700px) {
+  .error_text {
+    max-width: 70vw;
+  }
+}
+
+@media (max-width: 470px) {
+  .error_text {
+    max-width: 60vw;
+  }
 }
 </style>
