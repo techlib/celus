@@ -1015,6 +1015,9 @@ CREATE_USER_WELCOME_EVENTS = config("CREATE_USER_WELCOME_EVENTS", cast=bool, def
 OCTOPUS_HMAC_KEY = config("OCTOPUS_HMAC_KEY", default="")
 OCTOPUS_HMAC_ALGO = config("OCTOPUS_HMAC_ALGO", default="sha256")
 
+# External registration URL - when set, registration link will redirect to this URL
+EXTERNAL_REGISTRATION_URL = config("EXTERNAL_REGISTRATION_URL", default="")
+
 # Management commands runnable from the UI
 # the format is a semicolon-separated list of tuples (app_name, command_name)
 EXPOSED_MANAGEMENT_COMMANDS = config(
@@ -1041,6 +1044,7 @@ EXPORTED_SETTINGS = [
     "ENABLE_ITEMS",
     "ENABLE_RAW_DATA_IMPORT",
     "EXPORT_DELETING_PERIOD",
+    "EXTERNAL_REGISTRATION_URL",
     "HARVESTER_IPV4_ADDRESSES",
     "HARVESTER_IPV6_ADDRESSES",
     "LANGUAGES",

@@ -91,7 +91,16 @@ cs:
             <v-icon class="mr-3" size="small">far fa-hand-point-right</v-icon>
             <i18n-t keypath="signup" tag="span" class="text--secondary">
               <template #register_here>
-                <a @click="currentTab = 'register'" v-text="$t('register')"></a>
+                <a
+                  v-if="externalRegistrationUrl"
+                  :href="externalRegistrationUrl"
+                  v-text="$t('register')"
+                ></a>
+                <a
+                  v-else
+                  @click="currentTab = 'register'"
+                  v-text="$t('register')"
+                ></a>
               </template>
             </i18n-t>
           </v-alert>
@@ -385,12 +394,16 @@ export default {
   computed: {
     ...mapState({
       loginError: (state) => state.login.loginError,
+      basicInfo: (state) => state.basicInfo,
     }),
     ...mapGetters({
       loginErrorText: "loginErrorText",
       allowSignUp: "allowSignUp",
       usesPasswordLogin: "usesPasswordLogin",
     }),
+    externalRegistrationUrl() {
+      return this.basicInfo.EXTERNAL_REGISTRATION_URL || "";
+    },
     showLoginDialog: {
       get() {
         return this.$store.state.showLoginDialog;
