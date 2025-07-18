@@ -88,7 +88,7 @@ cs:
             variant="outlined"
             class="mt-3"
           >
-            <v-icon class="mr-3" size="small">far fa-hand-point-right</v-icon>
+            <v-icon class="mr-3" size="small">far fa-question-circle</v-icon>
             <i18n-t keypath="signup" tag="span" class="text--secondary">
               <template #register_here>
                 <a
