@@ -347,3 +347,18 @@ export default {
   mounted() {},
 };
 </script>
+
+<style scoped>
+.v-navigation-drawer {
+  height: calc(100% - 50px) !important;
+}
+
+@media only screen and (max-width: 1280px) {
+  .v-navigation-drawer {
+    height: 100% !important;
+  }
+  .v-navigation-drawer__scrim {
+    height: calc(100% + 50px) !important;
+  }
+}
+</style>

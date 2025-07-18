@@ -240,7 +240,13 @@ cs:
         </v-snackbar>
       </v-container>
     </v-main>
-    <v-footer app absolute inset height="128px" v-if="footerImages.length">
+    <v-footer
+      :style="showSidePanel ? 'left: 256px !important;' : 'left: 0 !important;'"
+      class="footer_container"
+      absolute
+      app
+      v-if="footerImages.length"
+    >
       <v-container fluid>
         <v-row no-gutters wrap>
           <v-col
@@ -465,7 +471,7 @@ export default {
 .fixed_button {
   margin-right: 36px;
   margin-bottom: 16px;
-  z-index: 4;
+  z-index: 1004;
 }
 img.logo {
   max-width: 20vw;
@@ -491,5 +497,11 @@ img.logow {
 
 :deep(.v-alert__close > button) {
   font-size: 15px;
+}
+.footer_container {
+  z-index: 1000 !important;
+  width: max-content !important;
+  bottom: -50px !important;
+  height: 128px !important;
 }
 </style>
