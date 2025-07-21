@@ -152,6 +152,13 @@ export default {
       success: false,
     };
   },
+  watch: {
+    dialog(newVal, oldVal) {
+      if (oldVal === true && newVal === false && this.success) {
+        this.$emit("deleted");
+      }
+    },
+  },
   methods: {
     async performDelete() {
       if (this.credentials) {
@@ -173,9 +180,6 @@ export default {
     },
     closeDialog() {
       this.dialog = false;
-      if (this.success) {
-        this.$emit("deleted");
-      }
     },
   },
 };
