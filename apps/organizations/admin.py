@@ -31,6 +31,7 @@ class OrganizationAdmin(NecronomiconAdminMixin, ImportExportMixin, TranslationAd
     ordering = ["name"]
     readonly_fields = ("created", "last_modified")
     resource_class = OrganizationResource
+    list_editable = ["country", "state"]
 
 
 @admin.register(models.UserOrganization)
