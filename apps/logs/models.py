@@ -10,7 +10,6 @@ from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
-import magic
 from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
 from core.exceptions import ModelUsageError
@@ -24,6 +23,7 @@ from core.models import (
     User,
 )
 from core.models import where_to_store as core_where_to_store
+from core.validators import validate_mime_type_based_on_extension as validate_mime_type
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.postgres.indexes import BrinIndex
@@ -892,39 +892,6 @@ def where_to_store(instance: "ManualDataUpload", filename):
         f"custom/{instance.user_id}/{instance.report_type.short_name}-"
         f"{instance.platform.short_name}_{ts}{ext}"
     )
-
-
-def validate_mime_type(fileobj):
-    detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
-    fileobj.seek(0)
-
-    # there is not one type to rule them all - magic is not perfect and we need to consider
-    # other possibilities that could be detected - for example the text/x-Algol68 seems
-    # to be returned for some CSV files with some version of libmagic
-    # (the library magic uses internally)
-    allowed_types = [
-        "text/csv",
-        "text/plain",
-        "application/csv",
-        "text/x-Algol68",
-        "application/json",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-excel",  # xls
-        "application/CDFV2",  # xls (sometimes)
-        "application/x-dosexec",  # Japanese (SHIFT_JIS) encoding
-    ]
-
-    if fileobj.name and fileobj.name.endswith(".xlsx"):
-        allowed_types.append("application/octet-stream")
-
-    if detected_type not in allowed_types:
-        raise ValidationError(
-            _(
-                "The uploaded file is not in required file type or is corrupted. "
-                "The file type seems to be '{detected_type}'. "
-                "Please upload your file in required file type."
-            ).format(detected_type=detected_type)
-        )
 
 
 class MduState(models.TextChoices):

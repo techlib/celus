@@ -240,6 +240,52 @@ used_languages = config("USED_LANGUAGES", default="en", cast=Csv())
 LANGUAGES = [lang for lang in AVAILABLE_LANGUAGES if lang[0] in used_languages]
 LOCALE_PATHS = [BASE_DIR / "locale"]
 
+ALLOWED_MIME_TYPES_XLS = config(
+    "ALLOWED_MIME_TYPES_XLS",
+    default=",".join(
+        [
+            "application/vnd.ms-excel",
+            "application/CDFV2",
+            "application/x-ole-storage",
+            "application/octet-stream",
+        ]
+    ),
+    cast=Csv(),
+)
+ALLOWED_MIME_TYPES_XLSX = config(
+    "ALLOWED_MIME_TYPES_XLSX",
+    default=",".join(
+        [
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/octet-stream",
+        ]
+    ),
+    cast=Csv(),
+)
+ALLOWED_MIME_TYPES_JSON = config(
+    "ALLOWED_MIME_TYPES_JSON", default=",".join(["text/plain", "application/json"]), cast=Csv()
+)
+ALLOWED_MIME_TYPES_CSV_AND_TSV = config(
+    "ALLOWED_MIME_TYPES_CSV_AND_TSV ",
+    default=",".join(
+        [
+            "text/csv",
+            "text/plain",
+            "application/csv",
+            "text/x-Algol68",
+            "application/x-dosexec",  # Japanese (SHIFT_JIS) encoding
+        ]
+    ),
+    cast=Csv(),
+)
+ALLOWED_MIME_TYPES = {
+    "xls": ALLOWED_MIME_TYPES_XLS,
+    "xlsx": ALLOWED_MIME_TYPES_XLSX,
+    "json": ALLOWED_MIME_TYPES_JSON,
+    "csv": ALLOWED_MIME_TYPES_CSV_AND_TSV,
+    "tsv": ALLOWED_MIME_TYPES_CSV_AND_TSV,
+}
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 

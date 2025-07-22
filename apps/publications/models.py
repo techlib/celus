@@ -5,12 +5,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import BinaryIO, Callable, List, Optional
 
-import magic
 from celus_nigiri.record import Author as NigiriAuthor
 from core.models import CreatedUpdatedMixin, DataSource
+from core.validators import validate_mime_type_csv as validate_mime_type
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
@@ -451,27 +450,6 @@ class TitleOverlapBatchState(models.TextChoices):
     PROCESSING = "processing", _("Processing")
     FAILED = "failed", _("Import failed")
     DONE = "done", _("Done")
-
-
-def validate_mime_type(fileobj):
-    pos = fileobj.tell()
-    fileobj.seek(0)
-    try:
-        detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
-    finally:
-        fileobj.seek(pos)
-    # there is not one type to rule them all - magic is not perfect and we need to consider
-    # other possibilities that could be detected - for example the text/x-Algol68 seems
-    # to be returned for some CSV files with some version of libmagic
-    # (the library magic uses internally)
-    if detected_type not in ("text/csv", "text/plain", "application/csv", "text/x-Algol68"):
-        raise ValidationError(
-            _(
-                "The uploaded file does not seem to be a CSV file. "
-                "The file type seems to be '{detected_type}'. "
-                "Please upload a CSV file."
-            ).format(detected_type=detected_type)
-        )
 
 
 class TitleOverlapBatch(CreatedUpdatedMixin, models.Model):

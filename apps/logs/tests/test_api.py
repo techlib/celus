@@ -505,7 +505,32 @@ class TestManualDataUpload:
             },
         )
         assert response.status_code == 400
-        assert "wrong_file_format" in response.data
+        assert "data_file" in response.data
+        assert "are not supported" in response.data["data_file"][0]
+
+    def test_create_manual_data_upload_wrong_content(
+        self, organizations, master_admin_client, report_type_nd, tmp_path, settings
+    ):
+        platform = PlatformFactory(short_name="Platform1")
+        report_type = report_type_nd(0)
+        file = StringIO("Source,2019-01\naaaa,9\n")
+        settings.MEDIA_ROOT = tmp_path
+        file.name = "input.xls"
+        response = master_admin_client.post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["branch"].pk,
+                "report_type_id": report_type.pk,
+                "data_file": file,
+                "method": MduMethod.CELUS,
+            },
+        )
+        assert response.status_code == 400
+        assert "data_file" in response.data
+        assert (
+            "doesn't seem to have the right format or is corrupted" in response.data["data_file"][0]
+        )
 
 
 @pytest.mark.django_db

@@ -6,9 +6,9 @@ from collections import Counter, defaultdict
 from functools import reduce
 from typing import BinaryIO, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
-import magic
 from colorfield.fields import ColorField
 from core.models import REL_ORG_ADMIN, CreatedUpdatedMixin, User
+from core.validators import validate_mime_type_csv as validate_mime_type
 from django.conf import settings
 from django.core.files.base import File
 from django.db import models
@@ -18,7 +18,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from organizations.models import Organization
 from publications.models import Platform, Title
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 
 from tags.logic.titles_lists import CsvTitleListReader, TitleListReader
 
@@ -590,27 +590,6 @@ class TaggingBatchState(models.TextChoices):
     PREFAILED = "prefailed", _("Preflight failed")
     FAILED = "failed", _("Import failed")
     UNDOING = "undoing", _("Undoing")
-
-
-def validate_mime_type(fileobj):
-    pos = fileobj.tell()
-    fileobj.seek(0)
-    try:
-        detected_type = magic.from_buffer(fileobj.read(16384), mime=True)
-    finally:
-        fileobj.seek(pos)
-    # there is no one type to rule them all - magic is not perfect and we need to consider
-    # other possibilities that could be detected - for example the text/x-Algol68 seems
-    # to be returned for some CSV files with some version of libmagic
-    # (the library magic uses internally)
-    if detected_type not in ("text/csv", "text/plain", "application/csv", "text/x-Algol68"):
-        raise ValidationError(
-            _(
-                "The uploaded file does not seem to be a CSV file. "
-                "The file type seems to be '{detected_type}'. "
-                "Please upload a CSV file."
-            ).format(detected_type=detected_type)
-        )
 
 
 class TaggingBatchQuerySet(models.QuerySet):

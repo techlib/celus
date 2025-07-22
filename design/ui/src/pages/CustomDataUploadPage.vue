@@ -362,7 +362,7 @@ cs:
                     :label="$t('data_file')"
                     :placeholder="$t('data_file_placeholder')"
                     required
-                    accept=".csv, .json, .tsv"
+                    accept=".csv, .json, .tsv, .xlsx, .xls"
                   >
                   </v-file-input>
                 </v-col>
