@@ -59,6 +59,7 @@ class TestUrl:
             ("https://example.com//", "https://example.com/"),
             ("https://example.com///path/", "https://example.com/path/"),
             ("https://example.com/path///sub//", "https://example.com/path/sub/"),
+            ("http://example.com", "https://example.com"),  # http -> https conversion
         ),
     )
     def test_url_normalization(self, in_url, out_url):
@@ -420,9 +421,9 @@ class TestCredentialsQuerySet:
         CredentialsFactory(url="https://skip.it")
         # Fake url with path
         CredentialsFactory(url="https://fake.it/something")
-        # Real sushi - protocol mismatch
-        c2 = CredentialsFactory(url="http://fake.it")
-        assert set(SushiCredentials.objects.all().not_fake()) == {c1, c2}
+        # Real sushi - protocol mismatch -> http is converted to https
+        CredentialsFactory(url="http://fake.it")
+        assert set(SushiCredentials.objects.all().not_fake()) == {c1}
 
     @pytest.mark.parametrize("consortial", (True, False))
     def test_annotate_same_counts(self, organizations, consortial, settings):

@@ -217,7 +217,7 @@ class TestMaximusSync:
             SushiCredentials.objects.create(
                 organization=o1,
                 platform=platforms[i],
-                url="http://example.com/",
+                url="https://example.com/",
                 counter_version=5,
                 customer_id="1234",
                 lock_level=UL_ORG_ADMIN,
@@ -247,7 +247,7 @@ class TestMaximusSync:
                 "ext_id": s[i].id,
                 "organization": o1.id,
                 "platform": platforms[i].id,
-                "url": "http://example.com/",
+                "url": "https://example.com/",
                 "counter_version": 5,
                 "customer_id": "1234",
                 "counter_reports": [

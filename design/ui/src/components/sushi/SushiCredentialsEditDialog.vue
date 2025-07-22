@@ -39,6 +39,7 @@ en:
   url_hint_no_report: "URL should not contain the '/reports/' part and anything beyond this. For example 'https://example.com/sushi5/reports/tr?customer_id=1' should be cropped to 'https://example.com/sushi5/'"
   url_hint_no_query: "URL should not contain any query parameters, i. e. there should be no '{search}' part"
   invalid_url: Please enter a valid URL
+  url_must_use_https: URL must use HTTPS protocol in order to keep your credentials safe
   duplicate: Name must be unique
   active_report_types: Active report types
   error_saving: It was not possible to save the credentials. Please review the entered values.
@@ -109,6 +110,7 @@ cs:
   url_hint_no_report: "URL by neměla obsahovat část s '/reports/' a cokoliv po ní. Např. 'https://example.com/sushi5/reports/tr?customer_id=1' by mělo být zkráceno na 'https://example.com/sushi5/'"
   url_hint_no_query: "URL nesmí obsahovat query parametry, tedy část '{search}'"
   invalid_url: Prosím zadejte platné URL
+  url_must_use_https: URL musí používat HTTPS protokol pro zachování bezpečnosti vašich přihlašovacích údajů
   duplicate: Název musí být unikátní
   active_report_types: Aktivní typy reportů
   error_saving: Přihlašovací údaje nebylo možné uložit. Zkontrolujte prosím zadané hodnoty.
@@ -444,6 +446,7 @@ cs:
                   :rules="[
                     rules.required,
                     ruleUrlValid,
+                    ruleUrlHttps,
                     ruleUrlC5NoReport,
                     ruleUrlC5NoQueryParams,
                   ]"
@@ -1603,7 +1606,7 @@ export default {
       this.url = "";
       if (this.currentKnowledgebase) {
         this.url = this.currentKnowledgebaseUrl;
-        let providers = this.currentKnowledgebase.providers.filter(
+        let providers = (this.currentKnowledgebase.providers || []).filter(
           (provider) => provider.counter_version === this.counterVersion,
         );
         if (providers.length > 0) {
@@ -1698,6 +1701,12 @@ export default {
       );
       if (result && result.website) {
         return this.$t("invalid_url");
+      }
+      return true;
+    },
+    ruleUrlHttps() {
+      if (this.url && this.url.toLowerCase().startsWith("http://")) {
+        return this.$t("url_must_use_https");
       }
       return true;
     },

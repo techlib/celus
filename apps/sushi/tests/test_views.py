@@ -175,11 +175,11 @@ class TestSushiCredentialsViewSet:
             platform=platforms["root"],
             counter_version=5,
             lock_level=UL_ORG_ADMIN,
-            url="http://a.b.c/",
+            url="https://a.b.c/",
         )
         assert credentials.title == ""
         url = reverse("sushi-credentials-detail", args=(credentials.pk,))
-        new_url = "http://x.y.com/"
+        new_url = "https://x.y.com/"
         new_title = "New title"
         resp = clients["admin1"].patch(url, {"url": new_url, "title": new_title})
         assert resp.status_code == 200

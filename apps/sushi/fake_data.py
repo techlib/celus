@@ -45,7 +45,7 @@ class CredentialsFactory(factory.django.DjangoModelFactory):
     title = factory.Faker("name")
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
-    url = factory.Faker("url")
+    url = factory.Faker("url", schemes=["https"])
     counter_version = FuzzyChoice(CounterVersionChoices.values)
     lock_level = UL_ORG_ADMIN
     requestor_id = factory.Faker("password")

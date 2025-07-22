@@ -237,7 +237,7 @@ class TestLogicDataImportXLSX:
                 provider = [e for e in kb["providers"] if e["counter_version"] == counter5_version][
                     0
                 ]
-                assert cr.url == provider["provider"]["url"]
+                assert cr.url == provider["provider"]["url"].replace("http://", "https://", 1)
                 expected_reports = {rec["report_type"] for rec in provider["assigned_report_types"]}
                 assert expected_reports == {rt.code for rt in cr.counter_reports.all()}
 
@@ -422,11 +422,11 @@ class TestLogicDataImportCSV:
         # check individual objects
         cr1 = credentials[0]
         assert cr1.counter_version == 4
-        assert cr1.url == data[0]["URL"]
+        assert cr1.url == "https://this.is/test/"
         assert cr1.organization == organizations[0]
         cr2 = credentials[1]
         assert cr2.counter_version == 5
-        assert cr2.url == data[1]["URL"]
+        assert cr2.url == "https://this.is/test/2"
         assert cr2.organization == organizations[1]
         assert cr2.http_username == "un"
         assert cr2.http_password == "pass"
@@ -436,7 +436,7 @@ class TestLogicDataImportCSV:
         assert {crt.code for crt in cr2.counter_reports.all()} == {"TR", "DR"}
         cr3 = credentials[2]
         assert cr3.counter_version == 51
-        assert cr3.url == data[2]["URL"]
+        assert cr3.url == "https://this.is/test/3"
         assert cr3.organization == organizations[1]
         assert cr3.api_key == "key" * 100
         assert cr3.extra_params == {"foot": "ball"}
@@ -509,10 +509,10 @@ class TestLogicDataImportCSV:
         assert stats["skipped"] == 1
         assert stats["synced"] == 2
         assert SushiCredentials.objects.count() == 3
-        credentials = SushiCredentials.objects.get(url="http://new.url/")
+        credentials = SushiCredentials.objects.get(url="https://new.url/")
         assert credentials.http_password == ""
         assert credentials.http_username == ""
-        credentials = SushiCredentials.objects.get(url="http://this.is/test/3")
+        credentials = SushiCredentials.objects.get(url="https://this.is/test/3")
         assert not credentials.api_key
         assert credentials.extra_params == {"foot": "ball"}
 

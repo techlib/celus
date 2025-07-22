@@ -478,6 +478,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         We override the parent save method to make sure `version_hash` is recomputed on each save
         """
         self.url = url.normalize_url(self.url)
+        # Convert http to https as we want to keep credentials secured
+        self.url = self.url.replace("http://", "https://", 1)
         computed_hash = self.compute_version_hash()
         with atomic():
             if self.version_hash != computed_hash:

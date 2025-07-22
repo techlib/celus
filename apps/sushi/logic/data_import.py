@@ -219,6 +219,9 @@ def import_sushi_credentials_new(
             log("can't assign url due to missing provider for the platform: '%s'", platform.name_en)
             continue
 
+        # Only https urls are stored within Celus so we need to convert it here
+        url = url.replace("http://", "https://", 1)
+
         # sync credentials
         key = (organization.pk, platform.pk, counter_version)
         if key in db_credentials:
@@ -479,6 +482,9 @@ def import_sushi_credentials_old(
                     stats["url_no_provider"] += 1
             else:
                 stats["url_no_knowlegdebase"] += 1
+
+        # Only https urls are stored within Celus so we need to convert it here
+        url = url.replace("http://", "https://", 1)
 
         if key in db_credentials:
             # we update it
