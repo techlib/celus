@@ -923,6 +923,7 @@ cs:
         v-model="showCreateDialog"
         @close-dialog="showCreateDialog = false"
         @update-credentials="updateCredentials"
+        @deleted="deleteCredentials"
         @set-dirty="reloadSelectedCredentials"
         :existing-credentials="sushiCredentialsList"
         key="create"
