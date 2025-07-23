@@ -365,8 +365,8 @@ export default {
       // may be different.
       // Here we return the selected events from this.events
       return this.events.filter((item) => {
-        this.selectedEvents.some((rec) => {
-          rec.pk === item.pk;
+        return this.selectedEvents.some((rec) => {
+          return rec.pk === item.pk;
         });
       });
     },
