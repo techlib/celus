@@ -1,6 +1,7 @@
 from urllib.parse import urlsplit
 
 from core.logic.url import normalize_url
+from publications.models import Platform as CelusPlatform
 from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.serializers import (
     BooleanField,
@@ -9,6 +10,7 @@ from rest_framework.serializers import (
     IntegerField,
     JSONField,
     ModelSerializer,
+    PrimaryKeyRelatedField,
     Serializer,
     SerializerMethodField,
     URLField,
@@ -148,3 +150,37 @@ class UpdateNotesSerializer(ModelSerializer):
     class Meta:
         model = Platform
         fields = ("notes",)
+
+
+class CelusPlatformSerializer(Serializer):
+    url = URLField()
+    name = CharField()
+    provider = CharField()
+    short_name = CharField()
+    related_platform = IntegerField(source="pk")
+    related_platform_url = URLField(source="url")
+    related_platform_name = CharField(source="name")
+    related_platform_provider = CharField(source="provider")
+    related_platform_short_name = CharField(source="short_name")
+    related_platform_knowledgebase = JSONField(source="knowledgebase")
+
+    class Meta:
+        model = CelusPlatform
+        fields = (
+            "url",
+            "name",
+            "provider",
+            "short_name",
+            "related_platform",
+            "related_platform_url",
+            "related_platform_name",
+            "related_platform_short_name",
+            "related_platform_provider",
+            "related_platform_knowledgebase",
+        )
+
+
+class LinkSerializer(Serializer):
+    platform_id = PrimaryKeyRelatedField(
+        queryset=CelusPlatform.objects.filter(counter_registry_id__isnull=True)
+    )

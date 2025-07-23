@@ -9,6 +9,7 @@ except ModuleNotFoundError:
     # while collecting the tests
     pass
 
+from core.models import DataSource
 from django.urls import reverse
 from publications import fake_data as publications_fake_data
 from publications import models as publications_models
@@ -263,3 +264,131 @@ class TestCounterRegistryAPI:
             )
 
         # TODO check pc and creds (should be updated as well)
+
+    @pytest.mark.parametrize(
+        "user,status",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 403),
+            ("admin1", 403),
+            ("admin2", 403),
+            ("user1", 403),
+            ("user2", 403),
+        ),
+    )
+    def test_api_unlinked_platforms(self, basic1, clients, users, user, status):
+        # Make sure that no platform exists
+        publications_models.Platform.objects.all().delete()
+
+        # Create platforms that should be included in results (no counter_registry_id)
+        publications_fake_data.PlatformFactory(
+            name="Unlinked Platform 1",
+            short_name="UP1",
+            provider="Provider1",
+            url="https://unlinked1.com",
+            counter_registry_id=None,
+        )
+        publications_fake_data.PlatformFactory(
+            name="Unlinked Platform 2",
+            short_name="UP2",
+            provider="Provider2",
+            url="https://unlinked2.com",
+            counter_registry_id=None,
+        )
+
+        # Create platforms that should be excluded from results
+
+        # 1. Platform with organization data source (excluded)
+        org_data_source = DataSource.objects.create(
+            short_name="org_source", type=DataSource.TYPE_ORGANIZATION
+        )
+        publications_fake_data.PlatformFactory(
+            name="Org Platform", counter_registry_id=None, source=org_data_source
+        )
+
+        # 2. Platform with counter_registry_id (excluded)
+        publications_fake_data.PlatformFactory(
+            name="Linked Platform", counter_registry_id="f0000000-0000-0000-0000-000000000000"
+        )
+
+        resp = clients[user].get(reverse("counter-platforms-unlinked-platforms"))
+        assert resp.status_code == status
+
+        if status == 200:
+            assert len(resp.data) == 2, "Expected 2 unlinked platforms"
+            assert {e["name"] for e in resp.data} == {"Unlinked Platform 1", "Unlinked Platform 2"}
+
+    @pytest.mark.parametrize(
+        "user,status",
+        (
+            ("su", 200),
+            ("master_admin", 200),
+            ("master_user", 403),
+            ("admin1", 403),
+            ("admin2", 403),
+            ("user1", 403),
+            ("user2", 403),
+        ),
+    )
+    def test_api_link_platforms(self, basic1, clients, users, user, status):
+        # create a platform which should be linked
+        pc1 = publications_fake_data.PlatformFactory(
+            name="Unlinked Platform 1",
+            short_name="UP1",
+            provider="Provider1",
+            url="https://unlinked1.com",
+            counter_registry_id=None,
+        )
+        pc2 = publications_fake_data.PlatformFactory(
+            name="Linked Platform 2",
+            short_name="LP2",
+            provider="Provider2",
+            url="https://linked2.com",
+            counter_registry_id="f1111111-1111-1111-1111-111111111111",
+        )
+        pc3 = publications_fake_data.PlatformFactory(
+            name="Unlinked Platform 3",
+            short_name="UP3",
+            provider="Provider3",
+            url="https://unlinked3.com",
+            counter_registry_id=None,
+        )
+        pe1 = PlatformExtrasFactory(platform__id="f0000000-0000-0000-0000-000000000000")
+        pe2 = PlatformExtrasFactory(platform__id="f2222222-2222-2222-2222-222222222222")
+        # Link unlinked platform
+        resp = clients[user].post(
+            reverse("counter-platforms-link", args=(pe1.platform.id,)), {"platform_id": pc1.pk}
+        )
+        assert resp.status_code == status
+        pc1.refresh_from_db()
+        if status == 200:
+            assert str(pc1.counter_registry_id) == "f0000000-0000-0000-0000-000000000000"
+        else:
+            assert pc1.counter_registry_id is None
+
+        # Link platform which is already linked
+        resp = clients[user].post(
+            reverse("counter-platforms-link", args=(pe2.platform.id,)), {"platform_id": pc2.pk}
+        )
+        if status == 200:
+            assert resp.status_code == 400
+        else:
+            assert resp.status_code == status
+        pc2.refresh_from_db()
+        assert str(pc2.counter_registry_id) == "f1111111-1111-1111-1111-111111111111"
+
+        # Reuse same registry_id
+        pc1.counter_registry_id = "f0000000-0000-0000-0000-000000000000"
+        pc1.save()
+        resp = clients[user].post(
+            reverse("counter-platforms-link", args=(pe1.platform.id,)), {"platform_id": pc3.pk}
+        )
+        pc1.refresh_from_db()
+        pc3.refresh_from_db()
+        if status == 200:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == status
+        assert str(pc1.counter_registry_id) == "f0000000-0000-0000-0000-000000000000"
+        assert pc3.counter_registry_id is None

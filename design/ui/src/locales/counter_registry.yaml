@@ -12,6 +12,7 @@ en:
     notes: Notes
     missing_url: SUSHI URL is not present in neither CELUS or COUNTER registry.
     columns:
+      registry: Registry
       url: URL
       short_name: Short name
       name: Name
@@ -24,6 +25,11 @@ en:
       different: Different
       missing: Missing
       same: Same
+      unlinked: Unlinked
+    no_data: No platform was found.
+    link_local: Link local platform
+    link_registry: Link registry
+    save_notes: Save notes
 
 cs:
   counter_registry:
@@ -39,6 +45,7 @@ cs:
     notes: Poznámky
     missing_url: SUSHI URL není možné najít v CELUSu ani v COUNTER registru.
     columns:
+      registry: Registr
       url: URL
       short_name: Krátné jméno
       name: Jméno
@@ -51,3 +58,8 @@ cs:
       different: Rozdílné
       missing: Chybějící
       same: Stejné
+      unlinked: Nepropojené
+    no_data: Žádná platforma nebyla nalezena.
+    link_local: Propojit místní platformu
+    link_registry: Propojit s registrem
+    save_notes: Uložit poznámky

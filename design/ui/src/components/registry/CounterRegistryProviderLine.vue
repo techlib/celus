@@ -2,10 +2,15 @@
 <i18n lang="yaml" src="@/locales/counter_registry.yaml"></i18n>
 
 <template>
-  <tr :class="inRegistry?.url != inCelus?.url ? 'bg-red-lighten-5' : ''">
+  <tr
+    :class="
+      !unlinked && inRegistry?.url != inCelus?.url ? 'bg-red-lighten-5' : ''
+    "
+  >
     <th>C{{ counterVersion }} URL</th>
+    <td v-if="unlinked"></td>
     <td
-      v-if="!inRegistry?.url && !inCelus?.url"
+      v-else-if="!inRegistry?.url && !inCelus?.url"
       colspan="2"
       class="text-center"
     >
@@ -20,13 +25,14 @@
   </tr>
   <tr
     :class="
-      !sameReports(inRegistry?.reports, inCelus?.reports)
+      !unlinked && !sameReports(inRegistry?.reports, inCelus?.reports)
         ? 'bg-red-lighten-5'
         : ''
     "
   >
     <th>C{{ counterVersion }} {{ $t("counter_registry.counter_reports") }}</th>
-    <td>
+    <td v-if="unlinked"></td>
+    <td v-else>
       <v-chip
         class="mr-1"
         size="small"
@@ -83,6 +89,10 @@ export default {
       type: Object,
     },
     checked: {
+      required: true,
+      type: Boolean,
+    },
+    unlinked: {
       required: true,
       type: Boolean,
     },

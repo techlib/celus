@@ -1,14 +1,21 @@
+from core.models import DataSource
 from core.permissions import SuperuserOrAdminPermission
 from publications import models as publications_models
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, UpdateModelMixin
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework.viewsets import GenericViewSet
 from sushi import models as sushi_models
 
 from .models import Platform
-from .serializers import ApplySerializer, PlatformDiffSerializer, UpdateNotesSerializer
+from .serializers import (
+    ApplySerializer,
+    CelusPlatformSerializer,
+    LinkSerializer,
+    PlatformDiffSerializer,
+    UpdateNotesSerializer,
+)
 
 
 class PlatformDiffViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
@@ -20,6 +27,24 @@ class PlatformDiffViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
         if self.action in ["update", "partial_update"]:
             return UpdateNotesSerializer
         return super().get_serializer_class()
+
+    def get_queryset(self):
+        return super().get_queryset().order_by("name", "abbrev")
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="unlinked-platforms",
+        serializer_class=CelusPlatformSerializer,
+    )
+    def unlinked_platforms(self, request):
+        qs = (
+            publications_models.Platform.objects.filter(counter_registry_id__isnull=True)
+            .exclude(source__type=DataSource.TYPE_ORGANIZATION)
+            .order_by("name", "short_name")
+        )
+        serializer = CelusPlatformSerializer(qs, many=True)
+        return Response(serializer.data)
 
     @action(methods=["POST"], detail=False, url_path="apply", serializer_class=ApplySerializer)
     def apply(self, request):
@@ -67,3 +92,20 @@ class PlatformDiffViewSet(ListModelMixin, UpdateModelMixin, GenericViewSet):
             platform.update_related_credentials_url()
 
         return Response({"created": len(to_create), "updated": len(to_update)})
+
+    @action(methods=["POST"], detail=True, url_path="link", serializer_class=LinkSerializer)
+    def link(self, request, pk):
+        platform_diff = self.get_object()
+        serializer = LinkSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(data=serializer.errors, status=HTTP_400_BAD_REQUEST)
+        if publications_models.Platform.objects.filter(
+            counter_registry_id=platform_diff.id
+        ).exists():
+            # registry id already used
+            return Response(data=serializer.errors, status=HTTP_404_NOT_FOUND)
+
+        celus_platform = publications_models.Platform.objects.get(pk=serializer.data["platform_id"])
+        celus_platform.counter_registry_id = platform_diff.id
+        celus_platform.save()
+        return Response()

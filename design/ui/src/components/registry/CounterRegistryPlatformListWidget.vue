@@ -79,13 +79,25 @@
           </strong>
         </v-chip>
       </v-col>
+      <v-col cols="auto">
+        <v-chip
+          :prepend-icon="icons.unlinked"
+          color="default"
+          @click="filter = 'unlinked'"
+        >
+          {{ $t("counter_registry.filters.unlinked") }}
+          <strong class="ml-2">
+            {{ unlinkedCount }}
+          </strong>
+        </v-chip>
+      </v-col>
     </v-row>
     <v-row>
       <v-col class="px-0 px-sm-2">
         <v-data-table
           :item-selectable="selectablePlatform"
           v-model="selectedCounterPlatforms"
-          :items="counterPlatformsToShow"
+          :items="platformsToShow"
           :headers="headers"
           :search="search"
           :page="page"
@@ -93,7 +105,6 @@
           v-model:sort-by="orderBy"
           show-select
           item-value="id"
-          item-key="id"
           multi-sort
           show-expand
           :loading="loading"
@@ -103,9 +114,31 @@
             <v-skeleton-loader type="table-row@20"></v-skeleton-loader>
           </template>
 
+          <template #item.id="{ item }">
+            <span v-if="item.unlinked"> </span>
+            <a
+              v-else
+              :href="'https://registry.countermetrics.org/platform/' + item.id"
+              target="_blank"
+            >
+              <v-icon
+                color="info"
+                icon="fa fa-registered"
+                size="small"
+              ></v-icon>
+            </a>
+          </template>
+
           <template #item.name="{ item }">
+            <span v-if="item.unlinked"></span>
             <v-icon
-              v-if="item.related_platform && item.keep_name"
+              v-else-if="item.related_platform && item.keep_name"
+              color="info"
+              size="x-small"
+              >{{ icons.same }}
+            </v-icon>
+            <v-icon
+              v-else-if="item.related_platform && item.keep_name"
               color="info"
               size="x-small"
               >{{ icons.same }}
@@ -131,8 +164,9 @@
           </template>
 
           <template #item.short_name="{ item }">
+            <span v-if="item.unlinked"></span>
             <v-icon
-              v-if="item.related_platform && item.keep_short_name"
+              v-else-if="item.related_platform && item.keep_short_name"
               color="info"
               size="x-small"
               >{{ icons.same }}
@@ -154,8 +188,9 @@
           </template>
 
           <template #item.provider="{ item }">
+            <span v-if="item.unlinked"></span>
             <v-icon
-              v-if="item.related_platform && item.keep_provider"
+              v-else-if="item.related_platform && item.keep_provider"
               color="info"
               size="x-small"
               >{{ icons.same }}
@@ -177,8 +212,9 @@
           </template>
 
           <template #item.url="{ item }">
+            <span v-if="item.unlinked"></span>
             <v-icon
-              v-if="item.related_platform && item.keep_url"
+              v-else-if="item.related_platform && item.keep_url"
               color="info"
               size="x-small"
               >{{ icons.same }}
@@ -198,8 +234,9 @@
           </template>
 
           <template #item.sushi_services="{ item }">
+            <span v-if="item.unlinked"></span>
             <v-icon
-              v-if="item.related_platform && item.keep_knowledgebase"
+              v-else-if="item.related_platform && item.keep_knowledgebase"
               color="info"
               size="x-small"
               >{{ icons.same }}
@@ -223,7 +260,13 @@
               <td :colspan="columns.length" class="pb-3">
                 <CounterRegistryDiffWidget
                   :platform-diff="item"
+                  :unlinked-platforms="
+                    missingPlatform(item) ? celusPlatforms : []
+                  "
+                  :missing-platforms="item.unlinked ? missing : []"
                   :checked="selectedCounterPlatforms.includes(item.id)"
+                  :missing="missingPlatform(item)"
+                  @linked="fetchPlatforms"
                 >
                 </CounterRegistryDiffWidget>
               </td>
@@ -274,6 +317,7 @@ export default {
       itemsPerPage: 20,
       orderBy: [],
       counterPlatforms: [],
+      celusPlatforms: [],
       loading: false,
       updating: false,
       selectedCounterPlatforms: [],
@@ -286,11 +330,16 @@ export default {
         },
         { text: this.$t("counter_registry.filters.missing"), value: "missing" },
         { text: this.$t("counter_registry.filters.same"), value: "same" },
+        {
+          text: this.$t("counter_registry.filters.unlinked"),
+          value: "unlinked",
+        },
       ],
       icons: {
         different: "fa fa-retweet",
         missing: "fa fa-plus",
         same: "fa fa-check",
+        unlinked: "fa fa-link-slash",
       },
     };
   },
@@ -298,6 +347,11 @@ export default {
   computed: {
     headers() {
       return [
+        {
+          title: this.$i18n.t("counter_registry.columns.registry"),
+          value: "id",
+          key: "id",
+        },
         {
           title: this.$i18n.t("counter_registry.columns.name"),
           value: "name",
@@ -344,32 +398,50 @@ export default {
         }),
       };
     },
-    counterPlatformsToShow() {
+    platforms() {
+      return [...this.counterPlatforms, ...this.celusPlatforms];
+    },
+    platformsToShow() {
       if (this.filter === "different") {
-        return this.counterPlatforms.filter((e) => this.updatablePlatform(e));
-      }
-      if (this.filter === "missing") {
-        return this.counterPlatforms.filter((e) => this.missingPlatform(e));
-      }
-      if (this.filter === "same") {
-        return this.counterPlatforms.filter(
-          (e) => !this.updatablePlatform(e) && !this.missingPlatform(e),
+        return this.platforms.filter(
+          (e) => this.updatablePlatform(e) && !e.unlinked,
         );
       }
-      return this.counterPlatforms;
+      if (this.filter === "missing") {
+        return this.missing;
+      }
+      if (this.filter === "same") {
+        return this.platforms.filter(
+          (e) =>
+            !this.updatablePlatform(e) &&
+            !this.missingPlatform(e) &&
+            !e.unlinked,
+        );
+      }
+      if (this.filter === "unlinked") {
+        return this.platforms.filter((e) => e.unlinked);
+      }
+      return this.platforms;
     },
     updatableCount() {
       return this.counterPlatforms.filter((e) => this.updatablePlatform(e))
         .length;
     },
     missingCount() {
-      return this.counterPlatforms.filter((e) => this.missingPlatform(e))
-        .length;
+      return this.missing.length;
     },
     sameCount() {
       return this.counterPlatforms.filter(
         (e) => !this.updatablePlatform(e) && !this.missingPlatform(e),
       ).length;
+    },
+    unlinkedCount() {
+      return this.celusPlatforms.length;
+    },
+    missing() {
+      return this.counterPlatforms.filter(
+        (e) => this.missingPlatform(e) && !e.unlinked,
+      );
     },
   },
 
@@ -392,8 +464,9 @@ export default {
     },
     selectablePlatform(platformDiff) {
       return (
-        this.updatablePlatform(platformDiff) ||
-        this.missingPlatform(platformDiff)
+        (this.updatablePlatform(platformDiff) ||
+          this.missingPlatform(platformDiff)) &&
+        !platformDiff.unlinked
       );
     },
     async fetchCounterPlatforms() {
@@ -411,6 +484,30 @@ export default {
         this.loading = false;
       }
     },
+    async fetchCelusPlatforms() {
+      this.loading = true;
+      let result = await this.http({
+        url: "/api/counter_registry/platforms_diff/unlinked-platforms/",
+        group: "platform-unlinked",
+      });
+      if (!result.error) {
+        this.celusPlatforms = result.response.data;
+        // we need to set id otherwise the expansion will not work properly
+        this.celusPlatforms.forEach((platform) => {
+          platform.id = platform.related_platform;
+          platform.unlinked = true;
+        });
+      }
+      if (result.error !== "canceled") {
+        // if the request was cancelled, it means another request was made
+        // so we do not want to switch loading off
+        this.loading = false;
+      }
+    },
+    async fetchPlatforms() {
+      await this.fetchCounterPlatforms();
+      await this.fetchCelusPlatforms();
+    },
     async triggerUpdate() {
       this.updating = true;
       let result = await this.http({
@@ -426,6 +523,11 @@ export default {
       this.updating = false;
     },
     cellProps({ item }) {
+      if (item.unlinked) {
+        return {
+          class: { "bg-blue-grey-lighten-5": true },
+        };
+      }
       if (this.updatablePlatform(item)) {
         return {
           class: { "bg-red-lighten-5": true },
@@ -441,7 +543,7 @@ export default {
   },
 
   mounted() {
-    this.fetchCounterPlatforms();
+    this.fetchPlatforms();
   },
 };
 </script>
