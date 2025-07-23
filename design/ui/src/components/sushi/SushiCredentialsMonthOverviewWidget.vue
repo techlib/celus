@@ -184,7 +184,7 @@ cs:
                         class="mr-1"
                         >fa fa-exclamation-triangle</v-icon
                       >
-                      <v-icon v-if="!item.enabled" size="x-small" class="mr-1"
+                      <v-icon v-if="!item.enabled" size="x-small" class="mr-2"
                         >fa fa-unlink</v-icon
                       >
                       <strong>{{
