@@ -71,8 +71,15 @@ cs:
             :key="rt.id"
           >
             <template #activator="{ props }">
-              <v-btn v-bind="props" :value="rt.id">
-                {{ rt.code }}
+              <v-btn
+                v-bind="props"
+                :value="rt.id"
+                :color="getCounterVersionColor(rt.counter_version)"
+              >
+                <span class="mr-1">{{ rt.code }}</span>
+                <span class="caption" v-if="isCounterVersionInconsistent">{{
+                  counterVersionToStr(rt.counter_version)
+                }}</span>
               </v-btn>
             </template>
             {{ rt.name }}
@@ -90,11 +97,13 @@ cs:
       {{ $t("reharvest_warning") }}
       <strong>{{ $t("reharvest_warning_inner") }}</strong>
     </v-alert>
-
     <v-data-table hide-default-footer>
       <thead>
         <tr>
           <th>{{ $t("labels.credentials") }}</th>
+          <th v-if="isCounterVersionInconsistent">
+            {{ $t("labels.counter_version") }}
+          </th>
           <th>{{ $t("labels.report_type") }}</th>
           <th
             v-for="month in monthDates"
@@ -116,6 +125,15 @@ cs:
               {{ row.cred.title }}
             </div>
             {{ row.cred.organization.name }} / {{ row.cred.platform.name }}
+          </td>
+          <td
+            class="caption font-weight-bold"
+            :class="`text-${getCounterVersionColor(row.cred.counter_version)}`"
+            v-if="isCounterVersionInconsistent"
+          >
+            <div class="mr-10 text-center">
+              {{ counterVersionToStr(row.cred.counter_version) }}
+            </div>
           </td>
           <td class="caption">
             <v-chip
@@ -209,6 +227,7 @@ import cancellation from "@/mixins/cancellation";
 import { mapActions } from "vuex";
 import { monthsBetween, parseDateTime, ymDateFormat } from "@/libs/dates";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import { counterVersionToStr } from "@/libs/sushi";
 
 export default {
   name: "SushiHarvestedSlotsWidget",
@@ -302,6 +321,13 @@ export default {
       );
       return rows;
     },
+    isCounterVersionInconsistent() {
+      if (this.credentials.length <= 1) return false;
+      const firstCounterVersion = this.credentials[0].counter_version;
+      return this.credentials.some(
+        (cred) => cred.counter_version !== firstCounterVersion,
+      );
+    },
     slotsFree() {
       return (this.slotToCount[""] ?? 0) + (this.slotToCount["rh-ok"] ?? 0);
     },
@@ -334,6 +360,14 @@ export default {
 
   methods: {
     ...mapActions({ showSnackbar: "showSnackbar" }),
+    counterVersionToStr,
+    getCounterVersionColor(version) {
+      if (!this.isCounterVersionInconsistent) return "secondary";
+      if (version >= 51) return "success";
+      if (version >= 5) return "info";
+      if (version >= 4) return "warning";
+      return "secondary";
+    },
     async fetchPresenceData() {
       if (!this.presenceDataUrl) return;
       this.loading = true;
