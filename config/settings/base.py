@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import logging
+import os
 import socket
 import sys
 from datetime import timedelta
@@ -1055,3 +1056,7 @@ EXPORTED_SETTINGS = [
     "USES_ERMS",
     "USES_REGISTRY_BACKEND",
 ]
+
+# set environment for this process to REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+# to validate SSL certificates using the system CA bundle
+os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
