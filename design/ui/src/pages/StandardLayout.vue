@@ -185,7 +185,7 @@ cs:
       <v-alert
         v-if="displayNewReleaseAlert"
         class="ma-4 mt-6 alert_new_version"
-        @input="dismissLastRelease(false)"
+        @update:model-value="dismissLastRelease(false)"
         density="compact"
         dismissible
         variant="outlined"
