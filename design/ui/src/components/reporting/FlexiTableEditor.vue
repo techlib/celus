@@ -786,9 +786,13 @@ cs:
                   v-bind="props"
                   min-width="12rem"
                 >
-                  <v-icon size="small" color="red lighten-2" class="mr-1"
-                    >fa fa-stop
-                  </v-icon>
+                  <v-progress-circular
+                    indeterminate
+                    color="red lighten-2"
+                    size="18"
+                    width="2"
+                    class="mr-2"
+                  ></v-progress-circular>
                   {{ $t("cancel_report") }}
                 </v-btn>
               </template>

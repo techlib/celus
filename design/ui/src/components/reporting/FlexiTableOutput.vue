@@ -124,8 +124,14 @@ cs:
           </v-btn-toggle>
         </div>
       </div>
+      <v-skeleton-loader
+        type="paragraph@10"
+        loading
+        class="py-10 px-5"
+        v-if="loading"
+      ></v-skeleton-loader>
       <v-data-table-server
-        v-if="view === 'table' && totalRowCount !== null"
+        v-else-if="view === 'table' && totalRowCount !== null"
         :items="formattedData"
         :headers="tableHeaders"
         item-key="pk"
@@ -152,14 +158,6 @@ cs:
             : {}
         "
       >
-        <template #loading>
-          <v-skeleton-loader
-            type="paragraph@10"
-            loading
-            class="py-10 px-5"
-          ></v-skeleton-loader>
-        </template>
-
         <template #headers="{ columns }">
           <TableCustomSort
             :columns="columns"
@@ -238,7 +236,7 @@ cs:
         </template>
       </v-data-table-server>
 
-      <div v-else>
+      <div v-else-if="view === 'chart' && !loading">
         <ReportingChart
           v-if="totalRowCount"
           :data="dataWithRemainder"
@@ -249,7 +247,7 @@ cs:
             (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
           "
         ></ReportingChart>
-        <v-alert v-else-if="!loading" type="info" variant="outlined">
+        <v-alert v-else type="info" variant="outlined">
           {{ $t("no_data_for_chart") }}
         </v-alert>
       </div>
