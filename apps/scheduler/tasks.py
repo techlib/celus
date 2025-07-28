@@ -40,7 +40,10 @@ def trigger_scheduler(self, url: str, finish: bool = False):
 
     res = scheduler.run_next(self.request.id)
     logger.debug("Scheduler returned %s", res)
-    if res == RunResponse.COOLDOWN or (finish and res != RunResponse.IDLE):
+
+    if res == RunResponse.DELETING:
+        logger.warn("Credentials are about to be deleted -> terminating Scheduler", res)
+    elif res == RunResponse.COOLDOWN or (finish and res != RunResponse.IDLE):
         # re-plan if in cooldown
         # or when finish is set and there are still tasks to perform
         logger.info("Scheduler with url %s re-planned for later.", url)

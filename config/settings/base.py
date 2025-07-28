@@ -473,7 +473,7 @@ CELERY_TASK_ROUTES = {
     "scheduler.tasks.plan_schedulers_triggering": {"queue": "sushi"},
     "scheduler.tasks.trigger_scheduler": {"queue": "sushi"},
     "scheduler.tasks.update_automatic_harvesting": {"queue": "sushi"},
-    "sushi.tasks.delete_fetchattempts_and_related_importbatches_task": {"queue": "import"},
+    "sushi.tasks.plan_to_delete_credentials_task": {"queue": "sushi"},
     "sushi.tasks.send_harvesting_report_task": {"queue": "celery"},
     "sushi.tasks.send_harvesting_reports_task": {"queue": "celery"},
     "sushi.tasks.send_grouped_harvesting_report_task": {"queue": "celery"},
@@ -521,6 +521,16 @@ CELERY_BEAT_SCHEDULE = {
         "task": "scheduler.tasks.plan_schedulers_triggering",
         "schedule": schedule(run_every=timedelta(minutes=1)),
         "options": {"expires": 60},
+    },
+    "plan_to_delete_credentials_task": {
+        "task": "sushi.tasks.plan_to_delete_credentials_task",
+        "schedule": schedule(run_every=timedelta(minutes=5)),
+        "options": {"expires": 60},
+    },
+    "knowledgebase_sync_routes": {
+        "task": "knowledgebase.tasks.sync_routes",
+        "schedule": schedule(run_every=timedelta(minutes=5)),
+        "options": {"expires": 5 * 60},
     },
     "process_outstanding_import_batch_sync_logs_task": {
         "task": "logs.tasks.process_outstanding_import_batch_sync_logs_task",

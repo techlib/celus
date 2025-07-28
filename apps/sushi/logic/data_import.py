@@ -15,7 +15,7 @@ from publications.logic.knowledgebase import (
     is_report_type_whitelisted,
 )
 from publications.models import Platform
-from scheduler.models import FetchIntention, Harvest
+from scheduler.models import DeleteCredentials, FetchIntention, Harvest
 
 from sushi.logic.export import Col
 
@@ -418,7 +418,7 @@ def import_sushi_credentials_old(
     stats = Counter()
     db_credentials = {
         (cr.organization_id, cr.platform_id, cr.counter_version): cr
-        for cr in SushiCredentials.objects.all()
+        for cr in SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO)
     }
     platform_objects = Platform.objects.all()
     source_id = lambda pl: pl.source.organization_id if pl.source else None  # noqa: E731

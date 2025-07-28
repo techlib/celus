@@ -37,6 +37,7 @@ def report_data(organizations, platforms, report_types, counter_report_types, me
         CounterReportsToCredentialsFactory(
             credentials__organization=organizations["branch"],
             credentials__platform=platforms["shared"],
+            credentials__counter_version=counter_report_types["tr"].counter_version,
             counter_report=counter_report_types["tr"],
         ).credentials.set_broken(
             FetchAttemptFactory(start_date="2024-12-01", end_date="2024-12-31"), "sushi"
@@ -45,16 +46,19 @@ def report_data(organizations, platforms, report_types, counter_report_types, me
     CounterReportsToCredentialsFactory(
         credentials__organization=organizations["branch"],
         credentials__platform=platforms["empty"],
+        credentials__counter_version=counter_report_types["dr51"].counter_version,
         counter_report=counter_report_types["dr51"],
     )
     cred1 = CounterReportsToCredentialsFactory(
         credentials__organization=organizations["branch"],
         credentials__platform=platforms["brain"],
+        credentials__counter_version=counter_report_types["jr1"].counter_version,
         counter_report=counter_report_types["jr1"],
     ).credentials
     cred2 = CounterReportsToCredentialsFactory(
         credentials__organization=organizations["standalone"],
         credentials__platform=platforms["shared"],
+        credentials__counter_version=counter_report_types["pr51"].counter_version,
         counter_report=counter_report_types["pr51"],
     ).credentials
 
@@ -63,6 +67,7 @@ def report_data(organizations, platforms, report_types, counter_report_types, me
         CounterReportsToCredentialsFactory(
             credentials__organization=organizations["standalone"],
             credentials__platform=platforms["shared"],
+            credentials__counter_version=counter_report_types["dr"].counter_version,
             counter_report=counter_report_types["dr"],
         ).set_broken(FetchAttemptFactory(start_date="2025-01-01", end_date="2025-01-31"), "sushi")
 

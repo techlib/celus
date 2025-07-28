@@ -92,9 +92,9 @@ class TestCredentialsSignals:
             date=date(2019, 12, 1),  # prev month
         )
         credentials["standalone_tr"].save()
-        assert (
-            automatic_standalone.harvest.intentions.count() == 2
-        ), "No intentions is created - clashing data"
+        assert automatic_standalone.harvest.intentions.count() == 2, (
+            "No intentions is created - clashing data"
+        )
 
         # Create new mapping
         new_mapping = CounterReportsToCredentials.objects.create(

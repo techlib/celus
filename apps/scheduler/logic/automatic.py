@@ -12,6 +12,7 @@ def update_cr2c(automatic: Automatic, cr2c: CounterReportsToCredentials):
         and cr2c.broken is None
         and cr2c.credentials.broken is None
         and cr2c.credentials.is_verified
+        and not cr2c.credentials.deleting
     ):
         # We need to make sure that the intentions exists
 
@@ -71,7 +72,7 @@ def update_verified_for_automatic_scheduling(attempt: SushiFetchAttempt):
         return
 
     # Only update for current credentials
-    if not attempt.credentials.is_verified:
+    if not attempt.credentials.is_verified or attempt.credentials.deleting:
         return
 
     automatic = Automatic.get_or_create(

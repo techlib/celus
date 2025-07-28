@@ -54,6 +54,7 @@ from django.db.models import (
     OuterRef,
     Q,
     Subquery,
+    TextChoices,
     Value,
     When,
 )
@@ -105,6 +106,12 @@ class CounterVersionChoices(IntegerChoices):
             return CounterVersion.C51
         else:
             raise NotImplementedError()
+
+
+class DeleteCredentials(TextChoices):
+    NO = "NO", "No"
+    WITH_DATA = "WITH_DATA", "With Data"
+    WITHOUT_DATA = "WITHOUT_DATA", "Without Data"
 
 
 COUNTER_REPORTS = (
@@ -425,6 +432,7 @@ class SushiCredentialsQuerySet(models.QuerySet):
         return len(to_remove)
 
 
+@reversion.register()
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
     UNLOCKED = 0
     LOCK_LEVEL_CHOICES = (
@@ -505,6 +513,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         blank=True,
         related_name="modified_harvestable_month_credentials",
     )
+    to_delete = models.CharField(choices=DeleteCredentials.choices, default=DeleteCredentials.NO)
 
     objects = SushiCredentialsQuerySet.as_manager()
 
@@ -517,8 +526,12 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 ),
                 name="last_harvestable_month_by_attempt_vs_user",
             ),
+            UniqueConstraint(
+                fields=["organization", "platform", "counter_version"],
+                condition=Q(to_delete=DeleteCredentials.NO),
+                name="unique_with_no_delete",
+            ),
         )
-        unique_together = (("organization", "platform", "counter_version", "title"),)
         verbose_name_plural = "Sushi credentials"
 
     def __str__(self):
@@ -546,6 +559,10 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                     )
 
             super().save(*args, **kwargs)
+
+    @property
+    def deleting(self):
+        return self.to_delete != DeleteCredentials.NO
 
     def update_last_harvestable_month_by_attempt(self, attempt: "SushiFetchAttempt") -> bool:
         """Update last_harvestable_month by attempt which reports that it no longer contains data

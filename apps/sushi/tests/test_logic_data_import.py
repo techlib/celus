@@ -26,7 +26,7 @@ from test_scenarios.basic import (  # noqa - fixtures
 )
 
 from ..fake_data import CounterReportTypeFactory, FetchAttemptFactory
-from ..models import SushiCredentials
+from ..models import DeleteCredentials, SushiCredentials
 
 fake = Faker()
 Faker.seed(0)
@@ -390,6 +390,7 @@ class TestLogicDataImportXLSX:
             organization=local_organizations[0],
             platform=platforms[0],
             counter_version=counter5_version,
+            to_delete=DeleteCredentials.WITHOUT_DATA,
         )
 
         assert SushiCredentials.objects.count() == 2

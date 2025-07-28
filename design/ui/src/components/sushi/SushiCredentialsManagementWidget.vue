@@ -1425,12 +1425,15 @@ export default {
           this.preprocessCredentials(item),
         );
 
-        // Update checked (so they are not deselected)
-        let currentMap = new Map(
+        // Update checked credentials
+        // checkedCredentials is a list of objects
+        // and in order to correctly display selected
+        // credentials on the page the object has to match
+        const listMap = new Map(
           this.sushiCredentialsList.map((e) => [e.pk, e]),
         );
         this.checkedCredentials = this.checkedCredentials.map(
-          (e) => currentMap.get(e.pk) || e,
+          (e) => listMap.get(e.pk) || e,
         );
       } catch (error) {
         this.showSnackbar({
@@ -1474,6 +1477,12 @@ export default {
       }
     },
     deleteCredentials() {
+      if (this.selectedCredentials) {
+        // uncheck deleted credentials if checked
+        this.checkedCredentials = this.checkedCredentials.filter(
+          (e) => e.pk != this.selectedCredentials.pk,
+        );
+      }
       this.loadSushiCredentialsList();
     },
     preprocessCredentials(item) {

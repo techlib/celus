@@ -2,26 +2,24 @@ import logging
 from collections import defaultdict
 
 import celery
+import reversion
 from core.context_managers import logged_task
 from core.logic.error_reporting import email_if_fails
 from core.models import User
+from django.db import DatabaseError, transaction
 from organizations.models import Organization, UserOrganization
+from scheduler.models import Scheduler
 
 from sushi.logic.cleanup import delete_fetchattempts_and_related_importbatches
 from sushi.logic.email import send_grouped_harvest_reports, send_harvest_reports
 from sushi.logic.harvest_reports import make_harvest_reports
+from sushi.models import DeleteCredentials, SushiCredentials, SushiFetchAttempt
 
 logger = logging.getLogger(__name__)
 
 
 @celery.shared_task
 @logged_task
-@email_if_fails
-def delete_fetchattempts_and_related_importbatches_task(fetch_attempts_pks: list):
-    delete_fetchattempts_and_related_importbatches(fetch_attempts_pks)
-
-
-@celery.shared_task
 @email_if_fails
 def send_harvesting_report_task(user_id: int, organization_id: int):
     if user := User.objects.filter(pk=user_id, is_active=True).first():
@@ -74,3 +72,62 @@ def send_grouped_harvesting_reports_task():
         harvest_reports_filtered = [e for e in harvest_reports if e.organization.pk in orgs]
         if send_grouped_harvest_reports(user, harvest_reports_filtered):
             logger.info("grouped harvest reports for %s was sent", user)
+
+
+@celery.shared_task
+@reversion.create_revision()
+@logged_task
+@email_if_fails
+def delete_credentials_task(credentials_id: int):
+    with transaction.atomic():
+        if credentials := SushiCredentials.objects.filter(pk=credentials_id).first():
+            if credentials.to_delete == DeleteCredentials.NO:
+                # credentials were not marked for deletion
+                # => something went wrong => aborting
+                logger.warning(
+                    "Credentials '%d' are not marked to delete => aborting delete", credentials.pk
+                )
+                return
+
+            try:
+                if (
+                    Scheduler.objects.filter(current_intention__credentials=credentials)
+                    .select_for_update(nowait=True)
+                    .exists()
+                ):
+                    raise DatabaseError
+                # Lock all FetchAttempts as well to be sure that an attempt is not
+                # being currently (re)imported
+                SushiFetchAttempt.objects.filter(credentials=credentials).select_for_update(
+                    nowait=True
+                )
+            except (Scheduler.DoesNotExist, DatabaseError):
+                # Credentials are currently processed => deletion postponed
+                # till it will be retriggered by scheduled task
+                logger.info("Deletion postponed. Credentials %s are being harvested", credentials)
+                return
+
+            match credentials.to_delete:
+                case DeleteCredentials.WITH_DATA:
+                    fetch_attempts_pks = list(
+                        SushiFetchAttempt.objects.filter(credentials=credentials).values_list(
+                            "pk", flat=True
+                        )
+                    )
+                    delete_fetchattempts_and_related_importbatches(fetch_attempts_pks)
+                    credentials.delete()
+                case DeleteCredentials.WITHOUT_DATA:
+                    credentials.delete()
+                case _:
+                    raise AssertionError("unreachable")
+        else:
+            logger.warning("Credentials %s were already deleted", credentials)
+
+
+@celery.shared_task
+@email_if_fails
+def plan_to_delete_credentials_task():
+    for credentials_id in SushiCredentials.objects.exclude(
+        to_delete=DeleteCredentials.NO
+    ).values_list("id", flat=True):
+        delete_credentials_task.delay(credentials_id)

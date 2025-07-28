@@ -19,6 +19,7 @@ from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
+    DeleteCredentials,
     SushiCredentials,
 )
 from sushi.models import BrokenCredentialsMixin as BS
@@ -60,13 +61,6 @@ def list_credentials(organizations, platforms, counter_report_types):
             last_harvestable_month=date(2025, 1, 1),
         ),
         CredentialsFactory(
-            organization=organizations["standalone"],
-            platform=platforms["branch"],
-            enabled=False,
-            counter_version=5,
-            last_harvestable_month=date(2025, 1, 1),
-        ),
-        CredentialsFactory(
             organization=organizations["branch"],
             platform=platforms["branch"],
             enabled=False,
@@ -92,9 +86,10 @@ def list_credentials(organizations, platforms, counter_report_types):
     CounterReportsToCredentialsFactory(
         credentials=creds[1], counter_report=counter_report_types["pr"], broken=None
     )
-    creds[4].force_current_version_verified()
-    SushiCredentials.objects.filter(pk__in=[creds[1].pk, creds[2].pk]).update(version_hash="xxx")
-    SushiCredentials.objects.filter(pk__in=[creds[0].pk, creds[3].pk]).update(version_hash="yyy")
+    creds[3].force_current_version_verified()
+    SushiCredentials.objects.filter(pk__in=[creds[0].pk, creds[1].pk, creds[2].pk]).update(
+        version_hash="xxx"
+    )
     SushiCredentials.objects.filter(pk=creds[0].pk).update(broken=BS.BROKEN_HTTP)
     return creds
 
@@ -172,24 +167,24 @@ class TestSushiCredentialsViewSet:
     @pytest.mark.parametrize(
         "params,creds_indexes,consortial_installation",
         (
-            ({}, {0, 1, 2, 3, 4}, None),
+            ({}, {0, 1, 2, 3}, None),
             ({"counter_version": 4}, {0}, None),
-            ({"counter_version": 5}, {1, 2, 4}, None),
-            ({"counter_version": 51}, {3}, None),
-            ({"organization": "standalone"}, {0, 1, 2, 4}, None),
-            ({"organization": "branch"}, {3}, None),
-            ({"platform": "standalone"}, {0, 4}, None),
-            ({"platform": "branch"}, {1, 2, 3}, None),
-            ({"last_harvestable_month": True}, {0, 1, 2, 4}, None),
-            ({"last_harvestable_month": False}, {3}, None),
-            ({"enabled": True}, {0, 4}, None),
-            ({"enabled": False}, {1, 2, 3}, None),
+            ({"counter_version": 5}, {1, 3}, None),
+            ({"counter_version": 51}, {2}, None),
+            ({"organization": "standalone"}, {0, 1, 3}, None),
+            ({"organization": "branch"}, {2}, None),
+            ({"platform": "standalone"}, {0, 3}, None),
+            ({"platform": "branch"}, {1, 2}, None),
+            ({"last_harvestable_month": True}, {0, 1, 3}, None),
+            ({"last_harvestable_month": False}, {2}, None),
+            ({"enabled": True}, {0, 3}, None),
+            ({"enabled": False}, {1, 2}, None),
             ({"potential_issues": "broken"}, {0, 3}, None),
-            ({"potential_issues": "not_validated"}, {0, 1, 2, 3}, None),
-            ({"potential_issues": "can_update"}, {1, 2, 4}, None),
-            ({"potential_issues": "can_update_verified"}, {4}, None),
-            ({"potential_issues": "duplicated"}, {0, 1, 2, 3}, True),
-            ({"potential_issues": "duplicated"}, {1, 2}, False),
+            ({"potential_issues": "not_validated"}, {0, 1, 2}, None),
+            ({"potential_issues": "can_update"}, {1, 3}, None),
+            ({"potential_issues": "can_update_verified"}, {3}, None),
+            ({"potential_issues": "duplicated"}, {0, 1, 2}, True),
+            ({"potential_issues": "duplicated"}, {0, 1}, False),
         ),
     )
     def test_list_filtering(
@@ -254,14 +249,14 @@ class TestSushiCredentialsViewSet:
             platforms["standalone"].pk,
             platforms["branch"].pk,
         }, "list platforms in paginator"
-        assert len(resp.data["results"]) == 5
-        assert resp.data["count"] == 5
-        assert resp.data["inactive_count"] == 3
+        assert len(resp.data["results"]) == 4
+        assert resp.data["count"] == 4
+        assert resp.data["inactive_count"] == 2
         assert resp.data["broken_count"] == 1
         assert resp.data["broken_report_count"] == 1
         assert resp.data["report_count"] == 3
         assert resp.data["report_from_broken_credentials_count"] == 1
-        assert resp.data["report_from_inactive_credentials_count"] == 2
+        assert resp.data["report_from_inactive_credentials_count"] == 1
 
         # Filtered
         resp = clients["master_admin"].get(
@@ -276,8 +271,8 @@ class TestSushiCredentialsViewSet:
         assert resp.data["count"] == 2
         assert resp.data["inactive_count"] == 0
         assert resp.data["broken_count"] == 1
-        assert resp.data["broken_report_count"] == 0
-        assert resp.data["report_count"] == 1
+        assert resp.data["broken_report_count"] == 1
+        assert resp.data["report_count"] == 2
         assert resp.data["report_from_broken_credentials_count"] == 1
         assert resp.data["report_from_inactive_credentials_count"] == 0
 
@@ -594,14 +589,24 @@ class TestSushiCredentialsViewSet:
             url="http://a.b.c/",
         )
         url = reverse("sushi-credentials-detail", args=(credentials.pk,))
-        assert SushiCredentials.objects.count() == 1
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
         resp = clients["admin1"].delete(url)
         assert resp.status_code == 403
-        assert SushiCredentials.objects.count() == 1
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
 
-    def test_destroy_locked_lower(self, basic1, organizations, platforms, clients):
+    @pytest.mark.parametrize(
+        "params,to_delete",
+        (
+            ("?delete_data=true", DeleteCredentials.WITH_DATA),
+            ("?delete_data=false", DeleteCredentials.WITHOUT_DATA),
+            ("", DeleteCredentials.WITHOUT_DATA),
+        ),
+    )
+    def test_destroy_locked_lower(
+        self, basic1, organizations, platforms, clients, params, to_delete
+    ):
         """
-        The object is locked with consortium staff level lock, so the organization admin cannot
+        The object is not locked with consortium staff level lock, so the organization admin can
         remove it
         """
         credentials = CredentialsFactory(
@@ -612,10 +617,12 @@ class TestSushiCredentialsViewSet:
             url="http://a.b.c/",
         )
         url = reverse("sushi-credentials-detail", args=(credentials.pk,))
-        assert SushiCredentials.objects.count() == 1
-        resp = clients["admin1"].delete(url)
-        assert resp.status_code == 204
-        assert SushiCredentials.objects.count() == 0
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
+        assert SushiCredentials.objects.exclude(to_delete=DeleteCredentials.NO).count() == 0
+        resp = clients["admin1"].delete(url + params)
+        assert resp.status_code == 202
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 0
+        assert SushiCredentials.objects.filter(to_delete=to_delete).count() == 1
 
     def test_month_overview_no_month(self, basic1, clients):
         """
@@ -914,19 +921,19 @@ class TestSushiCredentialsViewSet:
             url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(4)]}
         )
         assert resp.status_code == 200
-        assert resp.data["updated"] == 4
+        assert resp.data["updated"] == 3
 
         for i in range(4):
             list_credentials[i].refresh_from_db()
             assert list_credentials[i].enabled is True
 
         resp = clients["master_admin"].post(
-            url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(5)]}
+            url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(4)]}
         )
         assert resp.status_code == 200
         assert resp.data["updated"] == 0, "nothing updated"
 
-        for i in range(5):
+        for i in range(4):
             list_credentials[i].refresh_from_db()
             assert list_credentials[i].enabled is True
 

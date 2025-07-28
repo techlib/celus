@@ -5,11 +5,13 @@ import pandas as pd
 import pytest
 from django.urls import reverse
 from openpyxl import load_workbook
+from reversion.models import Version
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import FetchIntention
 
 from sushi.fake_data import FetchAttemptFactory
-from sushi.models import SushiCredentials
+from sushi.models import DeleteCredentials, SushiCredentials
+from sushi.tasks import delete_credentials_task
 from test_scenarios.basic import *  # noqa
 
 
@@ -23,14 +25,15 @@ class TestSushiCredentialsAPI:
             "delete_fetchintentions",
             "delete_data",
             "delete_fetchattempts_and_related_importbatches",
+            "reversion_created",
             "status_code",
         ],
         [
-            ["admin2", True, True, True, True, 204],
-            ["admin1", False, False, True, False, 404],
-            ["user2", False, False, True, False, 404],
-            ["admin2", True, True, False, False, 204],
-            ["admin1", False, False, False, False, 404],
+            ["admin2", True, True, True, True, True, 202],
+            ["admin1", False, False, True, False, False, 404],
+            ["user2", False, False, True, False, False, 404],
+            ["admin2", True, True, False, False, True, 202],
+            ["admin1", False, False, False, False, False, 404],
         ],
     )
     def test_destroy(
@@ -43,9 +46,10 @@ class TestSushiCredentialsAPI:
         delete_credentials,
         delete_fetchintentions,
         delete_data,
+        reversion_created,
         status_code,
     ):
-        cr = credentials["standalone_tr"]
+        cr: SushiCredentials = credentials["standalone_tr"]
         fetch_attempts = FetchAttemptFactory.create_batch(2, credentials=cr)
         fi = FetchIntentionFactory(credentials=cr, attempt=fetch_attempts[0])
 
@@ -55,20 +59,43 @@ class TestSushiCredentialsAPI:
         assert cr_queryset.exists()
         assert fi_queryset.exists()
 
-        with mock.patch(
-            "sushi.views.delete_fetchattempts_and_related_importbatches_task"
-        ) as mock_task:
+        with mock.patch("sushi.views.delete_credentials_task") as mock_task:
             url = reverse("sushi-credentials-detail", args=[cr.pk])
             url += f"?delete_data={delete_data}"
             res = clients[user].delete(url)
             assert res.status_code == status_code
 
-            if delete_fetchattempts_and_related_importbatches:
-                fa_pks = [fa.pk for fa in fetch_attempts]
-                mock_task.delay.assert_called_with(fa_pks)
+            cr.refresh_from_db()
+            # Check credentials state
+            if not delete_credentials:
+                assert cr.to_delete == DeleteCredentials.NO
             else:
-                mock_task.delay.assert_not_called()
+                if delete_fetchattempts_and_related_importbatches:
+                    assert cr.to_delete == DeleteCredentials.WITH_DATA
+                else:
+                    assert cr.to_delete == DeleteCredentials.WITHOUT_DATA
+                # Check that deletion of credentials was plannened
+                mock_task.delay.assert_called_with(cr.pk)
 
+        deleted_count = Version.objects.get_deleted(SushiCredentials).count()
+        # Now try to perfrom the task
+        with mock.patch("sushi.tasks.delete_fetchattempts_and_related_importbatches") as mock_task:
+            delete_credentials_task(cr.pk)
+
+            if delete_credentials_task and delete_fetchattempts_and_related_importbatches:
+                fa_pks = [fa.pk for fa in fetch_attempts]
+                mock_task.assert_called_with(fa_pks)
+            else:
+                mock_task.assert_not_called()
+
+        # Test reversion
+        new_deleted_count = Version.objects.get_deleted(SushiCredentials).count()
+        if reversion_created:
+            assert new_deleted_count == deleted_count + 1
+        else:
+            assert new_deleted_count == deleted_count
+
+        # Check everything was deleted
         if delete_credentials:
             assert not cr_queryset.exists()
         else:
@@ -78,6 +105,54 @@ class TestSushiCredentialsAPI:
             assert not fi_queryset.exists()
         else:
             assert fi_queryset.exists()
+
+    @pytest.mark.parametrize("delete_data", (True, False))
+    def test_recreate_destroyed_credentials(
+        self,
+        basic1,
+        credentials,
+        clients,
+        platforms,
+        organizations,
+        counter_report_types,
+        delete_data,
+    ):
+        SushiCredentials.objects.all().delete()
+
+        def create_credentials(expected_status):
+            resp = clients["master_admin"].post(
+                reverse("sushi-credentials-list"),
+                {
+                    "title": "Test title",
+                    "platform_id": platforms["root"].pk,
+                    "organization_id": organizations["root"].pk,
+                    "url": "http://sushi.example.com",
+                    "requestor_id": "rrrrr",
+                    "customer_id": "ccccc",
+                    "counter_version": "5",
+                    "counter_reports": [counter_report_types["tr"].pk],
+                },
+            )
+            assert resp.status_code == expected_status
+            return resp
+
+        cred_pk = create_credentials(201).data["pk"]
+        assert SushiCredentials.objects.count() == 1
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
+        create_credentials(400)
+        assert SushiCredentials.objects.count() == 1
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
+
+        url = reverse("sushi-credentials-detail", args=[cred_pk])
+        url += f"?delete_data={delete_data}"
+        res = clients["master_admin"].delete(url)
+        assert res.status_code == 202
+        assert SushiCredentials.objects.count() == 1
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 0
+        # recreate credentials
+        cred_pk = create_credentials(201).data["pk"]
+        assert SushiCredentials.objects.count() == 2
+        assert SushiCredentials.objects.filter(to_delete=DeleteCredentials.NO).count() == 1
 
 
 def get_core_attrs_credentials():

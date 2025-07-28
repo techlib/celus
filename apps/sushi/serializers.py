@@ -35,6 +35,7 @@ from .models import (
     AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
+    DeleteCredentials,
     SushiCredentials,
     SushiFetchAttempt,
 )
@@ -301,6 +302,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             organization=validated_data["organization"],
             platform=validated_data["platform"],
             counter_version=validated_data["counter_version"],
+            to_delete=DeleteCredentials.NO,
         ).exists():
             raise ValidationError(
                 "Only one set of SUSHI credentials for an organization, platform and counter "

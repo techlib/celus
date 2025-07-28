@@ -28,6 +28,7 @@ from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
+    DeleteCredentials,
     SushiCredentials,
     SushiFetchAttempt,
 )
@@ -55,6 +56,7 @@ class RunResponse(Enum):
     BUSY = auto()  # is currently processing a request
     PROCESSED = auto()  # FetchIntention was processed
     BROKEN = auto()  # FetchIntention credentials are broken
+    DELETING = auto()  # FetchIntention credentials are being deleted
 
 
 class ProcessResponse(Enum):
@@ -62,6 +64,7 @@ class ProcessResponse(Enum):
     ALREADY_PROCESSED = auto()  # FetchIntention was already processed
     BROKEN = auto()  # Credentials of FetchIntention are marked as broken
     DUPLICATE = auto()  # FetchIntention was marked as duplicate
+    DELETING = auto()  # Credentials of FetchIntention are being deleted
 
 
 # TODO scheduler cleanup (too many invalid urls)
@@ -152,6 +155,7 @@ class Scheduler(models.Model):
                             duplicate_of__isnull=True,
                             credentials__url=self.url,
                             credentials__broken__isnull=True,
+                            credentials__to_delete=DeleteCredentials.NO,
                             when_processed__isnull=True,
                             not_before__lte=timezone.now(),
                         )
@@ -210,6 +214,9 @@ class Scheduler(models.Model):
             if process_response == ProcessResponse.BROKEN:
                 # Credentials are broken
                 res = RunResponse.BROKEN
+            elif process_response == ProcessResponse.DELETING:
+                # Credentials are being deleted
+                res = RunResponse.DELETING
             else:
                 # Update cooldown delay - but respect a higher delay if it was set in the handler
                 new_ready = intention.when_processed + timedelta(seconds=self.cooldown)
@@ -219,7 +226,6 @@ class Scheduler(models.Model):
                 res = RunResponse.PROCESSED
 
             self.unassign_intention()
-            self.save()
 
         return res
 
@@ -521,6 +527,9 @@ class FetchIntention(models.Model):
         if self.broken_credentials:
             return ProcessResponse.BROKEN
 
+        if self.credentials.deleting:
+            return ProcessResponse.DELETING
+
         if self.duplicate_of:
             return ProcessResponse.DUPLICATE
 
@@ -632,6 +641,13 @@ class FetchIntention(models.Model):
             logger.warning(
                 "Credentials are broken. Can't create retry for FetchIntention %s", self.pk
             )
+            return
+
+        if self.credentials.deleting:
+            logger.warning(
+                "Credentials are being deleted. Can't create retry for FetchIntention %s", self.pk
+            )
+            return
 
         kwargs = {
             "data_not_ready_retry": self.data_not_ready_retry
@@ -750,7 +766,12 @@ class FetchIntention(models.Model):
         """Retry failed attempts"""
 
         # Skip when credentials were not verified or they are marked as broken
-        if not self.credentials.is_verified or self.attempt.broken_credentials:
+        # or credentials are being deleted
+        if (
+            not self.credentials.is_verified
+            or self.credentials.deleting
+            or self.attempt.broken_credentials
+        ):
             return
 
         self.handle_data_not_ready(final_import_batch=False)
@@ -1143,9 +1164,11 @@ class Automatic(models.Model):
 
         new_intentions: typing.List[FetchIntention] = []
 
-        creds_to_verify = {
-            cr["pk"]: cr["verified"]
-            for cr in SushiCredentials.objects.all().annotate_verified().values("pk", "verified")
+        creds_to_trigger = {
+            cr["pk"]: cr["verified"] and cr["to_delete"] == DeleteCredentials.NO
+            for cr in SushiCredentials.objects.all()
+            .annotate_verified()
+            .values("pk", "verified", "to_delete")
         }
 
         for cr2c in (
@@ -1157,7 +1180,7 @@ class Automatic(models.Model):
         ):
             # only verified credentials can be automatically planned
             # to save queries per-credentials, we use preloaded verification status
-            if not creds_to_verify.get(cr2c.credentials_id, False):
+            if not creds_to_trigger.get(cr2c.credentials_id, False):
                 continue
 
             new_intentions.append(

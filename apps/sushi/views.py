@@ -32,8 +32,7 @@ from reversion.views import create_revision
 from scheduler.models import FetchIntention
 from scheduler.serializers import MonthOverviewSerializer
 
-from sushi.models import SushiFetchAttempt
-from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
+from sushi.tasks import delete_credentials_task
 
 from . import filters
 from .logic.export import CredentialsDataFrame, OrganizationsDataFrame, Sheet, XlsxFile
@@ -43,6 +42,7 @@ from .models import (
     CounterReportsToCredentials,
     CounterReportType,
     CounterVersionChoices,
+    DeleteCredentials,
     SushiCredentials,
 )
 from .serializers import (
@@ -178,7 +178,9 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     def get_queryset(self):
         user_organizations = self.request.user.admin_organizations()
-        qs = SushiCredentials.objects.filter(organization__in=user_organizations)
+        qs = SushiCredentials.objects.filter(
+            organization__in=user_organizations, to_delete=DeleteCredentials.NO
+        )
         organization_id = self.request.query_params.get("organization")
         if organization_id:
             qs = qs.filter(
@@ -277,26 +279,18 @@ class SushiCredentialsViewSet(ModelViewSet):
         delete_data = self.request.query_params.get("delete_data", "false").lower() == "true"
         credentials: SushiCredentials = self.get_object()
         if credentials.can_edit(request.user):
-            reversion.set_comment("Deleted through API")
             if delete_data:
-                fetch_attempts_pks = list(
-                    SushiFetchAttempt.objects.filter(credentials=credentials).values_list(
-                        "pk", flat=True
-                    )
-                )
-
+                credentials.to_delete = DeleteCredentials.WITH_DATA
                 reversion.set_comment(
-                    "Deleted through API with all related FetchAttempts and ImportBatches."
+                    "Marked for deletion through API with all related FetchAttempts and "
+                    "ImportBatches."
                 )
-
-                # we need to trigger deletion after credentials are deleted
-                # otherwise a deadlock may appear between uwsgi and celery job
-                transaction.on_commit(
-                    lambda: delete_fetchattempts_and_related_importbatches_task.delay(
-                        fetch_attempts_pks
-                    )
-                )
-            return super().destroy(request, *args, **kwargs)
+            else:
+                credentials.to_delete = DeleteCredentials.WITHOUT_DATA
+                reversion.set_comment("Marked for deletion through API")
+            credentials.save()
+            transaction.on_commit(lambda: delete_credentials_task.delay(credentials.pk))
+            return Response(status=status.HTTP_202_ACCEPTED)
         else:
             raise PermissionDenied("User is not allowed to delete this object")
 
