@@ -38,6 +38,7 @@ cs:
           validate-pair
           @validity-updated="handleValidityUpdated"
           :label="$t('title_fields.start_date')"
+          :max-date-limit="finishedMonth"
         >
         </DatePicker>
       </v-col>
@@ -45,9 +46,9 @@ cs:
         <DatePicker
           :disabled="started"
           v-model="endDate"
-          :max-date="finishedMonth"
           hide-details="auto"
           :label="$t('title_fields.end_date')"
+          :max-date-limit="finishedMonth"
         >
         </DatePicker>
       </v-col>
