@@ -1,3 +1,29 @@
+- version: 9.1.0
+  title:
+    en: Many small improvements and bug fixes in CELUS 9.1.0
+    cs: Mnoho drobných vylepšení a oprav chyb v CELUSu 9.1.0
+  text:
+    en: |
+      - [Monthly harvesting overview](https://support.celus.net/support/solutions/articles/103000355160) is now automatically turned on for all admins
+      - Usage data in most tables now sorts in descending order on first click
+      - COUNTER version information is now displayed in the harvesting dialog when multiple versions are present
+      - You can now change the description of a report when copying it
+      - The SUSHI status pie chart now links to the corresponding records on the SUSHI status page
+      - HTTPS is newly enforced for SUSHI URLs and certificate validation was improved
+      - Many other small improvements and bug fixes were also introduced
+    cs: |
+      - [Měsíční přehled sklízení](https://support.celus.net/support/solutions/articles/103000355160) je nyní automaticky zapnutý pro všechny administrátory
+      - Data o využití ve většině tabulek se nyní řadí při prvním kliknutí sestupně
+      - V dialogu sklízení se nyní zobrazují informace o verzi COUNTER, pokud je přítomno více verzí COUNTER
+      - Nyní můžete měnit popis reportu při jeho kopírování
+      - Koláčový graf SUSHI statusu nyní odkazuje na odpovídající záznamy na stránce SUSHI status
+      - Pro SUSHI URL je nově vyžadováno HTTPS a ověřování certifikátů bylo vylepšeno
+      - Bylo přidáno mnoho dalších drobných vylepšení a oprav
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 9.0.2
   title:
     en: Hotfix release 9.0.2

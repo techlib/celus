@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.0] - 2025-08-04
+
+### Added
+
+#### Frontend
+
+- sort usage in most tables descending on first click
+- add counter version information into harvesting table when more versions are present
+- show splitting dimension in FlexiTableOutput
+- make it possible to configure external registration URL used instead of internal registration
+- allow change of description during report copy
+- add current year to date range selector
+- remove limit from start date in date range selector and only validate after user has selected a date
+- add feedback when user's fiscal year successfully changes
+- show debug links in sushi edit dialog for ordinary admins
+- add link from dashboard pie-chart to sushi status
+
+#### Backend
+
+- enforce system CA certificates in requests
+- update pre-commit to explicitly use poetry
+- make validate_mime_type configurable via settings
+- add a manage command to turn on sending harvest reports for all users
+- make organization country and state list-editable in django admin
+- add configurable User-Agent of the harvester
+- add missing interest related models into admin
+- make it possible to turn off clickhouse in recompute_interest (useful when it crashes with it)
+- always install django-celus-registry (make it non-optional)
+
+### Changes
+
+#### Frontend
+
+- modify date-range picker to remove limit from start date picker and only validate after user has selected a date
+- enforce https:// in sushi urls
+- change the order of columns in non-sushi platform page
+- change the hand icon in registration link to questionmark
+- change display and wording of the SUSHI credentials indicators for platforms
+- remove trailing slash from SUSHI URLs in the debug links (some platforms don't like it)
+
+#### Backend
+
+- update fetch intention cancel action to return 404 when canceling non-existent intention of existing harvest
+- modify interest computation to support dimension-less interest
+- better tune cleanup_database
+- modify SUSHI exception handling to never break whole credentials on exception 3000 - regardless of associated HTTP status code
+- make storage of request logs to clickhouse more robust
+- raise the minimum Python version to 3.9 + upgrade dependencies
+
+### Fixed
+
+#### Frontend
+
+- fix marking events as read in batch mode
+- reload the sushi credentials list after credentials were deleted + handle closing of deletion dialog properly
+- fix custom logo layout
+- fix "mark fixed" action per report type not being shown in sushi edit dialog
+- fix bug with incorrect organization being selected by default when copying report
+- fix `smartMonthRange` function when end or start date are missing
+- don't clean activeReport when closing mailing preferences in StoredReportsTable
+- fix list wasn't updated when annotation was deleted in AnnotationList
+- do not reload components when url is changed via stateTracking
+- fix browser back button when navigating from platform detail page back to platform list
+- improve handling of unexpected logouts due to CORS errors - do not try to deal with eduId when handling unknown errors
+- show icon withdescription for users which are not able to edit report in StoredReportsTable
+- add loader when text in dimension filter for FlexibleTable is not known yet
+- display "no data" message only when table is not loading in FlexiTableOutput
+- fix scroll width for small displays in charts
+- fix dismissing of the release alert not being remembered
+- fix progress skeleton not being displayed in FlexiTableOutput on first load and in chart view
+- fix pagination processing in title list component
+
+#### Backend
+
+- fix coverage ratio calculation for empty report types
+- fix InterestConfig unique constrain
+- don't post data to brain for platforms which are not linked
+- explicitly assign all tasks to queues in celery config
+
 ## [9.0.2] - 2025-06-04
 
 ### Changes
