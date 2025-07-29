@@ -716,7 +716,7 @@ export default {
         grid:
           this.type === "bar"
             ? { left: "25%", top: 90 }
-            : { left: this.maxValue.toString().length * 10, top: 90 },
+            : { left: this.maxValue.toString().length * 10 + 20, top: 90 },
         xAxis: this.xAxis,
         yAxis: this.yAxis,
         dataset: {
