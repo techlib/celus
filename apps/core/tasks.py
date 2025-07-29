@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pickle
+from datetime import datetime, timedelta
 from time import time
 
 import celery
@@ -113,11 +114,13 @@ def flush_request_logs_to_clickhouse():
 
         source = popper()
         errors = []
+        sync_canceled = False
 
         while batch := list(itertools.islice(source, settings.REQUEST_LOGGING_BUFFER_SIZE)):
             logger.debug(f"Syncing {len(batch)} {name} logs to Clickhouse")
             backend = get_logging_backend()
             to_store = []
+
             for rec in batch:
                 # we process the records one by one to make sure that an error in one record
                 # does not prevent processing of the rest
@@ -125,9 +128,40 @@ def flush_request_logs_to_clickhouse():
                     to_store.append(record_cls(**pickle.loads(rec)))
                 except Exception as exc:
                     errors.append(exc)
-                    logger.exception(f"Failed to parse {name} log record")
+                    logger.exception("Failed to parse %s log record", name)
+
             if to_store:
-                backend.store_records(cube, to_store)
+                try:
+                    backend.store_records(cube, to_store)
+                    logger.debug(
+                        "Successfully stored %d %s records to Clickhouse", len(to_store), name
+                    )
+                except Exception as exc:
+                    logger.error("Failed to store %s records to Clickhouse: %s", name, exc)
+                    # Put the data back into Redis for retry
+                    for rec in batch:
+                        r.rpush(key, rec)
+                    logger.info("Restored %d %s records back to Redis for retry", len(batch), name)
+                    # Cancel sync for this batch and continue with next batch
+                    sync_canceled = True
+
+            # If we've canceled sync, don't process more batches
+            if sync_canceled:
+                logger.warning("Sync canceled for %s logs due to Clickhouse write failure", name)
+                # find the oldest record in the batch
+                oldest_record = min(to_store, key=lambda x: x.timestamp)
+                # if the oldest record is older than 1 hour, send an email to the admins
+                if oldest_record.timestamp < datetime.now(
+                    oldest_record.timestamp.tzinfo
+                ) - timedelta(hours=1):
+                    async_mail_admins(
+                        f"Sync canceled for {name} logs due to Clickhouse write failure",
+                        f"The oldest record is older than 1 hour: {oldest_record.timestamp}, which "
+                        "means the problem persists and should be investigated. Celery logs should "
+                        "contain information about the error.",
+                    )
+                break
+
         if errors:
             async_mail_admins(
                 f"Errors syncing {name} logs to Clickhouse",
