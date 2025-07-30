@@ -1763,7 +1763,7 @@ export default {
       if (this.platformFilter) {
         searchParams.append("platform", this.platformFilter);
       }
-      return `${base}reports/${rt.code.toLowerCase()}/?${searchParams.toString()}`;
+      return `${base}reports/${rt.code.toLowerCase()}?${searchParams.toString()}`;
     },
     applyLastHarvestableMonthDialog({ values }) {
       this.lastHarvestableMonthUpdated = true;
