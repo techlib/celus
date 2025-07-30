@@ -1646,6 +1646,8 @@ class TestAutomatic:
         assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}, (
             "no intentions deleted"
         )
+        fi.attempt.refresh_from_db()
+        assert "assuming a 3030 exception" in fi.attempt.log
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
@@ -1891,8 +1893,6 @@ class TestAutomatic:
             assert FetchIntention.objects.all().count() == 2, "new FI is created"
             assert fi.attempt.import_batch is None
 
-        fi.attempt.refresh_from_db()
-        assert "assuming a 3030 exception" in fi.attempt.log
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_same_queue_reenabled_intentions(
