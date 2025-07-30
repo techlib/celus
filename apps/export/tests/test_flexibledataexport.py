@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 from io import BytesIO, StringIO, TextIOWrapper
 from zipfile import ZipFile
 
@@ -254,6 +255,20 @@ class TestFlexibleDataExport:
         data = export_output(export)
         assert data.splitlines()[0].startswith("Title/Database,ISSN,EISSN,ISBN,")
 
+    def test_create_output_file_with_item(
+        self, flexible_slicer_test_data_with_items, admin_user, export_output
+    ):
+        """
+        Tests that using item as primary dimension also adds DOI and other extra columns.
+        Also test that publication date is formatted correctly.
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.add_group_by("metric")
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        assert data.splitlines()[0].startswith("Item,DOI,ISSN,EISSN,ISBN,Publication date,")
+        assert data.splitlines()[1].startswith("Item 1,10.1234/567890,,,,2020-01-01,")
+
     @pytest.mark.parametrize(["split_by"], [("platform",), ("date__year",), ("date",)])
     @pytest.mark.parametrize(
         ["fmt", "split"],
@@ -426,6 +441,38 @@ class TestFlexibleDataExportExcel:
             ["Organization 2", 1114182, 1312470, 1510758],
             ["Organization 3", 1709046, 1907334, 2105622],
             ["Total", "=SUM(B2:B4)", "=SUM(C2:C4)", "=SUM(D2:D4)"],
+        ]
+
+    def test_create_output_file_with_item(
+        self, flexible_slicer_test_data_with_items, admin_user, export_output
+    ):
+        """
+        Tests that using item as primary dimension also adds DOI and other extra columns
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.add_group_by("metric")
+        exporter = FlexibleDataExcelExporter(slicer, include_charts=False, include_col_totals=True)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook["report"]
+
+        assert [[cell.value for cell in row] for row in sheet.rows] == [
+            ["Item", "DOI", "ISSN", "EISSN", "ISBN", "Publication date", "Metric 1", "Metric 2"],
+            [
+                "Item 1",
+                "10.1234/567890",
+                None,
+                None,
+                None,
+                datetime(2020, 1, 1, 0, 0),
+                26688,
+                28128,
+            ],
+            ["Item 2", "10.1234/567891", "3574-4169", None, None, None, 26784, 28224],
+            ["Item 3", "10.1234/567892", None, None, "978-3-16-148410-0", None, 27456, 28896],
+            ["Total", None, None, None, None, None, "=SUM(G2:G4)", "=SUM(H2:H4)"],
         ]
 
     @pytest.mark.parametrize("include_tags", [True, False])

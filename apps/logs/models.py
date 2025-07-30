@@ -148,6 +148,7 @@ class ReportType(models.Model):
     dimensions = models.ManyToManyField(
         "Dimension", related_name="report_types", through="ReportTypeToDimension"
     )
+    uses_items = models.BooleanField(default=False)
     source = models.ForeignKey(DataSource, on_delete=models.SET_NULL, null=True, blank=True)
     interest_metrics = models.ManyToManyField(
         "Metric", through="ReportInterestMetric", through_fields=("report_type", "metric")

@@ -1,4 +1,5 @@
 import csv
+import logging
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import dataclass
@@ -9,6 +10,8 @@ from xlsxwriter.worksheet import Worksheet
 
 XSLX_COL_WIDTH_ADJ_RATIO = 0.8  # how to scale column width compared to the computed value
 XSLX_COL_WIDTH_ADJ_CONST = 2  # what to add to the scaled column width
+
+logger = logging.getLogger(__name__)
 
 
 def xslx_scale_column_width(width, max_col_width=60):

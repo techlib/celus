@@ -8,7 +8,7 @@ import openpyxl
 import pytest
 from django.db.models import Q
 from organizations.models import Organization
-from publications.models import Platform, Title
+from publications.models import Item, Platform, Title
 from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
 from tags.models import AccessibleBy, Tag, TagScope
 
@@ -841,6 +841,71 @@ class TestFlexibleDataSlicerComputations:
             assert data[0][order_by] > data[1][order_by] > data[2][order_by]
         else:
             assert data[0][order_by] < data[1][order_by] < data[2][order_by]
+
+    def test_group_by_item(self, flexible_slicer_test_data_with_items):
+        """
+        Primary dimension: item
+        Group by: metric
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_items["metrics"][0]),
+            add_group=True,
+        )
+        slicer.order_by = ["item__pk"]
+        data = list(slicer.get_data())
+        assert len(data) == 3
+        items = flexible_slicer_test_data_with_items["items"]
+        # the data was obtained using libreoffice calc on the test data
+        exp_data = [
+            {"pk": items[0].name, "m1": 26688},
+            {"pk": items[1].name, "m1": 26784},
+            {"pk": items[2].name, "m1": 27456},
+        ]
+        assert [remap_row_keys_to_short_names(rec, Item, [Metric]) for rec in data] == exp_data
+
+    def test_group_by_item_with_title_filter(self, flexible_slicer_test_data_with_items):
+        """
+        Primary dimension: item
+        Group by: metric
+        Filter: title
+        """
+        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("target", flexible_slicer_test_data_with_items["targets"][0])
+        )
+        slicer.add_group_by("metric")
+        slicer.order_by = ["item__pk"]
+        data = list(slicer.get_data())
+        assert len(data) == 2
+        exp_data = [
+            {"pk": flexible_slicer_test_data_with_items["items"][0].name, "m1": 26688, "m2": 28128},
+            {"pk": flexible_slicer_test_data_with_items["items"][1].name, "m1": 26784, "m2": 28224},
+        ]
+        assert [remap_row_keys_to_short_names(rec, Item, [Metric]) for rec in data] == exp_data
+
+    def test_group_by_item_with_title_filter_by_tag(
+        self, flexible_slicer_test_data_with_items, admin_user
+    ):
+        """
+        Primary dimension: item
+        Group by: metric
+        Filter: title
+        """
+        tag = TagFactory.create(name="my_tag", tag_class__scope=TagScope.TITLE)
+        title = flexible_slicer_test_data_with_items["targets"][0]
+        tag.tag(title, admin_user)
+        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.add_filter(TagDimensionFilter("target", [tag.pk]))
+        slicer.add_group_by("metric")
+        slicer.order_by = ["item__pk"]
+        data = list(slicer.get_data())
+        assert len(data) == 2
+        exp_data = [
+            {"pk": flexible_slicer_test_data_with_items["items"][0].name, "m1": 26688, "m2": 28128},
+            {"pk": flexible_slicer_test_data_with_items["items"][1].name, "m1": 26784, "m2": 28224},
+        ]
+        assert [remap_row_keys_to_short_names(rec, Item, [Metric]) for rec in data] == exp_data
 
 
 @pytest.mark.clickhouse

@@ -346,6 +346,13 @@ export default {
         isbn: true,
         doi: false,
       },
+      itemColumns: {
+        doi: true,
+        issn: true,
+        eissn: true,
+        isbn: true,
+        publication_date: true,
+      },
       errorCode: null,
       errorDetails: null,
       cancelTokenSource: null,
@@ -391,6 +398,14 @@ export default {
           .map(([key, value]) => key);
       }
       return titleHeaders;
+    },
+    activeItemColumns() {
+      if (this.row === "item") {
+        return Object.entries(this.itemColumns)
+          .filter(([key, value]) => value)
+          .map(([key, value]) => key);
+      }
+      return [];
     },
     headersFromData() {
       if (this.report.trendMode) {
@@ -475,6 +490,10 @@ export default {
           value: "target__" + key,
           order: "reverse",
         }));
+        let itemHeaders = this.activeItemColumns.map((key) => ({
+          title: this.$t("title_fields." + key),
+          value: "item__" + key,
+        }));
         let tagHeaders = this.taggableRow
           ? [
               {
@@ -492,6 +511,7 @@ export default {
           },
           ...tagHeaders,
           ...titleHeaders,
+          ...itemHeaders,
           ...headers,
         ];
         return ret;
@@ -817,6 +837,14 @@ export default {
               if (obj) {
                 Object.keys(this.titleColumns).forEach((key) => {
                   newItem["target__" + key] = obj[key];
+                });
+              }
+            }
+            if (this.row === "item") {
+              let obj = this.translators[this.row].translateKey(newItem.pk);
+              if (obj) {
+                Object.keys(this.itemColumns).forEach((key) => {
+                  newItem["item__" + key] = obj[key];
                 });
               }
             }

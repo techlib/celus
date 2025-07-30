@@ -13,6 +13,10 @@ let implicitDimensions = [
     nameKey: "labels.title",
   },
   {
+    shortName: "item",
+    nameKey: "labels.item",
+  },
+  {
     shortName: "metric",
     nameKey: "labels.metric",
   },

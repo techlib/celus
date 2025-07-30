@@ -121,6 +121,7 @@ class ReportTypeSerializer(ModelSerializer):
     counter_version = SerializerMethodField()
     counter_report_type_id = SerializerMethodField()
     counter_code = SerializerMethodField()
+    uses_items = BooleanField(required=False)
 
     class Meta:
         model = ReportType
@@ -138,6 +139,7 @@ class ReportTypeSerializer(ModelSerializer):
             "counter_version",
             "counter_report_type_id",
             "counter_code",
+            "uses_items",
         )
 
     def get_counter_version(self, obj: ReportType):

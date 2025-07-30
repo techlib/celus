@@ -402,6 +402,7 @@ cs:
                     class="mt-0"
                     :disabled="
                       row.id === 'report_type' ||
+                      row.id === 'item' || // item filtering is not supported
                       (row.id === 'date' && filters.includes('date__year')) ||
                       (row.id === 'date__year' && filters.includes('date')) ||
                       (row.id.startsWith('date') && trendMode) ||
@@ -1114,6 +1115,10 @@ export default {
         // only show report type if there is more than one selected
         base = base.filter((d) => d.id !== "report_type");
       }
+      // remove items if not all report types use items
+      if (!this.showItems) {
+        base = base.filter((d) => d.id !== "item");
+      }
       return base;
     },
     appliedFilters() {
@@ -1224,6 +1229,9 @@ export default {
     },
     reportTypeSelected() {
       return this.selectedReportTypes.length > 0;
+    },
+    showItems() {
+      return this.selectedReportTypeObjs.every((rt) => rt.uses_items);
     },
     disableDimValuesSelectors() {
       return this.selectedReportTypes.length === 0;

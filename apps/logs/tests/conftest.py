@@ -1,4 +1,5 @@
 import calendar
+import datetime
 from itertools import product
 
 import faker
@@ -7,7 +8,7 @@ from celus_nigiri.counter5 import CounterRecord
 from celus_nigiri.record import Identifiers
 from celus_nigiri.utils import parse_date_fuzzy
 from organizations.models import Organization, UserOrganization
-from publications.models import Platform, Title
+from publications.models import Item, Platform, Title
 from tags.fake_data import TagClassFactory, TagForTitleFactory
 from tags.models import AccessibleBy, TagScope
 
@@ -147,11 +148,14 @@ def counter_records_with_item():
 
 @pytest.fixture()
 def report_type_nd():
-    def fn(dim_number, dimension_names=None, short_name=None, name=None, source=None) -> ReportType:
+    def fn(
+        dim_number, dimension_names=None, short_name=None, name=None, source=None, **kwargs
+    ) -> ReportType:
         rt = ReportType.objects.create(
             short_name=short_name or f"{dim_number}d",
             name=name or f"{dim_number} dimensional report",
             source=source,
+            **kwargs,
         )
         for i in range(dim_number):
             if dimension_names and i < len(dimension_names):
@@ -428,4 +432,154 @@ def flexible_slicer_test_data_with_tags(flexible_slicer_test_data, users):  # no
         "tags": [tag1, tag2, tag3],
         "tag_classes": [tc1, tag3.tag_class],
         **flexible_slicer_test_data,
+    }
+
+
+@pytest.fixture
+def flexible_slicer_test_data_with_items(report_type_nd):
+    """
+    Creates a 'cube' of AccessLogs for all combinations of organization, platform, report_type, etc.
+    It contains items for the titles, and it slightly smaller in the number of platforms,
+    organizations, metrics, etc.
+    """
+
+    organizations = [
+        Organization.objects.create(short_name="org1", name="Organization 1"),
+        Organization.objects.create(short_name="org2", name="Organization 2"),
+    ]
+    platforms = [
+        Platform.objects.create(
+            short_name="pl1",
+            name="Platform 1",
+            counter_registry_id="11111111-1111-1111-1111-111111111111",
+        ),
+        Platform.objects.create(short_name="pl2", name="Platform 2"),
+    ]
+    metrics = [
+        Metric.objects.create(short_name="m1", name="Metric 1"),
+        Metric.objects.create(short_name="m2", name="Metric 2"),
+    ]
+    targets = [
+        Title.objects.create(name="Title 1", isbn="123456789"),
+        Title.objects.create(name="Title 2", issn="1245-6789"),
+    ]
+    # items 1 and 2 are linked to title 1, item 3 is linked to title 2
+    items = [
+        Item.objects.create(
+            name="Item 1", doi="10.1234/567890", publication_date=datetime.date(2020, 1, 1)
+        ),
+        Item.objects.create(name="Item 2", doi="10.1234/567891", issn="3574-4169"),
+        Item.objects.create(name="Item 3", doi="10.1234/567892", isbn="978-3-16-148410-0"),
+    ]
+    report_types = [
+        report_type_nd(1, ["dim1name"], short_name="rt1", name="Report type 1", uses_items=True),
+        report_type_nd(
+            2, ["dim1name", "dim2name"], short_name="rt2", name="Report type 2", uses_items=True
+        ),
+    ]
+    dates = ["2019-12-01", "2020-01-01", "2020-02-01"]
+    dimension_values = [
+        ["A", "B"],
+        ["XX", "YY", "A"],  # "A" is intentionally in both - we want to check for clashes
+    ]
+    values = value_generator()
+    accesslogs = []
+    dimension_texts = {}
+    ops = {}
+    for rt in report_types:
+        dim_count = rt.dimensions.count()
+        dim_options = dimension_values[:dim_count]
+        for i, dim in enumerate(rt.dimensions_sorted):
+            for value in dimension_values[i]:
+                dimension_texts[(dim.pk, value)], _ = DimensionText.objects.get_or_create(
+                    dimension=dim, text=value
+                )
+        for organization, platform, date in product(organizations, platforms, dates):
+            # create one import batch per report type, organization, platform, date
+            ib = ImportBatchFactory(
+                report_type=rt, organization=organization, platform=platform, date=date
+            )
+            for metric, target, *dim_values in product(metrics, targets, *dim_options):
+                dim_data = {}
+                for i, value_str in enumerate(dim_values):
+                    attr = f"dim{i+1}"
+                    value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
+                    dim_data[attr] = value_key.pk
+                title_items = [items[0], items[1]] if target == targets[0] else [items[2]]
+                for item, value in zip(title_items, values):
+                    accesslogs.append(
+                        AccessLog(
+                            report_type=rt,
+                            organization=organization,
+                            platform=platform,
+                            metric=metric,
+                            target=target,
+                            date=date,
+                            value=value,
+                            import_batch=ib,
+                            item=item,
+                            **dim_data,
+                        )
+                    )
+            # create OrganizationPlatform if necessary
+            if (organization.pk, platform.pk) not in ops:
+                ops[(organization.pk, platform.pk)] = OrganizationPlatform(
+                    organization=organization, platform=platform
+                )
+
+    AccessLog.objects.bulk_create(accesslogs)
+    # uncomment the following to get the test data in a CSV file
+    # it is useful when you want to use pivot table in a spreadsheet to check the calculations
+    # it will produce a table with names/human friendly values for all dimensions
+    # import csv
+
+    # with open("/tmp/TestFlexibleDataSlicerWithItems.csv", "w") as out:
+    #     writer = csv.writer(out)
+    #     writer.writerow(
+    #         [
+    #             "report_type",
+    #             "organization",
+    #             "platform",
+    #             "metric",
+    #             "target",
+    #             "item",
+    #             "date",
+    #             "dim1",
+    #             "dim2",
+    #             "value",
+    #         ]
+    #     )
+    #     text_reverse_map = {
+    #         (dim_id, text.pk):
+    #         dim_value for ((dim_id, dim_value), text) in dimension_texts.items()
+    #     }
+    #     for al in accesslogs:
+    #         writer.writerow(
+    #             [
+    #                 al.report_type.name,
+    #                 al.organization.name,
+    #                 al.platform.name,
+    #                 al.metric.name,
+    #                 al.target.name,
+    #                 al.item.name if al.item else None,
+    #                 al.date,
+    #                 text_reverse_map[(al.report_type.dimensions_sorted[0].pk, al.dim1)]
+    #                 if al.dim1
+    #                 else None,
+    #                 text_reverse_map[(al.report_type.dimensions_sorted[1].pk, al.dim2)]
+    #                 if al.dim2
+    #                 else None,
+    #                 al.value,
+    #             ]
+    #         )
+    sync_accesslogs_with_clickhouse_superfast()
+    return {
+        "report_types": report_types,
+        "organizations": organizations,
+        "platforms": platforms,
+        "metrics": metrics,
+        "targets": targets,
+        "items": items,
+        "dates": dates,
+        "dimension_values": dimension_values,
     }

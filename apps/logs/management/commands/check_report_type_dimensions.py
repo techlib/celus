@@ -72,7 +72,10 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                 print("Missing RT:", rt_short_name)
                 stats["missing_rt"] += 1
                 if fix_it:
-                    rt = ReportType.objects.create(short_name=rt_short_name, name=name, source=None)
+                    uses_items = crt_code == "IR"
+                    rt = ReportType.objects.create(
+                        short_name=rt_short_name, name=name, source=None, uses_items=uses_items
+                    )
                     if version == 51:
                         if rt5 := ReportType.objects.filter(short_name=rt_short_name[:-2]).first():
                             make_dimension_c51_based_on_c5(rt5, rt, dimensions)

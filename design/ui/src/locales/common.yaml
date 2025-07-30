@@ -95,6 +95,7 @@ en:
     processing_success: Processing successful
     proprietary_ids: Proprietary IDs
     proprietary_ids_tt: Internal title identifiers used by individual platforms/publishers
+    publication_date: Publication date
     queued: Queued
     ratios: Ratio
     report_types: Report types
@@ -509,6 +510,7 @@ cs:
     processing_success: Úspěšné zpracování
     proprietary_ids: Interní ID
     proprietary_ids_tt: Interní identifikátory titulu u jednotlivých platformem/vydavatelů
+    publication_date: Datum vydání
     queued: Odloženo
     ratios: Rozložení
     report_types: Typy reportů

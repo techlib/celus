@@ -13,6 +13,7 @@ export default {
         organization: new IdTranslation("/api/organization/"),
         platform: new IdTranslation("/api/platform/"),
         target: new IdTranslation("/api/title/"),
+        item: new IdTranslation("/api/item/"),
         report_type: new IdTranslation("/api/report-type/"),
         explicitDimension: explicitDimensionTranslator,
         tag: new IdTranslation("/api/tags/tag/"),

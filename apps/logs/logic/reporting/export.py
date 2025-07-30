@@ -38,7 +38,13 @@ logger = logging.getLogger(__name__)
 
 
 class FlexibleDataExporter(ABC):
-    object_remapped_dims = {"target": {"columns": ["name", "issn", "eissn", "isbn"]}}
+    object_remapped_dims = {
+        "target": {"columns": ["name", "issn", "eissn", "isbn"]},
+        "item": {"columns": ["name", "doi", "issn", "eissn", "isbn", "publication_date"]},
+    }
+
+    dim_name_to_column_name = {"publication_date": _("Publication date")}
+
     taggable_rows = {
         "target": {"scope": TagScope.TITLE, "related_attr": "title"},
         "platform": {"scope": TagScope.PLATFORM, "related_attr": "platform"},
@@ -200,7 +206,7 @@ class FlexibleDataExporter(ABC):
         # possible other remapped attrs of primary object
         remap_keys = self.remapped_keys()
         for key in remap_keys[1:]:
-            fields.append((key, key.upper()))
+            fields.append((key, self.dim_name_to_column_name.get(key, key.upper())))
         # add tag column if needed
         if self.include_tags:
             fields.append(("tags", _("Tags")))
@@ -568,8 +574,6 @@ class FlexibleDataZipCSVExporter(FlexibleDataSimpleCSVExporter):
 
 
 class FlexibleDataExcelExporter(FlexibleDataExporter):
-    object_remapped_dims = {"target": {"columns": ["name", "issn", "eissn", "isbn"]}}
-
     def __init__(self, slicer: FlexibleDataSlicer, include_charts: bool = True, **kwargs):
         super().__init__(slicer, **kwargs)
         self._seen_sheetnames = set()
@@ -657,7 +661,12 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 sink.write(outfile.read())
 
     def create_writer(self, output, fields: List[Tuple[str, str]]) -> DictWriter:
-        col_formats = {}
+        # format publication date as date (used for items)
+        col_formats = {
+            "publication_date": self.workbook.add_format(
+                {"num_format": "yyyy-mm-dd", **self.base_fmt_dict}
+            )
+        }
         if self.slicer.trend_mode:
             col_formats[self.slicer.COL_REL_DIFF] = self.workbook.add_format(
                 {"num_format": "0.00%", **self.base_fmt_dict}
