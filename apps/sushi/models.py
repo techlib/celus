@@ -1388,7 +1388,10 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
                 # some error occurs with 400 http status, but it should not break
                 # the entire credentials and are handled when update_broken_report_type
                 # is triggered
-                if str(self.error_code) not in (str(ErrorCode.INVALID_REPORT_FILTER.value),):
+                if str(self.error_code) not in (
+                    str(ErrorCode.INVALID_REPORT_FILTER.value),
+                    str(ErrorCode.REPORT_NOT_SUPPORTED.value),
+                ):
                     self.credentials.set_broken(self, SushiCredentials.BROKEN_HTTP)
                     return True
 
