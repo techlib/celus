@@ -14,7 +14,7 @@
     v-bind="$attrs"
   >
     <v-icon size="small">fa fa-plus</v-icon>
-    <span v-if="!icon" class="pl-2">{{ $t("labels.new_tag") }}</span>
+    <span v-if="!icon" class="ml-2">{{ $t("labels.new_tag") }}</span>
     <v-dialog
       v-if="showDialog"
       v-model="showDialog"

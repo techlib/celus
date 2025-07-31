@@ -50,12 +50,7 @@ cs:
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          color="secondary"
-          variant="flat"
-          elevation="2"
-          @click="show = false"
-        >
+        <v-btn color="defaultButton" variant="elevated" @click="show = false">
           {{ $t("actions.cancel") }}
         </v-btn>
       </v-card-actions>

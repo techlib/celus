@@ -228,7 +228,7 @@ cs:
             id="popOutButton"
             class="expand_full_button"
           >
-            <v-icon size="small" class="pr-2">{{
+            <v-icon size="small" class="mr-2">{{
               popped ? "fa fa-times" : "fas fa-external-link-alt"
             }}</v-icon>
             {{ popped ? $t("close") : $t("pop_out") }}

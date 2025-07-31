@@ -74,8 +74,7 @@
           <v-spacer></v-spacer>
           <v-btn
             @click="showEditDialog = false"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             color="defaultButton"
             >{{ $t("actions.close") }}</v-btn
           >
@@ -90,8 +89,7 @@
             "
             :disabled="forbiddenPositions.has(Number.parseInt(editedPosition))"
             color="success"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             >{{ $t("actions.save") }}</v-btn
           >
           <v-btn
@@ -100,8 +98,7 @@
               showEditDialog = false;
             "
             color="error"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
           >
             {{ $t("actions.delete") }}
           </v-btn>

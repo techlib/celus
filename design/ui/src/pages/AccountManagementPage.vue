@@ -122,10 +122,14 @@ cs:
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="closeSendEmailDialog()">
+          <v-btn
+            @click="closeSendEmailDialog()"
+            color="defaultButton"
+            variant="elevated"
+          >
             {{ $t("actions.cancel") }}
           </v-btn>
-          <v-btn @click="sendUserEmail()" color="primary">
+          <v-btn @click="sendUserEmail()" color="primary" variant="elevated">
             <v-icon class="mr-2" size="small">fas fa-envelope</v-icon>
             {{ $t("send") }}
           </v-btn>

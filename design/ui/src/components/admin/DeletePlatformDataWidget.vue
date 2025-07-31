@@ -72,7 +72,7 @@ cs:
 <template>
   <span>
     <v-btn color="error" @click="showDialog = true">
-      <v-icon size="small" class="pr-1">fa fa-trash</v-icon>
+      <v-icon size="small" class="mr-2">fa fa-trash</v-icon>
       {{ $t("labels.delete_all_platform_data") }}
     </v-btn>
     <v-dialog v-model="showDialog" max-width="800px">

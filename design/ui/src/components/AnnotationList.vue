@@ -68,18 +68,18 @@ cs:
                 <v-spacer></v-spacer>
                 <v-btn
                   @click="cancelDelete()"
-                  variant="flat"
-                  elevation="2"
+                  variant="elevated"
                   color="defaultButton"
                   >{{ $t("cancel") }}</v-btn
                 >
                 <v-btn
-                  variant="flat"
-                  elevation="2"
+                  variant="elevated"
                   @click="deleteAnnotation()"
                   color="error"
                 >
-                  <v-icon size="small" class="mr-2">fa fa-trash</v-icon>
+                  <v-icon size="small" class="mr-2 d-flex align-center"
+                    >fa fa-trash</v-icon
+                  >
                   {{ $t("actions.delete") }}
                 </v-btn>
               </v-card-actions>

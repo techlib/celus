@@ -188,9 +188,8 @@ cs:
       <v-spacer></v-spacer>
       <v-btn
         @click="$emit('close')"
-        variant="flat"
+        variant="elevated"
         color="defaultButton"
-        elevation="2"
         class="mb-3 mr-4"
         >{{ $t("close") }}</v-btn
       >
@@ -214,8 +213,7 @@ cs:
           <v-btn
             @click="showBatchDialog = false"
             class="mb-3 mr-4"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             color="defaultButton"
             >{{ $t("actions.close") }}</v-btn
           >

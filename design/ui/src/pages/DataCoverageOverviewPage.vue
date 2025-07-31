@@ -391,15 +391,13 @@ cs:
             @click="harvestSelected()"
             :disabled="selectedMonthCount === 0"
             class="mb-3 me-3"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
           >
             {{ $t("harvest_selected") }}
           </v-btn>
           <v-btn
             @click="showHarvestDialog = false"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             color="defaultButton"
             class="mb-3 me-3"
           >

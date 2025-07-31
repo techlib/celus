@@ -179,6 +179,7 @@ cs:
                     <v-card-actions>
                       <v-btn
                         variant="elevated"
+                        color="defaultButton"
                         :text="$t('actions.cancel')"
                         @click="cancelDescriptionEdit"
                       ></v-btn>
@@ -768,7 +769,7 @@ cs:
                   min-width="12rem"
                   color="defaultButton"
                 >
-                  <v-icon size="small" color="green lighten-2" class="mr-1"
+                  <v-icon size="small" color="green lighten-2" class="mr-2"
                     >fa fa-play
                   </v-icon>
                   {{ $t("run_report") }}
@@ -807,7 +808,7 @@ cs:
                   :disabled="!(formValid && hasGroupBy)"
                   color="defaultButton"
                 >
-                  <v-icon size="small" color="blue lighten-2" class="mr-1"
+                  <v-icon size="small" color="blue lighten-2" class="mr-2"
                     >fas fa-file-export
                   </v-icon>
                   {{ $t("run_export") }}
@@ -902,7 +903,7 @@ cs:
               color="primary"
               :disabled="!(formValid && hasGroupBy) || !accessLevelValid"
             >
-              <v-icon class="mr-1" size="small">far fa-hdd</v-icon>
+              <v-icon class="mr-2" size="small">far fa-hdd</v-icon>
               {{
                 reportPk
                   ? $t("actions.save_changes")

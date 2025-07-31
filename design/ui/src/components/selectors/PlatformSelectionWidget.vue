@@ -41,8 +41,7 @@
             : {}
         "
         :disabled="platformId === null"
-        variant="flat"
-        elevation="2"
+        variant="elevated"
         color="primary"
         >{{ $t("continue") }}</v-btn
       >

@@ -832,11 +832,10 @@ cs:
                 <v-btn
                   @click="closeDialog"
                   class="mr-2"
-                  variant="flat"
+                  variant="elevated"
                   color="defaultButton"
-                  elevation="2"
                 >
-                  <v-icon size="small" class="mr-1">fa fa-times</v-icon>
+                  <v-icon size="small" class="mr-2">fa fa-times</v-icon>
                   {{ $t("close") }}
                 </v-btn>
                 <v-btn
@@ -846,7 +845,7 @@ cs:
                   :disabled="saving || disableSave"
                   :loading="saving"
                 >
-                  <v-icon size="small" class="mr-1">fa fa-save</v-icon>
+                  <v-icon size="small" class="mr-2">fa fa-save</v-icon>
                   {{ $t("save") }}
                 </v-btn>
               </v-col>

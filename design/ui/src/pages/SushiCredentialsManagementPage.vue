@@ -30,7 +30,7 @@
             color="primary"
             size="x-large"
           >
-            <v-icon class="pe-2" size="small">fa-plus</v-icon>
+            <v-icon class="me-2" size="small">fa-plus</v-icon>
             Add SUSHI credentials
           </v-btn>
         </v-col>

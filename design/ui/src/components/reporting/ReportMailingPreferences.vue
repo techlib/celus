@@ -236,7 +236,9 @@ cs:
       </v-data-table>
     </v-card-text>
     <v-card-actions class="pa-4">
-      <v-btn @click="close" variant="elevated">{{ $t("close") }}</v-btn>
+      <v-btn @click="close" variant="elevated" color="defaultButton">{{
+        $t("close")
+      }}</v-btn>
     </v-card-actions>
   </v-card>
 </template>

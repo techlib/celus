@@ -169,8 +169,7 @@ cs:
             class="ma-3"
             :disabled="!valid || requestInProgress"
             type="submit"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             >{{ $t("login") }}</v-btn
           >
         </v-card-actions>
@@ -315,8 +314,7 @@ cs:
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             class="ma-3"
             :disabled="!valid || requestInProgress"
             v-if="!resetSuccess"

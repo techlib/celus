@@ -110,15 +110,17 @@ cs:
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="$emit('close')" variant="flat" elevation="2">{{
-          $t("actions.close")
-        }}</v-btn>
+        <v-btn
+          @click="$emit('close')"
+          variant="elevated"
+          color="defaultButton"
+          >{{ $t("actions.close") }}</v-btn
+        >
         <v-btn
           color="primary"
           :disabled="!valid || missingOrganization"
           @click="save"
-          variant="flat"
-          elevation="2"
+          variant="elevated"
           class="ma-3"
           >{{
             tagClass === null ? $t("actions.create") : $t("actions.save")

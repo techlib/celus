@@ -95,10 +95,20 @@ cs:
             <v-row>
               <v-col class="d-flex">
                 <v-spacer></v-spacer>
-                <v-btn @click="cancelEdit()" class="mr-2">
+                <v-btn
+                  @click="cancelEdit()"
+                  class="mr-2"
+                  color="defaultButton"
+                  variant="elevated"
+                >
                   {{ $t("actions.cancel") }}
                 </v-btn>
-                <v-btn :disabled="!valid" @click="submit()" color="primary">
+                <v-btn
+                  :disabled="!valid"
+                  @click="submit()"
+                  color="primary"
+                  variant="elevated"
+                >
                   <v-icon size="small" class="mr-2">fa fa-save</v-icon>
                   {{ $t("actions.save") }}
                 </v-btn>

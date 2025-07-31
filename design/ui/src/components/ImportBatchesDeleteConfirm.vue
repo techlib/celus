@@ -64,8 +64,7 @@ cs:
         :loading="deleting"
         @click="deleteAll()"
         :disabled="!canDelete"
-        variant="flat"
-        elevation="2"
+        variant="elevated"
       >
         <v-progress-circular
           size="small"
@@ -83,9 +82,14 @@ cs:
         }}
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn @click="cancelDialog()" class="mr-2" variant="flat" elevation="2">
-        <v-icon size="small" class="mr-1">fa fa-times</v-icon>
-        {{ $t("actions.cancel") }}
+      <v-btn
+        @click="cancelDialog()"
+        class="mr-2"
+        variant="elevated"
+        color="defaultButton"
+      >
+        <v-icon v-if="!deleting" size="small" class="mr-2">fa fa-times</v-icon>
+        {{ deleting ? $t("actions.close") : $t("actions.cancel") }}
       </v-btn>
     </v-card-actions>
   </v-card>

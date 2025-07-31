@@ -492,6 +492,7 @@ cs:
               v-else-if="uploadObject"
               class="mr-2"
               variant="elevated"
+              color="defaultButton"
               @click="backToStart(), prev"
             >
               {{ $t("back_to_start") }}
@@ -519,7 +520,7 @@ cs:
               :loading="confirming"
               class="ml-4"
             >
-              <v-icon size="small" class="pr-2">fas fa-caret-right</v-icon>
+              <v-icon size="small" class="mr-2">fas fa-caret-right</v-icon>
               {{ $t("continue") }}
             </v-btn>
           </template>
@@ -645,7 +646,7 @@ cs:
                 color="warning"
                 @click="showConfirmDeleteDialog = true"
               >
-                <v-icon size="small" class="pr-2">fa fa-trash-alt</v-icon>
+                <v-icon size="small" class="mr-2">fa fa-trash-alt</v-icon>
                 {{ $t("delete_existing") }}
               </v-btn>
               <v-btn
@@ -666,7 +667,7 @@ cs:
                   preflighting
                 "
               >
-                <v-icon size="small" class="pr-6">fa fa-gears</v-icon>
+                <v-icon size="small" class="mr-2">fa fa-gears</v-icon>
                 {{ $t("finish_import") }}
               </v-btn>
               <v-btn
@@ -676,7 +677,7 @@ cs:
                 @click="regeneratePreflight"
                 :disabled="importing"
               >
-                <v-icon size="small" class="pr-6">fas fa-redo</v-icon>
+                <v-icon size="small" class="mr-6">fas fa-redo</v-icon>
                 {{ $t("regenerate_preflight") }}
               </v-btn>
             </v-card-actions>
@@ -687,7 +688,7 @@ cs:
                 :disabled="importing"
                 variant="elevated"
               >
-                <v-icon size="small" class="pr-6">fas fa-redo</v-icon>
+                <v-icon size="small" class="mr-6">fas fa-redo</v-icon>
                 {{ $t("regenerate_preflight") }}
               </v-btn>
               <v-btn

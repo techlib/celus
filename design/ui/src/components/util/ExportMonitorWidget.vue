@@ -43,7 +43,7 @@ cs:
       </template>
       {{ progressTooltip }}
     </v-tooltip>
-    <span v-else>
+    <span class="d-flex align-center" v-else>
       <v-icon size="small">fa fa-download</v-icon>
       <span class="ml-2">{{ $t("download") }}</span>
     </span>

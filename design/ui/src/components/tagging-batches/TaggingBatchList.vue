@@ -25,7 +25,7 @@
       <template #top>
         <div class="d-flex px-1 align-center">
           <v-btn color="primary" @click="uploadNew()">
-            <v-icon size="small" class="pr-6">fa fa-upload</v-icon>
+            <v-icon size="small" class="mr-6">fa fa-upload</v-icon>
             {{ $t("tagging.create_new_title_list") }}
           </v-btn>
           <v-spacer></v-spacer>

@@ -29,9 +29,12 @@ cs:
     <v-dialog v-model="showDialog" max-width="640px">
       <PlatformSelectionWidget allow-create>
         <template v-slot:actions>
-          <v-btn @click="showDialog = false" variant="flat" elevation="2">{{
-            $t("actions.cancel")
-          }}</v-btn>
+          <v-btn
+            @click="showDialog = false"
+            variant="elevated"
+            color="defaultButton"
+            >{{ $t("actions.cancel") }}</v-btn
+          >
         </template>
       </PlatformSelectionWidget>
     </v-dialog>

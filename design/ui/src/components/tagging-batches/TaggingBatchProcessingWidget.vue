@@ -210,8 +210,7 @@ cs:
         >
           <v-btn
             v-if="getTagsFromFile"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             color="primary"
             @click="assignTag()"
           >
@@ -222,8 +221,7 @@ cs:
             @click="assignTag()"
             color="primary"
             :disabled="!tag"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             >{{ $t("actions.assign_tag") }}
           </v-btn>
         </span>
@@ -235,12 +233,11 @@ cs:
           <template #activator="{ props }">
             <v-btn
               @click="unassign()"
-              variant="flat"
-              elevation="2"
+              variant="elevated"
               color="error"
               v-bind="props"
             >
-              <v-icon size="x-small" class="mr-1">fa fa-trash</v-icon>
+              <v-icon size="x-small" class="mr-2">fa fa-trash</v-icon>
               {{ $t("tagging.unassign_tag") }}
             </v-btn>
           </template>
@@ -252,25 +249,16 @@ cs:
           v-if="taggingBatch && taggingBatch.state === 'imported'"
         >
           <template #activator="{ props }">
-            <v-btn
-              @click="assignTag()"
-              v-bind="props"
-              variant="flat"
-              elevation="2"
-            >
-              <v-icon size="x-small" class="mr-1">fa fa-redo-alt</v-icon>
+            <v-btn @click="assignTag()" v-bind="props" variant="elevated">
+              <v-icon size="x-small" class="mr-2">fa fa-redo-alt</v-icon>
               {{ $t("tagging.reassign_tag") }}
             </v-btn>
           </template>
           <span>{{ $t("tagging.reassign_tag_tt") }}</span>
         </v-tooltip>
-        <v-btn
-          @click="$emit('close')"
-          variant="flat"
-          elevation="2"
-          color="primary"
-          >{{ $t("actions.close") }}</v-btn
-        >
+        <v-btn @click="$emit('close')" variant="elevated" color="primary">{{
+          $t("actions.close")
+        }}</v-btn>
       </v-card-actions>
     </v-card>
     <ErrorDialog

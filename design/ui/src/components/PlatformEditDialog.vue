@@ -251,21 +251,19 @@ cs:
                 @click="closeDialog"
                 class="mr-2"
                 color="defaultButton"
-                variant="flat"
-                elevation="2"
+                variant="elevated"
               >
-                <v-icon size="small" class="mr-1">fa fa-times</v-icon>
+                <v-icon size="small" class="mr-2">fa fa-times</v-icon>
                 {{ $t("close") }}
               </v-btn>
               <v-btn
                 color="primary"
                 @click="saveAndClose"
                 class="mr-2"
-                variant="flat"
-                elevation="2"
+                variant="elevated"
                 :disabled="!isValid"
               >
-                <v-icon size="small" class="mr-1">fa fa-save</v-icon>
+                <v-icon size="small" class="mr-2">fa fa-save</v-icon>
                 {{ $t("save") }}
               </v-btn>
             </v-col>

@@ -333,8 +333,7 @@ cs:
           <v-col cols="auto" v-if="deleteMode">
             <v-btn
               color="error"
-              variant="flat"
-              elevation="2"
+              variant="elevated"
               :disabled="selectedItems.length == 0"
               @click="showConfirmDeleteDialog = true"
             >
@@ -348,8 +347,7 @@ cs:
               :disabled="selectedItems.length == 0"
               color="primary"
               class="mr-4"
-              variant="flat"
-              elevation="2"
+              variant="elevated"
             >
               <v-icon size="small" class="mr-2">fa fa-download</v-icon>
               {{ $t("harvest_button") }}
@@ -377,8 +375,7 @@ cs:
         @click="closeDialog()"
         class="mr-4"
         :right="true"
-        variant="flat"
-        elevation="2"
+        variant="elevated"
         color="defaultButton"
         >{{ $t("close") }}</v-btn
       >

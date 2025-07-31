@@ -85,8 +85,7 @@ cs:
             class="ma-3"
             :disabled="working || !codeRequestId"
             @click="sendCodeViaEmail()"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
           >
             <v-icon class="me-2" size="small">fas fa-envelope</v-icon>
             {{ $t("resend_verification_code") }}
@@ -97,8 +96,7 @@ cs:
             type="submit"
             @click="logout"
             :disabled="working"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
           >
             <v-icon class="me-2" size="small">fa fa-user</v-icon>
             {{ $t("login_another_user") }}

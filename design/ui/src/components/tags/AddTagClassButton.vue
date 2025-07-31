@@ -6,10 +6,9 @@
     :size="small ? 'small' : 'default'"
     @click="showDialog = true"
     v-bind="$attrs"
-    :variant="outlined ? 'outlined' : 'flat'"
-    :elevation="outlined ? 0 : 2"
+    :variant="outlined ? 'outlined' : 'elevated'"
   >
-    <v-icon size="small" class="pr-2">fa fa-plus</v-icon>
+    <v-icon size="small" class="mr-2">fa fa-plus</v-icon>
     {{ $t("labels.new_tag_class") }}
     <v-dialog v-model="showDialog" max-width="720px">
       <EditTagClassWidget

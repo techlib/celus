@@ -236,8 +236,7 @@ cs:
             <v-spacer></v-spacer>
             <v-btn
               @click="showBatchDialog = false"
-              variant="flat"
-              elevation="2"
+              variant="elevated"
               color="defaultButton"
               class="mr-2 mb-2"
             >
@@ -312,20 +311,18 @@ cs:
             <v-btn
               @click="showDeleteDialog = false"
               class="mr-2 mb-2"
-              color="secondary"
-              variant="flat"
-              elevation="2"
+              color="defaultButton"
+              variant="elevated"
             >
               {{ $t("actions.cancel") }}
             </v-btn>
             <v-btn
               @click="performDelete()"
-              variant="flat"
-              elevation="2"
+              variant="elevated"
               class="mr-2 mb-2"
               color="error"
             >
-              <v-icon size="small" class="mr-1">fa fa-trash-alt</v-icon>
+              <v-icon size="small" class="mr-2">fa fa-trash-alt</v-icon>
               {{ $t("actions.delete") }}
             </v-btn>
           </v-card-actions>

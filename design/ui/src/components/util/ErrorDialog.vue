@@ -22,9 +22,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn variant="flat" elevation="2" @click="close()">{{
-          $t("dismiss")
-        }}</v-btn>
+        <v-btn variant="elevated" @click="close()">{{ $t("dismiss") }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

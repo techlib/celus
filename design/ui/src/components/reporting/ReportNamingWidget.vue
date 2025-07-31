@@ -30,20 +30,15 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          @click="cancel()"
-          variant="flat"
-          elevation="2"
-          color="defaultButton"
-          >{{ $t("cancel") }}</v-btn
-        >
+        <v-btn @click="cancel()" variant="elevated" color="defaultButton">{{
+          $t("cancel")
+        }}</v-btn>
         <v-btn
           type="submit"
           color="primary"
           :disabled="!valid || loading"
           :loading="loading"
-          variant="flat"
-          elevation="2"
+          variant="elevated"
           >{{ submitButtonText }}
         </v-btn>
       </v-card-actions>

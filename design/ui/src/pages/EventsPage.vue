@@ -16,7 +16,7 @@
         >
           <template #activator="{ props }">
             <v-btn @click="askForPermission" color="primary" v-bind="props">
-              <v-icon class="mr-1" size="small">fa fa-bell</v-icon>
+              <v-icon class="mr-2" size="small">fa fa-bell</v-icon>
               {{ $t("notifications.enable_notifications") }}
             </v-btn>
           </template>

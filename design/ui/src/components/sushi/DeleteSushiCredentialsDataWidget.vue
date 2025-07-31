@@ -41,7 +41,7 @@ cs:
 <template>
   <span>
     <v-btn color="error" variant="flat" @click="dialog = true">
-      <v-icon size="small" class="mr-1">fa fa-trash-alt</v-icon>
+      <v-icon size="small" class="mr-2">fa fa-trash-alt</v-icon>
       {{ $t("delete") }}
     </v-btn>
     <v-dialog v-model="dialog" max-width="500px">
@@ -117,7 +117,7 @@ cs:
             >{{ $t("delete") }}</v-btn
           >
           <v-btn @click="closeDialog" variant="elevated" color="defaultButton">
-            <v-icon v-if="success || error" size="small" class="mr-1"
+            <v-icon v-if="success || error" size="small" class="mr-2"
               >fa fa-times</v-icon
             >
             {{ success || error ? $t("close") : $t("cancel") }}

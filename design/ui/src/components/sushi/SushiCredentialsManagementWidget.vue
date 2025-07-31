@@ -745,7 +745,7 @@ cs:
               showEditDialog = true;
             "
           >
-            <v-icon left size="x-small" class="pr-4">fas fa-edit</v-icon>
+            <v-icon left size="x-small" class="mr-4">fas fa-edit</v-icon>
             {{ $t("actions.edit") }}
           </v-btn>
           <v-btn
@@ -757,7 +757,7 @@ cs:
               showDetailsDialog = true;
             "
           >
-            <v-icon left size="x-small" class="pr-4">fa fa-list</v-icon>
+            <v-icon left size="x-small" class="mr-4">fa fa-list</v-icon>
             {{ $t("actions.show_attempts") }}
           </v-btn>
           <v-tooltip location="left">
@@ -772,7 +772,7 @@ cs:
                   showDataDialog = true;
                 "
               >
-                <v-icon left size="x-small" class="pr-4"
+                <v-icon left size="x-small" class="mr-4"
                   >far fa-calendar-alt</v-icon
                 >
                 {{ $t("actions.show_overview") }}
@@ -961,10 +961,9 @@ cs:
           <v-spacer></v-spacer>
           <v-btn
             @click="stopTestDialog()"
-            variant="flat"
+            variant="elevated"
             color="defaultButton"
             class="mr-5"
-            elevation="2"
             >{{ $t("close") }}</v-btn
           >
         </v-card-actions>

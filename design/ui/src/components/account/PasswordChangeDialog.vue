@@ -47,19 +47,14 @@ cs:
         </v-card-text>
         <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
-          <v-btn
-            @click="show = false"
-            variant="flat"
-            elevation="2"
-            color="defaultButton"
+          <v-btn @click="show = false" variant="elevated" color="defaultButton"
             >{{ $t("cancel") }}
           </v-btn>
           <v-btn
             color="primary"
             :disabled="!valid || requestInProgress"
             type="submit"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
           >
             {{ $t("change_password") }}
           </v-btn>

@@ -46,20 +46,12 @@ cs:
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn
-        @click="$emit('cancel')"
-        class="mr-2"
-        variant="flat"
-        elevation="2"
-        >{{ $t("actions.cancel") }}</v-btn
-      >
-      <v-btn
-        @click="markAsEmpty"
-        color="primary"
-        variant="flat"
-        elevation="2"
-        >{{ $t("actions.proceed") }}</v-btn
-      >
+      <v-btn @click="$emit('cancel')" class="mr-2" variant="elevated">{{
+        $t("actions.cancel")
+      }}</v-btn>
+      <v-btn @click="markAsEmpty" color="primary" variant="elevated">{{
+        $t("actions.proceed")
+      }}</v-btn>
     </v-card-actions>
   </v-card>
 </template>

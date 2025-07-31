@@ -50,17 +50,12 @@ cs:
     </v-card-text>
     <v-card-actions class="pb-4">
       <v-spacer></v-spacer>
-      <v-btn
-        @click="closeDialog()"
-        variant="flat"
-        elevation="2"
-        color="defaultButton"
-        >{{ $t("close") }}</v-btn
-      >
+      <v-btn @click="closeDialog()" variant="elevated" color="defaultButton">{{
+        $t("close")
+      }}</v-btn>
       <v-btn
         @click="trigger"
-        variant="flat"
-        elevation="2"
+        variant="elevated"
         color="primary"
         :loading="saving"
         :disabled="multipleValues"

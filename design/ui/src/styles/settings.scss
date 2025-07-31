@@ -64,6 +64,17 @@ a {
   }
 }
 
+.v-btn {
+  .v-btn__content {
+    display: flex;
+    align-items: center;
+    .v-icon {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
 .v-app-bar {
   z-index: 1000 !important;
 }

@@ -70,8 +70,8 @@ cs:
           <v-spacer></v-spacer>
           <v-btn
             @click.stop="$emit('close', false)"
-            variant="flat"
-            elevation="2"
+            color="defaultButton"
+            variant="elevated"
             >{{ $t("actions.close") }}</v-btn
           >
           <v-btn
@@ -79,8 +79,7 @@ cs:
             :disabled="!valid"
             @click="saveTag"
             class="ma-3"
-            variant="flat"
-            elevation="2"
+            variant="elevated"
             >{{
               tag === null ? $t("actions.create") : $t("actions.save")
             }}</v-btn

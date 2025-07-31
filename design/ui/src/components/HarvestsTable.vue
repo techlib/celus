@@ -157,7 +157,7 @@ cs:
               elevation="2"
               @click="fetchHarvestsData()"
             >
-              <v-icon size="x-small" class="pr-4">fas fa-sync-alt</v-icon>
+              <v-icon size="x-small" class="mr-2">fas fa-sync-alt</v-icon>
               {{ $t("actions.refresh") }}
             </v-btn>
           </template>
