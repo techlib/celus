@@ -103,7 +103,7 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                 print("Mismatch:", rt_short_name, "fixable" if fixable else "CANNNOT FIX")
                 print("   ", rt.dimension_short_names)
                 print("   ", dimensions)
-                stats[f'mismatch_{"fixable" if fixable else "unfixable"}'] += 1
+                stats[f"mismatch_{'fixable' if fixable else 'unfixable'}"] += 1
                 if fixable and fix_it:
                     pos = len(rt.dimension_short_names)
                     for i, dim_name in enumerate([e for e in dimensions if e not in rt_dims]):

@@ -342,9 +342,9 @@ class TestHarvestAPI:
 
         assert resp.status_code == status
         if status == 400:
-            assert set(resp.data.keys()) == {
-                credentials["standalone_br1_jr1"].pk
-            }, "display affected credentials"
+            assert set(resp.data.keys()) == {credentials["standalone_br1_jr1"].pk}, (
+                "display affected credentials"
+            )
             assert Harvest.objects.count() == harvests_count, "no harvest created"
 
     @pytest.mark.parametrize("user_type", ["master_admin", "admin2"])

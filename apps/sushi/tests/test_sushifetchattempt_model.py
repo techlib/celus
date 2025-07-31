@@ -720,9 +720,9 @@ class TestCounterReportsToCredentials:
             credentials=credentials["branch_pr"], start_date=date(2020, 1, 1)
         )
         assert credentials["branch_pr"].update_last_harvestable_month_by_attempt(fa2) is False
-        assert credentials["branch_pr"].last_harvestable_month == date(
-            2021, 2, 1
-        ), "date does not change"
+        assert credentials["branch_pr"].last_harvestable_month == date(2021, 2, 1), (
+            "date does not change"
+        )
         assert credentials["branch_pr"].last_harvestable_month_attempt == fa1
         assert credentials["branch_pr"].last_harvestable_month_user is None
 
@@ -748,9 +748,9 @@ class TestCounterReportsToCredentials:
             credentials=credentials["standalone_tr"], start_date=date(2020, 1, 1)
         )
         assert credentials["standalone_tr"].update_last_harvestable_month_by_attempt(fa4) is False
-        assert credentials["standalone_tr"].last_harvestable_month == date(
-            2021, 1, 1
-        ), "date does not change"
+        assert credentials["standalone_tr"].last_harvestable_month == date(2021, 1, 1), (
+            "date does not change"
+        )
         assert credentials["standalone_tr"].last_harvestable_month_attempt is None
         assert credentials["standalone_tr"].last_harvestable_month_user == users["master_admin"]
 

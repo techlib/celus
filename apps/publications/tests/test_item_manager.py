@@ -374,9 +374,9 @@ class TestItemManager:
                 exp_value = db_item.get(id_attr, "") or in_item.get(id_attr, "")
                 if id_attr == "isbn":
                     exp_value = normalize_isbn(exp_value)
-                assert (
-                    getattr(item, id_attr) == exp_value
-                ), f'{id_attr} is DB should be "{exp_value}"'
+                assert getattr(item, id_attr) == exp_value, (
+                    f'{id_attr} is DB should be "{exp_value}"'
+                )
             assert set(item.proprietary_ids) == set(db_item.get("proprietary_ids", "")) | set(
                 in_item.get("proprietary_ids", [])
             )

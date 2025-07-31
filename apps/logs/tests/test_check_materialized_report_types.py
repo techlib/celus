@@ -53,17 +53,17 @@ class TestCheckMaterializedReportTypes:
         spec_extra = ReportMaterializationSpec.objects.create(
             base_report_type=tr, name="TR without item", keep_item=False
         )
-        assert not hasattr(
-            spec_matching, "reporttype"
-        ), "convoluted way to check that reporttype is not set"
+        assert not hasattr(spec_matching, "reporttype"), (
+            "convoluted way to check that reporttype is not set"
+        )
         call_command("check_materialized_report_types", "--fix-it")
         assert ReportMaterializationSpec.objects.count() == 6, "nothing deleted, no --delete-extra"
         call_command("check_materialized_report_types", "--fix-it", "--delete-extra")
         assert ReportMaterializationSpec.objects.count() == 5, "extra spec deleted"
         spec_matching.refresh_from_db()
-        assert hasattr(
-            spec_matching, "reporttype"
-        ), "convoluted way to check that reporttype is set"
+        assert hasattr(spec_matching, "reporttype"), (
+            "convoluted way to check that reporttype is set"
+        )
         assert spec_matching.reporttype is not None
         # the extra spec should have been deleted
         assert ReportMaterializationSpec.objects.filter(pk=spec_extra.pk).count() == 0

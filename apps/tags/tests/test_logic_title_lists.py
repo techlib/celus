@@ -13,11 +13,9 @@ class TestCsvTitleListReader:
         with open("test-data/tagging_batch/plain-title-list.csv", "r") as infile:
             # we just need parsing of the column names, so we do just one iteration
             next(reader.parse_data(infile))
-            assert reader.column_names == {
-                "isbn": "ISBN",
-                "issn": "issn",
-                "eissn": "eISSN",
-            }, "column names are correctly extracted from data"
+            assert reader.column_names == {"isbn": "ISBN", "issn": "issn", "eissn": "eISSN"}, (
+                "column names are correctly extracted from data"
+            )
 
     def test_record_generation(self):
         reader = CsvTitleListReader()

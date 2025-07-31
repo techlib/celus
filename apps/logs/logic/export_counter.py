@@ -145,8 +145,7 @@ class Counter5Export(metaclass=ABCMeta):
             ["Exceptions", ""],
             [
                 "Reporting_Period",
-                f"Begin_Date={self.start_date.isoformat()}; "
-                f"End_Date={self.end_date.isoformat()}",
+                f"Begin_Date={self.start_date.isoformat()}; End_Date={self.end_date.isoformat()}",
             ],
             ["Created", now().replace(microsecond=0).isoformat()],
             ["Created_By", f"CELUS {settings.CELUS_VERSION}"],
@@ -576,8 +575,7 @@ class Counter51ExportMixin:
             ["Exceptions", ""],
             [
                 "Reporting_Period",
-                f"Begin_Date={self.start_date.isoformat()}; "
-                f"End_Date={self.end_date.isoformat()}",
+                f"Begin_Date={self.start_date.isoformat()}; End_Date={self.end_date.isoformat()}",
             ],
             ["Created", now().replace(microsecond=0).isoformat()],
             ["Created_By", f"Celus {settings.CELUS_VERSION}"],

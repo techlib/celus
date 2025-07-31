@@ -24,12 +24,12 @@ DEFAULT_TIMELIMIT = 300
 
 def convert_option(option: str, value: str) -> typing.Optional[typing.Any]:
     if option not in OPTION_CONVERTOR:
-        print(f"Unknow option { option }", file=sys.stderr)
+        print(f"Unknow option {option}", file=sys.stderr)
         return None
     try:
         return OPTION_CONVERTOR[option](value)
     except Exception:
-        print(f"Failed to convert option { option } - '{ value }'", file=sys.stderr)
+        print(f"Failed to convert option {option} - '{value}'", file=sys.stderr)
         return None
 
 
@@ -64,7 +64,7 @@ for k, v in [(k, v) for k, v in os.environ.items() if k.startswith("CELERY_WORKE
     # skip unmatched options
     value = convert_option(option, v)
     if not value:
-        print(f"Skipping setting { option } for worker { worker_name }", file=sys.stderr)
+        print(f"Skipping setting {option} for worker {worker_name}", file=sys.stderr)
         continue
 
     options: typing.Dict[str, typing.Any] = worker_config.get(worker_name, {})
@@ -76,7 +76,7 @@ for worker_name, options in worker_config.items():
     options["CONCURRENCY"] = options.get("CONCURRENCY", DEFAULT_CONCURRENCY)
     options["TIMELIMIT"] = options.get("TIMELIMIT", DEFAULT_TIMELIMIT)
     if "QUEUES" not in options:
-        print(f"QUEUES not defined for worker { worker_name }", file=sys.stderr)
+        print(f"QUEUES not defined for worker {worker_name}", file=sys.stderr)
         sys.exit(1)
 
 print("Using worker configuration:", worker_config)

@@ -5,7 +5,7 @@ from io import StringIO
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Rewrite CSV to ensure all fields are taken as " "text"
+        description="Rewrite CSV to ensure all fields are taken as text"
     )
     parser.add_argument("input_file", help="input CSV file with Sushi credentials")
     args = parser.parse_args()

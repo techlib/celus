@@ -297,9 +297,9 @@ class TestDataImport:
         crs1 = counter_records(data1, metric="Hits", platform="Platform1")
         ibs, _stats = import_counter_records(report_type, organization, platform, crs1)
         assert len(ibs) == 1, "only one import batch created"
-        assert (
-            AccessLog.objects.count() == 3 + 3 + 2 + 1
-        ), "3 normal, 3 interest, 2 materialized, 1 materialized interest"
+        assert AccessLog.objects.count() == 3 + 3 + 2 + 1, (
+            "3 normal, 3 interest, 2 materialized, 1 materialized interest"
+        )
         assert report_type.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7
         assert interest_rt.accesslog_set.count() == 3, "3 interest logs created"
         assert interest_rt.accesslog_set.aggregate(sum=Sum("value"))["sum"] == 7

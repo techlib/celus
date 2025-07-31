@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "-b",
             "--backend",
-            help=f"Backend to use {*BACKENDS.keys(),} (default: csv)",
+            help=f"Backend to use {(*BACKENDS.keys(),)} (default: csv)",
             default="csv",
             dest="backend",
         )
@@ -43,9 +43,7 @@ class Command(BaseCommand):
                 columns[col] = max(columns[col], len(table[-1][col]))
         for col in table:
             self.stderr.write(
-                f"{col[0]: >{columns[0]}}  "
-                f"{col[1]: <{columns[1]}}  "
-                f"{col[2]: <{columns[2]}}  "
+                f"{col[0]: >{columns[0]}}  {col[1]: <{columns[1]}}  {col[2]: <{columns[2]}}  "
             )
         self.stderr.style_func = self.style.ERROR
 
@@ -93,7 +91,7 @@ class Command(BaseCommand):
         except KeyError:
             self.stderr.write(
                 self.style.ERROR(
-                    f"Not a known backend ({options['backend']}) - {*BACKENDS.keys(),}"
+                    f"Not a known backend ({options['backend']}) - {(*BACKENDS.keys(),)}"
                 )
             )
         else:

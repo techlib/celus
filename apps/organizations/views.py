@@ -313,9 +313,11 @@ User email: {request.user.email}
 Organization name: {org.name}
 Organization id: {org.id}
 
-For more info see Django admin: {request.build_absolute_uri(
-    reverse('admin:organizations_organization_change', args=[org.id])
-    )}.
+For more info see Django admin: {
+                request.build_absolute_uri(
+                    reverse("admin:organizations_organization_change", args=[org.id])
+                )
+            }.
 """,
         )
         return Response(OrganizationSerializer(org).data, status=status.HTTP_201_CREATED)

@@ -555,9 +555,9 @@ class TestRequestLogging:
 
             # Check if email was sent based on record age
             if should_send_email:
-                assert (
-                    mail_admins_mock.called
-                ), f"Email should have been sent for record age {record_age_hours} hours"
+                assert mail_admins_mock.called, (
+                    f"Email should have been sent for record age {record_age_hours} hours"
+                )
                 # Verify email content
                 call_args = mail_admins_mock.call_args
                 assert (
@@ -567,6 +567,6 @@ class TestRequestLogging:
                 assert "older than 1 hour" in call_args[0][1]
                 assert "should be investigated" in call_args[0][1]
             else:
-                assert (
-                    not mail_admins_mock.called
-                ), f"Email should not have been sent for record age {record_age_hours} hours"
+                assert not mail_admins_mock.called, (
+                    f"Email should not have been sent for record age {record_age_hours} hours"
+                )

@@ -129,9 +129,9 @@ class TestFlexibleReportAPI:
                 assert resp.status_code == 404
             else:
                 assert resp.status_code == 200
-                assert (
-                    resp.json()["mailing_count"] == count
-                ), f"user {user} should see {count} mailing"
+                assert resp.json()["mailing_count"] == count, (
+                    f"user {user} should see {count} mailing"
+                )
         # check that the mailing count is correct for the list view
         url = reverse("flexible-report-list")
         for user, count in user_to_count.items():
@@ -141,9 +141,9 @@ class TestFlexibleReportAPI:
                 assert len(resp.json()) == 0
             else:
                 assert len(resp.json()) == 1
-                assert (
-                    resp.json()[0]["mailing_count"] == count
-                ), f"user {user} should see {count} mailing"
+                assert resp.json()[0]["mailing_count"] == count, (
+                    f"user {user} should see {count} mailing"
+                )
 
     def test_create(self, admin_client, admin_user):
         resp = admin_client.post(

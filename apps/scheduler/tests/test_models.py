@@ -583,31 +583,31 @@ class TestFetchIntention:
                 assert fi.process() == ProcessResponse.SUCCESS
                 if not expected:
                     if error_code == ErrorCode.PARTIAL_DATA_RETURNED.value:
-                        assert (
-                            fi.attempt.import_batch is None
-                        ), "last partial data should not contain ib"
+                        assert fi.attempt.import_batch is None, (
+                            "last partial data should not contain ib"
+                        )
                         assert fi.attempt.can_import_data, "last partial data should be importable"
                         import_one_sushi_attempt(fi.attempt)
-                        assert (
-                            fi.attempt.import_batch is not None
-                        ), "last partial data should contain ib after import"
+                        assert fi.attempt.import_batch is not None, (
+                            "last partial data should contain ib after import"
+                        )
 
                     if empty_ib:
-                        assert (
-                            fi.attempt.import_batch is not None
-                        ), "there should be import batch at the end of a chain"
-                        assert (
-                            fi.attempt.import_batch.accesslog_set.count() == 0
-                        ), "import batch should be empty if partial_data is not returned"
+                        assert fi.attempt.import_batch is not None, (
+                            "there should be import batch at the end of a chain"
+                        )
+                        assert fi.attempt.import_batch.accesslog_set.count() == 0, (
+                            "import batch should be empty if partial_data is not returned"
+                        )
                         assert OrganizationPlatform.objects.filter(
                             organization=fi.credentials.organization,
                             platform=fi.credentials.platform,
                         ).exists(), "OrganizationPlatform should have been created"
 
                     else:
-                        assert (
-                            fi.attempt.import_batch is None
-                        ), "no ib should be present so it can be retried later"
+                        assert fi.attempt.import_batch is None, (
+                            "no ib should be present so it can be retried later"
+                        )
 
                 else:
                     assert fi.attempt.import_batch is None
@@ -1556,10 +1556,9 @@ class TestAutomatic:
             counter_report=counter_report_types["tr"]
         ).delete()
 
-        assert Automatic.update_for_last_month() == {
-            "deleted": 0,
-            "added": 0,
-        }, "updated using signals"
+        assert Automatic.update_for_last_month() == {"deleted": 0, "added": 0}, (
+            "updated using signals"
+        )
         assert FetchIntention.objects.count() == 1
         remained = FetchIntention.objects.last()
         assert remained.counter_report == counter_report_types["br1"]
@@ -1609,10 +1608,9 @@ class TestAutomatic:
             broken_type=SushiCredentials.BROKEN_SUSHI,
         )
 
-        assert Automatic.update_for_last_month() == {
-            "deleted": 0,
-            "added": 0,
-        }, "updated using signals"
+        assert Automatic.update_for_last_month() == {"deleted": 0, "added": 0}, (
+            "updated using signals"
+        )
         assert FetchIntention.objects.count() == 2
 
         # make cred1 verified
@@ -1645,10 +1643,9 @@ class TestAutomatic:
         for fi in FetchIntention.objects.all():
             fi.credentials.broken = True
             fi.credentials.save()
-        assert Automatic.update_for_last_month() == {
-            "added": 0,
-            "deleted": 0,
-        }, "no intentions deleted"
+        assert Automatic.update_for_last_month() == {"added": 0, "deleted": 0}, (
+            "no intentions deleted"
+        )
 
     @freeze_time(datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=current_tz))
     def test_credentials_signals(
@@ -1718,9 +1715,9 @@ class TestAutomatic:
             date=date(2019, 12, 1),  # prev month
         )
         credentials["standalone_tr"].save()
-        assert (
-            automatic_standalone.harvest.intentions.count() == 2
-        ), "No intentions is created - clashing data"
+        assert automatic_standalone.harvest.intentions.count() == 2, (
+            "No intentions is created - clashing data"
+        )
 
         # Create new mapping
         new_mapping = CounterReportsToCredentials.objects.create(
@@ -1950,6 +1947,6 @@ class TestAutomatic:
         Automatic.update_for_last_month()
 
         assert FetchIntention.objects.all().count() == 2, "new FI is recreated"
-        assert (
-            FetchIntention.objects.order_by("pk").last().queue == queue
-        ), "queue matches the one which was interrupted"
+        assert FetchIntention.objects.order_by("pk").last().queue == queue, (
+            "queue matches the one which was interrupted"
+        )

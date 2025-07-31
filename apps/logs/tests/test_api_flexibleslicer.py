@@ -301,9 +301,9 @@ class TestSlicerAPI:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert (
-            data["count"] == 0
-        ), "no data should be returned, we are just checking the query does not crash"
+        assert data["count"] == 0, (
+            "no data should be returned, we are just checking the query does not crash"
+        )
 
     def test_filter_by_tag_class(self, flexible_slicer_test_data_with_tags, clients):
         """
@@ -325,10 +325,9 @@ class TestSlicerAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert data["count"] == 2
-        assert {row["pk"] for row in data["results"]} == {
-            t1.pk,
-            t3.pk,
-        }, "only titles with first tag class should be returned"
+        assert {row["pk"] for row in data["results"]} == {t1.pk, t3.pk}, (
+            "only titles with first tag class should be returned"
+        )
 
     @pytest.mark.parametrize(["sort_desc"], [(True,), (False,)])
     def test_tag_roll_up_order_by_tag(

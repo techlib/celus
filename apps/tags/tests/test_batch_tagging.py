@@ -772,12 +772,12 @@ class TestBatchTaggingAPI:
             resp = clients["admin1"].post(
                 reverse("tagging-batch-list"), {"source_file": infile, **extra}
             )
-            assert (
-                not preflight_task.delay.called
-            ), "preflight should not be started on batch creation"
-            assert (
-                not preflight_task.apply_async.called
-            ), "preflight should not be started on batch creation"
+            assert not preflight_task.delay.called, (
+                "preflight should not be started on batch creation"
+            )
+            assert not preflight_task.apply_async.called, (
+                "preflight should not be started on batch creation"
+            )
         assert resp.status_code == (201 if send_existing_tag else 400)
         if send_existing_tag:
             tb = TaggingBatch.objects.get()
@@ -806,12 +806,12 @@ class TestBatchTaggingAPI:
             resp = clients["admin1"].post(
                 reverse("tagging-batch-list"), {"source_file": infile, **extra}
             )
-            assert (
-                not preflight_task.delay.called
-            ), "preflight should not be started on batch creation"
-            assert (
-                not preflight_task.apply_async.called
-            ), "preflight should not be started on batch creation"
+            assert not preflight_task.delay.called, (
+                "preflight should not be started on batch creation"
+            )
+            assert not preflight_task.apply_async.called, (
+                "preflight should not be started on batch creation"
+            )
         assert resp.status_code == (201 if send_existing_tagclass else 400)
         if send_existing_tagclass:
             tb = TaggingBatch.objects.get()
@@ -928,9 +928,9 @@ class TestBatchTaggingAPI:
                 tb.refresh_from_db()
                 assert tb.state == TaggingBatchState.PREPROCESSING
             else:
-                assert (
-                    not preflight_task.apply_async.called
-                ), "the tagging task should not be started"
+                assert not preflight_task.apply_async.called, (
+                    "the tagging task should not be started"
+                )
 
     @pytest.mark.parametrize(
         ["existing_tb", "tb_state", "status_code"],
@@ -1191,9 +1191,9 @@ class TestTasks:
             if is_undone:
                 assert preflight_task.apply_async.called, "the preflight task should be called"
             else:
-                assert (
-                    not preflight_task.apply_async.called
-                ), "the preflight task should not be called"
+                assert not preflight_task.apply_async.called, (
+                    "the preflight task should not be called"
+                )
         tb.refresh_from_db()
         if is_undone:
             assert tb.state == TaggingBatchState.PREPROCESSING

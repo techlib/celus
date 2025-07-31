@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 from django.contrib.admin.apps import AdminConfig
-from django.core.checks import Error, Warning, register
+from django.core.checks import Error, register
+from django.core.checks import Warning as DjangoWarning
 
 
 class CelusAdminConfig(AdminConfig):
@@ -56,7 +57,9 @@ class CoreConfig(AppConfig):
             errors = []
             for app, command in CommandManager.get_invalid_exposed_commands():
                 errors.append(
-                    Warning(f"Exposed command {app}.{command} is not available", id="core.W001")
+                    DjangoWarning(
+                        f"Exposed command {app}.{command} is not available", id="core.W001"
+                    )
                 )
             return errors
 
@@ -64,7 +67,7 @@ class CoreConfig(AppConfig):
         def check_clickhouse_settings(app_configs, **kwargs):
             if settings.CLICKHOUSE_QUERY_ACTIVE and not settings.CLICKHOUSE_SYNC_ACTIVE:
                 return [
-                    Warning(
+                    DjangoWarning(
                         "Having `CLICKHOUSE_QUERY_ACTIVE` without `CLICKHOUSE_SYNC_ACTIVE` is "
                         "likely an error as the data will not be up to date in queries.",
                         id="core.W002",

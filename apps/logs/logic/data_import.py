@@ -130,7 +130,7 @@ def import_counter_records(
     ib_id_to_key_to_value = {}
     # the key in the above dict of dicts will be as follows:
     ib_id_to_key_structure = ["metric_id", "target_id", "item_id"] + [
-        f"dim{i+1}" for i, dim in enumerate(report_type.dimensions_sorted)
+        f"dim{i + 1}" for i, dim in enumerate(report_type.dimensions_sorted)
     ]
 
     def process_buffer(record_batch: Iterable[CounterRecord]):
@@ -243,9 +243,9 @@ def import_counter_records(
 
         on_commit(sync_with_clickhouse, robust=True)
     for i, cache in enumerate([tm._counter_rec_to_title_rec_cache, tm._title_rec_to_title_cache]):
-        logger.info(f"Title manager: step #{i+1} {cache.stats()}")
+        logger.info(f"Title manager: step #{i + 1} {cache.stats()}")
     for i, cache in enumerate([im._counter_rec_to_item_rec_cache, im._item_rec_to_item_cache]):
-        logger.info(f"Item manager: step #{i+1} {cache.stats()}")
+        logger.info(f"Item manager: step #{i + 1} {cache.stats()}")
 
     return import_batches, stats
 
@@ -449,7 +449,7 @@ def _preprocess_counter_records(
                 dim_value = get_or_create_with_map(
                     DimensionText, remap, "text", dim_value, other_attrs={"dimension_id": dim.pk}
                 )
-            id_attrs[f"dim{i+1}"] = dim_value
+            id_attrs[f"dim{i + 1}"] = dim_value
         # here we detect possible duplicated keys and merge matching records
         key = tuple(id_attrs[k] for k in ib_id_to_key_structure)
         # we prepare the data to insert already split by individual import batch

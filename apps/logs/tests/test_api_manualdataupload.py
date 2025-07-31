@@ -691,9 +691,9 @@ class TestManualUploadConflicts:
             reverse("manual-data-upload-import-data", args=(mdu.pk,))
         )
         assert response.status_code == 409
-        assert batches == sorted(
-            e["pk"] for e in response.data["clashing_import_batches"]
-        ), "all import batches are in conflict"
+        assert batches == sorted(e["pk"] for e in response.data["clashing_import_batches"]), (
+            "all import batches are in conflict"
+        )
 
     @pytest.mark.skip()
     def test_conflict_with_sushi(self):
@@ -1147,9 +1147,9 @@ class TestManualUploadForRaw:
         prepare_preflight(mdu.pk)
 
         response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
-        assert (
-            response.data["report_type"]["pk"] == report_types[report_type].pk
-        ), "report type was selected"
+        assert response.data["report_type"]["pk"] == report_types[report_type].pk, (
+            "report type was selected"
+        )
         assert response.data["clashing_months"] == []
         assert response.data["can_import"] is True
         assert mdu.import_batches.count() == 0

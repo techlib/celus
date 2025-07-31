@@ -193,7 +193,7 @@ DATABASES = {
     }
 }
 
-print(f'Using database: {DATABASES["default"]["NAME"]}', file=sys.stderr)
+print(f"Using database: {DATABASES['default']['NAME']}", file=sys.stderr)
 
 DB_NAME_OLD = config("DB_NAME_OLD", default="")
 if DB_NAME_OLD:

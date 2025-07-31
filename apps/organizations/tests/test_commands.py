@@ -59,12 +59,12 @@ class TestEnableHarvestReportsCommand:
         call_command("enable_harvest_reports", "--do-it")
 
         # Verify all records are now enabled
-        assert (
-            User.objects.filter(send_grouped_harvest_reports=False).count() == 1
-        ), "updated for superuser only"
-        assert (
-            UserOrganization.objects.filter(send_harvest_reports=False).count() == 1
-        ), "updated for is_admins=True"
+        assert User.objects.filter(send_grouped_harvest_reports=False).count() == 1, (
+            "updated for superuser only"
+        )
+        assert UserOrganization.objects.filter(send_harvest_reports=False).count() == 1, (
+            "updated for is_admins=True"
+        )
         assert User.objects.filter(send_grouped_harvest_reports=True).count() == 2
         assert UserOrganization.objects.filter(send_harvest_reports=True).count() == 2
 
@@ -73,24 +73,24 @@ class TestEnableHarvestReportsCommand:
         call_command("enable_harvest_reports", "--users-only", "--do-it")
 
         # Verify only users were updated
-        assert (
-            User.objects.filter(send_grouped_harvest_reports=False).count() == 1
-        ), "updated for superuser only"
-        assert (
-            UserOrganization.objects.filter(send_harvest_reports=False).count() == 2
-        ), "nothing updated"
+        assert User.objects.filter(send_grouped_harvest_reports=False).count() == 1, (
+            "updated for superuser only"
+        )
+        assert UserOrganization.objects.filter(send_harvest_reports=False).count() == 2, (
+            "nothing updated"
+        )
 
     def test_user_orgs_only_flag(self, users_and_orgs):
         """Test --user-orgs-only flag updates only UserOrganization records"""
         call_command("enable_harvest_reports", "--user-orgs-only", "--do-it")
 
         # Verify only user-orgs were updated
-        assert (
-            User.objects.filter(send_grouped_harvest_reports=False).count() == 2
-        ), "nothing updated"
-        assert (
-            UserOrganization.objects.filter(send_harvest_reports=False).count() == 1
-        ), "one is_admin updated"
+        assert User.objects.filter(send_grouped_harvest_reports=False).count() == 2, (
+            "nothing updated"
+        )
+        assert UserOrganization.objects.filter(send_harvest_reports=False).count() == 1, (
+            "one is_admin updated"
+        )
 
     def test_conflicting_flags_raises_error(self, users_and_orgs):
         """Test that using both --users-only and --user-orgs-only raises error"""

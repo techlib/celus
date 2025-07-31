@@ -207,7 +207,7 @@ class ReportType(models.Model):
 
     @cached_property
     def explicit_dimensions(self) -> typing.List[str]:
-        return [f"dim{i+1}" for i, _dim in enumerate(self.dimensions_sorted)]
+        return [f"dim{i + 1}" for i, _dim in enumerate(self.dimensions_sorted)]
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -239,7 +239,7 @@ class ReportType(models.Model):
         """
         for i, dim in enumerate(self.dimensions_sorted):
             if dim.short_name == dim_short_name:
-                return f"dim{i+1}"
+                return f"dim{i + 1}"
         return None
 
     def dim_to_dim_attr(self, dim: "Dimension") -> typing.Optional[str]:
@@ -249,7 +249,7 @@ class ReportType(models.Model):
         """
         for i, d in enumerate(self.dimensions_sorted):
             if d == dim:
-                return f"dim{i+1}"
+                return f"dim{i + 1}"
         return None
 
     @classmethod
@@ -958,7 +958,7 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         )
 
     def __str__(self):
-        return f'{self.user.username if self.user else ""}: {self.report_type}, {self.platform}'
+        return f"{self.user.username if self.user else ''}: {self.report_type}, {self.platform}"
 
     def mail_report_format(self):
         report_type = self.report_type or ""

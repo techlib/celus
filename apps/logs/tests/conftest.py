@@ -245,7 +245,7 @@ def flexible_slicer_test_data(report_type_nd):
             for metric, target, *dim_values in product(metrics, targets, *dim_options):
                 dim_data = {}
                 for i, value_str in enumerate(dim_values):
-                    attr = f"dim{i+1}"
+                    attr = f"dim{i + 1}"
                     value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
                     dim_data[attr] = value_key.pk
                 value = next(values)
@@ -370,7 +370,7 @@ def flexible_slicer_test_data2(report_type_nd):
             organization, platform, metric, target, date = rec[:5]
             dim_data = {}
             for i in range(dim_count):
-                attr = f"dim{i+1}"
+                attr = f"dim{i + 1}"
                 value_str = rec[5 + i]
                 if (rt.dimensions_sorted[i].pk, value_str) in dimension_texts:
                     # this is a remapped text value
@@ -502,7 +502,7 @@ def flexible_slicer_test_data_with_items(report_type_nd):
             for metric, target, *dim_values in product(metrics, targets, *dim_options):
                 dim_data = {}
                 for i, value_str in enumerate(dim_values):
-                    attr = f"dim{i+1}"
+                    attr = f"dim{i + 1}"
                     value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
                     dim_data[attr] = value_key.pk
                 title_items = [items[0], items[1]] if target == targets[0] else [items[2]]

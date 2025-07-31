@@ -224,11 +224,11 @@ class CreateHarvestSerializer(serializers.ModelSerializer):
             counter_report = id_to_crt.get(intention["counter_report"])
             if not credentials:
                 raise serializers.ValidationError(
-                    f'Invalid credentials ID: {intention["credentials"]}'
+                    f"Invalid credentials ID: {intention['credentials']}"
                 )
             if not counter_report:
                 raise serializers.ValidationError(
-                    f'Invalid counter report ID: {intention["counter_report"]}'
+                    f"Invalid counter report ID: {intention['counter_report']}"
                 )
             intention["credentials"] = credentials
             intention["counter_report"] = counter_report

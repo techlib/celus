@@ -42,23 +42,23 @@ class TestPlatformReports:
         month_cols = report.context.covered_months
         assert tr_source.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert tr_source.report_data_.loc[pl1_pk][0] == "TR"
-        assert set(tr_source.report_data_.loc[pl1_pk][month_cols]) == {
-            300
-        }, "value is 3*100 for all months"
+        assert set(tr_source.report_data_.loc[pl1_pk][month_cols]) == {300}, (
+            "value is 3*100 for all months"
+        )
         # JR1 report
         jr1_source = report.sources_by_id["jr1"]
         assert jr1_source.report_data_ is not None
         assert jr1_source.report_data_.loc[pl2_pk][0] == "JR1"
-        assert set(jr1_source.report_data_.loc[pl2_pk][month_cols]) == {
-            30
-        }, "value is 3*10 for all months"
+        assert set(jr1_source.report_data_.loc[pl2_pk][month_cols]) == {30}, (
+            "value is 3*10 for all months"
+        )
         # JR1GOA report
         jr1goa_source = report.sources_by_id["jr1goa"]
         assert jr1goa_source.report_data_ is not None
         assert jr1goa_source.report_data_.loc[pl2_pk][0] == "JR1GOA"
-        assert set(jr1goa_source.report_data_.loc[pl2_pk][month_cols]) == set(
-            range(3, 37, 3)
-        ), "value is 3*month_index for each months"
+        assert set(jr1goa_source.report_data_.loc[pl2_pk][month_cols]) == set(range(3, 37, 3)), (
+            "value is 3*month_index for each months"
+        )
 
     def test_stages_compute_data(self, report_data_tr_jr1, report_def_tr_jr1):
         report = Report.from_dict(report_def_tr_jr1)
@@ -75,52 +75,52 @@ class TestPlatformReports:
         assert stage1.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert stage1.report_data_.loc[pl1_pk][0] == "TR", "platform1 uses TR"
         assert stage1.report_data_.loc[pl2_pk][0] == "JR1 - JR1GOA", "platform2 uses JR1 - JR1GOA"
-        assert set(stage1.report_data_.loc[pl1_pk][month_cols]) == {
-            300
-        }, "value is 3*100 for all months"
-        assert set(stage1.report_data_.loc[pl2_pk][month_cols]) == set(
-            range(0, 30, 3)
-        ), "value is 3*(10-month) for each month, but cannot be negative"
+        assert set(stage1.report_data_.loc[pl1_pk][month_cols]) == {300}, (
+            "value is 3*100 for all months"
+        )
+        assert set(stage1.report_data_.loc[pl2_pk][month_cols]) == set(range(0, 30, 3)), (
+            "value is 3*(10-month) for each month, but cannot be negative"
+        )
         # stage 1 of part 2 only does TR | JR1 operation
         stage2 = report.parts[1].stages[0]
         assert stage2.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert stage2.report_data_.loc[pl1_pk][0] == "TR", "platform1 uses TR"
         assert stage2.report_data_.loc[pl2_pk][0] == "JR1", "platform2 uses JR1"
-        assert set(stage2.report_data_.loc[pl1_pk][month_cols]) == {
-            300
-        }, "value is 3*100 for all months"
-        assert set(stage2.report_data_.loc[pl2_pk][month_cols]) == {
-            30
-        }, "value is 3*10 for all months"
+        assert set(stage2.report_data_.loc[pl1_pk][month_cols]) == {300}, (
+            "value is 3*100 for all months"
+        )
+        assert set(stage2.report_data_.loc[pl2_pk][month_cols]) == {30}, (
+            "value is 3*10 for all months"
+        )
         # stage 1 of part 3 tests summation of 2 reports
         stage3 = report.parts[2].stages[0]
         assert stage3.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert stage3.report_data_.loc[pl1_pk][0] == "JR1 + GOA"
         assert stage3.report_data_.loc[pl2_pk][0] == "JR1 + GOA"
         assert set(stage3.report_data_.loc[pl1_pk][month_cols]) == {0}, "value is 0 for all months"
-        assert set(stage3.report_data_.loc[pl2_pk][month_cols]) == set(
-            range(33, 69, 3)
-        ), "value is 3*(10+month) for each month"
+        assert set(stage3.report_data_.loc[pl2_pk][month_cols]) == set(range(33, 69, 3)), (
+            "value is 3*(10+month) for each month"
+        )
         # stage 2 of part 3 only has data from TR, thus for pl1 only
         stage32 = report.parts[2].stages[1]
         assert stage32.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert stage32.report_data_.loc[pl1_pk][0] == "TR"
         assert stage32.report_data_.loc[pl2_pk][0] == "TR"
-        assert set(stage32.report_data_.loc[pl1_pk][month_cols]) == {
-            300
-        }, "value is 0 for all months"
+        assert set(stage32.report_data_.loc[pl1_pk][month_cols]) == {300}, (
+            "value is 0 for all months"
+        )
         assert set(stage32.report_data_.loc[pl2_pk][month_cols]) == {0}, "no data for pl2"
         # stage 3 of part 3 merges source with previous stage
         stage33 = report.parts[2].stages[2]
         assert stage33.report_data_.index.to_list() == [pl1_pk, pl2_pk]
         assert stage33.report_data_.loc[pl1_pk][0] == "TR", "platform1 uses TR"
         assert stage33.report_data_.loc[pl2_pk][0] == "JR1 + GOA", "platform2 uses prev stage"
-        assert set(stage33.report_data_.loc[pl1_pk][month_cols]) == {
-            300
-        }, "value is 3*100 for all months"
-        assert set(stage33.report_data_.loc[pl2_pk][month_cols]) == set(
-            range(33, 69, 3)
-        ), "value is 3*(10+month) for each month"
+        assert set(stage33.report_data_.loc[pl1_pk][month_cols]) == {300}, (
+            "value is 3*100 for all months"
+        )
+        assert set(stage33.report_data_.loc[pl2_pk][month_cols]) == set(range(33, 69, 3)), (
+            "value is 3*(10+month) for each month"
+        )
 
     def test_report_output(self, report_data_tr_jr1, report_def_tr_jr1):
         PlatformFactory()  # this will have no data
@@ -148,9 +148,9 @@ class TestPlatformReports:
         assert pl2_rec.source_name == "JR1 - JR1GOA"
         # check that the data is correct
         assert set(pl1_rec.monthly_data.values()) == {300}, "value is 3*100 for all months"
-        assert set(pl2_rec.monthly_data.values()) == set(
-            range(0, 30, 3)
-        ), "value is 3*(10-month) for each month, but cannot be negative"
+        assert set(pl2_rec.monthly_data.values()) == set(range(0, 30, 3)), (
+            "value is 3*(10-month) for each month, but cannot be negative"
+        )
         assert part1["stages"][0]["used_data_sources"] == ["tr", "jr1", "jr1goa"]
         # check the second part - the data for JR1 do not have GOA subtracted
         part2 = output["PART 2"]

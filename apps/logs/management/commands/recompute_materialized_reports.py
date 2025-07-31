@@ -35,7 +35,7 @@ class Command(BaseCommand):
             try:
                 base = ReportType.objects.get(short_name=options["base_report"])
             except ReportType.DoesNotExist:
-                raise ValueError(f'No such base report: {options["base_report"]}') from None
+                raise ValueError(f"No such base report: {options['base_report']}") from None
             qs = ReportType.objects.filter(materialization_spec__base_report_type=base)
         elif options["report_type"]:
             qs = ReportType.objects.filter(short_name=options["report_type"])

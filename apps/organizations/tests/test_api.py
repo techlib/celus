@@ -114,9 +114,9 @@ class TestOrganizationAPI:
             resp = authenticated_client.post(
                 url, {"name": "test organization"}, content_type="application/json"
             )
-            assert (
-                email_task.delay.called
-            ), "email about a default organization created by user was sent to admin"
+            assert email_task.delay.called, (
+                "email about a default organization created by user was sent to admin"
+            )
         assert resp.status_code == 201
         assert Organization.objects.count() == 1
         org = Organization.objects.get()
@@ -126,13 +126,13 @@ class TestOrganizationAPI:
         assert org.name_cs == "test organization"
         assert org.internal_id == "test#test-organization"
         assert org in authenticated_client.user.organizations.all()
-        assert (
-            org.private_data_source == org.source
-        ), "organization object data source should be the organizations own private data-source"
+        assert org.private_data_source == org.source, (
+            "organization object data source should be the organizations own private data-source"
+        )
         userorg = UserOrganization.objects.get(organization=org, user=authenticated_client.user)
-        assert (
-            org.private_data_source == userorg.source
-        ), "user-organization data source should be the organizations own private data-source"
+        assert org.private_data_source == userorg.source, (
+            "user-organization data source should be the organizations own private data-source"
+        )
 
     def test_user_default_organization_creation_not_allowed(self, authenticated_client, settings):
         settings.ALLOW_USER_REGISTRATION = False

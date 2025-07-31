@@ -116,7 +116,7 @@ class TestTRCounterExport:
 \ufeffReport_Name,Title Master Report\r
 Report_ID,TR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -147,7 +147,7 @@ target2,Pub1,,Plat1,,,978-1-4920-8488-4,,,,Journal,Article,2022,Controlled,Regul
 \ufeffReport_Name,Title Master Report\r
 Report_ID,TR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -225,7 +225,7 @@ class TestDRCounterExport:
 \ufeffReport_Name,Database Master Report\r
 Report_ID,DR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -256,7 +256,7 @@ target2,Pub1,,Plat1,,Book,Regular,No_License,3,3\r
 \ufeffReport_Name,Database Master Report\r
 Report_ID,DR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -334,7 +334,7 @@ class TestPRCounterExport:
 \ufeffReport_Name,Platform Master Report\r
 Report_ID,PR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -365,7 +365,7 @@ Plat1,Journal,Regular,No_License,29,29\r
 \ufeffReport_Name,Platform Master Report\r
 Report_ID,PR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -449,7 +449,7 @@ class TestIR_M1CounterExport:
 \ufeffReport_Name,Multimedia Item Requests\r
 Report_ID,IR_M1\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -480,7 +480,7 @@ target2,Pub1,,Plat1,,,,No_License,29,29\r
 \ufeffReport_Name,Multimedia Item Requests\r
 Report_ID,IR_M1\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -560,7 +560,7 @@ class TestIRCounterExport:
 \ufeffReport_Name,Item Master Report\r
 Report_ID,IR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -591,7 +591,7 @@ J21,Pub1,,Plat1,,,VoR,10.2222/1111.2222.1111,,,,,,target2,,,,Journal,,,978-1-492
 \ufeffReport_Name,Item Master Report\r
 Report_ID,IR\r
 Release,5\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -668,7 +668,7 @@ class TestTR51CounterExport:
 \ufeffReport_Name,Title Report\r
 Report_ID,TR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -703,7 +703,7 @@ target2,Pub1,,Plat1,,,978-1-4920-8488-4,,,,Journal,2022,Controlled,Regular,No_Li
 \ufeffReport_Name,Title Report\r
 Report_ID,TR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -779,7 +779,7 @@ class TestDR51CounterExport:
 \ufeffReport_Name,Database Report\r
 Report_ID,DR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -814,7 +814,7 @@ target2,Pub1,,Plat1,,Book,Regular,No_License,3,3\r
 \ufeffReport_Name,Database Report\r
 Report_ID,DR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -896,7 +896,7 @@ class TestPR51CounterExport:
 \ufeffReport_Name,Platform Report\r
 Report_ID,PR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -931,7 +931,7 @@ Plat1,Journal,Regular,No_License,29,29\r
 \ufeffReport_Name,Platform Report\r
 Report_ID,PR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -1017,7 +1017,7 @@ class TestIR51CounterExport:
 \ufeffReport_Name,Item Report\r
 Report_ID,IR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r
@@ -1052,7 +1052,7 @@ J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,Book,,,978-1-4920-8488
 \ufeffReport_Name,Item Report\r
 Report_ID,IR\r
 Release,5.1\r
-Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name }\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
 Metric_Types,\r
 Report_Filters,\r

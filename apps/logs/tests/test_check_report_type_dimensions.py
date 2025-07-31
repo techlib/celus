@@ -13,9 +13,9 @@ class TestCheckReportTypeDimensions:
         assert ReportType.objects.count() == 0, "no report types"
         call_command("check_report_type_dimensions", "--fix-it")
         assert ReportType.objects.count() == len(COUNTER_REPORTS), "all counter report types added"
-        assert not ReportType.objects.filter(
-            short_name="IR"
-        ).exists(), "IR not added (excluded for C5)"
+        assert not ReportType.objects.filter(short_name="IR").exists(), (
+            "IR not added (excluded for C5)"
+        )
         assert ReportType.objects.filter(short_name="IR51").exists(), "IR51 added"
 
     def test_with_items_disabled(self, settings):
@@ -23,9 +23,9 @@ class TestCheckReportTypeDimensions:
         assert ReportType.objects.count() == 0, "no report types"
         call_command("check_report_type_dimensions", "--fix-it")
         assert ReportType.objects.count() == len(COUNTER_REPORTS) - 1, "IR51 not added"
-        assert not ReportType.objects.filter(
-            short_name="IR"
-        ).exists(), "IR not added (excluded for C5)"
+        assert not ReportType.objects.filter(short_name="IR").exists(), (
+            "IR not added (excluded for C5)"
+        )
         assert not ReportType.objects.filter(short_name="IR51").exists(), "IR51 not added"
 
     def test_metric_order_c5_c51(self):

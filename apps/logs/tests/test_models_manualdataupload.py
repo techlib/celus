@@ -303,11 +303,9 @@ A,Metric1,unresolved,0,0,0,20
 
         assert preflight["used_metrics"] == ["metric1", "metric2"]
 
-        assert preflight["organizations"]["unresolved"] == {
-            "pk": None,
-            "count": 4,
-            "sum": 20,
-        }, "check that preflight is properly generated even when some organization is not resolved"
+        assert preflight["organizations"]["unresolved"] == {"pk": None, "count": 4, "sum": 20}, (
+            "check that preflight is properly generated even when some organization is not resolved"
+        )
 
     def test_organization_from_data(self):
         org1 = OrganizationFactory(

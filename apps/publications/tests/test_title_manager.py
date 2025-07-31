@@ -322,9 +322,9 @@ class TestTitleManager:
                 exp_value = db_title.get(id_attr, "") or in_title.get(id_attr, "")
                 if id_attr == "isbn":
                     exp_value = normalize_isbn(exp_value)
-                assert (
-                    getattr(title, id_attr) == exp_value
-                ), f'{id_attr} is DB should be "{exp_value}"'
+                assert getattr(title, id_attr) == exp_value, (
+                    f'{id_attr} is DB should be "{exp_value}"'
+                )
             assert set(title.proprietary_ids) == set(db_title.get("proprietary_ids", "")) | set(
                 in_title.get("proprietary_ids", [])
             )

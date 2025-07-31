@@ -462,7 +462,7 @@ class ReportDataView(models.Model):
                     dt.pk
                     for dt in DimensionText.objects.filter(dimension=dim, text__in=allowed_values)
                 ]
-                filters[f"dim{i+1}__in"] = values
+                filters[f"dim{i + 1}__in"] = values
         return filters
 
     def logdata_qs(self):

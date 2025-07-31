@@ -39,11 +39,11 @@ class TestCeleryTasks:
 
         with requests_mock.Mocker() as m:
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/platforms/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/platforms/"),
                 text=json.dumps(PLATFORM_INPUT_DATA),
             )
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/report_types/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/report_types/"),
                 text=json.dumps(REPORT_TYPE_INPUT_DATA2),
             )
 
@@ -54,7 +54,7 @@ class TestCeleryTasks:
             definition["data_format"]["id"] = 333
             definition["lowest_nibbler_version"] = version("celus_nibbler")
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/report_types/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/report_types/"),
                 text=json.dumps(REPORT_TYPE_INPUT_DATA2),
             )
             definition["highest_nibbler_version"] = version("celus_nibbler")
@@ -62,7 +62,7 @@ class TestCeleryTasks:
             parser_definitions["parser1"].delete()
 
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/parsers/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/parsers/"),
                 text=json.dumps([definition]),
             )
 
@@ -95,16 +95,16 @@ class TestCeleryTasks:
     def test_sync_knowledgebase_fail_task(self, data_sources):
         with requests_mock.Mocker() as m:
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/platforms/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/platforms/"),
                 text=json.dumps({"wrong": "format"}),
             )
 
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/report_types/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/report_types/"),
                 text=json.dumps({"wrong": "format"}),
             )
             m.get(
-                re.compile(f'^{data_sources["brain"].url}/knowledgebase/parsers/'),
+                re.compile(f"^{data_sources['brain'].url}/knowledgebase/parsers/"),
                 text=json.dumps({"wrong": "format"}),
             )
 
@@ -184,7 +184,7 @@ class TestCeleryTasks:
         with requests_mock.Mocker() as m:
             m.post(
                 re.compile(
-                    f'^{data_sources["brain"].url}/knowledgebase/platforms/update-assigned-report-types/'
+                    f"^{data_sources['brain'].url}/knowledgebase/platforms/update-assigned-report-types/"
                 ),
                 text=json.dumps(PLATFORM_INPUT_DATA3),
             )

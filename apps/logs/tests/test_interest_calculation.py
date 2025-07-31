@@ -90,9 +90,9 @@ class TestInterestCalculation:
         for rec in interest_data:
             orig_rt_dim_text_id = self.get_dim_text_id("Original_Report_Type", rt.short_name)
             assert rec["dim1"] == orig_rt_dim_text_id
-            assert (
-                DimensionText.objects.get(pk=orig_rt_dim_text_id).text_local_en == rt.name_en
-            ), "whole name is preserved"
+            assert DimensionText.objects.get(pk=orig_rt_dim_text_id).text_local_en == rt.name_en, (
+                "whole name is preserved"
+            )
             orig_metric_dim_text_id = self.get_dim_text_id("Original_Metric", uir.short_name)
             assert rec["dim2"] == orig_metric_dim_text_id
             assert (
@@ -1016,20 +1016,20 @@ class TestInterestRecomputationDetection:
         assert len(ibs_old) == 1
         ib_old = ibs_old[0]
         assert interest_rt.accesslog_set.count() == 3, "3 of 3 should make it to interest"
-        assert (
-            ib_old.accesslog_set.filter(report_type=interest_rt).count() == 3
-        ), "3 interest records"
+        assert ib_old.accesslog_set.filter(report_type=interest_rt).count() == 3, (
+            "3 interest records"
+        )
         # import new data
         ibs_new, _stats = import_counter_records(report_type_new, organization, platform, crs_new)
         assert len(ibs_new) == 1
         ib_new = ibs_new[0]
         assert interest_rt.accesslog_set.count() == 3, "still 3 interest records, but new ones"
-        assert (
-            ib_new.accesslog_set.filter(report_type=interest_rt).count() == 3
-        ), "# new interest records from new data"
-        assert (
-            ib_old.accesslog_set.filter(report_type=interest_rt).count() == 0
-        ), "old interest should be removed"
+        assert ib_new.accesslog_set.filter(report_type=interest_rt).count() == 3, (
+            "# new interest records from new data"
+        )
+        assert ib_old.accesslog_set.filter(report_type=interest_rt).count() == 0, (
+            "old interest should be removed"
+        )
 
     def test_interest_superseding_ib_is_deleted(self, organizations, report_type_nd, interest_rt):
         """

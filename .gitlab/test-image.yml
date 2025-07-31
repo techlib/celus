@@ -1,5 +1,5 @@
 variables:
-  POETRY_VERSION: "1.8.1"
+  POETRY_VERSION: "1.8.5"
 
 image:test_image:
   stage: image

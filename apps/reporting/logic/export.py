@@ -165,7 +165,7 @@ class XlsxExporter:
                     2,
                     current_row,
                     max_col,
-                    f'Metric: {source.metric or "*"}; Filters: {filters}',
+                    f"Metric: {source.metric or '*'}; Filters: {filters}",
                     self.base_fmt,
                 )
                 current_row += 1
@@ -299,7 +299,7 @@ class XlsxExporter:
                     # changes in the code, and as this all is really a corner case, it's not
                     # worth the effort. At least for now.
                     return (
-                        f"IF('{left_sheet}'!{source_ref_col}=B{current_row+1}, "
+                        f"IF('{left_sheet}'!{source_ref_col}=B{current_row + 1}, "
                         f"{left_data}, {right_data})"
                     ), None
                 elif right_sheet:
@@ -309,7 +309,7 @@ class XlsxExporter:
                     right_fr = self.sheet_first_row[right_sheet]
                     source_ref_col = xl_rowcol_to_cell(right_fr + row - 1, 1)
                     return (
-                        f"IF('{right_sheet}'!{source_ref_col}=B{current_row+1}, "
+                        f"IF('{right_sheet}'!{source_ref_col}=B{current_row + 1}, "
                         f"{right_data}, {left_data})"
                     ), None
                 else:

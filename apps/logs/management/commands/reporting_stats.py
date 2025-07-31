@@ -17,7 +17,7 @@ class Command(BaseCommand):
         total = base if base else counter.total()
         largest = counter.most_common(1)[0][1]
         for k, v in counter.most_common(top):
-            out.write(f'{"█" * int(60 * v / largest):60s} {k}: {v:4d} ({v / total:6.2%}) \n')
+            out.write(f"{'█' * int(60 * v / largest):60s} {k}: {v:4d} ({v / total:6.2%}) \n")
         out.write("\n")
 
     def handle(self, *args, **options):

@@ -109,13 +109,13 @@ class TestTagClassVisibility:
         user = users[user_key]
         for key, tag_cls in tags.items():
             if locals()[f"can_see_{key}"]:
-                assert tag_cls in TagClass.objects.user_accessible_tag_classes(
-                    user
-                ), f"{user_key} should see {key}"
+                assert tag_cls in TagClass.objects.user_accessible_tag_classes(user), (
+                    f"{user_key} should see {key}"
+                )
             else:
-                assert tag_cls not in TagClass.objects.user_accessible_tag_classes(
-                    user
-                ), f"{user_key} should not see {key}"
+                assert tag_cls not in TagClass.objects.user_accessible_tag_classes(user), (
+                    f"{user_key} should not see {key}"
+                )
 
     @pytest.mark.parametrize(
         [
@@ -178,9 +178,9 @@ class TestTagClassVisibility:
             if locals()[f"can_see_{key}"]:
                 assert tag_cls.user_score >= tag_cls.can_create_tags, f"{user_key} should see {key}"
             else:
-                assert (
-                    tag_cls.user_score < tag_cls.can_create_tags
-                ), f"{user_key} should not see {key}"
+                assert tag_cls.user_score < tag_cls.can_create_tags, (
+                    f"{user_key} should not see {key}"
+                )
 
     @pytest.mark.parametrize(
         ["user_key", "access_permission", "can_create"],
@@ -299,9 +299,9 @@ class TestTagVisibility:
             if locals()[f"can_see_{key}"]:
                 assert tag in Tag.objects.user_accessible_tags(user), f"{user_key} should see {key}"
             else:
-                assert tag not in Tag.objects.user_accessible_tags(
-                    user
-                ), f"{user_key} should not see {key}"
+                assert tag not in Tag.objects.user_accessible_tags(user), (
+                    f"{user_key} should not see {key}"
+                )
 
     @pytest.mark.parametrize(
         [
@@ -360,9 +360,9 @@ class TestTagVisibility:
             if locals()[f"can_assign_{key}"]:
                 assert tag.can_user_assign(user), f"{user_key} should be able to assign {key}"
             else:
-                assert not tag.can_user_assign(
-                    user
-                ), f"{user_key} should not be able to assign {key}"
+                assert not tag.can_user_assign(user), (
+                    f"{user_key} should not be able to assign {key}"
+                )
 
     @pytest.mark.parametrize(
         [
@@ -426,9 +426,9 @@ class TestTagVisibility:
             if locals()[f"can_modify_{key}"]:
                 assert tag.can_user_modify(user), f"{user_key} should be able to modify {key}"
             else:
-                assert not tag.can_user_modify(
-                    user
-                ), f"{user_key} should not be able to modify {key}"
+                assert not tag.can_user_modify(user), (
+                    f"{user_key} should not be able to modify {key}"
+                )
 
     @pytest.mark.parametrize(
         [
@@ -478,9 +478,9 @@ class TestTagVisibility:
             if locals()[f"can_see_{key}"]:
                 assert tag in Tag.objects.org_accessible_tags(org), f"{org_key} should see {key}"
             else:
-                assert tag not in Tag.objects.org_accessible_tags(
-                    org
-                ), f"{org_key} should not see {key}"
+                assert tag not in Tag.objects.org_accessible_tags(org), (
+                    f"{org_key} should not see {key}"
+                )
 
 
 @pytest.mark.django_db

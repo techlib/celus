@@ -433,9 +433,9 @@ class TestAccountCreationAPI:
             {"key": email_address.emailconfirmation_set.all().last().key},
         )
         assert resp.status_code == 200
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None
-        ), "device cookie is set"
+        assert resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None, (
+            "device cookie is set"
+        )
         user1 = User.objects.get(pk=users["user1"].pk)
         assert user1.email_verified
 
@@ -643,9 +643,9 @@ class TestMiddleware:
 
         assert resp.status_code == status
         assert resp.has_header("CELUS-VERSION")
-        assert re.match(
-            r"^[0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z-]*$", resp["CELUS-VERSION"]
-        ), "Version follows semantic versioning"
+        assert re.match(r"^[0-9]+\.[0-9]+\.[0-9]+[0-9A-Za-z-]*$", resp["CELUS-VERSION"]), (
+            "Version follows semantic versioning"
+        )
 
         assert resp["CELUS-VERSION"] == settings.CELUS_VERSION
 
@@ -883,9 +883,9 @@ class TestOtpAPI:
         assert resp.status_code == 201
         assert resp.data["name"] == "default"
         assert resp.data["email"] is None
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['master_user'].pk}") is not None
-        ), "device cookie is set"
+        assert resp.cookies.get(f"otp_device_id_{users['master_user'].pk}") is not None, (
+            "device cookie is set"
+        )
 
     def test_create_email_not_verified(
         self, settings, clients, users, otp_devices, disallow_eduid_login
@@ -910,9 +910,9 @@ class TestOtpAPI:
             reverse("otp-detail", args=(otp_devices["admin2"].pk,))
         )
         assert resp.status_code == 204, "master admin can delete other user's devices"
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['master_admin'].pk}") is not None
-        ), "Cookie unset"
+        assert resp.cookies.get(f"otp_device_id_{users['master_admin'].pk}") is not None, (
+            "Cookie unset"
+        )
 
         resp = clients["user1"].delete(reverse("otp-detail", args=(otp_devices["user1"].pk,)))
         assert resp.status_code == 204, "users can delete own devices devices"
@@ -954,9 +954,9 @@ class TestOtpAPI:
             {"code": otp_devices["user1"].token},
         )
         assert resp.status_code == 200
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None
-        ), "device cookie is set"
+        assert resp.cookies.get(f"otp_device_id_{users['user1'].pk}") is not None, (
+            "device cookie is set"
+        )
 
     def test_verify_missing_code(self, settings, clients, users, otp_devices):
         settings.OTP_ENABLED = True
@@ -972,9 +972,9 @@ class TestOtpAPI:
             {"code": otp_devices["user1"].token},
         )
         assert resp.status_code == 404
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None
-        ), "device cookie is not set"
+        assert resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None, (
+            "device cookie is not set"
+        )
 
     def test_verify_wrong_code(self, settings, clients, users, otp_devices):
         settings.OTP_ENABLED = True
@@ -984,6 +984,6 @@ class TestOtpAPI:
             reverse("otp-verify", args=(otp_devices["user1"].pk,)), {"code": "000000"}
         )
         assert resp.status_code == 404
-        assert (
-            resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None
-        ), "device cookie is not set"
+        assert resp.cookies.get(f"otp_device_id_{users['user2'].pk}") is None, (
+            "device cookie is not set"
+        )

@@ -188,9 +188,9 @@ class TestBatch:
 
         assert batch.status == BatchStatus.OUTDATED
         assert batch.deleted is None
-        assert Organization.objects.filter(
-            pk=organizations["standalone"].pk
-        ).exists(), "Organiztion wasn't deleted"
+        assert Organization.objects.filter(pk=organizations["standalone"].pk).exists(), (
+            "Organiztion wasn't deleted"
+        )
 
     def test_delete_expired(self, basic1, organizations):
         with freeze_time(datetime(2020, 1, 1, 0, 0, 0)):
@@ -212,6 +212,6 @@ class TestBatch:
 
         assert batch.status == BatchStatus.OUTDATED
         assert batch.deleted is None
-        assert Organization.objects.filter(
-            pk=organizations["standalone"].pk
-        ).exists(), "Organiztion wasn't deleted"
+        assert Organization.objects.filter(pk=organizations["standalone"].pk).exists(), (
+            "Organiztion wasn't deleted"
+        )

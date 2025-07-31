@@ -137,7 +137,7 @@ def delete_with_data(modeladmin, request, queryset):
     attempts_deleted = queryset.delete()
     batches_deleted = del_stats[1].get("logs.ImportBatch", 0)
     messages.info(
-        request, f"{attempts_deleted[0]} attempts deleted with " f"{batches_deleted} data batches"
+        request, f"{attempts_deleted[0]} attempts deleted with {batches_deleted} data batches"
     )
 
 

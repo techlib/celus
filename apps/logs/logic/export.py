@@ -151,7 +151,7 @@ class CSVExport:
         # values that will be retrieved from the accesslogs
         values = ["value", "report_type_id"]
         values += list(field_name_map.keys())
-        values += [f"dim{i+1}" for i in range(DIMENSION_COUNT)]
+        values += [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()
@@ -170,7 +170,7 @@ class CSVExport:
                 record["value"] = log["value"]
                 record["date"] = log["date"]
                 for i, dim in enumerate(rt_to_dimensions[log["report_type_id"]]):
-                    value = log.get(f"dim{i+1}")
+                    value = log.get(f"dim{i + 1}")
                     record[dim.short_name] = text_id_to_text.get(value, value)
                 writer.writerow(record)
                 if rec_num % 999 == 0:
@@ -220,7 +220,7 @@ class CSVExport:
         # values that will be retrieved from the accesslogs
         values = ["value", "report_type_id"]
         values += list(field_name_map.keys())
-        values += [f"dim{i+1}" for i in range(DIMENSION_COUNT)]
+        values += [f"dim{i + 1}" for i in range(DIMENSION_COUNT)]
         # crate the writer
         writer = csv.DictWriter(stream, field_names)
         writer.writeheader()

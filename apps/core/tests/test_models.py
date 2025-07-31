@@ -109,9 +109,9 @@ class TestUserModel:
         user.save()
         # .email_verified is a cached property, we need new User instance
         user = User.objects.get(pk=user.pk)
-        assert (
-            user.email_verified == user_email_verified
-        ), "the email should be verified even if case does not match"
+        assert user.email_verified == user_email_verified, (
+            "the email should be verified even if case does not match"
+        )
 
     @pytest.mark.parametrize(["otp_enabled", "created"], [[True, True], [False, False]])
     def test_email_device_created_on_signal(self, settings, otp_enabled, created):

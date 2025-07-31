@@ -71,7 +71,9 @@ class PlatformReportView(APIView):
                 f"Valid dimensions are: {all_dims}"
             )
         reported_dims = [
-            f"dim{i+1}" for i, dim in enumerate(rt.dimensions_sorted) if dim.short_name in req_dims
+            f"dim{i + 1}"
+            for i, dim in enumerate(rt.dimensions_sorted)
+            if dim.short_name in req_dims
         ]
         # deal with possible uuid being used as platform_id
         if isinstance(platform_id, uuid.UUID):

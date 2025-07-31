@@ -195,8 +195,8 @@ class FetchIntentionAdmin(admin.ModelAdmin):
 
     def harvest_link(self, obj: models.FetchIntention):
         return format_html(
-            f'<a href="{ reverse("admin:scheduler_harvest_change", args=(obj.harvest.id,)) }">'
-            f"{ obj.harvest.id }</a>"
+            f'<a href="{reverse("admin:scheduler_harvest_change", args=(obj.harvest.id,))}">'
+            f"{obj.harvest.id}</a>"
         )
 
     harvest_link.short_description = "Harvest"

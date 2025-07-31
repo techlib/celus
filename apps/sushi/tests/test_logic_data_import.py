@@ -386,7 +386,7 @@ class TestLogicDataImportCSV:
                 "requestor_id": "RRRX",
                 "URL": "http://this.is/test/2",
                 "version": 5,
-                "extra_attrs": f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                "extra_attrs": f"auth=un,pass;api_key={'key' * 100};foo=bar",
                 "counter_reports": "TR, DR",
             },
             {
@@ -396,7 +396,7 @@ class TestLogicDataImportCSV:
                 "requestor_id": "RRRY",
                 "URL": "http://this.is/test/3",
                 "version": 51,
-                "extra_attrs": f'api_key={"key" * 100};foot=ball',
+                "extra_attrs": f"api_key={'key' * 100};foot=ball",
                 "counter_reports": "IR",
             },
             {
@@ -481,7 +481,7 @@ class TestLogicDataImportCSV:
                 "requestor_id": "RRRY",
                 "URL": "http://this.is/test/3",
                 "version": 51,
-                "extra_attrs": f'api_key={"key" * 100};foot=ball',
+                "extra_attrs": f"api_key={'key' * 100};foot=ball",
                 "counter_reports": "IR",
             },
         ]
@@ -591,7 +591,7 @@ class TestLogicDataImportCSV:
                 "requestor_id": "RRRX",
                 "URL": "http://this.is/test/2",
                 "version": 5,
-                "extra_attrs": f'auth=un,pass;api_key={"key" * 100};foo=bar',
+                "extra_attrs": f"auth=un,pass;api_key={'key' * 100};foo=bar",
                 "counter_reports": "TR, DR",
             },
         ]

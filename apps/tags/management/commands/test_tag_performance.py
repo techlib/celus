@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 def print_time_stats(times, title=""):
     print(
         f"{title}: "
-        f"avg={1000*mean(times):.1f} ms, "
-        f"min={1000*min(times):.1f} ms, "
-        f"max={1000*max(times):.1f} ms"
+        f"avg={1000 * mean(times):.1f} ms, "
+        f"min={1000 * min(times):.1f} ms, "
+        f"max={1000 * max(times):.1f} ms"
     )
 
 
@@ -68,7 +68,7 @@ class Command(BaseCommand):
         start = monotonic()
         list(Tag.objects.filter(tag_class__scope=TagScope.TITLE).annotate(Count("titles")))
         duration = monotonic() - start
-        print(f"Titles group by tag: time={1000*duration:.1f} ms")
+        print(f"Titles group by tag: time={1000 * duration:.1f} ms")
         return [duration]
 
     @classmethod
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         start = monotonic()
         list(qs)
         duration = monotonic() - start
-        print(f"Interest group by tag: time={1000*duration:.1f} ms")
+        print(f"Interest group by tag: time={1000 * duration:.1f} ms")
         return [duration]
 
     @classmethod

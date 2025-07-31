@@ -25,39 +25,39 @@ class TestAccessibleOrganizations:
     def test_counts(self, basic1, organizations, platforms, clients, users):
         assert User.objects.count() == 8, "we should have 8 test users and 5 orgs"
         assert users["user1"].organizations.count() == 1, "user 1 belongs to branch org"
-        assert (
-            users["user1"].accessible_organizations().count() == 1
-        ), "only branch org accessible for user1"
+        assert users["user1"].accessible_organizations().count() == 1, (
+            "only branch org accessible for user1"
+        )
 
         assert users["admin1"].organizations.count() == 2, "admin1 belongs to root and branch org"
-        assert (
-            users["admin1"].accessible_organizations().count() == 2
-        ), "both root and branch org are accessible for admin1"
+        assert users["admin1"].accessible_organizations().count() == 2, (
+            "both root and branch org are accessible for admin1"
+        )
 
         assert users["user2"].organizations.count() == 1, "user2 belongs to standalone org"
-        assert (
-            users["user2"].accessible_organizations().count() == 1
-        ), "standalone is accessible for user2"
+        assert users["user2"].accessible_organizations().count() == 1, (
+            "standalone is accessible for user2"
+        )
         assert users["admin2"].organizations.count() == 1, "admin2 belongs to standalone org"
-        assert (
-            users["admin2"].accessible_organizations().count() == 1
-        ), "standalone is accessible for user2"
+        assert users["admin2"].accessible_organizations().count() == 1, (
+            "standalone is accessible for user2"
+        )
 
         assert users["master_user"].organizations.count() == 1, "master_user belongs to master org"
-        assert (
-            users["master_user"].accessible_organizations().count() == 5
-        ), "all organizations are accessible for master_user"
-        assert (
-            users["master_admin"].organizations.count() == 1
-        ), "master_admin belongs to master org"
-        assert (
-            users["master_admin"].accessible_organizations().count() == 5
-        ), "all organizations are accessible for master_admin"
+        assert users["master_user"].accessible_organizations().count() == 5, (
+            "all organizations are accessible for master_user"
+        )
+        assert users["master_admin"].organizations.count() == 1, (
+            "master_admin belongs to master org"
+        )
+        assert users["master_admin"].accessible_organizations().count() == 5, (
+            "all organizations are accessible for master_admin"
+        )
 
         assert users["su"].organizations.count() == 0, "superuser doesn't explicitly belong to org"
-        assert (
-            users["su"].accessible_organizations().count() == 5
-        ), "all organizations are accessible for superuser"
+        assert users["su"].accessible_organizations().count() == 5, (
+            "all organizations are accessible for superuser"
+        )
 
         assert (
             users["admin1"].userorganization_set.filter(organization__name="branch").delete()[0]
@@ -282,13 +282,13 @@ class TestAccessibleUsers:
     def test_non_master_admin(self, basic1, organizations, platforms, clients, users, user):
         resp = clients[user].get(reverse("user-management-list"))
         # cannot see any superuser
-        assert not any(
-            [user["is_superuser"] for user in resp.json()]
-        ), "non-master admin should not be able to see superusers"
+        assert not any([user["is_superuser"] for user in resp.json()]), (
+            "non-master admin should not be able to see superusers"
+        )
         # cannot see any master admin
-        assert not any(
-            [user["is_admin_of_master_organization"] for user in resp.json()]
-        ), "non-master admin should not be able to see master admins"
+        assert not any([user["is_admin_of_master_organization"] for user in resp.json()]), (
+            "non-master admin should not be able to see master admins"
+        )
 
     # test that users are successfully created and added to appropriate orgs and permissions
     @pytest.mark.parametrize("is_admin", [True, False])
@@ -346,10 +346,10 @@ class TestOrgAdminsManagingSettings:
             },
         )
 
-        assert (
-            organizations["standalone"].users.all().count() == standalone_users_cnt + 1
-        ), "admin2 should be able to add users to his org when \
+        assert organizations["standalone"].users.all().count() == standalone_users_cnt + 1, (
+            "admin2 should be able to add users to his org when \
             ALLOW_ORG_ADMINS_TO_MANAGE_USERS = True"
+        )
 
     @pytest.mark.parametrize("is_admin", [True, False])
     def test_without_allow_admin(
@@ -370,8 +370,10 @@ class TestOrgAdminsManagingSettings:
             },
         )
 
-        assert resp.status_code == 403, "Non-master admin should not be able to add users when \
+        assert resp.status_code == 403, (
+            "Non-master admin should not be able to add users when \
             ALLOW_ORG_ADMINS_TO_MANAGE_USERS = False"
+        )
 
         # but master admin can create users in this org
         clients["master_admin"].post(
@@ -386,10 +388,10 @@ class TestOrgAdminsManagingSettings:
             },
         )
 
-        assert (
-            organizations["standalone"].users.all().count() == standalone_users_cnt + 1
-        ), "Master admin should be able to add users when \
+        assert organizations["standalone"].users.all().count() == standalone_users_cnt + 1, (
+            "Master admin should be able to add users when \
             ALLOW_ORG_ADMINS_TO_MANAGE_USERS = False"
+        )
 
 
 @pytest.mark.django_db

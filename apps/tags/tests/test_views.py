@@ -95,9 +95,9 @@ class TestTagViews:
         assert resp.status_code == 200
         assert len(resp.json()) == 86, "can see all the tags"
         assert len([tag for tag in resp.json() if tag["user_can_assign"]]) == 84
-        assert (
-            len([tag for tag in resp.json() if tag["user_can_modify"]]) == 4
-        ), "can only modify those where class permits tag creation"
+        assert len([tag for tag in resp.json() if tag["user_can_modify"]]) == 4, (
+            "can only modify those where class permits tag creation"
+        )
 
     def test_tag_tagged_titles(self, clients, users):
         user = users["user1"]
@@ -710,12 +710,12 @@ class TestTagClassViews:
 
         tc.refresh_from_db()
         tag.refresh_from_db()
-        assert (
-            tag.can_see == tc.default_tag_can_see
-        ), "Tag.can_see should match TagClass.default_tag_can_see"
-        assert (
-            tag.can_assign == tc.default_tag_can_assign
-        ), "Tag.can_assing should match TagClass.default_tag_can_assign"
+        assert tag.can_see == tc.default_tag_can_see, (
+            "Tag.can_see should match TagClass.default_tag_can_see"
+        )
+        assert tag.can_assign == tc.default_tag_can_assign, (
+            "Tag.can_assing should match TagClass.default_tag_can_assign"
+        )
         assert tag.owner == tc.owner, "Tag.owner should match TagClass.owner"
         assert tag.owner_org == tc.owner_org, "Tag.owner_org should match TagClass.owner_org"
 
@@ -1047,9 +1047,9 @@ class TestTagItemsLinksView:
             {"item_type": "platform", "item_id": ",".join(str(p.pk) for p in platforms)},
         )
         assert resp.status_code == 200
-        assert (
-            len(resp.json()) == 4 * platform_count
-        ), "there should be 4 links per visible platform"
+        assert len(resp.json()) == 4 * platform_count, (
+            "there should be 4 links per visible platform"
+        )
 
 
 @pytest.mark.django_db

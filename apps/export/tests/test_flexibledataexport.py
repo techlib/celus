@@ -301,9 +301,9 @@ class TestFlexibleDataExport:
                     assert archname.endswith(".csv")
                 assert "_metadata.csv" in zipfile.namelist()
             else:
-                assert (
-                    "[Content_Types].xml" in zipfile.namelist()
-                ), "XLSX should contain [Content_Types].xml"
+                assert "[Content_Types].xml" in zipfile.namelist(), (
+                    "XLSX should contain [Content_Types].xml"
+                )
                 workbook = openpyxl.load_workbook(export.output_file.file)
                 assert "metadata" in workbook.sheetnames
 

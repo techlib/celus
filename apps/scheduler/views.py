@@ -190,7 +190,7 @@ class HarvestViewSet(
             except CounterReportsToCredentials.DoesNotExist:
                 raise ValidationError(
                     {
-                        credentials.pk: f'Counter report {intention["counter_report"].code} '
+                        credentials.pk: f"Counter report {intention['counter_report'].code} "
                         f"is not active for credentials"
                     }
                 ) from None
@@ -198,7 +198,7 @@ class HarvestViewSet(
             if cr2c.broken:
                 raise ValidationError(
                     {
-                        credentials.pk: f'Counter report {intention["counter_report"].code} '
+                        credentials.pk: f"Counter report {intention['counter_report'].code} "
                         f"is broken for credentials"
                     }
                 )

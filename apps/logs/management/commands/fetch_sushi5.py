@@ -29,7 +29,7 @@ class Command(BaseCommand):
             "-p",
             dest="print_output",
             action="store_true",
-            help="If given, print out a nicely formatted version of the data on " "stdout",
+            help="If given, print out a nicely formatted version of the data on stdout",
         )
 
     def handle(self, *args, **options):

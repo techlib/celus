@@ -310,9 +310,9 @@ class TestClickhouseSync:
         new_interest_al_pks = set(
             AccessLog.objects.filter(report_type=interest_rt).values_list("pk", flat=True)
         )
-        assert (
-            len(new_interest_al_pks & interest_al_pks) == 0
-        ), "all interest accesslogs were removed and recreated"
+        assert len(new_interest_al_pks & interest_al_pks) == 0, (
+            "all interest accesslogs were removed and recreated"
+        )
         assert (
             interest_rt.accesslog_set.aggregate(int_sum=Sum("value"))["int_sum"] == 2 * old_sum_db
         ), "the interest with the new metric should be doubled"

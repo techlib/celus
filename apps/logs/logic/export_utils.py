@@ -109,7 +109,7 @@ class MappingXlsxDictWriter(DictWriter):
             for col in formula.refs
         ]
         if formula.operation == "sum":
-            return f'=SUM({",".join(cells)})'
+            return f"=SUM({','.join(cells)})"
         else:
             # the formula may simply be a string which should be filled in with the cell refs
             if "{" in formula.operation:

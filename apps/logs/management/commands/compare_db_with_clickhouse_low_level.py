@@ -33,7 +33,7 @@ class Command(BaseCommand):
         def al_info(rec):
             dim_info = []
             for i, dim in enumerate(rec.report_type.dimensions_sorted):
-                dim_val = getattr(rec, f"dim{i+1}")
+                dim_val = getattr(rec, f"dim{i + 1}")
                 dim_info.append(f"{dim.name}='{dt_remap.get(dim_val, dim_val)}'")
             if rec.target_id not in target_remap:
                 target_remap[rec.target_id] = Title.objects.get(pk=rec.target_id).name

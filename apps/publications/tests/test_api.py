@@ -1196,12 +1196,12 @@ class TestPlatformTitleAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 4, "4 overlap records in total"
-        assert (
-            len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 2
-        ), "2 records for self-overlap"
-        assert (
-            len([rec for rec in data if rec["platform1"] != rec["platform2"]]) == 2
-        ), "2 records for other-overlap"
+        assert len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 2, (
+            "2 records for self-overlap"
+        )
+        assert len([rec for rec in data if rec["platform1"] != rec["platform2"]]) == 2, (
+            "2 records for other-overlap"
+        )
         check_rec = [
             rec
             for rec in data
@@ -1244,9 +1244,9 @@ class TestPlatformTitleAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, "only 1 self overlap"
-        assert (
-            len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 1
-        ), "1 self-overlap"
+        assert len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 1, (
+            "1 self-overlap"
+        )
         # then with end_date which removes the overlapping records
         resp = authenticated_client.get(
             reverse("organization-platform-overlap", args=[organization.pk]),
@@ -1255,9 +1255,9 @@ class TestPlatformTitleAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1, "only 1 self overlap"
-        assert (
-            len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 1
-        ), "1 self-overlap"
+        assert len([rec for rec in data if rec["platform1"] == rec["platform2"]]) == 1, (
+            "1 self-overlap"
+        )
 
     @pytest.mark.parametrize(
         ["org_in_query", "org_has_config", "exp_value"],
@@ -1500,9 +1500,9 @@ class TestPlatformTitleAPI:
         data = resp.json()
         assert len(data) == 1, "only 1 record - self overlap"
         assert data[0]["overlap"] == 0, "no overlap"
-        assert (
-            data[0]["total_interest"] == exp_value
-        ), "the total interest should reflect the interest config"
+        assert data[0]["total_interest"] == exp_value, (
+            "the total interest should reflect the interest config"
+        )
 
     def test_organization_all_platform_overlap_all_orgs(
         self, master_user_client, accesslogs_with_interest, platforms
@@ -1883,9 +1883,9 @@ class TestTitlesOnMultiplePlatforms:
                     f"{ib1.platform_id}": {"min": 2010, "max": 2010},
                     f"{ib2.platform_id}": {"min": 2010, "max": 2010},
                 }, "2011 should be ignored - no No_License metric and no Controlled access type"
-                assert (
-                    rec["total_interest"] == 7 + 14
-                ), "Access_Type != Controlled (13+26) should be ignored"
+                assert rec["total_interest"] == 7 + 14, (
+                    "Access_Type != Controlled (13+26) should be ignored"
+                )
 
     @pytest.mark.parametrize(
         "order_by", ["total_interest", "name", "issn", "isbn", "doi", "platform_count"]

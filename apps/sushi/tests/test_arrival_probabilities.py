@@ -153,23 +153,23 @@ class TestGetArrivalProbabilities:
         settings.SUSHI_ARRIVAL_STATS_QUANTILES = [0.1, 0.25, 0.5, 0.75, 0.9, 1]
 
         p1: Platform = setup["p1"]
-        assert (
-            p1.sushi_arrival_stats["probabs"] == DEFAULT_ARRIVAL_STATS["probabs"]
-        ), "default values"
+        assert p1.sushi_arrival_stats["probabs"] == DEFAULT_ARRIVAL_STATS["probabs"], (
+            "default values"
+        )
         # test with threshold 10 - there is not enough data, so the data should be the same
         update_all_arrival_curves(attempt_count_threshold=10, lookback_days=None)
         p1.refresh_from_db()
-        assert (
-            p1.sushi_arrival_stats["probabs"] == DEFAULT_ARRIVAL_STATS["probabs"]
-        ), "default values"
+        assert p1.sushi_arrival_stats["probabs"] == DEFAULT_ARRIVAL_STATS["probabs"], (
+            "default values"
+        )
 
         # test with threshold 5 - there is enough data for generic model, but not for specific one
         update_all_arrival_curves(attempt_count_threshold=5, lookback_days=None)
         p1.refresh_from_db()
 
-        assert (
-            p1.sushi_arrival_stats["probabs"] == settings.SUSHI_ARRIVAL_STATS_QUANTILES
-        ), "updated probabilities"
+        assert p1.sushi_arrival_stats["probabs"] == settings.SUSHI_ARRIVAL_STATS_QUANTILES, (
+            "updated probabilities"
+        )
         assert p1.sushi_arrival_stats["source"] == "generic", "source should be generic"
 
         # test with threshold 3 - there is enough data for specific model

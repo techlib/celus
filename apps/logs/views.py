@@ -310,7 +310,7 @@ class AccessLogListViewBase(ListAPIView):
                 dimensions = rt.dimensions_sorted
                 tr_to_dimensions[rt.pk] = dimensions
             for i, dim in enumerate(dimensions):
-                value = getattr(al, f"dim{i+1}")
+                value = getattr(al, f"dim{i + 1}")
                 if dim.pk not in seen_dims:
                     # we need to fetch the mappings for this dimension
                     text_id_to_text.update(

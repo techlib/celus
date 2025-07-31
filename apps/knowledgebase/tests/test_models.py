@@ -333,14 +333,14 @@ class TestPlatformImportAttempt:
     def test_perform(self, data_sources, report_types):
         with requests_mock.Mocker() as m:
             m.get(
-                re.compile(f'^{data_sources["brain"].url}.*'), text=json.dumps(PLATFORM_INPUT_DATA)
+                re.compile(f"^{data_sources['brain'].url}.*"), text=json.dumps(PLATFORM_INPUT_DATA)
             )
             attempt1 = PlatformImportAttempt(source=data_sources["brain"])
             attempt1.save()
             attempt1.perform()
 
             assert m.called
-            assert attempt1.url == f'{data_sources["brain"].url}/knowledgebase/platforms/'
+            assert attempt1.url == f"{data_sources['brain'].url}/knowledgebase/platforms/"
             assert attempt1.kind == PlatformImportAttempt.KIND_PLATFORM
             assert attempt1.created_timestamp is not None
             assert attempt1.started_timestamp is not None
@@ -352,14 +352,14 @@ class TestPlatformImportAttempt:
 
         with requests_mock.Mocker() as m:
             m.get(
-                re.compile(f'^{data_sources["brain"].url}.*'), text=json.dumps(PLATFORM_INPUT_DATA)
+                re.compile(f"^{data_sources['brain'].url}.*"), text=json.dumps(PLATFORM_INPUT_DATA)
             )
             attempt2 = PlatformImportAttempt(source=data_sources["brain"])
             attempt2.save()
             attempt2.perform()
 
             assert m.called
-            assert attempt2.url == f'{data_sources["brain"].url}/knowledgebase/platforms/'
+            assert attempt2.url == f"{data_sources['brain'].url}/knowledgebase/platforms/"
             assert attempt2.kind == PlatformImportAttempt.KIND_PLATFORM
             assert attempt2.created_timestamp is not None
             assert attempt2.started_timestamp is not None
@@ -383,9 +383,9 @@ class TestPlatformImportAttempt:
             assert email_task.delay.called, "email about duplicated platforms sent"
 
         platform_with_source.refresh_from_db()
-        assert (
-            platform_with_source.name == "AAP - American Academy of Pediatrics"
-        ), "linked platform updated"
+        assert platform_with_source.name == "AAP - American Academy of Pediatrics", (
+            "linked platform updated"
+        )
 
     @freeze_time("2020-01-15 00:00:00")
     @pytest.mark.parametrize("verification", ("forced", "attempt"))
@@ -724,9 +724,9 @@ class TestReportTypeImportAttempt:
 
         assert attempt.stats == {"created": 1, "updated": 2, "total": 3}
         assert rt_count + 3 == ReportType.objects.count()
-        assert (
-            ReportInterestMetric.objects.count() == rim_count
-        ), "two report type metric were created and two were delete"
+        assert ReportInterestMetric.objects.count() == rim_count, (
+            "two report type metric were created and two were delete"
+        )
 
         report_type1 = ReportType.objects.get(short_name="one")
         assert report_type1.name == "first"

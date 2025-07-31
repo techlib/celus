@@ -1006,9 +1006,9 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
         # let's try for the complete data
         organization_data = slicer.get_possible_dimension_values("organization")
-        assert (
-            organization_data["count"] == Organization.objects.count()
-        ), "the data is complete so all organizations should be present"
+        assert organization_data["count"] == Organization.objects.count(), (
+            "the data is complete so all organizations should be present"
+        )
         # let's delete all records related to one organization and the filtered metrics
         AccessLog.objects.filter(metric__in=metrics, organization=organization).delete(
             i_know_what_i_am_doing=True
@@ -1017,9 +1017,9 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
             # we need to sync clickhouse because we did not use the standard way of deleting data
             ch_backend.delete_records(AccessLogCube.query().filter(organization_id=organization.pk))
         organization_data = slicer.get_possible_dimension_values("organization")
-        assert (
-            organization_data["count"] == Organization.objects.count() - 1
-        ), "one organization should not be present in the data anymore"
+        assert organization_data["count"] == Organization.objects.count() - 1, (
+            "one organization should not be present in the data anymore"
+        )
 
     def test_get_possible_dimension_values_with_text_filter_implicit_dim(
         self, flexible_slicer_test_data

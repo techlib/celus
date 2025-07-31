@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as celus-test
+FROM ubuntu:24.04 as celus-test
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG POETRY_VERSION

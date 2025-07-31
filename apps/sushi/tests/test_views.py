@@ -283,9 +283,9 @@ class TestSushiCredentialsViewSet:
         resp = clients["admin1"].patch(url, {"use_counter_reports_from_platform": True})
         assert resp.status_code == 200
         credentials.refresh_from_db()
-        assert (
-            credentials.counter_reports.count() == 0
-        ), "credentials should not contain any report types"
+        assert credentials.counter_reports.count() == 0, (
+            "credentials should not contain any report types"
+        )
 
     def test_destroy_locked_higher(self, basic1, organizations, platforms, clients):
         """
@@ -1185,9 +1185,9 @@ class TestSushiCredentialsViewSet:
         credentials["standalone_tr"].refresh_from_db()
         credentials["branch_pr"].refresh_from_db()
         assert credentials["standalone_tr"].use_counter_reports_from_platform is True
-        assert (
-            credentials["branch_pr"].use_counter_reports_from_platform is False
-        ), "admin2 is not allowed to updated branch_pr"
+        assert credentials["branch_pr"].use_counter_reports_from_platform is False, (
+            "admin2 is not allowed to updated branch_pr"
+        )
         assert all(
             e.use_counter_reports_from_platform is False
             for e in SushiCredentials.objects.exclude(
