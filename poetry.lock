@@ -4164,4 +4164,4 @@ registry = ["django-celus-registry"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.6"
-content-hash = "d8839c16b03e13e011eced870e49e21a81e4f3f9af52a51b9ae8e2afc869eaa2"
+content-hash = "18e61f38a02eb89fbd075ff442839407be2dcd2e9c9be388215019c10ceb8dcc"
