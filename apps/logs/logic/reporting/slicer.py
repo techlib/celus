@@ -12,6 +12,7 @@ from django.conf import settings
 from django.core.exceptions import EmptyResultSet
 from django.db.models import (
     Case,
+    CharField,
     DateField,
     F,
     FilteredRelation,
@@ -702,7 +703,11 @@ class FlexibleDataSlicer:
                 else:
                     # if there is a name, we want name, if not, we want short_name
                     # the following simulates this
-                    qs = qs.annotate(sort_name=Concat(F(f"name_{lang}"), F("short_name")))
+                    qs = qs.annotate(
+                        sort_name=Concat(
+                            F(f"name_{lang}"), F("short_name"), output_field=CharField()
+                        )
+                    )
                     obs.append(prefix + "sort_name")
             elif ob.startswith(self.primary_dimension) and not self.tag_roll_up:
                 if self._primary_dimension_query:
