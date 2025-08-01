@@ -201,7 +201,9 @@ class TestMaximusSync:
             }
             for p in platforms
         ]
-        for d in json.loads(json.dumps(get_platforms())):
+        payload = get_platforms()
+        assert "ext_id" in payload[0]  # testing regression
+        for d in json.loads(json.dumps(payload)):
             assert d in check
 
     @pytest.mark.django_db

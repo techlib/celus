@@ -57,7 +57,8 @@ class CallableRelatedField(serializers.SlugRelatedField):
 
 
 class CelusPlatformSerializer(serializers.ModelSerializer):
-    ext_id = serializers.IntegerField(source="id")
+    # platform already has a ext_id field and in new version of DRF overshadowing it here
+    # does not work. For this reason, we use pk instead and remap it later in `get_platforms`
     source = serializers.StringRelatedField()
     source_type = CallableRelatedField(
         read_only=True, slug_field="get_type_display", source="source"
@@ -65,7 +66,7 @@ class CelusPlatformSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Platform
-        fields = ("ext_id", "short_name", "name", "source", "source_type", "counter_registry_id")
+        fields = ("pk", "short_name", "name", "source", "source_type", "counter_registry_id")
 
 
 class CounterReportsToCredentialsSerializer(serializers.ModelSerializer):
@@ -141,9 +142,12 @@ def get_organizations_platforms():
 
 
 def get_platforms():
-    return CelusPlatformSerializer(
+    data = CelusPlatformSerializer(
         Platform.objects.all().select_related("source", "source__organization"), many=True
     ).data
+    for p in data:
+        p["ext_id"] = p.pop("pk")
+    return data
 
 
 def get_sushi_credentials():
@@ -176,4 +180,13 @@ def sync():
         "/flexible-reports/": get_flexible_reports,
     }
     for k, v in d.items():
-        c.post(settings.MAXIMUS_URL + k, json=v()).raise_for_status()
+        payload = v()
+        resp = c.post(settings.MAXIMUS_URL + k, json=payload)
+        if resp.status_code >= 400:
+            from core.tasks import async_mail_admins
+
+            async_mail_admins(
+                f"Failed to sync {k} to Maximus",
+                f"Failed to sync {k} to Maximus: {resp.status_code}\n\nError:\n{resp.text}\n\n"
+                f"Payload:\n{payload}",
+            )
