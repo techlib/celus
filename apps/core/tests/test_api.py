@@ -302,7 +302,7 @@ class TestAccountCreationAPI:
             resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/", self.test_user_data
             )
-        assert resp.status_code == 204
+        assert resp.status_code == 201
         assert User.objects.count() == 1
         assert len(mailoutbox) == 1
         user = User.objects.get()
@@ -322,13 +322,13 @@ class TestAccountCreationAPI:
             resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/", self.test_user_data
             )
-        assert resp.status_code == 204
+        assert resp.status_code == 201
         assert User.objects.count() == 1
         second_user_data = dict(self.test_user_data)
         second_user_data["email"] = "foo@baz.bar"
         with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
             resp = clients["unauthenticated"].post("/api/rest-auth/registration/", second_user_data)
-        assert resp.status_code == 204
+        assert resp.status_code == 201
         assert User.objects.count() == 2
 
     @pytest.mark.parametrize("first_verified", [True, False])
@@ -388,7 +388,7 @@ class TestAccountCreationAPI:
                     "password2": "verysecret666",
                 },
             )
-        assert resp.status_code == 204
+        assert resp.status_code == 201
         assert len(mailoutbox) == 1
         mail = mailoutbox[0]
         assert "CELUS" in mail.subject, "CELUS must be mentioned in the email body"
@@ -449,7 +449,7 @@ class TestAccountCreationAPI:
             resp = clients["unauthenticated"].post(
                 "/api/rest-auth/registration/", self.test_user_data
             )
-            assert resp.status_code == 204
+            assert resp.status_code == 201
             assert User.objects.count() == 1
             assert email_task.delay.called, "email to admins should be sent"
 

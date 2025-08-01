@@ -9,7 +9,6 @@ from io import StringIO
 
 import prometheus_client
 from allauth.account.adapter import get_adapter
-from allauth.account.utils import send_email_confirmation, sync_user_email_addresses
 from decouple import RepositoryEnv
 from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
@@ -37,6 +36,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
 from config.permissions import IsAuthenticatedWithOptional2FA
+from core.account import sync_user_email_addresses
 from core.logic.email import mail_otp_token
 from core.models import UL_ORG_ADMIN, Identity, TaskProgress, User
 from core.permissions import OwnerPermission, SuperuserOrAdminPermission, SuperuserPermission
@@ -134,11 +134,11 @@ class UserVerifyEmailView(APIView):
 
     def post(self, request):
         user: User = request.user
-        sync_user_email_addresses(user)
+        email_address = sync_user_email_addresses(user)
 
         # Don't send email if already verified
         if not user.email_verified:
-            send_email_confirmation(request, user, signup=False)
+            email_address.send_confirmation(request, signup=False)
 
         del user.email_verification  # reload cached property
         return Response(self.serializer_class(user.email_verification).data)
@@ -231,6 +231,10 @@ class UserPasswordResetView(PasswordResetConfirmView):
 
 
 class VerifyEmailAndOtpView(VerifyEmailView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._object = None
+
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200 and settings.OTP_ENABLED:
@@ -243,6 +247,13 @@ class VerifyEmailAndOtpView(VerifyEmailView):
             device.save()
             OtpDeviceView._set_cookie(response, user, device)
         return response
+
+    def get_object(self):
+        # cache call to get_object because it would be invalidated by the first call
+        # inside super().post
+        if self._object is None:
+            self._object = super().get_object()
+        return self._object
 
 
 class CeleryTaskStatusViewSet(mixins.RetrieveModelMixin, GenericViewSet):
@@ -428,11 +439,11 @@ class DifferentUserVerifyEmailView(APIView):
 
     def post(self, request):
         user = User.objects.get(pk=request.data.get("pk"))
-        sync_user_email_addresses(user)
+        email_address = sync_user_email_addresses(user)
 
         # Don't send email if already verified
         if not user.email_verified:
-            send_email_confirmation(request, user, signup=False)
+            email_address.send_confirmation(request, signup=False)
             verification_status = "verification email sent"
         else:
             verification_status = "already verified"

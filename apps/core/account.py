@@ -85,3 +85,25 @@ class CelusRegisterSerializer(RegisterSerializer):
         ):
             raise ValidationError("A user is already registered with this e-mail address.")
         return email
+
+
+def sync_user_email_addresses(user) -> EmailAddress:
+    """
+    Keep user.email in sync with user.emailaddress_set.
+
+    Under some circumstances the user.email may not have ended up as
+    an EmailAddress record, e.g. in the case of manually created admin
+    users.
+
+    NOTE: This is a modified copy of the function from allauth.account.utils,
+    which we used but was removed in allauth 65.10.0.
+    """
+    from .models import EmailAddress
+
+    if not user.email:
+        raise ValueError("User has no email address")
+
+    email_address, _ = EmailAddress.objects.get_or_create(
+        user=user, email=user.email, defaults={"primary": False, "verified": False}
+    )
+    return email_address
