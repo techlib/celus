@@ -48,7 +48,7 @@ class Command(BaseCommand):
         # Update User records unless --user-orgs-only is specified
         if not options["user_orgs_only"]:
             users_to_update = User.objects.filter(
-                send_grouped_harvest_reports=False
+                send_grouped_harvest_reports=False, is_active=True
             ).filter_consortium_admins()
             users_count = users_to_update.count()
 
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         # Update UserOrganization records unless --users-only is specified
         if not options["users_only"]:
             user_orgs_to_update = UserOrganization.objects.filter(
-                send_harvest_reports=False, is_admin=True
+                send_harvest_reports=False, is_admin=True, user__is_active=True
             )
             user_orgs_count = user_orgs_to_update.count()
 

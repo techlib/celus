@@ -96,3 +96,19 @@ class TestEnableHarvestReportsCommand:
         """Test that using both --users-only and --user-orgs-only raises error"""
         with pytest.raises(CommandError, match="Cannot use both --users-only and --user-orgs-only"):
             call_command("enable_harvest_reports", "--users-only", "--user-orgs-only")
+
+    def test_deactivate_user_does_not_update_harvest_reports(self, users_and_orgs):
+        """Test that deactivating a user does not update harvest reports"""
+        user1 = users_and_orgs["users"][0]
+        user1.is_active = False
+        user1.save()
+
+        user_org1 = users_and_orgs["user_orgs"][0]
+
+        call_command("enable_harvest_reports", "--do-it")
+
+        user1.refresh_from_db()
+        assert user1.send_grouped_harvest_reports is False
+
+        user_org1.refresh_from_db()
+        assert user_org1.send_harvest_reports is False
