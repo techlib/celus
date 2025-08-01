@@ -24,7 +24,7 @@ def delete_fetchattempts_and_related_importbatches_task(fetch_attempts_pks: list
 @celery.shared_task
 @email_if_fails
 def send_harvesting_report_task(user_id: int, organization_id: int):
-    if user := User.objects.filter(pk=user_id).first():
+    if user := User.objects.filter(pk=user_id, is_active=True).first():
         if organization := Organization.objects.filter(pk=organization_id).first():
             harvest_reports = make_harvest_reports([organization])
             send_harvest_reports(user, harvest_reports)

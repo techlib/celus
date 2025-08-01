@@ -218,6 +218,14 @@ class TestTask:
         tasks.send_harvesting_report_task(users["master_admin"].pk, organizations["branch"].pk)
         assert len(mailoutbox) == 1
 
+    def test_send_harvest_report_task_deactivated_user(
+        self, users, basic1, report_data, organizations, mailoutbox
+    ):
+        users["master_admin"].is_active = False
+        users["master_admin"].save()
+        tasks.send_harvesting_report_task(users["master_admin"].pk, organizations["branch"].pk)
+        assert len(mailoutbox) == 0, "Don't send emails for deactivated users"
+
     @pytest.mark.parametrize(
         "user,sent_count",
         (
