@@ -1452,6 +1452,7 @@ class TestFlexibleDataSimpleCSVExporter:
         slicer.add_filter(ExplicitDimensionFilter("dim1", dim1_ids), add_group=True)
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
+        slicer.order_by = ["platform"]
         exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
@@ -1474,6 +1475,7 @@ class TestFlexibleDataSimpleCSVExporter:
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date")
+        slicer.order_by = ["platform"]
         exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)
