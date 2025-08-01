@@ -269,33 +269,21 @@ class TestOrganizationAltNameAPI:
 
         # Success
         resp = clients[client].post(reverse("alt-name-list", args=(org_id,)), {"name": "alt2"})
-        if passes:
-            assert resp.status_code == 201
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (201 if passes else 403)
 
         # Organization not found
-        resp = clients[client].post(reverse("alt-name-list", args=(0,)), {"name": "alt2"})
-        if passes:
-            assert resp.status_code == 404
-        else:
-            assert resp.status_code == 403
+        resp = clients[client].post(reverse("alt-name-list", args=(0,)), {"name": "alt3"})
+        assert resp.status_code == (404 if passes else 403)
 
         # Name conflict with existing alt name
         resp = clients[client].post(reverse("alt-name-list", args=(org_id,)), {"name": "alt1"})
-        if passes:
-            assert resp.status_code == 400
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (400 if passes else 403)
 
         # Name conflict with existing organization name
         resp = clients[client].post(
             reverse("alt-name-list", args=(org_id,)), {"name": "standalone"}
         )
-        if passes:
-            assert resp.status_code == 400
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (400 if passes else 403)
 
     @pytest.mark.parametrize(
         ["client", "passes"],
@@ -316,31 +304,19 @@ class TestOrganizationAltNameAPI:
 
         # Organization not found
         resp = clients[client].delete(reverse("alt-name-detail", args=(0, alt_id)))
-        if passes:
-            assert resp.status_code == 404
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (404 if passes else 403)
 
         # Alt name not found
         resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, 0)))
-        if passes:
-            assert resp.status_code == 404
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (404 if passes else 403)
 
         # Success
         resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, alt_id)))
-        if passes:
-            assert resp.status_code == 204
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (204 if passes else 403)
 
         # Already deleted
         resp = clients[client].delete(reverse("alt-name-detail", args=(org_id, alt_id)))
-        if passes:
-            assert resp.status_code == 404
-        else:
-            assert resp.status_code == 403
+        assert resp.status_code == (404 if passes else 403)
 
 
 @pytest.mark.django_db
