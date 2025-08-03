@@ -34,6 +34,9 @@ class Command(BaseCommand):
             if not result.is_ok():
                 logger.error("FOUND DIFFERENCES BETWEEN DB AND CH!")
                 logger.info("\n".join(result.log))
+                logger.info(
+                    "Found %s import batches to resync", len(result.import_batches_to_resync)
+                )
                 if options["fix_it"]:
                     logger.info("Fixing found problems")
                     deal_with_comparison_results(result)

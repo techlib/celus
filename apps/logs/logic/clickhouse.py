@@ -34,12 +34,14 @@ def initialize_clickhouse():
 @needs_clickhouse_sync
 @atomic()
 def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_000) -> int:
+    logger.info("Syncing import batch %s with clickhouse", import_batch.pk)
     try:
         sync_log = ImportBatchSyncLog.objects.select_for_update().get(
             import_batch_id=import_batch.pk
         )
     except ImportBatchSyncLog.DoesNotExist:
         # the sync log was deleted before we got the lock, nothing to do anymore
+        logger.warning("Sync log for import batch %s does not exist", import_batch.pk)
         return 0
     if sync_log.state in (
         ImportBatchSyncLog.STATE_NO_CHANGE,
@@ -58,6 +60,12 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
             e = exc
             sync_log.state = ImportBatchSyncLog.STATE_SYNC
             sync_log.save()
+            logger.error(
+                "Error syncing import batch %s with clickhouse: %s",
+                import_batch.pk,
+                exc,
+                exc_info=True,
+            )
 
             def error():
                 raise e
@@ -74,6 +82,7 @@ def sync_import_batch_with_clickhouse(import_batch: ImportBatch, batch_size=10_0
     elif sync_log.state == ImportBatchSyncLog.STATE_DELETE:
         # the import batch was already deleted, so we cannot do anything and just leave it
         # to be picked up by celery cleanup task
+        logger.warning("Import batch %s was already deleted", import_batch.pk)
         return 0
     else:
         raise ValueError(f"Unhandled state {sync_log.state}")
