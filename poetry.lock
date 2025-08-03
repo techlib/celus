@@ -1461,13 +1461,13 @@ python-dateutil = ">=2.7"
 
 [[package]]
 name = "hcube"
-version = "0.28.0"
+version = "0.29.0"
 description = "HCube is a simple ORM for working with hyper-cube OLAP data stored in various backends."
 optional = false
-python-versions = ">=3.8.8"
+python-versions = ">=3.9"
 files = [
-    {file = "hcube-0.28.0-py3-none-any.whl", hash = "sha256:da50b9cb25a5fae950ee25b611f5acd4ad2139f055856d72f875c92b2c056bde"},
-    {file = "hcube-0.28.0.tar.gz", hash = "sha256:ba567a577a22699038ba22810316f3b9ac97e966b7445488dec6a587e36b5c2f"},
+    {file = "hcube-0.29.0-py3-none-any.whl", hash = "sha256:b0f5433df041eed4c288372b930a3288fa4b5f92054ab86fd33e8eae54c1cfd7"},
+    {file = "hcube-0.29.0.tar.gz", hash = "sha256:dc5b5f3d8d9ddb8ac512624131e1d888165c8f3b55b893e3524b546461e8180f"},
 ]
 
 [package.dependencies]
@@ -4164,4 +4164,4 @@ registry = ["django-celus-registry"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.6"
-content-hash = "18e61f38a02eb89fbd075ff442839407be2dcd2e9c9be388215019c10ceb8dcc"
+content-hash = "e7b6758118ed464760c47afabb1eec484fd53d00475047cbb575b0b0e9a8cc3d"
