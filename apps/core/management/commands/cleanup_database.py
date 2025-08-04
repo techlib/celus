@@ -11,6 +11,7 @@ from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db import connection
+from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
 from django_otp.plugins.otp_email.models import EmailDevice
 from events.models import Event
@@ -62,6 +63,18 @@ class Command(BaseCommand):
             stats[key] += value
 
     def handle(self, *args, **options):
+        if not options["doit"]:
+            # when pretending, we need to run in a transaction to be able to rollback
+            with atomic():
+                self.cleanup_database(options)
+            self.stderr.write(
+                self.style.SUCCESS("Pretend run completed, use --do-it to really do it")
+            )
+        else:
+            self.cleanup_database(options)
+            self.stderr.write(self.style.SUCCESS("Database cleaned up"))
+
+    def cleanup_database(self, options):
         # at first truncate the largest tables to make the cleanup faster
         to_truncate = (
             "logs_accesslog",
