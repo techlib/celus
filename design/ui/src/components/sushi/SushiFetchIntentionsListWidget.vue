@@ -409,7 +409,7 @@ export default {
     return {
       loading: false,
       showPacmanDialog: false,
-      orderBy: [],
+      orderBy: [{ key: "start_date", order: "desc" }],
       loadingActions: {
         trigger: [],
         cancel: [],

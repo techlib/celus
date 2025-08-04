@@ -258,7 +258,7 @@ export default {
       intentions: [],
       expandedRows: [],
       intentionCount: 0,
-      orderBy: [{ key: "timestamp", order: "desc" }],
+      orderBy: [{ key: "start_date", order: "desc" }],
       pageSize: 5,
       page: 1,
       showBatchDialog: false,
