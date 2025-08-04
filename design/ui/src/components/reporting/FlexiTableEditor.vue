@@ -157,10 +157,10 @@ cs:
                     v-bind="activatorProps"
                   ></v-text-field>
                   <v-icon
-                    v-if="!readOnly || (readOnly && reportDescription)"
+                    v-if="!readOnly"
                     size="x-small"
                     v-bind="activatorProps"
-                    :class="['ml-2 mt-3', readOnly ? 'disabled_icon' : '']"
+                    class="ml-2 mt-3"
                   >
                     fas fa-edit
                   </v-icon>
@@ -1967,10 +1967,6 @@ export default {
       content: "";
     }
   }
-}
-
-.disabled_icon {
-  opacity: 0.7;
 }
 
 .v-selection-control--density-comfortable {
