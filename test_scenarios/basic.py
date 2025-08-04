@@ -150,10 +150,16 @@ def platforms(data_sources):
         },
     )
 
-    root = PlatformFactory(name="root", source=data_sources["root"])
+    root = PlatformFactory(
+        name="root",
+        source=data_sources["root"],
+        counter_registry_id="00000000-0000-0000-0000-000000000000",
+    )
     branch = PlatformFactory(name="branch", source=data_sources["branch"])
     standalone = PlatformFactory(name="standalone", source=data_sources["standalone"])
-    shared = PlatformFactory(name="shared")
+    shared = PlatformFactory(
+        name="shared", counter_registry_id="11111111-1111-1111-1111-111111111111"
+    )
     del data_sources
     return locals()
 

@@ -6,7 +6,7 @@ from typing import List, Optional
 import pandas as pd
 from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from django.conf import settings
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from organizations.models import Organization
@@ -84,6 +84,12 @@ class CredentialsDataFrame:
             platforms = platforms | Platform.objects.filter(
                 source__organization__in=accessible_organizations
             )
+
+        platforms = platforms.filter(
+            Q(counter_registry_id__isnull=False)
+            | Q(sushicredentials__isnull=False)
+            | Q(knowledgebase__providers__0__isnull=False)
+        )
         return platforms.distinct().order_by("name_en")
 
     def create(
