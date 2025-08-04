@@ -11,7 +11,6 @@ from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db import connection
-from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
 from django_otp.plugins.otp_email.models import EmailDevice
 from events.models import Event
@@ -62,8 +61,20 @@ class Command(BaseCommand):
         for key, value in details.items():
             stats[key] += value
 
-    @atomic
     def handle(self, *args, **options):
+        # at first truncate the largest tables to make the cleanup faster
+        to_truncate = (
+            "logs_accesslog",
+            "logs_importbatch",
+            "publications_platformtitle",
+            "publications_title",
+            "sushi_sushifetchattempt",
+        )
+        with connection.cursor() as cursor:
+            for table in to_truncate:
+                cursor.execute(f"TRUNCATE TABLE {table} CASCADE")
+                self.stderr.write(self.style.SUCCESS(f"{table} table truncated"))
+
         # remove unused data
         stats = Counter()
         for model in (
