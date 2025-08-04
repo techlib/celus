@@ -2,7 +2,7 @@ import logging
 from collections import Counter
 
 from activity.models import UserActivity
-from allauth.account.models import EmailConfirmation
+from allauth.account.models import EmailAddress, EmailConfirmation
 from annotations.models import Annotation
 from deployment.models import FooterImage, SiteLogo
 from django.conf import settings
@@ -10,6 +10,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
+from django.db import connection
 from django.db.transaction import atomic
 from django_celery_results.models import TaskResult
 from django_otp.plugins.otp_email.models import EmailDevice
@@ -49,6 +50,11 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--bootstrap",
+            action="store_true",
+            help="Do extra cleaning for creating a database bootstrap",
+        )
         parser.add_argument("--do-it", dest="doit", action="store_true")
 
     @classmethod
@@ -73,7 +79,6 @@ class Command(BaseCommand):
             RouterSyncAttempt,
             TaskResult,
             PlatformImportAttempt,
-            # EmailAddress,
             EmailConfirmation,
             Token,
             FooterImage,
@@ -147,6 +152,29 @@ class Command(BaseCommand):
         self.stderr.write(
             self.style.SUCCESS(f"Updated {res} knowledgebase sources to use token from settings")
         )
+
+        # look for obsolete table `error_report_error` and remove it
+        # it is a remnant of a removed app, so it must be removed manually using raw SQL
+        self.stderr.write(self.style.WARNING("Looking for obsolete table `error_report_error`"))
+        with connection.cursor() as cursor:
+            cursor.execute("DROP TABLE IF EXISTS error_report_error")
+        self.stderr.write(self.style.SUCCESS("Obsolete table `error_report_error` removed"))
+
+        if options["bootstrap"]:
+            # remove all non-staff users
+            User.objects.exclude(is_staff=True).delete()
+            self.stderr.write(self.style.SUCCESS("Bootstrap: Removed all non-staff users"))
+            # make sure all remaining users have 2fa enabled
+            User.objects.all().update(skip_2fa=False)
+            self.stderr.write(self.style.SUCCESS("Bootstrap: Enabled 2fa for all users"))
+            # create verified email addresses for all users
+            for user in User.objects.all():
+                EmailAddress.objects.update_or_create(
+                    user=user, email=user.email, defaults={"verified": True, "primary": True}
+                )
+            self.stderr.write(
+                self.style.SUCCESS("Bootstrap: Created verified email addresses for all users")
+            )
 
         if not options["doit"]:
             raise ValueError("preventing db commit, use --do-it to really do it ;)")
