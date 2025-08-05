@@ -41,6 +41,8 @@ class ReportTypeSerializer(serializers.Serializer):
     name = serializers.CharField(allow_blank=True)
     metrics = MetricSerializer(many=True)
     dimensions = DimensionSerializer(many=True)
+    uses_titles = serializers.BooleanField(allow_null=True, default=None)
+    uses_items = serializers.BooleanField(allow_null=True, default=None)
 
 
 class ParserDefinitionSerializer(serializers.Serializer):

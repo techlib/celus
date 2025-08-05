@@ -699,6 +699,8 @@ class TestReportTypeImportAttempt:
         assert report_type1.ext_id == 111
         assert report_type1.controlled_metrics.count() == 0
         assert report_type1.dimensions.count() == 0
+        assert report_type1.uses_items is False
+        assert report_type1.uses_titles is True
 
         report_type2 = ReportType.objects.get(short_name="two")
         assert report_type2.name == "second"
@@ -720,6 +722,8 @@ class TestReportTypeImportAttempt:
                 "metric__short_name", "interest_group__short_name"
             )
         ) == [("metric1", "multimedia"), ("metric2", "search"), ("metric3", "other")]
+        assert report_type2.uses_items is False
+        assert report_type2.uses_titles is False
 
         # Create import batch for on of the report types
         ImportBatchFactory(report_type=report_type2)
@@ -746,6 +750,8 @@ class TestReportTypeImportAttempt:
                 "position", "dimension__short_name"
             )
         ) == [(0, "dim1")]
+        assert report_type1.uses_items is True
+        assert report_type1.uses_titles is False
 
         report_type2 = ReportType.objects.get(short_name="Two")
         assert report_type2.name == "SECOND"
@@ -767,6 +773,8 @@ class TestReportTypeImportAttempt:
                 "metric__short_name", "interest_group__short_name"
             )
         ) == [("metric3", "search")]
+        assert report_type2.uses_items is True
+        assert report_type2.uses_titles is True
 
         report_type3 = ReportType.objects.get(short_name="three")
         assert report_type3.name == "third"
@@ -794,6 +802,8 @@ class TestReportTypeImportAttempt:
             report_type3.reportinterestmetric_set.order_by("id").last().interest_group.short_name
             == "other"
         )
+        assert report_type3.uses_items is True
+        assert report_type3.uses_titles is False
 
     def test_metrics_are_not_duplicated(self, data_sources):
         MetricFactory(short_name="metric1", source=None)

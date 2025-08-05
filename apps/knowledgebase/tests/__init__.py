@@ -170,7 +170,14 @@ PLATFORM_INPUT_DATA3 = [
 
 
 REPORT_TYPE_INPUT_DATA = [
-    {"pk": 111, "short_name": "one", "name": "first", "dimensions": [], "metrics": []},
+    {
+        "pk": 111,
+        "short_name": "one",
+        "name": "first",
+        "dimensions": [],
+        "metrics": [],
+        "uses_titles": True,
+    },
     {
         "pk": 222,
         "short_name": "two",
@@ -199,6 +206,7 @@ REPORT_TYPE_INPUT_DATA = [
                 "interest_group": "other",
             },
         ],
+        "uses_items": False,
     },
 ]
 
@@ -210,6 +218,7 @@ REPORT_TYPE_INPUT_DATA2 = [
         "name": "first",
         "dimensions": [{"pk": 1, "short_name": "dim1", "aliases": ["dimension1", "DIM1", "d1"]}],
         "metrics": [],
+        "uses_items": True,
     },
     {
         "pk": 222,
@@ -228,6 +237,8 @@ REPORT_TYPE_INPUT_DATA2 = [
                 "interest_group": "search",
             },
         ],
+        "uses_titles": True,
+        "uses_items": True,
     },
     {
         "pk": 333,
@@ -246,5 +257,6 @@ REPORT_TYPE_INPUT_DATA2 = [
             },
             {"pk": 3, "short_name": "metric3", "aliases": ["m3"], "interest_group": "other"},
         ],
+        "uses_items": True,
     },
 ]

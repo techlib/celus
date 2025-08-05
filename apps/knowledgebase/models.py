@@ -495,12 +495,18 @@ class ReportTypeImportAttempt(ImportAttempt):
         counter["total"] = len(data)
 
         for report_type_data in data:
+            # Convert None to False for uses_*
+            report_type_data["uses_items"] = report_type_data["uses_items"] or False
+            report_type_data["uses_titles"] = report_type_data["uses_titles"] or False
+
             report_type, created = ReportType.objects.get_or_create(
                 source=self.source,
                 ext_id=report_type_data["pk"],
                 defaults={
                     "name": report_type_data["name"],
                     "short_name": report_type_data["short_name"],
+                    "uses_items": report_type_data["uses_items"],
+                    "uses_titles": report_type_data["uses_titles"],
                 },
             )
 
@@ -632,7 +638,7 @@ class ReportTypeImportAttempt(ImportAttempt):
                         updated = True
 
                 # Set attributes
-                for field in ("short_name", "name"):
+                for field in ("short_name", "name", "uses_items", "uses_titles"):
                     updated = updated or (getattr(report_type, field) != report_type_data[field])
                     setattr(report_type, field, report_type_data[field])
 

@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from dataclasses import dataclass
 from typing import List
 
 from celus_nibbler.parsers import get_parsers
@@ -11,6 +12,22 @@ from sushi.models import COUNTER_REPORTS, CounterReportType
 from logs.models import Dimension, ReportType, ReportTypeToDimension
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Usage:
+    uses_titles: bool = True
+    uses_items: bool = False
+
+    @classmethod
+    def from_code(cls, name: str) -> "Usage":
+        if name in ("PR", "PR1"):
+            return cls(uses_items=False, uses_titles=False)
+        if name == "IR":
+            return cls(uses_items=True, uses_titles=True)
+        if name == "IR_M1":
+            return cls(uses_items=True, uses_titles=False)
+        return cls()
 
 
 def make_dimension_c51_based_on_c5(rt5: ReportType, rt51: ReportType, dimensions: List[str]):
@@ -65,6 +82,8 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                 )
                 continue
 
+            usage = Usage.from_code(crt_code)
+
             # Update ReportTypes
             try:
                 rt = ReportType.objects.get(short_name=rt_short_name, source__isnull=True)
@@ -72,9 +91,12 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                 print("Missing RT:", rt_short_name)
                 stats["missing_rt"] += 1
                 if fix_it:
-                    uses_items = crt_code == "IR"
                     rt = ReportType.objects.create(
-                        short_name=rt_short_name, name=name, source=None, uses_items=uses_items
+                        short_name=rt_short_name,
+                        name=name,
+                        source=None,
+                        uses_items=usage.uses_items,
+                        uses_titles=usage.uses_titles,
                     )
                     if version == 51:
                         if rt5 := ReportType.objects.filter(short_name=rt_short_name[:-2]).first():
@@ -94,6 +116,26 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                             setattr(rt, f"name_{code}", name)
                             rt.save()
                             stats["fixed_rt_name"] += 1
+
+                if usage.uses_titles != rt.uses_titles:
+                    print(
+                        f"RT uses_titles mismatch {rt.short_name} "
+                        f'"{rt.uses_titles}" != "{usage.uses_titles}"'
+                    )
+                    stats["rt_uses_titles_mismatch"] += 1
+                    if fix_it:
+                        rt.uses_titles = usage.uses_titles
+                        rt.save()
+
+                if usage.uses_items != rt.uses_items:
+                    print(
+                        f"RT uses_items mismatch {rt.short_name} "
+                        f'"{rt.uses_items}" != "{usage.uses_items}"'
+                    )
+                    stats["rt_uses_items_mismatch"] += 1
+                    if fix_it:
+                        rt.uses_items = usage.uses_items
+                        rt.save()
 
             # check ReportType dimensions
             dims = set(dimensions)

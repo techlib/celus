@@ -1124,6 +1124,10 @@ export default {
       if (!this.showItems) {
         base = base.filter((d) => d.id !== "item");
       }
+      // remove titles if not all report types use titles
+      if (!this.showTitles) {
+        base = base.filter((d) => d.id !== "target");
+      }
       return base;
     },
     appliedFilters() {
@@ -1237,6 +1241,9 @@ export default {
     },
     showItems() {
       return this.selectedReportTypeObjs.every((rt) => rt.uses_items);
+    },
+    showTitles() {
+      return this.selectedReportTypeObjs.every((rt) => rt.uses_titles);
     },
     disableDimValuesSelectors() {
       return this.selectedReportTypes.length === 0;
@@ -1878,6 +1885,9 @@ export default {
       this.reportViews = [];
       if (this.selectedReportTypes.length === 1) {
         this.fetchReportViews();
+      }
+      if (!this.showTitles) {
+        this.filters = this.filters.filter((e) => e != "target");
       }
     },
     filters: {
