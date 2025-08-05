@@ -513,7 +513,7 @@ cs:
               v-if="uploading"
             ></v-progress-linear>
             <v-btn
-              v-else-if="canConfirm && uploadObject"
+              v-else-if="canConfirm && uploadObject && uploadObjectId"
               @click="confirmReportType(), next"
               color="primary"
               :loading="confirming"
@@ -1220,7 +1220,6 @@ export default {
           this.methodChanged = false;
         }
 
-        this.step = this.steps.preflight;
         await this.$router.push({
           name: "platform-upload-data-step-preflight",
           params: {
@@ -1448,6 +1447,8 @@ export default {
     },
     async backToStart() {
       let reportTypeId = this.uploadObject?.report_type?.pk;
+      this.dataFile = null;
+      this.step = this.steps.upload;
       await this.$router.push({
         name: "platform-upload-data",
         params: {
