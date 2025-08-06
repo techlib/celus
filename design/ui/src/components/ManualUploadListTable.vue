@@ -377,6 +377,7 @@ export default {
       mduCount: 0,
       page: 1,
       pageSize: 10,
+      changingOrganization: false,
       watchedAttrs: [
         {
           name: "search",
@@ -627,6 +628,18 @@ export default {
         });
       }
     },
+    // Merge current filters with available options, keeping only valid ones
+    mergeFilters(currentFilter, filtered) {
+      if (currentFilter.length > 0) {
+        const availableFilters = currentFilter.filter((id) =>
+          filtered.map((p) => p.pk).includes(id),
+        );
+        if (availableFilters.length !== currentFilter.length) {
+          return availableFilters;
+        }
+      }
+      return currentFilter;
+    },
     async fetchStats() {
       const reply = await this.http({
         url: this.mduStatsBaseUrl,
@@ -666,10 +679,30 @@ export default {
       this.page = 1; // reset page when filter changes
     },
     url() {
-      this.fetchMDUs();
+      if (!this.changingOrganization) {
+        this.fetchMDUs();
+      }
     },
     selectedOrganizationId() {
-      this.refetchFilters();
+      this.changingOrganization = true;
+      this.page = 1;
+      this.$nextTick(() => {
+        this.refetchFilters();
+        this.fetchMDUs();
+        this.changingOrganization = false;
+      });
+    },
+    filteredPlatforms() {
+      this.filterPlatforms = this.mergeFilters(
+        this.filterPlatforms,
+        this.filteredPlatforms,
+      );
+    },
+    filteredReportTypes() {
+      this.filterReportTypes = this.mergeFilters(
+        this.filterReportTypes,
+        this.filteredReportTypes,
+      );
     },
   },
 
