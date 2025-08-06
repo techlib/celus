@@ -544,11 +544,11 @@ def sync_organizationplatform_records_task(reason: Optional[str] = None):
 @email_if_fails
 @atomic
 def find_split_accesslogs_with_the_same_title_task():
-    stats = find_split_accesslogs_with_the_same_title()
+    stats = find_split_accesslogs_with_the_same_title(fix_it=True)
     if stats:
         async_mail_admins.delay(
-            "Found split accesslogs with the same title",
-            f"Stats: {stats}\n\nTo fix the issue, manual invervention is needed.",
+            "Found and fixed split accesslogs with the same title",
+            f"Stats: {stats}\n\nNo manual intervention is needed.",
         )
 
 

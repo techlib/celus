@@ -148,4 +148,10 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
         else:
             logger.info("Nothing to fix")
 
+    if fix_it:
+        stats["ibs_resynced"] = len(ibs_to_resync)
+        stats["titles_fixed"] = len(titles_to_fix)
+    else:
+        stats["ibs_to_resync"] = len(ibs_to_resync)
+        stats["titles_to_fix"] = len(titles_to_fix)
     return stats
