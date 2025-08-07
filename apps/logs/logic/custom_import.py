@@ -10,6 +10,7 @@ from organizations.models import Organization
 
 from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
 from logs.logic.data_import import import_counter_records, import_empty_batches
+from logs.logic.interest.computation import sync_interest_for_import_batch
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload
 
@@ -128,6 +129,9 @@ def import_custom_data(
                 months=list(mdu.preflight["months"].keys()),
                 import_batch_kwargs={"user": user, "owner_level": mdu.owner_level},
             )
+            # sync interest for each empty import batch so that interest_ib is properly set
+            for ib in new_ibs:
+                sync_interest_for_import_batch(ib)
             new_stats = {}
         else:
             new_ibs, new_stats = import_counter_records(

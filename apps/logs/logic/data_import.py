@@ -218,9 +218,7 @@ def import_counter_records(
         sync_interest_for_import_batch(ib, interest_rt, skip_clickhouse_sync=True)
         # if interest of this ib supersedes interest of other ibs, then we need to recompute
         # but we only do it in `on_commit` to leave it after the current transaction
-        ibs_for_interest_recompute.update(
-            set(find_superseded_import_batches(ib).values_list("pk", flat=True))
-        )
+        ibs_for_interest_recompute.update({ib.pk for ib in find_superseded_import_batches(ib)})
         # compute materialized report types
         sync_materialized_reports_for_import_batch(ib)
 

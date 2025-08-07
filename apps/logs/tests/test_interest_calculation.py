@@ -21,7 +21,7 @@ from logs.fake_data import (
     MetricFactory,
     ReportTypeFactory,
 )
-from logs.logic.data_import import import_counter_records
+from logs.logic.data_import import create_import_batch_or_crash, import_counter_records
 from logs.logic.interest.computation import (
     InterestComputer,
     _find_metric_interest_changes,
@@ -220,6 +220,83 @@ class TestInterestCalculation:
         new_ib = ibs_new[0]
         assert new_ib.accesslog_set.count() == 6, "3 normal logs + 3 interest logs"
         assert interest_rt.accesslog_set.count() == 4, "3 new interest logs + 1 remaining old"
+
+    @pytest.mark.parametrize(["new_before_old"], [[True], [False]])
+    @pytest.mark.django_db(transaction=True)
+    def test_superseded_report_types_with_empty_record_count(
+        self,
+        counter_records,
+        organizations,
+        report_type_nd,
+        new_before_old,
+        interest_rt,
+        interest_groups,
+    ):
+        """
+        Test that when there are data for two report types from which one obsoletes the other,
+        but the newer does not have any records, while the older does, the older data should
+        be used for interest calculation and not superseded.
+
+        This is a modified version of the test_superseded_report_types test and complements it
+        to test the case when the newer report type has no records.
+        """
+        organization = organizations[0]
+        platform = Platform.objects.create(
+            short_name="Platform1", name="Platform 1", provider="Provider 1"
+        )
+        report_type_old: ReportType = report_type_nd(1, short_name="old")
+        report_type_new: ReportType = report_type_nd(1, short_name="new")
+        report_type_old.superseded_by = report_type_new
+        report_type_old.save()
+        # now define the interest
+        hit_metric = MetricFactory.create(short_name="Hits")
+        ReportInterestMetric.objects.create(
+            report_type=report_type_old,
+            metric=hit_metric,
+            interest_group=interest_groups["full_text"],
+        )
+        ReportInterestMetric.objects.create(
+            report_type=report_type_new,
+            metric=hit_metric,
+            interest_group=interest_groups["full_text"],
+        )
+        # prepare data
+        data_old = [
+            ["Title1", "2018-01-01", "1v1", 1],
+            ["Title2", "2018-01-01", "1v2", 2],
+            ["Title3", "2018-02-01", "1v2", 4],  # this is extra - has different date
+        ]
+        crs_old = counter_records(data_old, metric="Hits", platform="Platform1")
+        # import and check
+        if new_before_old:
+            # this simulates what happens when an exception 3030 is present in the data
+            ib_new = create_import_batch_or_crash(
+                report_type_new, organization, platform, "2018-01-01"
+            )
+            sync_interest_for_import_batch(ib_new)
+        ibs_old, _stats = import_counter_records(report_type_old, organization, platform, crs_old)
+        if not new_before_old:
+            # this simulates what happens when an exception 3030 is present in the data
+            ib_new = create_import_batch_or_crash(
+                report_type_new, organization, platform, "2018-01-01"
+            )
+            sync_interest_for_import_batch(ib_new)
+        assert len(ibs_old) == 2, "one import batch per month"
+        old_ib1, old_ib2 = sorted(ibs_old, key=lambda x: x.date)
+        old_ib1.refresh_from_db()
+        old_ib2.refresh_from_db()
+        assert old_ib1.date == date(2018, 1, 1)
+        assert old_ib2.date == date(2018, 2, 1)
+        assert old_ib1.interest_ib == old_ib1, "contains its own interest"
+        assert old_ib1.interest_timestamp is not None, "interest timestamp is set"
+        assert old_ib2.interest_ib == old_ib2, "contains its own interest"
+        assert old_ib1.accesslog_set.count() == 4, "2 normal + 2 interest logs in first batch"
+        assert old_ib2.accesslog_set.count() == 2, "1 normal log + 1 interest log in second batch"
+
+        ib_new.refresh_from_db()
+        assert ib_new.accesslog_set.count() == 0, "no interest logs"
+        assert ib_new.interest_ib == old_ib1, "no interest logs in the new batch - use the old one"
+        assert interest_rt.accesslog_set.count() == 3, "2 in old_ib1 + 1 in old_ib2"
 
     def test_two_report_types_with_the_same_metric(
         self, counter_records, organizations, report_type_nd, interest_rt
@@ -713,7 +790,7 @@ class TestRealWorldInterestCalculation:
         [
             ("TR", ["JR1", "BR2"]),
             ("TR51", ["TR", "JR1", "BR2"]),
-            ("IR51", ["TR51", "TR", "JR1", "BR2", "IR_M1"]),
+            ("IR51", ["TR51", "IR_M1", "TR", "JR1", "BR2"]),
             ("DR51", ["DR", "DB1"]),
             ("DR", ["DB1"]),
             ("JR1", []),
@@ -731,9 +808,7 @@ class TestRealWorldInterestCalculation:
         call_command("check_report_type_dimensions", "--fix-it")
         call_command("check_interest_definitions", "--fix-it")
         rt = ReportType.objects.get(short_name=rt)
-        assert {t.short_name for t in get_report_types_superseded_by_report_type(rt)} == set(
-            expected
-        )
+        assert [t.short_name for t in get_report_types_superseded_by_report_type(rt)] == expected
 
     @pytest.mark.parametrize(
         ["ref_rt", "expected"],
@@ -773,10 +848,101 @@ class TestRealWorldInterestCalculation:
         assert set(find_superseded_import_batches(ref_ib)) == set(tr_to_ib[rt] for rt in expected)
 
     @pytest.mark.parametrize(
-        ["existing_tr", "clashes"], [[None, False], ["IR51", True], ["TR51", True]]
+        ["ref_record_count", "superseded_record_count", "is_found"],
+        [
+            (10, 10, True),  # both are not empty
+            (10, 0, True),  # the reference is not empty -> superseded
+            (0, 10, False),  # the reference is empty -> not superseded
+            (0, 0, True),  # both are empty -> superseded
+        ],
+    )
+    def test_find_superseded_import_batches_with_empty_record_count(
+        self, organizations, ref_record_count, superseded_record_count, is_found
+    ):
+        """
+        Test that find_superseded_import_batches returns does not return a superseding import batch
+        if it is empty and the reference import batch is not.
+        """
+        organization = organizations[0]
+        platform = PlatformFactory()
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        tr = ReportType.objects.get(short_name="TR")
+        tr_51 = ReportType.objects.get(short_name="TR51")
+        # create import batches for both report types
+        tr51_ib = ImportBatchFactory(
+            organization=organization,
+            platform=platform,
+            report_type=tr_51,
+            date="2024-01-01",
+            record_count=ref_record_count,
+        )
+        tr_ib = ImportBatchFactory(
+            organization=organization,
+            platform=platform,
+            report_type=tr,
+            date="2024-01-01",
+            record_count=superseded_record_count,
+        )
+        # now test the function
+        assert set(find_superseded_import_batches(tr51_ib)) == ({tr_ib} if is_found else set())
+
+    @pytest.mark.parametrize(
+        ["tr_count", "br2_count", "top_found_ib"],
+        [
+            (0, 0, None),  # none has data
+            (0, 10, "BR2"),  # BR2 has data
+            (10, 0, "TR"),  # TR has data
+            (10, 10, "TR"),  # TR is the highest which has data
+        ],
+    )
+    def test_sync_interest_for_import_batch_with_three_report_types(
+        self, organizations, tr_count, br2_count, top_found_ib
+    ):
+        """
+        Test that when source ib has no data, sync_interest_for_import_batch
+        will find the highest report type which has data and use it as the interest ib.
+        """
+        organization = organizations[0]
+        platform = PlatformFactory()
+        call_command("check_report_type_dimensions", "--fix-it")
+        call_command("check_interest_definitions", "--fix-it")
+        tr = ReportType.objects.get(short_name="TR")
+        tr_51 = ReportType.objects.get(short_name="TR51")
+        br2 = ReportType.objects.get(short_name="BR2")
+        # create import batches for both report types
+        tr51_ib = ImportBatchFactory(
+            organization=organization,
+            platform=platform,
+            report_type=tr_51,
+            date="2024-01-01",
+            record_count=0,
+        )
+        ImportBatchFactory(
+            organization=organization,
+            platform=platform,
+            report_type=tr,
+            date="2024-01-01",
+            record_count=tr_count,
+        )
+        ImportBatchFactory(
+            organization=organization,
+            platform=platform,
+            report_type=br2,
+            date="2024-01-01",
+            record_count=br2_count,
+        )
+        # now test the function
+        sync_interest_for_import_batch(tr51_ib)
+        tr51_ib.refresh_from_db()
+        assert tr51_ib.interest_ib.report_type.short_name == (top_found_ib or "TR51")
+
+    @pytest.mark.parametrize(
+        ["existing_tr", "existing_record_count", "clashes"],
+        [[None, 0, False], ["IR51", 10, True], ["TR51", 10, True], ["TR51", 0, False]],
     )
     def test_report_type_hierarchy_during_import(
-        self, interest_rt, interest_groups, existing_tr, clashes
+        self, interest_rt, interest_groups, existing_tr, existing_record_count, clashes
     ):
         """
         Test that interest from IR51 will prevent computation of interest from TR
@@ -792,6 +958,7 @@ class TestRealWorldInterestCalculation:
                 platform=platform,
                 report_type=ReportType.objects.get(short_name=existing_tr),
                 date="2024-01-01",
+                record_count=existing_record_count,
             )
         crs = [
             CounterRecord(

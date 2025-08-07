@@ -186,18 +186,9 @@ class InterestGroupAdmin(TranslationAdmin):
 
 @admin.register(models.ImportBatch)
 class ImportBatchAdmin(admin.ModelAdmin):
-    list_display = ["created", "report_type", "organization", "platform", "date", "log_count"]
+    list_display = ["created", "report_type", "organization", "platform", "date", "record_count"]
     list_filter = ["report_type", "organization", "platform"]
     list_select_related = ["report_type", "organization", "platform"]
-
-    @classmethod
-    def log_count(cls, obj: models.ImportBatch):
-        return obj.accesslog_set.count()
-
-    # the following is actually much slower than doing a separate query for each import batch
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     return qs.annotate(log_count=Count('accesslog'))
 
 
 @admin.register(models.ReportMaterializationSpec)

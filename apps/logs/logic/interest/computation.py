@@ -76,7 +76,7 @@ def sync_interest_by_import_batches(queryset=None) -> Counter:
 @atomic
 def sync_interest_for_import_batch(
     import_batch: ImportBatch,
-    interest_rt: ReportType,
+    interest_rt: Optional[ReportType] = None,
     skip_clickhouse_sync=False,
     interest_computer: Optional["InterestComputer"] = None,
     assume_no_old_interest=False,
@@ -90,6 +90,7 @@ def sync_interest_for_import_batch(
     """
     start = time()
     stats = Counter()
+    interest_rt = interest_rt or ReportType.objects.get_interest_rt()
     # check if superseding import batch exists and return empty list if it does
     if superseding_ib := find_superseding_import_batch(import_batch):
         stats["superseded_import_batch"] += 1
@@ -100,6 +101,19 @@ def sync_interest_for_import_batch(
             remove_interest_from_import_batches([import_batch.pk], interest_rt)
         import_batch.save()
         return stats
+
+    # if the import batch has no records, we want to find import batches for the same date
+    # which would normally be superseded by this import batch, but have records
+    # so this record will be superseded by the one with records instead
+    if import_batch.record_count == 0:
+        superseded_ibs = find_superseded_import_batches(import_batch, no_emptiness_check=True)
+        for superseded_ib in superseded_ibs:
+            if superseded_ib.record_count > 0:
+                import_batch.interest_ib = superseded_ib
+                import_batch.interest_timestamp = now()
+                import_batch.save()
+                stats["empty_ib_superseded_by_non_empty_ib"] += 1
+                return stats
 
     # prepare the data
     ic = interest_computer or InterestComputer(interest_rt)
@@ -173,14 +187,16 @@ def find_superseding_import_batch(import_batch: ImportBatch) -> Optional[ImportB
     Find the superseding import batch for the given import batch.
     """
     superseding_report_types = get_report_type_superseding_report_types(import_batch.report_type)
-    ibs = list(
-        ImportBatch.objects.filter(
-            report_type__in=superseding_report_types,
-            organization_id=import_batch.organization_id,
-            platform_id=import_batch.platform_id,
-            date=import_batch.date,
-        )
+    qs = ImportBatch.objects.filter(
+        report_type__in=superseding_report_types,
+        organization_id=import_batch.organization_id,
+        platform_id=import_batch.platform_id,
+        date=import_batch.date,
     )
+    if import_batch.record_count > 0:
+        # this import batch has records, so a superseding import batch must have records as well
+        qs = qs.filter(record_count__gt=0)
+    ibs = list(qs)
     if not ibs:
         return None
     if len(ibs) == 1:
@@ -214,9 +230,10 @@ def find_superseding_import_batches(
         else:
             # multiple import batches for the same date - keep the one with the highest
             # positioned report type
+            # also replace if the superseded import batch has no records
             if superseding_report_types.index(ib.report_type) < superseding_report_types.index(
                 out[ib.date].report_type
-            ):
+            ) or (out[ib.date].record_count == 0 and ib.record_count > 0):
                 out[ib.date] = ib
     return out
 
@@ -244,21 +261,24 @@ def get_report_type_superseding_report_types(report_type: ReportType) -> List[Re
 
 def get_report_types_superseded_by_report_type(report_type: ReportType) -> List[ReportType]:
     """
-    Returns a list of report types that are superseded by the given report type
+    Returns a list of report types that are superseded by the given report type.
+    The list is ordered from the closest superseded to the most distant.
     """
     id_to_superseded = defaultdict(list)
-    for rt in ReportType.objects.filter(superseded_by__isnull=False).select_related(
-        "superseded_by"
+    for rt in (
+        ReportType.objects.filter(superseded_by__isnull=False)
+        .order_by("-counterreporttype__counter_version", "pk")  # to have stable ordering
+        .select_related("superseded_by")
     ):
         id_to_superseded[rt.superseded_by_id].append(rt)
     out = list(id_to_superseded.get(report_type.id, []))  # copy the list
-    newly_added = set(out)
+    newly_added = list(out)
     while newly_added:
-        rt = newly_added.pop()
+        rt = newly_added.pop(0)
         for new_rt in id_to_superseded.get(rt.id, []):
             if new_rt not in out:
                 out.append(new_rt)
-                newly_added.add(new_rt)
+                newly_added.append(new_rt)
     return out
 
 
@@ -290,18 +310,50 @@ def fast_compare_existing_and_new_records(
     return really_new, obsolete_pks, same
 
 
-def find_superseded_import_batches(import_batch: ImportBatch) -> QuerySet[ImportBatch]:
+def find_superseded_import_batches(
+    import_batch: ImportBatch, no_emptiness_check=False
+) -> List[ImportBatch]:
     """
     Find all import batches for which interest is superseded by the given import batch
-    and thus need recomputation
+    and thus need recomputation.
+
+    If no_emptiness_check is True, we do not check if the import batch has records.
+    This is used when we want to find import batches that are superseded by an empty import batch
+    and we want to find if we can use a non-empty import batch instead.
     """
     superseded_rts = get_report_types_superseded_by_report_type(import_batch.report_type)
-    return ImportBatch.objects.filter(
+    qs = ImportBatch.objects.filter(
         organization_id=import_batch.organization_id,
         platform_id=import_batch.platform_id,
         report_type__in=superseded_rts,
         date=import_batch.date,
     )
+    if import_batch.record_count == 0:
+        if not no_emptiness_check:
+            # this import batch has no records, so it can only supersede other empty import batches
+            qs = qs.filter(record_count=0)
+
+    # we need to sort the import batches by the position of the report type in the hierarchy
+    # as given by the `superseded_rts` list
+    out = []
+    ibs = list(qs)
+    for rt in superseded_rts:
+        out.extend(ib for ib in ibs if ib.report_type_id == rt.id)
+
+    if import_batch.record_count > 0:
+        # non-empty import batch can supersede empty import batches even if they are higher in the
+        # hierarchy
+        superseding_rts = get_report_type_superseding_report_types(import_batch.report_type)
+        out += list(
+            ImportBatch.objects.filter(
+                report_type__in=superseding_rts,
+                organization_id=import_batch.organization_id,
+                platform_id=import_batch.platform_id,
+                date=import_batch.date,
+                record_count=0,
+            )
+        )
+    return out
 
 
 @dataclass
@@ -740,7 +792,7 @@ def remove_interest_from_import_batches(
 
 
 @atomic
-def recompute_interest_by_batch(queryset=None, verbose=False):
+def recompute_interest_by_batch(queryset=None, verbose=False, interest_rt=None):
     """
     Using `verbose` reports potential discrepancies between old and recomputed interest values.
     It requires 2 extra queries for each import batch, so it should be used with caution.
@@ -769,7 +821,7 @@ def recompute_interest_by_batch(queryset=None, verbose=False):
     if total_count == 0:
         # short-circuit to save query for interest report type
         return stats
-    interest_rt = ReportType.objects.get_interest_rt()
+    interest_rt = interest_rt or ReportType.objects.get_interest_rt()
     for i, import_batch in enumerate(queryset.iterator()):
         old_sum = (
             import_batch.accesslog_set.filter(report_type=interest_rt).aggregate(sum=Sum("value"))[

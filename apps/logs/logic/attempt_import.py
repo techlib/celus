@@ -22,6 +22,7 @@ from logs.logic.data_import import (
     import_counter_records,
     wipe_empty_or_partial_import_batches,
 )
+from logs.logic.interest.computation import sync_interest_for_import_batch
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +180,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
         attempt.save()
         logger.info("Import stats: %s", stats)
     else:
-        # Process errors for counter5
+        # Process empty data
         if CounterVersionChoices.is_c5x(counter_version) and warnings:
             attempt.log = f"Warnings: {'; '.join(str(w) for w in warnings)}"
         else:
@@ -193,6 +194,7 @@ def import_one_sushi_attempt(attempt: SushiFetchAttempt):
             month=attempt.start_date,
         )
         attempt.save()
+        sync_interest_for_import_batch(attempt.import_batch)
         logger.warning("No records found!")
     attempt.mark_processed()
 

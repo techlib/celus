@@ -1883,6 +1883,10 @@ class TestAutomatic:
         if has_ib:
             assert FetchIntention.objects.all().count() == 1, "FI is updated"
             assert fi.attempt.import_batch is not None
+            assert fi.attempt.import_batch.record_count == 0, "no records in the import batch"
+            assert fi.attempt.import_batch.interest_ib == fi.attempt.import_batch, (
+                "interest was processed"
+            )
         else:
             assert FetchIntention.objects.all().count() == 2, "new FI is created"
             assert fi.attempt.import_batch is None
