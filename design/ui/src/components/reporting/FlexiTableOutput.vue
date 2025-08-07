@@ -295,7 +295,7 @@ import TrendArrow from "@/components/reporting/TrendArrow.vue";
 import { smartMonthRange } from "@/libs/dates";
 import { useGoTo } from "vuetify";
 import { differenceInMonths, addMonths } from "date-fns";
-import { ymDateParse } from "@/libs/dates";
+import { ymDateFormat } from "@/libs/dates";
 import TableCustomSort from "@/components/tables/TableCustomSort";
 import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
 
@@ -870,7 +870,14 @@ export default {
                 ) ?? "-",
               );
             } else {
-              texts.push(pks[i]);
+              let value = pks[i];
+              if (group.ref.startsWith("date") && value) {
+                if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                  const date = new Date(value);
+                  value = ymDateFormat(date);
+                }
+              }
+              texts.push(value);
             }
             i++;
           }
