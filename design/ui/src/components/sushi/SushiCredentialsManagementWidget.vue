@@ -1463,8 +1463,7 @@ export default {
         }
       }
       if (!found) {
-        // we did not find the corresponding record - we add it at the end
-        this.sushiCredentialsList.push(credentials);
+        this.loadSushiCredentialsList();
       }
       // update the model used by the edit dialog
       if (this.selectedCredentials) {
