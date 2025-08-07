@@ -73,7 +73,7 @@ cs:
     log_scale: Logaritmická škála
     loading_data: Nahrávám data
     preparing_data: Zpracovávám data
-    crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamů
+    crunching_records: Zpracovávám {n} záznam | Zpracovávám {n} záznamy | Zpracovávám {n} záznamů
     request_error: Nebylo možné nahrát data kvůli chybě
     missing_data: Žádná data za tento měsíc
   chart_view:
