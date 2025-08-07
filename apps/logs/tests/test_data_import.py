@@ -64,6 +64,7 @@ class TestDataImport:
         assert al.value == 50
         assert al.dim1 is None
         assert PlatformTitle.objects.count() == 1
+        assert ImportBatch.objects.first().record_count == 1
 
     def test_temporary_item_title_conversion(self, organizations, report_type_nd, platform):
         assert AccessLog.objects.count() == 0

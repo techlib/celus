@@ -490,6 +490,11 @@ class ImportBatch(models.Model):
     last_clickhoused = models.DateTimeField(
         null=True, help_text="When was the import batch last synced with clickhouse"
     )
+    record_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of associated accesslog records without artificial ones "
+        "(no interest, no materialized report types)",
+    )
 
     objects = ImportBatchQuerySet.as_manager()
 

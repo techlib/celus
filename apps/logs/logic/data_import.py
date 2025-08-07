@@ -209,6 +209,8 @@ def import_counter_records(
                 writer.writerow(sorted(rec.keys()))
             writer.writerow([v for k, v in sorted(rec.items())])
             stats["new logs"] += 1
+        ib.record_count = stats["new logs"]
+        ib.save(update_fields=["record_count"])
         ingest_import_batch_data(ib, csv_data)
         # and insert the PlatformTitle links
         stats += create_platformtitle_links_from_import_batch(ib, target_ids)
