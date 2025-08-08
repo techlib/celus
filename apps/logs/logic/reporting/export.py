@@ -667,6 +667,10 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 {"num_format": "yyyy-mm-dd", **self.base_fmt_dict}
             )
         }
+        if self.slicer.primary_dimension == "date":
+            col_formats["date"] = self.workbook.add_format(
+                {"num_format": "yyyy-mm", **self.base_fmt_dict}
+            )
         if self.slicer.trend_mode:
             col_formats[self.slicer.COL_REL_DIFF] = self.workbook.add_format(
                 {"num_format": "0.00%", **self.base_fmt_dict}
