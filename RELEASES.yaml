@@ -1,3 +1,21 @@
+- version: 9.1.1
+  title:
+    en: Hotfix release 9.1.1
+    cs: Horká oprava 9.1.1
+  text:
+    en: |
+      - Interest computation algorithm was changed to prefer older report types when the newer report contains no data
+      - Several issues in the manual upload wizard were fixed
+      - A few other small improvements and bug fixes were introduced
+    cs: |
+      - Výpočet zájmu byl změněn tak, aby preferoval starší typy reportů, pokud nový typ reportu neobsahuje data
+      - Několik chyb v manuálním nahrávání dat bylo opraveno
+      - Bylo provedeno několik dalších drobných vylepšení a oprav chyb
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 9.1.0
   title:
     en: Many small improvements and bug fixes in CELUS 9.1.0

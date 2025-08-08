@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.1] - 2025-08-08
+
+### Changes
+
+#### Frontend
+
+- formatting of dates in reporting output column names was changed from YYYY-MM-DD to YYYY-MM
+
+#### Backend
+
+- change interest computation algorithm to only use newer report types if the newer report contains data
+  (gets around the problem of publishers incorrectly using exception 3030 instead of 3032)
+- background task for finding split access logs now directly fixes the data in the database
+
+### Fixed
+
+#### Frontend
+
+- error in manual upload of reports was fixed
+- bug in navigation in the manual upload wizard was fixed
+- Czech translation in APIChart component was fixed
+- edit button and description button for read-only users in FlexiTableEditor were hidden
+- filters in the manual upload wizard are reset when organization is changed
+
+#### Backend
+
+- incorrect formating of dates when used as primary column in reporting export to Excel was fixed
+- when empty import batches are used for interest, the `interest_ib` field is now set correctly
+
 ## [9.1.0] - 2025-08-04
 
 ### Added
