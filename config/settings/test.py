@@ -16,6 +16,8 @@ DATABASES["default"]["USER"] = config("POSTGRES_USER", "celus")  # noqa F405
 DATABASES["default"]["PASSWORD"] = config("POSTGRES_PASSWORD", "celus")  # noqa F405
 DATABASES["default"]["HOST"] = config("POSTGRES_HOST", "127.0.0.1")  # noqa F405
 
+POSTGRES_FOR_CLICKHOUSE = config("POSTGRES_FOR_CLICKHOUSE", default=DATABASES["default"]["HOST"])  # noqa F405
+
 CACHES["default"]["LOCATION"] = config("REDIS_URL", "redis://127.0.0.1:6379/1")  # noqa F405
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://localhost")  # noqa F405
 

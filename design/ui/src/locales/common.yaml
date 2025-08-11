@@ -4,6 +4,7 @@ en:
     admin: Administration
     all_titles: All titles
     analytics: Analytics
+    anomaly_report: Anomaly report
     changelog: Changelog
     ch_export: Analytical database
     configuration: Configuration
@@ -433,7 +434,8 @@ cs:
     admin: Administrace
     all_titles: Všechny tituly
     analytics: Analytické nástroje
-    ch_export: Analytická databáze
+    ch_export: ClickHouse exporty
+    anomaly_report: Přehled anomálií
     changelog: Seznam změn
     configuration: Konfigurace
     content: Obsah

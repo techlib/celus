@@ -86,7 +86,6 @@
            </tr>
   {% endfor %}
         </mj-table>
-
       </mj-column>
     </mj-section>
 
@@ -110,6 +109,36 @@
                 <td style="text-align: center"><a href="{{ celus_url }}/admin/sushi-credentials?potentialIssuesFilter=not_validated">{{ unverified_count }}</a></td>
             </tr>
         </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <mj-section>
+      <mj-column border="1px solid #eee" border-radius="10px">
+        <mj-text>
+          <h3 style="margin-bottom: 0">{% blocktranslate with month=month|date:"F" %}Anomaly Data - {{ month }}{% endblocktranslate %} (<a href="{{ celus_url }}/analytics/anomaly-report?month={{ month|date:'Y-m' }}">{{ anomaly_count }}</a>)</h3>
+          {% if anomaly_count %}
+          <p><i>{% blocktranslate with month=month|date:"F" %}Anomalies found in {{ month }} data{% endblocktranslate %}</i></p>
+        </mj-text>
+        <mj-table color="#555" align="center">
+          <tr style="border-bottom: 1px solid #ddd">
+            <th style="width: 33%; text-align: left">{% translate 'Organization' %}</th>
+            <th style="width: 33%; text-align: left">{% translate 'Platform' %}</th>
+            <th style="width: 33%; text-align: center">{% translate 'Count' %}</th>
+          </tr>
+          {% for anomaly in anomaly_summary %}
+          <tr>
+            <td style="text-align: left; padding: 3px">{{ anomaly.organization_name }}</td>
+            <td style="text-align: left; padding: 3px">{{ anomaly.platform_name }}</td>
+            <td style="text-align: center"><a href="{{ celus_url }}/analytics/anomaly-report?month={{ month|date:'Y-m' }}&platformId={{ anomaly.platform_id }}">{{ anomaly.count }}</a></td>
+          </tr>
+          {% endfor %}
+        </mj-table>
+        {% else %}
+        </mj-text>
+        <mj-text>
+          <p>{% blocktranslate with month=month|date:"F" %}No anomalies detected in {{ month }} data.{% endblocktranslate %}</p>
+        </mj-text>
+        {% endif %}
       </mj-column>
     </mj-section>
 

@@ -12,4 +12,10 @@ urlpatterns = [
         views.ReportExportView.as_view(),
         name="report-export",
     ),
+    path("reporting/anomaly-report/", views.AnomalyReportView.as_view(), name="anomaly-report"),
+    path(
+        "reporting/anomaly-report/details/",
+        views.AnomalyDetailsView.as_view(),
+        name="anomaly-details",
+    ),
 ]

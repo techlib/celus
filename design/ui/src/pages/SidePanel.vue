@@ -196,6 +196,15 @@ export default {
                 },
               ],
             },
+            {
+              title: this.$t("pages.anomaly_report"),
+              icon: "fa fa-magnifying-glass-chart",
+              linkTo: "anomaly-report",
+              chip: {
+                title: this.$t("labels.new_menu_item"),
+                color: "error",
+              },
+            },
           ],
           show: true,
         },

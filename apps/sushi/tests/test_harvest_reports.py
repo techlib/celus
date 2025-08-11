@@ -8,8 +8,10 @@ import pytest
 from core.models import User
 from django.urls import reverse
 from freezegun import freeze_time
+from logs.cubes import ch_backend
 from logs.fake_data import ImportBatchFactory, ImportBatchFullFactory
 from organizations.models import Organization, UserOrganization
+from reporting.apps import ensure_accesslog_zero_fill_view
 
 from sushi import tasks
 from sushi.fake_data import CounterReportsToCredentialsFactory, FetchAttemptFactory
@@ -105,6 +107,19 @@ def report_data(organizations, platforms, report_types, counter_report_types, me
         ),
         start_date=date(2025, 1, 1),
     )
+
+
+@pytest.fixture(autouse=True)
+def ensure_view(clickhouse_db):
+    """
+    Ensure the AccessLogCubeZeroFillView is created and destroyed after the test.
+    """
+    try:
+        ensure_accesslog_zero_fill_view()
+        yield
+    finally:
+        with ch_backend.pool.get_client() as client:
+            client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
 
 
 @pytest.mark.django_db

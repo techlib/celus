@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     "colorfield",
     "django_otp",
     "django_otp.plugins.otp_email",
+    "reporting.apps.ReportingConfig",
     # allauth is at the end so that we can easily override its templates
     "allauth",
     "allauth.socialaccount",
@@ -373,7 +374,8 @@ CLICKHOUSE_SECURE = config("CLICKHOUSE_SECURE", default=False, cast=bool)
 # in clickhouse-driver above 0.2.8, the default is True, but we use self-signed certificates
 # in production, so we need a way to disable the verification
 CLICKHOUSE_VERIFY = config("CLICKHOUSE_VERIFY", default=False, cast=bool)
-
+# the following can be used to pass Postgres container name to Clickhouse when both run in Docker
+POSTGRES_FOR_CLICKHOUSE = config("POSTGRES_FOR_CLICKHOUSE", default=DATABASES["default"]["HOST"])
 # 256k chars is the default max limit of clickhouse query
 # it can be increased by setting max_query_size in config.xml, so we make it configurable.
 # It influences how many IDs may be passed to the clickhouse database in one "IN" query

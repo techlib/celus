@@ -1,4 +1,5 @@
 import typing
+from collections import defaultdict
 
 import mrml
 from core.models import User
@@ -8,8 +9,31 @@ from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import translation
+from reporting.logic.anomalies import AnomalyDetector
 
 from .harvest_reports import DataCounts, HarvestReport
+
+
+def _get_anomaly_summary(month: str, organization_ids: typing.List[int]) -> typing.List[dict]:
+    """
+    Fetch anomalies for the given month and organization(s).
+    Returns list of dicts with platform_name, organization_name, and count.
+    Returns empty list if ClickHouse is not available.
+    """
+    detector = AnomalyDetector(month, month, organization_ids)
+    anomalies = detector.get_anomalies()
+
+    # Group by platform and organization
+    grouped = defaultdict(lambda: {"count": 0, "platform_name": "", "organization_name": ""})
+    for anomaly in anomalies:
+        key = (anomaly["platform_id"], anomaly["organization_id"])
+        grouped[key]["count"] += 1
+        grouped[key]["platform_name"] = anomaly["platform_name"]
+        grouped[key]["organization_name"] = anomaly["organization"]
+        grouped[key]["platform_id"] = anomaly["platform_id"]
+        grouped[key]["organization_id"] = anomaly["organization_id"]
+
+    return sorted(grouped.values(), key=lambda x: (x["organization_name"], x["platform_name"]))
 
 
 def _make_harvest_report_missing_credentials_message(
@@ -65,6 +89,11 @@ def _make_harvest_report_message(
     )
     subject = subject.strip()
 
+    # Fetch anomaly summary for the data month (same as success rate)
+    anomaly_month = harvest_report.month.strftime("%Y-%m-%d")
+    anomaly_summary = _get_anomaly_summary(anomaly_month, [harvest_report.organization.pk])
+    anomaly_count = sum(a["count"] for a in anomaly_summary)
+
     body_context = {
         "month": harvest_report.month,
         "last_month": harvest_report.month + relativedelta(months=1),
@@ -75,6 +104,8 @@ def _make_harvest_report_message(
         "unverified_count": len(unverified),
         "broken_count": len(broken),
         "issue_count": len(broken) + len(unverified),
+        "anomaly_summary": anomaly_summary,
+        "anomaly_count": anomaly_count,
     }
 
     body_txt = render_to_string("sushi/email/harvest_report_body.txt", context=body_context)
@@ -130,6 +161,12 @@ def _make_grouped_harvest_report_message(
 
     overall_success_rate = sum((e.data_counts for e in harvest_reports), DataCounts()).success_rate
 
+    # Fetch anomaly summary for all organizations in the data month (same as success rate)
+    org_ids = [hr.organization.pk for hr in harvest_reports]
+    anomaly_month = month.strftime("%Y-%m-%d")
+    anomaly_summary = _get_anomaly_summary(anomaly_month, org_ids)
+    anomaly_count = sum(a["count"] for a in anomaly_summary)
+
     body_context = {
         "month": month,
         "last_month": month + relativedelta(months=1),
@@ -141,6 +178,8 @@ def _make_grouped_harvest_report_message(
         "broken_count": len(broken),
         "issue_count": len(broken) + len(unverified),
         "overall_success_rate": overall_success_rate,
+        "anomaly_summary": anomaly_summary,
+        "anomaly_count": anomaly_count,
     }
 
     body_txt = render_to_string("sushi/email/harvest_report_grouped_body.txt", context=body_context)

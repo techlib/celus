@@ -40,6 +40,7 @@
       inline
       auto-apply
       :max-date="maxDateLimit"
+      :min-date="minDate"
     >
     </VueDatePicker>
   </v-menu>

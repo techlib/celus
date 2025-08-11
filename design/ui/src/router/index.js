@@ -307,6 +307,15 @@ const routes = [
     },
   },
   {
+    path: "/analytics/anomaly-report",
+    name: "anomaly-report",
+    component: () => import("../pages/AnomalyReportPage.vue"),
+    meta: {
+      hideDateRangeSelector: true,
+      title: "pages.anomaly_report",
+    },
+  },
+  {
     path: "/admin/management/",
     name: "management",
     component: () => import("../pages/ManagementPage.vue"),

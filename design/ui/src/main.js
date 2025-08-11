@@ -34,6 +34,9 @@ const pluralizationRules = {
 };
 
 const i18n = createI18n({
+  legacy: true,
+  allowComposition: true,
+  globalInjection: true,
   locale: "en",
   fallbackLocale: "en",
   silentTranslationWarn: true,

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 4.2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-12 16:59+0200\n"
+"POT-Creation-Date: 2025-10-28 11:39+0100\n"
 "PO-Revision-Date: 2024-12-11 18:34+0100\n"
 "Last-Translator: Beda Kosata <beda@ecomole.com>\n"
 "Language-Team: Czech <beda@ecomole.com>\n"
@@ -70,23 +70,23 @@ msgstr "je admin alespoň jedné organizace"
 msgid "is consortial admin"
 msgstr "je konzorciální admin"
 
-#: apps/core/models.py:37
+#: apps/core/models.py:38
 msgid "Normal user"
 msgstr "Obyčejný uživatel"
 
-#: apps/core/models.py:38
+#: apps/core/models.py:39
 msgid "Robot"
 msgstr "Robot"
 
-#: apps/core/models.py:39
+#: apps/core/models.py:40
 msgid "Organization admin"
 msgstr "Admin organizace"
 
-#: apps/core/models.py:40
+#: apps/core/models.py:41
 msgid "Consortium staff"
 msgstr "Člen konzorcia"
 
-#: apps/core/models.py:41
+#: apps/core/models.py:42
 msgid "Consortium admin"
 msgstr "Admin konzorcia"
 
@@ -175,93 +175,125 @@ msgstr "Vaše uživatelské jméno, pro případ, že jste zapomněl(a)"
 msgid "Looking forward to seeing you in CELUS again!"
 msgstr "Těšíme se na Vás znova v CELUSu!"
 
-#: apps/core/validators.py:18
+#: apps/core/validators.py:21
 #, python-format
 msgid "%(value)s is not in range for valid year (%(minv)d-%(maxv)d)"
 msgstr "%(value)s není v rozsahu platných roků (%(minv)d-%(maxv)d)"
 
-#: apps/logs/admin.py:261
+#: apps/core/validators.py:66
+#, fuzzy, python-brace-format
+#| msgid ""
+#| "The uploaded file is not in required file type or is corrupted. The file "
+#| "type seems to be '{detected_type}'. Please upload your file in required "
+#| "file type."
+msgid ""
+"The uploaded file '{filename}' doesn't seem to have the right format or is "
+"corrupted. The file type seems to be '{detected_type}'. Please upload your "
+"file in right format."
+msgstr ""
+"Nahrávaný soubor je špatného typu nebo je poškozen. Soubor je pravděpodobně "
+"typu '{detected_type}'. Prosím nahrajte soubor požadovaného typu. "
+
+#: apps/core/validators.py:74
+#, python-brace-format
+msgid "Files with '.{ext}' extension are not supported. "
+msgstr ""
+
+#: apps/core/validators.py:83
+#, python-brace-format
+msgid ""
+"The uploaded file does not seem to be a CSV file. The file type seems to be "
+"'{detected_type}'. Please upload a CSV file."
+msgstr ""
+"Nahrávaný soubor není typu CSV. Zdá se, že nahrávaný soubor je typu "
+"'{detected_type}'. Prosím nahrajte soubor CSV."
+
+#: apps/logs/admin.py:257
 #, python-format
 msgid "%d preflight started to regenerate"
 msgid_plural "%d preflights started to regenerate"
 msgstr[0] "%d přehled se začal přegenerovávat"
 msgstr[1] "%d přehledů se začalo přegenerovávat"
 
-#: apps/logs/logic/reporting/export.py:206
+#: apps/logs/logic/reporting/export.py:48
+msgid "Publication date"
+msgstr ""
+
+#: apps/logs/logic/reporting/export.py:214
 msgid "Tags"
 msgstr "Štítky"
 
-#: apps/logs/logic/reporting/export.py:209
+#: apps/logs/logic/reporting/export.py:217
 msgid "Row total"
 msgstr "Suma řádku"
 
-#: apps/logs/logic/reporting/export.py:216
+#: apps/logs/logic/reporting/export.py:224
 msgctxt "column name"
 msgid "Change"
 msgstr "Změna"
 
-#: apps/logs/logic/reporting/export.py:217
+#: apps/logs/logic/reporting/export.py:225
 msgid "Change %"
 msgstr "Změna %"
 
-#: apps/logs/logic/reporting/export.py:364
+#: apps/logs/logic/reporting/export.py:372
 msgid "Report name"
 msgstr "Název reportu"
 
-#: apps/logs/logic/reporting/export.py:365
+#: apps/logs/logic/reporting/export.py:373
 msgid "Created"
 msgstr "Vytvořeno"
 
-#: apps/logs/logic/reporting/export.py:366
+#: apps/logs/logic/reporting/export.py:374
 msgid "Created for"
 msgstr "Vytvořeno pro"
 
-#: apps/logs/logic/reporting/export.py:367
+#: apps/logs/logic/reporting/export.py:375
 msgid "CELUS version"
 msgstr "Verze CELUSu"
 
-#: apps/logs/logic/reporting/export.py:378
 #: apps/logs/logic/reporting/export.py:386
-#: apps/logs/logic/reporting/export.py:388
+#: apps/logs/logic/reporting/export.py:394
+#: apps/logs/logic/reporting/export.py:396
 msgid "Data coverage"
 msgstr "Pokrytí daty"
 
-#: apps/logs/logic/reporting/export.py:379
+#: apps/logs/logic/reporting/export.py:387
 #, python-format
 msgid "Base period: %(coverage).1f%%"
 msgstr "Základní období: %(coverage).1f%%"
 
-#: apps/logs/logic/reporting/export.py:380
+#: apps/logs/logic/reporting/export.py:388
 #, python-format
 msgid "Compared period: %(coverage).1f%%"
 msgstr "Porovnávané období: %(coverage).1f%%"
 
-#: apps/logs/logic/reporting/export.py:392
+#: apps/logs/logic/reporting/export.py:400
 msgid "Split by"
 msgstr "Rozdělit podle"
 
-#: apps/logs/logic/reporting/export.py:398
+#: apps/logs/logic/reporting/export.py:406
 msgid "Rows"
 msgstr "Řádky"
 
-#: apps/logs/logic/reporting/export.py:403
+#: apps/logs/logic/reporting/export.py:411
 #, python-format
 msgid "Trend analysis: %(start)s vs %(end)s"
 msgstr "Analýza trendu: %(start)s vs %(end)s"
 
-#: apps/logs/logic/reporting/export.py:406
+#: apps/logs/logic/reporting/export.py:414
 msgid "Columns"
 msgstr "Soupce"
 
-#: apps/logs/logic/reporting/export.py:409
+#: apps/logs/logic/reporting/export.py:417
 msgid "Applied filters"
 msgstr "Aplikované filtry"
 
-#: apps/logs/logic/reporting/export.py:424
+#: apps/logs/logic/reporting/export.py:432
 msgid "Included organizations"
 msgstr "Zahrnuté organizace"
 
-#: apps/logs/logic/reporting/export.py:426
+#: apps/logs/logic/reporting/export.py:434
 msgid ""
 "(No organization filter was applied, the data represent the following "
 "organizations)"
@@ -269,125 +301,121 @@ msgstr ""
 "(Nebyl použit žádný filtr organizace, data reprezentují následující "
 "organizace)"
 
-#: apps/logs/logic/reporting/export.py:453
+#: apps/logs/logic/reporting/export.py:461
 msgid "-- untagged remainder --"
 msgstr "-- zbytek bez štítků --"
 
-#: apps/logs/logic/reporting/slicer.py:1023 apps/tags/models.py:42
+#: apps/logs/logic/reporting/slicer.py:1052 apps/tags/models.py:42
 msgid "Title"
 msgstr "Titul"
 
-#: apps/logs/logic/reporting/slicer.py:1024 apps/organizations/models.py:73
+#: apps/logs/logic/reporting/slicer.py:1053 apps/organizations/models.py:73
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:20
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:49
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:79
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:124
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:6
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:30
 #: apps/tags/models.py:44
 msgid "Organization"
 msgstr "Organizace"
 
-#: apps/logs/logic/reporting/slicer.py:1025 apps/publications/models.py:136
+#: apps/logs/logic/reporting/slicer.py:1054 apps/publications/models.py:139
 #: apps/publications/models.py:283
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:20
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:47
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:108
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:6
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:12
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:27
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:21
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:50
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:125
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:6
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:12
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:30
 #: apps/tags/models.py:43
 msgid "Platform"
 msgstr "Platforma"
 
-#: apps/logs/logic/reporting/slicer.py:1038
+#: apps/logs/logic/reporting/slicer.py:1067
 msgid "tag"
 msgid_plural "tags"
 msgstr[0] "štítek"
 msgstr[1] "štítky"
 msgstr[2] "štítky"
 
-#: apps/logs/logic/reporting/slicer.py:1040
+#: apps/logs/logic/reporting/slicer.py:1069
 msgid "tag class"
 msgid_plural "tag classes"
 msgstr[0] "typ štítku"
 msgstr[1] "typy štítku"
 msgstr[2] "typy štítku"
 
-#: apps/logs/models.py:179
+#: apps/logs/models.py:174
 msgid "Report type"
 msgstr "Typ reportu"
 
-#: apps/logs/models.py:345
+#: apps/logs/models.py:344
 msgid "Metric"
 msgstr "Metrika"
 
-#: apps/logs/models.py:528
+#: apps/logs/models.py:532
 msgid "Date"
 msgstr "Datum"
 
-#: apps/logs/models.py:911
-#, python-brace-format
-msgid ""
-"The uploaded file is not in required file type or is corrupted. The file "
-"type seems to be '{detected_type}'. Please upload your file in required file "
-"type."
-msgstr ""
-"Nahrávaný soubor je špatného typu nebo je poškozen. Soubor je pravděpodobně "
-"typu '{detected_type}'. Prosím nahrajte soubor požadovaného typu. "
-
-#: apps/logs/models.py:919 apps/necronomicon/models.py:17
-#: apps/publications/models.py:450 apps/sushi/models.py:1032
+#: apps/logs/models.py:898 apps/necronomicon/models.py:17
+#: apps/publications/models.py:450 apps/sushi/models.py:1141
 #: apps/tags/models.py:585
 msgid "Initial"
 msgstr "Výchozí"
 
-#: apps/logs/models.py:920
+#: apps/logs/models.py:899
 msgid "Confirmed"
 msgstr "Potvrznený"
 
-#: apps/logs/models.py:921 apps/tags/models.py:48 apps/tags/models.py:587
+#: apps/logs/models.py:900 apps/tags/models.py:48 apps/tags/models.py:587
 msgid "Preflight"
 msgstr "Přehled"
 
-#: apps/logs/models.py:922 apps/sushi/models.py:1036 apps/tags/models.py:588
+#: apps/logs/models.py:901 apps/sushi/models.py:1145 apps/tags/models.py:588
 msgid "Importing"
 msgstr "Importuji"
 
-#: apps/logs/models.py:923 apps/tags/models.py:589
+#: apps/logs/models.py:902 apps/tags/models.py:589
 msgid "Imported"
 msgstr "Naimportováno"
 
-#: apps/logs/models.py:924 apps/tags/models.py:590
+#: apps/logs/models.py:903 apps/tags/models.py:590
 msgid "Preflight failed"
 msgstr "Přehled selhal"
 
-#: apps/logs/models.py:925 apps/publications/models.py:452
-#: apps/sushi/models.py:1044 apps/tags/models.py:591
+#: apps/logs/models.py:904 apps/publications/models.py:452
+#: apps/sushi/models.py:1153 apps/tags/models.py:591
 msgid "Import failed"
 msgstr "Import selhal"
 
-#: apps/logs/models.py:929
+#: apps/logs/models.py:908
 msgid "Counter format"
 msgstr "Counter formát"
 
-#: apps/logs/models.py:930
+#: apps/logs/models.py:909
 msgid "CELUS format"
 msgstr "CELUS formát"
 
-#: apps/logs/models.py:931
+#: apps/logs/models.py:910
 msgid "Raw data"
 msgstr "Surová data"
 
-#: apps/logs/serializers.py:97
+#: apps/logs/serializers.py:106
 msgid "Dimension with this code name already exists"
 msgstr "Dimenze s tímto kódem již existuje"
 
-#: apps/logs/serializers.py:191
+#: apps/logs/serializers.py:204
 msgid "Public report type with this code name already exists"
 msgstr "Veřejný typ reportů s tímhle kódem již existuje"
 
-#: apps/logs/serializers.py:200
+#: apps/logs/serializers.py:213
 #, python-brace-format
 msgid ""
 "Report type with this code name already exists for organization "
@@ -450,11 +478,11 @@ msgstr "Smazat propojené objekty"
 msgid "Close"
 msgstr "Zavřít"
 
-#: apps/nibbler/models.py:55
+#: apps/nibbler/models.py:57
 msgid "Parser Definition"
 msgstr "Definice parseru"
 
-#: apps/nibbler/models.py:56
+#: apps/nibbler/models.py:58
 msgid "Parser Definitions"
 msgstr "Definice parserů"
 
@@ -468,11 +496,11 @@ msgstr "Organizace s krátkým jménem '%(short_name)s' již existuje."
 msgid "An alias for organization {org} clashes with one of organization names."
 msgstr "Alias pro organizaci {org} se kryje s jedním jménem organizace."
 
-#: apps/publications/models.py:48
+#: apps/publications/models.py:47
 msgid "Knowledgebase"
 msgstr "Znalostní databáze"
 
-#: apps/publications/models.py:49
+#: apps/publications/models.py:48
 msgid "Manual"
 msgstr "Ručně zadáno"
 
@@ -544,46 +572,37 @@ msgstr "Zpracovávám"
 msgid "Done"
 msgstr "Hotovo"
 
-#: apps/publications/models.py:470 apps/tags/models.py:609
-#, python-brace-format
-msgid ""
-"The uploaded file does not seem to be a CSV file. The file type seems to be "
-"'{detected_type}'. Please upload a CSV file."
-msgstr ""
-"Nahrávaný soubor není typu CSV. Zdá se, že nahrávaný soubor je typu "
-"'{detected_type}'. Prosím nahrajte soubor CSV."
-
-#: apps/sushi/models.py:1034
+#: apps/sushi/models.py:1143
 msgid "Downloading"
 msgstr "Stahuji"
 
-#: apps/sushi/models.py:1040
+#: apps/sushi/models.py:1149
 msgid "Success"
 msgstr "Úspěch"
 
-#: apps/sushi/models.py:1042
+#: apps/sushi/models.py:1151
 msgid "No data"
 msgstr "Žádná data"
 
-#: apps/sushi/models.py:1045
+#: apps/sushi/models.py:1154
 msgid "Parsing failed"
 msgstr "Parsování selhalo"
 
-#: apps/sushi/models.py:1046
+#: apps/sushi/models.py:1155
 msgid "Download failed"
 msgstr "Stahování selhalo"
 
-#: apps/sushi/models.py:1047
+#: apps/sushi/models.py:1156
 msgid "Not used"
 msgstr "Nepoužito"
 
 #: apps/sushi/templates/sushi/email/_harvest_report_body_footer.mjml:6
 msgid "To unsubscribe, you can change your email preferences in"
-msgstr "Pokud již nechcete tyto emaily dostávat, můžete změnit nastavení"
+msgstr ""
 
 #: apps/sushi/templates/sushi/email/_harvest_report_body_footer.mjml:6
 msgid "your profile"
-msgstr "ve vašem profilu"
+msgstr ""
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:14
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:4
@@ -663,14 +682,14 @@ msgstr ""
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:79
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:19
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:96
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:95
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:22
 msgid "Potential Issues"
 msgstr "Potenciální problémy"
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:80
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:20
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:97
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:96
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:23
 msgid "All potential issues - regardless of when they first appeared"
 msgstr ""
@@ -678,27 +697,55 @@ msgstr ""
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:84
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:21
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:101
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:100
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:24
 msgid "Issue"
 msgstr "Problém"
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:85
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:109
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:21
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:102
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:27
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:101
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:126
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:24
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:30
 msgid "Count"
 msgstr "Počet"
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:88
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:105
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:104
 msgid "Broken Credentials"
 msgstr "Rozbité přístupové údaje"
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.mjml:92
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:109
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:108
 msgid "Unverified Credentials"
 msgstr "Neověřené přístupové údaje"
+
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:102
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:25
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:118
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:28
+#, python-format
+msgid "Anomaly Data - %(month)s"
+msgstr "Anomálie - %(month)s"
+
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:103
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:26
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:119
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:29
+#, python-format
+msgid "Anomalies found in %(month)s data"
+msgstr "Anomálie nalezené v datech za %(month)s"
+
+#: apps/sushi/templates/sushi/email/harvest_report_body.mjml:120
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:29
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.mjml:138
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:32
+#, python-format
+msgid "No anomalies detected in %(month)s data."
+msgstr "Za %(month)s nebyly nalezeny žádné anomálie."
 
 #: apps/sushi/templates/sushi/email/harvest_report_body.txt:22
 #: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:25
@@ -710,8 +757,8 @@ msgstr "Rozbité"
 msgid "Unverified"
 msgstr "Neověřené"
 
-#: apps/sushi/templates/sushi/email/harvest_report_body.txt:26
-#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:29
+#: apps/sushi/templates/sushi/email/harvest_report_body.txt:31
+#: apps/sushi/templates/sushi/email/harvest_report_grouped_body.txt:34
 msgid "Made By"
 msgstr "Vyrobeno"
 

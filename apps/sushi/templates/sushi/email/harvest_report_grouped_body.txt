@@ -25,5 +25,10 @@
 {% translate 'Broken' %},{{ broken_count }}
 {% translate 'Unverified' %},{{ unverified_count }}
 
+# {% blocktranslate with month=month|date:"F" %}Anomaly Data - {{ month }}{% endblocktranslate %} ({{ anomaly_count }})
+{% if anomaly_count %}{% blocktranslate with month=month|date:"F" %}Anomalies found in {{ month }} data{% endblocktranslate %}
+{% translate 'Organization' %},{% translate 'Platform' %},{% translate 'Count' %}
+{% for anomaly in anomaly_summary %}{{ anomaly.organization_name }},{{ anomaly.platform_name }},{{ anomaly.count }}
+{% endfor %}{% else %}{% blocktranslate with month=month|date:"F" %}No anomalies detected in {{ month }} data.{% endblocktranslate %}{% endif %}
 
 {% translate 'Made By' %}: {{ celus_url }}

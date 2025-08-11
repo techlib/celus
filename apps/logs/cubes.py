@@ -32,7 +32,7 @@ django_db = connection.settings_dict
 postgresql_attrs = dict(
     user=django_db["USER"],
     password=django_db["PASSWORD"],
-    host=django_db["HOST"],
+    host=settings.POSTGRES_FOR_CLICKHOUSE,
     port=django_db["PORT"],
 )
 
@@ -108,6 +108,25 @@ class AccessLogCube(Cube):
             )
             for name, table_name, attrs in _dicts
         ]
+
+        dictionaries.extend(
+            [
+                DictionaryDefinition(
+                    name="import_batch_rev",
+                    source=PostgresqlSource(
+                        django_db["NAME"], table="logs_importbatch", **postgresql_attrs
+                    ),
+                    key=[
+                        "report_type_id",
+                        "organization_id",
+                        "platform_id",
+                        DictionaryAttr(name="date", type="Date"),
+                    ],
+                    layout="complex_key_hashed",
+                    attrs=[],
+                )
+            ]
+        )
 
     @classmethod
     def translate_accesslog_to_cube(cls, accesslog: AccessLog) -> "AccessLogCubeRecord":
