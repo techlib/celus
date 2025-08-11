@@ -86,7 +86,7 @@ class TestSushiFetching:
                 "Errors: Error #2090: Got response code: 404 for request: "
                 "https://example.com/path/path\n\n",
                 False,
-                "3f2fd24ecdb3c9e7df2818f3bae87fe070f0d8775d346b55c77dbc163bc5b703",
+                "498d3539351036335252e99b1d005e79515656299777bcc3f2338f5e257db44c",
             ),
             (
                 "no_data.json",
@@ -104,7 +104,7 @@ class TestSushiFetching:
                 AttemptStatus.DOWNLOAD_FAILED,
                 "Errors: Error #1030: Invalid Customer Id\n\n",
                 True,
-                "ee0662987472c461be97bfa9a609c663cbf006e0ddf752d408237298c423e500",
+                "f53489e656fee489bac7a309c83a2674d1d5079a493a46192fc9f62c8dc5ce5f",
             ),
             (
                 "code-zero.json",

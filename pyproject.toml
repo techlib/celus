@@ -54,7 +54,7 @@ python = "^3.9.6"
 
 celery = "~5.5.3"
 celus-nibbler = "~12.2.1"
-celus-nigiri = "~4.1.0"
+celus-nigiri = "~4.1.1"
 celus-pycounter = "~4.1.0"
 clickhouse-driver = "0.2.9"
 colorlog = "^6.7.0"
