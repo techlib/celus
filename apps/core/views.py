@@ -81,6 +81,9 @@ class UserView(GenericAPIView):
             return Response(UserSerializer(request.user, context={"request": request}).data)
         return HttpResponseForbidden("user is not logged in")
 
+    def get_queryset(self):
+        return super().get_queryset().annotate_can_impersonate()
+
 
 class UserExistsView(GenericAPIView):
     permission_classes = [AllowAny]

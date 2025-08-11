@@ -6,13 +6,13 @@ from rest_framework import mixins, status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from .permissions import ImpersonatedSuperuserOrAdminPermission, users_impersonable
+from .permissions import ImpersonatePermission, users_impersonable
 from .serializers import ImpersonateListSerializer, ImpersonateSetSerializer
 
 
 class ImpersonateViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, GenericViewSet):
     queryset = User.objects.filter(is_superuser=False)
-    permission_classes = (ImpersonatedSuperuserOrAdminPermission,)
+    permission_classes = (ImpersonatePermission,)
 
     def get_serializer_class(self):
         if self.action == "list":

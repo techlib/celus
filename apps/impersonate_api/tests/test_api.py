@@ -28,14 +28,19 @@ class TestImpersonateAPI:
             ("master_admin", 7),  # admin{1,2}, user{1,2}, empty, master_{admin,user}
             ("master_user", 0),
             ("admin1", 0),
-            ("admin2", 0),
+            ("admin2", 2),  # user1, admin2
             ("user1", 0),
             ("user2", 0),
             ("unauthenticated", 0),
             ("invalid", 0),
         ),
     )
-    def test_list(self, basic1, clients, client, count):
+    def test_list(self, basic1, clients, users, organizations, client, count):
+        # set admin2 as admin of branch organization with impersonate
+        users["admin2"].organizations.add(
+            organizations["branch"], through_defaults={"is_admin": True, "can_impersonate": True}
+        )
+
         response = clients[client].get(reverse("impersonate-list"))
         if count:
             assert response.status_code == 200

@@ -82,6 +82,7 @@ class UserSerializer(ModelSerializer):
             "impersonator",
             "sesame_token",
             "send_grouped_harvest_reports",
+            "can_impersonate",
         )
 
     def get_email_verification_status(self, obj: User) -> str:

@@ -5,7 +5,7 @@ from core.validators import ISNI_LENGTH, ROR_LENGTH, isni_validator, ror_validat
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, QuerySet, UniqueConstraint
+from django.db.models import CheckConstraint, Q, QuerySet, UniqueConstraint
 from django.utils.translation import gettext as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
@@ -227,6 +227,7 @@ class UserOrganization(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
+    can_impersonate = models.BooleanField(default=False)
     source = models.ForeignKey("core.DataSource", on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -235,7 +236,17 @@ class UserOrganization(models.Model):
     )
 
     class Meta:
-        unique_together = (("user", "organization"),)
+        constraints = [
+            UniqueConstraint(fields=["user", "organization"], name="unique_user_organization"),
+            CheckConstraint(
+                check=~(models.Q(is_admin=False) & models.Q(can_impersonate=True)),
+                name="user_org_non_admins_cant_impersonate",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.organization} / {self.user}"
+
+    def save(self, *args, **kwargs):
+        self.can_impersonate = self.can_impersonate and self.is_admin
+        return super().save(*args, **kwargs)

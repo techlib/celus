@@ -598,11 +598,7 @@ export default {
       }
     },
     showImpersonate() {
-      return (
-        this.user.is_admin_of_master_organization ||
-        this.user.is_superuser ||
-        this.impersonated
-      );
+      return this.user.can_impersonate || this.impersonated;
     },
     impersonateHeaders() {
       return [

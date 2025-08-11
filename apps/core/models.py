@@ -151,6 +151,24 @@ class UserQuerySet(models.QuerySet):
         )
         return self.filter(q_superusers | q_master_admin)
 
+    def annotate_can_impersonate(self):
+        from organizations.models import UserOrganization
+
+        # user is a member of at least one organization with can_impersonate flag
+        return self.annotate(
+            _can_impersonate=Exists(
+                UserOrganization.objects.filter(user_id=OuterRef("pk"), can_impersonate=True)
+            )
+            | Q(is_superuser=True)
+            | Exists(
+                UserOrganization.objects.filter(
+                    user_id=OuterRef("pk"),
+                    is_admin=True,
+                    organization__internal_id__in=settings.MASTER_ORGANIZATIONS,
+                )
+            )
+        )
+
 
 class CelusUserManager(UserManager):
     def get_queryset(self):
@@ -161,6 +179,9 @@ class CelusUserManager(UserManager):
 
     def filter_consortium_admins(self):
         return self.get_queryset().filter_consortium_admins()
+
+    def annotate_can_impersonate(self):
+        return self.get_queryset().annotate_can_impersonate()
 
 
 class User(AbstractUser):
@@ -379,6 +400,17 @@ class User(AbstractUser):
             return self._email_verified
         else:
             return self.EMAIL_VERIFICATION_STATUS_VERIFIED == self.email_verification["status"]
+
+    @cached_property
+    def can_impersonate(self):
+        if hasattr(self, "_can_impersonate"):
+            return self._can_impersonate
+        else:
+            return (
+                self.is_superuser
+                or self.is_admin_of_master_organization
+                or self.userorganization_set.filter(can_impersonate=True).exists()
+            )
 
 
 class Identity(models.Model):
