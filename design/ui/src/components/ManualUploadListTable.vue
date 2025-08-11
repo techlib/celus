@@ -79,6 +79,8 @@ cs:
         v-model:items-per-page="pageSize"
         :search="searchDebounced"
         :items-per-page-options="[10, 25, 50]"
+        v-model:expanded="expanded"
+        item-value="pk"
       >
         <!-- v-model:sort-by="orderByCr" -->
         <template #headers="{ columns }">
@@ -86,6 +88,29 @@ cs:
             :columns="columns"
             v-model:externalOrderBy="orderByCr"
           />
+        </template>
+        <template
+          v-slot:item.data-table-expand="{ item, toggleExpand, internalItem }"
+        >
+          <v-btn
+            @click="toggleExpand(internalItem)"
+            icon
+            variant="plain"
+            size="small"
+          >
+            <v-icon size="x-small">{{
+              expanded.includes(item.pk)
+                ? "fa fa-chevron-up"
+                : "fa fa-chevron-down"
+            }}</v-icon>
+          </v-btn>
+        </template>
+        <template v-slot:expanded-row="{ columns, item }">
+          <tr>
+            <td :colspan="columns.length">
+              <MduHeatMap :mdu-id="item.pk"></MduHeatMap>
+            </td>
+          </tr>
         </template>
         <template #item.user.last_name="{ item }">
           {{ userToString(item.user) }}
@@ -344,6 +369,7 @@ import MDUChart from "@/components/MDUChart";
 import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
 import TableCustomSort from "@/components/tables/TableCustomSort";
+import MduHeatMap from "@/components/util/MduHeatMap";
 
 export default {
   name: "ManualUploadListTable",
@@ -355,6 +381,7 @@ export default {
     ManualUploadState,
     AccessLogList,
     TableCustomSort,
+    MduHeatMap,
   },
 
   data() {
@@ -375,6 +402,7 @@ export default {
       page: 1,
       pageSize: 10,
       changingOrganization: false,
+      expanded: [],
       watchedAttrs: [
         {
           name: "search",
@@ -412,6 +440,11 @@ export default {
     },
     headers() {
       const out = [
+        {
+          title: "",
+          value: "data-table-expand",
+          align: "center",
+        },
         {
           title: this.$t("title_fields.uploaded"),
           value: "created",

@@ -152,6 +152,7 @@ en:
     delete_all_platform_data: Delete all platform data
     delete_data: Delete data
     description: Description
+    dimensions: Dimensions
     email: Email
     empty_value: "- empty -"
     error: Error
@@ -568,6 +569,7 @@ cs:
     delete_all_platform_data: Smazat všechna data pro platformu
     delete_data: Mazání dat
     description: Popis
+    dimensions: Dimenze
     email: Email
     empty_value: "- prázdné -"
     error: Chyba

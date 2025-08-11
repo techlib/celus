@@ -1542,3 +1542,51 @@ class TestAccessLogListView:
         )
         resp = clients[client].get(reverse("mdu-access-logs", args=[mdu.pk]))
         assert resp.status_code == code
+
+
+@pytest.mark.django_db
+class TestMduHeatmapDataView:
+    def test_mdu_heatmap_data(
+        self, master_admin_client, counter_records, organizations, report_type_nd
+    ):
+        platform = PlatformFactory(short_name="Platform1")
+        organization = organizations["branch"]
+        report_type = report_type_nd(1)
+
+        data = [
+            ["Title1", "2021-01-01", "dim1_val1", 100],
+            ["Title2", "2021-01-01", "dim1_val2", 200],
+            ["Title3", "2021-02-01", "dim1_val3", 300],
+        ]
+        crs = counter_records(data, metric="Hits", platform="Platform1")
+        import_batches, _ = import_counter_records(report_type, organization, platform, crs)
+
+        mdu = ManualDataUploadFactory.create(
+            import_batches=import_batches,
+            report_type=report_type,
+            platform=platform,
+            organization=organization,
+        )
+
+        resp = master_admin_client.get(reverse("mdu-heatmap-data", args=[mdu.pk]))
+        data = resp.json()
+
+        monthly_data = sorted(data["monthly_data"], key=lambda x: (x["year"], x["month"]))
+        months_with_data = [item for item in monthly_data if item["total_value"] is not None]
+        assert len(months_with_data) == 2
+        assert months_with_data[0] == {
+            "year": 2021,
+            "month": 1,
+            "total_value": 300,
+            "record_count": 2,
+            "metric_count": 1,
+        }
+        assert months_with_data[1] == {
+            "year": 2021,
+            "month": 2,
+            "total_value": 300,
+            "record_count": 1,
+            "metric_count": 1,
+        }
+        assert data["metrics"] == ["Hits"]
+        assert len(data["dimensions"]) == 1

@@ -30,6 +30,11 @@ urlpatterns = [
         views.ImportBatchAccessLogListView.as_view(),
         name="ib-access-logs",
     ),
+    path(
+        "mdu-heatmap-data/<int:mdu_id>/",
+        views.MduHeatmapDataView.as_view(),
+        name="mdu-heatmap-data",
+    ),
     path("raw-data/", views.RawDataExportView.as_view(), name="raw_data"),
     path("raw-data-export/", views.RawDataDelayedExportView.as_view(), name="raw_data_export"),
     path(

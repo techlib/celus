@@ -35,14 +35,17 @@ from django.db.models import (
     Count,
     Exists,
     F,
+    Max,
     OuterRef,
     Prefetch,
     Q,
+    Sum,
     Value,
     When,
     prefetch_related_objects,
 )
 from django.db.models import IntegerField as DbIntegerField
+from django.db.models.functions import Extract
 from django.db.transaction import atomic, on_commit
 from django.http import JsonResponse, StreamingHttpResponse
 from django.urls import reverse
@@ -101,6 +104,7 @@ from logs.models import (
     Metric,
     ReportInterestMetric,
     ReportType,
+    ReportTypeToDimension,
 )
 from logs.serializers import (
     AccessLogSerializer,
@@ -356,7 +360,7 @@ class AccessLogListViewBase(ListAPIView):
         return out
 
 
-class MduAccessLogListView(AccessLogListViewBase):
+class MduAccessLogViewMixin:
     def get_base_queryset(self):
         mdu_id = self.kwargs["mdu_id"]
         mdu = get_object_or_404(ManualDataUpload.objects.all(), pk=mdu_id)
@@ -393,6 +397,10 @@ class MduAccessLogListView(AccessLogListViewBase):
                 mdu.import_batches.values_list("organization_id", flat=True)
             )
         return AccessLog.objects.filter(**query_params)
+
+
+class MduAccessLogListView(MduAccessLogViewMixin, AccessLogListViewBase):
+    pass
 
 
 class ImportBatchAccessLogListView(AccessLogListViewBase):
@@ -1733,3 +1741,73 @@ class FlexibleReportUserEmailViewSet(ModelViewSet):
 
         send_report_mailing_raw_task.delay(request.data)
         return Response({"message": "Email sent", "success": True}, status=HTTP_200_OK)
+
+
+class MduHeatmapDataView(MduAccessLogViewMixin, AccessLogListViewBase):
+    def list(self, request, *args, **kwargs):
+        mdu_id = self.kwargs["mdu_id"]
+        mdu = get_object_or_404(ManualDataUpload.objects.select_related("report_type"), pk=mdu_id)
+        queryset = self.get_base_queryset()
+
+        monthly_data = (
+            queryset.annotate(year=Extract("date", "year"), month=Extract("date", "month"))
+            .values("year", "month")
+            .annotate(
+                total_value=Sum("value"),
+                metric_count=Count("metric", distinct=True),
+                record_count=Count("pk"),
+            )
+            .order_by("year", "month")
+        )
+
+        monthly_data_list = list(monthly_data)
+
+        complete_monthly_data = []
+        all_years = sorted(set(item["year"] for item in monthly_data_list))
+
+        data_map = {f"{item['year']}-{item['month']}": item for item in monthly_data_list}
+
+        for year in all_years:
+            for month in range(1, 13):
+                key = f"{year}-{month}"
+                complete_monthly_data.append(
+                    data_map.get(
+                        key,
+                        {
+                            "year": year,
+                            "month": month,
+                            "total_value": None,
+                            "metric_count": None,
+                            "record_count": None,
+                        },
+                    )
+                )
+
+        metrics = (
+            queryset.values_list("metric__short_name", flat=True)
+            .distinct()
+            .order_by("metric__short_name")
+        )
+
+        # map e.g. "dim1" to Dimension object
+        pos_to_dim = {
+            f"dim{e.position + 1}": e.dimension.short_name
+            for e in ReportTypeToDimension.objects.filter(
+                report_type=mdu.report_type
+            ).select_related("dimension")
+        }
+
+        # annotate Max of DimensionTexts if dimX=None for all records, Max will be None
+        ann = {f"{pos}_max": Max(pos) for pos in pos_to_dim.keys()}
+        dim_max = queryset.aggregate(**ann)
+        present_pos = {an_name[:-4] for an_name, an_max in dim_max.items() if an_max}
+        # filter the dimensions
+        dimensions_with_data = [dim for pos, dim in pos_to_dim.items() if pos in present_pos]
+
+        return Response(
+            {
+                "monthly_data": complete_monthly_data,
+                "metrics": list(metrics),
+                "dimensions": list(dimensions_with_data),
+            }
+        )
