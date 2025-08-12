@@ -29,7 +29,14 @@ cs:
     density="default"
   >
     <template #headers="{ columns }">
-      <TableCustomSort :columns="columns" v-model:externalOrderBy="sortBy" />
+      <TableCustomSort
+        :columns="columns"
+        v-model:externalOrderBy="sortBy"
+        :show-select-all="true"
+        :all-selected="allEventsSelected"
+        :unsortable-column-values="['data-table-select', 'data-table-expand']"
+        @toggle-select-all="toggleSelectAll"
+      />
     </template>
     <template #item.data-table-expand="{ item }">
       <v-icon
@@ -177,10 +184,15 @@ cs:
         <v-col>
           <v-btn
             @click="markSelectedRead(true)"
-            :disabled="selectedEvents.length === 0"
+            :disabled="
+              selectedEvents.length === 0 || selectedUnreadEventsCount === 0
+            "
           >
             <v-icon class="mr-2" size="small">far fa-envelope-open</v-icon>
             {{ $t("events.mark_as_read") }}
+            <span v-if="selectedUnreadEventsCount > 0" class="ml-1"
+              >({{ selectedUnreadEventsCount }})</span
+            >
           </v-btn>
         </v-col>
       </v-row>
@@ -366,17 +378,6 @@ export default {
         this.search = value;
       }, 500),
     },
-    selectedEventsLive() {
-      // this.selectedEvents contains whole objects, but those may not be
-      // in sync with this.events - most importantly, their read status
-      // may be different.
-      // Here we return the selected events from this.events
-      return this.events.filter((item) => {
-        return this.selectedEvents.some((rec) => {
-          return rec.pk === item.pk;
-        });
-      });
-    },
     availableCategoriesAndCounts() {
       return new Map(
         this.storeCounts.category.map((e) => [e.category, e.count]),
@@ -389,6 +390,14 @@ export default {
     },
     availableReadAndCounts() {
       return new Map(this.storeCounts.read.map((e) => [e.read, e.count]));
+    },
+    allEventsSelected() {
+      return (
+        this.eventCount > 0 && this.selectedEvents.length === this.eventCount
+      );
+    },
+    selectedUnreadEventsCount() {
+      return this.selectedEvents.filter((item) => !item.read).length;
     },
   },
 
@@ -452,7 +461,7 @@ export default {
       }
     },
     async markSelectedRead(read) {
-      const eventIds = this.selectedEventsLive
+      const eventIds = this.selectedEvents
         .filter((item) => item.read != read)
         .map((item) => item.pk);
       const reply = await this.http({
@@ -496,6 +505,24 @@ export default {
         importance: this.filterImportance,
         search: this.searchDebounced,
       });
+    },
+    async toggleSelectAll(value) {
+      if (value) {
+        let params = this.urlFilters.filter(
+          (e) => !e.startsWith("page=") && !e.startsWith("page_size="),
+        );
+        params.push(`page_size=${this.eventCount}`);
+        const url = "/api/events/user-events/?" + params.join("&");
+        const response = await this.http({
+          url: url,
+          method: "GET",
+        });
+        if (!response.error) {
+          this.selectedEvents = response.response.data.results;
+        }
+      } else {
+        this.selectedEvents = [];
+      }
     },
   },
 

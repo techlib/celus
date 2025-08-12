@@ -3,19 +3,37 @@
     <th
       v-for="column in columns"
       :key="column.key || column.value"
-      @click="
-        column.sortable !== false && column.key ? toggleSort(column) : null
-      "
+      @click="isColumnSortable(column) ? toggleSort(column) : null"
       :style="{
-        cursor: column.sortable !== false && column.key ? 'pointer' : 'default',
+        cursor: isColumnSortable(column) ? 'pointer' : 'default',
       }"
       class="sortable-header"
     >
       <div
-        class="d-flex align-center"
+        v-if="column.value === selectColumnValue"
+        class="d-flex align-center justify-flex-start"
+      >
+        <v-checkbox
+          v-if="showSelectAll"
+          :model-value="allSelected"
+          @update:model-value="$emit('toggle-select-all', $event)"
+          density="compact"
+          hide-details
+        />
+      </div>
+      <div
+        v-else
+        class="d-flex align-center header-content"
         :style="{ justifyContent: getJustifyContent(column.align) }"
       >
-        {{ column.title }}
+        <span
+          :style="{
+            opacity: isSorted(column) ? 1 : 0.7,
+            fontWeight: isSorted(column) ? 'bold' : 'normal',
+          }"
+        >
+          {{ column.title }}
+        </span>
         <v-icon
           v-if="isSorted(column)"
           class="ml-1"
@@ -23,7 +41,7 @@
           :icon="getSortIcon(column)"
         ></v-icon>
         <v-icon
-          v-else-if="column.sortable !== false && column.key"
+          v-else-if="isColumnSortable(column)"
           class="ml-1 ghost-arrow"
           size="x-small"
         >
@@ -38,17 +56,41 @@
 
 <script>
 export default {
+  emits: ["update:externalOrderBy", "toggle-select-all"],
   props: {
     columns: null,
     externalOrderBy: {
       type: Array,
       default: () => [],
     },
+    showSelectAll: {
+      type: Boolean,
+      default: false,
+    },
+    allSelected: {
+      type: Boolean,
+      default: false,
+    },
+    unsortableColumnValues: {
+      type: Array,
+      default: () => [],
+    },
+    selectColumnValue: {
+      type: String,
+      default: "data-table-select",
+    },
   },
   data() {
     return {
       orderBy: [],
     };
+  },
+  computed: {
+    isColumnUnsortable() {
+      return (column) => {
+        return this.unsortableColumnValues.includes(column.value);
+      };
+    },
   },
   watch: {
     externalOrderBy: {
@@ -112,6 +154,13 @@ export default {
       if (order === "asc") return "fas fa-sort-up";
       if (order === "desc") return "fas fa-sort-down";
       return "";
+    },
+    isColumnSortable(column) {
+      return (
+        column.sortable !== false &&
+        column.key &&
+        !this.isColumnUnsortable(column)
+      );
     },
   },
 };

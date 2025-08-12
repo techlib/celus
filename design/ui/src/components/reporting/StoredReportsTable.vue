@@ -109,7 +109,12 @@
               </v-col>
             </v-row>
           </template>
-
+          <template #headers="{ columns }">
+            <TableCustomSort
+              :columns="columns"
+              v-model:externalOrderBy="orderBy"
+            />
+          </template>
           <template #item.actions="{ item }">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
@@ -488,6 +493,7 @@ import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
 import ReportMailingPreferences from "@/components/reporting/ReportMailingPreferences.vue";
 import DateRangeText from "@/components/util/DateRangeText.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort.vue";
 
 export default {
   name: "StoredReportsTable",
@@ -501,6 +507,7 @@ export default {
     ExportMonitorWidget,
     ReportMailingPreferences,
     DateRangeText,
+    TableCustomSort,
   },
 
   data() {
@@ -573,6 +580,8 @@ export default {
         {
           title: this.$t("title_fields.last_modified"),
           value: "lastUpdated",
+          sortable: true,
+          order: "reverse",
         },
         {
           title: this.$t("title_fields.last_modified_by"),
