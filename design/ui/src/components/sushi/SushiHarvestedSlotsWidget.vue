@@ -77,9 +77,9 @@ cs:
                 :color="getCounterVersionColor(rt.counter_version)"
               >
                 <span class="mr-1">{{ rt.code }}</span>
-                <span class="caption" v-if="isCounterVersionInconsistent">{{
-                  counterVersionToStr(rt.counter_version)
-                }}</span>
+                <span v-if="isCounterVersionInconsistent"
+                  >(C{{ counterVersionToStr(rt.counter_version) }})</span
+                >
               </v-btn>
             </template>
             {{ rt.name }}
@@ -131,7 +131,7 @@ cs:
             :class="`text-${getCounterVersionColor(row.cred.counter_version)}`"
             v-if="isCounterVersionInconsistent"
           >
-            <div class="mr-10 text-center">
+            <div class="mr-6 text-center">
               {{ counterVersionToStr(row.cred.counter_version) }}
             </div>
           </td>
@@ -353,7 +353,11 @@ export default {
         cr.counter_reports_long.forEach((rt) => out.set(rt.id, rt)),
       );
       let array = Array.from(out.values());
-      array.sort((a, b) => a.code.localeCompare(b.code));
+      array.sort((a, b) => {
+        const counterVersion = a.counter_version - b.counter_version;
+        if (counterVersion !== 0) return counterVersion;
+        return a.code.localeCompare(b.code);
+      });
       return array;
     },
   },
