@@ -872,7 +872,7 @@ export default {
             } else {
               let value = pks[i];
               if (group.ref.startsWith("date") && value) {
-                if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                if (String(value).match(/^\d{4}-\d{2}-\d{2}$/)) {
                   const date = new Date(value);
                   value = ymDateFormat(date);
                 }
