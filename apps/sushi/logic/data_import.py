@@ -195,6 +195,10 @@ def import_sushi_credentials_new(
         optional = {}
         if title := to_clean_str(record.get(Col.TITLE.value)):
             optional["title"] = title
+        else:
+            optional["title"] = platform.short_name
+            if counter_version == 51:
+                optional["title"] += " (C51)"
 
         if platform_filter := to_clean_str(record.get(Col.PLATFORM_FILTER.value)):
             optional["extra_params"] = {"platform": platform_filter}

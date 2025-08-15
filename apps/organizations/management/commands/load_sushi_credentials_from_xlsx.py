@@ -29,7 +29,7 @@ class Command(BaseCommand):
             "credentials",
         )
         parser.add_argument(
-            "--parse_sheet_no",
+            "--parse-sheet-no",
             dest="parse_sheet_no",
             type=int,
             default=2,

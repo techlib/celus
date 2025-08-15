@@ -3,6 +3,9 @@ from core.fake_data import UserFactory
 from core.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from faker import Faker
+from publications.fake_data import PlatformFactory
+from sushi.models import SushiCredentials
 
 from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
@@ -112,3 +115,93 @@ class TestEnableHarvestReportsCommand:
 
         user_org1.refresh_from_db()
         assert user_org1.send_harvest_reports is False
+
+
+@pytest.mark.django_db
+class TestLoadSushiCredentialsFromXlsxCommand:
+    fake = Faker()
+    knowledgebase = {
+        "providers": [
+            {
+                "counter_version": 5,
+                "provider": {"url": fake.url()},
+                "assigned_report_types": [
+                    {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"}
+                ],
+            },
+            {
+                "counter_version": 51,
+                "provider": {"url": fake.url()},
+                "assigned_report_types": [
+                    {"not_valid_after": None, "not_valid_before": None, "report_type": "IR"}
+                ],
+            },
+        ]
+    }
+
+    @pytest.fixture(autouse=True)
+    def platforms(self):
+        platforms = [
+            "AK Journals",
+            "AMA Guides",
+            "APA PsycNET",
+            "APA PsychInfo",
+            "APIC Text",
+            "ASABE Technical Library",
+            "ASM Digital Collection",
+            "ASM Journals",
+            "ASM Materials Information",
+            "ASTM International",
+            "Academy of Management",
+        ]
+        for platform in platforms:
+            PlatformFactory(name=platform, knowledgebase=self.knowledgebase)
+
+    def test_load_sushi_credentials_from_xlsx_single_org_sheet_2(self):
+        """
+        Test loading of C5 credentials. Look into the file to see what is loaded.
+        """
+        org = OrganizationFactory()
+
+        assert SushiCredentials.objects.count() == 0
+        call_command(
+            "load_sushi_credentials_from_xlsx",
+            "-f",
+            "test-data/import/sushi-credentials.xlsx",
+            "--single-org",
+            str(org.pk),
+            "--parse-sheet-no",
+            "2",
+            "--do-it",
+        )
+        assert SushiCredentials.objects.count() == 3, "3 non-empty credentials on sheet 2"
+        assert all(s.counter_version == 5 for s in SushiCredentials.objects.all())
+        assert {s.title for s in SushiCredentials.objects.all()} == {
+            "title 1",
+            "title 9",
+            "APA PsychI",  # auto-generated title
+        }
+
+    def test_load_sushi_credentials_from_xlsx_single_org_sheet_3(self):
+        """
+        Test loading of C51 credentials. Look into the file to see what is loaded.
+        """
+        org = OrganizationFactory()
+
+        assert SushiCredentials.objects.count() == 0
+        call_command(
+            "load_sushi_credentials_from_xlsx",
+            "-f",
+            "test-data/import/sushi-credentials.xlsx",
+            "--single-org",
+            str(org.pk),
+            "--parse-sheet-no",
+            "3",
+            "--do-it",
+        )
+        assert SushiCredentials.objects.count() == 2, "2 non-empty credentials on sheet 3"
+        assert all(s.counter_version == 51 for s in SushiCredentials.objects.all())
+        assert {s.title for s in SushiCredentials.objects.all()} == {
+            "title 1 - 5.1",
+            "AMA Guides (C51)",  # auto-generated title
+        }
