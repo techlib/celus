@@ -1,15 +1,19 @@
 import json
 import logging
 from collections import Counter
+from datetime import timedelta
 from enum import Enum, auto
 from typing import Optional
 
 import reversion
+from core.logic.dates import last_month, month_end, month_start
 from django.db.models import Count, Q
+from django.utils.timezone import now
 from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from openpyxl import load_workbook
 from organizations.models import Organization
 from publications.models import Platform
+from scheduler.models import FetchIntention, Harvest
 
 from sushi.logic.export import Col
 
@@ -32,6 +36,7 @@ def import_sushi_credentials_from_xlsx(
     log_trivial: bool = False,
     update_credentials=Perform.UPDATE_NONE,
     reversion_comment: Optional[str] = None,
+    harvest_months: Optional[int] = None,
 ) -> dict:
     workbook = load_workbook(filename=filename, read_only=True)
     if sheet_no > len(workbook.worksheets):
@@ -92,6 +97,7 @@ def import_sushi_credentials_from_xlsx(
         update_credentials=update_credentials,
         reversion_comment=reversion_comment,
         counter_version=counter_version,
+        harvest_months=harvest_months,
     )
 
 
@@ -103,6 +109,7 @@ def import_sushi_credentials_new(
     update_credentials=Perform.UPDATE_NONE,
     reversion_comment: Optional[str] = None,
     counter_version: int = 5,
+    harvest_months: Optional[int] = None,
 ) -> dict:
     """
     Imports SUSHI credentials from a list of dicts describing the data - new version for xlsx
@@ -150,6 +157,7 @@ def import_sushi_credentials_new(
             logger.log(level, f"row #%03d: {message}", i + 2, *args)
         stats[stat_name] += 1
 
+    new_credentials = []
     for i, record in enumerate(records):  # noqa: B007 - i is used in `log` function
         customer_id = to_clean_str(record.get(Col.CUSTOMER_ID.value))
         if not customer_id:
@@ -292,6 +300,7 @@ def import_sushi_credentials_new(
                     reversion_comment or "Created by logic.data_import.import_sushi_credentials"
                 )
                 db_credentials[key] = cr
+                new_credentials.append(cr)
             log("Credentials created", stat_name="added", level=logging.WARNING)
 
         # report type assignment
@@ -331,6 +340,32 @@ def import_sushi_credentials_new(
                     stat_name="report_type_not_assigned",
                     level=logging.WARNING,
                 )
+    if harvest_months:
+        for cr in new_credentials:
+            intentions = []
+            for rt in cr.counter_reports.all():
+                month = last_month()
+                for _i in range(harvest_months):
+                    intentions.append(
+                        FetchIntention(
+                            credentials=cr,
+                            start_date=month,
+                            end_date=month_end(month),
+                            counter_report=rt,
+                            not_before=now(),
+                        )
+                    )
+                    month = month_start(month - timedelta(days=16))
+            Harvest.plan_harvesting(
+                intentions=intentions, priority=FetchIntention.PRIORITY_NOW, user=None
+            )
+            log(
+                "Planned harvest for %d intentions for credentials %d",
+                len(intentions),
+                cr.pk,
+                stat_name="planned_harvest",
+                level=logging.INFO,
+            )
     return stats
 
 

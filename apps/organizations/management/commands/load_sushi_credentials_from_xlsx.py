@@ -58,6 +58,13 @@ class Command(BaseCommand):
             default=False,
             help="log trivial messages - empty or unchanged rows",
         )
+        parser.add_argument(
+            "--harvest-months",
+            dest="harvest_months",
+            type=int,
+            default=None,
+            help="Number of months to harvest for new credentials (0 = no auto-harvesting)",
+        )
         parser.add_argument("--do-it", dest="doit", action="store_true")
 
     @atomic
@@ -78,6 +85,7 @@ class Command(BaseCommand):
             log_trivial=options["log_trivial"],
             update_credentials=update_credentials,
             reversion_comment='Updated/created by command line script "load_sushi_credentials"',
+            harvest_months=options["harvest_months"],
         )
         self.stderr.write(self.style.WARNING(f"\nImport stats: {stats}"))
         if not options["doit"]:
