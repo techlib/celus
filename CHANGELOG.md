@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.2] - 2025-08-18
+
+### Changes
+
+#### Frontend
+
+- apply uniform styling to all buttons in the frontend
+
+#### Backend
+
+- modify the `load_sushi_credentials_from_xlsx` management command to support auto-harvesting of new
+  credentials and automatically create titles for them
+- change which parts of the COUNTER report are mandatory and which are optional in the nigiri library
+
+### Fixed
+
+#### Frontend
+
+- fix bug in display of months in reporting column names - values were shifted by one month when in
+  a timezone west of UTC
+- fix bug in reporting when years are selected as column names
+- fix sorting in the SUSHI harvest list
+- properly reload list of SUSHI credentials when credentials are deleted
+
 ## [9.1.1] - 2025-08-08
 
 ### Changes

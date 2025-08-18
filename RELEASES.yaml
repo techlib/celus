@@ -1,3 +1,23 @@
+- version: 9.1.2
+  title:
+    en: Hotfix release 9.1.2
+    cs: Horká oprava 9.1.2
+  text:
+    en: |
+      - A bug in display of months in reporting column names was fixed to be correct in all timezones
+      - A bug in reporting when years are selected as column names was fixed
+      - Sorting in the SUSHI harvest list was fixed
+      - The list of SUSHI credentials is properly reloaded when credentials are deleted
+    cs: |
+      - Chyba ve zobrazení měsíců v názvech sloupců v reportingu byla opravena tak, aby byla správná ve všech časových pásmech
+      - Chyba ve zobrazení ročních dat v reportingu byla opravena
+      - Řazení v seznamu sklízení SUSHI bylo opraveno
+      - Správné obnovení seznamu SUSHI přihlašovacích údajů při jejich odstranění
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 9.1.1
   title:
     en: Hotfix release 9.1.1
