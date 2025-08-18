@@ -29,7 +29,7 @@ from logs.models import (
 )
 from necronomicon.models import Batch, Candidate
 from organizations.models import Organization, UserOrganization
-from publications.models import Title
+from publications.models import Platform, Title
 from recache.models import CachedQuery
 from rest_framework.authtoken.models import Token
 from reversion.models import Revision, Version
@@ -176,6 +176,10 @@ class Command(BaseCommand):
         self.stderr.write(
             self.style.SUCCESS(f"Updated {res} knowledgebase sources to use token from settings")
         )
+
+        # delete all platforms with null source
+        count, details = Platform.objects.filter(source__isnull=True).delete()
+        self.stderr.write(self.style.SUCCESS(f"Deleted platforms with null source: {details}"))
 
         # look for obsolete table `error_report_error` and remove it
         # it is a remnant of a removed app, so it must be removed manually using raw SQL
