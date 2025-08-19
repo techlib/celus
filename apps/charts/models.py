@@ -390,7 +390,7 @@ COUNTER_REPORT_DATA_VIEWS = [
         "IR_A1",
         True,
         100,
-        name="COUNTER 5 - Article Report 1",
+        name="COUNTER 5.1 - Article Report 1",
         desc="Journal Article Requests",
         metric_allowed_values=["Total_Item_Requests", "Unique_Items_Requests"],
         filters=[
@@ -403,7 +403,7 @@ COUNTER_REPORT_DATA_VIEWS = [
         "IR_M1",
         True,
         101,
-        name="COUNTER 5 - Multimedia Report 1",
+        name="COUNTER 5.1 - Multimedia Report 1",
         desc="Multimedia Item Requests",
         metric_allowed_values=["Total_Item_Requests", "Unique_Items_Requests"],
         filters=[

@@ -208,9 +208,6 @@ INTEREST_DEFAULT_REPORT_TYPES = {
             },
             "full_text_denial": {"metrics": {"No_License": None, "Limit_Exceeded": None}},
         },
-        # TR is superseded by both C51_TR and C5_IR, but we cannot express it right now,
-        # it will have to wait for the new interest computation
-        # for now, we use the C51_TR, because this will be used in production
         "superseded_by": (51, "TR"),
         "mappings": C50_MAPPINGS,
     },
@@ -235,8 +232,32 @@ INTEREST_DEFAULT_REPORT_TYPES = {
         "interest": {"full_text": {"metrics": {"FT Article Requests": None}}},
         "superseded_by": (5, "TR"),
     },
+    (4, "JR1a"): {
+        "interest": {"full_text": {"metrics": {"Archive Article Requests": None}}},
+        "superseded_by": (5, "TR"),
+    },
+    # We currently cannot express that JR1GOA has Access_Type=OA_Gold,
+    # implicitly - without it having been specified in an extra dimension.
+    # This is a limitation of the current interest computation code.
+    # Because C4 is long obsolete and not many users use it, we will not fix it.
+    # (4, "JR1GOA"): {
+    #     "interest": {"full_text": {"metrics": {"Gold Open Access Article Requests": None}}},
+    #     "superseded_by": (5, "TR"),
+    # },
+    (4, "JR2"): {
+        "interest": {
+            "full_text_denial": {"metrics": {"Access denied: content item not licensed": None}}
+        },
+        "superseded_by": (5, "TR"),
+    },
     (4, "BR2"): {
         "interest": {"full_text": {"metrics": {"Book Section Requests": None}}},
+        "superseded_by": (5, "TR"),
+    },
+    (4, "BR3"): {
+        "interest": {
+            "full_text_denial": {"metrics": {"Access denied: content item not licensed": None}}
+        },
         "superseded_by": (5, "TR"),
     },
     (4, "DB1"): {

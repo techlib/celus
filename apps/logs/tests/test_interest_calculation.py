@@ -788,9 +788,9 @@ class TestRealWorldInterestCalculation:
     @pytest.mark.parametrize(
         ["rt", "expected"],
         [
-            ("TR", ["JR1", "BR2"]),
-            ("TR51", ["TR", "JR1", "BR2"]),
-            ("IR51", ["TR51", "IR_M1", "TR", "JR1", "BR2"]),
+            ("TR", ["JR1", "JR1a", "JR2", "BR2", "BR3"]),
+            ("TR51", ["TR", "JR1", "JR1a", "JR2", "BR2", "BR3"]),
+            ("IR51", ["TR51", "IR_M1", "TR", "JR1", "JR1a", "JR2", "BR2", "BR3"]),
             ("DR51", ["DR", "DB1"]),
             ("DR", ["DB1"]),
             ("JR1", []),

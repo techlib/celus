@@ -51,6 +51,7 @@ class Command(BaseCommand):
         code_to_rt = {rt.short_name: rt for rt in ReportType.objects.all()}
         short_name_to_metric_id = {m.short_name: {"pk": m.pk} for m in Metric.objects.all()}
         short_name_to_ig = {ig.short_name: ig for ig in InterestGroup.objects.all()}
+        seen_rt_ids = set()
         for (cver, rep_code), definition in INTEREST_DEFAULT_REPORT_TYPES.items():
             changed = False
             rep_code = convert_short_name(rep_code, cver)
@@ -61,6 +62,7 @@ class Command(BaseCommand):
                 logger.warning("Can't find report type with short name '%s'", rep_code)
                 continue
 
+            seen_rt_ids.add(rt.pk)
             sb_rt = None
             if sb := definition.get("superseded_by"):
                 sb_rep_code = convert_short_name(sb[1], sb[0])
@@ -128,6 +130,35 @@ class Command(BaseCommand):
                         "mapping": mdef.get("values", {}),
                     },
                 )
+
+        # list all ReportInterestMetric objects which are connected to COUNTER reports and
+        # were not hit above
+        extra_rims = ReportInterestMetric.objects.filter(
+            report_type__counterreporttype__isnull=False
+        ).exclude(report_type__pk__in=seen_rt_ids)
+        if extra_rims.exists():
+            logger.warning("Removing obsolete COUNTER ReportInterestMetric not in definitions:")
+            for rim in extra_rims:
+                logger.warning(
+                    "# %d: '%s' - '%s'", rim.pk, rim.metric.short_name, rim.report_type.short_name
+                )
+            count, _ = extra_rims.delete()
+            logger.info("Deleted %d obsolete ReportInterestMetric objects", count)
+            stats["obsolete RIM deleted"] += count
+
+        # list all ReportTypes which have superseded_by set but have no interest metrics
+        # these should be removed because they serve no purpose and may be confusing
+        for rt in ReportType.objects.filter(superseded_by__isnull=False).exclude(
+            reportinterestmetric__isnull=False
+        ):
+            stats["obsolete superseding removed"] += 1
+            logger.warning(
+                "ReportType %d '%s' has superseded_by set but has no interest metrics, removing it",
+                rt.pk,
+                rt.short_name,
+            )
+            rt.superseded_by = None
+            rt.save()
 
         logger.info("Stats: %s", stats)
 

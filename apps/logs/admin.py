@@ -136,7 +136,11 @@ class MetricAdmin(TranslationAdmin):
 @admin.register(models.ReportInterestMetric)
 class ReportInterestMetricAdmin(TranslationAdmin):
     list_display = ["report_type", "metric", "interest_group"]
-    list_filter = ["report_type", "metric", "interest_group"]
+    list_filter = [
+        ("report_type", admin.RelatedOnlyFieldListFilter),
+        ("metric", admin.RelatedOnlyFieldListFilter),
+        "interest_group",
+    ]
     search_fields = ["report_type__short_name", "report_type__name", "metric__name"]
     list_select_related = ["report_type", "metric", "interest_group"]
 
