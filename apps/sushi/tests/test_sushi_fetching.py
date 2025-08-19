@@ -586,33 +586,33 @@ class TestSushiFetching:
         ("path", "counter_report", "extracted_data", "breaks_report"),
         (
             (
-                # even though requested, Parent_Details are not present and we need to crash
-                # such an import - otherwise we will get items unconnected to titles, which
-                # messes up the interest computation
-                "counter5_ir_sample_no_parents.json",
-                "ir",
+                # even though requested, Parent_Details are not present for some records
+                # and we need to crash such an import - otherwise we will get items unconnected
+                # to titles, which messes up the interest computation
+                "IR_sample_r51.json",
+                "ir51",
                 {
-                    "Created_By": "Sample Institutional Repository",
-                    "Institution_Name": "Client Demo Site",
-                    "Institution_ID": [{"Type": "ISNI", "Value": "1234123412341234"}],
+                    "Created_By": "Sample Publisher",
+                    "Institution_Name": "Sample Institution",
+                    "Institution_ID": {"ISNI": ["1234123412341234"]},
                 },
                 True,
             ),
             (
                 # this one has parent details where necessary and only lacks it for Multimedia,
                 # where parent details are not required
-                "counter5_ir_sample.json",
-                "ir",
+                "IR_sample_r51_no-missing-parent.json",
+                "ir51",
                 {
-                    "Created_By": "Sample Institutional Repository",
-                    "Institution_Name": "Client Demo Site",
-                    "Institution_ID": [{"Type": "ISNI", "Value": "1234123412341234"}],
+                    "Created_By": "Sample Publisher",
+                    "Institution_Name": "Sample Institution",
+                    "Institution_ID": {"ISNI": ["1234123412341234"]},
                 },
                 False,
             ),
         ),
     )
-    def test_c5_ir_without_parent_details_breaks_report(
+    def test_c51_ir_without_parent_details_breaks_report(
         self,
         path,
         counter_report,
@@ -626,10 +626,12 @@ class TestSushiFetching:
         Test that processing IR reports without parent details and with article data breaks the
         report if title details are missing.
         """
+        # NOTE: Do not remove this test when rebasing IR_M1 migration code, this has been modified
+        # to use C51 and is important
         credentials = CredentialsFactory(
             organization=organizations["empty"],
             platform=platforms["empty"],
-            counter_version=5,
+            counter_version=51,
             url="https://example.com/sushi/",
             customer_id="CCCCCCC",
             requestor_id="RRRRRRR",
@@ -640,14 +642,14 @@ class TestSushiFetching:
             credentials=credentials, counter_report=crt
         )
         with requests_mock.Mocker() as m:
-            with open(Path(__file__).parent / "data/counter5" / path) as datafile:
+            with open(Path(__file__).parent / "data/counter51" / path) as datafile:
                 m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(
-                crt, start_date="2016-01-01", end_date="2016-01-31"
+                crt, start_date="2022-01-01", end_date="2022-01-31"
             )
             assert attempt.extracted_data == extracted_data
             url = (
-                f"https://example.com/sushi/reports/{counter_report}?customer_id=CCCCCCC"
+                "https://example.com/sushi/r51/reports/ir?customer_id=CCCCCCC"
                 "&requestor_id=RRRRRRR&api_key=AAAAAAAA"
             )
             assert attempt.used_url.startswith(url)

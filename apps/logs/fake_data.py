@@ -226,7 +226,7 @@ def create_item_ids():
 
 
 def create_dim_data(obj):
-    return []
+    return {}
 
 
 class CounterRecordFactory(factory.Factory):
