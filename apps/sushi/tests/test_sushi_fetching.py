@@ -6,10 +6,12 @@ from unittest.mock import patch
 import pytest
 import requests
 import requests_mock
+from django.core.files.base import ContentFile
 from freezegun import freeze_time
 from logs.logic.attempt_import import import_one_sushi_attempt
+from publications.models import Item, Title
 
-from sushi.fake_data import CredentialsFactory
+from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
 from test_scenarios.basic import (  # noqa - fixtures
     counter_report_types,
@@ -657,6 +659,40 @@ class TestSushiFetching:
             attempt.refresh_from_db()
             cr2c.refresh_from_db()
             assert cr2c.is_broken() == breaks_report
+
+    def test_c51_ir_title_and_item_data_types(self, counter_report_types, organizations, platforms):
+        """
+        Test that when importing IR reports with title and item data types are properly set -
+        the title should be set from the title data, the item should be set from the usage data.
+        """
+        credentials = CredentialsFactory(
+            organization=organizations["empty"], platform=platforms["empty"], counter_version=51
+        )
+        crt = counter_report_types["ir51"]
+        CounterReportsToCredentials.objects.create(credentials=credentials, counter_report=crt)
+
+        with (
+            Path(__file__).parent / "data/counter51/IR_sample_r51_no-missing-parent.json"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "something.json"
+
+        fetch_attempt = FetchAttemptFactory.create(
+            credentials=credentials,
+            counter_report=crt,
+            start_date="2022-01-01",
+            end_date="2022-01-31",
+            data_file=data_file,
+            status=AttemptStatus.IMPORTING,
+        )
+
+        import_one_sushi_attempt(fetch_attempt)
+
+        assert fetch_attempt.status == AttemptStatus.SUCCESS
+        t1 = Title.objects.get(name="Title 1")
+        assert t1.pub_type == Title.PUB_TYPE_BOOK
+        i1 = Item.objects.get(name="Item 3")
+        assert i1.pub_type == Item.PUB_TYPE_BOOK_SEGMENT
 
     def test_user_agent(
         self, counter_report_types, organizations, platforms, settings, monkeypatch

@@ -379,11 +379,15 @@ class TitleManager:
         self._counter_rec_to_title_rec_cache[cache_key] = ret
         return ret
 
-    def deduce_pub_type(self, eissn, isbn, issn, record):
+    @classmethod
+    def deduce_pub_type(cls, eissn, isbn, issn, record):
         pub_type = Title.PUB_TYPE_UNKNOWN
-        if "Data_Type" in record.dimension_data:
-            data_type = record.dimension_data["Data_Type"]
-            pub_type = Title.data_type_to_pub_type(data_type)
+        if pdt := record.dimension_data.get("Parent_Data_Type"):
+            # if the parent data type is set, it means we are processing items
+            # and title is the parent, so we use it
+            pub_type = Title.data_type_to_pub_type(pdt)
+        elif dt := record.dimension_data.get("Data_Type"):
+            pub_type = Title.data_type_to_pub_type(dt)
         if pub_type == Title.PUB_TYPE_UNKNOWN:
             # we try harder - based on isbn, issn, etc.
             if (issn or eissn) and not isbn:

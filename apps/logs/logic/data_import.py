@@ -103,6 +103,7 @@ def import_counter_records(
     """
 
     # IR_M1 temporary fix (unless we are going to migrate older IR_M1 reports)
+    # TODO: remove this once we migrate IR_M1 reports
     if report_type.short_name == "IR_M1":
 
         def convert_records(records):
