@@ -160,6 +160,24 @@ class ItemRec:
         if ic.authors != authors_ids:
             return False
 
+        # proprietary ids with the same prefix are not in conflict
+        if self.proprietary_ids and ic.proprietary_ids:
+            my_pids = defaultdict(list)
+            # create dict of prefixes and values stored in self.proprietary_ids
+            for pid in self.proprietary_ids:
+                split = pid.split(":", 1)
+                if len(split) == 2:
+                    prefix, value = split
+                    my_pids[prefix].append(value)
+
+            # compare with ic.proprietary_ids
+            for pid in ic.proprietary_ids:
+                split = pid.split(":", 1)
+                if len(split) == 2:
+                    prefix, value = split
+                    if prefix in my_pids and value not in my_pids[prefix]:
+                        return False
+
         return True
 
     def compare_score(self, ic: "ItemCompareRec", am: "AuthorManager") -> Tuple[int, ...]:

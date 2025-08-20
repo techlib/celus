@@ -321,6 +321,22 @@ class TestItemManager:
                 False,
                 id="same authors extra issn => merge",
             ),
+            pytest.param(
+                {"name": "Nature", "proprietary_ids": ["foo:1234567890"], "issn": "1234-5678"},
+                [],
+                {"name": "Nature", "proprietary_ids": ["foo:9876543210"], "issn": "1234-5678"},
+                [],
+                False,
+                id="different proprietary ids, with the same prefix => new",
+            ),
+            pytest.param(
+                {"name": "Nature", "proprietary_ids": ["foo:1234567890"]},
+                [],
+                {"name": "Nature", "proprietary_ids": ["foo:9876543210"]},
+                [],
+                False,
+                id="different proprietary ids, with the same prefix, just title => new",
+            ),
         ],
     )
     def test_get_or_create_merging_strategy(
