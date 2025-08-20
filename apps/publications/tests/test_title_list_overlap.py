@@ -391,9 +391,10 @@ class TestTitleOverlapBatchAPI:
         Check the workflow of creating a batch and the structure of the serialized data.
         """
         # create the batch
-        with open(plain_test_file, "rb") as f, patch(
-            "publications.views.process_title_overlap_batch_task"
-        ) as mock:
+        with (
+            open(plain_test_file, "rb") as f,
+            patch("publications.views.process_title_overlap_batch_task") as mock,
+        ):
             response = admin_client.post(
                 reverse("title-overlap-batch-list"), data={"source_file": f}, format="multipart"
             )

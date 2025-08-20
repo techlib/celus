@@ -224,9 +224,10 @@ class TestClickhouseSync:
         sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
         sync_log.state = ImportBatchSyncLog.STATE_SYNC
         sync_log.save()
-        with patch("logs.tasks.process_one_import_batch_sync_log_task") as sync_task, patch(
-            "logs.tasks.async_mail_admins"
-        ) as mail_task:
+        with (
+            patch("logs.tasks.process_one_import_batch_sync_log_task") as sync_task,
+            patch("logs.tasks.async_mail_admins") as mail_task,
+        ):
             process_outstanding_import_batch_sync_logs_task(age_threshold=0)
             sync_task.delay.assert_called_once()
             sync_task.delay.assert_called_with(sync_log.pk)
@@ -479,9 +480,11 @@ class TestClickhouseCompareDetection:
     )
     def test_compare_db_with_clickhouse_task_problem_detection(self, stats, is_ok):
         # we need to mock both functions so that it works without clickhouse and data
-        with patch("logs.tasks.compare_db_with_clickhouse") as mock, patch(
-            "logs.tasks.compare_titles_with_clickhouse"
-        ) as mock2, patch("logs.tasks.async_mail_admins") as mailmock:
+        with (
+            patch("logs.tasks.compare_db_with_clickhouse") as mock,
+            patch("logs.tasks.compare_titles_with_clickhouse") as mock2,
+            patch("logs.tasks.async_mail_admins") as mailmock,
+        ):
             mock.return_value = ComparisonResult(stats=stats)
             mock.__name__ = "compare_db_with_clickhouse"
             compare_db_with_clickhouse_task()
@@ -495,9 +498,11 @@ class TestClickhouseCompareDetection:
     )
     def test_compare_titles_with_clickhouse_task_problem_detection(self, stats, is_ok):
         # we need to mock both functions so that it works without clickhouse and data
-        with patch("logs.tasks.compare_db_with_clickhouse") as mock, patch(
-            "logs.tasks.compare_titles_with_clickhouse"
-        ) as mock2, patch("logs.tasks.async_mail_admins") as mailmock:
+        with (
+            patch("logs.tasks.compare_db_with_clickhouse") as mock,
+            patch("logs.tasks.compare_titles_with_clickhouse") as mock2,
+            patch("logs.tasks.async_mail_admins") as mailmock,
+        ):
             mock2.return_value = ComparisonResult(stats=stats)
             mock2.__name__ = "compare_titles_with_clickhouse"
             compare_db_with_clickhouse_task()

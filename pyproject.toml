@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [

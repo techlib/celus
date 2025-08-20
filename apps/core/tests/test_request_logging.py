@@ -117,9 +117,10 @@ class TestRequestLogging:
             assert instance_mock.rpush.called
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             backend_mock = Mock()
             get_backend_mock.return_value = backend_mock
             instance_mock = Mock()
@@ -171,9 +172,10 @@ class TestRequestLogging:
             assert instance_mock.rpush.called
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             backend_mock = Mock()
             get_backend_mock.return_value = backend_mock
             instance_mock = Mock()
@@ -248,9 +250,10 @@ class TestRequestLogging:
             assert instance_mock.rpush.called
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             backend_mock = Mock()
             get_backend_mock.return_value = backend_mock
             instance_mock = Mock()
@@ -271,9 +274,10 @@ class TestRequestLogging:
             {**COMMON_TEST_RECORD_DATA, "timestamp": datetime.now(), "execution_time": 1.0}
         )
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             # Mock Redis instance
             instance_mock = Mock()
             instance_mock.lpop = MagicMock(side_effect=[test_record_data, None])
@@ -312,9 +316,10 @@ class TestRequestLogging:
             {**COMMON_TEST_RECORD_DATA, "timestamp": datetime.now(), "execution_time": 1.0}
         )
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             # Mock Redis instance
             instance_mock = Mock()
             instance_mock.lpop = MagicMock(side_effect=[test_record_data, None])
@@ -348,9 +353,10 @@ class TestRequestLogging:
             {**COMMON_TEST_RECORD_DATA, "timestamp": datetime.now(), "execution_time": 1.0}
         )
 
-        with patch("core.tasks.redis.Redis") as redis_mock, patch(
-            "core.request_logging.clickhouse.get_logging_backend"
-        ) as get_backend_mock:
+        with (
+            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+        ):
             # Mock Redis instance
             instance_mock = Mock()
             instance_mock.lpop = MagicMock(side_effect=[test_record_data, None])
@@ -528,9 +534,10 @@ class TestRequestLogging:
             # Put test data into Redis
             redis_connection.rpush(settings.CELERY_LOGGING_REDIS_KEY, test_record_data)
 
-            with patch(
-                "core.request_logging.clickhouse.get_logging_backend"
-            ) as get_backend_mock, patch("core.tasks.async_mail_admins") as mail_admins_mock:
+            with (
+                patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
+                patch("core.tasks.async_mail_admins") as mail_admins_mock,
+            ):
                 # Mock backend that raises an exception on store_records
                 backend_mock = Mock()
                 backend_mock.store_records.side_effect = Exception("ClickHouse connection failed")

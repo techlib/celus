@@ -90,9 +90,10 @@ class TestManualUploadForCounterData:
             mdu.save()
 
         # calculate preflight in celery
-        with patch("core.models.SourceFileMixin._send_error_mail") as mail_mock, patch(
-            "logs.tasks.async_mail_admins"
-        ) as mail_admins_mock:
+        with (
+            patch("core.models.SourceFileMixin._send_error_mail") as mail_mock,
+            patch("logs.tasks.async_mail_admins") as mail_admins_mock,
+        ):
             prepare_preflight(mdu.pk)
 
         response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))

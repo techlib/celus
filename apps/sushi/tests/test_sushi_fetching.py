@@ -179,9 +179,11 @@ class TestSushiFetching:
         assert credentials.is_broken() is False
         # in some cases the behavior depends on the time gap between the request and the
         # requested dates, so we freeze the time to a fixed value
-        with freeze_time("2019-05-10"), requests_mock.Mocker() as m, patch(
-            "sushi.models.Event"
-        ) as mock_event:
+        with (
+            freeze_time("2019-05-10"),
+            requests_mock.Mocker() as m,
+            patch("sushi.models.Event") as mock_event,
+        ):
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
                 content = datafile.read()
                 m.get(re.compile(f"^{credentials.url}.*"), text=content)
@@ -368,9 +370,10 @@ class TestSushiFetching:
             organization=organizations["empty"], platform=platforms["empty"], counter_version=5
         )
         path = "C5_PR_with_3040.json"
-        with freeze_time(
-            datetime(2019, 5, 1) + timedelta(days=delay_days)
-        ), requests_mock.Mocker() as m:
+        with (
+            freeze_time(datetime(2019, 5, 1) + timedelta(days=delay_days)),
+            requests_mock.Mocker() as m,
+        ):
             with open(Path(__file__).parent / "data/counter5" / path) as datafile:
                 m.get(re.compile(f"^{credentials.url}.*"), text=datafile.read(), status_code=200)
             attempt: SushiFetchAttempt = credentials.fetch_report(

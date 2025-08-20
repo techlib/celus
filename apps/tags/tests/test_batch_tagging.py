@@ -764,9 +764,10 @@ class TestBatchTaggingAPI:
             None - do not send a tag class
         """
         tag = TagForTitleFactory.create()
-        with plain_test_file.open("rb") as infile, patch(
-            "tags.views.tagging_batch_preflight_task"
-        ) as preflight_task:
+        with (
+            plain_test_file.open("rb") as infile,
+            patch("tags.views.tagging_batch_preflight_task") as preflight_task,
+        ):
             tag_id = tag.pk + (0 if send_existing_tag else 1)  # +1 means non-existent ID
             extra = {"tag": tag_id} if send_existing_tag is not None else {}
             resp = clients["admin1"].post(
@@ -798,9 +799,10 @@ class TestBatchTaggingAPI:
             None - do not send a tag class
         """
         tc = TagClassFactory.create(scope=TagScope.TITLE)
-        with plain_test_file.open("rb") as infile, patch(
-            "tags.views.tagging_batch_preflight_task"
-        ) as preflight_task:
+        with (
+            plain_test_file.open("rb") as infile,
+            patch("tags.views.tagging_batch_preflight_task") as preflight_task,
+        ):
             tc_id = tc.pk + (0 if send_existing_tagclass else 1)  # +1 means non-existent ID
             extra = {"tag_class": tc_id} if send_existing_tagclass is not None else {}
             resp = clients["admin1"].post(
@@ -1227,9 +1229,12 @@ class TestTasks:
         with freeze_time("2023-02-02"):
             assert TaggingBatch.objects.to_reprocess().count() == 2
             # do retagging number 1
-            with patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock, patch(
-                "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
-            ) as task_apply_async_mock:
+            with (
+                patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock,
+                patch(
+                    "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
+                ) as task_apply_async_mock,
+            ):
                 # we create an attempt to simulate what would happen inside `assign_tag`
                 assign_tag_mock.side_effect = lambda *args, **kwargs: TaggingAttemptFactory.create(
                     batch=tb1
@@ -1239,9 +1244,12 @@ class TestTasks:
                 assert assign_tag_mock.call_count == 1, "one batch is reprocessed"
                 assert TaggingBatch.objects.to_reprocess().count() == 1
             # do retagging number 2
-            with patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock, patch(
-                "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
-            ) as task_apply_async_mock:
+            with (
+                patch("tags.tasks.TaggingBatch.assign_tag") as assign_tag_mock,
+                patch(
+                    "tags.tasks.reprocess_due_tagging_batches_task.apply_async"
+                ) as task_apply_async_mock,
+            ):
                 assign_tag_mock.side_effect = lambda *args, **kwargs: TaggingAttemptFactory.create(
                     batch=tb2
                 )

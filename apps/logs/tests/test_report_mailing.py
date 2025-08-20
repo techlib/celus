@@ -342,9 +342,12 @@ class TestReportMailingSending:
         fru = FlexibleReportUserEmail(
             user=user, flexible_report=fr, frequency=period, number_of_periods=period_count
         )  # using the model without saving should work as well
-        with mock.patch(
-            "logs.logic.reporting.slicer.FlexibleDataSlicer.create_from_config"
-        ) as mock_create, freeze_time(today):
+        with (
+            mock.patch(
+                "logs.logic.reporting.slicer.FlexibleDataSlicer.create_from_config"
+            ) as mock_create,
+            freeze_time(today),
+        ):
             # make sure to stop processing after create_from_config is called
             # - we just want to test the config passed to it, not the subsequent code
             mock_create.side_effect = ValueError("test")
@@ -381,9 +384,12 @@ class TestReportMailingSending:
         fru = FlexibleReportUserEmail(
             user=user, flexible_report=fr, frequency=period, number_of_periods=period_count
         )  # using the model without saving should work as well
-        with mock.patch(
-            "logs.logic.reporting.slicer.FlexibleDataSlicer.create_from_config"
-        ) as mock_create, freeze_time(today):
+        with (
+            mock.patch(
+                "logs.logic.reporting.slicer.FlexibleDataSlicer.create_from_config"
+            ) as mock_create,
+            freeze_time(today),
+        ):
             # make sure to stop processing after create_from_config is called
             # - we just want to test the config passed to it, not the subsequent code
             mock_create.side_effect = ValueError("test")

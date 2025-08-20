@@ -771,9 +771,10 @@ class TestRawDataExport:
         sync_materialized_reports()
         # call the export using API, but mock the important parts to be able to test the internals
         url = reverse("raw_data_export")
-        with patch("logs.views.export_raw_data_task") as export_task, patch(
-            "logs.views.CSVExport"
-        ) as exporter:
+        with (
+            patch("logs.views.export_raw_data_task") as export_task,
+            patch("logs.views.CSVExport") as exporter,
+        ):
             exporter.return_value = Mock(filename_base="foo", file_url="http://foo.bar")
             resp = master_admin_client.post(url)
             assert resp.status_code == 200
