@@ -28,7 +28,7 @@ export default {
       if (cleanObjectIds.length === 0) {
         return;
       }
-      let objIdStr = cleanObjectIds.join(",");
+      let objIdStr = cleanObjectIds.filter((x) => !!x).join(",");
       let linksPromise = this.http({
         url: "/api/tags/tag-item-links/",
         params: { item_type: objectType, item_id: objIdStr },
