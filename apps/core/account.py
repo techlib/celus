@@ -104,6 +104,6 @@ def sync_user_email_addresses(user) -> EmailAddress:
         raise ValueError("User has no email address")
 
     email_address, _ = EmailAddress.objects.get_or_create(
-        user=user, email=user.email, defaults={"primary": False, "verified": False}
+        user=user, email=user.email.lower(), defaults={"primary": False, "verified": False}
     )
     return email_address

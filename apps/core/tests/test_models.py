@@ -2,6 +2,7 @@ import pytest
 from allauth.account.models import EmailAddress
 from django_otp.plugins.otp_email.models import EmailDevice
 
+from core.account import sync_user_email_addresses
 from core.models import User
 from test_scenarios.basic import *  # noqa
 
@@ -112,6 +113,21 @@ class TestUserModel:
         assert user.email_verified == user_email_verified, (
             "the email should be verified even if case does not match"
         )
+
+    @pytest.mark.parametrize(
+        ["email", "expected_email"],
+        [["foo@bar.baz", "foo@bar.baz"], ["FOO@bar.baz", "foo@bar.baz"]],
+    )
+    def test_sync_user_email_addresses_with_case_mismatch(self, email, expected_email):
+        user = User.objects.create(username="foo", email=email)
+        assert user.emailaddress_set.count() == 0
+        sync_user_email_addresses(user)
+        assert user.emailaddress_set.count() == 1
+        user.email = email.upper()
+        user.save()
+        sync_user_email_addresses(user)
+        assert user.emailaddress_set.count() == 1
+        assert user.emailaddress_set.first().email == "foo@bar.baz"
 
     @pytest.mark.parametrize(["otp_enabled", "created"], [[True, True], [False, False]])
     def test_email_device_created_on_signal(self, settings, otp_enabled, created):
