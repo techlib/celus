@@ -92,6 +92,25 @@ class TestAccessibleUsers:
             },
         )
         assert resp.status_code == 201
+        assert resp.json()["email"] == "name@email.com"
+
+    @pytest.mark.parametrize("lowercase_email", [True, False])
+    def test_superuser_add_user_lowercase_email(
+        self, basic1, organizations, platforms, clients, users, lowercase_email
+    ):
+        resp = clients["su"].post(
+            reverse("user-management-list"),
+            data={
+                "first_name": "name",
+                "last_name": "name",
+                "username": "name",
+                "email": "name@email.com" if lowercase_email else "Name@EMAIL.com",
+                "is_admin": False,
+                "organization": organizations["standalone"].pk,
+            },
+        )
+        assert resp.status_code == 201
+        assert resp.json()["email"] == "name@email.com"
 
     @pytest.mark.parametrize("uppercase", [True, False])
     def test_add_user_with_existing_email(

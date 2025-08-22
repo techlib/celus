@@ -332,7 +332,8 @@ class TestAccountCreationAPI:
         assert User.objects.count() == 2
 
     @pytest.mark.parametrize("first_verified", [True, False])
-    def test_create_account_same_email(self, client, first_verified):
+    @pytest.mark.parametrize("case_mismatch", [True, False])
+    def test_create_account_same_email(self, client, first_verified, case_mismatch):
         """
         Tests that it is not possible to create two accounts with the same email
         - regardless if the email is verified (changed at the end of 2024)
@@ -343,13 +344,34 @@ class TestAccountCreationAPI:
             resp = client.post(
                 "/api/rest-auth/registration/",
                 {
-                    "email": "foo@bar.baz",
+                    "email": "foo@bar.baz" if not case_mismatch else "Foo@bar.baz",
                     "password1": "verysecret666",
                     "password2": "verysecret666",
                 },
             )
             assert resp.status_code == 400
             assert not mail_task.called
+
+    @pytest.mark.parametrize("lowercase_email", [True, False])
+    def test_created_user_has_lowercase_email(self, client, lowercase_email):
+        """
+        Tests that the email address of the created user is always lowercased
+        """
+        with patch("core.signals.async_mail_customer_care_admins"):  # fake celery task
+            resp = client.post(
+                "/api/rest-auth/registration/",
+                {
+                    "email": "foo@bar.baz" if lowercase_email else "Foo@BAR.baz",
+                    "password1": "verysecret666",
+                    "password2": "verysecret666",
+                },
+            )
+        assert resp.status_code == 201
+        assert User.objects.count() == 1
+        user = User.objects.get()
+        assert user.email == "foo@bar.baz"
+        assert user.emailaddress_set.count() == 1
+        assert user.emailaddress_set.first().email == "foo@bar.baz"
 
     def test_create_account_bad_data(self, mailoutbox, clients):
         """

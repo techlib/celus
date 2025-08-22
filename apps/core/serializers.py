@@ -225,7 +225,7 @@ class AccessibleUsersSerializer(ModelSerializer):
             users_to_consider = users_to_consider.exclude(pk=self.instance.pk)
         if users_to_consider.exists():
             raise ValidationError("User with this email already exists")
-        return value
+        return value.lower()
 
     def create(self, validated_data):
         admin_rights = validated_data.pop("is_admin")
@@ -233,14 +233,14 @@ class AccessibleUsersSerializer(ModelSerializer):
 
         # ensure username is filled in - it is usually not passed from the frontend
         if not validated_data.get("username"):
-            validated_data["username"] = validated_data["email"]
+            validated_data["username"] = validated_data["email"].lower()
 
         user = User.objects.create(**validated_data)
         UserOrganization.objects.create(user=user, organization=organization, is_admin=admin_rights)
         return user
 
     def update(self, instance, validated_data):
-        instance.email = validated_data.get("email", instance.email)
+        instance.email = validated_data.get("email", instance.email).lower()
         instance.first_name = validated_data.get("first_name", instance.first_name)
         instance.last_name = validated_data.get("last_name", instance.last_name)
         instance.username = validated_data.get("username", instance.username)
