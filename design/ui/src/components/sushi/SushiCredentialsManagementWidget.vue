@@ -1120,6 +1120,7 @@ export default {
         {
           name: "search",
           type: String,
+          var: "sushi_search",
         },
         {
           name: "counterVersion",

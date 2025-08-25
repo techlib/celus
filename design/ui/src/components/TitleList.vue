@@ -294,6 +294,7 @@ export default {
         {
           name: "search",
           type: String,
+          var: "title_search",
         },
         {
           name: "selectedPubType",
