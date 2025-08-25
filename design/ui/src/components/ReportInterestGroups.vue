@@ -50,14 +50,17 @@ export default {
       this.report.interest_metric_set.forEach((im) =>
         groupSet.set(im.interest_group.pk, im.interest_group),
       );
-      let groups = [...groupSet.values()];
+      let groups = [...groupSet.values()].map((group) => ({
+        ...group,
+        metrics: [],
+        extra: 0,
+      }));
       groups.forEach((group) => {
-        group.metrics = [];
         this.report.interest_metric_set
           .filter((im) => im.interest_group.pk === group.pk)
           .forEach((im) => group.metrics.push(im.metric));
         // shorten the list of metrics if requested
-        if (group.metrics.length > this.maxCount) {
+        if (this.maxCount && group.metrics.length > this.maxCount) {
           group.extra = group.metrics.length - this.maxCount;
           group.metrics = group.metrics.slice(0, this.maxCount);
         }
