@@ -325,6 +325,8 @@ export default {
           title: this.$t("title_fields.actions"),
           value: "actions",
           sortable: false,
+          width: "115px",
+          align: "center",
         },
       ];
       if (this.showSuperActions) {

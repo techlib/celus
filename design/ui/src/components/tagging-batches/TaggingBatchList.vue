@@ -275,6 +275,7 @@ export default {
           value: "actions",
           sortable: false,
           key: "actions",
+          width: "95px",
         },
       ];
     },

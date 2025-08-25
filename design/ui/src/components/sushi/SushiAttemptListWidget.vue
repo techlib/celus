@@ -337,6 +337,8 @@ export default {
           value: "actions",
           key: "actions",
           sortable: false,
+          width: "115px",
+          align: "center",
         },
       ];
       return ret;

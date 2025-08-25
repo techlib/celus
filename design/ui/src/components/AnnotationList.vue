@@ -255,6 +255,7 @@ export default {
           title: this.$i18n.t("title_fields.actions"),
           value: "actions",
           sortable: false,
+          width: "85px",
         },
       ];
     },
