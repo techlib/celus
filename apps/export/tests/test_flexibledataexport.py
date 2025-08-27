@@ -263,6 +263,7 @@ class TestFlexibleDataExport:
         Also test that publication date is formatted correctly.
         """
         slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer.order_by = ["item__name"]
         slicer.add_group_by("metric")
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
@@ -451,6 +452,7 @@ class TestFlexibleDataExportExcel:
         """
         slicer = FlexibleDataSlicer(primary_dimension="item")
         slicer.add_group_by("metric")
+        slicer.order_by = ["item__name"]
         exporter = FlexibleDataExcelExporter(slicer, include_charts=False, include_col_totals=True)
         out = BytesIO()
         exporter.stream_data_to_sink(out)
