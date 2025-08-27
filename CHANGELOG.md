@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.3] - 2025-08-19
+
+### Added
+
+#### Frontend
+
+- add sorting by last modified date in StoredReportsTable
+- allow selecting all events on EventList
+
+### Changes
+
+#### Frontend
+
+- set fixed width for action columns on various pages
+- make date pickers on annotations page clearable
+
+#### Backend
+
+- update ruff target Python version from 3.8 to 3.9 in pyproject.toml
+- enhance item comparison logic to handle different proprietary IDs with the same prefix as different items
+
+### Fixed
+
+#### Frontend
+
+- fix freeze of interest overview when specific interest type is selected (caused by infinite recursion in a computed property)
+- fix API chart Y-axis values not visible for small values
+- fix title pub_type extraction from item report - use parent_data_type instead of data_type
+- fix error getting tags for null title in reporting
+- decouple title and sushi text filters on platform detail page (in titles and sushi tabs)
+
+#### Backend
+
+- add some missing C4 reports to interest definitions
+- fix counter version for IR51 views in stored data view templates
+- update check_interest_definitions to remove obsolete RIMs and superseding records
+- make sure email addresses in Celus are always lowercase
+
 ## [9.1.2] - 2025-08-18
 
 ### Changes
