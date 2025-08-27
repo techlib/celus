@@ -87,7 +87,7 @@ export default {
         this.heatmapDataRaw = monthly_data.map((item) => ({
           year: item.year,
           month: item.month - 1,
-          value: item.total_value || -1,
+          value: item.total_value !== null ? item.total_value : -1,
           metricCount: item.metric_count || 0,
           recordCount: item.record_count || 0,
           hasData: item.total_value !== null,
