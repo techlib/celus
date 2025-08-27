@@ -66,6 +66,8 @@ cs:
                 :error-messages="validateDateRange()"
                 readonly
                 v-bind="props"
+                clearable
+                @click:clear="clearStartDate"
               ></v-text-field>
             </template>
             <VueDatePicker
@@ -95,6 +97,8 @@ cs:
                 prepend-icon="fa fa-calendar"
                 readonly
                 v-bind="props"
+                clearable
+                @click:clear="clearEndDate"
               ></v-text-field>
             </template>
             <VueDatePicker
@@ -467,6 +471,12 @@ export default {
     },
     required(v) {
       return !!v || this.$t("value_required");
+    },
+    clearStartDate() {
+      this.startDate = null;
+    },
+    clearEndDate() {
+      this.endDate = null;
     },
     clean() {
       this.annotationId = null;
