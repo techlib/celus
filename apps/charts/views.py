@@ -1,5 +1,6 @@
 from core.logic.type_conversion import to_bool
 from core.permissions import SuperuserOrAdminPermission
+from core.renderers import PandasCSVRenderer, PandasExcelRenderer
 from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
 from logs.models import DimensionText, Metric, ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
@@ -10,7 +11,6 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
 
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from charts.serializers import (

@@ -91,7 +91,6 @@ INSTALLED_APPS = [
     "releases.apps.ReleasesConfig",
     "necronomicon.apps.NecronomiconConfig",
     "events.apps.EventsConfig",
-    "rest_pandas",
     "import_export",
     "rest_framework_api_key",
     "django.contrib.postgres",

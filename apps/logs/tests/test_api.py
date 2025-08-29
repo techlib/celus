@@ -38,10 +38,7 @@ from logs.fake_data import (
     ManualDataUploadFullFactory,
     ReportTypeFactory,
 )
-from logs.logic.interest.computation import (
-    sync_interest_by_import_batches,
-    sync_interest_for_import_batch,
-)
+from logs.logic.interest.computation import sync_interest_by_import_batches
 from logs.models import (
     AccessLog,
     Dimension,
@@ -1150,69 +1147,6 @@ class TestReportInterestMetricAPI:
 
         # verify no unexpected metrics are present
         assert len(tr_metrics) == len(expected_metrics), "Unexpected metrics found"
-
-
-@pytest.mark.django_db
-class TestRawDataAPI:
-    def test_raw_data_ib(
-        self, authenticated_client, report_types, interests, interest_rt, platforms
-    ):
-        # we need to use the right rt, platform and metric so that interest is defined
-        ib = ImportBatchFullFactory.create(
-            report_type=report_types["jr1"],
-            platform=platforms["branch"],
-            create_accesslogs__metrics=[Metric.objects.get(short_name="metric1")],
-        )
-        resp = authenticated_client.get(reverse("raw_data"), {"ib": ib.pk, "format": "json"})
-        assert resp.status_code == 200
-        data = resp.json()
-        log_count = ib.accesslog_set.count()
-        assert len(data) == log_count
-        sync_interest_for_import_batch(ib, interest_rt)
-        assert ib.accesslog_set.count() > log_count, "ib should have extra interest records"
-        # recheck that there is no interest in the data
-        resp = authenticated_client.get(
-            reverse("raw_data"), {"import_batch": ib.pk, "format": "json"}
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert log_count == len(data), "interest data is not in the output"
-
-    def test_raw_data_mdu(
-        self, authenticated_client, report_types, interests, interest_rt, platforms
-    ):
-        """
-        Test that the raw-data endpoint returns the correct data for a manual data upload.
-        """
-        ib = ImportBatchFullFactory.create(
-            report_type=report_types["jr1"],
-            platform=platforms["branch"],
-            create_accesslogs__metrics=[Metric.objects.get(short_name="metric1")],
-        )
-        mdu = ManualDataUploadFactory.create(
-            import_batches=[ib],
-            report_type=report_types["jr1"],
-            platform=platforms["branch"],
-            organization=ib.organization,
-        )
-        assert mdu.import_batches.count() == 1
-        resp = authenticated_client.get(reverse("raw_data"), {"mdu": mdu.pk, "format": "json"})
-        assert resp.status_code == 200
-        data = resp.json()
-        log_count = mdu.accesslogs.count()
-        assert len(data) == log_count
-        sync_interest_for_import_batch(ib, interest_rt)
-        assert mdu.accesslogs.count() > log_count, "ib should have extra interest records"
-        # recheck that there is no interest in the data
-        resp = authenticated_client.get(reverse("raw_data"), {"mdu": mdu.pk, "format": "json"})
-        assert resp.status_code == 200
-        data = resp.json()
-        assert log_count == len(data), "interest data is not in the output"
-        # check the format of the data
-        rec = data[0]
-        assert "date" in rec
-        assert rec["report_type"] == "JR1"
-        assert {"platform", "organization", "metric", "value"}.issubset(rec.keys())
 
 
 @pytest.mark.django_db

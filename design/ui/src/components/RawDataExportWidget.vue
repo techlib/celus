@@ -3,10 +3,11 @@
 <i18n lang="yaml">
 en:
   export_raw_data: Export raw data
-  info_text:
+  info_text_platform:
     It is possible to export all data related to this platform here. The
     amount of data is potentially quite huge, so the data is exported in CSV format
     inside a ZIP archive.
+  info_text_title: It is possible to export all data related to this title in CSV format here.
   record_count: Number of records to export
   error: There was an error exporting the data
   download_data: Download data
@@ -21,10 +22,11 @@ en:
 
 cs:
   export_raw_data: Export všech dat
-  info_text:
+  info_text_platform:
     Zde je možné vyexportovat veškerá data k této platformě. Množství těchto
     dat může být potenciálně obrovské a data jsou proto exportována to formátu CSV
     zabaleného do ZIP archivu.
+  info_text_title: Zde je možné vyexportovat veškerá data k tomuto titulu to formátu CSV.
   record_count: Počet záznamů k exportu
   error: Během exportu došlo k neznámé chybě
   download_data: Stáhnout data
@@ -42,20 +44,25 @@ cs:
     <v-btn
       @click="showDialog = true"
       :color="color"
-      :variant="text ? 'text' : 'flat'"
+      variant="flat"
       :size="small ? 'small' : 'default'"
       elevation="2"
     >
       <v-icon left class="mr-2" :size="small ? 'small' : 'default'"
         >fa fa-download</v-icon
       >
-      {{ $t("export_raw_data") }}
+      {{ titleText }}
     </v-btn>
     <v-dialog v-model="showDialog" max-width="600">
       <v-card>
-        <v-card-title>{{ $t("export_raw_data") }}</v-card-title>
+        <v-card-title>{{ titleText }}</v-card-title>
         <v-card-text>
-          <div class="card_text py-2 text-disabled">{{ $t("info_text") }}</div>
+          <div v-if="title" class="card_text py-2 text-disabled">
+            {{ $t("info_text_title") }}
+          </div>
+          <div v-else class="card_text py-2 text-disabled">
+            {{ $t("info_text_platform") }}
+          </div>
           <div class="card_text py-2 text-disabled">
             <strong>{{ $t("record_count") }}</strong
             >:
@@ -205,7 +212,7 @@ export default {
         url += `&organization=${this.organization}`;
       }
       if (this.title) {
-        url += `&target=${this.title}`;
+        url += `&target=${this.title}&compress=false`;
       }
       if (this.platform) {
         url += `&platform=${this.platform}`;
@@ -223,6 +230,9 @@ export default {
     },
     shouldRetry() {
       return this.retriedTimes < this.retryNumber;
+    },
+    titleText() {
+      return this.text || this.$t("export_raw_data");
     },
   },
   methods: {

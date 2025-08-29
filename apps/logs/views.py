@@ -24,6 +24,7 @@ from core.permissions import (
     SuperuserOrAdminPermission,
     SuperuserOrMasterUserPermission,
 )
+from core.renderers import PandasCSVRenderer, PandasExcelRenderer
 from core.serializers import UserSerializerForMailing
 from core.tasks import async_mail_admins
 from core.validators import month_validator, pk_list_validator
@@ -74,8 +75,6 @@ from rest_framework.serializers import DateField, IntegerField, PrimaryKeyRelate
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
-from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
-from rest_pandas.views import PandasViewBase
 from scheduler.models import FetchIntention
 from sushi.models import (
     AttemptStatus,
@@ -424,23 +423,6 @@ class ImportBatchAccessLogListView(AccessLogListViewBase):
         return AccessLog.objects.filter(**query_params)
 
 
-class RawDataExportView(PandasViewBase, AccessLogListViewBase):
-    """
-    Specialized view for exporting raw data from the access log using pandas.
-    It supports several output formats, including CSV, Excel, etc.
-    It does not use pagination, but instead returns all data capped at 100k records.
-    """
-
-    export_size_limit = 100_000  # limit the number of records in output to this number
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())[: self.export_size_limit]
-        queryset = self.post_process_data(queryset)
-        serializer = self.get_serializer(queryset, many=True)
-        response = Response(serializer.data)
-        return self.update_pandas_headers(response)
-
-
 class RawDataDelayedExportView(APIView):
     permission_classes = [
         IsAuthenticatedWithOptional2FA
@@ -458,7 +440,10 @@ class RawDataDelayedExportView(APIView):
 
     def post(self, request):
         query_params = self.extract_query_filter_params(request)
-        exporter = CSVExport(query_params, zip_compress=True, use_clickhouse=request.USE_CLICKHOUSE)
+        compress = request.GET.get("compress", None) != "false"
+        exporter = CSVExport(
+            query_params, zip_compress=compress, use_clickhouse=request.USE_CLICKHOUSE
+        )
         export_raw_data_task.delay(
             query_params, exporter.filename_base, zip_compress=exporter.zip_compress
         )

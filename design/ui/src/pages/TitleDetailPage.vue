@@ -4,6 +4,7 @@
 
 <i18n lang="yaml">
 en:
+  export: Export
   available_from_platforms: Available from platforms
   this_title_on_platform: Link to this title on the selected platform
   this_title_no_platform: Link to all data for this title without platform filter
@@ -12,6 +13,7 @@ en:
   not_available_from_any_platform: This title did not appear on any platform in the selected time period.
   try_larger_window: Try selecting a broader date range.
 cs:
+  export: Export
   available_from_platforms: Dostupné na platformách
   this_title_on_platform: Odkaz na tento titul na uvedené platformě
   this_title_no_platform: Odkaz na souhrná data pro tento titul bez ohledu na platformu
@@ -256,8 +258,13 @@ cs:
               <h3>{{ $t("overview") }}</h3>
             </v-col>
             <v-col cols="auto">
-              <data-export-widget :title="titleId" :platform="platformId">
-              </data-export-widget>
+              <raw-data-export-widget
+                :title="titleId"
+                :platform="platformId"
+                :text="$t('export')"
+                color="primary"
+              >
+              </raw-data-export-widget>
             </v-col>
           </v-row>
           <CounterChartSet
@@ -285,12 +292,12 @@ cs:
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import CounterChartSet from "@/components/charts/CounterChartSet";
-import DataExportWidget from "@/components/DataExportWidget";
 import AnnotationsWidget from "@/components/AnnotationsWidget";
 import { useGoTo } from "vuetify";
 import { formatInteger } from "@/libs/numbers";
 import cancellation from "@/mixins/cancellation";
 import TagCard from "@/components/tags/TagCard";
+import RawDataExportWidget from "@/components/RawDataExportWidget";
 import ItemList from "@/components/items/ItemList.vue";
 import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
 
@@ -299,10 +306,10 @@ export default {
   components: {
     ItemList,
     TagCard,
-    DataExportWidget,
     CounterChartSet,
     AnnotationsWidget,
     InterestGroupSelector,
+    RawDataExportWidget,
   },
   mixins: [cancellation],
   props: {

@@ -13,6 +13,7 @@ from core.logic.type_conversion import to_bool
 from core.models import DataSource
 from core.pagination import SmartPageNumberPagination
 from core.permissions import SuperuserOrAdminPermission, ViewPlatformPermission
+from core.renderers import PandasCSVRenderer, PandasExcelRenderer
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -52,7 +53,6 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet, ViewSet
-from rest_pandas import PandasCSVRenderer, PandasExcelRenderer
 from sushi.models import CounterReportPlatform
 from tags.models import Tag
 
