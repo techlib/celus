@@ -338,7 +338,9 @@ class FlexiReport {
         filters[item.dimension.ref] = item.values;
       }
     });
-    filters["report_type"] = this.reportTypes.map((item) => item.pk);
+    if (this.reportTypes.length > 0) {
+      filters["report_type"] = this.reportTypes.map((item) => item.pk);
+    }
 
     // deal with trend mode
     if (this.trendMode) {

@@ -366,6 +366,7 @@ export default {
       ordering: "-_total",
       baseWidth: 0,
       remainder: null,
+      skipNextAutoFetch: false,
       rowToTagScope: {
         target: "title",
         platform: "platform",
@@ -781,6 +782,7 @@ export default {
           this.loadingRemainder = false;
         }
       }
+      this.skipNextAutoFetch = true;
     },
     async updateTranslators() {
       this.translatorsUpdating = true;
@@ -935,9 +937,11 @@ export default {
         } else {
           this.ordering = "-_total";
         }
-        if (!this.loading) {
+        this.$emit("update:ordering", this.ordering);
+        if (!this.loading && !this.skipNextAutoFetch) {
           this.fetchData();
         }
+        this.skipNextAutoFetch = false;
       }
       this.prevOptions = { ...newOptions };
     },

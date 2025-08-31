@@ -5,6 +5,7 @@ export default {
   data() {
     return {
       watchedAttrs: [],
+      lastTrackedState: null,
     };
   },
 
@@ -99,7 +100,10 @@ export default {
   watch: {
     trackedState: {
       handler: function (newVal, oldVal) {
-        if (!isEqual(newVal, oldVal)) {
+        const newValPlain = JSON.parse(JSON.stringify(newVal));
+        const areEqual = isEqual(newValPlain, this.lastTrackedState);
+        if (!areEqual) {
+          this.lastTrackedState = newValPlain;
           // push state to history
           console.debug("store state in history", newVal);
           this.$router.replace({

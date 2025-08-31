@@ -51,6 +51,7 @@ en:
   apply_standard_filters: Apply standard filters
   save_report_with_mailing_objects_confirm_title: Confirm saving of report with periodic export mailing
   save_report_with_mailing_objects_confirm: This report has periodic mailing of exports set up. Any changes will be reflected in the next export. Do you want to continue?
+  invalid_url_parameters: Invalid URL parameters detected. Using default settings.
 
 cs:
   run_report: Spustit report
@@ -98,6 +99,7 @@ cs:
   apply_standard_filters: Aplikovat standardní filtry
   save_report_with_mailing_objects_confirm_title: Potvrďte uložení reportu s periodickým odesíláním exportu
   save_report_with_mailing_objects_confirm: Tento report má nastaveno periodické odesílání exportu. Jakmile budou provedeny změny, budou se projevit v příštím odeslání. Opravdu chcete pokračovat?
+  invalid_url_parameters: Detekovány neplatné URL parametry. Používají se výchozí hodnoty.
 </i18n>
 
 <template>
@@ -208,8 +210,43 @@ cs:
           </v-col>
         </v-row>
       </v-form>
+      <div
+        class="d-flex"
+        :class="collapsed ? 'justify-space-between' : 'justify-end'"
+      >
+        <v-card
+          v-if="collapsed"
+          class="pa-4 mt-2 mr-2 flex-grow-1"
+          border
+          elevation="0"
+        >
+          <ReportSpecOverview :report="reportObject" hide-for-view two-panes />
+          <v-fab
+            color="secondary"
+            variant="text"
+            location="bottom end"
+            icon="fas fa-edit"
+            absolute
+            @click="collapsed = false"
+            size="small"
+          >
+          </v-fab>
+        </v-card>
+
+        <v-btn
+          @click="collapsed = !collapsed"
+          color="primary"
+          variant="outlined"
+          icon
+          size="x-small"
+        >
+          <v-icon size="small">
+            {{ collapsed ? "fas fa-chevron-down" : "fas fa-chevron-up" }}
+          </v-icon>
+        </v-btn>
+      </div>
       <v-form v-model="formValid">
-        <v-row>
+        <v-row v-if="!collapsed">
           <v-col class="d-flex">
             <v-autocomplete
               v-model="selectedReportTypes"
@@ -228,7 +265,7 @@ cs:
           </v-col>
           <v-col
             class="align-self-center"
-            v-if="selectedReportTypes.length === 0"
+            v-if="selectedReportTypes.length === 0 && !collapsed"
           >
             <span>
               <v-icon class="pr-2" color="orange"
@@ -249,7 +286,7 @@ cs:
             ></v-select>
           </v-col>
         </v-row>
-        <v-row v-if="reportViews.length">
+        <v-row v-if="reportViews.length && !collapsed">
           <v-col>
             {{ $t("apply_standard_filters") }}:
             <v-tooltip
@@ -277,7 +314,7 @@ cs:
             </v-tooltip>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row v-if="!collapsed">
           <v-col>
             <v-card class="pa-2">
               <v-card-title class="pt-2">{{ $t("labels.rows") }}</v-card-title>
@@ -444,7 +481,7 @@ cs:
             </v-card>
           </v-col>
         </v-row>
-        <v-row v-if="tagRollUpPossible">
+        <v-row v-if="tagRollUpPossible && !collapsed">
           <v-col>
             <v-card class="pa-2">
               <v-card-title class="pt-2 float-left"
@@ -505,7 +542,7 @@ cs:
             </v-card>
           </v-col>
         </v-row>
-        <v-row v-if="filters.length || coverageData">
+        <v-row v-if="(filters.length || coverageData) && !collapsed">
           <v-col v-if="filters.length" cols="12" :md="''">
             <v-card class="fill-height">
               <v-card-title>{{ $t("labels.filter_settings") }}</v-card-title>
@@ -758,13 +795,15 @@ cs:
             </v-alert>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row :class="{ 'mt-4': collapsed }">
           <v-col v-if="!reportRunning" cols="auto">
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <v-btn
                   @click="runReport"
-                  :disabled="!(formValid && hasGroupBy) || reportRunning"
+                  :disabled="
+                    !(isFormActuallyValid && hasGroupBy) || reportRunning
+                  "
                   v-bind="props"
                   min-width="12rem"
                   color="defaultButton"
@@ -805,7 +844,7 @@ cs:
               <template v-slot:activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  :disabled="!(formValid && hasGroupBy)"
+                  :disabled="!(isFormActuallyValid && hasGroupBy)"
                   color="defaultButton"
                 >
                   <v-icon size="small" color="blue lighten-2" class="mr-2"
@@ -873,6 +912,7 @@ cs:
                     v-model="showZeroRows"
                     class="mt-0"
                     :disabled="cannotShowZeroRows"
+                    v-if="!collapsed"
                   ></v-switch>
                 </span>
               </template>
@@ -887,7 +927,7 @@ cs:
               </span>
             </v-tooltip>
           </v-col>
-          <v-col cols="auto" class="pt-0" v-if="!trendMode">
+          <v-col cols="auto" class="pt-0" v-if="!trendMode && !collapsed">
             <!-- row totals do not make sense in trend mode -->
             <v-switch
               color="primary"
@@ -901,7 +941,9 @@ cs:
             <v-btn
               @click="wantsSave ? saveReport() : (showNameEditDialog = true)"
               color="primary"
-              :disabled="!(formValid && hasGroupBy) || !accessLevelValid"
+              :disabled="
+                !(isFormActuallyValid && hasGroupBy) || !accessLevelValid
+              "
             >
               <v-icon class="mr-2" size="small">far fa-hdd</v-icon>
               {{
@@ -929,6 +971,7 @@ cs:
           v-show="displayReport"
           :show-row-totals="showTotals"
           ref="outputTable"
+          @update:ordering="handleOrderingChange"
         ></FlexiTableOutput>
       </v-col>
     </v-row>
@@ -959,7 +1002,7 @@ import {
   ymDateParse,
 } from "@/libs/dates";
 import cancellation from "@/mixins/cancellation";
-import { toBase64JSON } from "@/libs/serialization";
+import { toBase64JSON, fromBase64Object } from "@/libs/serialization";
 import TagSelector from "@/components/tags/TagSelector";
 import TagClassSelector from "@/components/tags/TagClassSelector";
 import CoverageCard from "@/components/coverage/CoverageCard.vue";
@@ -969,9 +1012,11 @@ import lastDayOfYear from "date-fns/lastDayOfYear";
 import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
 import { useGoTo } from "vuetify";
+import stateTracking from "@/mixins/stateTracking";
 
 import FilterCard from "@/components/reporting/FilterCard.vue";
 import { explicitDimensions } from "@/libs/dimensions";
+import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
 
 export default {
   name: "FlexiTableEditor",
@@ -982,6 +1027,7 @@ export default {
     reportTypes,
     formRulesMixin,
     cancellation,
+    stateTracking,
   ],
 
   components: {
@@ -997,6 +1043,7 @@ export default {
     FromToMonthEntry,
     FromToYearEntry,
     DimensionKeySelector,
+    ReportSpecOverview,
   },
 
   props: {
@@ -1015,9 +1062,45 @@ export default {
     const baseStart = addYears(comparedStart, -1);
     const baseEnd = addYears(comparedEnd, -1);
     return {
+      watchedAttrs: [
+        { name: "selectedReportTypes", type: Array, var: "rt" },
+        { name: "row", type: String, var: "r" },
+        { name: "columns", type: Array, var: "c" },
+        { name: "filters", type: Array, var: "f" },
+        { name: "splitBy", type: String, var: "sb" },
+        { name: "orderBy", type: Array, var: "o" },
+
+        { name: "selectedMetrics", type: Array, var: "m" },
+        { name: "selectedPlatforms", type: Array, var: "p" },
+        { name: "selectedOrganizations", type: Array, var: "org" },
+        { name: "selectedDateRange", type: Object, var: "dr" },
+        { name: "selectedDimValues", type: Object, var: "dv" },
+
+        { name: "selectedTitleTags", type: Array, var: "tt" },
+        { name: "selectedTitleTagClass", type: Object, var: "ttc" },
+        { name: "selectedPlatformTags", type: Array, var: "pt" },
+        { name: "selectedOrganizationTags", type: Array, var: "ot" },
+        { name: "selectedTagClass", type: Object, var: "tc" },
+
+        { name: "filterOrgsByTag", type: Boolean, var: "fot" },
+        { name: "filterPlatformsByTag", type: Boolean, var: "fpt" },
+        { name: "filterTitlesByClass", type: Boolean, var: "ftc" },
+
+        { name: "showZeroRows", type: Boolean, var: "zr" },
+        { name: "showTotals", type: Boolean, var: "st" },
+        { name: "tagRollUp", type: Boolean, var: "tru" },
+        { name: "showRemainder", type: Boolean, var: "sr" },
+
+        { name: "trendMode", type: Boolean, var: "tm" },
+        { name: "tmBaseDateRange", type: Object, var: "tmb" },
+        { name: "tmComparedDateRange", type: Object, var: "tmc" },
+        { name: "autoRun", type: Boolean, var: "run" },
+        { name: "collapsed", type: Boolean, var: "col" },
+      ],
       selectedItems: [],
       row: "organization",
       columns: [],
+      collapsed: false,
       filters: [],
       rules: {
         required: (value) => !!value || this.$t("please_fill_in_title"),
@@ -1078,6 +1161,7 @@ export default {
       accessLevelValid: true,
       showDescriptionDialog: false,
       newReportDescription: "",
+      autoRun: false,
     };
   },
 
@@ -1095,6 +1179,46 @@ export default {
       dateRangeCoverageEnd: "dateRangeCoverageEndText",
       reportsWithoutCoverage: "reportTypesWithoutCoverage",
     }),
+    trackedState: {
+      get() {
+        if (this.reportId || this.setupInProgress) {
+          return {};
+        }
+
+        let out = {};
+        this.watchedAttrs.forEach((attr) => {
+          let shouldInclude = false;
+
+          if (attr.name === "selectedDimValues") {
+            shouldInclude =
+              this[attr.name] &&
+              Object.values(this[attr.name]).some(
+                (arr) => Array.isArray(arr) && arr.length > 0,
+              );
+          } else if (attr.type === Boolean) {
+            shouldInclude = this[attr.name] === true;
+          } else if (this[attr.name] && this[attr.name].length !== 0) {
+            shouldInclude = true;
+          }
+          if (shouldInclude) {
+            out[attr.var || attr.name] = this[attr.name];
+          }
+        });
+        return out;
+      },
+      set(val) {
+        if (this.reportId || this.setupInProgress) {
+          return;
+        }
+
+        this.watchedAttrs.forEach((attr) => {
+          const key = attr.var || attr.name;
+          if (val[key] !== undefined) {
+            this[attr.name] = this.deserialize(attr, val[key]);
+          }
+        });
+      },
+    },
     watchedRow: {
       get() {
         return this.row;
@@ -1253,6 +1377,9 @@ export default {
         let rts = this.allReportTypes.filter(
           (item) => item.pk === this.selectedReportTypes[0],
         );
+        if (rts.length === 0) {
+          return [];
+        }
         let ret = rts[0].dimensionObjs;
         ret.forEach((item) => (item.id = item.ref));
         return ret;
@@ -1263,6 +1390,9 @@ export default {
         const rt1 = this.allReportTypes.find(
           (item) => item.pk === this.selectedReportTypes[0],
         );
+        if (!rt1) {
+          return [];
+        }
         let others = this.allReportTypes.filter(
           (item) => this.selectedReportTypes.indexOf(item.pk) > 0,
         );
@@ -1292,8 +1422,16 @@ export default {
       Object.entries(this.appliedFilters)
         .filter(([k, v]) => k !== "report_type")
         .forEach(([k, v]) => {
-          if (typeof v === "object") {
-            rt.filters.push({ dimension: rt.resolveDim(k), values: v });
+          if (typeof v === "object" && !Array.isArray(v)) {
+            if (v.start !== undefined || v.end !== undefined) {
+              rt.filters.push({
+                dimension: rt.resolveDim(k),
+                start: v.start,
+                end: v.end,
+              });
+            } else {
+              rt.filters.push({ dimension: rt.resolveDim(k), values: v });
+            }
           } else {
             rt.filters.push({ dimension: rt.resolveDim(k), values: [...v] });
           }
@@ -1393,6 +1531,29 @@ export default {
     reportDescriptionClass() {
       return this.readOnly ? "text-grey-lighten-1" : "";
     },
+    shouldAutoRun() {
+      return (
+        this.autoRun &&
+        !this.initialLoad &&
+        !this.setupInProgress &&
+        this.canGetData &&
+        this.hasGroupBy &&
+        this.selectedReportTypes.length > 0 &&
+        this.isFormActuallyValid !== false &&
+        !this.reportRunning &&
+        !this.displayReport
+      );
+    },
+    isFormActuallyValid() {
+      if (this.collapsed) {
+        const hasReportTypes = this.selectedReportTypes.length > 0;
+        const hasValidGroupBy = this.hasGroupBy;
+        const hasValidName =
+          !this.wantsSave || (this.reportName && this.reportName.length > 0);
+        return hasReportTypes && hasValidGroupBy && hasValidName;
+      }
+      return this.formValid;
+    },
   },
 
   methods: {
@@ -1402,6 +1563,32 @@ export default {
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
+    deserialize(attr, value) {
+      switch (attr.type) {
+        case Object:
+          return value;
+        case Array:
+          return value;
+        case String:
+          return String(value);
+        case Number:
+          return parseInt(value);
+        case Boolean:
+          if (typeof value === "boolean") {
+            return value;
+          } else {
+            return value === "true";
+          }
+        default:
+          return value;
+      }
+    },
+    isValidDim(value) {
+      return (
+        !value.startsWith("dim") ||
+        this.explicitDims.find((dim) => dim.id === value)
+      );
+    },
     ruleNotEmpty(modelValue) {
       return modelValue.length > 0 || this.$t("not_empty");
     },
@@ -1437,7 +1624,7 @@ export default {
       await this.$refs.outputTable.updateOutput(this.reportObject);
     },
     async runExport(format) {
-      if (!this.formValid) {
+      if (!this.isFormActuallyValid) {
         return;
       }
       if (this.canGetData) {
@@ -1456,6 +1643,11 @@ export default {
       // update order by based on the current state of output table
       if (this.$refs.outputTable && this.$refs.outputTable.ordering) {
         this.orderBy = [this.$refs.outputTable.ordering];
+      }
+    },
+    handleOrderingChange(ordering) {
+      if (ordering) {
+        this.orderBy = [ordering];
       }
     },
     async firstSave({ title, description, access }) {
@@ -1487,7 +1679,7 @@ export default {
         }
         return;
       }
-      if (!this.formValid) {
+      if (!this.isFormActuallyValid) {
         return;
       }
       // if the report has some mailing objects, ask user to confirm saving
@@ -1512,15 +1704,22 @@ export default {
           // update order by based on the current state of output table
           this.updateOrderByFromOutputTable();
           await this.reportObject.save();
-          this.reportPk = this.reportObject.pk;
+          const savedReportPk = this.reportObject.pk;
+          this.reportPk = savedReportPk;
+          this.setupInProgress = true;
           // rewrite window history so that we return to this page rather than an empty one
           let location = this.$router.resolve({
             name: "flexireport",
             params: {
-              reportId: this.reportPk,
+              reportId: savedReportPk,
             },
+            query: this.$route.query,
           });
           window.history.replaceState({}, null, location.href);
+          this.$nextTick(() => {
+            this.setupInProgress = false;
+          });
+
           this.showSnackbar({
             content: this.$t("save_success"),
             color: "success",
@@ -1705,8 +1904,13 @@ export default {
       }
     },
     async fetchCoverageData() {
-      if (this.selectedReportTypes.length && this.coverageGaugeCount > 0)
+      if (
+        this.selectedReportTypes.length &&
+        this.selectedReportTypeObjs.length &&
+        this.coverageGaugeCount > 0
+      ) {
         this.coverageData = await this.reportObject.getCoverage();
+      }
     },
     goToCoverageOverview() {
       const routerCoverageOverview = this.$router.resolve({
@@ -1784,20 +1988,58 @@ export default {
     cancelDescriptionEdit() {
       this.showDescriptionDialog = false;
     },
+    restoreStateFromUrl() {
+      // Only restore if there are URL parameters
+      if (Object.keys(this.$route.query).length === 0) {
+        return;
+      }
+
+      const wasSetupInProgress = this.setupInProgress;
+      this.setupInProgress = true;
+
+      try {
+        this.restoreTrackedState();
+        if (this.explicitDims) {
+          this.explicitDims.forEach((dim) => {
+            if (!this.selectedDimValues[dim.id]) {
+              this.selectedDimValues[dim.id] = [];
+            }
+          });
+        }
+      } catch (error) {
+        console.warn("Failed to restore state from URL:", error);
+      } finally {
+        this.setupInProgress = wasSetupInProgress;
+      }
+    },
+    restoreTrackedState() {
+      if (this.reportId) {
+        return;
+      }
+      try {
+        this.trackedState = fromBase64Object(this.$route.query);
+      } catch (error) {
+        console.warn("Invalid URL parameters, using defaults:", error);
+        this.showSnackbar({
+          content: this.$t("invalid_url_parameters"),
+          color: "warning",
+        });
+      }
+    },
   },
 
   async mounted() {
     this.loading = true;
+    this.setupInProgress = true;
     try {
       await this.fetchReportTypes();
-      await this.fetchSettings();
-      // we want to select something so that the user immediately has a report
-      // he can run and see how it works. Here we select something the users
-      // already know from the platforms page:
-      //   * reportType = interest (most usefull, shows that interest is a separate report)
-      //   * rows = platform
-      //   * columns = interest type
-      if (this.selectedReportTypes.length === 0) {
+      const hasUrlParams = Object.keys(this.$route.query).length > 0;
+      if (this.reportId) {
+        await this.fetchSettings();
+      } else if (hasUrlParams) {
+        this.restoreStateFromUrl();
+      }
+      if (this.selectedReportTypes.length === 0 && !hasUrlParams) {
         const defaultReport = this.allReportTypes.find(
           (rt) => rt.short_name === "TR",
         );
@@ -1827,19 +2069,22 @@ export default {
       }
     } finally {
       this.loading = false;
+      this.setupInProgress = false;
+      this.$nextTick(() => {
+        this.initialLoad = false;
+      });
     }
   },
 
   watch: {
     possibleRows(newVal) {
       const newIds = newVal.map((dim) => dim.id);
-      // check if the splitBy is still valid
       if (this.splitBy && !newIds.includes(this.splitBy)) {
         this.splitBy = null;
       }
-      // check if columns are still valid (for example if report type gets hidden
-      // when only one report type is selected)
-      this.columns = this.columns.filter((dim) => newIds.includes(dim));
+      if (!this.setupInProgress && this.allReportTypes.length > 0) {
+        this.columns = this.columns.filter((dim) => newIds.includes(dim));
+      }
     },
     row() {
       this.columns = this.columns.filter((dim) => dim !== this.row);
@@ -1863,11 +2108,15 @@ export default {
         }
       }
     },
-    selectedReportTypes() {
+    selectedReportTypes(newVal, oldVal) {
+      if (isEqual(newVal, oldVal)) {
+        return;
+      }
+
       if (this.reportTypeSetOnLoad) {
         // first update after load should not do updates, but a new one should
         this.reportTypeSetOnLoad = false;
-      } else {
+      } else if (!this.setupInProgress) {
         this.selectedDimValues = {};
         if (this.explicitDims) {
           // prepare the selectedDimValues array of the correct length
@@ -1879,6 +2128,7 @@ export default {
       }
       // validate the primary dimension to be compatible with the report types
       if (
+        !this.setupInProgress &&
         this.row.startsWith("dim") &&
         !this.explicitDims.find((dim) => dim.id === this.row)
       ) {
@@ -1893,24 +2143,12 @@ export default {
         }
       }
       // validate filters for explicit dimensions - remove invalid ones
-      this.filters = this.filters.filter(
-        (filter) =>
-          !filter.startsWith("dim") ||
-          this.explicitDims.find((dim) => dim.id === filter),
-      );
-      // validate columns for explicit dimensions - remove invalid ones
-      this.columns = this.columns.filter(
-        (column) =>
-          !column.startsWith("dim") ||
-          this.explicitDims.find((dim) => dim.id === column),
-      );
-      // validate splitBy for explicit dimensions - remove invalid ones
-      if (
-        this.splitBy &&
-        this.splitBy.startsWith("dim") &&
-        !this.explicitDims.find((dim) => dim.id === this.splitBy)
-      ) {
-        this.splitBy = null;
+      if (!this.setupInProgress) {
+        this.filters = this.filters.filter((filter) => this.isValidDim(filter));
+        this.columns = this.columns.filter((column) => this.isValidDim(column));
+        if (this.splitBy && this.isValidDim(this.splitBy)) {
+          this.splitBy = null;
+        }
       }
 
       this.fetchCoverageData();
@@ -1925,19 +2163,20 @@ export default {
     filters: {
       deep: true,
       handler(newValue, oldValue) {
-        for (let filter of oldValue) {
-          if (!newValue.includes(filter)) {
-            // this filter got disabled
-            if (filter === "platform") {
-              this.selectedPlatforms = [];
-            } else if (filter === "organization") {
-              this.selectedOrganizations = [];
-            } else if (filter === "metric") {
-              this.selectedMetrics = [];
-            } else if (filter.startsWith("date")) {
-              this.selectedDateRange = { start: null, end: null };
-            } else if (filter.startsWith("dim")) {
-              this.selectedDimValues[filter] = [];
+        if (!this.setupInProgress) {
+          for (let filter of oldValue) {
+            if (!newValue.includes(filter)) {
+              if (filter === "platform") {
+                this.selectedPlatforms = [];
+              } else if (filter === "organization") {
+                this.selectedOrganizations = [];
+              } else if (filter === "metric") {
+                this.selectedMetrics = [];
+              } else if (filter.startsWith("date")) {
+                this.selectedDateRange = { start: null, end: null };
+              } else if (filter.startsWith("dim")) {
+                this.selectedDimValues[filter] = [];
+              }
             }
           }
         }
@@ -1989,6 +2228,36 @@ export default {
     showDescriptionDialog(newValue) {
       if (newValue === true) {
         this.newReportDescription = this.reportDescription;
+      }
+    },
+    explicitDims: {
+      handler(newDims) {
+        newDims.forEach((dim, index) => {
+          let dimName = `dim${index + 1}`;
+          this.translators[dimName] = this.translators.explicitDimension;
+        });
+      },
+      immediate: true,
+    },
+    "$route.query": {
+      deep: true,
+      handler(newQuery, oldQuery) {
+        if (!this.setupInProgress && !isEqual(newQuery, oldQuery)) {
+          const newState = fromBase64Object(newQuery);
+          if (!this.reportId) {
+            const currentState = this.trackedState;
+            if (!isEqual(newState, currentState)) {
+              this.restoreStateFromUrl();
+            }
+          }
+        }
+      },
+    },
+    shouldAutoRun(newVal) {
+      if (newVal) {
+        this.$nextTick(() => {
+          this.runReport();
+        });
       }
     },
   },

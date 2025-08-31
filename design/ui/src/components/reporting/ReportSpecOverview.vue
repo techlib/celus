@@ -42,13 +42,13 @@
           {{ report.groupBy.map((fltr) => fltr.getName($i18n)).join(", ") }}
         </td>
       </tr>
-      <tr>
+      <tr v-if="!hideForView">
         <th>{{ $t("title_fields.last_modified") }}:</th>
         <td>
           {{ dateAndUser(report.lastUpdated, report.lastUpdatedBy, true) }}
         </td>
       </tr>
-      <tr>
+      <tr v-if="!hideForView">
         <th>{{ $t("title_fields.created") }}:</th>
         <td>
           {{ dateAndUser(report.created, report.createdBy, true) }}
@@ -64,7 +64,7 @@
           </ul>
         </td>
       </tr>
-      <tr>
+      <tr v-if="!hideForView">
         <th class="align-top">{{ $t("labels.settings") }}:</th>
         <td>
           <ul class="unobtrusive-bullets">
@@ -124,6 +124,7 @@ export default {
   props: {
     report: { type: Object },
     twoPanes: { type: Boolean, default: false },
+    hideForView: { type: Boolean, default: false },
   },
 
   methods: {
