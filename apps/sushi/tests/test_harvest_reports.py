@@ -373,3 +373,43 @@ class TestApi:
 
         tasks.send_harvesting_reports_task()
         assert len(mailoutbox) == sent_count
+
+    @pytest.mark.parametrize(
+        "user,enabled,status_code,sent_count",
+        (
+            ("master_admin", False, 200, 0),
+            ("master_user", False, 200, 0),
+            ("user2", False, 200, 0),
+            ("user1", False, 200, 0),
+            ("admin1", False, 200, 0),
+            ("admin2", False, 200, 0),
+            ("su", False, 200, 0),
+            ("master_admin", True, 200, 1),
+            ("master_user", True, 200, 0),  # no credentials
+            ("user2", True, 200, 0),  # no credentials
+            ("user1", True, 200, 0),  # no credentials
+            ("admin1", True, 200, 1),
+            ("admin2", True, 200, 1),
+            ("su", True, 200, 1),
+        ),
+    )
+    def test_grouped_harvest_report(
+        self,
+        basic1,
+        clients,
+        organizations,
+        report_data,
+        mailoutbox,
+        user,
+        enabled,
+        status_code,
+        sent_count,
+    ):
+        assert len(mailoutbox) == 0
+        resp = clients[user].post(
+            reverse("organization-grouped-harvest-reports"), {"enabled": enabled}
+        )
+        assert resp.status_code == status_code
+
+        tasks.send_grouped_harvesting_reports_task()
+        assert len(mailoutbox) == sent_count

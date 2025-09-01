@@ -768,12 +768,11 @@ export default {
         });
       }
     },
-    async toggleSendGroupedHarvestReports(enabled, fake_organization) {
+    async toggleSendGroupedHarvestReports(enabled) {
       try {
-        let response = await axios.put(
-          `/api/user-management/${this.user.pk}/`,
-          { send_grouped_harvest_reports: enabled },
-        );
+        await axios.post(`/api/organization/grouped-harvest-reports/`, {
+          enabled: enabled,
+        });
         this.user.send_grouped_harvest_reports = enabled;
         if (enabled) {
           this.showSnackbar({
@@ -799,7 +798,7 @@ export default {
       }
       try {
         this.sendingHarvestReport = true;
-        let response = await axios.post(
+        await axios.post(
           `/api/organization/${organization.pk}/send-harvest-report/`,
         );
         this.showSnackbar({
@@ -818,9 +817,7 @@ export default {
     async sendGroupedHarvestReport() {
       try {
         this.sendingHarvestReport = true;
-        let response = await axios.post(
-          "/api/organization/send-grouped-harvest-report/",
-        );
+        await axios.post("/api/organization/send-grouped-harvest-report/");
         this.showSnackbar({
           content: this.$t("harvest_reports.sent"),
           color: "success",

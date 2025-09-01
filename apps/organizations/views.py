@@ -50,6 +50,7 @@ from organizations.tasks import erms_sync_organizations_task
 
 from .models import COUNTRIES, Organization, UserOrganization
 from .serializers import (
+    GroupedHarvestReportSerializer,
     HarvestReportSerializer,
     OrganizationListSerializer,
     OrganizationSerializer,
@@ -155,6 +156,22 @@ class OrganizationViewSet(ReadOnlyModelViewSet):
         UserOrganization.objects.filter(user=request.user, organization__pk=pk).update(
             send_harvest_reports=enabled
         )
+        return Response()
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="grouped-harvest-reports",
+        serializer_class=GroupedHarvestReportSerializer,
+    )
+    def grouped_harvest_reports(self, request):
+        serializer = GroupedHarvestReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        enabled = serializer.validated_data["enabled"]
+
+        request.user.send_grouped_harvest_reports = enabled
+        request.user.save()
+
         return Response()
 
     @action(detail=True, methods=["post"], url_path="send-harvest-report")

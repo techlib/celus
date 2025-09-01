@@ -49,6 +49,10 @@ class HarvestReportSerializer(Serializer):
     enabled = BooleanField(required=True)
 
 
+class GroupedHarvestReportSerializer(HarvestReportSerializer):
+    pass
+
+
 class OrganizationListSerializer(ModelSerializer):
     is_admin = BooleanField(read_only=True)
     is_member = BooleanField(read_only=True)
