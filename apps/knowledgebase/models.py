@@ -428,6 +428,7 @@ class PlatformImportAttempt(ImportAttempt):
         ).exclude(pk__in=updated_platforms_ids):
             logger.info("Knowledgebase data from platform '%s' wiped", platform.short_name)
             platform.knowledgebase = None
+            platform.counter_registry_id = None
             platform.save()
             counter["wiped"] += 1
 

@@ -237,6 +237,7 @@ class TestPlatformImportAttempt:
             short_name="wiped_knowledgebase",
             knowledgebase={"some": "data1"},
             source=data_sources["brain"],
+            counter_registry_id="99999999-9999-9999-9999-999999999999",
         )
         platform_no_wiped = PlatformFactory(
             short_name="no_wiped_knowledgebase", knowledgebase={"some": "data2"}, source=None
@@ -269,6 +270,7 @@ class TestPlatformImportAttempt:
 
         platform_wiped.refresh_from_db()
         assert platform_wiped.knowledgebase is None, "KB from same source is wiped"
+        assert platform_wiped.counter_registry_id is None, "Link with registry is removed"
 
         platform_no_wiped.refresh_from_db()
         assert platform_no_wiped.knowledgebase == {"some": "data2"}, "KB from other source remain"
