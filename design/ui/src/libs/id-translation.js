@@ -52,8 +52,12 @@ class IdTranslation {
         try {
           let response = await axios.get(url);
           let data = response.data;
+          let data_count = 0;
           if ("results" in data) {
+            data_count = data.count;
             data = data.results;
+          } else {
+            data_count = data.length;
           }
           data.forEach((item) => {
             this.dict.set(item.pk, item);
@@ -61,7 +65,7 @@ class IdTranslation {
           });
           // check if there are some untranslated items
           if (this.toTranslate.size > 0) {
-            if ((response.data.count || 0) > response.data.results.length) {
+            if (data_count > data.length) {
               // this means that pagination prevented us from getting all the data
               // so we need to do another pass
               console.info(

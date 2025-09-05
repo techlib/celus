@@ -141,7 +141,7 @@ cs:
     </template>
     <template #item.tags="{ item }">
       <TagChip
-        v-for="tag in objIdToTags.get(item.pk)"
+        v-for="tag in getTagsForObjectById('organization', item.pk)"
         :key="tag.pk"
         :tag="tag"
         small
@@ -230,12 +230,9 @@ export default {
     visibleOrganizations() {
       if (this.selectedTags.length) {
         return this.organizations.filter((org) => {
-          if (this.objIdToTags.has(org.pk)) {
-            const objTagIds = this.objIdToTags.get(org.pk).map((tag) => tag.pk);
-            return intersection(this.selectedTags, objTagIds).length > 0;
-          } else {
-            return false;
-          }
+          const tags = this.getTagsForObjectById("organization", org.pk);
+          const objTagIds = tags.map((tag) => tag.pk);
+          return intersection(this.selectedTags, objTagIds).length > 0;
         });
       }
       return this.organizations;
@@ -289,11 +286,14 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     getTags(tags, itemId) {
-      this.objIdToTags.set(itemId, tags);
+      if (!this.objIdToTagsByType.has("organization")) {
+        this.objIdToTagsByType.set("organization", new Map());
+      }
+      this.objIdToTagsByType.get("organization").set(itemId, tags);
     },
     fetchTags() {
       if (this.organizations.length) {
-        this.getTagsForObjectsById(
+        this.fetchTagsForObjectsById(
           "organization",
           this.organizations.map((item) => item.pk),
         );

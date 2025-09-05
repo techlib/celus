@@ -13,13 +13,12 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
-import cancellation from "@/mixins/cancellation";
 import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+import cancellation from "@/mixins/cancellation";
+import { mapActions } from "vuex";
 
 /* vue-echarts */
-import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
+import { tagText } from "@/libs/tags";
 import { BarChart, LineChart } from "echarts/charts";
 import {
   DatasetComponent,
@@ -29,8 +28,9 @@ import {
   ToolboxComponent,
   TooltipComponent,
 } from "echarts/components";
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";
-import { tagText } from "@/libs/tags";
 
 use([
   CanvasRenderer,
@@ -78,8 +78,8 @@ export default {
       default: 50,
       type: Number,
     },
-    primaryDimension: {
-      type: String,
+    primaryDimensions: {
+      type: Array,
       required: true,
     },
   },
@@ -99,10 +99,16 @@ export default {
           Object.keys(this.series).map((k) => [k, item[k]]),
         );
 
-        let key = item[this.shownPrimaryDimension];
-        if (this.shownPrimaryDimension === "tag" && typeof key === "object") {
-          key = tagText(key);
-        }
+        // merge the primary dimensions into a single key
+        let key = this.primaryDimensions
+          .map((dim) =>
+            dim === "tag" && typeof item[dim] === "object"
+              ? tagText(item[dim])
+              : item[dim],
+          )
+          .join(" | ");
+
+        // we add a number to the end of non-unique keys to avoid duplicates
         let count = keyToCount.get(key) || 0;
         if (count > 0) {
           newItem[this.shownPrimaryDimension] = `${key} #${count + 1}`;
@@ -191,7 +197,7 @@ export default {
       }
     },
     shownPrimaryDimension() {
-      return this.primaryDimension;
+      return this.primaryDimensions[0];
     },
     // new stuff for vue-echarts starts here
     option() {

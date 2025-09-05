@@ -211,7 +211,7 @@ cs:
       <template #item.tags="{ props, item }">
         <TagChip
           v-bind="props"
-          v-for="tag in objIdToTags.get(item.pk)"
+          v-for="tag in getTagsForObjectById('title', item.pk)"
           :key="tag.pk"
           :tag="tag"
           size="small"
@@ -231,20 +231,20 @@ cs:
 </template>
 
 <script>
+import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
+import TagChip from "@/components/tags/TagChip";
+import TagSelector from "@/components/tags/TagSelector";
+import SimplePie from "@/components/util/SimplePie";
+import { echartPalette } from "@/libs/palettes";
+import cancellation from "@/mixins/cancellation";
+import stateTracking from "@/mixins/stateTracking";
+import tags from "@/mixins/tags";
 import axios from "axios";
-import { mapActions, mapGetters } from "vuex";
 import debounce from "lodash/debounce";
+import { mapActions, mapGetters } from "vuex";
 import { formatInteger } from "../libs/numbers";
 import { iconForPubType, pubTypes, titleForPubType } from "../libs/pub-types";
 import ShortenText from "./ShortenText";
-import SimplePie from "@/components/util/SimplePie";
-import { echartPalette } from "@/libs/palettes";
-import TagSelector from "@/components/tags/TagSelector";
-import cancellation from "@/mixins/cancellation";
-import tags from "@/mixins/tags";
-import TagChip from "@/components/tags/TagChip";
-import stateTracking from "@/mixins/stateTracking";
-import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
@@ -544,7 +544,7 @@ export default {
         }
 
         if (this.titles.length) {
-          await this.getTagsForObjectsById(
+          await this.fetchTagsForObjectsById(
             "title",
             this.titles.map((item) => item.pk),
           );

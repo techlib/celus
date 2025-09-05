@@ -33,7 +33,7 @@ def slicer(flexible_slicer_test_data):
     """
     creates moderately complex `FlexibleDataSlicer` instance
     """
-    slicer = FlexibleDataSlicer(primary_dimension="platform", include_row_totals=True)
+    slicer = FlexibleDataSlicer(["platform"], include_row_totals=True)
     texts = flexible_slicer_test_data["dimension_values"][0][:2]
     report_type = flexible_slicer_test_data["report_types"][0]
     dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -46,7 +46,7 @@ def slicer(flexible_slicer_test_data):
 @pytest.fixture
 def slicer2(flexible_slicer_test_data):
     MetricFactory(name="", short_name="MS")  # metric with short_name only
-    slicer = FlexibleDataSlicer(primary_dimension="metric")
+    slicer = FlexibleDataSlicer(["metric"])
     slicer.include_all_zero_rows = True
     texts = flexible_slicer_test_data["dimension_values"][0][:2]
     report_type = flexible_slicer_test_data["report_types"][0]
@@ -129,11 +129,10 @@ class TestFlexibleDataExport:
     def test_create_output_file_with_tag_rollup(
         self, tagged_titles, flexible_slicer_test_data, admin_user, export_output, show_remainder
     ):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["target"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.tag_roll_up = True
-        slicer.primary_dimension = "target"
         slicer.show_untagged_remainder = show_remainder
         slicer.add_group_by("metric")
 
@@ -164,11 +163,10 @@ class TestFlexibleDataExport:
         """
         Tags from hidden tag class should not be visible in the output
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["target"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.tag_roll_up = True
-        slicer.primary_dimension = "target"
         slicer.show_untagged_remainder = False
         slicer.add_group_by("metric")
 
@@ -193,11 +191,10 @@ class TestFlexibleDataExport:
         self, tagged_titles, flexible_slicer_test_data, admin_user, export_output, hide_tag_class
     ):
         tag1 = tagged_titles["tag1"]
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["target"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_filter(TagDimensionFilter("target", tag1))
-        slicer.primary_dimension = "target"
         slicer.add_group_by("metric")
         t1, t2, _ = tagged_titles["titles"]
         if hide_tag_class:
@@ -230,10 +227,9 @@ class TestFlexibleDataExport:
         title100 = TitleFactory.create_batch(100)
         for title in title100:
             tag1.tag(title, admin_user)
-        slicer = FlexibleDataSlicer(primary_dimension="platform", include_all_zero_rows=True)
+        slicer = FlexibleDataSlicer(["target"], include_all_zero_rows=True)
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
-        slicer.primary_dimension = "target"
         slicer.add_group_by("metric")
 
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
@@ -249,7 +245,7 @@ class TestFlexibleDataExport:
         """
         Tests that using title as primary dimension also adds ISBN and other extra columns
         """
-        slicer = FlexibleDataSlicer(primary_dimension="target")
+        slicer = FlexibleDataSlicer(["target"])
         slicer.add_group_by("metric")
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
         data = export_output(export)
@@ -262,7 +258,7 @@ class TestFlexibleDataExport:
         Tests that using item as primary dimension also adds DOI and other extra columns.
         Also test that publication date is formatted correctly.
         """
-        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer = FlexibleDataSlicer(["item"])
         slicer.order_by = ["item__name"]
         slicer.add_group_by("metric")
         slicer.order_by = ["item__name"]
@@ -289,7 +285,7 @@ class TestFlexibleDataExport:
         """
         Tests that using title as primary dimension also adds ISBN and other extra columns
         """
-        slicer = FlexibleDataSlicer(primary_dimension="target")
+        slicer = FlexibleDataSlicer(["target"])
         if split:
             slicer.add_split_by(split_by)
         slicer.add_group_by("metric")
@@ -319,7 +315,7 @@ class TestFlexibleDataExportCSV:
         """
         Tests that totals are calculated correctly
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.order_by = ["organization__name"]
         exporter_cls = FlexibleDataZipCSVExporter if zip_csv else FlexibleDataSimpleCSVExporter
@@ -354,7 +350,7 @@ class TestFlexibleDataExportCSV:
     @pytest.mark.parametrize("col_totals", [True, False])
     def test_trend_mode(self, flexible_slicer_test_data, row_totals, col_totals, zip_csv):
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
@@ -418,6 +414,401 @@ class TestFlexibleDataExportCSV:
 
 
 @pytest.mark.django_db
+class TestFlexibleDataExportMultiindex:
+    def test_basic_multiindex_csv(self, flexible_slicer_test_data, admin_user, export_output):
+        """
+        Test basic multiindex export with 2 primary dimensions (organization, platform)
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["organization", "platform"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+        # Check header (Tags columns are included after each taggable dimension)
+        assert lines[0].startswith(
+            "Organization,Organization Tags,Platform,Platform Tags,Metric 1,Metric 2,Metric 3"
+        )
+        # Check that we have 9 data rows (3 orgs x 3 platforms)
+        assert len(lines) == 10  # 1 header + 9 data rows
+        # Check first data row (now with empty tags columns)
+        assert lines[1].startswith("Organization 1,,Platform 1,,")
+
+    def test_multiindex_with_title(self, flexible_slicer_test_data, admin_user, export_output):
+        """
+        Test multiindex with a dimension that has extra columns (title with ISSN, etc.)
+        """
+        slicer = FlexibleDataSlicer(["platform", "target"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["platform", "target"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+        # Check header includes extra columns for title (ISSN, EISSN, ISBN)
+        header = lines[0]
+        assert "Platform" in header
+        assert "Title/Database" in header
+        assert "ISSN" in header
+        assert "EISSN" in header
+        assert "ISBN" in header
+        # Check that we have 9 data rows (3 platforms x 3 titles)
+        assert len(lines) == 10  # 1 header + 9 data rows
+
+        # Verify actual ISSN, EISSN, ISBN values are exported in data rows
+        titles = flexible_slicer_test_data["targets"]
+        # Find header column positions
+        cols = header.split(",")
+        issn_idx = cols.index("ISSN")
+        eissn_idx = cols.index("EISSN")
+        isbn_idx = cols.index("ISBN")
+
+        # Check at least one row has actual identifier values
+        found_values = {"issn": [], "eissn": [], "isbn": []}
+
+        for line in lines[1:]:  # Skip header
+            parts = line.split(",")
+            if len(parts) > max(issn_idx, eissn_idx, isbn_idx):
+                # Collect non-empty values
+                if parts[issn_idx].strip():
+                    found_values["issn"].append(parts[issn_idx])
+                if parts[eissn_idx].strip():
+                    found_values["eissn"].append(parts[eissn_idx])
+                if parts[isbn_idx].strip():
+                    found_values["isbn"].append(parts[isbn_idx])
+
+        # At least one of the identifiers should be present
+        assert found_values["issn"] or found_values["eissn"] or found_values["isbn"], (
+            f"No ISSN, EISSN, or ISBN values found in export. "
+            f"Sample row: {lines[1] if len(lines) > 1 else 'N/A'}"
+        )
+
+        # Verify that the exported identifiers match actual title data
+        exported_issns = set(found_values["issn"])
+        exported_eissns = set(found_values["eissn"])
+        exported_isbns = set(found_values["isbn"])
+        actual_issns = {t.issn for t in titles if t.issn}
+        actual_eissns = {t.eissn for t in titles if t.eissn}
+        actual_isbns = {t.isbn for t in titles if t.isbn}
+
+        # Check that exported values are a subset of actual values (or equal)
+        assert exported_issns.issubset(actual_issns) or not exported_issns, (
+            f"Exported ISSNs {exported_issns} don't match actual {actual_issns}"
+        )
+        assert exported_eissns.issubset(actual_eissns) or not exported_eissns, (
+            f"Exported EISSNs {exported_eissns} don't match actual {actual_eissns}"
+        )
+        assert exported_isbns.issubset(actual_isbns) or not exported_isbns, (
+            f"Exported ISBNs {exported_isbns} don't match actual {actual_isbns}"
+        )
+
+    def test_triple_index(self, flexible_slicer_test_data, admin_user, export_output):
+        """
+        Test with 3 primary dimensions - including verification of title identifiers
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform", "target"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["organization", "platform", "target"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+        header = lines[0]
+        # Check header has all 3 dimensions (plus Tags, ISSN, EISSN, ISBN for title)
+        assert "Organization" in header
+        assert "Platform" in header
+        assert "Title/Database" in header
+        assert "ISSN" in header
+        assert "EISSN" in header
+        assert "ISBN" in header
+        # Check that we have 27 data rows (3 orgs x 3 platforms x 3 titles)
+        assert len(lines) == 28  # 1 header + 27 data rows
+
+        # Verify title identifiers are exported (not just empty columns)
+        cols = header.split(",")
+        issn_idx = cols.index("ISSN")
+        isbn_idx = cols.index("ISBN")
+
+        # Check that at least some rows have identifier values
+        identifiers_found = False
+        for line in lines[1:]:
+            parts = line.split(",")
+            if len(parts) > max(issn_idx, isbn_idx):
+                if parts[issn_idx].strip() or parts[isbn_idx].strip():
+                    identifiers_found = True
+                    break
+
+        assert identifiers_found, (
+            f"No ISSN or ISBN values found in triple index export. "
+            f"Sample row: {lines[1] if len(lines) > 1 else 'N/A'}"
+        )
+
+    def test_multiindex_with_tags(
+        self, flexible_slicer_test_data, admin_user, export_output, tagged_titles
+    ):
+        """
+        Test that tags appear right after their dimension columns in multiindex
+        """
+        # Tag some platforms too
+        from publications.models import Platform
+        from tags.fake_data import TagFactory
+
+        platforms = Platform.objects.all()
+        tc = TagClassFactory.create(name="Platform TC", scope=TagScope.PLATFORM)
+        platform_tag = TagFactory(tag_class=tc, name="Platform Tag 1")
+        platform_tag.tag(platforms[0], admin_user)
+
+        slicer = FlexibleDataSlicer(["platform", "target"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["platform", "target"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+        header = lines[0]
+        # Check that tags appear right after their dimension columns with dimension name prefix:
+        # Platform, Platform Tags, Title/Database, ISSN, EISSN, ISBN, Title/Database Tags, ...
+        cols = header.split(",")
+        platform_idx = cols.index("Platform")
+        # Tags column should come right after Platform and include dimension name
+        assert cols[platform_idx + 1] == "Platform Tags"
+
+        # Find Title/Database index
+        title_idx = cols.index("Title/Database")
+        # ISBN comes after ISSN, EISSN, ISBN for title
+        issn_idx = cols.index("ISSN")
+        eissn_idx = cols.index("EISSN")
+        isbn_idx = cols.index("ISBN")
+        # Tags should come after ISBN
+        assert issn_idx == title_idx + 1
+        assert eissn_idx == title_idx + 2
+        assert isbn_idx == title_idx + 3
+        # Find tags column after title attributes - should include dimension name
+        tags_after_title = isbn_idx + 1
+        assert cols[tags_after_title] == "Title/Database Tags"
+
+    def test_multiindex_with_tags_single_dimension_compatibility(
+        self, flexible_slicer_test_data, admin_user, export_output, tagged_titles
+    ):
+        """
+        Test that single dimension reports still use "tags" column name (not pk_tags)
+        """
+        slicer = FlexibleDataSlicer(["target"])
+        slicer.add_group_by("metric")
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+        header = lines[0]
+        # For single dimension, should use "Tags" not "pk_tags"
+        assert "Title/Database,ISSN,EISSN,ISBN,Tags," in header
+        # Verify that pk_tags is NOT in the header (backward compatibility)
+        assert "pk_tags" not in header.lower()
+
+    def test_multiindex_with_totals_csv(self, flexible_slicer_test_data):
+        """
+        Test multiindex with row and column totals in CSV
+        """
+        import csv
+        from io import StringIO
+
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["organization", "platform"]
+        exporter = FlexibleDataSimpleCSVExporter(
+            slicer, include_row_totals=True, include_col_totals=True
+        )
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        rows = list(csv.reader(out))
+        # Check header has row total column
+        assert "Row total" in rows[0]
+        # Check last row is totals
+        assert rows[-1][0] == "Total"
+        # Verify structure: Organization, Platform, Row total, Metric1, Metric2, Metric3
+        assert len(rows[0]) == 6  # 2 primary dims + row total + 3 metrics
+
+    def test_multiindex_excel(self, flexible_slicer_test_data):
+        """
+        Test multiindex with Excel export
+        """
+        from io import BytesIO
+
+        import openpyxl
+
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["organization", "platform"]
+        exporter = FlexibleDataExcelExporter(slicer, include_charts=False, include_col_totals=True)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        assert "report" in workbook.sheetnames
+        sheet = workbook["report"]
+        # Check header
+        header = [cell.value for cell in list(sheet.rows)[0]]
+        assert header[0] == "Organization"
+        assert header[1] == "Platform"
+        # Check we have data rows
+        assert len(list(sheet.rows)) > 1
+
+    def test_multiindex_with_split_by(self, flexible_slicer_test_data, admin_user, inmemory_media):
+        """
+        Test multiindex with split_by creating multiple sheets
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.add_split_by("target")
+        slicer.order_by = ["organization", "platform"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user, fmt=FileFormat.ZIP_CSV)
+        export.create_output_file(raise_exception=True)
+        # Verify the file was created and has multiple CSV files
+        with ZipFile(export.output_file.file, "r") as zipfile:
+            csv_files = [name for name in zipfile.namelist() if name.endswith(".csv")]
+            # Should have metadata + one file per title (3 titles)
+            assert len(csv_files) >= 3
+
+    def test_multiindex_trend_mode_csv(self, flexible_slicer_test_data, admin_user, export_output):
+        """
+        Test CSV export with multiindex + trend mode
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["platform", "organization"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+
+        # Check header - includes tag columns for multiindex
+        header = lines[0]
+        expected_headers = [
+            "Platform",
+            "Platform Tags",
+            "Organization",
+            "Organization Tags",
+            "2019-12",
+            "2020-01 - 2020-03",
+            "Change",
+            "Change %",
+        ]
+        assert header == ",".join(expected_headers)
+
+        # Check that we have data rows
+        assert len(lines) > 1  # At least header + data rows
+
+        # Check first data row has numeric values for trend columns
+        if len(lines) > 1:
+            first_data_row = lines[1].split(",")
+            assert len(first_data_row) == 8  # 4 dimension columns + 4 trend columns
+            # Check that trend columns are numeric (not empty)
+            assert first_data_row[4] == "378"  # base
+            assert first_data_row[5] == "5508"  # compared
+            assert first_data_row[6] == "5130"  # diff
+            assert first_data_row[7] != ""  # reldiff
+
+    def test_multiindex_trend_mode_excel(self, flexible_slicer_test_data, admin_user):
+        """
+        Test Excel export with multiindex + trend mode including formulas
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook["report"]
+
+        # Check headers - no tag columns when include_tags=False
+        headers = [cell.value for cell in sheet[1]]
+        expected_headers = [
+            "Platform",
+            "Organization",
+            "2019-12",
+            "2020-01 - 2020-03",
+            "Change",
+            "Change %",
+        ]
+        assert headers == expected_headers
+
+        # Check that we have data rows
+        assert sheet.max_row > 1
+
+        # Check that formulas are present in trend columns
+        if sheet.max_row > 1:
+            # Check that Change column has formulas (column 5 = E)
+            change_cell = sheet.cell(row=2, column=5)  # Change column
+            assert change_cell.value is not None
+            if isinstance(change_cell.value, str) and change_cell.value.startswith("="):
+                # It's a formula - should be D2-C2 (compared - base)
+                assert "D2-C2" in change_cell.value or "D3-C3" in change_cell.value
+
+            # Check that Change % column has formulas (column 6 = F)
+            change_pct_cell = sheet.cell(row=2, column=6)  # Change % column
+            assert change_pct_cell.value is not None
+            if isinstance(change_pct_cell.value, str) and change_pct_cell.value.startswith("="):
+                # It's a formula
+                assert "(" in change_pct_cell.value and ")" in change_pct_cell.value
+
+    def test_multiindex_trend_mode_with_totals(
+        self, flexible_slicer_test_data, admin_user, export_output
+    ):
+        """
+        Test multiindex + trend mode with column totals
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["organization", "platform"]
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        export.include_col_totals = True
+        data = export_output(export)
+        lines = data.splitlines()
+
+        # Check that we have data rows
+        assert len(lines) > 1
+
+        expected_values = [
+            [378, 5508, 5130],
+            [3294, 14256, 10962],
+            [6210, 23004, 16794],
+            [9126, 31752, 22626],
+            [12042, 40500, 28458],
+            [14958, 49248, 34290],
+            [17874, 57996, 40122],
+            [20790, 66744, 45954],
+            [23706, 75492, 51786],
+        ]
+
+        for i, line in enumerate(lines[1:]):  # Skip header
+            values = line.split(",")
+            assert len(values) == 8  # 4 dimension columns + 4 trend columns
+            # Check that trend columns have numeric values
+            assert values[4] == str(expected_values[i][0])  # base
+            assert values[5] == str(expected_values[i][1])  # compared
+            assert values[6] == str(expected_values[i][2])  # diff
+            assert values[7] != ""  # hard to check, just check that it is not empty
+
+
+@pytest.mark.django_db
 class TestFlexibleDataExportExcel:
     def test_totals_as_formulas(self, flexible_slicer_test_data):
         """
@@ -425,7 +816,7 @@ class TestFlexibleDataExportExcel:
         Group by: platform
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.order_by = ["organization__name"]
         exporter = FlexibleDataExcelExporter(
@@ -451,7 +842,7 @@ class TestFlexibleDataExportExcel:
         """
         Tests that using item as primary dimension also adds DOI and other extra columns
         """
-        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer = FlexibleDataSlicer(["item"])
         slicer.add_group_by("metric")
         slicer.order_by = ["item__name"]
         exporter = FlexibleDataExcelExporter(slicer, include_charts=False, include_col_totals=True)
@@ -482,7 +873,7 @@ class TestFlexibleDataExportExcel:
     @pytest.mark.parametrize("row_totals", [True, False])
     def test_trend_mode(self, flexible_slicer_test_data, include_tags, row_totals, admin_user):
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
@@ -533,7 +924,7 @@ class TestFlexibleDataExportExcel:
     @pytest.mark.parametrize("include_row_totals", [True, False])
     @pytest.mark.parametrize("include_col_totals", [True, False])
     def test_show_totals(self, flexible_slicer_test_data, include_row_totals, include_col_totals):
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.order_by = ["organization__name"]
         exporter = FlexibleDataExcelExporter(
@@ -571,7 +962,7 @@ class TestFlexibleDataExportExcel:
 
     @pytest.mark.parametrize(["max_parts", "error"], [(2, True), (3, False)])
     def test_maximum_part_number_excel(self, flexible_slicer_test_data, max_parts, error):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.MAXIMUM_POSSIBLE_PARTS = max_parts
         slicer.add_group_by("metric")
         slicer.add_split_by("target")
@@ -587,7 +978,7 @@ class TestFlexibleDataExportExcel:
 
     @pytest.mark.parametrize(["max_cols", "error"], [(2, True), (3, False)])
     def test_maximum_column_number(self, flexible_slicer_test_data, max_cols, error):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.MAXIMUM_POSSIBLE_GROUPS = max_cols
         slicer.add_group_by("metric")
         exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
@@ -602,7 +993,7 @@ class TestFlexibleDataExportExcel:
 
     @pytest.mark.parametrize(["max_parts", "error"], [(2, True), (3, False)])
     def test_maximum_part_number_csv(self, flexible_slicer_test_data, max_parts, error):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.MAXIMUM_POSSIBLE_PARTS = max_parts
         slicer.add_group_by("metric")
         slicer.add_split_by("target")
@@ -617,7 +1008,7 @@ class TestFlexibleDataExportExcel:
             exporter.stream_data_to_sink(out)
 
     def test_empty_export(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         m = MetricFactory(name="Empty metric")
         slicer.add_filter(ForeignKeyDimensionFilter("metric", [m]))
@@ -637,7 +1028,7 @@ class TestFlexibleDataExportExcel:
         """
         Check that there is no error when exporting data with empty coverage.
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         # when using new organization, the coverage is empty
         org = OrganizationFactory()
@@ -655,3 +1046,141 @@ class TestFlexibleDataExportExcel:
         for row in workbook["metadata"].iter_rows():
             if row[0].value == "Coverage":
                 assert row[1].value == "-"
+
+    # --- Multiindex incompatible options (export-level) ---
+
+    def test_multiindex_tag_roll_up_incompatible_export(self, flexible_slicer_test_data):
+        slicer = FlexibleDataSlicer(["platform", "organization"], tag_roll_up=True)
+        slicer.add_group_by("metric")
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        with pytest.raises(SlicerConfigError) as exc:
+            exporter.stream_data_to_sink(out)
+        assert exc.value.code == SlicerConfigErrorCode.E114.value
+
+    def test_multiindex_include_all_zero_rows_incompatible_export(self, flexible_slicer_test_data):
+        slicer = FlexibleDataSlicer(["platform", "organization"], include_all_zero_rows=True)
+        slicer.add_group_by("metric")
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        with pytest.raises(SlicerConfigError) as exc:
+            exporter.stream_data_to_sink(out)
+        assert exc.value.code == SlicerConfigErrorCode.E115.value
+
+    def test_multiindex_trend_mode_export(self, flexible_slicer_test_data, admin_user):
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        exporter = FlexibleDataExcelExporter(
+            slicer, include_tags=True, include_charts=False, report_owner=admin_user
+        )
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook["report"]
+
+        # Check that we have the expected columns - includes tag columns for multiindex
+        headers = [cell.value for cell in sheet[1]]
+        expected_headers = [
+            "Platform",
+            "Platform Tags",
+            "Organization",
+            "Organization Tags",
+            "2019-12",
+            "2020-01 - 2020-03",
+            "Change",
+            "Change %",
+        ]
+        assert headers == expected_headers
+
+        # Check that we have data rows
+        assert sheet.max_row > 1  # At least header + data rows
+
+    def test_multiindex_explicit_dimension_excel(self, flexible_slicer_test_data, admin_user):
+        """
+        Test Excel export with multiindex using explicit remapped dimensions (dim1, dim2)
+        """
+        slicer = FlexibleDataSlicer(["dim1", "platform"])
+        slicer.add_group_by("metric")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["dim1", "platform"]
+        exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook["report"]
+
+        # Check headers
+        headers = [cell.value for cell in sheet[1]]
+        expected_headers = ["dimension-0", "Platform", "Metric 1", "Metric 2", "Metric 3"]
+        assert headers == expected_headers
+
+        # Check that we have data rows
+        assert sheet.max_row > 1
+
+        # Check first data row has actual values (not empty)
+        first_data_row = [cell.value for cell in sheet[2]]  # Row 2 (after header)
+        assert len(first_data_row) == 5
+        # Check that dim1 column has actual text values (not empty)
+        assert first_data_row[0] is not None
+        assert first_data_row[0] != ""
+        assert isinstance(first_data_row[0], str)
+        # Check that platform column has actual text values
+        assert first_data_row[1] is not None
+        assert first_data_row[1] != ""
+        assert isinstance(first_data_row[1], str)
+        # Check that metric columns have numeric values
+        assert first_data_row[2] is not None
+        assert first_data_row[3] is not None
+        assert first_data_row[4] is not None
+
+    def test_multiindex_explicit_dimension_csv(
+        self, flexible_slicer_test_data, admin_user, export_output
+    ):
+        """
+        Test CSV export with multiindex using explicit remapped dimensions (dim1, dim2)
+        """
+        slicer = FlexibleDataSlicer(["dim1", "platform"])
+        slicer.add_group_by("metric")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["dim1", "platform"]
+        # Use the exporter directly to control include_tags
+        exporter = FlexibleDataSimpleCSVExporter(slicer, include_tags=False)
+        out = StringIO()
+        exporter.stream_data_to_sink(out)
+        data = out.getvalue()
+        lines = data.splitlines()
+
+        # Check header
+        header = lines[0]
+        expected_headers = ["dimension-0", "Platform", "Metric 1", "Metric 2", "Metric 3"]
+        assert header == ",".join(expected_headers)
+
+        # Check that we have data rows
+        assert len(lines) > 1
+
+        # Check first data row has actual values (not empty)
+        first_data_row = lines[1].split(",")
+        assert len(first_data_row) == 5
+        # Check that dim1 column has actual text values (not empty)
+        assert first_data_row[0] != ""
+        assert first_data_row[0] in ["A", "B", "C"]  # Expected dim1 values
+        # Check that platform column has actual text values
+        assert first_data_row[1] != ""
+        assert first_data_row[1] in ["Platform 1", "Platform 2", "Platform 3"]
+        # Check that metric columns have numeric values
+        assert first_data_row[2] != ""
+        assert first_data_row[3] != ""
+        assert first_data_row[4] != ""

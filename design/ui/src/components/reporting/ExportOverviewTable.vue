@@ -100,8 +100,8 @@
     <template #item.expiresIn="{ item }">
       <span v-html="getExpiration(item.created)"></span>
     </template>
-    <template #item.primaryDimension="{ item }">
-      {{ item.primaryDimension.getName($i18n) }}
+    <template #item.primaryDimensions="{ item }">
+      {{ item.primaryDimensions.map((dim) => dim.getName($i18n)).join(", ") }}
     </template>
     <template #item.statusText="{ item }">
       {{ $t("export_status." + item.statusText) }}
@@ -113,18 +113,21 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import { formatDistanceToNow } from "date-fns";
-import axios from "axios";
-import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
-import { filesize } from "filesize";
-import { FlexiExport } from "@/libs/flexi-reports";
-import reportTypes from "@/mixins/reportTypes";
-import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
-import { EXPORT_ERROR, EXPORT_FINISHED } from "@/libs/flexi-reports";
-import translators from "@/mixins/translators";
 import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
 import TableCustomSort from "@/components/tables/TableCustomSort";
+import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
+import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
+import {
+  EXPORT_ERROR,
+  EXPORT_FINISHED,
+  FlexiExport,
+} from "@/libs/flexi-reports";
+import reportTypes from "@/mixins/reportTypes";
+import translators from "@/mixins/translators";
+import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
+import { filesize } from "filesize";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "ExportOverviewTable",
@@ -171,8 +174,8 @@ export default {
         },
         {
           title: this.$t("labels.rows"),
-          value: "primaryDimension",
-          key: "primaryDimension",
+          value: "primaryDimensions",
+          key: "primaryDimensions",
         },
         {
           title: this.$t("labels.status"),

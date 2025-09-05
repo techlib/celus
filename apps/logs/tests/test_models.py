@@ -67,7 +67,7 @@ class TestFlexibleReport:
                 FlexibleReport.objects.create(**params)
 
     def test_config_serialization_report_type(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -76,7 +76,7 @@ class TestFlexibleReport:
         assert fr.report_config["filters"][0]["values"] == [report_type.short_name]
 
     def test_config_serialization_metric(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metric = flexible_slicer_test_data["metrics"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metric))
         slicer.add_group_by("metric")
@@ -85,7 +85,7 @@ class TestFlexibleReport:
         assert fr.report_config["filters"][0]["values"] == [metric.short_name]
 
     def test_config_serialization_explicit_dim(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         dt1 = DimensionText.objects.get(text="A", dimension__short_name="dim1name")
         dt2 = DimensionText.objects.get(text="YY", dimension__short_name="dim2name")
         slicer.add_filter(ExplicitDimensionFilter("dim1", dt1.pk))
@@ -105,7 +105,7 @@ class TestFlexibleReport:
         """
         Tests that serialization of explicit dimension of type integer works as expected
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         dt1 = DimensionText.objects.get(text="A", dimension__short_name="dim1name")
         slicer.add_filter(ExplicitDimensionFilter("dim1", dt1.pk))
         slicer.add_filter(ExplicitDimensionFilter("dim2", [1999, 2003]))
@@ -143,7 +143,7 @@ class TestFlexibleReport:
         assert config["filters"][3]["values"] == [dt2.pk]
 
     def test_resolve_explicit_dimension(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][1]
         dt1 = DimensionText.objects.get(text="A", dimension__short_name="dim1name")
         dt2 = DimensionText.objects.get(text="YY", dimension__short_name="dim2name")
@@ -156,7 +156,7 @@ class TestFlexibleReport:
         assert fr.resolve_explicit_dimension("dim2").short_name == "dim2name"
 
     def test_resolve_explicit_dimension_with_multiple_report_types(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
         )
@@ -168,7 +168,7 @@ class TestFlexibleReport:
             assert exc_info.value.code == SlicerConfigErrorCode.E113
 
     def test_used_report_types(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -178,7 +178,7 @@ class TestFlexibleReport:
     # TODO: activate this test once we do remapping of order_by during save
     @pytest.mark.skip(reason="temporarily disabled because the code was switched off for demo")
     def test_config_serialization_order_by_explicit_dim(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         dt1 = DimensionText.objects.get(text="A", dimension__short_name="dim1name")
         slicer.add_filter(ExplicitDimensionFilter("dim1", dt1.pk))
         slicer.add_group_by("metric")
@@ -192,7 +192,7 @@ class TestFlexibleReport:
     # TODO: activate this test once we do remapping of order_by during save
     @pytest.mark.skip(reason="temporarily disabled because the code was switched off for demo")
     def test_config_serialization_order_by_implicit_dim(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         dt1 = DimensionText.objects.get(text="A", dimension__short_name="dim1name")
         slicer.add_filter(ExplicitDimensionFilter("dim1", dt1.pk))
         slicer.add_group_by("metric")

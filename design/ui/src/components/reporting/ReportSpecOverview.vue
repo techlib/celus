@@ -27,7 +27,9 @@
       <tr>
         <th>{{ $t("labels.rows") }}:</th>
         <td>
-          {{ report.primaryDimension.getName($i18n) }}
+          {{
+            report.primaryDimensions.map((dim) => dim.getName($i18n)).join(", ")
+          }}
         </td>
       </tr>
       <tr>
@@ -113,8 +115,8 @@
 </template>
 
 <script>
-import { smartMonthRange } from "@/libs/dates";
 import FilterSpec from "@/components/reporting/FilterSpec.vue";
+import { smartMonthRange } from "@/libs/dates";
 import { dateAndUser } from "@/libs/user";
 
 export default {

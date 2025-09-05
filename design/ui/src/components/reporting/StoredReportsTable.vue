@@ -335,8 +335,10 @@
             </div>
           </template>
 
-          <template #item.primaryDimension.name="{ item }">
-            {{ item.primaryDimension.getName($i18n) }}
+          <template #item.primaryDimensions.name="{ item }">
+            {{
+              item.primaryDimensions.map((dim) => dim.getName($i18n)).join(", ")
+            }}
             <v-tooltip location="bottom">
               <template #activator="{ props }">
                 <v-icon v-if="item.tagRollUp" size="x-small" v-bind="props"
@@ -478,22 +480,22 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import axios from "axios";
-import { isoDateTimeFormatSpans } from "@/libs/dates";
-import { dimensionMixin } from "@/mixins/dimensions";
-import reportTypes from "@/mixins/reportTypes";
+import CopyReportDialog from "@/components/reporting/CopyReportDialog";
+import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
+import ReportMailingPreferences from "@/components/reporting/ReportMailingPreferences.vue";
+import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort.vue";
+import DateRangeText from "@/components/util/DateRangeText.vue";
 import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
+import { isoDateTimeFormatSpans } from "@/libs/dates";
 import { FlexiReport } from "@/libs/flexi-reports";
 import { userToString } from "@/libs/user";
-import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
-import CopyReportDialog from "@/components/reporting/CopyReportDialog";
-import { mergeProps } from "vue";
+import { dimensionMixin } from "@/mixins/dimensions";
+import reportTypes from "@/mixins/reportTypes";
 import translators from "@/mixins/translators";
-import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
-import ReportMailingPreferences from "@/components/reporting/ReportMailingPreferences.vue";
-import DateRangeText from "@/components/util/DateRangeText.vue";
-import TableCustomSort from "@/components/tables/TableCustomSort.vue";
+import axios from "axios";
+import { mergeProps } from "vue";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "StoredReportsTable",
@@ -528,7 +530,6 @@ export default {
       loading: false,
       activeItem: null,
       search: "",
-      values: null,
       translatedValue: null,
       showNameDialog: false,
       selectedRowDim: null,
@@ -551,7 +552,9 @@ export default {
     rowDims() {
       let out = new Map();
       this.reports.forEach((r) =>
-        out.set(r.primaryDimension.ref, r.primaryDimension),
+        r.primaryDimensions.forEach((dim) => {
+          out.set(dim.ref, dim);
+        }),
       );
       return Array.from(out).map(([ref, dim]) => ({
         title: dim.getName(this.$i18n),
@@ -573,9 +576,9 @@ export default {
         },
         { title: this.$t("title_fields.name"), value: "name", key: "name" },
         {
-          title: this.$t("title_fields.primary_dimension"),
-          value: "primaryDimension.name",
-          key: "primaryDimension.name",
+          title: this.$t("title_fields.primary_dimensions"),
+          value: "primaryDimensions.name",
+          key: "primaryDimensions.name",
         },
         {
           title: this.$t("title_fields.last_modified"),
@@ -615,7 +618,9 @@ export default {
         out = out.filter((r) => r.accessLevel === this.selectedVisibility);
       }
       if (this.selectedRowDim) {
-        out = out.filter((r) => r.primaryDimension.ref === this.selectedRowDim);
+        out = out.filter((r) =>
+          r.primaryDimensions.some((dim) => dim.ref === this.selectedRowDim),
+        );
       }
       return out;
     },
@@ -652,17 +657,6 @@ export default {
         for (let rt of resp.data) {
           FlexiReport.fromAPIObject(rt, this.reportTypeMap).then((obj) =>
             this.reports.push(obj),
-          );
-        }
-        this.values = resp.data;
-        if (this.selectedVisibility) {
-          this.values = this.values.filter(
-            (r) => r.accessLevel === this.selectedVisibility,
-          );
-        }
-        if (this.selectedRowDim) {
-          this.values = this.values.filter(
-            (r) => r.primaryDimension.ref === this.selectedRowDim,
           );
         }
       } catch (error) {
@@ -776,7 +770,6 @@ export default {
     },
     async afterCopy(report) {
       this.reports.push(report);
-      this.values = [...this.reports];
       this.showSnackbar({
         content: this.$t("copy_success"),
         color: "success",

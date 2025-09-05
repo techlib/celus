@@ -169,14 +169,23 @@ cs:
           <span v-else class="text--secondary">{{ item.tag }}</span>
         </template>
 
-        <template #item.assignedTags="{ item }">
-          <TagChip
-            v-for="tag in objIdToTags.get(item.pk)"
-            :key="tag.pk"
-            :tag="tag"
-            small
-            show-class
-          ></TagChip>
+        <!-- create columns for each row that is taggable -->
+        <template
+          v-for="(row, index) in rows"
+          v-slot:[`item.${row}__tags`]="{ item }"
+        >
+          <template v-if="rowToTagScope[row]">
+            <TagChip
+              v-for="tag in getTagsForObjectById(
+                rowToTagScope[row],
+                item[getPkField(index)],
+              )"
+              :key="tag.pk"
+              :tag="tag"
+              small
+              show-class
+            ></TagChip>
+          </template>
         </template>
 
         <template #item.reldiff="{ item }">
@@ -266,11 +275,15 @@ cs:
         <ReportingChart
           v-if="totalRowCount"
           :data="dataWithRemainder"
-          :primary-dimension="row"
+          :primary-dimensions="rows"
           :series="chartSeries"
-          :type="row.startsWith('date') ? 'histogram' : 'bar'"
+          :type="
+            rows.length && rows[0].startsWith('date') ? 'histogram' : 'bar'
+          "
           :height="
-            (row.startsWith('date') ? 480 : 260 + dataToShow.length * 20) + 'px'
+            (rows.length && rows[0].startsWith('date')
+              ? 480
+              : 260 + dataToShow.length * 20) + 'px'
           "
         ></ReportingChart>
         <v-alert v-else type="info" variant="outlined">
@@ -414,16 +427,15 @@ export default {
       return this.loadingData || this.dataComputing || this.translatorsUpdating;
     },
     activeTitleColumns() {
-      let titleHeaders = [];
-      if (this.row === "target") {
-        titleHeaders = Object.entries(this.titleColumns)
+      if (this.rows.includes("target")) {
+        return Object.entries(this.titleColumns)
           .filter(([key, value]) => value)
           .map(([key, value]) => key);
       }
-      return titleHeaders;
+      return [];
     },
     activeItemColumns() {
-      if (this.row === "item") {
+      if (this.rows.includes("item")) {
         return Object.entries(this.itemColumns)
           .filter(([key, value]) => value)
           .map(([key, value]) => key);
@@ -517,48 +529,57 @@ export default {
           title: this.$t("title_fields." + key),
           value: "item__" + key,
         }));
-        let tagHeaders = this.taggableRow
+        let coverageHeaders = this.showCoverageColumn
           ? [
               {
-                title: this.$t("labels.tags"),
-                value: "assignedTags",
-                sortable: this.report.tagRollUp,
+                title: this.$t("labels.coverage"),
+                value: "coverage",
+                sortable: false,
+                align: "center",
+                width: "200px",
               },
             ]
           : [];
-        let coverageHeaders =
-          this.row === "platform" && !this.report.trendMode
-            ? [
-                {
-                  title: this.$t("labels.coverage"),
-                  value: "coverage",
-                  sortable: false,
-                  align: "center",
-                  width: "200px",
-                },
-              ]
-            : [];
-        let ret = [
-          {
-            title: this.report.effectivePrimaryDimension.getName(this.$i18n),
-            value: this.report.effectivePrimaryDimension.ref,
+        // Handle multiple primary dimensions
+        let primaryDimensionHeaders = [];
+        this.report.effectivePrimaryDimensions.forEach((dim, index) => {
+          primaryDimensionHeaders.push({
+            title: dim.getName(this.$i18n),
+            value: dim.ref,
             sortable: !this.readonly,
-          },
-          ...tagHeaders,
-          ...coverageHeaders,
-          ...titleHeaders,
-          ...itemHeaders,
-          ...headers,
-        ];
+          });
+          // push title headers immediately after the title main dimension
+          if (dim.ref === "target") {
+            primaryDimensionHeaders.push(...titleHeaders);
+          }
+          // push item headers immediately after the item main dimension
+          if (dim.ref === "item") {
+            primaryDimensionHeaders.push(...itemHeaders);
+          }
+          // check if this is a taggable column and add the tags column
+          if (this.rowToTagScope[dim.ref]) {
+            primaryDimensionHeaders.push({
+              title: this.$t(`labels.tags_${this.rowToTagScope[dim.ref]}`),
+              value: dim.ref + "__tags",
+              sortable: this.report.tagRollUp,
+            });
+          }
+        });
+
+        let ret = [...primaryDimensionHeaders, ...coverageHeaders, ...headers];
         return ret;
       }
       return [];
     },
-    row() {
-      return this.report?.effectivePrimaryDimension?.ref;
+    rows() {
+      // Return all primary dimensions for multiindex support
+      if (this.report?.primaryDimensions?.length > 0) {
+        return this.report.primaryDimensions.map((dim) => dim.ref);
+      }
+      return [this.report?.effectivePrimaryDimension?.ref].filter(Boolean);
     },
-    taggableRow() {
-      return this.row in this.rowToTagScope;
+    usesMultiIndex() {
+      return this.report?.primaryDimensions?.length > 1;
     },
     dataUrl() {
       return "/api/flexible-slicer/";
@@ -615,7 +636,8 @@ export default {
       return false;
     },
     remainderVisible() {
-      return this.row === "tag" && this.report.showUntaggedRemainder;
+      if (this.usesMultiIndex) return false;
+      return this.rows[0] === "tag" && this.report.showUntaggedRemainder;
     },
     contextOverride() {
       return this.contextOverrideOrganization || this.contextOverrideDates;
@@ -630,6 +652,13 @@ export default {
     partsCropped() {
       return this.totalParts > this.splitParts.length;
     },
+    showCoverageColumn() {
+      return (
+        !this.usesMultiIndex &&
+        this.rows[0] === "platform" &&
+        !this.report.trendMode
+      );
+    },
   },
 
   methods: {
@@ -641,7 +670,10 @@ export default {
       // if we are in the split mode, we need to check the possible splits first
       this.splitParts = [];
       if (this.report.splitBy) {
-        await this.getSplitParts();
+        let partsOk = await this.getSplitParts();
+        if (!partsOk) {
+          return;
+        }
       } else {
         this.currentPart = undefined;
       }
@@ -657,8 +689,12 @@ export default {
         .forEach((item) => {
           this.translators[item.ref] = this.getTranslator(item);
         });
-      let primDim = this.report.primaryDimension;
-      this.translators[primDim.ref] = this.getTranslator(primDim);
+
+      // Set up translators for all primary dimensions
+      this.report.primaryDimensions.forEach((dim) => {
+        this.translators[dim.ref] = this.getTranslator(dim);
+      });
+
       this.errorCode = null;
       this.errorDetails = null;
       if (clean) {
@@ -673,7 +709,22 @@ export default {
       let resp = await this.http({
         url: "/api/flexible-slicer/parts/",
         params: this.report.urlParams(),
+        dontShowError: true,
       });
+      if (resp.error) {
+        // deal with the error and return false
+        if (resp.error.code) {
+          let code = resp.error.code;
+          this.showError(code, resp.error.message);
+        } else {
+          this.showSnackbar({
+            content: "Could not load data: " + error,
+            color: "error",
+          });
+        }
+        this.loadingParts = false;
+        return false;
+      }
       if (resp.response) {
         this.totalParts = resp.response.data.count;
         let splitParts = resp.response.data.values.map(
@@ -722,6 +773,7 @@ export default {
       }
       this.updateSize();
       this.loadingParts = false;
+      return true;
     },
     cancelReport() {
       this.cancelTokenSource.cancel("request canceled by user");
@@ -752,6 +804,7 @@ export default {
           this.cancelTokenSource.cancel("request cancelled by newer request");
         } else {
           // this request is already in progress, so we do nothing
+          console.log("request already in progress, skipping");
           return;
         }
       }
@@ -794,17 +847,20 @@ export default {
       // post-processing
       this.dataComputing = true;
       await this.updateTranslators();
-      if (this.taggableRow) {
-        this.cleanTagCache(); // clear the cache because taggings may have changed
-        await this.getTagsForObjectsById(
-          this.rowToTagScope[this.row],
-          this.data.map((item) => item.pk),
-        );
+      for (const [idx, row] of this.rows.entries()) {
+        if (this.rowToTagScope[row]) {
+          this.cleanTagCache(this.rowToTagScope[row]); // clear the cache because taggings may have changed
+          await this.fetchTagsForObjectsById(
+            // fix for multiindex, for now tagging is disabled in multiindex mode
+            this.rowToTagScope[row],
+            this.data.map((item) => item[this.getPkField(idx)]),
+          );
+        }
       }
       this.recomputeData();
       this.dataComputing = false;
 
-      if (this.row === "platform" && !this.report.trendMode) {
+      if (this.showCoverageColumn) {
         this.fetchCoverageForPlatforms();
       }
 
@@ -826,17 +882,34 @@ export default {
         }
       }
     },
+    getPkField(index) {
+      return index === 0 ? "pk" : `pk${index + 1}`;
+    },
     async updateTranslators() {
       this.translatorsUpdating = true;
       let promises = [];
-      if (this.row && this.translators[this.row]) {
-        // for implicit dimensions the key is 'pk' for explicit it is the name of the dim (e.g. dim1)
-        let pks = this.data.map((item) => item.pk ?? item[this.row]);
-        promises.push(this.translators[this.row].prepareTranslation(pks));
-      }
+
+      // update translators for all primary dimensions
+      this.report.primaryDimensions.forEach((dim, index) => {
+        const pkField = this.getPkField(index);
+        const dimRef = dim.ref;
+
+        if (this.translators[dimRef]) {
+          // All primary dimensions now use pk, pk2, pk3, etc. keys consistently
+          let pks = this.data.map((item) => item[pkField]);
+          promises.push(this.translators[dimRef].prepareTranslation(pks));
+        }
+      });
+
+      // update translators for all dimensions from the data which are not primary dimensions
       if (this.data.length > 0) {
+        // Get all primary dimension fields to exclude them
+        let primaryDimFields = [];
+        for (let i = 0; i < this.report.primaryDimensions.length; i++) {
+          primaryDimFields.push(this.getPkField(i));
+        }
+
         let pks_lists = Object.keys(this.data[0])
-          .filter((item) => item !== "pk" && item !== this.row)
           .filter((item) => item.substr(0, 4) === "grp-")
           .map((item) => splitGroup(item));
         let i = 0;
@@ -852,44 +925,48 @@ export default {
       this.translatorsUpdating = false;
     },
     recomputeData() {
-      // process the data to translate the primary dimension
+      // process the data to translate the primary dimensions
       this.cleanData = this.data.map((item) => {
         let newItem = { ...item };
-        if (this.translators[this.row]) {
-          if (this.row === "tag") {
-            // for tags, we translate to whole objects in order to be able
-            // to display the tag chip
-            newItem[this.row] =
-              this.translators[this.row].translateKey(
-                newItem.pk ?? newItem[this.row],
-              ) ?? null;
+
+        for (const [index, row] of this.rows.entries()) {
+          const pkField = this.getPkField(index);
+
+          if (this.translators[row]) {
+            if (row === "tag") {
+              // for tags, we translate to whole objects in order to be able
+              // to display the tag chip
+              newItem[row] =
+                this.translators[row].translateKey(newItem[pkField]) ?? null;
+            } else {
+              newItem[row] =
+                this.translators[row].translateKeyToString(
+                  newItem[pkField],
+                  this.$i18n.locale,
+                ) ?? this.$t("blank_value");
+              if (row === "target") {
+                // extra data for titles
+                let obj = this.translators[row].translateKey(newItem[pkField]);
+                if (obj) {
+                  Object.keys(this.titleColumns).forEach((key) => {
+                    newItem["target__" + key] = obj[key];
+                  });
+                }
+              }
+              if (row === "item") {
+                let obj = this.translators[row].translateKey(newItem[pkField]);
+                if (obj) {
+                  Object.keys(this.itemColumns).forEach((key) => {
+                    newItem["item__" + key] = obj[key];
+                  });
+                }
+              }
+            }
           } else {
-            newItem[this.row] =
-              this.translators[this.row].translateKeyToString(
-                newItem.pk ?? newItem[this.row],
-                this.$i18n.locale,
-              ) ?? this.$t("blank_value");
-            if (this.row === "target") {
-              // extra data for titles
-              let obj = this.translators[this.row].translateKey(newItem.pk);
-              if (obj) {
-                Object.keys(this.titleColumns).forEach((key) => {
-                  newItem["target__" + key] = obj[key];
-                });
-              }
-            }
-            if (this.row === "item") {
-              let obj = this.translators[this.row].translateKey(newItem.pk);
-              if (obj) {
-                Object.keys(this.itemColumns).forEach((key) => {
-                  newItem["item__" + key] = obj[key];
-                });
-              }
-            }
+            newItem[row] = newItem[pkField].toString();
           }
-        } else {
-          newItem[this.row] = newItem[this.row].toString();
         }
+
         return newItem;
       });
       // extract the header row data

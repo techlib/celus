@@ -18,6 +18,7 @@ en:
   report_description: Report description
   please_fill_in_title: Report title is required in order to save the report.
   select_at_least_one_column_dim: At least one column dimension must be selected.
+  select_at_least_one_row_dim: At least one row dimension must be selected.
   split_to_parts: Split report to parts by selected attribute
   dont_split: "-- no splitting --"
   title_tags: Tags for title filtering
@@ -52,6 +53,8 @@ en:
   save_report_with_mailing_objects_confirm_title: Confirm saving of report with periodic export mailing
   save_report_with_mailing_objects_confirm: This report has periodic mailing of exports set up. Any changes will be reflected in the next export. Do you want to continue?
   invalid_url_parameters: Invalid URL parameters detected. Using default settings.
+  trend_mode_muliindex_tt: Trend mode is not supported when multiple dimensions are used for defining rows.
+  trend_mode_tt: Trend mode makes it possible to compare usage between two time periods.
 
 cs:
   run_report: Spustit report
@@ -67,6 +70,7 @@ cs:
   report_description: Popis reportu
   please_fill_in_title: Název reportu je vyžadován před jeho uložením
   select_at_least_one_column_dim: Musí být vybrán alespoň jeden rozměr, který definuje sloupce.
+  select_at_least_one_row_dim: Musí být vybrán alespoň jeden rozměr, který definuje řádky.
   split_to_parts: Rozdělit report na části podle vybraného atributu
   dont_split: "-- nedělit --"
   title_tags: Štítky pro filtrování titulů
@@ -100,6 +104,8 @@ cs:
   save_report_with_mailing_objects_confirm_title: Potvrďte uložení reportu s periodickým odesíláním exportu
   save_report_with_mailing_objects_confirm: Tento report má nastaveno periodické odesílání exportu. Jakmile budou provedeny změny, budou se projevit v příštím odeslání. Opravdu chcete pokračovat?
   invalid_url_parameters: Detekovány neplatné URL parametry. Používají se výchozí hodnoty.
+  trend_mode_muliindex_tt: Trend mode není podporován, pokud je vybrán více než jeden rozměr pro definici řádků.
+  trend_mode_tt: Trend mode umožňuje porovnávat využití mezi dvěma časovými obdobími.
 </i18n>
 
 <template>
@@ -319,45 +325,71 @@ cs:
             <v-card class="pa-2">
               <v-card-title class="pt-2">{{ $t("labels.rows") }}</v-card-title>
               <v-card-text>
-                <v-radio-group
-                  v-model="watchedRow"
-                  hide-details
-                  class="mt-1"
+                <v-checkbox
+                  v-for="row in possibleRows"
+                  v-model="rows"
+                  :label="row.name"
+                  :key="row.id"
+                  color="primary"
                   density="compact"
-                  :disabled="!reportTypeSelected || readOnly"
+                  hide-details
+                  class="mt-0"
+                  :disabled="
+                    row.id === splitBy ||
+                    (row.id.startsWith('date') && trendMode) ||
+                    !reportTypeSelected ||
+                    readOnly
+                  "
+                  :value="row.id"
                 >
-                  <v-radio
-                    v-for="row in possibleRows"
-                    :label="row.name"
-                    :key="row.id"
-                    color="primary"
-                    :disabled="
-                      row.id === splitBy ||
-                      (row.id.startsWith('date') && trendMode) ||
-                      readOnly
-                    "
-                    :value="row.id"
-                  ></v-radio>
-                </v-radio-group>
+                  <template #append v-if="rows.includes(row.id)">
+                    <v-tooltip location="bottom" max-width="320px">
+                      <template #activator="{ props }">
+                        <v-chip
+                          size="x-small"
+                          variant="tonal"
+                          color="info"
+                          v-bind="props"
+                          >{{ rows.indexOf(row.id) + 1 }}
+                        </v-chip>
+                      </template>
+                      {{ $t("column_order_tt") }}
+                    </v-tooltip>
+                  </template>
+                </v-checkbox>
               </v-card-text>
+              <v-alert
+                v-if="!hasValidRows && reportTypeSelected"
+                type="warning"
+                variant="outlined"
+                class="ma-2"
+              >
+                {{ $t("select_at_least_one_row_dim") }}
+              </v-alert>
             </v-card>
           </v-col>
           <v-col>
             <v-card class="pa-2 fill-height">
-              <v-card-title
-                class="d-flex pt-2 justify-space-between align-start mb-1"
-                >{{ $t("labels.columns") }}
-                <v-switch
-                  v-model="trendMode"
-                  :label="$t('trend_mode.trend_mode')"
-                  class="text-caption align-end ml-4 pt-0 d-flex justify-end"
-                  density="compact"
-                  style="min-width: 100px"
-                  color="primary"
-                  hide-details
-                  :disabled="readOnly"
-                ></v-switch>
-              </v-card-title>
+              <v-tooltip location="bottom right">
+                <template #activator="{ props }">
+                  <v-card-title
+                    class="d-flex pt-2 justify-space-between align-start mb-1"
+                    v-bind="props"
+                    >{{ $t("labels.columns") }}
+                    <v-switch
+                      v-model="trendMode"
+                      :label="$t('trend_mode.trend_mode')"
+                      class="text-caption align-end ml-4 pt-0 d-flex justify-end"
+                      density="compact"
+                      style="min-width: 100px"
+                      color="primary"
+                      hide-details
+                      :disabled="readOnly"
+                    ></v-switch>
+                  </v-card-title>
+                </template>
+                {{ $t("trend_mode_tt") }}
+              </v-tooltip>
               <v-card-text>
                 <div v-if="trendMode">
                   <div class="pt-4" style="min-width: 260px">
@@ -395,7 +427,7 @@ cs:
                     color="primary"
                     class="mt-0"
                     :disabled="
-                      item.id === row ||
+                      rows.includes(item.id) ||
                       item.id === splitBy ||
                       !reportTypeSelected ||
                       readOnly ||
@@ -409,9 +441,9 @@ cs:
                       <v-tooltip location="bottom" max-width="320px">
                         <template #activator="{ props }">
                           <v-chip
-                            size="small"
-                            variant="outlined"
-                            color="secondary"
+                            size="x-small"
+                            variant="tonal"
+                            color="info"
                             v-bind="props"
                             >{{ columns.indexOf(item.id) + 1 }}
                           </v-chip>
@@ -466,7 +498,7 @@ cs:
                       >
                         <template #activator="{ props }">
                           <v-chip
-                            size="small"
+                            size="x-small"
                             class="ms-2 chip_in_filter"
                             v-bind="props"
                             >{{ organizationCount }}
@@ -802,7 +834,8 @@ cs:
                 <v-btn
                   @click="runReport"
                   :disabled="
-                    !(isFormActuallyValid && hasGroupBy) || reportRunning
+                    !(isFormActuallyValid && hasGroupBy && hasValidRows) ||
+                    reportRunning
                   "
                   v-bind="props"
                   min-width="12rem"
@@ -844,7 +877,9 @@ cs:
               <template v-slot:activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  :disabled="!(isFormActuallyValid && hasGroupBy)"
+                  :disabled="
+                    !(isFormActuallyValid && hasGroupBy && hasValidRows)
+                  "
                   color="defaultButton"
                 >
                   <v-icon size="small" color="blue lighten-2" class="mr-2"
@@ -893,9 +928,15 @@ cs:
           <v-col cols="auto">
             <v-alert
               type="warning"
-              v-if="!hasGroupBy && selectedReportTypes.length"
+              v-if="
+                (!hasGroupBy || !hasValidRows) && selectedReportTypes.length
+              "
               variant="outlined"
-              >{{ $t("select_at_least_one_column_dim") }}
+            >
+              <span v-if="!hasValidRows">{{
+                $t("select_at_least_one_row_dim")
+              }}</span>
+              <span v-else>{{ $t("select_at_least_one_column_dim") }}</span>
             </v-alert>
           </v-col>
           <v-col cols="auto" class="pt-0">
@@ -1063,7 +1104,7 @@ export default {
     return {
       watchedAttrs: [
         { name: "selectedReportTypes", type: Array, var: "rt" },
-        { name: "row", type: String, var: "r" },
+        { name: "rows", type: Array, var: "r" },
         { name: "columns", type: Array, var: "c" },
         { name: "filters", type: Array, var: "f" },
         { name: "splitBy", type: String, var: "sb" },
@@ -1097,7 +1138,7 @@ export default {
         { name: "collapsed", type: Boolean, var: "col" },
       ],
       selectedItems: [],
-      row: "organization",
+      rows: ["organization"],
       columns: [],
       collapsed: false,
       filters: [],
@@ -1215,19 +1256,6 @@ export default {
         });
       },
     },
-    watchedRow: {
-      get() {
-        return this.row;
-      },
-      set(value) {
-        // here we can react to changes in the row that were done by the user
-        // not by the loading code, etc.
-        // BTW, this approach seems to be an interesting way to handle
-        // similar cases where the reactivity gets in the way during initialization
-        this.row = value;
-        this.orderBy = [];
-      },
-    },
     readOnly() {
       return !this.canEdit;
     },
@@ -1330,28 +1358,33 @@ export default {
       return this.columns;
     },
     canGetData() {
-      return this.row && this.hasGroupBy && this.selectedReportTypes.length > 0;
+      return (
+        this.hasValidRows &&
+        this.hasGroupBy &&
+        this.selectedReportTypes.length > 0
+      );
     },
-    dataUrlParams() {
-      // this is here just to watch for changes, it is not used directly
-      // to make requests
+    hasValidRows() {
+      return this.rows.length > 0;
+    },
+    coverageDefiningUrlParams() {
+      // subset of url params which have to be watched to trigger a coverage reload
       return {
-        primary_dimension: this.row,
         filters: toBase64JSON(this.appliedFilters),
-        groups: toBase64JSON(this.appliedGroups),
-        zero_rows: this.showZeroRows,
-        trend_mode: this.trendMode,
         base_period_filters: toBase64JSON(this.tmBaseDateRange),
         compared_period_filters: toBase64JSON(this.tmComparedDateRange),
       };
     },
     selectorBaseUrl() {
-      if (this.row) {
-        let base = `/api/flexible-slicer/possible-values/?primary_dimension=${this.row}`;
-        base += `&filters=${toBase64JSON(this.appliedFilters)}`;
-        return base;
-      }
-      return null;
+      // this url is used to get the possible values for the selector
+      // it does not matter which dimension is used, only the filters are important
+      // so we use a static primary dimension to prevent unnecessary reloading
+      // of the data when primary dimensions change
+      let base = `/api/flexible-slicer/possible-values/?primary_dimensions=${toBase64JSON(
+        ["organization"],
+      )}`;
+      base += `&filters=${toBase64JSON(this.appliedFilters)}`;
+      return base;
     },
     hasGroupBy() {
       return this.columns.length > 0 || this.trendMode;
@@ -1413,7 +1446,7 @@ export default {
       rt.description = this.reportDescription;
       rt.pk = this.reportPk;
       rt.reportTypes = [...this.selectedReportTypeObjs];
-      rt.primaryDimension = rt.resolveDim(this.row);
+      rt.primaryDimensions = this.rows.map((row) => rt.resolveDim(row));
       rt.filters = [];
       Object.entries(this.appliedFilters)
         .filter(([k, v]) => k !== "report_type")
@@ -1456,15 +1489,20 @@ export default {
       return this.owner ? "user" : this.ownerOrganization ? "org" : "sys";
     },
     tagRollUpPossible() {
-      return ["target", "platform", "organization"].includes(this.row);
+      if (this.usesMultiIndex) return false; // multiindex does not support tag roll-up
+      return this.rows.some((row) =>
+        ["target", "platform", "organization"].includes(row),
+      );
     },
     tagScope() {
-      if (this.row === "target") {
+      // used for tag roll-up - not used for multiindex
+      if (this.rows.includes("target")) {
         return "title";
-      } else {
+      } else if (this.rows.length === 1) {
         // the name is the same as the name of the row dimension
-        return this.row;
+        return this.rows[0];
       }
+      return null;
     },
     anyAccessibleTag() {
       return this.accessibleTags.length > 0;
@@ -1473,15 +1511,18 @@ export default {
       return Object.keys(this.organizations).filter((key) => key > 0).length;
     },
     cannotShowZeroRows() {
+      // we cannot show zero rows if we use multiindex - the backend does not support this
+      if (this.usesMultiIndex) return true;
       // if we sum by tag, we need to allow zero rows
       if (this.tagRollUp) return false;
       // in trend mode, we can show zero rows, because the meaning is different
       if (this.trendMode) return false;
       // if rows are organization or platform, we can show zero rows
-      if (["organization", "platform"].includes(this.row)) return false;
+      if (this.rows.some((row) => ["organization", "platform"].includes(row)))
+        return false;
       // for titles, we can only show zero rows if we have the titles
       // limited by a tag
-      if (this.row === "target" && this.selectedTitleTags.length > 0)
+      if (this.rows.includes("target") && this.selectedTitleTags.length > 0)
         return false;
       // otherwise, we cannot show zero rows
       return true;
@@ -1491,7 +1532,7 @@ export default {
         return this.$t("zero_rows_tooltip_trend_mode");
       }
       return this.$t("zero_rows_tooltip", {
-        row: this.$t(this.row),
+        row: this.rows.map((row) => this.$t(row)).join(", "),
       });
     },
     baseSubsetPeriodLength() {
@@ -1519,7 +1560,7 @@ export default {
       // we want to warn the user that he may be summing up apples and oranges
       if (this.splitBy === "metric") return false;
       if (this.columns.includes("metric") && !this.trendMode) return false;
-      if (this.row === "metric") return false;
+      if (this.rows.includes("metric")) return false;
       if (this.filters.includes("metric") && this.selectedMetrics.length === 1)
         return false;
       return true;
@@ -1549,6 +1590,9 @@ export default {
         return hasReportTypes && hasValidGroupBy && hasValidName;
       }
       return this.formValid;
+    },
+    usesMultiIndex() {
+      return this.rows.length > 1;
     },
   },
 
@@ -1750,8 +1794,11 @@ export default {
     },
     loadSettings(settings) {
       let config = settings.config;
-      if (config.primary_dimension) {
-        this.row = config.primary_dimension;
+      // Handle both old primary_dimension and new primary_dimensions for backward compatibility
+      if (config.primary_dimensions) {
+        this.rows = config.primary_dimensions;
+      } else if (config.primary_dimension) {
+        this.rows = [config.primary_dimension];
       }
       if (config.filters) {
         // deal with report_type first as it influences much more later
@@ -2044,7 +2091,7 @@ export default {
             ...this.selectedReportTypes,
             defaultReport.pk,
           ];
-          this.row = "platform";
+          this.rows = ["platform"];
           if (this.organizationSelected) {
             this.filters.push("organization");
             this.selectedOrganizations = [this.globallySelectedOrganization.pk];
@@ -2082,25 +2129,37 @@ export default {
         this.columns = this.columns.filter((dim) => newIds.includes(dim));
       }
     },
-    row() {
-      this.columns = this.columns.filter((dim) => dim !== this.row);
-      if (!this.setupInProgress) {
-        // empty the tag class on row change to prevent unrelated class
-        // from being used in filter
-        this.selectedTagClass = null;
-        if (!this.tagRollUpPossible) {
-          this.tagRollUp = false;
+    rows: {
+      deep: true,
+      handler(newRows, oldRows) {
+        // Remove any selected rows from columns to avoid conflicts
+        this.columns = this.columns.filter((dim) => !newRows.includes(dim));
+        if (!this.setupInProgress) {
+          // empty the tag class on row change to prevent unrelated class
+          // from being used in filter
+          this.selectedTagClass = null;
+          if (!this.tagRollUpPossible) {
+            this.tagRollUp = false;
+          }
         }
-      }
-      this.fetchAccessibleTags();
+        this.fetchAccessibleTags();
+      },
     },
     splitBy() {
       if (this.splitBy) {
         this.columns = this.columns.filter((dim) => dim !== this.splitBy);
-        if (this.row === this.splitBy) {
-          this.row = this.possibleRows.find(
-            (item) => item.id !== this.splitBy,
-          ).id;
+        // Remove splitBy from rows if it's selected
+        if (this.rows.includes(this.splitBy)) {
+          this.rows = this.rows.filter((row) => row !== this.splitBy);
+          // If no rows left, select the first available one
+          if (this.rows.length === 0) {
+            const availableRow = this.possibleRows.find(
+              (item) => item.id !== this.splitBy,
+            );
+            if (availableRow) {
+              this.rows = [availableRow.id];
+            }
+          }
         }
       }
     },
@@ -2121,25 +2180,25 @@ export default {
             this.translators[dim.id] = this.translators.explicitDimension;
           });
         }
-      }
-      // validate the primary dimension to be compatible with the report types
-      if (
-        !this.setupInProgress &&
-        this.row.startsWith("dim") &&
-        !this.explicitDims.find((dim) => dim.id === this.row)
-      ) {
-        // use the first compatible dimension which is not already in the columns
-        // but prefer platform if it is available
-        const toTry = ["platform", ...this.possibleRows.map((dim) => dim.id)];
-        for (let dim of toTry) {
-          if (!this.columns.includes(dim)) {
-            this.row = dim;
-            break;
+
+        // validate the primary dimensions to be compatible with the report types
+        let newRows = this.rows.filter(this.isValidDim);
+        // if at least one primary dimension is valid, use it
+        if (newRows.length > 0) {
+          this.rows = newRows;
+        } else {
+          // if no primary dimension is valid, use the first compatible dimension
+          // which is not already in the columns and prefer platform if it is available
+          const toTry = ["platform", ...this.possibleRows.map((dim) => dim.id)];
+          for (let dim of toTry) {
+            if (!this.columns.includes(dim)) {
+              this.rows = [dim];
+              break;
+            }
           }
         }
-      }
-      // validate filters for explicit dimensions - remove invalid ones
-      if (!this.setupInProgress) {
+
+        // validate filters for explicit dimensions - remove invalid ones
         this.filters = this.filters.filter((filter) => this.isValidDim(filter));
         this.columns = this.columns.filter((column) => this.isValidDim(column));
         if (this.splitBy && this.isValidDim(this.splitBy)) {
@@ -2178,7 +2237,7 @@ export default {
         }
       },
     },
-    dataUrlParams: {
+    coverageDefiningUrlParams: {
       deep: true,
       handler(newValue, oldValue) {
         // because `deep` is true, we need to compare the values of newVal and
@@ -2206,7 +2265,10 @@ export default {
         // filtering by date with year over year does not make sense
         this.filters = this.filters.filter((f) => !f.startsWith("date"));
         // dates in rows also do not make sense
-        this.row = this.row.startsWith("date") ? "platform" : this.row;
+        this.rows = this.rows.filter((row) => !row.startsWith("date"));
+        if (this.rows.length === 0) {
+          this.rows = ["platform"];
+        }
       } else {
         // turn zero rows off as they are not very useful outside of trend mode
         this.showZeroRows = false;
@@ -2256,6 +2318,13 @@ export default {
         });
       }
     },
+    usesMultiIndex(newVal) {
+      if (this.usesMultiIndex) {
+        // switch off all things not compatible with multiindex
+        this.tagRollUp = false;
+        this.showZeroRows = false;
+      }
+    },
   },
 };
 </script>
@@ -2277,10 +2346,6 @@ export default {
 
 .v-selection-control--density-comfortable {
   --v-selection-control-size: 40px;
-}
-
-.v-chip.v-chip--size-small {
-  padding: 0 12px;
 }
 
 .v-card-title {

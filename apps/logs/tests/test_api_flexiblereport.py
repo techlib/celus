@@ -145,13 +145,22 @@ class TestFlexibleReportAPI:
                     f"user {user} should see {count} mailing"
                 )
 
-    def test_create(self, admin_client, admin_user):
+    @pytest.mark.parametrize(
+        "prim_dim_spec",
+        [{"primary_dimension": "platform"}, {"primary_dimensions": b64json(["platform"])}],
+    )
+    def test_create(self, admin_client, admin_user, prim_dim_spec):
+        """
+        Test creating a report with different primary dimension specifications
+        (one is older with primary_dimension, the other with primary_dimensions is newer for
+        multiindex support)
+        """
         resp = admin_client.post(
             reverse("flexible-report-list"),
             {
                 "name": "test report",
                 "description": "description",
-                "config": {"primary_dimension": "platform", "groups": b64json(["metric"])},
+                "config": {"groups": b64json(["metric"]), **prim_dim_spec},
             },
             content_type="application/json",
         )
@@ -160,7 +169,7 @@ class TestFlexibleReportAPI:
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["primary_dimensions"] == ["platform"], "regardless of the spec"
         assert report.report_config["group_by"] == ["metric"]
         assert report.description == "description"
 
@@ -170,7 +179,7 @@ class TestFlexibleReportAPI:
             {
                 "name": "test report",
                 "config": {
-                    "primary_dimension": "platform",
+                    "primary_dimensions": b64json(["platform"]),
                     "groups": b64json(["metric"]),
                     "tag_roll_up": "true",
                     "tag_class": 1,
@@ -183,7 +192,7 @@ class TestFlexibleReportAPI:
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["primary_dimensions"] == ["platform"]
         assert report.report_config["group_by"] == ["metric"]
         assert report.report_config["tag_roll_up"] is True
         assert report.report_config["tag_class"] == 1
@@ -195,7 +204,7 @@ class TestFlexibleReportAPI:
             {
                 "name": "test report",
                 "config": {
-                    "primary_dimension": "target",
+                    "primary_dimensions": b64json(["target"]),
                     "groups": b64json(["metric"]),
                     "filters": b64json({"tag__target": [tag.pk]}),
                 },
@@ -207,7 +216,7 @@ class TestFlexibleReportAPI:
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config["primary_dimension"] == "target"
+        assert report.report_config["primary_dimensions"] == ["target"]
         assert report.report_config["group_by"] == ["metric"]
         assert report.report_config["filters"][0]["dimension"] == "target"
         assert report.report_config["filters"][0]["tag_ids"] == [tag.pk]
@@ -235,7 +244,7 @@ class TestFlexibleReportAPI:
         assert report.owner == admin_user
         assert report.owner_organization is None
         assert report.last_updated_by == admin_user
-        assert report.report_config["primary_dimension"] == "platform"
+        assert report.report_config["primary_dimensions"] == ["platform"]
         assert report.report_config["trend_mode"] is True
         assert report.report_config["base_subset_filters"][0]["dimension"] == "date"
         assert report.report_config["base_subset_filters"][0]["start"] == "2019-01-01"

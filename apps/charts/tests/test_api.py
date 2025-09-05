@@ -540,7 +540,7 @@ class TestReportingUrlAPI:
         assert "f" in params
 
         # Verify the primary dimension is correct
-        assert params["r"] == "date"
+        assert base64.b64decode(params["r"]).decode("utf-8") == json.dumps(["date"])
 
         # Verify report type is encoded
         assert base64.b64decode(params["rt"]).decode("utf-8") == json.dumps(
@@ -585,7 +585,7 @@ class TestReportingUrlAPI:
         assert "f" in params  # filters
 
         # Verify primary dimension
-        assert params["r"] == "date"
+        assert base64.b64decode(params["r"]).decode("utf-8") == json.dumps(["date"])
 
         # Verify secondary dimension is encoded as list
         decoded_secondary = json.loads(base64.b64decode(params["c"]).decode())
@@ -669,7 +669,7 @@ class TestReportingUrlAPI:
         assert "f" in params
 
         # Verify the primary dimension is correct
-        assert params["r"] == "date"
+        assert base64.b64decode(params["r"]).decode("utf-8") == json.dumps(["date"])
 
         # Verify report type is encoded
         decoded_rt = json.loads(base64.b64decode(params["rt"]).decode())
@@ -758,7 +758,10 @@ class TestReportingUrlAPI:
         assert "params" in data
         params = data["params"]
 
-        assert params["r"] == "dim1", "Primary dimension converted"
+        assert base64.b64decode(params["r"]).decode("utf-8") == json.dumps(["dim1"]), (
+            "Primary dimension converted"
+        )
+
         assert json.loads(base64.b64decode(params["c"])) == ["dim2"], (
             "Secondary dimension converted"
         )

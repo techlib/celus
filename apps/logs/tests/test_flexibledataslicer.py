@@ -38,8 +38,16 @@ from logs.models import (
 )
 
 
-def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list) -> dict:
+def remap_row_keys_to_short_names(
+    row: dict, primary_dimensions: list | str, dimensions: list
+) -> dict:
     result = {}
+    if isinstance(primary_dimensions, list):
+        pk_map = {
+            FlexibleDataSlicer.get_pk_key(i): model for i, model in enumerate(primary_dimensions)
+        }
+    else:
+        pk_map = {"pk": primary_dimensions}
     for key, value in row.items():
         if key.startswith("grp-"):
             parts = key[4:].split(",")
@@ -52,8 +60,8 @@ def remap_row_keys_to_short_names(row: dict, primary_dimension, dimensions: list
                     new_key_parts.append(str(obj))
             new_key = "-".join(new_key_parts)
             result[new_key] = value
-        elif key == "pk":
-            obj = primary_dimension.objects.get(pk=value)
+        elif model := pk_map.get(key):
+            obj = model.objects.get(pk=value)
             result[key] = getattr(obj, "short_name", str(obj))
     return result
 
@@ -87,7 +95,7 @@ class TestFlexibleDataSlicerComputations:
         Group by:
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         # without any groups/columns, the result would not make much sense
         with pytest.raises(SlicerConfigError):
             slicer.get_data()
@@ -98,7 +106,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
@@ -118,7 +126,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.include_all_zero_rows = show_zero
         metric = flexible_slicer_test_data["metrics"][0]
@@ -140,7 +148,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: platform
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         slicer.add_filter(ForeignKeyDimensionFilter("platform", platforms), add_group=True)
         slicer.include_all_zero_rows = show_zero
@@ -161,7 +169,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: platform, metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         metrics = flexible_slicer_test_data["metrics"][1:]
         slicer.add_filter(ForeignKeyDimensionFilter("platform", platforms), add_group=True)
@@ -184,7 +192,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: organization
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         organizations = flexible_slicer_test_data["organizations"][1:]
         slicer.add_filter(
             ForeignKeyDimensionFilter("organization", [org.pk for org in organizations]),
@@ -210,7 +218,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: organization, platform
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         organizations = flexible_slicer_test_data["organizations"][1:]
         slicer.add_filter(
@@ -239,7 +247,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform, metric
         DimensionFilter: platform, metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         metrics = flexible_slicer_test_data["metrics"][1:]
         slicer.add_filter(
@@ -268,7 +276,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric
         DimensionFilter: dim1
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
         slicer.add_filter(ExplicitDimensionFilter("dim1", dim1_ids), add_group=False)
@@ -291,7 +299,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: report type
         DimensionFilter: metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data["metrics"][:2]),
             add_group=False,
@@ -315,7 +323,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: report type
         DimensionFilter: platform
         """
-        slicer = FlexibleDataSlicer(primary_dimension="metric")
+        slicer = FlexibleDataSlicer(["metric"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("platform", [flexible_slicer_test_data["platforms"][0]]),
             add_group=False,
@@ -341,7 +349,7 @@ class TestFlexibleDataSlicerComputations:
         DimensionFilter: None
         Order by: platform (primary dimension)
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_group_by("metric")
         slicer.order_by = [order_by]
         slicer.include_all_zero_rows = show_zero
@@ -378,7 +386,7 @@ class TestFlexibleDataSlicerComputations:
         Test that ordering by primary dimension works for any primary dimension - the purpose
         of the test is to make sure it does not crash
         """
-        slicer = FlexibleDataSlicer(primary_dimension=primary_dim)
+        slicer = FlexibleDataSlicer([primary_dim])
         report_type = flexible_slicer_test_data["report_types"][1]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -399,19 +407,47 @@ class TestFlexibleDataSlicerComputations:
             short_name="MAT_TEST", materialization_spec=mat_spec, approx_record_count=100
         )
 
-        slicer = FlexibleDataSlicer(primary_dimension="report_type", include_all_zero_rows=True)
+        slicer = FlexibleDataSlicer(primary_dimensions=["report_type"])
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", [base_rt.pk]))
         slicer.add_group_by("metric")
-        slicer._replace_report_type_with_materialized()
 
-        if slicer._mat_reports_map:
-            assert mat_rt.pk in slicer._mat_reports_map
-            assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+        # get the data
+        data = list(slicer.get_data())
 
-            data = list(slicer.get_data())
-            for row in data:
-                assert row["pk"] == base_rt.pk
-                assert row["pk"] != mat_rt.pk
+        # check that the reports are properly mapped
+        assert mat_rt.pk in slicer._mat_reports_map
+        assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+
+        for row in data:
+            assert row["pk"] == base_rt.pk
+            assert row["pk"] != mat_rt.pk
+
+    def test_report_type_pk_mapping_with_materialized_reports_and_multiindex(
+        self, flexible_slicer_test_data
+    ):
+        base_rt = flexible_slicer_test_data["report_types"][0]
+
+        mat_spec = ReportMaterializationSpec.objects.create(
+            base_report_type=base_rt, name="Test Mat", keep_target=False
+        )
+        mat_rt = ReportType.objects.create(
+            short_name="MAT_TEST", materialization_spec=mat_spec, approx_record_count=100
+        )
+
+        slicer = FlexibleDataSlicer(primary_dimensions=["platform", "report_type"])
+        # we must filter down to one RT, otherwise materialized report types will not kick in
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", [base_rt.pk]))
+        slicer.add_group_by("metric")
+
+        data = list(slicer.get_data())
+
+        assert mat_rt.pk in slicer._mat_reports_map
+        assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+
+        for row in data:
+            # report type must be one of the normal (non-materialized report types)
+            assert row["pk2"] == base_rt.pk
+            assert row["pk2"] != mat_rt.pk
 
     @pytest.mark.parametrize(
         ["primary_dim", "order_by", "record_count"],
@@ -430,7 +466,7 @@ class TestFlexibleDataSlicerComputations:
         Test ordering by fields related to the primary dimension.
         We just want to test that it does not crash and returns the correct number of records
         """
-        slicer = FlexibleDataSlicer(primary_dimension=primary_dim)
+        slicer = FlexibleDataSlicer([primary_dim])
         report_type = flexible_slicer_test_data["report_types"][1]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -449,7 +485,7 @@ class TestFlexibleDataSlicerComputations:
         When more than one report type is used, grouping by explicit dimension is only possible
         if the dimension is the same for all report types and is stored in the same field.
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_group_by(dim)
 
         if error:
@@ -468,7 +504,7 @@ class TestFlexibleDataSlicerComputations:
         When more than one report type is used, filtering by explicit dimension is only possible
         if the dimension is the same for all report types and is stored in the same field.
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         dim_idx = ["dim1", "dim2"].index(dim)
         texts = flexible_slicer_test_data["dimension_values"][dim_idx][:2]
         dim_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -487,7 +523,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric
         DimensionFilter: dim1, report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         report_type = flexible_slicer_test_data["report_types"][0]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -512,7 +548,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric, dim1
         DimensionFilter: dim1, report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         report_type = flexible_slicer_test_data["report_types"][0]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -565,7 +601,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: tag on platform
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         tag = TagFactory.create(name="my_platforms", tag_class__scope=TagScope.PLATFORM)
         for platform in platforms:
@@ -591,7 +627,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: tag on platform
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         tc = TagClassFactory(scope=TagScope.PLATFORM)
         tags = TagFactory.create_batch(3, name="my_platforms", tag_class=tc)
@@ -618,7 +654,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: tag on title, platform, metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="target")
+        slicer = FlexibleDataSlicer(["target"])
         platforms = flexible_slicer_test_data["platforms"][:2]
         metric = flexible_slicer_test_data["metrics"][0]
         titles = [flexible_slicer_test_data["targets"][0], flexible_slicer_test_data["targets"][2]]
@@ -648,7 +684,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: platform
         DimensionFilter: tag on title, tag on platform, metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="target")
+        slicer = FlexibleDataSlicer(["target"])
         metric = flexible_slicer_test_data["metrics"][0]
         platforms = flexible_slicer_test_data["platforms"][:2]
         pl_tag = TagFactory.create(name="my_platforms", tag_class__scope=TagScope.PLATFORM)
@@ -681,7 +717,7 @@ class TestFlexibleDataSlicerComputations:
 
         Note: sorting by target is invalid in this context, we are testing mitigation of the error
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("metric")
         slicer.include_all_zero_rows = False
         slicer.order_by = ["target"]
@@ -695,9 +731,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric
         Tag roll-up: True
         """
-        slicer = FlexibleDataSlicer(
-            primary_dimension="target", tag_roll_up=True, include_all_zero_rows=show_zero
-        )
+        slicer = FlexibleDataSlicer(["target"], tag_roll_up=True, include_all_zero_rows=show_zero)
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_tags["metrics"][0]),
             add_group=True,
@@ -724,9 +758,7 @@ class TestFlexibleDataSlicerComputations:
         Tag roll-up: True
         Tag filter: tag1, tag3
         """
-        slicer = FlexibleDataSlicer(
-            primary_dimension="target", tag_roll_up=True, include_all_zero_rows=show_zero
-        )
+        slicer = FlexibleDataSlicer(["target"], tag_roll_up=True, include_all_zero_rows=show_zero)
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_tags["metrics"][0]),
             add_group=True,
@@ -761,9 +793,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric
         Tag roll-up: True
         """
-        slicer = FlexibleDataSlicer(
-            primary_dimension="target", tag_roll_up=True, include_all_zero_rows=False
-        )
+        slicer = FlexibleDataSlicer(["target"], tag_roll_up=True, include_all_zero_rows=False)
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_tags["metrics"][0]),
             add_group=True,
@@ -794,9 +824,7 @@ class TestFlexibleDataSlicerComputations:
         Split by: organization
         Tag roll-up: True
         """
-        slicer = FlexibleDataSlicer(
-            primary_dimension="target", tag_roll_up=True, include_all_zero_rows=False
-        )
+        slicer = FlexibleDataSlicer(["target"], tag_roll_up=True, include_all_zero_rows=False)
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_tags["metrics"][0]),
             add_group=True,
@@ -817,7 +845,7 @@ class TestFlexibleDataSlicerComputations:
         DimensionFilter: metric, report_type
         """
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
@@ -850,7 +878,7 @@ class TestFlexibleDataSlicerComputations:
     @pytest.mark.parametrize("desc", (True, False), ids=("desc", "asc"))
     def test_trend_mode_order_by(self, flexible_slicer_test_data, order_by, desc):
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
@@ -874,7 +902,7 @@ class TestFlexibleDataSlicerComputations:
         Primary dimension: item
         Group by: metric
         """
-        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer = FlexibleDataSlicer(["item"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_items["metrics"][0]),
             add_group=True,
@@ -897,7 +925,7 @@ class TestFlexibleDataSlicerComputations:
         Group by: metric
         Filter: title
         """
-        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer = FlexibleDataSlicer(["item"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("target", flexible_slicer_test_data_with_items["targets"][0])
         )
@@ -922,7 +950,7 @@ class TestFlexibleDataSlicerComputations:
         tag = TagFactory.create(name="my_tag", tag_class__scope=TagScope.TITLE)
         title = flexible_slicer_test_data_with_items["targets"][0]
         tag.tag(title, admin_user)
-        slicer = FlexibleDataSlicer(primary_dimension="item")
+        slicer = FlexibleDataSlicer(["item"])
         slicer.add_filter(TagDimensionFilter("target", [tag.pk]))
         slicer.add_group_by("metric")
         slicer.order_by = ["item__pk"]
@@ -940,12 +968,12 @@ class TestFlexibleDataSlicerComputations:
 @pytest.mark.django_db(transaction=True)
 class TestFlexibleDataSlicerPossibleDimensionValues:
     def test_get_possible_dimension_values_unfiltered(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metric_data = slicer.get_possible_dimension_values("metric")
         assert metric_data["count"] == Metric.objects.count()
 
     def test_get_possible_dimension_values_with_direct_filter(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metrics = flexible_slicer_test_data["metrics"][1:]
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
         metric_data = slicer.get_possible_dimension_values("metric")
@@ -967,7 +995,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
             ),
         )
         recompute_materialized_reports()
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metrics = flexible_slicer_test_data["metrics"][1:]
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", rt))
@@ -988,7 +1016,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         tag = TagFactory.create(name="my_tag", tag_class__scope=TagScope.PLATFORM)
         for pl in flexible_slicer_test_data["platforms"][:2]:
             tag.tag(pl, admin_user)
-        slicer = FlexibleDataSlicer(primary_dimension=primary_dimension)
+        slicer = FlexibleDataSlicer([primary_dimension])
         slicer.add_filter(TagDimensionFilter("platform", [tag.pk]))
         platform_data = slicer.get_possible_dimension_values("platform", ignore_self=ignore_self)
         assert platform_data["count"] == 2
@@ -1018,7 +1046,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         )
         for pl in flexible_slicer_test_data[f"{tagged_dimension}s"][:tagged_count]:
             tag.tag(pl, admin_user)
-        slicer = FlexibleDataSlicer(primary_dimension=primary_dimension)
+        slicer = FlexibleDataSlicer([primary_dimension])
         slicer.add_filter(TagDimensionFilter(tagged_dimension, [tag.pk]))
         slicer.organization_filter = Organization.objects.all()
         platform_data = slicer.get_possible_dimension_values(tagged_dimension, ignore_self=True)
@@ -1027,7 +1055,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
     def test_get_possible_dimension_values_with_indirect_filter(
         self, flexible_slicer_test_data, clickhouse_on_off
     ):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metrics = flexible_slicer_test_data["metrics"][1:]
         organization = flexible_slicer_test_data["organizations"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
@@ -1055,7 +1083,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         Tests that substring filtering works for `FlexibleDataSlicer.get_possible_dimension_values`
         for implicit dimensions
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metric_data = slicer.get_possible_dimension_values("metric", text_filter="2")
         assert metric_data["count"] == 1
         assert metric_data["values"][0]["metric"] == Metric.objects.get(name__icontains="2").pk
@@ -1067,7 +1095,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         Tests that substring filtering works for `FlexibleDataSlicer.get_possible_dimension_values`
         for explicit dimensions
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][1]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type.pk))
         metric_data = slicer.get_possible_dimension_values("dim1", text_filter="C")
@@ -1079,7 +1107,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         Tests that a list of pk's for the queried dimension may be used by the slicer to limit
         output of `get_possible_dimension_values`
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         metrics = flexible_slicer_test_data["metrics"][1:]
         metric_data = slicer.get_possible_dimension_values("metric", pks=[m.pk for m in metrics])
         assert metric_data["count"] == 2
@@ -1092,7 +1120,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         Tests that a list of pk's for the queried dimension may be used by the slicer to limit
         output of `get_possible_dimension_values`
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][1]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type.pk))
         dts = DimensionText.objects.filter(text__in=["A", "B"], dimension__short_name="dim1name")
@@ -1110,7 +1138,7 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
         Tests that a list of integer values the queried dimension may be used by the slicer to limit
         output of `get_possible_dimension_values`
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data2["report_types"][1]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type.pk))
         metric_data = slicer.get_possible_dimension_values("dim2", text_filter=search_text)
@@ -1118,20 +1146,249 @@ class TestFlexibleDataSlicerPossibleDimensionValues:
 
 
 @pytest.mark.django_db
+class TestFlexibleDataSlicerMultiIndex:
+    def test_primary_dimensions_array(self):
+        """
+        Test that slicer accepts multiple primary dimensions
+        """
+        slicer = FlexibleDataSlicer(["platform", "report_type"])
+        assert slicer.primary_dimensions == ["platform", "report_type"]
+
+    @pytest.mark.parametrize("kwargs,expected_exception", [({"tag_roll_up": True}, "E114")])
+    def test_multiindex_incompatible_options_raise(self, kwargs, expected_exception):
+        """
+        Test that using options incompatible with multiindex (multiple primary dimensions)
+        raises an exception.
+        """
+        # The minimal valid multiindex primary dimensions
+        primary_dims = ["platform", "organization"]
+        with pytest.raises(SlicerConfigError) as exc:
+            slicer = FlexibleDataSlicer(primary_dims, **kwargs)
+            slicer.check_params()
+        assert exc.value.code == expected_exception
+
+    def test_organization_platform_output_data(self, flexible_slicer_test_data):
+        """
+        Test that the output data for organization and platform is correct
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["organization", "platform"]
+        data = list(slicer.get_data())
+        assert len(data) == 9, "3 organizations, 3 platforms"
+        assert len(data[0].keys()) == 6, "organization, platform, 3 metrics, _total"
+        assert set(data[0].keys()) == {"pk", "pk2", "_total"} | {
+            f"grp-{m.pk}" for m in flexible_slicer_test_data["metrics"]
+        }
+        data = [
+            remap_row_keys_to_short_names(row, [Organization, Platform], [Metric]) for row in data
+        ]
+        assert data == [
+            {"pk": "org1", "pk2": "pl1", "m1": 1638, "m2": 1962, "m3": 2286},
+            {"pk": "org1", "pk2": "pl2", "m1": 5526, "m2": 5850, "m3": 6174},
+            {"pk": "org1", "pk2": "pl3", "m1": 9414, "m2": 9738, "m3": 10062},
+            {"pk": "org2", "pk2": "pl1", "m1": 13302, "m2": 13626, "m3": 13950},
+            {"pk": "org2", "pk2": "pl2", "m1": 17190, "m2": 17514, "m3": 17838},
+            {"pk": "org2", "pk2": "pl3", "m1": 21078, "m2": 21402, "m3": 21726},
+            {"pk": "org3", "pk2": "pl1", "m1": 24966, "m2": 25290, "m3": 25614},
+            {"pk": "org3", "pk2": "pl2", "m1": 28854, "m2": 29178, "m3": 29502},
+            {"pk": "org3", "pk2": "pl3", "m1": 32742, "m2": 33066, "m3": 33390},
+        ]
+
+    def test_organization_platform_output_data_ordering_asc(self, flexible_slicer_test_data):
+        """
+        Test that the output data for organization and platform is correct
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["organization", "platform"]
+        data = list(slicer.get_data())
+        assert len(data) == 9, "3 organizations, 3 platforms"
+        assert len(data[0].keys()) == 6, "organization, platform, 3 metrics, _total"
+        assert set(data[0].keys()) == {"pk", "pk2", "_total"} | {
+            f"grp-{m.pk}" for m in flexible_slicer_test_data["metrics"]
+        }
+        data = [
+            remap_row_keys_to_short_names(row, [Organization, Platform], [Metric]) for row in data
+        ]
+        last_org = "org0"
+        last_platform = "pl0"
+        for row in data:
+            assert row["pk"] >= last_org
+            if row["pk"] == last_org:
+                assert row["pk2"] >= last_platform
+            last_org = row["pk"]
+            last_platform = row["pk2"]
+
+    def test_organization_platform_output_data_ordering_desc(self, flexible_slicer_test_data):
+        """
+        Test that the output data for organization and platform is correct
+        """
+        slicer = FlexibleDataSlicer(["organization", "platform"])
+        slicer.add_group_by("metric")
+        slicer.order_by = ["-organization", "-platform"]
+        data = list(slicer.get_data())
+        assert len(data) == 9, "3 organizations, 3 platforms"
+        assert len(data[0].keys()) == 6, "organization, platform, 3 metrics, _total"
+        assert set(data[0].keys()) == {"pk", "pk2", "_total"} | {
+            f"grp-{m.pk}" for m in flexible_slicer_test_data["metrics"]
+        }
+
+        data = [
+            remap_row_keys_to_short_names(row, [Organization, Platform], [Metric]) for row in data
+        ]
+        last_org = "org9"
+        last_platform = "pl9"
+        for row in data:
+            assert row["pk"] <= last_org
+            if row["pk"] == last_org:
+                assert row["pk2"] <= last_platform
+            last_org = row["pk"]
+            last_platform = row["pk2"]
+
+    @pytest.mark.parametrize("all_zero_rows", [True, False])
+    def test_multiindex_trend_mode_basic(self, flexible_slicer_test_data, all_zero_rows):
+        """
+        Test basic multiindex with trend mode functionality.
+        Test that include_all_zero_rows is handled correctly - trend mode is the only case where
+        inclusion of all zero rows is supported for multiindex.
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            include_all_zero_rows=all_zero_rows,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        slicer.order_by = ["platform", "organization"]
+
+        # This should not raise an error
+        slicer.check_params()
+
+        data = list(slicer.get_data())
+        assert len(data) > 0
+
+        # Check that each row has the expected trend mode columns
+        for row in data:
+            assert "pk" in row  # platform
+            assert "pk2" in row  # organization
+            assert "base" in row
+            assert "compared" in row
+            assert "diff" in row
+            assert "reldiff" in row
+            assert "_total" in row
+
+            # Verify trend calculations
+            assert row["diff"] == row["compared"] - row["base"]
+            if row["base"] != 0:
+                assert abs(row["reldiff"] - (row["diff"] / row["base"])) < 0.001
+            else:
+                assert row["reldiff"] is None
+
+    def test_multiindex_trend_mode_ordering(self, flexible_slicer_test_data):
+        """
+        Test ordering by trend mode columns in multiindex
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+
+        # Test ordering by base values
+        slicer.order_by = ["base"]
+        data = list(slicer.get_data())
+        assert len(data) > 1
+        for i in range(len(data) - 1):
+            assert data[i]["base"] <= data[i + 1]["base"]
+
+        # Test ordering by compared values
+        slicer.order_by = ["compared"]
+        data = list(slicer.get_data())
+        assert len(data) > 1
+        for i in range(len(data) - 1):
+            assert data[i]["compared"] <= data[i + 1]["compared"]
+
+        # Test ordering by diff values
+        slicer.order_by = ["diff"]
+        data = list(slicer.get_data())
+        assert len(data) > 1
+        for i in range(len(data) - 1):
+            assert data[i]["diff"] <= data[i + 1]["diff"]
+
+    def test_multiindex_trend_mode_with_filters(self, flexible_slicer_test_data):
+        """
+        Test multiindex trend mode with additional dimension filters
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform", "organization"],
+            trend_mode=True,
+            base_subset_filters=[DateDimensionFilter("date", "2019-12-01", "2019-12-31")],
+            compared_subset_filters=[DateDimensionFilter("date", "2020-01-01", "2020-03-31")],
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
+        )
+        # Add a filter to limit to specific platforms
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("platform", flexible_slicer_test_data["platforms"][:2])
+        )
+
+        data = list(slicer.get_data())
+        assert len(data) > 0
+
+        # Verify all returned platforms are from the filtered set
+        platform_ids = {p.pk for p in flexible_slicer_test_data["platforms"][:2]}
+        for row in data:
+            assert row["pk"] in platform_ids
+
+    def test_multiindex_include_all_zero_rows_without_trend_mode_raises_error(
+        self, flexible_slicer_test_data
+    ):
+        """
+        Test that include_all_zero_rows with multiindex (without trend mode) raises E115
+        """
+        slicer = FlexibleDataSlicer(["platform", "organization"], include_all_zero_rows=True)
+
+        with pytest.raises(SlicerConfigError) as exc:
+            slicer.check_params()
+        assert exc.value.code == SlicerConfigErrorCode.E115.value
+
+
+@pytest.mark.django_db
 class TestFlexibleDataSlicerOther:
+    @pytest.mark.parametrize("array", [True, False])
+    def test_primary_dimensions_array_conversion(self, array):
+        """
+        Test that slicer first parameter can be both a string and an array
+        and that the result is the same
+        """
+        slicer = FlexibleDataSlicer(["platform"] if array else "platform")
+        assert slicer.primary_dimensions == ["platform"]
+
     def test_create_from_config(self):
         """
         Test that slicer created from config has the same params as the original slicer
         :return:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_filter(ForeignKeyDimensionFilter("metric", [1, 2, 3]))
         slicer.add_filter(DateDimensionFilter("date", "2020-01-01", "2020-03-31"))
         slicer.add_filter(ExplicitDimensionFilter("dim1", [10, 11]))
         slicer.add_group_by("organization")
         config = slicer.config()
         new_slicer = FlexibleDataSlicer.create_from_config(config)
-        assert new_slicer.primary_dimension == slicer.primary_dimension
+        assert new_slicer.primary_dimensions == slicer.primary_dimensions
         assert new_slicer.group_by == slicer.group_by
         assert new_slicer.order_by == slicer.order_by
         assert len(new_slicer.dimension_filters) == len(slicer.dimension_filters)
@@ -1143,7 +1400,7 @@ class TestFlexibleDataSlicerOther:
         Test that slicer created from config gives the same result as the original slicer
         :return:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         report_type = flexible_slicer_test_data["report_types"][0]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -1162,7 +1419,7 @@ class TestFlexibleDataSlicerOther:
         """
         Title.objects.create(name="Zero usage")  # add one unused title
         assert Title.objects.count() == 4
-        slicer = FlexibleDataSlicer(primary_dimension="target")
+        slicer = FlexibleDataSlicer(["target"])
         slicer.add_group_by("metric")
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
@@ -1216,7 +1473,7 @@ class TestFlexibleDataSlicerOther:
         rt = rts[report_type_idx]
         pl = platforms[platform_idx] if platform_idx is not None else None
         org = orgs[organization_idx] if organization_idx is not None else None
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_group_by("metric")
         slicer.add_filter(DateDimensionFilter("date", start_month, end_month))
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", rt))
@@ -1235,7 +1492,7 @@ class TestFlexibleDataSlicerOther:
             report_type=flexible_slicer_test_data["report_types"][0],
             date="2020-01-01",
         ).delete()
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_group_by("metric")
         slicer.add_filter(
             ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
@@ -1279,7 +1536,7 @@ class TestFlexibleDataSlicerOther:
         tag2.tag(orgs[1], admin_user)
         tag3.tag(orgs[1], admin_user)  # double tag org[1] to make sure it does not mess things up
         # create the slicer
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_group_by("metric")
         slicer.add_filter(
             ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][0])
@@ -1301,7 +1558,7 @@ class TestFlexibleDataSlicerOther:
             date="2020-01-01",
         ).delete()
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2020-01", "2020-01")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-02", "2020-02")],
@@ -1322,7 +1579,7 @@ class TestFlexibleDataSlicerOther:
         """
         rt1 = flexible_slicer_test_data["report_types"][0]
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", "2020-01", "2020-01")],
             compared_subset_filters=[DateDimensionFilter("date", "2020-02", "2020-02")],
@@ -1343,7 +1600,7 @@ class TestFlexibleDataSlicerOther:
         without raising KeyError or ZeroDivisionError
         """
         # Create a slicer
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
 
         # Mock the involved_report_types method to return an empty list
         from unittest.mock import patch
@@ -1359,7 +1616,7 @@ class TestFlexibleDataSlicerOther:
             assert coverage["overall"]["ratio"] is None
 
     def test_resolve_explicit_dimension_with_multiple_report_types(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_filter(
             ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
         )
@@ -1379,7 +1636,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: platform
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         # filter by new unused metric
         m = MetricFactory()
@@ -1398,7 +1655,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: platform
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         exporter = FlexibleDataSimpleCSVExporter(
             slicer, include_tags=False, include_row_totals=include_row_totals
@@ -1441,7 +1698,7 @@ class TestFlexibleDataSimpleCSVExporter:
         tag2.tag(flexible_slicer_test_data["organizations"][1], admin_user)
         tag3.tag(flexible_slicer_test_data["organizations"][1], admin_user)
 
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.order_by = ["organization"]
         exporter = FlexibleDataSimpleCSVExporter(
@@ -1472,7 +1729,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric, dim1
         DimensionFilter: dim1, report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         report_type = flexible_slicer_test_data["report_types"][0]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -1498,7 +1755,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: date
         DimensionFilter: report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date")
@@ -1530,7 +1787,7 @@ class TestFlexibleDataSimpleCSVExporter:
         tag2.tag(flexible_slicer_test_data["platforms"][0], admin_user)
         tag2.tag(flexible_slicer_test_data["platforms"][1], admin_user)
 
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date")
@@ -1565,7 +1822,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: date__year
         DimensionFilter: report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date__year")
@@ -1588,7 +1845,7 @@ class TestFlexibleDataSimpleCSVExporter:
 
         uses monitor function
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date__year")
@@ -1605,7 +1862,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: date__year
         DimensionFilter: date
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_filter(DateDimensionFilter("date", "2020-01-01", "2020-03-31"))
@@ -1624,7 +1881,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter: report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="date__year")
+        slicer = FlexibleDataSlicer(["date__year"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -1643,7 +1900,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter: report_type
         """
-        slicer = FlexibleDataSlicer(primary_dimension="dim1")
+        slicer = FlexibleDataSlicer(["dim1"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -1663,7 +1920,7 @@ class TestFlexibleDataSimpleCSVExporter:
         DimensionFilter:
         Extra filter: organization (simulates user with limited org access)
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         slicer.add_extra_organization_filter([flexible_slicer_test_data["organizations"][1].pk])
         exporter = FlexibleDataSimpleCSVExporter(slicer)
@@ -1682,7 +1939,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("organization")
         slicer.add_group_by("metric")
         parts = slicer.get_parts_queryset()
@@ -1697,7 +1954,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter: organization (thus limiting the number of parts after split)
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("organization")
         slicer.add_group_by("metric")
         organizations = flexible_slicer_test_data["organizations"][:2]
@@ -1712,7 +1969,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("organization")
         slicer.add_group_by("metric")
         with pytest.raises(SlicerConfigError):
@@ -1725,7 +1982,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("organization")
         slicer.add_group_by("metric")
         org = flexible_slicer_test_data["organizations"][0]
@@ -1741,7 +1998,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("date")
         slicer.add_group_by("metric")
         data = slicer.get_data(part=["2020-01"])
@@ -1756,7 +2013,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         slicer.add_split_by("organization")
         slicer.add_group_by("metric")
         exporter = FlexibleDataZipCSVExporter(slicer)
@@ -1779,7 +2036,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_split_by("organization")
@@ -1810,7 +2067,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: metric
         DimensionFilter:
         """
-        slicer = FlexibleDataSlicer(primary_dimension="platform")
+        slicer = FlexibleDataSlicer(["platform"])
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("metric")
@@ -1843,7 +2100,7 @@ class TestFlexibleDataSimpleCSVExporter:
         Group by: trend-mode
         """
         slicer = FlexibleDataSlicer(
-            primary_dimension="platform",
+            ["platform"],
             trend_mode=True,
             base_subset_filters=[DateDimensionFilter("date", start="2020-01-01", end="2020-01-31")],
             compared_subset_filters=[
@@ -1933,7 +2190,7 @@ class TestFiltersInSlicerContext:
     """
 
     def _slicer_filter_to_str(self, fltr) -> str:
-        slicer = FlexibleDataSlicer(primary_dimension="metric")
+        slicer = FlexibleDataSlicer(["metric"])
         slicer.add_filter(fltr)
         return slicer.filter_to_str(fltr)
 
@@ -1951,7 +2208,7 @@ class TestFiltersInSlicerContext:
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
         # for explicit dimension resolution, we need to have a report type specified
         report_type = flexible_slicer_test_data["report_types"][0]
-        slicer = FlexibleDataSlicer(primary_dimension="metric")
+        slicer = FlexibleDataSlicer(["metric"])
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         fltr = ExplicitDimensionFilter("dim1", dim1_ids)
         value = "; ".join(texts)
@@ -1989,7 +2246,7 @@ class TestFlexibleDataExcelExporter:
         """
         Test that the `include_charts` parameter works as expected
         """
-        slicer = FlexibleDataSlicer(primary_dimension="organization")
+        slicer = FlexibleDataSlicer(["organization"])
         slicer.add_group_by("platform")
         exporter = FlexibleDataExcelExporter(
             slicer, include_tags=False, include_charts=include_charts

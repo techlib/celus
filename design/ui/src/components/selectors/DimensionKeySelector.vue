@@ -325,6 +325,17 @@ export default {
       await this.fetchPossibleValues();
     }
   },
+  beforeUnmount() {
+    // if the component is unmounted (hidden, etc.) before the request is complete,
+    // we need to cancel the request to prevent potential subsequent code to run
+    // (and potentially cause errors)
+    if (this.fetchPossibleValuesCancelTokenSource) {
+      this.fetchPossibleValuesCancelTokenSource.cancel();
+    }
+    if (this.idValidatorCancelTokenSource) {
+      this.idValidatorCancelTokenSource.cancel();
+    }
+  },
 };
 </script>
 

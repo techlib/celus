@@ -446,9 +446,7 @@ class ReportDataSource:
         if self.report_data_ is not None:
             return
         slicer = FlexibleDataSlicer(
-            primary_dimension=self.report.primary_dimension,
-            include_all_zero_rows=False,
-            use_clickhouse=True,
+            [self.report.primary_dimension], include_all_zero_rows=False, use_clickhouse=True
         )
 
         context = self.report.context

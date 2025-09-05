@@ -92,6 +92,7 @@ en:
     platform_count: Platform count
     platforms: Platforms
     primary_dimension: Rows
+    primary_dimensions: Rows
     processed: Imported
     processing_success: Processing successful
     proprietary_ids: Proprietary IDs
@@ -233,6 +234,9 @@ en:
     tag_scope: Tag scope
     tag_scope_hint: What type of object can this tag be assigned to
     tags: Tags
+    tags_title: Title tags
+    tags_platform: Platform tags
+    tags_organization: Organization tags
     text_color: Text color
     title: Title / database
     title_count: Title count
@@ -470,6 +474,9 @@ cs:
     sushi_troubleshooting: Řešení problémů
     tag_management: Správa štítků
     tags: Štítky
+    tags_title: Štítky titulu
+    tags_platform: Štítky platformy
+    tags_organization: Štítky organizace
     title_detail: Detail titulu
     title_list_overlap: Překryv titulového seznamu
     title_lists: Titulové seznamy
@@ -517,6 +524,7 @@ cs:
     platform_count: Počet platforem
     platforms: Platformy
     primary_dimension: Řádky
+    primary_dimensions: Řádky
     processed: Importováno
     processing_success: Úspěšné zpracování
     proprietary_ids: Interní ID

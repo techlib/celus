@@ -195,7 +195,7 @@ cs:
           </template>
           <template #item.tags="{ item }">
             <TagChip
-              v-for="tag in objIdToTags.get(item.pk)"
+              v-for="tag in getTagsForObjectById('platform', item.pk)"
               :key="tag.pk"
               :tag="tag"
               small
@@ -221,18 +221,18 @@ cs:
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import { formatInteger } from "../libs/numbers";
+import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 import PlatformEditDialog from "@/components/PlatformEditDialog";
-import cancellation from "@/mixins/cancellation";
-import tags from "@/mixins/tags";
 import TagChip from "@/components/tags/TagChip";
 import TagSelector from "@/components/tags/TagSelector";
-import { intersection } from "lodash";
-import stateTracking from "@/mixins/stateTracking";
-import NoDataInTableWidget from "@/components/NoDataInTableWidget.vue";
 import { counterVersionToStr } from "@/libs/sushi";
+import cancellation from "@/mixins/cancellation";
+import stateTracking from "@/mixins/stateTracking";
+import tags from "@/mixins/tags";
+import { intersection } from "lodash";
 import debounce from "lodash/debounce";
+import { mapGetters } from "vuex";
+import { formatInteger } from "../libs/numbers";
 import TableCustomSort from "./tables/TableCustomSort.vue";
 
 export default {
@@ -384,13 +384,10 @@ export default {
 
       if (this.selectedTags.length > 0) {
         filteredPlatforms = filteredPlatforms.filter((pl) => {
-          if (this.objIdToTags.has(pl.pk)) {
-            const tags = this.objIdToTags.get(pl.pk).map((tag) => tag.pk);
-            if (intersection(tags, this.selectedTags).length) {
-              return true;
-            }
-          }
-          return false;
+          const tagIds = this.getTagsForObjectById("platform", pl.pk).map(
+            (tag) => tag.pk,
+          );
+          return intersection(tagIds, this.selectedTags).length > 0;
         });
       }
 
@@ -425,7 +422,9 @@ export default {
     async syncTags() {
       let toTag = this.platforms
         .map((pl) => pl.pk)
-        .filter((pk) => !this.objIdToTags.has(pk));
+        .filter((pk) => {
+          return this.getTagsForObjectById("platform", pk).length === 0;
+        });
       if (this.resolvingTagsForIds.size) {
         // we only want to resolve those that are not already being resolved
         toTag = toTag.filter((pk) => !this.resolvingTagsForIds.has(pk));
@@ -435,7 +434,7 @@ export default {
 
       if (toTag.length) {
         try {
-          await this.getTagsForObjectsById("platform", toTag);
+          await this.fetchTagsForObjectsById("platform", toTag);
         } finally {
           // clean up the set of what was resolved
           toTag.forEach((pk) => this.resolvingTagsForIds.delete(pk));

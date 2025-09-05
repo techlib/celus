@@ -1,5 +1,3 @@
-import qs from "qs";
-
 export default {
   data() {
     let tags = [];
@@ -15,18 +13,24 @@ export default {
     }
     return {
       selectedTags: tags,
-      objIdToTags: new Map(),
+      objIdToTagsByType: new Map(), // Maps objectType -> Map of objectId -> tags
     };
   },
 
   methods: {
-    cleanTagCache() {
-      this.objIdToTags.clear();
+    cleanTagCache(objectType) {
+      if (objectType) {
+        this.objIdToTagsByType.delete(objectType);
+      }
     },
-    async getTagsForObjectsById(objectType, objectIds) {
-      let cleanObjectIds = objectIds.filter(
-        (x) => x && !this.objIdToTags.has(x),
-      );
+    async fetchTagsForObjectsById(objectType, objectIds) {
+      // Get or create the map for this objectType
+      if (!this.objIdToTagsByType.has(objectType)) {
+        this.objIdToTagsByType.set(objectType, new Map());
+      }
+      const objIdToTags = this.objIdToTagsByType.get(objectType);
+
+      let cleanObjectIds = objectIds.filter((x) => x && !objIdToTags.has(x));
       if (cleanObjectIds.length === 0) {
         return;
       }
@@ -50,7 +54,7 @@ export default {
         !tagsResult.error
       ) {
         let tagIdToObj = new Map();
-        let newObjIdToTags = new Map(this.objIdToTags);
+        let newObjIdToTags = new Map(objIdToTags);
 
         tagsResult.response.data.forEach((tag) => tagIdToObj.set(tag.pk, tag));
         cleanObjectIds.forEach((id) => newObjIdToTags.set(id, []));
@@ -58,8 +62,15 @@ export default {
           newObjIdToTags.get(link.target_id).push(tagIdToObj.get(link.tag_id)),
         );
         // we exchange the whole map to trigger a re-render
-        this.objIdToTags = newObjIdToTags;
+        this.objIdToTagsByType.set(objectType, newObjIdToTags);
       }
+    },
+    getTagsForObjectById(objectType, objectId) {
+      if (!this.objIdToTagsByType.has(objectType)) {
+        return [];
+      }
+      const objIdToTags = this.objIdToTagsByType.get(objectType);
+      return objIdToTags.get(objectId) || [];
     },
   },
 };

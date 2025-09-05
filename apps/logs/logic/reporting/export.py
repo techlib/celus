@@ -3,7 +3,7 @@ import logging
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, TextIO, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from cachalot.api import cachalot_disabled
@@ -85,14 +85,26 @@ class FlexibleDataExporter(ABC):
 
         self.involved_report_types = self.slicer.involved_report_types()
         self.column_parts_separator = column_parts_separator
-        self.explicit_prim_dim, self.remapped_prim_dim, self.prim_dim = self.resolve_dimension(
-            self.slicer.primary_dimension
-        )
-        # how the primary dimension is called in the query output
-        self.prim_dim_key = self.slicer.primary_dimension
-        if self.remapped_prim_dim and not self.explicit_prim_dim:
-            self.prim_dim_key = "pk"
-        self.prim_dim_remap = {}  # always prepared for one output batch
+
+        # Handle multiindex support - store metadata for all primary dimensions
+        self.primary_dim_keys = []
+        self.primary_dim_metadata = []  # list of (explicit, remapped, model) tuples
+        self.prim_dim_remap = {}  # dict mapping pk keys to their remappings
+
+        for i, primary_dimension in enumerate(self.slicer.primary_dimensions):
+            # Resolve dimension metadata first so we know how the slicer outputs the key
+            explicit, remapped, model = self.resolve_dimension(primary_dimension)
+
+            # All primary dimensions now use pk, pk2, pk3, etc. keys consistently
+            # regardless of whether it's single-dimension or multiindex
+            key = self.slicer.get_pk_key(i)
+
+            self.primary_dim_keys.append(key)
+            self.primary_dim_metadata.append((explicit, remapped, model, primary_dimension))
+
+            # Initialize remap storage for this dimension
+            self.prim_dim_remap[key] = {}
+
         self._fields = []
         # mapping between primary dim value and connected tags, used in batch processing
         # inside write_qs_to_output
@@ -100,46 +112,74 @@ class FlexibleDataExporter(ABC):
 
     @property
     def include_tags(self):
+        # For multiindex, tags should be included if ANY primary dimension is taggable
         return (
             self._include_tags
-            and self.slicer.primary_dimension in self.taggable_rows
+            and any(dim in self.taggable_rows for dim in self.slicer.primary_dimensions)
             and not self.slicer.tag_roll_up
         )
+
+    @include_tags.setter
+    def include_tags(self, value):
+        self._include_tags = value
 
     @property
     def effective_prim_dim(self) -> str:
         if not self.slicer.tag_roll_up:
-            return self.slicer.primary_dimension
+            return self.slicer.primary_dimensions[0]
         return "tag"
+
+    @property
+    def multiindex(self) -> bool:
+        return len(self.slicer.primary_dimensions) > 1
 
     def remapped_keys(self):
         return self.object_remapped_dims.get(self.effective_prim_dim, {}).get("columns", ["name"])
 
-    def prepare_primary_remap(self, batch: Set):
+    def prepare_primary_remap(self, batch_dict: dict):
         """
-        :param batch: set of primary dimension values to remap
+        :param batch_dict: dict mapping pk keys ("pk", "pk2", etc.) to sets of values to remap
         """
-        if self.remapped_prim_dim:
-            if self.explicit_prim_dim:
-                log_memory("FlexibleDataExporter - before creating remap for explicit")
-                self.prim_dim_remap = dict(
-                    rec
-                    for rec in DimensionText.objects.filter(
-                        dimension=self.prim_dim, pk__in=batch
-                    ).values_list("pk", "text")
-                )
-                log_memory("FlexibleDataExporter - after creating remap for explicit")
-            else:
-                log_memory("FlexibleDataExporter - before creating remap for implicit")
-                self.prim_dim_remap = self._prepare_implicit_remap(
-                    self.prim_dim.objects.filter(pk__in=batch)
-                )
-                log_memory("FlexibleDataExporter - after creating remap for implicit")
+        for key, batch in batch_dict.items():
+            if not batch:
+                continue
 
-    def _prepare_implicit_remap(self, qs: QuerySet) -> dict:
+            # Find the metadata for this primary dimension
+            idx = self.primary_dim_keys.index(key)
+            explicit, remapped, model, dim_name = self.primary_dim_metadata[idx]
+
+            if remapped:
+                if explicit:
+                    log_memory(f"FlexibleDataExporter - before creating remap for explicit {key}")
+                    self.prim_dim_remap[key] = dict(
+                        rec
+                        for rec in DimensionText.objects.filter(
+                            dimension=model, pk__in=batch
+                        ).values_list("pk", "text")
+                    )
+                    log_memory(f"FlexibleDataExporter - after creating remap for explicit {key}")
+                else:
+                    log_memory(f"FlexibleDataExporter - before creating remap for implicit {key}")
+                    # For tag_roll_up, use "tag" as the effective dimension name
+                    effective_dim = (
+                        "tag"
+                        if (key == "pk" and self.slicer.tag_roll_up and model.__name__ == "Tag")
+                        else dim_name
+                    )
+                    self.prim_dim_remap[key] = self._prepare_implicit_remap(
+                        model.objects.filter(pk__in=batch), effective_dim
+                    )
+                    log_memory(f"FlexibleDataExporter - after creating remap for implicit {key}")
+
+    def _prepare_implicit_remap(self, qs: QuerySet, dim_name: str = None) -> dict:
         # Fallback to name->short_name (e.g. for Metric)
         with cachalot_disabled():
-            remapped_keys = self.remapped_keys()
+            # Get remapped keys for the specific dimension, not just the first one
+            if dim_name:
+                remapped_keys = self.object_remapped_dims.get(dim_name, {}).get("columns", ["name"])
+            else:
+                remapped_keys = self.remapped_keys()
+
             if "name" in remapped_keys and hasattr(qs.model, "short_name"):
                 remaps = list(qs.values("pk", "short_name", *remapped_keys))
                 for item in remaps:
@@ -204,14 +244,47 @@ class FlexibleDataExporter(ABC):
             row = next(data)
         except StopIteration:
             return 0
-        fields = [(self.prim_dim_key, self.primary_column_name())]
-        # possible other remapped attrs of primary object
-        remap_keys = self.remapped_keys()
-        for key in remap_keys[1:]:
-            fields.append((key, self.dim_name_to_column_name.get(key, key.upper())))
-        # add tag column if needed
-        if self.include_tags:
-            fields.append(("tags", _("Tags")))
+
+        # Create fields for all primary dimensions
+        fields = []
+        for key, (explicit, remapped, _model, dim_name) in zip(
+            self.primary_dim_keys, self.primary_dim_metadata
+        ):
+            # Add the main column for this primary dimension
+            fields.append((key, self.dimension_output_name(dim_name)))
+
+            # Add extra columns for dimensions with remapped attributes
+            # Skip this when tag_roll_up is True since the actual dimension is "tag", not the
+            # configured primary dimension
+            if remapped and not explicit and not self.slicer.tag_roll_up:
+                # Get the remapped keys for this specific dimension
+                dim_remap_keys = self.object_remapped_dims.get(dim_name, {}).get(
+                    "columns", ["name"]
+                )
+                for remap_key in dim_remap_keys[1:]:  # Skip first (main) column
+                    # For backward compatibility, only prefix with key when multiindex
+                    if self.multiindex:
+                        field_key = f"{key}_{remap_key}"
+                    else:
+                        field_key = remap_key
+                    column_name = self.dim_name_to_column_name.get(remap_key, remap_key.upper())
+                    fields.append((field_key, column_name))
+
+            # Add tags column right after this dimension if it's taggable
+            if (
+                self._include_tags
+                and dim_name in self.taggable_rows
+                and not self.slicer.tag_roll_up
+            ):
+                # For multiindex, use prefixed key; for single dimension, use "tags"
+                if self.multiindex:
+                    tag_key = f"{key}_tags"
+                    # Include dimension name in column header for clarity
+                    tag_column_name = f"{self.dimension_output_name(dim_name)} {_('Tags')}"
+                else:
+                    tag_key = "tags"
+                    tag_column_name = _("Tags")
+                fields.append((tag_key, tag_column_name))
         # add total column if needed
         if self.include_row_totals:
             fields.append(("_total", _("Row total")))
@@ -240,37 +313,53 @@ class FlexibleDataExporter(ABC):
             [row], data, [{"no_remap": True, **extra_row_fn()}] if extra_row_fn else []
         )
         while batch := list(islice(all_data, batch_size)):
-            batch_pks = {obj[self.prim_dim_key] for obj in batch if not obj.get("no_remap")}
+            # Extract pks for all primary dimensions
+            batch_pks = {}
+            for key in self.primary_dim_keys:
+                batch_pks[key] = {
+                    obj[key] for obj in batch if not obj.get("no_remap") and key in obj
+                }
 
-            # potentially prefetch tags
+            # potentially prefetch tags for all taggable dimensions
             if self.include_tags:
-                self._tag_cache = {}
-                tag_spec = self.taggable_rows[self.slicer.primary_dimension]
-                link_class = Tag.link_class_from_scope(tag_spec["scope"])
-                if self.report_owner:
-                    # get the tags visible for the report_owner
-                    # the user does not want to see following tag classes in output
-                    hidden_tag_classes = UserTagClass.objects.filter(
-                        user=self.report_owner, hidden=True
-                    ).values_list("tag_class_id", flat=True)
-                    link_qs = link_class.objects.filter(
-                        tag__in=Tag.objects.user_accessible_tags(self.report_owner),
-                        target_id__in=batch_pks,
-                    ).exclude(tag__tag_class__in=hidden_tag_classes)
-                else:
-                    # if report_onwer is not set, we must have report_owner_org set - this is
-                    # checked in __init__. But I add the check here as well to make it explicit.
-                    if not self.report_owner_org:
-                        raise ValueError(
-                            "report_owner or report_owner_org must be set. This should not happen."
+                self._tag_cache = {}  # Maps (dim_key, pk_value) to list of tags
+                for key, (_explicit, _remapped, _model, dim_name) in zip(
+                    self.primary_dim_keys, self.primary_dim_metadata
+                ):
+                    if dim_name not in self.taggable_rows:
+                        continue
+
+                    tag_spec = self.taggable_rows[dim_name]
+                    link_class = Tag.link_class_from_scope(tag_spec["scope"])
+                    dim_pks = batch_pks[key]
+
+                    if not dim_pks:
+                        continue
+
+                    if self.report_owner:
+                        # get the tags visible for the report_owner
+                        # the user does not want to see following tag classes in output
+                        hidden_tag_classes = UserTagClass.objects.filter(
+                            user=self.report_owner, hidden=True
+                        ).values_list("tag_class_id", flat=True)
+                        link_qs = link_class.objects.filter(
+                            tag__in=Tag.objects.user_accessible_tags(self.report_owner),
+                            target_id__in=dim_pks,
+                        ).exclude(tag__tag_class__in=hidden_tag_classes)
+                    else:
+                        # if report_onwer is not set, we must have report_owner_org set
+                        # checked in __init__. But I add the check here as well.
+                        if not self.report_owner_org:
+                            raise ValueError("report_owner or report_owner_org must be set.")
+                        # get the tags visible for the report_owner_org
+                        link_qs = link_class.objects.filter(
+                            tag__in=Tag.objects.org_accessible_tags(self.report_owner_org),
+                            target_id__in=dim_pks,
                         )
-                    # get the tags visible for the report_owner_org
-                    link_qs = link_class.objects.filter(
-                        tag__in=Tag.objects.org_accessible_tags(self.report_owner_org),
-                        target_id__in=batch_pks,
-                    )
-                for link in link_qs.select_related("tag", "tag__tag_class"):
-                    self._tag_cache.setdefault(link.target_id, []).append(link.tag)
+
+                    for link in link_qs.select_related("tag", "tag__tag_class"):
+                        cache_key = (key, link.target_id)
+                        self._tag_cache.setdefault(cache_key, []).append(link.tag)
 
             self.prepare_primary_remap(batch_pks)
             for row in batch:
@@ -284,28 +373,55 @@ class FlexibleDataExporter(ABC):
         return count
 
     def writerow(self, writer, row):
-        if self.include_tags:
-            # add tag column
-            row["tags"] = self.tag_delimiter.join(
-                sorted(t.full_name for t in self._tag_cache.get(row[self.prim_dim_key], []))
-            )
-        if self.remapped_prim_dim:
-            if self.explicit_prim_dim:
-                # remap to text using the DimensionText mapping - mapper converts directly to text
-                row[self.prim_dim_key] = self.prim_dim_remap.get(
-                    row[self.prim_dim_key], row[self.prim_dim_key]
-                )
+        # Remap all primary dimensions and add their tags
+        for key, (explicit, remapped, _model, dim_name) in zip(
+            self.primary_dim_keys, self.primary_dim_metadata
+        ):
+            if key not in row:
+                continue
+
+            # Save the original ID before remapping (needed for tag lookup)
+            original_pk = row[key]
+
+            if remapped:
+                if explicit:
+                    # remap to text using the DimensionText mapping
+                    row[key] = self.prim_dim_remap[key].get(row[key], row[key])
+                else:
+                    # mapper converts to dict with multiple attributes
+                    if remap_data := self.prim_dim_remap[key].get(row[key]):
+                        # Get the remapped keys for this specific dimension
+                        dim_remap_keys = self.object_remapped_dims.get(dim_name, {}).get(
+                            "columns", ["name"]
+                        )
+                        _prim_key, *extra_keys = dim_remap_keys
+                        prim_text, *extra_data = remap_data
+                        row[key] = prim_text
+                        # remap all other keys for this dimension
+                        for extra_key, text in zip(extra_keys, extra_data):
+                            # For backward compatibility, only prefix with key when multiindex
+                            if self.multiindex:
+                                row[f"{key}_{extra_key}"] = text
+                            else:
+                                row[extra_key] = text
             else:
-                # mapper converts to dict
-                if remap_data := self.prim_dim_remap.get(row[self.prim_dim_key]):
-                    # remap the first column
-                    remap_keys = self.remapped_keys()
-                    _prim_key, *remap_keys = remap_keys
-                    prim_text, *remap_data = remap_data
-                    row[self.prim_dim_key] = prim_text
-                    # remap all other keys
-                    for key, text in zip(remap_keys, remap_data):
-                        row[key] = text
+                # For non-remapped fields (like date fields), preserve the value as-is
+                # The value is already in the correct format from the database query
+                pass
+
+            # Add tags column for this dimension if it's taggable
+            if self.include_tags and dim_name in self.taggable_rows:
+                # For multiindex, use prefixed key; single dim uses "tags"
+                if self.multiindex:
+                    tag_key = f"{key}_tags"
+                else:
+                    tag_key = "tags"
+                # Use original PK (before remapping) for tag lookup
+                cache_key = (key, original_pk)
+                row[tag_key] = self.tag_delimiter.join(
+                    sorted(t.full_name for t in self._tag_cache.get(cache_key, []))
+                )
+
         writer.writerow(row)
 
     def translate_part_key(self, part_key: [Tuple[str, Any]]):
@@ -320,9 +436,6 @@ class FlexibleDataExporter(ABC):
         for key, value in parts.items():
             name_parts.append(self.dimension_remap(key, value))
         return self.column_parts_separator.join(name_parts)
-
-    def primary_column_name(self) -> str:
-        return self.dimension_output_name(self.slicer.primary_dimension)
 
     def dimension_output_name(self, dim_name: str) -> str:
         explicit, _remapped, dim_model = self.resolve_dimension(dim_name)
@@ -356,7 +469,7 @@ class FlexibleDataExporter(ABC):
         """
         field, _modifier = AccessLog.get_dimension_field(ref)
         if isinstance(field, ForeignKey):
-            if ref == self.slicer.primary_dimension and self.slicer.tag_roll_up:
+            if ref == self.slicer.primary_dimensions[0] and self.slicer.tag_roll_up:
                 return False, True, Tag
             return False, True, field.remote_field.model
         elif ref.startswith("dim"):
@@ -403,7 +516,15 @@ class FlexibleDataExporter(ABC):
                 else "-",
             ]
         )
-        writer.writerow([_("Rows"), self.primary_column_name()])
+        # Show all primary dimensions
+        writer.writerow(
+            [
+                _("Rows"),
+                ", ".join(
+                    self.dimension_output_name(dim) for dim in self.slicer.primary_dimensions
+                ),
+            ]
+        )
         # columns depend on the trend_mode
         if self.slicer.trend_mode:
             start = self.slicer.base_subset_filters[0].smart_str()
@@ -421,7 +542,7 @@ class FlexibleDataExporter(ABC):
         dim = "organization"
         if (
             not self.report_owner_org  # if we have org, we know it's included
-            and self.slicer.primary_dimension != dim
+            and dim not in self.slicer.primary_dimensions  # Check all primary dimensions
             and dim not in self.slicer.split_by
             and dim not in self.slicer.group_by
             and not any(f.dimension == dim for f in self.slicer.dimension_filters)
@@ -497,7 +618,20 @@ class FlexibleDataExporter(ABC):
         return formulas
 
     def sum_row_skip_cols(self) -> int:
-        return len(self.remapped_keys()) + (1 if self.include_tags else 0)
+        # Count all primary dimension columns (including extra attributes like ISSN, ISBN, and tags)
+        skip = 0
+        for explicit, remapped, _model, dim_name in self.primary_dim_metadata:
+            skip += 1  # Main column for this dimension
+            if remapped and not explicit:
+                # Add extra columns (e.g., ISSN, EISSN, ISBN for title)
+                remap_keys = self.object_remapped_dims.get(dim_name, {}).get("columns", ["name"])
+                skip += len(remap_keys) - 1  # -1 because first is main column
+
+            # Add tags column for this dimension if it's taggable
+            if self.include_tags and dim_name in self.taggable_rows:
+                skip += 1
+
+        return skip
 
     def _check_maximum_parts_number(self, total: int):
         if total > self.slicer.MAXIMUM_POSSIBLE_PARTS:
@@ -671,7 +805,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
                 {"num_format": "yyyy-mm-dd", **self.base_fmt_dict}
             )
         }
-        if self.slicer.primary_dimension == "date":
+        if "date" in self.slicer.primary_dimensions:
             col_formats["date"] = self.workbook.add_format(
                 {"num_format": "yyyy-mm", **self.base_fmt_dict}
             )
@@ -689,7 +823,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             row_formulas=formulas,
             include_col_totals=self.include_col_totals,
             col_formats=col_formats,
-            sum_row_skip_cols=len(self.remapped_keys()) + (1 if self.include_tags else 0),
+            sum_row_skip_cols=self.sum_row_skip_cols(),
         )
 
     def add_chart_sheet(
@@ -702,12 +836,11 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             style = workbook.add_format({"bold": 1, "font_size": 12, "font_name": "Arial"})
             sheet.write(0, 1, f"Chart was limited to first {max_rows_to_show} rows!", style)
             row_count = max_rows_to_show
-        skip_cols = len(self.remapped_keys())  # for titles skip ISSN and other cols
-        omit_cols = 0  # cols to omit from the chart at the end of the row
-        if self.include_tags:
-            skip_cols += 1
+        # Use the sum_row_skip_cols method which handles multiindex correctly
+        skip_cols = self.sum_row_skip_cols()
         if self.include_row_totals:
             skip_cols += 1
+        omit_cols = 0  # cols to omit from the chart at the end of the row
         if self.slicer.trend_mode:
             omit_cols += 2
         for i in range(skip_cols, len(self._fields) - omit_cols):

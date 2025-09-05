@@ -111,9 +111,11 @@ def make_url_params(
     else:
         secondary_dimension = ["platform"]
 
+    primary_dimension = [_convert_to_explicit_dimension(report_type, params["primary_dimension"])]
+
     return {
         "rt": encode(report_type.pk),
-        "r": _convert_to_explicit_dimension(report_type, params["primary_dimension"]),
+        "r": encode(primary_dimension),
         "c": encode(secondary_dimension),
         "dr": encode(dr) if start_date or end_date else "",
         "m": encode(filters["metric"]) if "metric" in filters else "",

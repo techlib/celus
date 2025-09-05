@@ -1,8 +1,8 @@
+import { ymDateFormat, ymDateParse } from "@/libs/dates";
+import { toBase64JSON } from "@/libs/serialization";
 import { implicitDimensions } from "@/mixins/dimensions";
 import axios from "axios";
-import { toBase64JSON } from "@/libs/serialization";
-import { ymDateParse, ymDateFormat } from "@/libs/dates";
-import { differenceInMonths, addMonths } from "date-fns";
+import { addMonths, differenceInMonths } from "date-fns";
 
 class Dimension {
   /*
@@ -98,7 +98,7 @@ class FlexiReport {
 
   constructor() {
     this.pk = null;
-    this.primaryDimension = null;
+    this.primaryDimensions = []; // array of primary dimensions for multiindex support
     this.reportTypes = []; // these are filters as well, but we treat is differently
     this.filters = [];
     this.groupBy = [];
@@ -138,8 +138,10 @@ class FlexiReport {
     return FlexiReport.accessLeveLToIcon[this.accessLevel];
   }
 
-  get effectivePrimaryDimension() {
-    return this.tagRollUp ? this._tagDimension : this.primaryDimension;
+  get effectivePrimaryDimensions() {
+    return this.primaryDimensions.map((dim) =>
+      this.tagRollUp ? this._tagDimension : dim,
+    );
   }
 
   canEdit(user, organizationMap) {
@@ -188,8 +190,16 @@ class FlexiReport {
         );
       }
     }
-    // primary dimension
-    this.primaryDimension = this.resolveDim(config.primary_dimension);
+    // primary dimensions - handle both old and new formats
+    if (config.primary_dimensions) {
+      this.primaryDimensions = config.primary_dimensions.map((dim) =>
+        this.resolveDim(dim),
+      );
+    } else if (config.primary_dimension) {
+      this.primaryDimensions = [this.resolveDim(config.primary_dimension)];
+    } else {
+      this.primaryDimensions = [];
+    }
     // filters
     this.filters = config.filters
       .filter((item) => item.dimension !== "report_type")
@@ -362,7 +372,9 @@ class FlexiReport {
     }
 
     return {
-      primary_dimension: this.primaryDimension.ref,
+      primary_dimensions: toBase64JSON(
+        this.primaryDimensions.map((dim) => dim.ref),
+      ),
       filters: toBase64JSON(filters),
       groups: this.trendMode
         ? undefined
@@ -447,7 +459,7 @@ class FlexiExport {
   constructor() {
     this.pk = null;
     this.name = "";
-    this.primaryDimension = null;
+    this.primaryDimensions = []; // array of primary dimensions for multiindex support
     this.reportTypes = []; // these are filters as well, but we treat is differently
     this.filters = [];
     this.groupBy = [];
@@ -505,8 +517,16 @@ class FlexiExport {
         );
       }
     }
-    // primary dimension
-    this.primaryDimension = this.resolveDim(config.primary_dimension);
+    // primary dimensions - handle both old and new formats
+    if (config.primary_dimensions) {
+      this.primaryDimensions = config.primary_dimensions.map((dim) =>
+        this.resolveDim(dim),
+      );
+    } else if (config.primary_dimension) {
+      this.primaryDimensions = [this.resolveDim(config.primary_dimension)];
+    } else {
+      this.primaryDimensions = [];
+    }
     this.filters = config.filters
       .filter((item) => item.dimension !== "report_type")
       .map((item) => {
@@ -552,7 +572,7 @@ class FlexiExport {
     let idx = Dimension.explicitIndex(ref);
     if (idx !== null) {
       // we have an explicit dimension - we need to resolve it using the report_type, etc.
-      if (this.reportTypes.length === 1) {
+      if (this.reportTypes.length >= 1) {
         return Dimension.fromObject(
           ref,
           this.reportTypes[0].dimensions_sorted[idx],
@@ -565,10 +585,10 @@ class FlexiExport {
 
 export {
   Dimension,
-  FlexiReport,
-  FlexiExport,
   EXPORT_ERROR,
   EXPORT_FINISHED,
   EXPORT_IN_PROGRESS,
   EXPORT_NOT_STARTED,
+  FlexiExport,
+  FlexiReport,
 };

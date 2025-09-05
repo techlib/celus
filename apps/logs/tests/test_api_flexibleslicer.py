@@ -453,15 +453,7 @@ class TestSlicerAPI:
         assert resp.status_code == 200
         data = resp.json()["results"]
         assert len(data) == 3
-        assert set(data[0].keys()) == {
-            "pk",
-            "base",
-            "compared",
-            "diff",
-            "reldiff",
-            "_total",
-            "sort_name",  # extra field coming from the sorting
-        }
+        assert set(data[0].keys()) == {"pk", "base", "compared", "diff", "reldiff", "_total"}
 
     @pytest.mark.parametrize(
         ["base_subset_present", "compared_subset_present"],
@@ -608,3 +600,43 @@ class TestSlicerAPI:
         assert data["base"]["ib_max"] == 12 * 9
         assert data["compared"]["ib_count"] == 6 + 9 + 9
         assert data["compared"]["ib_max"] == 12 * 9
+
+    def test_multiindex_trend_mode_api(self, flexible_slicer_test_data, clients):
+        """
+        Test API endpoint with multiindex + trend mode parameters
+        """
+        metric_pk = flexible_slicer_test_data["metrics"][0].pk
+        resp = clients["su"].get(
+            reverse("flexible-slicer"),
+            {
+                "primary_dimensions": b64json(["platform", "organization"]),
+                "trend_mode": True,
+                "base_subset_filters": b64json(
+                    {"date": {"start": "2019-12-01", "end": "2019-12-31"}}
+                ),
+                "compared_subset_filters": b64json(
+                    {"date": {"start": "2020-01-01", "end": "2020-03-31"}}
+                ),
+                "filters": b64json({"metric": [metric_pk]}),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()["results"]
+        assert len(data) > 0
+
+        # Check that each row has the expected multiindex + trend mode columns
+        for row in data:
+            assert "pk" in row  # platform
+            assert "pk2" in row  # organization
+            assert "base" in row
+            assert "compared" in row
+            assert "diff" in row
+            assert "reldiff" in row
+            assert "_total" in row
+
+            # Verify trend calculations
+            assert row["diff"] == row["compared"] - row["base"]
+            if row["base"] != 0:
+                assert abs(row["reldiff"] - (row["diff"] / row["base"])) < 0.001
+            else:
+                assert row["reldiff"] is None
