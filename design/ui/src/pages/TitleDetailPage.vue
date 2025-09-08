@@ -271,7 +271,9 @@ cs:
             :platform-id="platformId"
             :title-id="titleId"
             :report-views-url="reportViewsUrl"
+            secondary-dimension-fallback="target"
             scope="title"
+            show-reporting-link
           >
           </CounterChartSet>
         </v-container>

@@ -53,6 +53,7 @@ cs:
               stack
               dashboard-chart
               fill-date-range
+              show-reporting-link
             >
             </APIChart>
           </v-card-text>

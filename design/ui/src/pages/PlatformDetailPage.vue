@@ -246,8 +246,10 @@ cs:
               :platform-id="platformId"
               :title-id="null"
               :report-views-url="reportViewsUrl"
+              secondary-dimension-fallback="platform"
               scope="platform"
               ref="chartSet"
+              show-reporting-link
             >
             </CounterChartSet>
           </section>

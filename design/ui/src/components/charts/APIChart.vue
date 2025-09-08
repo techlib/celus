@@ -62,6 +62,32 @@
   <div v-else>
     <v-container class="pa-0" fluid>
       <v-row class="pb-3 pt-4">
+        <v-col
+          cols="auto"
+          shrink
+          class="pa-0 d-flex align-center justify-center"
+          v-if="showReportingLink && reportingParams"
+        >
+          <v-tooltip location="bottom">
+            <template #activator="{ props }">
+              <v-badge color="error" location="top right" dot>
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  icon="fa fa-arrow-up-from-bracket"
+                  class="text-medium-emphasis"
+                  v-bind="props"
+                  :to="{
+                    name: 'flexitable',
+                    query: reportingParams,
+                  }"
+                >
+                </v-btn>
+              </v-badge>
+            </template>
+            <span>{{ $t("chart.reporting") }}</span>
+          </v-tooltip>
+        </v-col>
         <v-col v-if="showTableToggle" cols="auto" class="pl-5 py-0">
           <v-btn-toggle
             v-model="tableView"
@@ -226,18 +252,18 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import LoaderWidget from "@/components/util/LoaderWidget";
-import { pivot } from "@/libs/pivot";
-import cancellation from "@/mixins/cancellation";
-import ChartDataTable from "../ChartDataTable";
-import { formatInteger, padIntegerWithZeros } from "@/libs/numbers";
-import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
 import CoverageMap from "@/components/charts/CoverageMap";
+import LoaderWidget from "@/components/util/LoaderWidget";
+import { DEFAULT_VCHARTS_COLORS } from "@/libs/charts";
+import { formatInteger, padIntegerWithZeros } from "@/libs/numbers";
+import { pivot } from "@/libs/pivot";
+import { toBase64JSON } from "@/libs/serialization";
+import cancellation from "@/mixins/cancellation";
+import { mapActions, mapGetters, mapState } from "vuex";
+import ChartDataTable from "../ChartDataTable";
 
 /* vue-echarts */
-import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
+import { monthsBetween, ymDateFormat } from "@/libs/dates";
 import { BarChart, LineChart } from "echarts/charts";
 import {
   DatasetComponent,
@@ -249,8 +275,9 @@ import {
   TooltipComponent,
   VisualMapComponent,
 } from "echarts/components";
+import { use } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";
-import { monthsBetween, ymDateFormat } from "@/libs/dates";
 
 use([
   CanvasRenderer,
@@ -293,6 +320,9 @@ export default {
       required: true,
     },
     secondaryDimension: {
+      required: false,
+    },
+    secondaryDimensionFallback: {
       required: false,
     },
     reportTypeId: {
@@ -370,6 +400,10 @@ export default {
       default: false,
       type: Boolean,
     }, // fill in missing months with 0s
+    showReportingLink: {
+      default: false,
+      type: Boolean,
+    },
   },
   data() {
     return {
@@ -377,6 +411,7 @@ export default {
       loading: true,
       crunchingData: false,
       reportedMetrics: [],
+      reportingParams: null,
       tooMuchData: false,
       displayData: [],
       rawDataLength: 0,
@@ -406,6 +441,37 @@ export default {
           month: "short",
         }),
       );
+    },
+    reportingUrl() {
+      let params = {
+        primary_dimension: this.primaryDimension || "",
+        platform: this.platform || "",
+        title: this.title || "",
+        metric: this.metric || "",
+      };
+      if (
+        this.secondaryDimension &&
+        this.secondaryDimension != this.primaryDimension
+      ) {
+        params["secondary_dimension"] = this.secondaryDimension;
+      } else if (this.secondaryDimensionFallback) {
+        params["secondary_dimension"] = this.secondaryDimensionFallback;
+      }
+      if (this.organization && this.organization !== -1) {
+        params["organization"] = this.organization;
+      }
+      if (!this.ignoreDateRange) {
+        params.start_date = this.dateRangeStart || "";
+        params.end_date = this.dateRangeEnd || "";
+      }
+
+      const urlParams = new URLSearchParams(params).toString();
+
+      if (this.rawReportType) {
+        return `/api/report-type/${this.reportTypeId}/reporting-url?${urlParams}`;
+      } else {
+        return `/api/report-data-view/${this.reportTypeId}/reporting-url?${urlParams}`;
+      }
     },
     dataURL() {
       if (!this.user) {
@@ -980,6 +1046,20 @@ export default {
       // we use timeout to give the interface time to redraw
       setTimeout(async () => await this.ingestData(response.data.data), 10);
     },
+    async loadReportingLink() {
+      if (this.showReportingLink) {
+        const { response, error } = await this.http({ url: this.reportingUrl });
+        this.reportingParams = response.data.params;
+        // Run new report automatically
+        this.reportingParams["run"] = true;
+        // Show collapsed report settings
+        this.reportingParams["col"] = true;
+        // Set the ordering of the output table
+        if (this.primaryDimension === "date") {
+          this.reportingParams["o"] = "--" + toBase64JSON(["date"]);
+        }
+      }
+    },
     async loadCoverageData() {
       if (this.shownPrimaryDimension === "date") {
         let params = {
@@ -1030,6 +1110,9 @@ export default {
   },
   mounted() {
     this.loadData();
+    if (this.showReportingLink) {
+      this.loadReportingLink();
+    }
     if (!this.noCoverage) {
       this.loadCoverageData();
     }
@@ -1037,6 +1120,10 @@ export default {
   watch: {
     dataURL() {
       this.loadData();
+      if (this.showReportingLink) {
+        this.reportingParams = null;
+        this.loadReportingLink();
+      }
       if (!this.noCoverage) {
         this.loadCoverageData();
       }

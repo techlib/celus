@@ -1,3 +1,5 @@
+from abc import ABCMeta
+
 from core.logic.type_conversion import to_bool
 from core.permissions import SuperuserOrAdminPermission
 from core.renderers import PandasCSVRenderer, PandasExcelRenderer
@@ -11,11 +13,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from charts.logic.reporting_url import make_url_params
 from charts.models import ChartDefinition, ReportDataView, ReportViewToChartType
 from charts.serializers import (
     ChartDefinitionSerializer,
     ReportDataViewFullSerializer,
     ReportDataViewSerializer,
+    ReportingUrlSerializer,
     ReportViewToChartTypeSerializer,
 )
 
@@ -82,6 +86,31 @@ class ReportDataViewChartDefinitions(APIView):
                 reportviewtocharttype__report_data_view_id=view_pk
             ).order_by("reportviewtocharttype__position")
         return Response(self.get_serializer_class()(chd, many=True).data)
+
+
+class BaseReportingUrlView(APIView, metaclass=ABCMeta):
+    MODEL = None
+
+    def get(self, request, pk):
+        params = ReportingUrlSerializer(data=request.query_params)
+
+        if not params.is_valid():
+            return Response({"errors": params.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        obj = get_object_or_404(self.MODEL, pk=pk)
+
+        if url_params := make_url_params(obj, params.data):
+            return Response({"params": url_params})
+
+        return Response({"error": "unsupported"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReportDataViewReportingUrlView(BaseReportingUrlView):
+    MODEL = ReportDataView
+
+
+class ReportTypeReportingUrlView(BaseReportingUrlView):
+    MODEL = ReportType
 
 
 class ChartDataView(APIView):

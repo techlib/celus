@@ -73,6 +73,7 @@ cs:
           :report-type-id="selectedReportView.pk"
           :primary-dimension="primaryDimension"
           :secondary-dimension="secondaryDimension"
+          :secondary-dimension-fallback="secondaryDimensionFallback"
           :organization="organizationForChart"
           :platform="platformForChart"
           :title="titleId"
@@ -91,6 +92,7 @@ cs:
           :metric="selectedMetric"
           :no-coverage="noCoverage || importBatchId || mduId"
           :fill-date-range="!noCoverage && !importBatchId && !mduId"
+          :show-reporting-link="showReportingLink"
           ref="chart"
         >
         </APIChart>
@@ -135,6 +137,7 @@ export default {
     platformId: { required: false, type: Number },
     titleId: { required: false, type: Number },
     itemId: { required: false, type: Number },
+    secondaryDimensionFallback: { required: false },
     reportViewsUrl: {},
     importBatchId: { required: false, type: Number },
     mduId: { required: false, type: Number },
@@ -145,6 +148,10 @@ export default {
     // if `preferFullReport` is true then the full/master report will be selected by default
     preferFullReport: { default: false, type: Boolean },
     noCoverage: { default: false, type: Boolean }, // exclude coverage from chart
+    showReportingLink: {
+      default: false,
+      type: Boolean,
+    },
   },
   data() {
     return {

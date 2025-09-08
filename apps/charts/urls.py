@@ -17,9 +17,19 @@ urlpatterns = [
         name="report-data-view-chart-definitions",
     ),
     path(
+        "report-data-view/<pk>/reporting-url",
+        views.ReportDataViewReportingUrlView.as_view(),
+        name="report-data-view-reporting-url",
+    ),
+    path(
         "report-type/<report_type_pk>/report-views/",
         views.ReportTypeToReportDataViewView.as_view(),
         name="report-type-to-report-data-view",
+    ),
+    path(
+        "report-type/<pk>/reporting-url",
+        views.ReportTypeReportingUrlView.as_view(),
+        name="report-type-reporting-url",
     ),
     path(
         "chart-data/<report_view_id>/metrics/",

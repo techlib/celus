@@ -1,6 +1,7 @@
+from core.validators import month_validator
 from logs.serializers import DimensionSerializer
 from rest_framework.fields import BooleanField, CharField, IntegerField, ListField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from .models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
 
@@ -76,3 +77,15 @@ class ReportViewToChartTypeSerializer(ModelSerializer):
     class Meta:
         model = ReportViewToChartType
         fields = ("pk", "report_data_view", "chart_definition", "position")
+
+
+class ReportingUrlSerializer(Serializer):
+    primary_dimension = CharField(required=True)
+    secondary_dimension = CharField(required=False)
+    title = IntegerField(required=False)
+    organization = IntegerField(required=False)
+    platform = IntegerField(required=False)
+    start_date = CharField(validators=[month_validator], required=False)
+    end_date = CharField(validators=[month_validator], required=False)
+    metric = IntegerField(required=False)
+    end_date = CharField(validators=[month_validator], required=False)

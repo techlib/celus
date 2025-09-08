@@ -1,3 +1,6 @@
+import base64
+import json
+
 import pytest
 from core.tests.conftest import (  # noqa - fixtures
     authenticated_client,
@@ -7,7 +10,7 @@ from core.tests.conftest import (  # noqa - fixtures
 )
 from django.db.models import Sum
 from django.urls import reverse
-from logs.fake_data import ImportBatchFactory, ManualDataUploadFullFactory
+from logs.fake_data import DimensionTextFactory, ImportBatchFactory, ManualDataUploadFullFactory
 from logs.logic.clickhouse import sync_import_batch_with_clickhouse
 from logs.logic.data_import import import_counter_records
 from logs.logic.materialized_reports import sync_materialized_reports
@@ -16,6 +19,7 @@ from logs.tests.conftest import counter_records_0d, report_type_nd  # noqa - fix
 from organizations.tests.conftest import organizations  # noqa - fixture
 from publications.models import Title
 from publications.tests.conftest import interest_rt, platform  # noqa - fixture
+from tags.models import Tag, TagClass
 
 from charts.fake_data import ChartDefinitionFactory, ReportDataViewFactory
 from charts.models import ChartDefinition, DimensionFilter, ReportDataView, ReportViewToChartType
@@ -512,3 +516,325 @@ class TestChartDataAPIView:
                 import_batch__mdu=mdu1, report_type=mdu1.report_type
             ).aggregate(Sum("value"))["value__sum"]
         )
+
+
+@pytest.mark.django_db
+class TestReportingUrlAPI:
+    """Test the reporting URL generation endpoints for both ReportDataView and ReportType"""
+
+    def test_report_data_view_reporting_url_basic(self, master_admin_client, simple_report_view):
+        """Test basic reporting URL generation for ReportDataView"""
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {"primary_dimension": "date"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        # Check that basic parameters are present
+        assert "rt" in params
+        assert "r" in params
+        assert "c" in params
+        assert "f" in params
+
+        # Verify the primary dimension is correct
+        assert params["r"] == "date"
+
+        # Verify report type is encoded
+        assert base64.b64decode(params["rt"]).decode("utf-8") == json.dumps(
+            [simple_report_view.base_report_type.pk]
+        )
+
+    def test_report_data_view_reporting_url_with_all_params(
+        self, master_admin_client, simple_report_view, organizations, platform
+    ):
+        """Test reporting URL generation with all possible parameters"""
+        organization = organizations[0]
+        metric = Metric.objects.create(short_name="test_metric")
+        title = Title.objects.create(name="Test Title")
+
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {
+                "primary_dimension": "date",
+                "secondary_dimension": "platform",
+                "organization": organization.pk,
+                "platform": platform.pk,
+                "metric": metric.pk,
+                "start_date": "2023-01",
+                "end_date": "2023-12",
+                "title": title.pk,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        # Check all parameters are present
+        assert "rt" in params  # report type
+        assert "r" in params  # primary dimension
+        assert "c" in params  # secondary dimension (groups)
+        assert "org" in params  # organization
+        assert "p" in params  # platform
+        assert "m" in params  # metric
+        assert "dr" in params  # date range
+        assert "tt" in params  # title tag
+        assert "f" in params  # filters
+
+        # Verify primary dimension
+        assert params["r"] == "date"
+
+        # Verify secondary dimension is encoded as list
+        decoded_secondary = json.loads(base64.b64decode(params["c"]).decode())
+        assert decoded_secondary == ["platform"]
+
+        # Verify organization is encoded
+        decoded_org = json.loads(base64.b64decode(params["org"]).decode())
+        assert decoded_org == [organization.pk]
+
+        # Verify platform is encoded
+        decoded_platform = json.loads(base64.b64decode(params["p"]).decode())
+        assert decoded_platform == [platform.pk]
+
+        # Verify metric is encoded
+        decoded_metric = json.loads(base64.b64decode(params["m"]).decode())
+        assert decoded_metric == [metric.pk]
+
+        # Verify date range
+        decoded_date_range = json.loads(base64.b64decode(params["dr"]).decode())
+        assert decoded_date_range == {"start": "2023-01", "end": "2023-12"}
+
+        # Verify title tag was created and encoded
+        assert params["tt"].startswith("--")
+        decoded_title_tag = json.loads(base64.b64decode(params["tt"]).decode())
+        title_tag = Tag.objects.filter(name=f"ID_{title.pk}").first()
+        assert title_tag is not None
+        assert decoded_title_tag == [title_tag.pk]
+
+    def test_report_data_view_reporting_url_with_dimension_filters(
+        self, master_admin_client, report_type_nd
+    ):
+        """Test reporting URL generation with dimension filters"""
+        rt = report_type_nd(1)  # Create report type with 1 dimension
+        report_view = ReportDataView.objects.create(
+            base_report_type=rt, metric_allowed_values=["metric1", "metric2"]
+        )
+
+        # Create a dimension filter
+        DimensionFilter.objects.create(
+            report_data_view=report_view,
+            dimension=rt.dimensions_sorted[0],
+            allowed_values=["value1", "value2"],
+        )
+
+        dt = DimensionTextFactory(dimension=rt.dimensions_sorted[0], text="value2")
+
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(report_view.pk,)),
+            {"primary_dimension": "date"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        # Check dimension values are present
+        assert "dv" in params
+        decoded_dv = json.loads(base64.b64decode(params["dv"]).decode())
+        # Should be a list of lists for each dimension
+        assert isinstance(decoded_dv, dict)
+        assert any(e == [dt.pk] for e in decoded_dv.values()), (
+            "At least one dimension should have value2"
+        )
+
+    def test_report_type_reporting_url_basic(self, master_admin_client, report_type_nd):
+        """Test basic reporting URL generation for ReportType"""
+        rt = report_type_nd(0)
+
+        resp = master_admin_client.get(
+            reverse("report-type-reporting-url", args=(rt.pk,)), {"primary_dimension": "date"}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        # Check that basic parameters are present
+        assert "rt" in params
+        assert "r" in params
+        assert "c" in params
+        assert "f" in params
+
+        # Verify the primary dimension is correct
+        assert params["r"] == "date"
+
+        # Verify report type is encoded
+        decoded_rt = json.loads(base64.b64decode(params["rt"]).decode())
+        assert decoded_rt == [rt.pk]
+
+    def test_report_type_reporting_url_with_controlled_metrics(
+        self, master_admin_client, report_type_nd
+    ):
+        """Test reporting URL generation for ReportType with controlled metrics"""
+        rt = report_type_nd(0)
+        metric1 = Metric.objects.create(short_name="controlled_metric1")
+        metric2 = Metric.objects.create(short_name="controlled_metric2")
+        rt.controlled_metrics.add(metric1, metric2)
+
+        resp = master_admin_client.get(
+            reverse("report-type-reporting-url", args=(rt.pk,)),
+            {"primary_dimension": "date", "metric": metric1.pk},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        # Verify metric is included
+        assert "m" in params
+        decoded_metric = json.loads(base64.b64decode(params["m"]).decode())
+        assert [metric1.pk] == decoded_metric
+
+    def test_reporting_url_default_secondary_dimension(
+        self, master_admin_client, simple_report_view
+    ):
+        """Test that default secondary dimension is 'platform' when not specified"""
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {"primary_dimension": "date"},  # No secondary_dimension specified
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Verify default secondary dimension is platform
+        decoded_secondary = json.loads(base64.b64decode(params["c"]).decode())
+        assert decoded_secondary == ["platform"]
+
+    def test_reporting_url_with_only_start_date(self, master_admin_client, simple_report_view):
+        """Test reporting URL with only start_date (no end_date)"""
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {"primary_dimension": "date", "start_date": "2023-01"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Verify date range contains only start
+        decoded_date_range = json.loads(base64.b64decode(params["dr"]).decode())
+        assert decoded_date_range == {"start": "2023-01"}
+
+    def test_reporting_url_with_only_end_date(self, master_admin_client, simple_report_view):
+        """Test reporting URL with only end_date (no start_date)"""
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {"primary_dimension": "date", "end_date": "2023-12"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Verify date range contains only end
+        decoded_date_range = json.loads(base64.b64decode(params["dr"]).decode())
+        assert decoded_date_range == {"end": "2023-12"}
+
+    def test_reporting_primary_secondary_dimension_conversion(
+        self, master_admin_client, report_type_nd
+    ):
+        """Tests that primary and secondary dimensions are converted (Data_Type -> dim1)"""
+
+        rt = report_type_nd(2, ["First", "Second"])
+
+        resp = master_admin_client.get(
+            reverse("report-type-reporting-url", args=(rt.pk,)),
+            {"primary_dimension": "First", "secondary_dimension": "Second"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "params" in data
+        params = data["params"]
+
+        assert params["r"] == "dim1", "Primary dimension converted"
+        assert json.loads(base64.b64decode(params["c"])) == ["dim2"], (
+            "Secondary dimension converted"
+        )
+
+    def test_reporting_url_nonexistent_title(self, master_admin_client, simple_report_view):
+        """Test that nonexistent title is handled gracefully (no title tag created)"""
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {
+                "primary_dimension": "date",
+                "title": 999999,  # Non-existent title
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Should not contain title tag parameter
+        assert "tt" not in params or params["tt"] == ""
+        assert params.get("tt", "") == ""
+
+    def test_reporting_url_metric_combination(self, master_admin_client, simple_report_view):
+        """Test that metric from params is combined with allowed metrics from view"""
+        # Create a report view with allowed metrics
+        rt = simple_report_view.base_report_type
+        report_view = ReportDataView.objects.create(
+            base_report_type=rt, metric_allowed_values=["allowed_metric1", "allowed_metric2"]
+        )
+
+        # Create metrics
+        param_metric = Metric.objects.create(short_name="param_metric")
+        Metric.objects.create(short_name="allowed_metric1")
+        allowed_metric2 = Metric.objects.create(short_name="allowed_metric2")
+
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(report_view.pk,)),
+            {"primary_dimension": "date", "metric": param_metric.pk},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Verify that no metric is included
+        decoded_metric = json.loads(base64.b64decode(params["m"]).decode())
+        assert decoded_metric == []
+
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(report_view.pk,)),
+            {"primary_dimension": "date", "metric": allowed_metric2.pk},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        params = data["params"]
+
+        # Verify allowed_metric2 is included
+        decoded_metric = json.loads(base64.b64decode(params["m"]).decode())
+        assert decoded_metric == [allowed_metric2.pk]
+
+    def test_reporting_url_tag_class_creation(self, master_admin_client, simple_report_view):
+        """Test that TagClass for title filtering is created properly"""
+        title = Title.objects.create(name="Test Title for Tags")
+
+        # Ensure no tag class exists initially
+        assert not TagClass.objects.filter(name="Title Filter").exists()
+
+        resp = master_admin_client.get(
+            reverse("report-data-view-reporting-url", args=(simple_report_view.pk,)),
+            {"primary_dimension": "date", "title": title.pk},
+        )
+        assert resp.status_code == 200
+
+        # Verify TagClass was created with correct properties
+        tag_class = TagClass.objects.get(name="Title Filter")
+        assert tag_class.internal is True
+        assert tag_class.exclusive is True
+
+        # Verify Tag was created
+        tag = Tag.objects.get(name=f"ID_{title.pk}")
+        assert tag.tag_class == tag_class
