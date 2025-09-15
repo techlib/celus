@@ -78,7 +78,6 @@ cs:
         v-model:page="page"
         v-model:items-per-page="pageSize"
         :search="searchDebounced"
-        :items-per-page-options="[10, 25, 50]"
         v-model:expanded="expanded"
         item-value="pk"
       >

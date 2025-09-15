@@ -25,7 +25,6 @@ cs:
         :headers="headers"
         item-key="pk"
         item-value="pk"
-        :items-per-page-options="[10, 25, 50, 100]"
         :loading="loading"
         :page="page"
         :search="search"

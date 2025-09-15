@@ -181,7 +181,7 @@ export default {
       orderBy: [{ key: "name", order: "asc" }],
       orderDesc: false,
       page: 1,
-      itemsPerPage: -1,
+      itemsPerPage: 200,
       // state tracking support
       watchedAttrs: [
         {

@@ -265,7 +265,7 @@ export default {
       resolvingTagsForIds: new Set(),
       // table options
       page: 1,
-      itemsPerPage: -1,
+      itemsPerPage: 200,
       orderBy: [{ key: "name", order: "asc" }],
       // state tracking support
       watchedAttrs: [

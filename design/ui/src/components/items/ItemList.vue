@@ -70,7 +70,6 @@ cs:
       :items="filteredItems"
       :loading="loading"
       :headers="headers"
-      :items-per-page-options="[10, 25, 50, 100]"
       :items-length="totalItemCount"
       :must-sort="true"
       v-model:items-per-page="itemsPerPage"

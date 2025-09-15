@@ -9,7 +9,6 @@
     :items-length="total"
     v-model:page="page"
     v-model:items-per-page="ipp"
-    :items-per-page-options="[10, 25, 50]"
   >
     <template #headers="{ columns }">
       <TableCustomSort :columns="columns" v-model:externalOrderBy="sortBy" />

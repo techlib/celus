@@ -314,7 +314,7 @@ export default {
       search: "",
       // table options
       page: 1,
-      itemsPerPage: 20,
+      itemsPerPage: 25,
       orderBy: [],
       counterPlatforms: [],
       celusPlatforms: [],

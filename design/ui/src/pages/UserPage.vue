@@ -223,7 +223,6 @@ cs:
         <v-data-table
           :items="organizationList"
           :headers="headers"
-          :items-per-page-options="[10, 25, 50, -1]"
           :hide-default-footer="organizationList.length <= 10"
         >
           <template #item.name="{ item }">
@@ -355,7 +354,6 @@ cs:
           density="comfortable"
           fixed-header
           v-model:sort-by="orderBy"
-          :items-per-page-options="[10, 25, 50]"
           :custom-filter="searchImpersonateFilter"
         >
           <template #top>

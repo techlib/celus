@@ -138,7 +138,6 @@ cs:
         :loading="loading"
         :page="page"
         :items-per-page="itemsPerPage"
-        :items-per-page-options="itemsPerPageOptions"
         :items-length="totalRowCount"
         :fixed-header="popped"
         :height="popped ? 'calc(100vh - 72px)' : null"
@@ -361,7 +360,7 @@ export default {
       totalParts: 0,
       view: "table",
       page: 1,
-      itemsPerPage: 20,
+      itemsPerPage: 25,
       prevOptions: {},
       sortBy: [{ key: "_total", order: "desc" }],
       ordering: "-_total",
@@ -581,9 +580,6 @@ export default {
     },
     contextOverride() {
       return this.contextOverrideOrganization || this.contextOverrideDates;
-    },
-    itemsPerPageOptions() {
-      return this.contextOverride ? [10, 20, 50, 100, -1] : [10, 20, 50, 100];
     },
     noPartAvailable() {
       return (

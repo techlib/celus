@@ -55,11 +55,13 @@ export default createVuetify({
       sortAscIcon: "fas fa-sort-up",
       sortDescIcon: "fas fa-sort-down",
       density: "compact",
+      itemsPerPageOptions: [10, 25, 50, 100, 200],
     },
     VDataTableServer: {
       sortAscIcon: "fas fa-sort-up",
       sortDescIcon: "fas fa-sort-down",
       density: "compact",
+      itemsPerPageOptions: [10, 25, 50, 100, 200],
     },
     VCard: {
       elevation: "2",

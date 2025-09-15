@@ -52,7 +52,7 @@ cs:
     :expanded="expanded"
     expand-icon="fas fa-caret-down"
     :items-per-page="50"
-    :items-per-page-options="[50, 100, -1]"
+    :items-per-page-options="[50, 100, 200]"
     :custom-filter="searchFilter"
     class="auto-table"
     v-model:sort-by="orderBy"
