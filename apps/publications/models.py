@@ -64,7 +64,7 @@ class PlatformQuerySet(models.QuerySet):
         platforms = self.filter(counter_reports_source=CounterReportSource.KNOWLEDGEBASE)
         crp_map = {e.pk: [] for e in platforms}
         for crp in CounterReportPlatform.objects.filter(platform__in=platforms):
-            crp_map[crp.platform.pk].append(crp)
+            crp_map[crp.platform_id].append(crp)
 
         crt_map = {(e.counter_version, e.code): e for e in CounterReportType.objects.all()}
 
@@ -72,9 +72,13 @@ class PlatformQuerySet(models.QuerySet):
         for platform in platforms:
             crps = crp_map[platform.pk]
             modified = False
-            for version, code in kb.get_counter_reports(platform.knowledgebase):
+            for (version, code), art in kb.get_counter_reports(platform.knowledgebase).items():
                 # make sure that all links exists
                 if crt := crt_map.get((version, code)):
+                    # ignore report types that require whitelisting and are not whitelisted in
+                    # the knowledgebase - this means they would be removed from the platform below
+                    if crt.requires_whitelisting and not art.get("whitelisted"):
+                        continue
                     _, created = CounterReportPlatform.objects.get_or_create(
                         platform=platform, counter_report=crt
                     )

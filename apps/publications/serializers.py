@@ -1,7 +1,7 @@
 from core.models import DataSource
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.fields import (
     BooleanField,
     CurrentUserDefault,
@@ -15,6 +15,11 @@ from rest_framework.fields import (
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import IntegerField, ModelSerializer, Serializer
 from sushi.models import CounterReportPlatform, CounterReportType
+
+from publications.logic.knowledgebase import (
+    get_provider_for_counter_version,
+    is_report_type_whitelisted,
+)
 
 from .models import Author, Item, Platform, Title, TitleOverlapBatch
 
@@ -71,6 +76,38 @@ class PlatformSerializer(ModelSerializer):
             "counter_reports_long",
             "counter_reports_source",
         )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        knowledgebase = self.instance.knowledgebase if self.instance else attrs.get("knowledgebase")
+
+        # Only validate if counter_reports are being assigned
+        if counter_reports := attrs.get("counter_reports", []):
+            wl_crts = [crt for crt in counter_reports if crt.requires_whitelisting]
+            if wl_crts:
+                if knowledgebase:
+                    # Get counter version from the first report type (assuming all are same version)
+                    counter_version = wl_crts[0].counter_version
+                    if not (
+                        kb_provider := get_provider_for_counter_version(
+                            knowledgebase, counter_version
+                        )
+                    ):
+                        raise ValidationError(
+                            "No provider found for counter version, reports requiring whitelisting "
+                            "cannot be assigned"
+                        )
+                else:
+                    raise ValidationError(
+                        "Platform doesn't have knowledgebase, reports requiring whitelisting "
+                        "cannot be assigned"
+                    )
+                for wl_crt in wl_crts:
+                    if not is_report_type_whitelisted(kb_provider, wl_crt.code):
+                        raise ValidationError(
+                            f"Report type {wl_crt.code} is not whitelisted for platform"
+                        )
+        return attrs
 
 
 class AllPlatformSerializer(ModelSerializer):

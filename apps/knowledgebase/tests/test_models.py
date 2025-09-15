@@ -496,6 +496,7 @@ class TestPlatformImportAttempt:
             ("manual", False, False, False),
         ),
     )
+    @pytest.mark.parametrize("pr_requires_whitelisting", [True, False])
     def test_process_credentials_update(
         self,
         data_sources,
@@ -506,7 +507,12 @@ class TestPlatformImportAttempt:
         use_counter_reports_from_platform,
         platform_updated,
         creds_updated,
+        pr_requires_whitelisting,
     ):
+        """
+        Test that synchronization with the knowledgebase works correctly
+        """
+
         p1 = PlatformFactory(
             short_name="AAP",
             ext_id=328,
@@ -544,6 +550,11 @@ class TestPlatformImportAttempt:
             enabled=True,
         )
         creds_affected.counter_reports.add(counter_report_types["dr"])
+        if pr_requires_whitelisting:
+            # set requires_whitelisting to True, this means the PR should not be assigned
+            # to the platform because it is not whitelisted in the knowledgebase
+            counter_report_types["pr"].requires_whitelisting = True
+            counter_report_types["pr"].save()
 
         creds_manual = CredentialsFactory(
             platform=p1,
@@ -573,10 +584,14 @@ class TestPlatformImportAttempt:
         p2.refresh_from_db()
         p3.refresh_from_db()
 
+        # PR is not whitelisted in the knowledgebase, so it will be assigned to the platform
+        # only if whitelisting is disabled for that report type
+        pr_present = [] if pr_requires_whitelisting else [(5, "PR")]
         if platform_updated:
             assert set(p1.counter_reports.values_list("counter_version", "code")) == {
                 (5, "TR"),
                 (4, "JR1"),
+                *pr_present,
             }
         else:
             assert set(p1.counter_reports.values_list("counter_version", "code")) == {(5, "IR_M1")}
@@ -585,19 +600,154 @@ class TestPlatformImportAttempt:
 
         if creds_updated:
             assert set(creds_affected.counter_reports.values_list("counter_version", "code")) == {
-                (5, "TR")
+                (5, "TR"),
+                *pr_present,
             }
         else:
             # affected credentials can be either
             # IR_M1 - if platform report types were not synced
             # or DR when it were synced
+            assert len(creds_affected.counter_reports.values_list("counter_version", "code")) == 1
             assert set(
                 creds_affected.counter_reports.values_list("counter_version", "code")
             ).issubset({(5, "DR"), (5, "IR_M1")})
-        assert set(creds_manual.counter_reports.values_list("counter_version", "code")) == {
-            (5, "PR")
-        }
+        # if PR requires whitelisting, it will be removed from the credentials
+        # during the sync
+        assert set(creds_manual.counter_reports.values_list("counter_version", "code")) == (
+            set() if pr_requires_whitelisting else {(5, "PR")}
+        )
         assert set(creds_empty.counter_reports.values_list("counter_version", "code")) == set()
+
+    def test_remove_non_whitelisted_reports_during_sync(
+        self, data_sources, counter_report_types, organizations
+    ):
+        """
+        Test that non-whitelisted reports are removed from credentials during knowledgebase sync.
+        """
+
+        # Create a platform with knowledgebase data
+        platform = PlatformFactory(
+            short_name="test_platform",
+            ext_id=12345,  # Add external ID for serializer
+            source=data_sources["brain"],
+        )
+
+        # Create counter report types
+        tr_crt = counter_report_types["tr"]
+        dr_crt = counter_report_types["dr"]
+        pr_crt = counter_report_types["pr"]
+
+        # Set TR and DR as requiring whitelisting
+        tr_crt.requires_whitelisting = True
+        tr_crt.save()
+        dr_crt.requires_whitelisting = True
+        dr_crt.save()
+        pr_crt.requires_whitelisting = False  # PR doesn't require whitelisting
+        pr_crt.save()
+
+        # Create credentials with all three report types
+        org = organizations["root"]
+        credentials = CredentialsFactory(
+            platform=platform,
+            organization=org,
+            counter_version=5,
+            use_counter_reports_from_platform=False,
+            report_types=[(5, "TR"), (5, "DR"), (5, "PR")],
+        )
+
+        # Verify all report types are assigned
+        assert set(credentials.counter_reports.values_list("code", flat=True)) == {"TR", "DR", "PR"}
+
+        # Create platform import attempt and process it
+        attempt = PlatformImportAttempt(source=data_sources["brain"])
+        attempt.save()
+
+        # Mock the platform data to include our test platform
+        platform_data = [
+            {
+                "pk": platform.ext_id,
+                "short_name": platform.short_name,
+                "name": platform.name,
+                "provider": platform.provider,
+                "url": platform.url,
+                "providers": [
+                    {
+                        "counter_version": 5,
+                        "assigned_report_types": [
+                            {"report_type": "TR", "whitelisted": True},
+                            {"report_type": "DR", "whitelisted": False},  # Not whitelisted
+                        ],
+                    }
+                ],
+                "report_types": ["TR", "DR", "PR"],
+                "counter_registry_id": None,
+                "duplicates": [],
+            }
+        ]
+
+        attempt.process(platform_data)
+
+        credentials.refresh_from_db()
+        # Verify that DR was removed (requires whitelisting but not whitelisted)
+        assert set(credentials.counter_reports.values_list("code", flat=True)) == {"TR", "PR"}
+
+    def test_remove_non_whitelisted_reports_no_knowledgebase(
+        self, data_sources, counter_report_types, organizations
+    ):
+        """Test that credentials without knowledgebase are cleaned up as well."""
+
+        # Create a platform with knowledgebase data
+        platform = PlatformFactory(
+            short_name="test_platform",
+            ext_id=12345,  # Add external ID for serializer
+            source=data_sources["brain"],
+        )
+
+        # Create counter report types
+        tr_crt = counter_report_types["tr"]
+        dr_crt = counter_report_types["dr"]
+        tr_crt.requires_whitelisting = True
+        tr_crt.save()
+        dr_crt.requires_whitelisting = False
+        dr_crt.save()
+
+        # Create credentials with all three report types
+        org = organizations["root"]
+        credentials = CredentialsFactory(
+            platform=platform,
+            organization=org,
+            counter_version=5,
+            use_counter_reports_from_platform=False,
+            report_types=[(5, "TR"), (5, "DR")],
+        )
+
+        # Verify all report types are assigned
+        assert set(credentials.counter_reports.values_list("code", flat=True)) == {"TR", "DR"}
+
+        # Create platform import attempt and process it
+        attempt = PlatformImportAttempt(source=data_sources["brain"])
+        attempt.save()
+
+        # Mock the platform data to include our test platform
+        platform_data = [
+            {
+                "pk": platform.ext_id,
+                "short_name": platform.short_name,
+                "name": platform.name,
+                "provider": platform.provider,
+                "url": platform.url,
+                "providers": [],
+                "report_types": ["TR", "DR"],
+                "counter_registry_id": None,
+                "duplicates": [],
+            }
+        ]
+
+        attempt.process(platform_data)
+
+        # TR requires whitelisting, so it will be removed if the knowledgebase is empty
+        credentials.refresh_from_db()
+        assert set(credentials.counter_reports.values_list("code", flat=True)) == {"DR"}
 
 
 @pytest.mark.django_db

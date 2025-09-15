@@ -50,6 +50,7 @@ from organizations.fake_data import OrganizationFactory
 from organizations.models import UserOrganization
 from sushi.fake_data import FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportType, SushiCredentials
+from sushi.tests.conftest import counter_report_type_named  # noqa - fixtures
 from tags.fake_data import TagForTitleFactory
 from tags.models import AccessibleBy
 
@@ -440,9 +441,28 @@ class TestPlatformAPI:
         )
         assert resp.status_code == 400, "Already created"
 
+    @pytest.mark.parametrize("tr_requires_whitelisting", [True, False])
+    @pytest.mark.parametrize("tr_whitelisted_in_kb", [True, False, None])
     def test_create_platform_for_organization_counter_reports_knowledgebase(
-        self, basic1, clients, organizations, client, counter_report_types, settings
+        self,
+        basic1,
+        clients,
+        organizations,
+        counter_report_types,
+        tr_requires_whitelisting,
+        tr_whitelisted_in_kb,
+        settings,
     ):
+        settings.ENABLE_ITEMS = True
+        tr = counter_report_types["tr"]
+        tr.requires_whitelisting = tr_requires_whitelisting
+        tr.save()
+        if tr_whitelisted_in_kb is not None:
+            for provider in KNOWLEDGEBASE["providers"]:
+                for art in provider["assigned_report_types"]:
+                    if art["report_type"] == tr.code:
+                        art["whitelisted"] = tr_whitelisted_in_kb
+                        break
         # Override to knowledgebase
         resp = clients["master_admin"].post(
             reverse("platform-list", args=[organizations["master"].pk]),
@@ -460,14 +480,16 @@ class TestPlatformAPI:
             },
             format="json",
         )
-        assert resp.status_code == 201
-        platform = Platform.objects.get(pk=resp.data["pk"])
-        assert set(platform.counter_reports.values_list("counter_version", "code")) == {
-            (5, "PR"),
-            (5, "TR"),
-            (51, "IR"),
-            (51, "DR"),
-        }
+        not_allowed = tr_requires_whitelisting and not tr_whitelisted_in_kb
+        assert resp.status_code == (400 if not_allowed else 201)
+        if resp.status_code == 201:
+            platform = Platform.objects.get(pk=resp.data["pk"])
+            assert set(platform.counter_reports.values_list("counter_version", "code")) == {
+                (5, "PR"),
+                (5, "TR"),
+                (51, "IR"),
+                (51, "DR"),
+            }
 
     def test_create_platform_for_organization_counter_reports_manual(
         self, basic1, clients, organizations, client, counter_report_types, settings
@@ -856,6 +878,105 @@ class TestPlatformAPI:
             else:
                 assert resp.status_code in (403, 404)
                 task_mock.delay.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ["platform", "report_type"],
+        [
+            ("root", "IR"),  # does not have IR report type
+            ("root", "TR"),  # has TR, but it is not whitelisted
+            ("root", "DR"),  # does not have knowledgebase record
+        ],
+    )
+    def test_reports_requiring_whitelisting_cannot_be_set(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        counter_report_type_named,
+        platform,
+        report_type,
+    ):
+        pl = platforms[platform]
+        rt = counter_report_type_named(report_type, version=51)
+        rt.requires_whitelisting = True
+        rt.save()
+
+        # Create a connection between the platform and organization
+        from logs.models import OrganizationPlatform
+
+        OrganizationPlatform.objects.create(organization=organizations["root"], platform=pl)
+
+        resp = clients["master_admin"].patch(
+            reverse("platform-detail", args=[organizations["root"].pk, pl.pk]),
+            {"counter_reports_source": "manual", "counter_reports": [rt.pk]},
+        )
+        assert resp.status_code == 400
+        assert "whitelist" in resp.json()["non_field_errors"][0]
+
+    def test_reports_requiring_whitelisting_can_be_set_when_whitelisted(
+        self, basic1, organizations, platforms, clients, counter_report_type_named
+    ):
+        pl = platforms["root"]
+        rt = counter_report_type_named("JR1", version=4)
+        rt.requires_whitelisting = True
+        rt.save()
+
+        # Create a connection between the platform and organization
+        from logs.models import OrganizationPlatform
+
+        OrganizationPlatform.objects.create(organization=organizations["root"], platform=pl)
+
+        # Update the platform's knowledgebase to include whitelisted JR1
+        pl.knowledgebase = {
+            "providers": [
+                {
+                    "assigned_report_types": [
+                        {
+                            "report_type": "JR1",
+                            "not_valid_after": None,
+                            "not_valid_before": None,
+                            "whitelisted": True,
+                        }
+                    ],
+                    "counter_version": 4,
+                    "provider": {
+                        "pk": 10,
+                        "url": "http://c4.brain.celus.net",
+                        "name": "c4.brain.celus.net",
+                        "extra": {},
+                        "yearly": None,
+                        "monthly": None,
+                    },
+                }
+            ]
+        }
+        pl.save()
+
+        resp = clients["master_admin"].patch(
+            reverse("platform-detail", args=[organizations["root"].pk, pl.pk]),
+            {"counter_reports_source": "manual", "counter_reports": [rt.pk]},
+        )
+        assert resp.status_code == 200
+
+    def test_reports_not_requiring_whitelisting_can_be_set(
+        self, basic1, organizations, platforms, clients, counter_report_type_named
+    ):
+        pl = platforms["root"]  # platform without knowledgebase
+        rt = counter_report_type_named("TR", version=5)
+        rt.requires_whitelisting = False
+        rt.save()
+
+        # Create a connection between the platform and organization
+        from logs.models import OrganizationPlatform
+
+        OrganizationPlatform.objects.create(organization=organizations["root"], platform=pl)
+
+        resp = clients["master_admin"].patch(
+            reverse("platform-detail", args=[organizations["root"].pk, pl.pk]),
+            {"counter_reports_source": "manual", "counter_reports": [rt.pk]},
+        )
+        assert resp.status_code == 200
 
 
 @pytest.mark.django_db

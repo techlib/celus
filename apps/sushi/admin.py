@@ -92,7 +92,15 @@ class SushiCredentialsAdmin(CreatedUpdatedAdminMixin, ExportActionMixin, Version
 
 @admin.register(models.CounterReportType)
 class CounterReportTypeAdmin(admin.ModelAdmin):
-    list_display = ["code", "name", "display_counter_version", "report_type", "active"]
+    list_display = [
+        "code",
+        "name",
+        "display_counter_version",
+        "report_type",
+        "active",
+        "requires_whitelisting",
+    ]
+    list_editable = ["requires_whitelisting"]
     list_filter = ["counter_version"]
     readonly_fields = ["name"]
     ordering = ["code"]

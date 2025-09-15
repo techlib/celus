@@ -48,6 +48,10 @@ en:
       This report was marked as broken for these credentials. This is usually result of errors
       during harvesting of data which indicate credentials are correct, but report is not supported.
       Automatic harvesting is disabled for such reports.
+    blacklisted_report_type_desc: |
+      The consistency of this report with other reports on the platform could not be verified.
+      CELUS has blacklisted this report until the consistency is ensured. You can find more information
+      in the knowledge base or contact us at {link}.
     report_type_from_platform:
       derive: Use reports from platform
       derived: List of reports is managed by platform.
@@ -133,6 +137,10 @@ cs:
       tooltip: Pro vybrané přihlašovací údaje budou automaticky stahovány všechny reporty spojené s danou platformou.
     knowledgebase_report_type_desc: Tento report byl na této platformě úspěšně stažený jiným uživatelem.
     registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.
+    blacklisted_report_type_desc: |
+      Konzistence tohoto reportu s ostatními reporty na platformě nemohla být ověřena.
+      CELUS tuto reportovou položku zakázal dokud konzistence nebude zajištěna.
+      Více informací naleznete ve znalostní bázi nebo nám napište na {link}.
     mark_as_fixed:
       title: Označ přístupové údaje jako opravené
       success: Přístupové údaje byly označeny jako opravené.

@@ -53,6 +53,7 @@ en:
     unknown_error: "An unknown error has occurred during data processing. If you send us the report to ask{'@'}celus.net, we will check it and try to teach CELUS to process it correctly."
     xls_error: Unable to parse .xls file. Please try to convert the file to .xlsx
     unsupported_report_type: Detected report type "{rt}" is not currently supported.
+    whitelisting_error: This report type was not whitelisted for this platform because we could not verify that it is consistent with other reports on the platform. Contact your administrator to whitelist this report type for this platform.
   unauthorized_multiple_org_title: Unauthorized to import
   unauthorized_multiple_org_text: This file contains data for multiple organizations and only consortial admin is allowed to import it.
   no_non_counter_for_platform: This platform does not support non-counter data.
@@ -122,6 +123,7 @@ cs:
     unknown_error: "Při zpracování dat došlo k neznámé chybě. Pokud nám report pošlete na ask{'@'}celus.net, zkontrolujeme ho a pokusíme se CELUS naučit, jak ho zpracovat."
     xls_error: Nedaří se zpracovat .xls soubor. Prosím zkuste soubor zkonvertovat na .xlsx
     unsupported_report_type: Zjištěný typ reportu "{rt}" není v současné době podporován.
+    whitelisting_error: Tento typ reportu nebyl povolen pro tuto platformu, protože nebylo možné ověřit, že je konzistentní s ostatními reporty na platformě. Kontaktujte prosím svého administrátora, aby povolil tento typ reportu pro tuto platformu.
   unauthorized_multiple_org_title: Neautorizovaný import
   unauthorized_multiple_org_text: Tento soubor obsahuje data pro více organizací a pouze konzorciální admin může nahrávat data pro více organizací z jednoho souboru.
   no_non_counter_for_platform: Tato platforma nepodporuje formáty mimo counter.
@@ -1261,6 +1263,9 @@ export default {
                 rt: info.unsupported_report_type[0],
               }),
             ];
+          } else if ("whitelisting_error" in info) {
+            this.showErrorDialog = true;
+            this.errors = [this.$t("errors.whitelisting_error")];
           } else {
             this.showSnackbar({ content: "Error sending data: " + error });
           }

@@ -5,6 +5,10 @@ from core.serializers import UserSimpleSerializer
 from django.db.models import Q
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
+from publications.logic.knowledgebase import (
+    get_provider_for_counter_version,
+    is_report_type_whitelisted,
+)
 from publications.models import Platform
 from publications.serializers import PlatformSerializer
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -47,7 +51,7 @@ class CloneToNewerSerializer(Serializer):
 class CounterReportTypeSerializer(ModelSerializer):
     class Meta:
         model = CounterReportType
-        fields = ("id", "code", "name", "counter_version")
+        fields = ("id", "code", "name", "counter_version", "requires_whitelisting")
 
 
 class UnsetBrokenSerializer(Serializer):
@@ -67,10 +71,19 @@ class CounterReportsToCredentialsSerializer(ModelSerializer):
     name = ReadOnlyField(source="counter_report.name")
     counter_version = ReadOnlyField(source="counter_report.counter_version")
     report_type = ReadOnlyField(source="counter_report.report_type_id")
+    requires_whitelisting = ReadOnlyField(source="counter_report.requires_whitelisting")
 
     class Meta:
         model = CounterReportsToCredentials
-        fields = ("id", "code", "name", "counter_version", "report_type", "broken")
+        fields = (
+            "id",
+            "code",
+            "name",
+            "counter_version",
+            "report_type",
+            "broken",
+            "requires_whitelisting",
+        )
 
 
 class SushiCredentialsSerializer(ModelSerializer):
@@ -142,6 +155,32 @@ class SushiCredentialsSerializer(ModelSerializer):
             "last_harvestable_month_user_id",
             "last_harvestable_month_attempt_id",
         )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        platform = self.instance.platform if self.instance else attrs.get("platform")
+        counter_version = (
+            self.instance.counter_version if self.instance else attrs.get("counter_version")
+        )
+        wl_crts = [crt for crt in attrs.get("counter_reports", []) if crt.requires_whitelisting]
+        if wl_crts:
+            if kb := platform.knowledgebase:
+                if not (kb_provider := get_provider_for_counter_version(kb, counter_version)):
+                    raise ValidationError(
+                        "No provider found for counter version, reports requiring whitelisting "
+                        "cannot be assigned"
+                    )
+            else:
+                raise ValidationError(
+                    "Platform doesn't have knowledgebase, reports requiring whitelisting "
+                    "cannot be assigned"
+                )
+            for wl_crt in wl_crts:
+                if not is_report_type_whitelisted(kb_provider, wl_crt.code):
+                    raise ValidationError(
+                        f"Report type {wl_crt.code} is not whitelisted for platform"
+                    )
+        return attrs
 
     def get_locked(self, obj: SushiCredentials):
         return obj.lock_level >= UL_CONS_STAFF

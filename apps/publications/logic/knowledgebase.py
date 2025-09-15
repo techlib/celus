@@ -14,16 +14,37 @@ def get_url(knowledgebase: dict, counter_version: int) -> typing.Optional[str]:
 
 def get_counter_reports(
     knowledgebase: typing.Optional[dict],
-) -> typing.List[typing.Tuple[int, str]]:
+) -> typing.Dict[typing.Tuple[int, str], typing.Dict[str, typing.Any]]:
     """Returns all counter reports from knowledgebase dict"""
     if not knowledgebase:
-        return []
-    res = []
+        return {}
+    res = {}
     try:
         for provider in knowledgebase["providers"]:
             for art in provider["assigned_report_types"]:
-                res.append((provider["counter_version"], art["report_type"]))
+                res[(provider["counter_version"], art["report_type"])] = art
     except (KeyError, IndexError):
-        return []
+        return {}
 
     return res
+
+
+def get_provider_for_counter_version(
+    knowledgebase: dict, counter_version: int
+) -> typing.Optional[dict]:
+    """Returns provider for counter version from knowledgebase dict"""
+    return next(
+        (e for e in knowledgebase["providers"] if e["counter_version"] == counter_version), None
+    )
+
+
+def is_report_type_whitelisted(provider: dict, report_type: str) -> bool:
+    """Returns True if report type is whitelisted for the provider"""
+    if not provider:
+        return False
+    if rec := next(
+        (e for e in provider.get("assigned_report_types", []) if e["report_type"] == report_type),
+        None,
+    ):
+        return rec.get("whitelisted", False)
+    return False

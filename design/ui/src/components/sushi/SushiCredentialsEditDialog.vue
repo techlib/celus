@@ -515,18 +515,49 @@ cs:
                   :persistent-hint="useCounterReportsFromPlatform"
                 >
                   <template #item="{ props, item }">
-                    <v-list-item v-bind="props" title>
+                    <v-list-item
+                      v-bind="props"
+                      title
+                      v-if="!isBlacklisted(item.raw)"
+                    >
                       <template v-slot:default>
                         <SushiReportIndicator
                           :report="item.raw"
                           :broken-fn="isBroken"
                           :knowledgebase-fn="inKnowledgebase"
                           :registry-fn="inRegistry"
+                          :blacklisted-fn="isBlacklisted"
                           show-name
                           show-last-harvestable-month
                         ></SushiReportIndicator>
                       </template>
                     </v-list-item>
+                    <v-tooltip location="bottom" max-width="400" v-else>
+                      <template #activator="{ props }">
+                        <span v-bind="props">
+                          <v-list-item title disabled>
+                            <SushiReportIndicator
+                              :report="item.raw"
+                              :blacklisted-fn="isBlacklisted"
+                              show-name
+                            ></SushiReportIndicator>
+                          </v-list-item>
+                        </span>
+                      </template>
+                      <i18n-t
+                        keypath="sushi.blacklisted_report_type_desc"
+                        tag="span"
+                      >
+                        <template #link>
+                          <a
+                            :href="`mailto:${contactEmail}`"
+                            class="text-warning"
+                            target="_blank"
+                            >{{ contactEmail }}</a
+                          >
+                        </template>
+                      </i18n-t>
+                    </v-tooltip>
                   </template>
                   <template #selection="{ item, props, selected }">
                     <v-chip
@@ -542,6 +573,7 @@ cs:
                         :broken-fn="isBroken"
                         :knowledgebase-fn="inKnowledgebase"
                         :registry-fn="inRegistry"
+                        :blacklisted-fn="isBlacklisted"
                         show-last-harvestable-month
                         is-autocomplete
                       ></SushiReportIndicator>
@@ -1010,6 +1042,7 @@ export default {
       allowUserCreatePlatforms: "allowUserCreatePlatforms",
       debugMonth: "dateRangeCoverageEndText",
       showManagementStuff: "showManagementStuff",
+      contactEmail: "contactEmail",
     }),
     credentials() {
       if (this.credentialsObject) {
@@ -1153,14 +1186,19 @@ export default {
       }
       return null;
     },
-    knowledgebaseReportTypes() {
+    knowledgebaseProvider() {
       if (this.currentKnowledgebase?.providers) {
-        let providers = this.currentKnowledgebase.providers.filter(
+        return this.currentKnowledgebase.providers.find(
           (provider) => provider.counter_version == this.counterVersion,
         );
-        if (providers.length > 0) {
-          return providers[0].assigned_report_types.map((e) => e.report_type);
-        }
+      }
+      return null;
+    },
+    knowledgebaseReportTypes() {
+      if (this.knowledgebaseProvider) {
+        return this.knowledgebaseProvider.assigned_report_types.map(
+          (e) => e.report_type,
+        );
       }
       // Fallback to useCases when there is no knowledgebase
       return this.useCaseReportTypes;
@@ -1470,7 +1508,11 @@ export default {
       } catch (error) {
         // Show waring for same credentials
         let respData = error.response?.data;
-        if (!forced && respData && respData[0].startsWith("Same credentials")) {
+        if (
+          !forced &&
+          respData &&
+          respData[0]?.startsWith("Same credentials")
+        ) {
           let text_ref =
             respData[0] == "Same credentials exists - globally"
               ? "same_credentials_global_text"
@@ -1486,6 +1528,11 @@ export default {
             // User really wants to save the it
             return await this.saveData(true);
           }
+        } else if (respData && respData["non_field_errors"]) {
+          this.showSnackbar({
+            content: respData["non_field_errors"][0],
+            color: "error",
+          });
         } else {
           this.showSnackbar({
             content: this.$t("error_saving"),
@@ -1590,6 +1637,17 @@ export default {
         );
       }
       return false;
+    },
+    isBlacklisted(report) {
+      if (!report.requires_whitelisting) {
+        return false;
+      }
+      if (this.knowledgebaseProvider) {
+        return !this.knowledgebaseProvider.assigned_report_types.find(
+          (e) => e.report_type == report.code && e.whitelisted,
+        );
+      }
+      return true;
     },
     guessUrl() {
       if (!this.url) {

@@ -18,6 +18,13 @@
           >fas fa-exclamation</v-icon
         >
         <v-icon
+          v-else-if="isBlacklisted"
+          size="small"
+          color="warning"
+          class="pl-1 w-auto"
+          >fa fa-face-frown</v-icon
+        >
+        <v-icon
           v-else-if="inKnowledgebase"
           size="x-small"
           color="success"
@@ -36,7 +43,22 @@
     <span>
       <strong v-if="report.name">{{ report.name }}</strong>
       <strong v-else>{{ report.code }}</strong>
-      <div v-if="inKnowledgebase">
+      <div v-if="isBlacklisted">
+        <v-icon size="x-small" color="warning" class="mr-1"
+          >fa fa-face-frown</v-icon
+        >
+        <i18n-t keypath="sushi.blacklisted_report_type_desc" tag="span">
+          <template #link>
+            <a
+              :href="`mailto:${contactEmail}`"
+              class="text-warning"
+              target="_blank"
+              >{{ contactEmail }}</a
+            >
+          </template>
+        </i18n-t>
+      </div>
+      <div v-else-if="inKnowledgebase">
         <v-icon size="small" color="success">fas fa-user-check</v-icon>
         {{ $t("sushi.knowledgebase_report_type_desc") }}
       </div>
@@ -60,6 +82,7 @@
 
 <script>
 import { counterVersionToStr } from "@/libs/sushi";
+import { mapGetters } from "vuex";
 
 export default {
   name: "SushiReportIndicator",
@@ -90,6 +113,12 @@ export default {
       required: false,
       default: null,
     },
+    blacklistedFn: {
+      // function to call with report instance to find out whether
+      // the report type is blacklisted
+      required: false,
+      default: null,
+    },
     showName: {
       default: false,
       type: Boolean,
@@ -109,6 +138,7 @@ export default {
   },
 
   computed: {
+    ...mapGetters(["contactEmail"]),
     isBroken() {
       if (this.brokenFn === false) {
         return false;
@@ -130,6 +160,13 @@ export default {
         return false;
       } else {
         return this.registryFn(this.report);
+      }
+    },
+    isBlacklisted() {
+      if (!this.blacklistedFn) {
+        return false;
+      } else {
+        return this.blacklistedFn(this.report);
       }
     },
     anyIcon() {

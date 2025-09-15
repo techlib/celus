@@ -1373,3 +1373,228 @@ class TestOrganizationManualDataUploadViewSet:
 
         resp = clients["admin2"].get(url + "?order_by=pk")
         assert resp.status_code == 404
+
+
+@pytest.mark.django_db
+class TestManualDataUploadWhitelisting:
+    """Test whitelisting validation for manual data uploads."""
+
+    @pytest.mark.parametrize("whitelisted", [True, False, None])
+    def test_upload_with_whitelisted_report_type_succeeds(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        counter_report_types,
+        clients,
+        tmp_path,
+        settings,
+        whitelisted,
+    ):
+        """
+        Test that uploading a report type that requires whitelisting succeeds when whitelisted.
+        """
+        # Set up platform with whitelisted report type
+        platform = platforms["brain"]
+        if whitelisted is not None:
+            platform.knowledgebase["providers"][1]["assigned_report_types"][0]["whitelisted"] = (
+                whitelisted
+            )
+        platform.save()
+
+        # Create a report type that requires whitelisting
+        rt = counter_report_types["tr"]
+        rt.requires_whitelisting = True
+        rt.save()
+
+        # Create test data file
+        with (
+            Path(__file__).parent.parent.parent.parent
+            / "test-data/counter5/COUNTER_R5_Report_Examples_TR.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "tr_test.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin1"].post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["root"].pk,
+                "data_file": data_file,
+                "method": MduMethod.RAW,
+            },
+        )
+        assert response.status_code == (201 if whitelisted else 400)
+        if whitelisted:
+            mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+            assert mdu.report_type == rt.report_type
+
+    def test_upload_with_non_whitelisted_report_type_different_version_fails(
+        self, basic1, organizations, platforms, counter_report_types, clients, tmp_path, settings
+    ):
+        """
+        Test that uploading a report type that requires whitelisting fails when not whitelisted
+        for the correct version.
+        """
+        # Set up platform with whitelisted report type for different version
+        platform = platforms["brain"]
+        # Add a provider for version 51 with whitelisted IR
+        platform.knowledgebase["providers"].append(
+            {
+                "assigned_report_types": [
+                    {
+                        "not_valid_after": None,
+                        "not_valid_before": None,
+                        "report_type": "IR",
+                        "whitelisted": True,
+                    }
+                ],
+                "counter_version": 51,
+                "provider": {
+                    "extra": {},
+                    "monthly": None,
+                    "name": "c51.brain.celus.net",
+                    "pk": 12,
+                    "url": "https://c51.brain.celus.net/sushi",
+                    "yearly": None,
+                },
+            }
+        )
+        platform.save()
+
+        # Create a report type that requires whitelisting for version 5 (not 51)
+        rt = counter_report_types["tr"]
+        rt.requires_whitelisting = True
+        rt.save()
+
+        # Create test data file
+        with (
+            Path(__file__).parent.parent.parent.parent
+            / "test-data/counter5/COUNTER_R5_Report_Examples_TR.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "tr_test.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin1"].post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["root"].pk,
+                "data_file": data_file,
+                "method": MduMethod.RAW,
+            },
+        )
+        assert response.status_code == 400
+        assert "whitelist" in response.json()["whitelisting_error"]
+
+    def test_upload_with_platform_without_knowledgebase_fails(
+        self, basic1, organizations, platforms, counter_report_types, clients, tmp_path, settings
+    ):
+        """
+        Test that uploading a report type that requires whitelisting fails when platform has no
+        knowledgebase.
+        """
+        # Use a platform without knowledgebase
+        platform = platforms["root"]
+
+        # Create a report type that requires whitelisting
+        rt = counter_report_types["tr"]
+        rt.requires_whitelisting = True
+        rt.save()
+
+        # Create test data file
+        with (
+            Path(__file__).parent.parent.parent.parent
+            / "test-data/counter5/COUNTER_R5_Report_Examples_TR.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "tr_test.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin1"].post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["root"].pk,
+                "data_file": data_file,
+                "method": MduMethod.RAW,
+            },
+        )
+        assert response.status_code == 400
+        assert "knowledgebase" in response.json()["whitelisting_error"]
+
+    def test_upload_with_report_type_not_requiring_whitelisting_succeeds(
+        self, basic1, organizations, platforms, counter_report_types, clients, tmp_path, settings
+    ):
+        """
+        Test that uploading a report type that doesn't require whitelisting succeeds regardless of
+        platform setup.
+        """
+        # Use a platform without knowledgebase
+        platform = platforms["root"]
+
+        # Create a report type that doesn't require whitelisting
+        rt = counter_report_types["tr"]
+        rt.requires_whitelisting = False
+        rt.save()
+
+        # Create test data file
+        with (
+            Path(__file__).parent.parent.parent.parent
+            / "test-data/counter5/COUNTER_R5_Report_Examples_TR.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "tr_test.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin1"].post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["root"].pk,
+                "data_file": data_file,
+                "method": MduMethod.RAW,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.report_type == rt.report_type
+
+    def test_upload_with_report_type_without_counter_report_type_succeeds(
+        self, basic1, organizations, platforms, clients, tmp_path, settings, report_types
+    ):
+        """Test that uploading a report type without associated CounterReportType succeeds."""
+        # Use a platform without knowledgebase
+        platform = platforms["root"]
+
+        # Use a report type that doesn't have an associated CounterReportType
+        rt = report_types["custom1"]
+
+        # Create test data file
+        with (
+            Path(__file__).parent / "data/custom/custom_data-2d-3x2x3-org-isodate.csv"
+        ).open() as f:
+            data_file = ContentFile(f.read())
+            data_file.name = "custom_test.csv"
+
+        settings.MEDIA_ROOT = tmp_path
+
+        response = clients["admin1"].post(
+            reverse("manual-data-upload-list"),
+            data={
+                "platform": platform.id,
+                "organization": organizations["root"].pk,
+                "report_type_id": rt.pk,
+                "data_file": data_file,
+                "method": MduMethod.CELUS,
+            },
+        )
+        assert response.status_code == 201
+        mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.report_type == rt

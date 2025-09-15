@@ -143,3 +143,10 @@ class ReportDataValidityError(Exception):
     Data inside a report are not valid (not conforming to the CoP) to such an extent that the report
     cannot be ingested and the report type should be marked as broken.
     """
+
+
+class WhitelistingError(Exception):
+    """
+    Exception raised when a report type requires whitelisting but is not whitelisted
+    for the platform in the knowledgebase.
+    """

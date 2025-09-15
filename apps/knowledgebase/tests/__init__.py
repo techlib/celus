@@ -20,7 +20,13 @@ PLATFORM_INPUT_DATA = [
             },
             {
                 "assigned_report_types": [
-                    {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"}
+                    {"not_valid_after": None, "not_valid_before": None, "report_type": "TR"},
+                    {
+                        "not_valid_after": None,
+                        "not_valid_before": None,
+                        "report_type": "PR",
+                        "whitelisted": False,
+                    },
                 ],
                 "counter_version": 5,
                 "provider": {

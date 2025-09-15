@@ -9,12 +9,17 @@ from core.models import (
 )
 from core.serializers import UserSimpleSerializer
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import gettext as _
 from nibbler.logic.processing import get_errors, output_to_poops
 from nibbler.models import get_report_types_from_nibbler_output
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
+from publications.logic.knowledgebase import (
+    get_provider_for_counter_version,
+    is_report_type_whitelisted,
+)
 from publications.models import Platform
 from publications.serializers import (
     DataSourceSerializer,
@@ -34,7 +39,7 @@ from rest_framework.serializers import (
 )
 from sushi.serializers import SushiFetchAttemptFlatSerializer
 
-from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType
+from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType, WhitelistingError
 from .models import (
     AccessLog,
     Dimension,
@@ -420,6 +425,44 @@ class ManualDataUploadSerializer(ModelSerializer):
 
         return attrs
 
+    def _validate_whitelisting(self, mdu: ManualDataUpload):
+        """
+        Validate that if the detected report type requires whitelisting,
+        the platform has it whitelisted in its knowledgebase.
+        """
+        if not mdu.report_type or not mdu.platform:
+            return
+
+        # Check if the report type has a corresponding CounterReportType that requires whitelisting
+        try:
+            crt = mdu.report_type.counterreporttype
+            if not crt.requires_whitelisting:
+                return
+        except ObjectDoesNotExist:
+            # No CounterReportType associated with this ReportType, no whitelisting needed
+            return
+
+        # The COUNTER report type is one that requires whitelisting
+        # Check platform knowledgebase for whitelisting
+        if not mdu.platform.knowledgebase:
+            raise WhitelistingError(
+                "Platform doesn't have knowledgebase, reports requiring whitelisting "
+                "cannot be uploaded"
+            )
+
+        if not (
+            kb_provider := get_provider_for_counter_version(
+                mdu.platform.knowledgebase, crt.counter_version
+            )
+        ):
+            raise WhitelistingError(
+                "No provider found for counter version, reports requiring whitelisting "
+                "cannot be uploaded"
+            )
+
+        if not is_report_type_whitelisted(kb_provider, crt.code):
+            raise WhitelistingError(f"Report type {crt.code} is not whitelisted for platform")
+
     def update(self, instance: ManualDataUpload, validated_data):
         result: ManualDataUpload = super().update(instance, validated_data)
         return self._adjust_permissions(result)
@@ -468,6 +511,10 @@ class ManualDataUploadSerializer(ModelSerializer):
                         raise MultipleReportTypes(report_types)
                     result.extra = {p.sheet_idx: p.extras for p in poops}
                     result.report_type = report_types[0]
+
+                    # Check whitelisting for report types that require it
+                    self._validate_whitelisting(result)
+
                     result.save()
             except Exception:
                 # remove file which won't be linked with a db model due to exception

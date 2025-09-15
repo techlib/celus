@@ -7,7 +7,7 @@ from celus_nibbler.parsers import get_parsers
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
-from sushi.models import COUNTER_REPORTS, CounterReportType
+from sushi.models import COUNTER_REPORTS, COUNTER_REPORTS_REQUIRING_WHITELISTING, CounterReportType
 
 from logs.models import Dimension, ReportType, ReportTypeToDimension
 
@@ -169,6 +169,10 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
 
             # Update CounterReportTypes
             try:
+                requires_whitelisting = (
+                    version,
+                    crt_code,
+                ) in COUNTER_REPORTS_REQUIRING_WHITELISTING
                 crt = rt.counterreporttype
                 if crt.name != name:
                     print(f'CRT name mismatch ({crt_code}): "{crt.name}" != "{name}"')
@@ -177,11 +181,27 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                         crt.name = name
                         crt.save()
                         stats["fixed_crt_name"] += 1
+
+                if requires_whitelisting != crt.requires_whitelisting:
+                    print(
+                        f"RT requires_whitelisting mismatch {crt_code} "
+                        f'"{crt.requires_whitelisting}" != "{requires_whitelisting}"'
+                    )
+                    stats["crt_requires_whitelisting_mismatch"] += 1
+                    if fix_it:
+                        crt.requires_whitelisting = requires_whitelisting
+                        crt.save()
+                        stats["fixed_crt_requires_whitelisting"] += 1
+
             except CounterReportType.DoesNotExist:
                 stats["missing_crt"] += 1
                 if fix_it:
                     CounterReportType.objects.create(
-                        counter_version=version, code=crt_code, report_type=rt, name=name
+                        counter_version=version,
+                        code=crt_code,
+                        report_type=rt,
+                        name=name,
+                        requires_whitelisting=requires_whitelisting,
                     )
 
         print("Stats:", stats)

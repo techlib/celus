@@ -464,6 +464,10 @@ class PlatformImportAttempt(ImportAttempt):
         Platform.objects.update_counter_reports_from_knowledgebase()
         # Update SushiCredentials based on newly updated CounterReportPlatforms
         SushiCredentials.objects.update_report_types_based_on_platform()
+        # Remove non-whitelisted reports from credentials
+        removed_count = SushiCredentials.objects.remove_non_whitelisted_reports()
+        if removed_count > 0:
+            logger.info("Removed %d non-whitelisted report types from credentials", removed_count)
 
         self.save()
 

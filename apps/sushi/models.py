@@ -69,6 +69,7 @@ from logs.models import AccessLog, ImportBatch
 from nibbler.logic.processing import counter_format_poops, output_to_poops
 from organizations.models import Organization
 from publications.logic import knowledgebase
+from publications.logic import knowledgebase as kb
 from publications.models import Platform
 from rest_framework.exceptions import PermissionDenied
 
@@ -132,6 +133,8 @@ COUNTER_REPORTS = (
     (51, "IR51", "IR", "COUNTER 5.1 - Item Report"),
 )
 
+COUNTER_REPORTS_REQUIRING_WHITELISTING = [(51, "IR")]
+
 
 class BrokenCredentialsMixin(models.Model):
     BROKEN_HTTP = "http"
@@ -180,6 +183,11 @@ class CounterReportType(models.Model):
     name = models.CharField(max_length=128, blank=True)
     counter_version = models.PositiveSmallIntegerField(choices=CounterVersionChoices.choices)
     report_type = models.OneToOneField("logs.ReportType", on_delete=models.CASCADE)
+    requires_whitelisting = models.BooleanField(
+        default=False,
+        help_text="If True, the report requires whitelisting on platform level via knowledgebase "
+        "so that it can be assigned to credentials",
+    )
     active = models.BooleanField(
         default=True,
         help_text="When turned off, this type of report will not be automatically downloaded",
@@ -373,6 +381,30 @@ class SushiCredentialsQuerySet(models.QuerySet):
             )
 
         return count
+
+    def remove_non_whitelisted_reports(self) -> int:
+        """
+        Remove counter report types that require whitelisting but are not whitelisted
+        for the platform from **any** credentials (regardless if the reports are managed
+        by the platform or not).
+        """
+        to_remove = set()
+
+        for crt in CounterReportType.objects.filter(requires_whitelisting=True):
+            for cr2crt in CounterReportsToCredentials.objects.filter(
+                counter_report=crt
+            ).select_related("credentials__platform"):
+                kb_crts = kb.get_counter_reports(cr2crt.credentials.platform.knowledgebase)
+                if crt := kb_crts.get((cr2crt.credentials.counter_version, crt.code)):
+                    if not crt.get("whitelisted"):
+                        to_remove.add(cr2crt.pk)
+                else:
+                    to_remove.add(cr2crt.pk)
+
+        if to_remove:
+            CounterReportsToCredentials.objects.filter(pk__in=to_remove).delete()
+
+        return len(to_remove)
 
 
 class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):

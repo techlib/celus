@@ -11,7 +11,12 @@ from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import Automatic
 
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiCredentials
+from sushi.models import (
+    AttemptStatus,
+    CounterReportsToCredentials,
+    CounterReportType,
+    SushiCredentials,
+)
 from sushi.models import BrokenCredentialsMixin as BS
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
@@ -286,6 +291,71 @@ class TestSushiCredentialsViewSet:
         assert credentials.counter_reports.count() == 0, (
             "credentials should not contain any report types"
         )
+
+    @pytest.mark.parametrize(
+        ["platform", "report_type"],
+        [
+            ("brain", "IR"),  # does not have IR report type
+            ("brain", "TR"),  # has TR, but it is not whitelisted
+            ("root", "IR"),  # does not have knowledgebase record
+        ],
+    )
+    def test_reports_requiring_whitelisting_cannot_be_set(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        counter_report_type_named,
+        platform,
+        report_type,
+    ):
+        pl = platforms[platform]
+        credentials = CredentialsFactory(
+            organization=organizations["root"],
+            platform=pl,
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+        rt = counter_report_type_named(report_type, version=5)
+        rt.requires_whitelisting = True
+        rt.save()
+
+        resp = clients["admin1"].patch(
+            reverse("sushi-credentials-detail", args=(credentials.pk,)),
+            {"counter_reports": [rt.pk]},
+        )
+        assert resp.status_code == 400
+        assert "whitelist" in resp.json()["non_field_errors"][0]
+        assert credentials.counter_reports.count() == 0
+
+    def test_reports_requiring_whitelisting_can_be_set_when_whitelisted(
+        self, basic1, organizations, platforms, clients, counter_report_type_named
+    ):
+        pl = platforms["brain"]
+        pl.knowledgebase["providers"][1]["assigned_report_types"][0]["whitelisted"] = True
+        pl.save()
+
+        credentials = CredentialsFactory(
+            organization=organizations["root"],
+            platform=pl,
+            counter_version=5,
+            lock_level=UL_ORG_ADMIN,
+            url="http://a.b.c/",
+        )
+        rt = counter_report_type_named("TR", version=5)
+        rt.requires_whitelisting = True
+        rt.save()
+
+        resp = clients["admin1"].patch(
+            reverse("sushi-credentials-detail", args=(credentials.pk,)),
+            {"counter_reports": [rt.pk]},
+        )
+        assert resp.status_code == 200
+        credentials.refresh_from_db()
+        assert credentials.counter_reports.count() == 1
+        assert credentials.counter_reports.first() == rt
 
     def test_destroy_locked_higher(self, basic1, organizations, platforms, clients):
         """
@@ -1194,3 +1264,19 @@ class TestSushiCredentialsViewSet:
                 pk__in=[credentials["standalone_tr"].pk, credentials["branch_pr"].pk]
             )
         )
+
+
+@pytest.mark.django_db()
+class TestCounterReportTypeViewSet:
+    def test_list(self, basic1, clients, counter_report_types):
+        url = reverse("counter-report-type-list")
+        resp = clients["admin1"].get(url)
+        assert resp.status_code == 200
+        assert len(resp.data) == CounterReportType.objects.count()
+        assert set(resp.data[0].keys()) == {
+            "id",
+            "code",
+            "name",
+            "counter_version",
+            "requires_whitelisting",
+        }

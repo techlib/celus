@@ -30,6 +30,7 @@ from core.tasks import async_mail_admins
 from core.validators import month_validator, pk_list_validator
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db.models import BooleanField as DbBooleanField
 from django.db.models import (
     Case,
@@ -123,7 +124,7 @@ from logs.serializers import (
 )
 
 from . import filters
-from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType
+from .exceptions import MultipleReportTypes, NibblerErrors, UnsupportedReportType, WhitelistingError
 from .fields import CommaSeparatedPrimaryKeyRelatedField
 from .filters import DimensionFilter, PrimaryDimensionFlexiReportFilter
 from .logic.data_coverage import DataCoverageExtractor
@@ -1205,6 +1206,10 @@ class ManualDataUploadViewSet(
             raise BadRequestException({"xls_error": str(e)}) from e
         except UnsupportedReportType as e:
             raise BadRequestException({"unsupported_report_type": e.report_type_names}) from e
+        except ValidationError as e:
+            raise BadRequestException({"non_field_errors": [str(e)]}) from e
+        except WhitelistingError as e:
+            raise BadRequestException({"whitelisting_error": str(e)}) from e
 
 
 class OrganizationManualDataUploadViewSet(ReadOnlyModelViewSet):

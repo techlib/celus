@@ -1,7 +1,7 @@
 import pytest
 from django.core.management import call_command
 from sushi.fake_data import CounterReportTypeFactory
-from sushi.models import COUNTER_REPORTS, CounterVersionChoices
+from sushi.models import COUNTER_REPORTS, CounterReportType, CounterVersionChoices
 
 from logs.models import ReportType
 
@@ -46,6 +46,25 @@ class TestCheckReportTypeDimensions:
                 "uses_titles", flat=True
             )
         ), "others should use titles"
+
+    def test_whitelisting(self, settings):
+        settings.ENABLE_ITEMS = True
+        assert ReportType.objects.count() == 0, "no report types"
+        call_command("check_report_type_dimensions", "--fix-it")
+        ir51 = CounterReportType.objects.get(code="IR", counter_version=51)
+        assert ir51.requires_whitelisting
+        # others do not
+        assert not any(
+            CounterReportType.objects.exclude(pk=ir51.pk).values_list(
+                "requires_whitelisting", flat=True
+            )
+        )
+        # modify IR51 and recheck to make sure it is updated
+        ir51.requires_whitelisting = False
+        ir51.save()
+        call_command("check_report_type_dimensions", "--fix-it")
+        ir51.refresh_from_db()
+        assert ir51.requires_whitelisting
 
     def test_with_items_disabled(self, settings):
         settings.ENABLE_ITEMS = False
