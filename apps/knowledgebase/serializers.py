@@ -22,6 +22,14 @@ class PlatformSerializer(serializers.Serializer):
     notes_url = serializers.URLField(allow_blank=True, allow_null=True, required=False)
 
 
+class AttemptOutputSerializer(serializers.Serializer):
+    platform_id = serializers.IntegerField()
+    counter_version = serializers.IntegerField()
+    counter_report_code = serializers.CharField()
+    urls = serializers.ListField(child=serializers.URLField())
+    latest = serializers.DateField()
+
+
 class DimensionSerializer(serializers.Serializer):
     pk = serializers.IntegerField(required=True)
     short_name = serializers.CharField(allow_blank=False)

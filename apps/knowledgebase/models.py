@@ -32,7 +32,12 @@ from publications.models import Platform
 from semantic_version import Version
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
 
-from .serializers import ParserDefinitionSerializer, PlatformSerializer, ReportTypeSerializer
+from .serializers import (
+    AttemptOutputSerializer,
+    ParserDefinitionSerializer,
+    PlatformSerializer,
+    ReportTypeSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -272,10 +277,9 @@ class PlatformImportAttempt(ImportAttempt):
                 models.Q(),
             )
 
-            input_data = (
+            output_data = (
                 SushiFetchAttempt.objects.filter(
-                    credentials__platform__source=self.source,
-                    status__in=[AttemptStatus.NO_DATA, AttemptStatus.SUCCESS],
+                    credentials__platform__source=self.source, status__in=[AttemptStatus.SUCCESS]
                 )
                 .exclude(fake_cond)
                 .exclude(used_url__iexact="")
@@ -290,14 +294,18 @@ class PlatformImportAttempt(ImportAttempt):
                 .values("platform_id", "counter_report_code", "counter_version")
                 .filter(platform_id__isnull=False)
                 .annotate(
-                    urls=ArrayAgg("short_url", distinct=True, ordering=models.F("short_url").asc())
+                    urls=ArrayAgg("short_url", distinct=True, ordering=models.F("short_url").asc()),
+                    latest=models.Max("start_date"),
                 )
-                .values("platform_id", "counter_report_code", "counter_version", "urls")
+                .values("platform_id", "counter_report_code", "counter_version", "urls", "latest")
                 .order_by("platform_id", "counter_version", "counter_report_code")
                 .distinct()
             )
+            serializer = AttemptOutputSerializer(data=list(output_data), many=True)
+            serializer.is_valid(raise_exception=True)
+
             return requests.post(
-                self.get_post_url(), headers=self.request_headers, json=list(input_data)
+                self.get_post_url(), headers=self.request_headers, json=serializer.data
             )
         else:
             return super().get_response()

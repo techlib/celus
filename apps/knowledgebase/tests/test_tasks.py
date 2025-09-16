@@ -1,6 +1,7 @@
 import copy
 import json
 import re
+from datetime import date
 from importlib.metadata import version
 from unittest.mock import patch
 
@@ -133,24 +134,29 @@ class TestCeleryTasks:
             short_name="fake", name="fake", ext_id=8888, source=data_sources["brain"]
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["tr"],
             used_url="https://sushi.example.com/reports/tr/?some=extras",
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["dr"],
             used_url="https://sushi.example.com/reports/dr/?some=extras2",
+            status=AttemptStatus.NO_DATA,
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["pr"],
             used_url="https://fake.example.com/?some=extrass",
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=5,
             credentials__platform=platform,
             counter_report=counter_report_types["pr"],
@@ -158,24 +164,28 @@ class TestCeleryTasks:
             status=AttemptStatus.PARSING_FAILED,
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=51,
             credentials__platform=platform,
             counter_report=counter_report_types["ir51"],
             used_url="https://sushi.example.com/reports/ir/?some=extras4",
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=51,
             credentials__platform=platform,
             counter_report=counter_report_types["ir51"],
             used_url="https://sushi.example.com/reports/ir/?some=extras5",
         )
         FetchAttemptFactory(
+            start_date=date(2025, 2, 1),
             credentials__counter_version=51,
             credentials__platform=platform,
             counter_report=counter_report_types["ir51"],
             used_url="https://alias-sushi.example.com/reports/ir/?some=extras5",
         )
         FetchAttemptFactory(
+            start_date=date(2025, 1, 1),
             credentials__counter_version=51,
             credentials__platform=platform,
             counter_report=counter_report_types["tr51"],
@@ -191,21 +201,17 @@ class TestCeleryTasks:
             tasks.sync_platforms_with_knowledgebase_task()
             assert m.last_request.json() == [
                 {
-                    "counter_report_code": "DR",
-                    "platform_id": 8888,
-                    "counter_version": 5,
-                    "urls": ["https://sushi.example.com/reports/dr/"],
-                },
-                {
                     "counter_report_code": "TR",
                     "platform_id": 8888,
                     "counter_version": 5,
+                    "latest": "2025-01-01",
                     "urls": ["https://sushi.example.com/reports/tr/"],
                 },
                 {
                     "counter_report_code": "IR",
                     "platform_id": 8888,
                     "counter_version": 51,
+                    "latest": "2025-02-01",
                     "urls": [
                         "https://alias-sushi.example.com/reports/ir/",
                         "https://sushi.example.com/reports/ir/",
