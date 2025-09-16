@@ -7,18 +7,10 @@
 <i18n lang="yaml">
 en:
   add_new: Add new SUSHI
-  export: Export
-  export_tooltip: Export credentials
-  export_all: All
-  export_all_tooltip: Exports all the credentials you have.
-  export_filtered: Filtered
-  export_filtered_tooltip: Exports all the credentials you have filtered.
-  export_selected: Selected
+  export_selected: Export Selected
   export_selected_tooltip: Exports all the credentials you selected by using checkboxes.
   import: Import
   import_tooltip: Import credentials
-  import_template: Download template for COUNTER 5 SUSHI credentials import
-  import_template_tooltip: Downloads a template to be filled with COUNTER 5 SUSHI credentials you wish to import into CELUS
   is_locked: These credentials are locked.
   is_unlocked: These credentials are not locked, you may edit them.
   cannot_edit: You cannot edit them.
@@ -33,7 +25,6 @@ en:
   no_credentials_selected: No credentials selected
   no_broken_credentials_selected: No broken credentials selected
   no_clonable_credentials_selected: No clonable credentials selected
-  no_credentials_filtered: No credentials filtered
   there_are_no_credentials: There are no credentials
   select_at_least_one_credentials: Please select at least one set of SUSHI credentials using the checkboxes in the credentials list.
   select_at_least_one_broken_credentials: Please select at least one set of broken SUSHI credentials using the checkboxes in the credentials list.
@@ -41,7 +32,6 @@ en:
   unverified_tooltip: No data has been obtained yet using the current version of these credentials. Please verify the credentials by manually harvesting some data.
   warn_same_credentials_in_org_tooltip: The same credentials are used for a different platform as well. This is likely an error and will cause data duplication.
   warn_same_credentials_global_tooltip: The same credentials are used by another organization. This is likely an error and will cause data duplication.
-  filter_at_least_one_credentials: Please filter at least one set of SUSHI credentials using filers above.
   first_add_some_credentials: You have not added any SUSHI credentials yet, please first add credentials using button above.
   import_credentials_confirm_title: Automatic import under construction
   import_credentials_confirm_text_1: CELUS currently doesn't support fully automatic importing of credentials, but we can load them up for you!
@@ -55,7 +45,7 @@ en:
     all: All
     set: Set
     not_set: Not set
-  more_actions: More actions
+  bulk_actions: Bulk actions
   potential_issues:
     label: Potential issues
     broken: Broken credentials
@@ -75,17 +65,10 @@ en:
 cs:
   add_new: Přidat nové SUSHI
   export: Exportuj
-  export_tooltip: Exportovat přístupové údaje
-  export_all: Všechny
-  export_all_tooltip: Vyexportuje všechny přístupové údaje které máte uloženy.
-  export_filtered: Vyfiltrované
-  export_filtered_tooltip: Vyexportuje všechny přístupové údaje, které jste vyfiltrovali.
-  export_selected: Vybrané
+  export_selected: Exportovat vybrané
   export_selected_tooltip: Vyexportuje všechny přístupové údaje, které jste vybrali zaškrtnutím políčka.
   import: Importuj
   import_tooltip: Importovat přístupové údaje
-  import_template: Stáhnout šablonu pro importování COUNTER 5 SUSHI přihlašovacích údajů
-  import_template_tooltip: Stáhne šablonu pro vyplnění COUNTER 5 SUSHI přihlašovacími údaji, které si přejete naimportovat do CELUSu
   is_locked: Tyto přístupové údaje jsou uzamčené.
   is_unlocked: Tyto přístupové údaje nejsou uzamčené, můžete je editovat
   cannot_edit: Nemůžete je editovat.
@@ -100,7 +83,6 @@ cs:
   no_credentials_selected: Nejsou vybrány žádné přihlašovací údaje
   no_broken_credentials_selected: Nejsou vybrány žádné nefunkční přihlašovací údaje
   no_clonable_credentials_selected: Nejsou vybrány žádné klonovatelné přihlašovací údaje
-  no_credentials_filtered: Nejsou vyfiltrovány žádné přihlašovací údaje
   there_are_no_credentials: Nemáte uloženy žádné přihlašovací údaje
   select_at_least_one_credentials: Vyberte prosím alespoň jedny přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
   select_at_least_one_broken_credentials: Vyberte prosím alespoň jedny nefunkční přihlašovací údaje pomocí zaškrtávacích polí v seznamu přihlašovacích údajů.
@@ -108,7 +90,6 @@ cs:
   unverified_tooltip: Žádná data zatím nebyla stažena se současnou verzí těchto přístupových údajů. Ověřte prosím platnost přihlašovacích údajů manuálním stažením dat.
   warn_same_credentials_in_org_tooltip: Stejné přístupové údaje jsou použity i u jiné platformy. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
   warn_same_credentials_global_tooltip: Stejné přístupové údaje jsou použity jinou organizací. Jde pravděpodobně o chybu, která způsobí duplikaci dat.
-  filter_at_least_one_credentials: Vyfiltrujte prosím alespoň jedny přihlašovací údaje pomocí filtrů v horní části.
   first_add_some_credentials: Nepřidali jste žádné SUSHI přihlašovací údaje, prosím nejprve přidejte přihlačovací údaje tlačítkem výše.
   import_credentials_confirm_title: Automatický import ve vývoji
   import_credentials_confirm_text_1: CELUS momentálně neimportuje přihlašovací údaje automaticky, ale můžete je naimportovat hromadně!
@@ -122,7 +103,7 @@ cs:
     all: Vše
     set: Nastaven
     not_set: Nenastaven
-  more_actions: Další akce
+  bulk_actions: Hromadné akce
   potential_issues:
     label: Potenciální problémy
     broken: Nefunkční přístupové údaje
@@ -201,181 +182,6 @@ cs:
             </v-col>
             <v-col cols="auto" align-self="center">
               <v-tooltip location="top">
-                <template #activator="{ props: tooltipProps }">
-                  <v-menu offset-y>
-                    <template #activator="{ props: menuProps }">
-                      <v-btn
-                        color="defaultButton"
-                        v-bind="{ ...tooltipProps, ...menuProps }"
-                      >
-                        <v-icon size="small" class="mr-2"
-                          >fas fa-file-export</v-icon
-                        >
-                        {{ $t("export") }}
-                      </v-btn>
-                    </template>
-                    <v-list>
-                      <v-tooltip location="left">
-                        <template #activator="{ props }">
-                          <form :action="exportUrl" method="post">
-                            <input
-                              type="hidden"
-                              name="csrfmiddlewaretoken"
-                              style="display: none"
-                              :value="getCSRFToken"
-                            />
-                            <input
-                              :type="
-                                sushiCredentialsList.length > 0
-                                  ? 'submit'
-                                  : undefined
-                              "
-                              id="submitExportAll"
-                              style="display: none"
-                            />
-                            <label for="submitExportAll">
-                              <v-list-item
-                                @click="showAddCredentials"
-                                v-bind="props"
-                              >
-                                <v-list-item-title>
-                                  {{ $t("export_all") }}
-                                  <v-badge
-                                    inline
-                                    color="secondary"
-                                    class="mt-0"
-                                  >
-                                    <template #badge>
-                                      <span class="text-white">{{
-                                        sushiCredentialsList.length
-                                      }}</span>
-                                    </template>
-                                  </v-badge>
-                                </v-list-item-title>
-                              </v-list-item>
-                            </label>
-                          </form>
-                        </template>
-                        {{ $t("export_all_tooltip") }}
-                      </v-tooltip>
-                      <v-tooltip location="left">
-                        <template #activator="{ props }">
-                          <form :action="exportUrl" method="post">
-                            <input
-                              type="hidden"
-                              name="csrfmiddlewaretoken"
-                              style="display: none"
-                              :value="getCSRFToken"
-                            />
-                            <div
-                              v-for="filteredCredential in filteredCredentials"
-                              :key="filteredCredential.pk"
-                              style="display: none"
-                            >
-                              <input
-                                type="hidden"
-                                :id="filteredCredential.pk"
-                                name="pk"
-                                :value="filteredCredential.pk"
-                              />
-                            </div>
-                            <input
-                              :type="
-                                filteredCredentials.length > 0
-                                  ? 'submit'
-                                  : undefined
-                              "
-                              id="submitExportFiltered"
-                              style="display: none"
-                            />
-                            <label for="submitExportFiltered">
-                              <v-list-item
-                                @click="showFilterCredentials"
-                                v-bind="props"
-                              >
-                                <v-list-item-title>
-                                  {{ $t("export_filtered") }}
-                                  <v-badge
-                                    inline
-                                    color="secondary"
-                                    class="mt-0"
-                                  >
-                                    <template #badge>
-                                      <span class="text-white">{{
-                                        filteredCredentials.length
-                                      }}</span>
-                                    </template>
-                                  </v-badge>
-                                </v-list-item-title>
-                              </v-list-item>
-                            </label>
-                          </form>
-                        </template>
-                        {{ $t("export_filtered_tooltip") }}
-                      </v-tooltip>
-                      <v-tooltip location="left">
-                        <template #activator="{ props }">
-                          <form :action="exportUrl" method="post">
-                            <input
-                              type="hidden"
-                              name="csrfmiddlewaretoken"
-                              style="display: none"
-                              :value="getCSRFToken"
-                            />
-                            <div
-                              v-for="checkedCredential in checkedCredentials"
-                              :key="checkedCredential.pk"
-                              style="display: none"
-                            >
-                              <input
-                                type="hidden"
-                                :id="checkedCredential.pk"
-                                name="pk"
-                                :value="checkedCredential.pk"
-                              />
-                            </div>
-                            <input
-                              :type="
-                                checkedCredentials.length > 0
-                                  ? 'submit'
-                                  : undefined
-                              "
-                              id="submitExportSelected"
-                              style="display: none"
-                            />
-                            <label for="submitExportSelected">
-                              <v-list-item
-                                @click="showSelectCredentials"
-                                v-bind="props"
-                              >
-                                <v-list-item-title>
-                                  {{ $t("export_selected") }}
-                                  <v-badge
-                                    inline
-                                    color="secondary"
-                                    class="mt-0"
-                                  >
-                                    <template #badge>
-                                      <span class="text-white">{{
-                                        checkedCredentials.length
-                                      }}</span>
-                                    </template>
-                                  </v-badge>
-                                </v-list-item-title>
-                              </v-list-item>
-                            </label>
-                          </form>
-                        </template>
-                        {{ $t("export_selected_tooltip") }}
-                      </v-tooltip>
-                    </v-list>
-                  </v-menu>
-                </template>
-                {{ $t("export_tooltip") }}
-              </v-tooltip>
-            </v-col>
-            <v-col cols="auto" align-self="center">
-              <v-tooltip location="top">
                 <template #activator="{ props }">
                   <v-btn
                     v-bind="props"
@@ -400,8 +206,12 @@ cs:
                         v-bind="{ ...menuProps, ...tooltipProps }"
                         color="defaultButton"
                         :loading="moreActionsLoading"
-                        >…</v-btn
                       >
+                        <v-icon size="small" class="mr-2"
+                          >fa fa-layer-group</v-icon
+                        >
+                        {{ $t("bulk_actions") }}
+                      </v-btn>
                     </template>
                     <v-list>
                       <v-tooltip location="bottom" max-width="600px">
@@ -491,10 +301,118 @@ cs:
                         </template>
                         {{ $t("sushi.report_type_from_platform.tooltip") }}
                       </v-tooltip>
+                      <v-tooltip location="bottom">
+                        <template #activator="{ props }">
+                          <v-list-item
+                            :disabled="
+                              checkedCredentials.length === 0 ||
+                              moreActionsLoading
+                            "
+                            @click="$refs.exportSubmit.submit()"
+                            v-bind="props"
+                          >
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                                >fa fa-file-export</v-icon
+                              >
+                              {{ $t("export_selected") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedCredentials.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
+                            <form
+                              :action="exportUrl"
+                              method="post"
+                              ref="exportSubmit"
+                            >
+                              <input
+                                type="hidden"
+                                name="csrfmiddlewaretoken"
+                                style="display: none"
+                                :value="getCSRFToken"
+                              />
+                              <div
+                                v-for="checkedCredential in checkedCredentials"
+                                :key="checkedCredential.pk"
+                                style="display: none"
+                              >
+                                <input
+                                  type="hidden"
+                                  :id="checkedCredential.pk"
+                                  name="pk"
+                                  :value="checkedCredential.pk"
+                                />
+                              </div>
+                            </form>
+                          </v-list-item>
+                        </template>
+                        {{ $t("export_selected_tooltip") }}
+                      </v-tooltip>
+                      <v-tooltip location="bottom" max-width="600px">
+                        <template #activator="{ props }">
+                          <v-list-item
+                            :disabled="
+                              checkedCredentialsNotEnabled.length === 0 ||
+                              moreActionsLoading
+                            "
+                            @click="updateEnabled(true)"
+                            v-bind="props"
+                          >
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                                >fa fa-play</v-icon
+                              >
+                              {{ $t("sushi.set_enabled") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedCredentialsNotEnabled.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
+                          </v-list-item>
+                        </template>
+                        {{ $t("sushi.set_enabled_tooltip") }}
+                      </v-tooltip>
+                      <v-tooltip location="bottom" max-width="600px">
+                        <template #activator="{ props }">
+                          <v-list-item
+                            :disabled="
+                              checkedCredentialsEnabled.length === 0 ||
+                              moreActionsLoading
+                            "
+                            @click="updateEnabled(false)"
+                            v-bind="props"
+                          >
+                            <v-list-item-title>
+                              <v-icon
+                                class="mr-2"
+                                size="small"
+                                color="lighterIcons"
+                                >fa fa-ban</v-icon
+                              >
+                              {{ $t("sushi.unset_enabled") }}
+                              <v-badge color="secondary" inline class="mt-1">
+                                <template #badge>
+                                  {{ checkedCredentialsEnabled.length }}
+                                </template>
+                              </v-badge>
+                            </v-list-item-title>
+                          </v-list-item>
+                        </template>
+                        {{ $t("sushi.unset_enabled_tooltip") }}
+                      </v-tooltip>
                     </v-list>
                   </v-menu>
                 </template>
-                {{ $t("more_actions") }}
+                {{ $t("bulk_actions") }}
               </v-tooltip>
             </v-col>
           </v-row>
@@ -619,16 +537,17 @@ cs:
               ></v-select>
             </v-col>
             <v-col
-              v-if="showPlatformFilter"
+              v-if="!fixedPlatformId"
               :style="$vuetify.display.xs ? 'ml-2' : ''"
               :cols="!$vuetify.display.smAndDown ? 2 : 5"
             >
               <PlatformSelector
-                :platforms="platforms"
+                :platforms="platformsSorted"
                 style="min-width: 100px"
                 v-model="platformFilter"
                 :label="$t('labels.platform')"
                 density="comfortable"
+                :loading="loading"
               />
             </v-col>
             <v-col :cols="!$vuetify.display.smAndDown ? 2 : 5">
@@ -651,10 +570,12 @@ cs:
         type="table"
         class="mt-5"
       ></v-skeleton-loader>
-      <v-data-table
+      <v-data-table-server
         v-else
-        v-model="checkedRows"
-        :items="filteredCredentials"
+        v-model="checkedCredentials"
+        :items-length="sushiCredentialsCount"
+        item-key="pk"
+        :items="sushiCredentialsList"
         :headers="headers"
         v-model:items-per-page="itemsPerPage"
         v-model:sort-by="orderBy"
@@ -662,240 +583,327 @@ cs:
         multi-sort
         show-select
         density="default"
-        item-value="pk"
-        ref="credentialsTable"
         return-object
       >
-        <template #item.counter_reports="{ item }">
-          <v-chip
-            v-for="(report, index) in item.counter_reports_long"
-            :key="index"
-            class="mr-1 px-2"
-            :class="
-              item.use_counter_reports_from_platform
-                ? 'font-weight-regular'
-                : 'font-weight-bold'
-            "
-            :color="
-              report.broken || item.use_counter_reports_from_platform
-                ? '#444444'
-                : 'teal-darken-2'
-            "
-            variant="tonal"
-            label
-            size="small"
+        <template #item.counter_reports="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
           >
-            <SushiReportIndicator
-              :report="report"
-              :derived-from-platform="item.use_counter_reports_from_platform"
-            ></SushiReportIndicator>
-          </v-chip>
-        </template>
-        <template #item.counter_version="{ item }">
-          <v-tooltip location="bottom" v-if="item.can_update && !item.broken">
-            <template v-slot:activator="{ props }">
-              <span v-bind="props">
-                <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
-                <i
-                  class="fa-arrow-alt-circle-up ml-1"
-                  :class="
-                    item.has_51_provider ? 'text-info fas' : 'text-info far'
+            <span>
+              <v-chip
+                v-for="(report, index) in item.counter_reports_long"
+                :key="index"
+                class="mr-1 px-2"
+                :class="
+                  item.use_counter_reports_from_platform
+                    ? 'font-weight-regular'
+                    : 'font-weight-bold'
+                "
+                :color="
+                  report.broken || item.use_counter_reports_from_platform
+                    ? '#444444'
+                    : 'teal-darken-2'
+                "
+                variant="tonal"
+                label
+                size="small"
+              >
+                <SushiReportIndicator
+                  :report="report"
+                  :derived-from-platform="
+                    item.use_counter_reports_from_platform
                   "
-                ></i>
-              </span>
-            </template>
-            {{
-              item.has_51_provider
-                ? $t("sushi.update.can_update_verified_legend")
-                : $t("sushi.update.can_update_legend")
-            }}
-          </v-tooltip>
-
-          <v-tooltip
-            location="bottom"
-            v-else-if="item.can_update && item.broken"
-          >
-            <template v-slot:activator="{ props }">
-              <span v-bind="props">
-                <strong>{{ counterVersionToStr(item.counter_version) }}</strong>
-                <i class="far fa-arrow-alt-circle-left ml-1 text-error"></i>
-              </span>
-            </template>
-            {{ $t("sushi.update.cannot_update_broken_tt") }}
-          </v-tooltip>
-
-          <strong v-else>{{
-            counterVersionToStr(item.counter_version)
-          }}</strong>
+                ></SushiReportIndicator>
+              </v-chip>
+            </span>
+          </v-lazy>
         </template>
-        <template #item.last_harvestable_month="{ item }">
-          <span v-if="item.last_harvestable_month">{{
-            item.last_harvestable_month.slice(0, 7)
-          }}</span>
+        <template #item.counter_version="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <v-tooltip location="bottom" v-if="item.can_update && !item.broken">
+              <template v-slot:activator="{ props }">
+                <span v-bind="props">
+                  <strong>{{
+                    counterVersionToStr(item.counter_version)
+                  }}</strong>
+                  <i
+                    class="fa-arrow-alt-circle-up ml-1"
+                    :class="
+                      item.has_51_provider ? 'text-info fas' : 'text-info far'
+                    "
+                  ></i>
+                </span>
+              </template>
+              {{
+                item.has_51_provider
+                  ? $t("sushi.update.can_update_verified_legend")
+                  : $t("sushi.update.can_update_legend")
+              }}
+            </v-tooltip>
+
+            <v-tooltip
+              location="bottom"
+              v-else-if="item.can_update && item.broken"
+            >
+              <template v-slot:activator="{ props }">
+                <span v-bind="props">
+                  <strong>{{
+                    counterVersionToStr(item.counter_version)
+                  }}</strong>
+                  <i class="far fa-arrow-alt-circle-left ml-1 text-error"></i>
+                </span>
+              </template>
+              {{ $t("sushi.update.cannot_update_broken_tt") }}
+            </v-tooltip>
+
+            <strong v-else>{{
+              counterVersionToStr(item.counter_version)
+            }}</strong>
+          </v-lazy>
         </template>
-        <template #item.actions="{ item }">
-          <v-btn
-            v-if="!item.locked_for_me"
-            variant="text"
-            size="small"
-            color="secondary"
-            @click.stop="
-              selectedCredentials = item;
-              showEditDialog = true;
-            "
+        <template #item.last_harvestable_month="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
           >
-            <v-icon left size="x-small" class="mr-4">fas fa-edit</v-icon>
-            {{ $t("actions.edit") }}
-          </v-btn>
-          <v-btn
-            variant="text"
-            size="small"
-            color="secondary"
-            @click.stop="
-              selectedCredentials = item;
-              showDetailsDialog = true;
-            "
+            <span>
+              <span v-if="item.last_harvestable_month">{{
+                item.last_harvestable_month.slice(0, 7)
+              }}</span>
+            </span>
+          </v-lazy>
+        </template>
+        <template #item.actions="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
           >
-            <v-icon left size="x-small" class="mr-4">fa fa-list</v-icon>
-            {{ $t("actions.show_attempts") }}
-          </v-btn>
-          <v-tooltip location="left">
-            <template v-slot:activator="{ props }">
+            <span>
               <v-btn
-                v-bind="props"
+                v-if="!item.locked_for_me"
                 variant="text"
                 size="small"
                 color="secondary"
                 @click.stop="
                   selectedCredentials = item;
-                  showDataDialog = true;
+                  showEditDialog = true;
                 "
               >
-                <v-icon left size="x-small" class="mr-4"
-                  >far fa-calendar-alt</v-icon
-                >
-                {{ $t("actions.show_overview") }}
+                <v-icon left size="x-small" class="mr-4">fas fa-edit</v-icon>
+                {{ $t("actions.edit") }}
               </v-btn>
-            </template>
-            {{ $t("actions.show_overview_details") }}
-          </v-tooltip>
-        </template>
-        <template #item.title="{ item }">
-          <v-tooltip
-            v-if="warnSameCredentials(item)"
-            max-width="400"
-            location="bottom"
-          >
-            <template v-slot:activator="{ props }">
-              <v-icon color="warning" class="pe-1" size="small" v-bind="props"
-                >fa fa-copy</v-icon
-              >
-              {{ item.title }}
-            </template>
-            {{ $t(warnSameCredentialsText(item)) }}
-          </v-tooltip>
-          <span v-else>
-            {{ item.title }}
-          </span>
-        </template>
-        <template #item.enabled="{ item }">
-          <CheckMark
-            true-color="error"
-            false-color="error"
-            v-if="item.broken"
-            :model-value="item.enabled"
-          ></CheckMark>
-          <CheckMark
-            true-color="warning"
-            false-color="warning"
-            v-else-if="!item.verified"
-            :model-value="item.enabled"
-          ></CheckMark>
-          <CheckMark v-else :model-value="item.enabled"></CheckMark>
-          <v-tooltip location="bottom" v-if="item.broken" max-width="400">
-            <template v-slot:activator="{ props }">
-              <v-icon class="ml-1" size="small" color="error" v-bind="props"
-                >fa fa-exclamation-triangle</v-icon
-              >
-            </template>
-            {{ $t("is_broken") }}
-          </v-tooltip>
-          <v-tooltip
-            location="bottom"
-            v-else-if="!item.verified"
-            max-width="400"
-          >
-            <template v-slot:activator="{ props }">
-              <v-icon size="small" class="ml-1" color="warning" v-bind="props"
-                >fa fa-exclamation-triangle</v-icon
-              >
-            </template>
-            {{ $t("unverified_tooltip") }}
-          </v-tooltip>
-        </template>
-        <template #item.outside_consortium="{ item }">
-          <CheckMark :model-value="item.outside_consortium"></CheckMark>
-        </template>
-        <template #item.locked="{ item }">
-          <!-- locked for me -->
-          <v-tooltip location="bottom" v-if="item.locked && item.locked_for_me">
-            <template v-slot:activator="{ props }">
-              <v-icon size="small" v-bind="props" color="red"
-                >fa fa-fw fa-lock</v-icon
-              >
-            </template>
-            {{ $t("is_locked") }} {{ $t("cannot_edit") }}
-          </v-tooltip>
-          <!-- locked, but I can edit -->
-          <v-tooltip location="bottom" v-else-if="item.locked">
-            <template v-slot:activator="{ props }">
-              <v-icon size="small" v-bind="props" color="red"
-                >fa fa-fw fa-lock</v-icon
-              >
-            </template>
-            {{ $t("is_locked") }} {{ $t("can_edit") }}
-          </v-tooltip>
-          <!-- not locked at all -->
-          <v-tooltip location="bottom" v-else>
-            <template v-slot:activator="{ props }">
-              <v-icon size="small" v-bind="props" color="green"
-                >fa fa-fw fa-lock-open</v-icon
-              >
-            </template>
-            {{ $t("is_unlocked") }}
-          </v-tooltip>
-          <v-tooltip location="bottom" v-if="item.can_lock">
-            <template v-slot:activator="{ props }">
               <v-btn
                 variant="text"
-                icon
-                @click="toggleLock(item)"
-                v-bind="props"
-                ><v-icon size="small" color="#0000008a"
-                  >fas fa-key</v-icon
-                ></v-btn
+                size="small"
+                color="secondary"
+                @click.stop="
+                  selectedCredentials = item;
+                  showDetailsDialog = true;
+                "
               >
-            </template>
-            {{ $t("can_lock") }}
-          </v-tooltip>
+                <v-icon left size="x-small" class="mr-4">fa fa-list</v-icon>
+                {{ $t("actions.show_attempts") }}
+              </v-btn>
+              <v-tooltip location="left">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    variant="text"
+                    size="small"
+                    color="secondary"
+                    @click.stop="
+                      selectedCredentials = item;
+                      showDataDialog = true;
+                    "
+                  >
+                    <v-icon left size="x-small" class="mr-4"
+                      >far fa-calendar-alt</v-icon
+                    >
+                    {{ $t("actions.show_overview") }}
+                  </v-btn>
+                </template>
+                {{ $t("actions.show_overview_details") }}
+              </v-tooltip>
+            </span>
+          </v-lazy>
         </template>
-        <template #item.organization="{ item }">
-          <span>{{ item.organization.name }}</span>
-          <v-tooltip location="bottom" v-if="item.last_updated_by">
-            <template v-slot:activator="{ props }">
-              <span v-bind="props">
-                <i class="text-grey-lighten-1 fas fa-user ml-1"></i>
+        <template #item.title="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <v-tooltip
+                v-if="warnSameCredentials(item)"
+                max-width="400"
+                location="bottom"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-icon
+                    color="warning"
+                    class="pe-1"
+                    size="small"
+                    v-bind="props"
+                    >fa fa-copy</v-icon
+                  >
+                  {{ item.title }}
+                </template>
+                {{ $t(warnSameCredentialsText(item)) }}
+              </v-tooltip>
+              <span v-else>
+                {{ item.title }}
               </span>
-            </template>
-            {{
-              $t("last_updated_tooltip", {
-                time: isoDateTimeFormat(item.last_updated),
-                user: userToString(item.last_updated_by, "-", true),
-              })
-            }}
-          </v-tooltip>
+            </span>
+          </v-lazy>
         </template>
-      </v-data-table>
+        <template #item.enabled="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <CheckMark
+                true-color="error"
+                false-color="error"
+                v-if="item.broken"
+                :model-value="item.enabled"
+              ></CheckMark>
+              <CheckMark
+                true-color="warning"
+                false-color="warning"
+                v-else-if="!item.verified"
+                :model-value="item.enabled"
+              ></CheckMark>
+              <CheckMark v-else :model-value="item.enabled"></CheckMark>
+              <v-tooltip location="bottom" v-if="item.broken" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-icon class="ml-1" size="small" color="error" v-bind="props"
+                    >fa fa-exclamation-triangle</v-icon
+                  >
+                </template>
+                {{ $t("is_broken") }}
+              </v-tooltip>
+              <v-tooltip
+                location="bottom"
+                v-else-if="!item.verified"
+                max-width="400"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-icon
+                    size="small"
+                    class="ml-1"
+                    color="warning"
+                    v-bind="props"
+                    >fa fa-exclamation-triangle</v-icon
+                  >
+                </template>
+                {{ $t("unverified_tooltip") }}
+              </v-tooltip>
+            </span>
+          </v-lazy>
+        </template>
+        <template #item.outside_consortium="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <CheckMark :model-value="item.outside_consortium"></CheckMark>
+            </span>
+          </v-lazy>
+        </template>
+        <template #item.lock_level="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <!-- locked for me -->
+              <v-tooltip
+                location="bottom"
+                v-if="item.locked && item.locked_for_me"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-icon size="small" v-bind="props" color="red"
+                    >fa fa-fw fa-lock</v-icon
+                  >
+                </template>
+                {{ $t("is_locked") }} {{ $t("cannot_edit") }}
+              </v-tooltip>
+              <!-- locked, but I can edit -->
+              <v-tooltip location="bottom" v-else-if="item.locked">
+                <template v-slot:activator="{ props }">
+                  <v-icon size="small" v-bind="props" color="red"
+                    >fa fa-fw fa-lock</v-icon
+                  >
+                </template>
+                {{ $t("is_locked") }} {{ $t("can_edit") }}
+              </v-tooltip>
+              <!-- not locked at all -->
+              <v-tooltip location="bottom" v-else>
+                <template v-slot:activator="{ props }">
+                  <v-icon size="small" v-bind="props" color="green"
+                    >fa fa-fw fa-lock-open</v-icon
+                  >
+                </template>
+                {{ $t("is_unlocked") }}
+              </v-tooltip>
+              <v-tooltip location="bottom" v-if="item.can_lock">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    variant="text"
+                    icon
+                    @click="toggleLock(item)"
+                    v-bind="props"
+                    ><v-icon size="small" color="#0000008a"
+                      >fas fa-key</v-icon
+                    ></v-btn
+                  >
+                </template>
+                {{ $t("can_lock") }}
+              </v-tooltip>
+            </span>
+          </v-lazy>
+        </template>
+        <template #item.organization__name="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <span>{{ item.organization.name }}</span>
+              <v-tooltip location="bottom" v-if="item.last_updated_by">
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props">
+                    <i class="text-grey-lighten-1 fas fa-user ml-1"></i>
+                  </span>
+                </template>
+                {{
+                  $t("last_updated_tooltip", {
+                    time: isoDateTimeFormat(item.last_updated),
+                    user: userToString(item.last_updated_by, "-", true),
+                  })
+                }}
+              </v-tooltip>
+            </span>
+          </v-lazy>
+        </template>
+        <template #header.data-table-select>
+          <SelectAllCheckbox
+            :selected-count="checkedCredentials.length"
+            :selected-on-page-count="checkedCredentialsOnPage.length"
+            :total-count="sushiCredentialsCount"
+            :on-page-count="sushiCredentialsList.length"
+            @deselect="checkedCredentials = []"
+            @select-all-on-page="selectAllOnPage"
+            @select-all="selectAllCredentials"
+          ></SelectAllCheckbox>
+        </template>
+      </v-data-table-server>
     </v-card>
     <v-dialog
       v-model="showEditDialog"
@@ -907,8 +915,6 @@ cs:
         v-model="showEditDialog"
         @update-credentials="updateCredentials"
         @deleted="deleteCredentials"
-        @set-dirty="reloadSelectedCredentials"
-        :existing-credentials="sushiCredentialsList"
         key="edit"
         @close-dialog="showEditDialog = false"
       ></SushiCredentialsEditDialog>
@@ -923,8 +929,6 @@ cs:
         @close-dialog="showCreateDialog = false"
         @update-credentials="updateCredentials"
         @deleted="deleteCredentials"
-        @set-dirty="reloadSelectedCredentials"
-        :existing-credentials="sushiCredentialsList"
         key="create"
         :fixed-platform="platformId"
       ></SushiCredentialsEditDialog>
@@ -976,7 +980,7 @@ cs:
       <SushiCredentialsDataDialog
         :credentials="selectedCredentials"
         @close="closeDataDialog"
-        @reload-credentials="reloadSelectedCredentials"
+        @reload-credentials="loadSushiCredentialsList"
       ></SushiCredentialsDataDialog>
     </v-dialog>
     <v-dialog
@@ -1019,24 +1023,25 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import Cookies from "js-cookie";
-import { mapActions, mapGetters } from "vuex";
-import debounce from "lodash/debounce";
-import CheckMark from "@/components/util/CheckMark";
-import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import CloneCredentialsToNewerWidget from "@/components/sushi/CloneCredentialsToNewerWidget";
+import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
+import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
 import MarkCredentialsAsFixedWidget from "@/components/sushi/MarkCredentialsAsFixedWidget";
 import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
-import stateTracking from "@/mixins/stateTracking";
-import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
-import { counterVersionToStr } from "@/libs/sushi";
+import SelectAllCheckbox from "@/components/tables/SelectAllCheckbox";
+import CheckMark from "@/components/util/CheckMark";
 import { isoDateTimeFormat } from "@/libs/dates";
+import { counterVersionToStr } from "@/libs/sushi";
 import { userToString } from "@/libs/user";
+import stateTracking from "@/mixins/stateTracking";
+import axios from "axios";
+import Cookies from "js-cookie";
+import debounce from "lodash/debounce";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "SushiCredentialsManagementWidget",
@@ -1052,6 +1057,7 @@ export default {
     SushiCredentialsEditDialog,
     SushiCredentialsDataDialog,
     SushiReportIndicator,
+    SelectAllCheckbox,
   },
   mixins: [stateTracking],
 
@@ -1063,9 +1069,9 @@ export default {
     organizationId: {
       default: -1,
       type: Number,
-      required: false,
+      required: true,
     },
-    platformId: {
+    fixedPlatformId: {
       default: null,
       type: Number,
       required: false,
@@ -1074,17 +1080,17 @@ export default {
       default: null,
       type: String,
     },
-    showPlatformFilter: {
-      default: false,
-      type: Boolean,
-    },
   },
 
   data() {
     return {
+      selectAllLoading: false,
       sushiCredentialsList: [],
+      sushiCredentialsCount: 0,
+      platforms: [],
       search: "",
       selectedCredentials: null,
+      immediateRenderCount: 12,
       showEditDialog: false,
       showDetailsDialog: false,
       showCreateDialog: false,
@@ -1095,19 +1101,17 @@ export default {
       loading: false,
       counterVersion: null,
       withLastHarvestableMonthSet: null,
-      checkedRows: [],
+      checkedCredentials: [],
       showTestDialog: false,
       potentialIssuesFilter: this.potentialIssues,
-      exportAllCredentialsUrl:
-        "/api/sushi-credentials/export-all-credentials/?export_all=true",
       platformFilter: null,
       moreActionsLoading: false,
       // table options
       page: 1,
       itemsPerPage: 25,
       orderBy: [
-        { key: "organization", order: "asc" },
-        { key: "platform.name", order: "asc" },
+        { key: "organization__name", order: "asc" },
+        { key: "platform__name", order: "asc" },
         { key: "counter_version", order: "desc" },
       ],
       // state tracking support
@@ -1163,7 +1167,6 @@ export default {
       consortialInstall: "consortialInstall",
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
-      selectedOrganization: "selectedOrganization",
     }),
     getCSRFToken() {
       let csrftoken = Cookies.get("csrftoken");
@@ -1182,12 +1185,12 @@ export default {
           title: this.$i18n.t("organization"),
           value: "organization.name",
           class: "wrap",
-          key: "organization",
+          key: "organization__name",
         },
         {
           title: this.$i18n.t("platform"),
           value: "platform.name",
-          key: "platform.name",
+          key: "platform__name",
         },
         {
           title: this.$i18n.t("title_fields.counter_version"),
@@ -1220,7 +1223,7 @@ export default {
           title: this.$i18n.t("title_fields.lock"),
           value: "locked",
           show: this.consortialInstall && large,
-          key: "locked",
+          key: "lock_level",
         },
         {
           title: this.$i18n.t("title_fields.actions"),
@@ -1241,84 +1244,30 @@ export default {
       }, 500),
     },
     dataUrl() {
-      let base = `/api/sushi-credentials/?organization=${this.organizationId}`;
-      if (this.platformId) {
-        base += `&platform=${this.platformId}`;
-      }
-      return base;
-    },
-    filteredCredentials() {
-      return this.sushiCredentialsList
-        .filter((item) => {
-          switch (this.potentialIssuesFilter) {
-            case "broken":
-              return item.broken || item.has_broken_reports;
-            case "not_validated":
-              return !item.verified;
-            case "can_update":
-              return item.can_update && !item.broken;
-            case "can_update_verified":
-              return item.can_update && item.has_51_provider && !item.broken;
-            case "duplicated":
-              return (
-                (item.same_global > 1 && this.consortialInstall) ||
-                item.same_in_org > 1
-              );
-            default:
-              return true;
-          }
-        })
-        .filter(
-          (item) =>
-            this.counterVersion === null ||
-            this.counterVersion === item.counter_version,
-        )
-        .filter(
-          (item) =>
-            this.withLastHarvestableMonthSet === null ||
-            this.withLastHarvestableMonthSet === !!item.last_harvestable_month,
-        )
-        .filter(this.createSearchFilter())
-        .filter((item) =>
-          this.platformFilter ? item.platform.pk === this.platformFilter : true,
-        );
-    },
-
-    checkedCredentials() {
-      let filteredIds = new Set(
-        this.filteredCredentials.map((item) => item.pk),
-      );
-      return this.checkedRows.filter((item) => filteredIds.has(item.pk));
+      return "/api/sushi-credentials/";
     },
     exportUrl() {
       let base = `/api/sushi-credentials/export-credentials/?organization=${this.organizationId}`;
-      if (this.platformId) {
-        base += `&platform=${this.platformId}`;
+      if (this.fixedPlatformId) {
+        base += `&platform=${this.fixedPlatformId}`;
       }
       return base;
     },
     exportForImportUrl() {
       let base = `/api/sushi-credentials/import-template/?organization=${this.organizationId}`;
-      if (this.platformId) {
-        base += `&platform=${this.platformId}`;
+      if (this.fixedPlatformId) {
+        base += `&platform=${this.fixedPlatformId}`;
       }
       return base;
     },
-    platforms() {
-      let platforms = new Set();
-      let ret = [];
-      this.sushiCredentialsList.forEach((item) => {
-        if (!platforms.has(item.platform.pk)) {
-          platforms.add(item.platform.pk);
-          ret.push(item.platform);
-        }
-      });
-      return ret.sort((a, b) => a.name.localeCompare(b.name));
+    platformsSorted() {
+      return this.platforms.toSorted((a, b) => a.name.localeCompare(b.name));
+    },
+    platformMap() {
+      return new Map(this.platforms.map((p) => [p.pk, p]));
     },
     checkedBrokenCredentials() {
-      return this.checkedCredentials.filter(
-        (e) => e.broken || e.has_broken_reports,
-      );
+      return this.checkedCredentials.filter((e) => e.any_broken);
     },
     checkedUpdatableCredentials() {
       return this.checkedCredentials.filter((e) => e.can_update && !e.broken);
@@ -1327,6 +1276,54 @@ export default {
       return this.checkedCredentials.filter(
         (e) => !e.use_counter_reports_from_platform,
       );
+    },
+    credentialsListUrlFilters() {
+      let params = {
+        page_size: this.itemsPerPage,
+      };
+      if (this.searchDebounced) {
+        params.search = this.searchDebounced;
+      }
+      if (this.platformFilter) {
+        params.platform = this.platformFilter;
+      }
+      if (this.organizationId) {
+        params.organization = this.organizationId;
+      }
+      if (this.potentialIssuesFilter) {
+        params.potential_issues = this.potentialIssuesFilter;
+      }
+      if (this.withLastHarvestableMonthSet != null) {
+        params.last_harvestable_month = this.withLastHarvestableMonthSet;
+      }
+      if (this.counterVersion) {
+        params.counter_version = this.counterVersion;
+      }
+      if (this.orderingFilter) {
+        params.ordering = this.orderingFilter;
+      }
+      return new URLSearchParams(params);
+    },
+    currentPlatformFilter() {
+      // If platform is fixed always use the filter
+      return this.fixedPlatformId || this.platformFilter;
+    },
+    orderingFilter() {
+      return this.orderBy
+        .map((e) => `${e.order == "desc" ? "-" : ""}${e.key}`)
+        .join(",");
+    },
+    checkedCredentialsOnPage() {
+      const checkedCredentialsIds = this.checkedCredentials.map((e) => e.pk);
+      return this.sushiCredentialsList.filter((e) =>
+        checkedCredentialsIds.includes(e.pk),
+      );
+    },
+    checkedCredentialsEnabled() {
+      return this.checkedCredentials.filter((e) => e.enabled);
+    },
+    checkedCredentialsNotEnabled() {
+      return this.checkedCredentials.filter((e) => !e.enabled);
     },
   },
 
@@ -1370,42 +1367,17 @@ export default {
         this.downloadImportTemplate();
       }
     },
-    showFilterCredentials() {
-      if (this.filteredCredentials.length === 0) {
-        this.$confirm(this.$t("filter_at_least_one_credentials"), {
-          title: this.$t("no_credentials_filtered"),
-          buttonTrueText: this.$t("close"),
-          buttonFalseText: null,
-          color: "warning",
-          icon: "fa fa-warning",
-        });
-      }
-    },
-    showSelectCredentials() {
-      if (this.checkedCredentials.length === 0) {
-        this.$confirm(this.$t("select_at_least_one_credentials"), {
-          title: this.$t("no_credentials_selected"),
-          buttonTrueText: this.$t("close"),
-          buttonFalseText: null,
-          color: "warning",
-          icon: "fa fa-warning",
-        });
-      }
-    },
-    showAddCredentials() {
-      if (this.sushiCredentialsList.length === 0) {
-        this.$confirm(this.$t("first_add_some_credentials"), {
-          title: this.$t("there_are_no_credentials"),
-          buttonTrueText: this.$t("close"),
-          buttonFalseText: null,
-        });
-      }
-    },
     async loadSushiCredentialsList() {
       this.loading = true;
       try {
-        let response = await axios.get(this.dataUrl);
-        this.sushiCredentialsList = response.data;
+        let response = await axios.get(
+          `${this.dataUrl}?${this.credentialsListUrlFilters.toString()}&page=${
+            this.page
+          }`,
+        );
+        this.sushiCredentialsList = response.data.results;
+        this.sushiCredentialsCount = response.data.count;
+        this.platforms = response.data.platforms;
         this.sushiCredentialsList.forEach((item) =>
           this.preprocessCredentials(item),
         );
@@ -1415,21 +1387,6 @@ export default {
         });
       } finally {
         this.loading = false;
-      }
-    },
-    async reloadSelectedCredentials() {
-      if (this.selectedCredentials) {
-        try {
-          let response = await axios.get(
-            `/api/sushi-credentials/${this.selectedCredentials.pk}/`,
-          );
-          this.updateCredentials(response.data);
-        } catch (error) {
-          this.showSnackbar({
-            content: "Could not reload credentials: " + error,
-            color: "error",
-          });
-        }
       }
     },
     updateCredentials(credentials) {
@@ -1446,21 +1403,17 @@ export default {
       this.preprocessCredentials(credentials);
       // the new credentials as returned by the edit dialog
       // we put them at the right place in the list of credentials
-      let found = false;
-      for (let i = 0; i < this.sushiCredentialsList.length; i++) {
-        if (this.sushiCredentialsList[i].pk === credentials.pk) {
-          this.sushiCredentialsList[i] = credentials;
-          found = true;
-          break;
-        }
-      }
-      // checkedRows contains a copy of the credentials, so we need to update it as well
-      for (let i = 0; i < this.checkedRows.length; i++) {
-        if (this.checkedRows[i].pk === credentials.pk) {
-          this.checkedRows[i] = credentials;
-          break;
-        }
-      }
+      let found = this.sushiCredentialsList
+        .map((e) => e.pk)
+        .includes(credentials.pk);
+
+      // Uncheck credentials when an action over a single credentials was performed
+      this.checkedCredentials = [];
+
+      this.sushiCredentialsList = this.sushiCredentialsList.map((e) =>
+        e.pk == credentials.pk ? credentials : e,
+      );
+
       if (!found) {
         this.loadSushiCredentialsList();
       }
@@ -1473,14 +1426,11 @@ export default {
       this.loadSushiCredentialsList();
     },
     preprocessCredentials(item) {
-      item["has_broken_reports"] = !!item.counter_reports_long.filter(
-        (report) => report.broken,
-      ).length;
-      //tem["isSelectable"] = !item.broken;
-      if (item.broken) {
-        // we need to make sure a broken item is not checked
-        this.checkedRows = this.checkedRows.filter((row) => row.pk !== item.pk);
+      if (typeof item.platform === "number") {
+        // Convert platfrom id to platform object
+        item.platform = this.platformMap.get(item.platform);
       }
+
       if (!item.platform.name) {
         // use platform short_name instead of name if name is empty
         item.platform.name = item.platform.short_name;
@@ -1516,7 +1466,7 @@ export default {
     applyLastHarvestableMonthDialog({ updated }) {
       if (updated > 0) {
         this.loadSushiCredentialsList();
-        this.checkedRows = [];
+        this.checkedCredentials = [];
       }
       this.showLastHarvestableMonthDialog = false;
     },
@@ -1526,7 +1476,7 @@ export default {
     closeCloneToNewer(refresh) {
       if (refresh) {
         this.loadSushiCredentialsList();
-        this.checkedRows = [];
+        this.checkedCredentials = [];
       }
       this.showCloneToNewerDialog = false;
     },
@@ -1579,7 +1529,7 @@ export default {
               color: "success",
             });
             this.loadSushiCredentialsList();
-            this.checkedRows = [];
+            this.checkedCredentials = [];
           }
         } catch (error) {
           this.showSnackbar({
@@ -1591,6 +1541,43 @@ export default {
         } finally {
           this.moreActionsLoading = false;
         }
+      }
+    },
+    async updateEnabled(enabled) {
+      const credentials = enabled
+        ? this.checkedCredentialsNotEnabled
+        : this.checkedCredentialsEnabled;
+      const credentials_ids = credentials.map((e) => e.pk);
+      if (credentials_ids.length == 0) {
+        return;
+      }
+
+      this.moreActionsLoading = true;
+      try {
+        let response = await axios.post(
+          "/api/sushi-credentials/update-enabled/",
+          {
+            enabled: enabled,
+            credentials: credentials_ids,
+          },
+        );
+        if (response.data.updated > 0) {
+          this.showSnackbar({
+            content: enabled
+              ? this.$t("sushi.set_enabled_success")
+              : this.$t("sushi.unset_enabled_success"),
+            color: "success",
+          });
+          this.loadSushiCredentialsList();
+          this.checkedCredentials = [];
+        }
+      } catch (error) {
+        this.showSnackbar({
+          content: "Could not update credentials: " + error,
+          color: "error",
+        });
+      } finally {
+        this.moreActionsLoading = false;
       }
     },
     triggerCloneToNewer() {
@@ -1615,31 +1602,6 @@ export default {
       this.loadSushiCredentialsList();
       this.loadSushiCredentialsCount();
     },
-    createSearchFilter() {
-      let words = [];
-      if (this.search) {
-        words = this.search.toLowerCase().split(/ /);
-      }
-      function filter(item) {
-        for (let word of words) {
-          let match = false;
-          if (item.title.toLowerCase().indexOf(word) >= 0) match = true;
-          if (item.organization.short_name.toLowerCase().indexOf(word) >= 0)
-            match = true;
-          if (item.organization.name.toLowerCase().indexOf(word) >= 0)
-            match = true;
-          if (item.platform.name.toLowerCase().indexOf(word) >= 0) match = true;
-          if (item.platform.short_name.toLowerCase().indexOf(word) >= 0)
-            match = true;
-          if (!match) {
-            // no match for this word
-            return false;
-          }
-        }
-        return true;
-      }
-      return filter;
-    },
     warnSameCredentials(creds) {
       if (this.consortialInstall) {
         return creds.same_global > 1;
@@ -1658,18 +1620,44 @@ export default {
     },
     async credentialsClonedHandler() {
       await this.loadSushiCredentialsList();
-      if (startHarvesting) {
-        this.checkedRows = this.filteredCredentials.filter((e) =>
-          credentials_pks.includes(e.pk),
+      this.checkedCredentials = [];
+    },
+    selectAllOnPage() {
+      this.checkedCredentials = [...this.sushiCredentialsList];
+    },
+    async selectAllCredentials() {
+      this.selectAllLoading = true;
+      try {
+        let response = await axios.get(
+          `${this.dataUrl}?${this.credentialsListUrlFilters.toString()}`,
         );
-        this.showTestDialog = true;
-      } else {
-        this.checkedRows = [];
+        let downloaded = response.data.results;
+        downloaded.forEach((cred) => {
+          cred.platform = this.platformMap.get(cred.platform);
+        });
+        let downloadedMap = new Map(downloaded.map((e) => [e.pk, e]));
+
+        this.checkedCredentials = downloaded;
+        // Update current list objects
+        this.sushiCredentialsList = this.sushiCredentialsList.map((e) =>
+          downloadedMap.get(e.pk),
+        );
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error loading credentials to select: " + error,
+        });
+      } finally {
+        this.selectAllLoading = false;
       }
     },
   },
 
   watch: {
+    credentialsListUrlFilters() {
+      this.page = 1;
+      this.checkedCredentials = [];
+      this.loadSushiCredentialsList();
+    },
     showEditDialog(value) {
       if (!value) {
         this.selectedCredentials = null;
@@ -1683,6 +1671,9 @@ export default {
       }
     },
     dataUrl() {
+      this.loadSushiCredentialsList();
+    },
+    page() {
       this.loadSushiCredentialsList();
     },
     itemsPerPage() {

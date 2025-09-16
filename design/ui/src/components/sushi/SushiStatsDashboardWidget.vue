@@ -33,27 +33,29 @@ cs:
         :to="link"
         class="text-decoration-none"
         style="color: rgba(0, 0, 0, 0.6)"
-        >{{ credentialsCount }}</router-link
+        >{{ sushiCredentialsCount }}</router-link
       >
     </div>
     <div class="text-h5 mt-1 mb-10">
-      <v-tooltip location="bottom" v-if="brokenCredentialsCount">
+      <v-tooltip location="bottom" v-if="brokenSushiCredentialsCount">
         <template #activator="{ props }">
           <span v-bind="props">
             <router-link
               class="text-error text-decoration-none mr-1"
               :to="linkBroken"
             >
-              <span class="fa fa-bug small"></span>{{ brokenCredentialsCount }}
+              <span class="fa fa-bug small"></span
+              >{{ brokenSushiCredentialsCount }}
             </router-link>
           </span>
         </template>
         {{ $t("broken_count") }}
       </v-tooltip>
-      <v-tooltip location="bottom" v-if="inactiveCredentialsCount">
+      <v-tooltip location="bottom" v-if="inactiveSushiCredentialsCount">
         <template #activator="{ props }">
           <span v-bind="props" class="text-warning mr-1">
-            <span class="fa fa-ban small"></span>{{ inactiveCredentialsCount }}
+            <span class="fa fa-ban small"></span
+            >{{ inactiveSushiCredentialsCount }}
           </span>
         </template>
         {{ $t("inactive_count") }}
@@ -74,11 +76,11 @@ cs:
         :to="link"
         class="text-decoration-none"
         style="color: rgba(0, 0, 0, 0.6)"
-        >{{ reportCount }}</router-link
+        >{{ counterReportCount }}</router-link
       >
     </div>
     <div class="text-h5 mt-1">
-      <v-tooltip location="bottom" v-if="brokenReportsCount">
+      <v-tooltip location="bottom" v-if="brokenCounterReportCount">
         <template #activator="{ props }">
           <span v-bind="props">
             <router-link
@@ -86,13 +88,16 @@ cs:
               class="text-orange-darken-4 text-decoration-none mr-1"
             >
               <span class="fa fa-exclamation-triangle small"></span
-              >{{ brokenReportsCount }}
+              >{{ brokenCounterReportCount }}
             </router-link>
           </span>
         </template>
         {{ $t("broken_report_count") }}
       </v-tooltip>
-      <v-tooltip location="bottom" v-if="reportsFromBrokenCredentialsCount">
+      <v-tooltip
+        location="bottom"
+        v-if="counterReportsFromBrokenCredentialsCount"
+      >
         <template #activator="{ props }">
           <span v-bind="props">
             <router-link
@@ -100,16 +105,20 @@ cs:
               class="text-error text-decoration-none mr-1"
             >
               <span class="fa fa-bug small"></span
-              >{{ reportsFromBrokenCredentialsCount }}
+              >{{ counterReportsFromBrokenCredentialsCount }}
             </router-link>
           </span>
         </template>
         {{ $t("report_from_broken_credentials_count") }}
       </v-tooltip>
-      <v-tooltip location="bottom" v-if="inactiveReportsCount">
+      <v-tooltip
+        location="bottom"
+        v-if="counterReportsFromInactiveCredentialsCount"
+      >
         <template #activator="{ props }">
           <span v-bind="props" class="text-warning mr-1">
-            <span class="fa fa-ban small"></span>{{ inactiveReportsCount }}
+            <span class="fa fa-ban small"></span
+            >{{ counterReportsFromInactiveCredentialsCount }}
           </span>
         </template>
         {{ $t("inactive_report_count") }}
@@ -138,65 +147,31 @@ export default {
 
   data() {
     return {
-      sushiCredentials: [],
+      sushiCredentialsCount: 0,
+      brokenSushiCredentialsCount: 0,
+      inactiveSushiCredentialsCount: 0,
+      counterReportCount: 0,
+      brokenCounterReportCount: 0,
+      counterReportsFromInactiveCredentialsCount: 0,
+      counterReportsFromBrokenCredentialsCount: 0,
     };
   },
 
   computed: {
     ...mapState(["selectedOrganizationId"]),
-    credentialsCount() {
-      return this.sushiCredentials.length;
-    },
-    brokenCredentialsCount() {
-      return this.sushiCredentials.filter((item) => !!item.broken).length;
-    },
-    inactiveCredentialsCount() {
-      return this.sushiCredentials.filter((item) => !item.enabled).length;
-    },
     autoDownloadedCredentials() {
       return (
-        this.credentialsCount -
-        this.inactiveCredentialsCount -
-        this.brokenCredentialsCount
+        this.sushiCredentialsCount -
+        this.inactiveSushiCredentialsCount -
+        this.brokenSushiCredentialsCount
       );
-    },
-    reportCount() {
-      let count = 0;
-      this.sushiCredentials.forEach(
-        (item) => (count += item.counter_reports_long.length),
-      );
-      return count;
-    },
-    reportsFromBrokenCredentialsCount() {
-      let count = 0;
-      this.sushiCredentials
-        .filter((item) => !!item.broken)
-        .forEach((item) => (count += item.counter_reports_long.length));
-      return count;
-    },
-    brokenReportsCount() {
-      let count = 0;
-      this.sushiCredentials.forEach(
-        (item) =>
-          (count += item.counter_reports_long.filter(
-            (report) => !!report.broken,
-          ).length),
-      );
-      return count;
-    },
-    inactiveReportsCount() {
-      let count = 0;
-      this.sushiCredentials
-        .filter((item) => !item.enabled)
-        .forEach((item) => (count += item.counter_reports_long.length));
-      return count;
     },
     autoDownloadedReportsCount() {
       return (
-        this.reportCount -
-        this.brokenReportsCount -
-        this.reportsFromBrokenCredentialsCount -
-        this.inactiveReportsCount
+        this.counterReportCount -
+        this.brokenCounterReportCount -
+        this.counterReportsFromBrokenCredentialsCount -
+        this.counterReportsFromInactiveCredentialsCount
       );
     },
     link() {
@@ -211,14 +186,34 @@ export default {
     async fetchSushiCredentials() {
       if (!this.selectedOrganizationId) return;
 
-      this.sushiCredentials = [];
+      this.sushiCredentialsCount = 0;
+      this.brokenSushiCredentialsCount = 0;
+      this.inactiveSushiCredentialsCount = 0;
+      this.counterReportCount = 0;
+      this.brokenCounterReportCount = 0;
+      this.counterReportsFromInactiveCredentialsCount = 0;
+      this.counterReportsFromBrokenCredentialsCount = 0;
       const request = {
         url: "/api/sushi-credentials/",
-        params: { organization: this.selectedOrganizationId },
+        params: {
+          organization: this.selectedOrganizationId,
+          page: 1,
+          page_size: 10,
+        },
         label: "SUSHI credentials",
       };
       const { response } = await this.http(request);
-      this.sushiCredentials = response ? response.data : [];
+      if (response && !response.error) {
+        this.sushiCredentialsCount = response.data.count;
+        this.brokenSushiCredentialsCount = response.data.broken_count;
+        this.inactiveSushiCredentialsCount = response.data.inactive_count;
+        this.counterReportCount = response.data.report_count;
+        this.brokenCounterReportCount = response.data.broken_report_count;
+        this.counterReportsFromBrokenCredentialsCount =
+          response.data.report_from_broken_credentials_count;
+        this.counterReportsFromInactiveCredentialsCount =
+          response.data.report_from_inactive_credentials_count;
+      }
     },
   },
 

@@ -80,6 +80,12 @@ en:
       cannot_update_broken_legend: Credentials are broken and cannot be cloned
       i_am_sure: I really want to clone the selected credentials to COUNTER 5.1, even though the platform may not yet support it.
       harvest_new_credentials: Harvest data for the new credentials
+    set_enabled: Auto harvest on
+    set_enabled_tooltip: Turn on automatic harvesting for selected credentials
+    set_enabled_success: Auto harvest was turned on.
+    unset_enabled: Auto harvest off
+    unset_enabled_tooltip: Turn off automatic harvesting for selected credentials
+    unset_enabled_success: Auto harvest was turned off.
 
 cs:
   sushi:
@@ -165,3 +171,9 @@ cs:
       cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
       i_am_sure: Opravdu chci naklonovat vybrané přístupové údaje do COUNTER 5.1, i když platforma nemusí být ještě podporována.
       harvest_new_credentials: Stáhnout data pro nové přístupové údaje
+    set_enabled: Zapnout auto stahování
+    set_enabled_tooltip: Zapne automatické stahování pro vybrané přístupové údaje
+    set_enabled_success: Auto stahování bylo zapnuto.
+    unset_enabled: Vypnout auto stahování
+    unset_enabled_tooltip: Vypne automatické stahování pro vybrané přístupové údaje
+    unset_enabled_success: Auto stahování bylo vypnuto.

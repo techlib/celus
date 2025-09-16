@@ -10,7 +10,11 @@ from organizations.tests.conftest import identity_by_user_type  # noqa
 from scheduler.fake_data import FetchIntentionFactory
 from scheduler.models import Automatic
 
-from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
+from sushi.fake_data import (
+    CounterReportsToCredentialsFactory,
+    CredentialsFactory,
+    FetchAttemptFactory,
+)
 from sushi.models import (
     AttemptStatus,
     CounterReportsToCredentials,
@@ -33,6 +37,66 @@ from test_scenarios.basic import (  # noqa - fixtures
     schedulers,
     users,
 )
+
+
+@pytest.fixture
+def list_credentials(organizations, platforms, counter_report_types):
+    # Remove all credentials
+    SushiCredentials.objects.all().delete()
+    creds = [
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
+            enabled=True,
+            counter_version=4,
+            last_harvestable_month=date(2020, 1, 1),
+            broken=BS.BROKEN_HTTP,
+        ),
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["branch"],
+            enabled=False,
+            counter_version=5,
+            last_harvestable_month=date(2025, 1, 1),
+        ),
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["branch"],
+            enabled=False,
+            counter_version=5,
+            last_harvestable_month=date(2025, 1, 1),
+        ),
+        CredentialsFactory(
+            organization=organizations["branch"],
+            platform=platforms["branch"],
+            enabled=False,
+            counter_version=51,
+            last_harvestable_month=None,
+        ),
+        CredentialsFactory(
+            organization=organizations["standalone"],
+            platform=platforms["standalone"],
+            enabled=True,
+            counter_version=5,
+            last_harvestable_month=date(2025, 1, 1),
+        ),
+    ]
+    platforms["standalone"].knowledgebase = {"providers": [{"counter_version": 51}]}
+    platforms["standalone"].save()
+    CounterReportsToCredentialsFactory(
+        credentials=creds[3], counter_report=counter_report_types["tr51"], broken=BS.BROKEN_SUSHI
+    )
+    CounterReportsToCredentialsFactory(
+        credentials=creds[0], counter_report=counter_report_types["jr1"], broken=None
+    )
+    CounterReportsToCredentialsFactory(
+        credentials=creds[1], counter_report=counter_report_types["pr"], broken=None
+    )
+    creds[4].force_current_version_verified()
+    SushiCredentials.objects.filter(pk__in=[creds[1].pk, creds[2].pk]).update(version_hash="xxx")
+    SushiCredentials.objects.filter(pk__in=[creds[0].pk, creds[3].pk]).update(version_hash="yyy")
+    SushiCredentials.objects.filter(pk=creds[0].pk).update(broken=BS.BROKEN_HTTP)
+    return creds
 
 
 @pytest.mark.django_db()
@@ -62,7 +126,7 @@ class TestSushiCredentialsViewSet:
         resp = clients[user].get(reverse("sushi-credentials-list"), params)
         if can_list:
             assert resp.status_code == 200
-            data = resp.json()
+            data = resp.json()["results"]
             assert len(data) == 1
             assert data[0]["can_lock"] == can_lock
             assert data[0]["can_update"] is True, "can be updated to C5.1"
@@ -70,7 +134,167 @@ class TestSushiCredentialsViewSet:
             # there are actually two mechanisms how the access could be denied -
             # either the list is empty or 404 is returned. The latter is used when
             # an organization filter is used which is incompatible with the currently active user
-            assert resp.status_code == 404 or len(resp.json()) == 0
+            assert resp.status_code == 404 or len(resp.json()["results"]) == 0
+
+    def test_list_pagination(self, basic1, organizations, platforms, clients):
+        # Recreate all credentials
+        SushiCredentials.objects.all().delete()
+        CredentialsFactory.create_batch(11)
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"), {"page_size": 10})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 11, (
+            "all data should be returned when page attr is not provided"
+        )
+        assert data["count"] == 11
+
+        resp = clients["master_admin"].get(
+            reverse("sushi-credentials-list"), {"page": 1, "page_size": 10}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 10, "return 10 plaforms"
+        assert data["count"] == 11
+
+        resp = clients["master_admin"].get(
+            reverse("sushi-credentials-list"), {"page": 2, "page_size": 10}
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 1, "return 1 plaform"
+        assert data["count"] == 11
+
+        resp = clients["master_admin"].get(
+            reverse("sushi-credentials-list"), {"page": 3, "page_size": 10}
+        )
+        assert resp.status_code == 404, "invalid page number"
+
+    @pytest.mark.parametrize(
+        "params,creds_indexes,consortial_installation",
+        (
+            ({}, {0, 1, 2, 3, 4}, None),
+            ({"counter_version": 4}, {0}, None),
+            ({"counter_version": 5}, {1, 2, 4}, None),
+            ({"counter_version": 51}, {3}, None),
+            ({"organization": "standalone"}, {0, 1, 2, 4}, None),
+            ({"organization": "branch"}, {3}, None),
+            ({"platform": "standalone"}, {0, 4}, None),
+            ({"platform": "branch"}, {1, 2, 3}, None),
+            ({"last_harvestable_month": True}, {0, 1, 2, 4}, None),
+            ({"last_harvestable_month": False}, {3}, None),
+            ({"enabled": True}, {0, 4}, None),
+            ({"enabled": False}, {1, 2, 3}, None),
+            ({"potential_issues": "broken"}, {0, 3}, None),
+            ({"potential_issues": "not_validated"}, {0, 1, 2, 3}, None),
+            ({"potential_issues": "can_update"}, {1, 2, 4}, None),
+            ({"potential_issues": "can_update_verified"}, {4}, None),
+            ({"potential_issues": "duplicated"}, {0, 1, 2, 3}, True),
+            ({"potential_issues": "duplicated"}, {1, 2}, False),
+        ),
+    )
+    def test_list_filtering(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        settings,
+        list_credentials,
+        params,
+        creds_indexes,
+        consortial_installation,
+    ):
+        if "organization" in params:
+            params["organization"] = organizations[params["organization"]].pk
+        if "platform" in params:
+            params["platform"] = platforms[params["platform"]].pk
+
+        if consortial_installation is not None:
+            settings.CONSORTIAL_INSTALLATION = consortial_installation
+
+        # TODO potential issues
+        # Broken, not validated, can_update, can_update_verified, duplicated
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"), params)
+        creds_pks = {e.pk for i, e in enumerate(list_credentials) if i in creds_indexes}
+        assert resp.status_code == 200
+        assert resp.data["count"] == len(creds_pks)
+        assert {e["pk"] for e in resp.data["results"]} == creds_pks
+
+    def test_list_simple(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        counter_report_types,
+        settings,
+        list_credentials,
+    ):
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"))
+        assert all("outside_consortium" in e for e in resp.data["results"])
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"), {"simple": False})
+        assert all("outside_consortium" in e for e in resp.data["results"])
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"), {"simple": True})
+        assert all("outside_consortium" not in e for e in resp.data["results"])
+
+    def test_list_paginator_extra_attrs(
+        self,
+        basic1,
+        organizations,
+        platforms,
+        clients,
+        counter_report_types,
+        settings,
+        list_credentials,
+    ):
+        # Full
+        resp = clients["master_admin"].get(reverse("sushi-credentials-list"))
+        assert resp.status_code == 200
+        assert {e["pk"] for e in resp.data["platforms"]} == {
+            platforms["standalone"].pk,
+            platforms["branch"].pk,
+        }, "list platforms in paginator"
+        assert len(resp.data["results"]) == 5
+        assert resp.data["count"] == 5
+        assert resp.data["inactive_count"] == 3
+        assert resp.data["broken_count"] == 1
+        assert resp.data["broken_report_count"] == 1
+        assert resp.data["report_count"] == 3
+        assert resp.data["report_from_broken_credentials_count"] == 1
+        assert resp.data["report_from_inactive_credentials_count"] == 2
+
+        # Filtered
+        resp = clients["master_admin"].get(
+            reverse("sushi-credentials-list"), {"platform": platforms["standalone"].pk}
+        )
+        assert resp.status_code == 200
+        assert {e["pk"] for e in resp.data["platforms"]} == {
+            platforms["standalone"].pk,
+            platforms["branch"].pk,
+        }, "list platforms in paginator - platform filter doesn't affect that"
+        assert len(resp.data["results"]) == 2
+        assert resp.data["count"] == 2
+        assert resp.data["inactive_count"] == 0
+        assert resp.data["broken_count"] == 1
+        assert resp.data["broken_report_count"] == 0
+        assert resp.data["report_count"] == 1
+        assert resp.data["report_from_broken_credentials_count"] == 1
+        assert resp.data["report_from_inactive_credentials_count"] == 0
+
+        # Empty
+        resp = clients["master_admin"].get(
+            reverse("sushi-credentials-list"), {"organization": 99999999999}
+        )
+        assert resp.status_code == 200
+        assert resp.data["platforms"] == []
+        assert resp.data["results"] == []
+        assert resp.data["count"] == 0
+        assert resp.data["inactive_count"] == 0
+        assert resp.data["broken_count"] == 0
+        assert resp.data["broken_report_count"] == 0
+        assert resp.data["report_count"] == 0
+        assert resp.data["report_from_broken_credentials_count"] == 0
+        assert resp.data["report_from_inactive_credentials_count"] == 0
 
     @pytest.mark.parametrize(
         "user,can_see",
@@ -655,6 +879,56 @@ class TestSushiCredentialsViewSet:
         )
         assert resp.status_code == 200, "no credentials were updated"
         assert len(resp.json()) == 0
+
+    def test_update_enabled(self, basic1, clients, counter_report_types, list_credentials):
+        url = reverse("sushi-credentials-update-enabled")
+        resp = clients["master_admin"].post(
+            url, {"enabled": False, "credentials": [list_credentials[i].pk for i in range(1)]}
+        )
+        assert resp.status_code == 200
+        assert resp.data["updated"] == 1
+        list_credentials[0].refresh_from_db()
+        assert list_credentials[0].enabled is False
+
+        resp = clients["master_admin"].post(
+            url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(2)]}
+        )
+        assert resp.status_code == 200
+        assert resp.data["updated"] == 2
+
+        for i in range(2):
+            list_credentials[i].refresh_from_db()
+            assert list_credentials[i].enabled is True
+
+        resp = clients["master_admin"].post(
+            url, {"enabled": False, "credentials": [list_credentials[i].pk for i in range(3)]}
+        )
+        assert resp.status_code == 200
+        assert resp.data["updated"] == 2, "third is already False"
+
+        for i in range(3):
+            list_credentials[i].refresh_from_db()
+            assert list_credentials[i].enabled is False
+
+        resp = clients["master_admin"].post(
+            url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(4)]}
+        )
+        assert resp.status_code == 200
+        assert resp.data["updated"] == 4
+
+        for i in range(4):
+            list_credentials[i].refresh_from_db()
+            assert list_credentials[i].enabled is True
+
+        resp = clients["master_admin"].post(
+            url, {"enabled": True, "credentials": [list_credentials[i].pk for i in range(5)]}
+        )
+        assert resp.status_code == 200
+        assert resp.data["updated"] == 0, "nothing updated"
+
+        for i in range(5):
+            list_credentials[i].refresh_from_db()
+            assert list_credentials[i].enabled is True
 
     def test_credential_details(self, basic1, credentials, clients, counter_report_types):
         # setup

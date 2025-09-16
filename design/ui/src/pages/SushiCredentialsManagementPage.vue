@@ -53,7 +53,6 @@
       v-else
       :organization-id="organizationId"
       :potential-issues="brokenOnly ? 'broken' : null"
-      show-platform-filter
       ref="sushiCredentialsWidget"
     ></SushiCredentialsManagementWidget>
     <v-dialog

@@ -57,9 +57,9 @@ cs:
             <v-select
               :items="[
                 { title: $t('sushi.all_counter_versions'), value: null },
-                { title: '4', value: 4 },
-                { title: '5', value: 5 },
-                { title: '5.1', value: 51 },
+                { title: counterVersionToStr(4), value: 4 },
+                { title: counterVersionToStr(5), value: 5 },
+                { title: counterVersionToStr(51), value: 51 },
               ]"
               v-model="counterVersion"
               :label="$t('labels.counter_version')"
@@ -68,9 +68,10 @@ cs:
           </v-col>
           <v-col cols="12" sm="6" md="4" lg="3">
             <PlatformSelector
-              :platforms="usedPlatforms"
+              :platforms="sortedPlatforms"
               v-model="selectedPlatform"
               :label="$t('platform')"
+              return-object
             ></PlatformSelector>
           </v-col>
           <v-col cols="6" md="auto">
@@ -269,6 +270,7 @@ export default {
   data() {
     return {
       sushiCredentialsList: [],
+      platforms: [],
       intentionsData: [],
       intentionsMap: new Map(),
       reportTypes: [],
@@ -357,7 +359,17 @@ export default {
       }, 500),
     },
     credentialsUrl() {
-      return `/api/sushi-credentials/?organization=${this.organizationId}`;
+      let url = `/api/sushi-credentials/?simple=true&organization=${this.organizationId}`;
+      if (!this.showInactive) {
+        url += "&enabled=true";
+      }
+      if (this.counterVersion) {
+        url += `&counter_version=${this.counterVersion}`;
+      }
+      if (this.selectedPlatform) {
+        url += `&platform=${this.selectedPlatform.pk}`;
+      }
+      return url;
     },
     intentionsUrl() {
       if (!this.selectedMonth) {
@@ -387,22 +399,11 @@ export default {
       });
       return out;
     },
-    usedPlatforms() {
-      const platformsMap = this.sushiCredentialsList
-        .filter(
-          (item) =>
-            this.counterVersion === null ||
-            item.counter_version === this.counterVersion,
-        )
-        .reduce((acc, item) => {
-          acc[item.platform.name] = item.platform;
-          return acc;
-        }, {});
-      let usedPlatforms = Object.values(platformsMap).sort((a, b) =>
-        a.name.localeCompare(b.name),
-      );
-
-      return [...usedPlatforms].sort((a, b) => a.name.localeCompare(b.name));
+    sortedPlatforms() {
+      return this.platforms.toSorted((a, b) => a.name.localeCompare(b.name));
+    },
+    platformMap() {
+      return new Map(this.platforms.map((p) => [p.pk, p]));
     },
     activeIntentions() {
       let intentions = [];
@@ -443,18 +444,7 @@ export default {
       });
     },
     sushiCredentialsWithIntentionsAfterFilter() {
-      let list = this.allSushiCredentialsWithIntentions
-        .filter((item) => this.showInactive || item.enabled)
-        .filter(
-          (item) =>
-            this.counterVersion === null ||
-            item.counter_version === this.counterVersion,
-        )
-        .filter(
-          (item) =>
-            this.selectedPlatform === null ||
-            item.platform.pk === this.selectedPlatform,
-        );
+      let list = [...this.allSushiCredentialsWithIntentions];
       if (this.hideSuccessful) {
         list = list.filter(
           (item) =>
@@ -524,11 +514,15 @@ export default {
       this.loadingCredentials = true;
       try {
         let response = await axios.get(this.credentialsUrl);
-        this.sushiCredentialsList = response.data;
+        this.sushiCredentialsList = response.data.results;
+        this.platforms = response.data.platforms;
         // make sure platform name is not blank - use short_name if needed
-        this.sushiCredentialsList.forEach((item) => {
-          if (!item.platform.name)
-            item.platform.name = item.platform.short_name;
+        this.platforms.forEach((platform) => {
+          if (!platform.name) platform.name = platform.short_name;
+        });
+        // Fill in the platform in the credentials list
+        this.sushiCredentialsList.forEach((cred) => {
+          cred.platform = this.platformMap.get(cred.platform);
         });
       } catch (error) {
         this.showSnackbar({

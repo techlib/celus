@@ -2,9 +2,10 @@ import typing
 
 from core.models import UL_CONS_STAFF
 from core.serializers import UserSimpleSerializer
+from core.validators import month_validator
 from django.db.models import Q
 from organizations.models import Organization
-from organizations.serializers import OrganizationSerializer
+from organizations.serializers import OrganizationSerializer, OrganizationShortSerializer
 from publications.logic.knowledgebase import (
     get_provider_for_counter_version,
     is_report_type_whitelisted,
@@ -21,19 +22,30 @@ from rest_framework.fields import (
     DateTimeField,
     HiddenField,
     IntegerField,
+    ListField,
     ReadOnlyField,
     SerializerMethodField,
 )
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer, Serializer
 
+from .filters import PotentialIssues
 from .models import (
     COUNTER_REPORTS,
+    AttemptStatus,
     CounterReportsToCredentials,
     CounterReportType,
     SushiCredentials,
     SushiFetchAttempt,
 )
+
+
+def sushi_status_list_validator(value: str):
+    statuses = set(value.split(","))
+    valid_statuses = {e.value for e in AttemptStatus}
+
+    if not statuses.issubset(valid_statuses):
+        raise ValidationError(f"Unknown status(es) {statuses - valid_statuses}")
 
 
 class UpdateLastHarvestableMonthSerializer(Serializer):
@@ -46,6 +58,11 @@ class CloneToNewerSerializer(Serializer):
 
     class Meta:
         fields = ("credentials_id",)
+
+
+class UpdateEnabledSerializer(Serializer):
+    enabled = BooleanField(required=True)
+    credentials = ListField(child=IntegerField(), allow_empty=False)
 
 
 class CounterReportTypeSerializer(ModelSerializer):
@@ -86,6 +103,34 @@ class CounterReportsToCredentialsSerializer(ModelSerializer):
         )
 
 
+class SimpleSushiCredentialsSerializer(ModelSerializer):
+    organization = OrganizationShortSerializer(read_only=True)
+    platform = PrimaryKeyRelatedField(source="platform_id", read_only=True)
+    counter_reports_long = CounterReportsToCredentialsSerializer(
+        many=True, source="counterreportstocredentials_set", read_only=True
+    )
+    same_global = IntegerField(read_only=True)
+    same_in_org = IntegerField(read_only=True)
+    any_broken = BooleanField(read_only=True)
+
+    class Meta:
+        model = SushiCredentials
+        fields = (
+            "pk",
+            "title",
+            "organization",
+            "platform",
+            "enabled",
+            "counter_version",
+            "counter_reports_long",
+            "broken",
+            "same_global",
+            "same_in_org",
+            "auto_update_url",
+            "any_broken",
+        )
+
+
 class SushiCredentialsSerializer(ModelSerializer):
     organization = OrganizationSerializer(read_only=True)
     platform = PlatformSerializer(read_only=True)
@@ -113,6 +158,7 @@ class SushiCredentialsSerializer(ModelSerializer):
     has_51_provider = BooleanField(read_only=True)
     forced = BooleanField(write_only=True, default=False)
     last_updated_by = UserSimpleSerializer(read_only=True)
+    any_broken = BooleanField(read_only=True)
 
     class Meta:
         model = SushiCredentials
@@ -148,6 +194,7 @@ class SushiCredentialsSerializer(ModelSerializer):
             "forced",
             "can_update",
             "has_51_provider",
+            "any_broken",
             "last_updated_by",
             "last_updated",
             "use_counter_reports_from_platform",
@@ -269,6 +316,20 @@ class SushiCredentialsSerializer(ModelSerializer):
         result.can_lock = submitter_level >= UL_CONS_STAFF
         result.locked_for_me = submitter_level < result.lock_level
         return result
+
+
+class SushiCredentialsListSerializer(SushiCredentialsSerializer):
+    platform = PrimaryKeyRelatedField(queryset=Platform.objects.all())
+
+
+class SushiCredentialsListFilterSerializers(Serializer):
+    platform = IntegerField(required=False)
+    counter_version = IntegerField(required=False)
+    last_harvestable_month = BooleanField(required=False)
+    pojential_issues = ChoiceField(choices=[e.value for e in PotentialIssues], required=False)
+    enabled = BooleanField(required=False)
+    month = CharField(validators=[month_validator], required=False)
+    statuses = CharField(validators=[sushi_status_list_validator], required=False)
 
 
 class SushiCredentialsNoSameGlobalSerializer(SushiCredentialsSerializer):

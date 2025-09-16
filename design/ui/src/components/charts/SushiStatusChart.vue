@@ -164,10 +164,10 @@ export default {
       try {
         const { response } = await this.http({
           url: "/api/sushi-credentials/",
-          params: { organization: this.organizationId },
+          params: { organization: this.organizationId, simple: true },
           label: "credentials list",
         });
-        this.sushiCredentialsList = response ? response.data : [];
+        this.sushiCredentialsList = response ? response.data.results : [];
         if (this.rawData) {
           this.prepareData();
         }

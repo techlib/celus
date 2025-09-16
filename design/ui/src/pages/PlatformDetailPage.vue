@@ -304,7 +304,7 @@ cs:
         <v-window-item value="sushi" v-if="showAdminStuff">
           <SushiCredentialsManagementWidget
             :organization-id="this.selectedOrganizationId"
-            :platform-id="this.platformId"
+            :fixed-platform-id="this.platformId"
           >
           </SushiCredentialsManagementWidget>
           <div class="ma-3">

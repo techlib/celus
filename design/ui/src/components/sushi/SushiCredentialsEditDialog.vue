@@ -330,7 +330,7 @@ cs:
                   </v-text-field>
                   <PlatformSelector
                     v-else
-                    :platforms="allowedPlatforms"
+                    :platforms="platforms"
                     v-model="platform"
                     :label="$t('platform')"
                     :loading="loadingPlatforms"
@@ -935,7 +935,6 @@ export default {
   props: {
     credentialsObject: {},
     modelValue: { default: false, type: Boolean },
-    existingCredentials: { required: false, type: Array },
     fixedPlatform: { required: false, type: Number },
   },
   data() {
@@ -1002,6 +1001,7 @@ export default {
       initializing: true,
       showDebug: false,
       registryUrlBase: "https://registry.countermetrics.org/",
+      existingCredentials: [],
     };
   },
   computed: {
@@ -1175,9 +1175,6 @@ export default {
     },
     isValid() {
       return this.valid;
-    },
-    allowedPlatforms() {
-      return this.platforms;
     },
     allowedCounterVersions() {
       return [51, 5, 4].map((e) => {
@@ -1451,13 +1448,13 @@ export default {
       forced |= false;
       this.errors = {};
       this.saving = true;
+      let response = null;
+      const cleanData = JSON.parse(JSON.stringify(this.apiData));
+      let data = structuredClone(cleanData);
+      if (forced) {
+        data.forced = true;
+      }
       try {
-        let response = null;
-        const cleanData = JSON.parse(JSON.stringify(this.apiData));
-        let data = structuredClone(cleanData);
-        if (forced) {
-          data.forced = true;
-        }
         if (this.credentials) {
           // we have existing credentials - we patch it
           response = await axios.patch(
@@ -1468,15 +1465,8 @@ export default {
           // we create new credentials
           response = await axios.post(`/api/sushi-credentials/`, data);
         }
-        this.savedCredentials = response.data;
-        await this.showSnackbar({
-          content: "Successfully saved SUSHI credentials",
-          color: "success",
-        });
-        this.$emit("update-credentials", response.data);
-        return response.data;
       } catch (error) {
-        // Show waring for same credentials
+        // Show warning for same credentials
         let respData = error.response?.data;
         if (
           !forced &&
@@ -1516,6 +1506,14 @@ export default {
       } finally {
         this.saving = false;
       }
+
+      this.savedCredentials = response.data;
+      await this.showSnackbar({
+        content: "Successfully saved SUSHI credentials",
+        color: "success",
+      });
+      this.$emit("update-credentials", response.data);
+      return response.data;
     },
     async markFixed(markReports) {
       if (this.credentials) {
@@ -1769,6 +1767,20 @@ export default {
         }
       }
     },
+    async loadExistingCredentials() {
+      const url = `/api/sushi-credentials/?simple=true&organization=${
+        this.selectedOrganization ? this.selectedOrganization.pk : "-1"
+      }`;
+      try {
+        let response = await axios.get(url);
+        this.existingCredentials = response.data.results;
+      } catch (error) {
+        this.showSnackbar({
+          content: "Error loading credentials list: " + error,
+          color: "error",
+        });
+      }
+    },
     toggleDebug() {
       this.showDebug = !this.showDebug;
     },
@@ -1846,6 +1858,7 @@ export default {
         await this.loadOrganizations();
         promises.push(this.loadPlatforms());
         promises.push(this.loadUseCases());
+        promises.push(this.loadExistingCredentials());
       }
       await Promise.all(promises);
     } finally {

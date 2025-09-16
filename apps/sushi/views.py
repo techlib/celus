@@ -3,24 +3,29 @@ from collections import defaultdict
 import reversion
 from celus_nigiri.utils import parse_date_fuzzy
 from core.logic.dates import month_end, month_start
+from core.logic.type_conversion import to_bool
 from core.models import UL_CONS_STAFF
 from core.permissions import SuperuserOrAdminPermission
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import transaction
-from django.db.models import BooleanField, F, Min
-from django.db.models.functions import Cast
+from django.db.models import BooleanField, Count, F, Min, Prefetch, Q, Sum
+from django.db.models.functions import Cast, Coalesce
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from logs.models import ImportBatch
+from logs.views import StandardResultsSetPagination
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
+from publications.models import Platform
+from publications.serializers import PlatformSerializer
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from reversion.views import create_revision
@@ -30,9 +35,11 @@ from scheduler.serializers import MonthOverviewSerializer
 from sushi.models import SushiFetchAttempt
 from sushi.tasks import delete_fetchattempts_and_related_importbatches_task
 
+from . import filters
 from .logic.export import CredentialsDataFrame, OrganizationsDataFrame, Sheet, XlsxFile
 from .models import (
     AttemptStatus,
+    CounterReportPlatform,
     CounterReportsToCredentials,
     CounterReportType,
     CounterVersionChoices,
@@ -41,18 +48,114 @@ from .models import (
 from .serializers import (
     CloneToNewerSerializer,
     CounterReportTypeSerializer,
+    SimpleSushiCredentialsSerializer,
     SushiCredentialsDataSerializer,
+    SushiCredentialsListFilterSerializers,
+    SushiCredentialsListSerializer,
     SushiCredentialsNoSameGlobalSerializer,
     SushiCredentialsNoSameInOrgSerializer,
     SushiCredentialsSerializer,
     SwitchToPlatformsReportTypesSerializer,
     UnsetBrokenSerializer,
+    UpdateEnabledSerializer,
     UpdateLastHarvestableMonthSerializer,
 )
 
 
+class SushiCredentialsPagination(StandardResultsSetPagination):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.platforms = []
+        self.stats = {}
+
+    def get_page_size(self, request):
+        if page_size := getattr(self, "_forced_page_size", None):
+            return page_size
+        else:
+            return super().get_page_size(request)
+
+    def paginate_queryset(self, queryset, request, view=None):
+        # Return all credentials when `page` attr is missing
+        # It is required because Some UI components expect unpaginated response
+        if "page" not in request.query_params:
+            self._forced_page_size = queryset.count()
+
+        # Platforms were extracted in the view
+        # Note that platform filter is ignored => should return the list of platforms
+        # as if the platform filter was not used
+        self.platforms = getattr(view, "_extracted_platforms", [])
+
+        res = super().paginate_queryset(queryset, request, view)
+
+        self.stats = queryset.annotate(
+            counter_report_count=Count("counterreportstocredentials")
+        ).aggregate(
+            inactive_count=Count("pk", filter=Q(enabled=False)),
+            broken_count=Count("pk", filter=Q(broken__isnull=False)),
+            broken_report_count=Coalesce(Sum("counter_report_broken_count"), 0),
+            report_count=Coalesce(Sum("counter_report_count"), 0),
+            report_from_broken_credentials_count=Coalesce(
+                Sum("counter_report_count", filter=Q(broken__isnull=False)), 0
+            ),
+            report_from_inactive_credentials_count=Coalesce(
+                Sum("counter_report_count", filter=Q(enabled=False)), 0
+            ),
+        )
+
+        if not getattr(view, "is_simple", False):
+            # It is not necessary to annotate_verified for simple views
+            ids = [rec.pk for rec in res]
+            res = queryset.annotate_verified().filter(pk__in=ids)
+
+        return res
+
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                "count": self.page.paginator.count if data else 0,
+                "platforms": self.platforms,
+                "results": data,
+                "inactive_count": self.stats.get("inactive_count", 0),
+                "broken_count": self.stats.get("broken_count", 0),
+                "broken_report_count": self.stats.get("broken_report_count", 0),
+                "report_count": self.stats.get("report_count", 0),
+                "report_from_broken_credentials_count": self.stats.get(
+                    "report_from_broken_credentials_count", 0
+                ),
+                "report_from_inactive_credentials_count": self.stats.get(
+                    "report_from_inactive_credentials_count", 0
+                ),
+            }
+        )
+
+
 class SushiCredentialsViewSet(ModelViewSet):
+    pagination_class = SushiCredentialsPagination
     queryset = SushiCredentials.objects.none()
+    filter_backends = [
+        SearchFilter,
+        OrderingFilter,
+        filters.CredentialsPlatformFilter,
+        filters.CredentialsCounterVersionFilter,
+        filters.CredentialsLastHarvestableMonthFilter,
+        filters.CredentialsPotentialIssuesFilter,
+        filters.CredentialsEnabledFilter,
+    ]
+    search_fields = ["title", "platform__name", "platform__short_name", "organization__name"]
+    ordering = ["organization__name", "platform__name", "-counter_version"]
+    ordering_fields = [
+        "title",
+        "organization__name",
+        "platform__name",
+        "counter_version",
+        "enabled",
+        "outside_consortium",
+        "lock_level",
+    ]
+
+    @property
+    def is_simple(self):
+        return to_bool(self.request.query_params.get("simple", "false"))
 
     def _post_process_queryset(self, qs):
         org_to_level = {}
@@ -83,38 +186,74 @@ class SushiCredentialsViewSet(ModelViewSet):
                     organization_id, self.request.user, admin_required=True
                 )
             )
-        # platform filter
-        platform_id = self.request.query_params.get("platform")
-        if platform_id:
-            qs = qs.filter(platform_id=platform_id)
         qs = (
-            qs.annotate_verified()
-            .annotate_same_counts()
+            qs.annotate_same_counts()
             .annotate_can_update()
             .annotate_has_51_provider()
+            .annotate_any_broken()
             .prefetch_related("counterreportstocredentials_set__counter_report")
             .prefetch_related("platform__counterreportplatform_set__counter_report")
-            .select_related("organization", "platform", "platform__source", "last_updated_by")
+            .select_related(
+                "organization",
+                "platform",
+                "platform__source",
+                "platform__source__organization",
+                "last_updated_by",
+            )
         )
         return qs
 
     def get_serializer_class(self):
+        if self.action == "list":
+            if self.is_simple:
+                return SimpleSushiCredentialsSerializer
+            else:
+                return SushiCredentialsListSerializer
+
         forced = self.request.data.get("forced", False)
         if not forced:
             if settings.CONSORTIAL_INSTALLATION:
                 return SushiCredentialsNoSameGlobalSerializer
             else:
                 return SushiCredentialsNoSameInOrgSerializer
+
         return SushiCredentialsSerializer
 
     def list(self, request, *args, **kwargs):
         """
         We need to post-process queryset to add info about locked status for current user
         """
+        SushiCredentialsListFilterSerializers(data=request.query_params).is_valid(
+            raise_exception=True
+        )
         queryset = self.filter_queryset(self.get_queryset())
-        queryset = self._post_process_queryset(queryset)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+
+        if "platform" in request.query_params:
+            # We need to extract platforms without platform filter
+            self._suppress_platform_filter = True
+            platform_qs = self.filter_queryset(self.get_queryset())
+        else:
+            platform_qs = queryset
+
+        platform_ids = platform_qs.values_list("platform_id", flat=True).distinct()
+        platforms = (
+            Platform.objects.filter(pk__in=platform_ids)
+            .select_related("source", "source__organization")
+            .prefetch_related(
+                Prefetch(
+                    "counterreportplatform_set",
+                    queryset=CounterReportPlatform.objects.select_related("counter_report"),
+                )
+            )
+        )
+
+        self._extracted_platforms = PlatformSerializer(platforms, many=True).data
+
+        qs = self.paginate_queryset(queryset)
+        if qs:
+            self._post_process_queryset(qs)
+        serializer = self.get_serializer(qs or [], many=True)
+        return self.get_paginated_response(serializer.data)
 
     @method_decorator(create_revision())
     def update(self, request, *args, **kwargs):
@@ -222,6 +361,25 @@ class SushiCredentialsViewSet(ModelViewSet):
                 SushiCredentials.objects.filter(pk__in=credentials_ids)
             )
             return Response(SushiCredentialsSerializer(qs, many=True).data)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="update-enabled",
+        serializer_class=UpdateEnabledSerializer,
+    )
+    def update_enabled(self, request):
+        """
+        Custom action to update enabled (automatic harvesting)
+        """
+        request_serializer = UpdateEnabledSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        enabled = request_serializer.validated_data["enabled"]
+        updated = SushiCredentials.objects.filter(
+            enabled=not enabled, pk__in=request_serializer.validated_data["credentials"]
+        ).update(enabled=enabled)
+
+        return Response({"updated": updated})
 
     @action(
         detail=False,

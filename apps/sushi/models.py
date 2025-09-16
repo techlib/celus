@@ -240,12 +240,31 @@ class CounterReportType(models.Model):
 
 
 class SushiCredentialsQuerySet(models.QuerySet):
+    def annotate_any_broken(self):
+        """
+        Annotates whether credentials are broken or any of its counter reports is broken
+        """
+        return self.annotate(
+            counter_report_broken_count=Count(
+                "counterreportstocredentials",
+                filter=Q(counterreportstocredentials__broken__isnull=False),
+            ),
+            any_broken=Q(broken__isnull=False)
+            | Exists(
+                CounterReportsToCredentials.objects.filter(
+                    credentials_id=OuterRef("pk"), broken__isnull=False
+                )
+            ),
+        )
+
     def annotate_verified(self):
         """
         Annotates that credentials are verified
         this means that credentials needs to have
         download attempt (NO_DATA or SUCCESS) with current hash
         or forced_verified_hash which matches current version_hash
+
+        Note that this function is expansive when there is a large number of attempts
         """
         return self.annotate(
             verified_attempt=Exists(
@@ -437,6 +456,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         help_text="Force verified=True for given hash - useful to preserve verification"
         " when URL is automatically updated",
         blank=True,
+        db_index=True,
     )
     counter_version = models.PositiveSmallIntegerField(choices=CounterVersionChoices.choices)
     requestor_id = models.CharField(max_length=128, blank=True)
@@ -465,7 +485,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         help_text="Only user with the same or higher level can unlock it and/or edit it",
     )
     version_hash = models.CharField(
-        max_length=BLAKE_HASH_SIZE * 2, help_text="Current hash of model attributes"
+        max_length=BLAKE_HASH_SIZE * 2, help_text="Current hash of model attributes", db_index=True
     )
 
     last_harvestable_month = models.DateField(
@@ -1218,6 +1238,7 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
     credentials_version_hash = models.CharField(
         max_length=2 * SushiCredentials.BLAKE_HASH_SIZE,
         help_text="Hash computed from the credentials at the time this attempt was made",
+        db_index=True,
     )
     processing_info = models.JSONField(default=dict, help_text="Internal info")
     triggered_by = models.ForeignKey(
