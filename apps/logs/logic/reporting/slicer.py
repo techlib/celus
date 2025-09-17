@@ -308,6 +308,13 @@ class FlexibleDataSlicer:
                 qs = primary_cls.objects.all()
                 if primary_cls is Organization and self.organization_filter is not None:
                     qs = qs.filter(pk__in=self.organization_filter)
+                pk_annotation = {}
+                if self.primary_dimension == "report_type" and self._mat_reports_map:
+                    whens = [
+                        When(then=Value(orig), pk=pk) for pk, orig in self._mat_reports_map.items()
+                    ]
+                    pk_annotation["pk"] = Case(*whens, default=F("pk"), output_field=IntegerField())
+
                 qs = (
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
@@ -315,6 +322,7 @@ class FlexibleDataSlicer:
                             "accesslog", condition=Q(**extend_query_filter(filters, "accesslog__"))
                         )
                     )
+                    .annotate(**pk_annotation)
                     .values("pk")
                     .annotate(**self._prepare_annotations())
                 )

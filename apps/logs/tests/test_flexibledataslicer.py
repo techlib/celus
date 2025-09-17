@@ -364,6 +364,7 @@ class TestFlexibleDataSlicerComputations:
             ("metric",),
             ("target",),
             ("organization",),
+            ("report_type",),
             ("dim1",),
             ("dim2",),
             ("date",),
@@ -385,6 +386,32 @@ class TestFlexibleDataSlicerComputations:
         slicer.order_by = [order_by_sign + primary_dim]
         data = list(slicer.get_data())
         assert len(data) > 0
+
+    def test_report_type_pk_mapping_with_materialized_reports(self, flexible_slicer_test_data):
+        """Test that pk mapping works correctly when report_type is primary dimension
+        with materialized reports."""
+        base_rt = flexible_slicer_test_data["report_types"][0]
+
+        mat_spec = ReportMaterializationSpec.objects.create(
+            base_report_type=base_rt, name="Test Mat", keep_target=False
+        )
+        mat_rt = ReportType.objects.create(
+            short_name="MAT_TEST", materialization_spec=mat_spec, approx_record_count=100
+        )
+
+        slicer = FlexibleDataSlicer(primary_dimension="report_type", include_all_zero_rows=True)
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", [base_rt.pk]))
+        slicer.add_group_by("metric")
+        slicer._replace_report_type_with_materialized()
+
+        if slicer._mat_reports_map:
+            assert mat_rt.pk in slicer._mat_reports_map
+            assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+
+            data = list(slicer.get_data())
+            for row in data:
+                assert row["pk"] == base_rt.pk
+                assert row["pk"] != mat_rt.pk
 
     @pytest.mark.parametrize(
         ["primary_dim", "order_by", "record_count"],
