@@ -636,13 +636,13 @@ cs:
                         cols="12"
                         md="6"
                         xl="4"
-                        v-if="filters.includes(`dim${index + 1}`)"
+                        v-if="filters.includes(ed.id)"
                       >
                         <FilterCard :title="ed.name">
                           <DimensionKeySelector
                             :query-url="selectorBaseUrl"
-                            v-model="selectedDimValues[index]"
-                            :dimension="`dim${index + 1}`"
+                            v-model="selectedDimValues[ed.id]"
+                            :dimension="ed.id"
                             :translator="translators.explicitDimension"
                             :disabled="disableDimValuesSelectors"
                             :read-only="readOnly"
@@ -1029,7 +1029,7 @@ export default {
       selectedReportTypes: [],
       selectedOrganizations: [],
       selectedDateRange: { start: null, end: null },
-      selectedDimValues: [],
+      selectedDimValues: {},
       selectedTitleTags: [],
       selectedTitleTagClass: null,
       selectedPlatformTags: [],
@@ -1198,9 +1198,9 @@ export default {
       // explicit dims
       this.explicitDims.forEach((dim, index) => {
         if (this.filters.includes(dim.id)) {
-          let vals = this.selectedDimValues[index];
+          let vals = this.selectedDimValues[dim.id];
           if (vals && vals.length > 0) {
-            ret[`dim${index + 1}`] = vals;
+            ret[dim.id] = vals;
           }
         }
       });
@@ -1566,14 +1566,14 @@ export default {
         if (rt_filter) {
           this.reportTypeSetOnLoad = true;
           this.selectedReportTypes = rt_filter.values;
-          this.selectedDimValues = [];
+          this.selectedDimValues = {};
           if (this.selectedReportTypes.length === 1) {
             let rt = this.allReportTypes.find(
               (item) => item.pk === this.selectedReportTypes[0],
             );
             if (rt) {
-              rt.dimensions_sorted.forEach(() =>
-                this.selectedDimValues.push([]),
+              rt.dimensions_sorted.forEach(
+                (dim) => (this.selectedDimValues[dim.id] = []),
               );
             }
           }
@@ -1616,9 +1616,7 @@ export default {
             this[configToAttr.get(filter.dimension)] = filter.values;
             this.filters.push(filter.dimension);
           } else if (filter.dimension.substring(0, 3) === "dim") {
-            this.selectedDimValues[
-              Number.parseInt(filter.dimension.substring(3, 4)) - 1
-            ] = filter.values;
+            this.selectedDimValues[filter.dimension] = filter.values;
             this.filters.push(filter.dimension);
           } else if (filter.dimension.startsWith("date")) {
             const start = parseDateTime(filter.start);
@@ -1750,23 +1748,22 @@ export default {
       }
       // empty all explicit dimension filters
       explicitDimensions.forEach((dim, index) => {
-        this.selectedDimValues[index] = [];
+        this.selectedDimValues[dim.id] = [];
         if (this.filters.includes(dim)) {
           this.filters = this.filters.filter((item) => item !== dim);
         }
       });
       // apply filters to explicit dimensions
       for (let df of view.dimension_filters) {
-        let expDim = this.explicitDims.findIndex(
+        let expDim = this.explicitDims.find(
           (dim) => dim.shortName === df.dimension.short_name,
         );
-        if (expDim >= 0) {
-          const ref = this.explicitDims[expDim].ref;
-          if (!this.filters.includes(ref)) {
-            this.filters.push(ref);
+        if (expDim) {
+          if (!this.filters.includes(expDim.id)) {
+            this.filters.push(expDim.id);
           }
-          this.selectedDimValues[expDim] = df.allowed_value_ids;
-          filteredDims.push(this.explicitDims[expDim].shortName);
+          this.selectedDimValues[expDim.id] = df.allowed_value_ids;
+          filteredDims.push(expDim.shortName);
         }
       }
       // show some info to the user
@@ -1871,16 +1868,51 @@ export default {
         // first update after load should not do updates, but a new one should
         this.reportTypeSetOnLoad = false;
       } else {
-        this.selectedDimValues = [];
+        this.selectedDimValues = {};
         if (this.explicitDims) {
           // prepare the selectedDimValues array of the correct length
-          this.explicitDims.forEach((dim, index) => {
-            this.selectedDimValues.push([]);
-            let dimName = `dim${index + 1}`;
-            this.translators[dimName] = this.translators.explicitDimension;
+          this.explicitDims.forEach((dim) => {
+            this.selectedDimValues[dim.id] = [];
+            this.translators[dim.id] = this.translators.explicitDimension;
           });
         }
       }
+      // validate the primary dimension to be compatible with the report types
+      if (
+        this.row.startsWith("dim") &&
+        !this.explicitDims.find((dim) => dim.id === this.row)
+      ) {
+        // use the first compatible dimension which is not already in the columns
+        // but prefer platform if it is available
+        const toTry = ["platform", ...this.possibleRows.map((dim) => dim.id)];
+        for (let dim of toTry) {
+          if (!this.columns.includes(dim)) {
+            this.row = dim;
+            break;
+          }
+        }
+      }
+      // validate filters for explicit dimensions - remove invalid ones
+      this.filters = this.filters.filter(
+        (filter) =>
+          !filter.startsWith("dim") ||
+          this.explicitDims.find((dim) => dim.id === filter),
+      );
+      // validate columns for explicit dimensions - remove invalid ones
+      this.columns = this.columns.filter(
+        (column) =>
+          !column.startsWith("dim") ||
+          this.explicitDims.find((dim) => dim.id === column),
+      );
+      // validate splitBy for explicit dimensions - remove invalid ones
+      if (
+        this.splitBy &&
+        this.splitBy.startsWith("dim") &&
+        !this.explicitDims.find((dim) => dim.id === this.splitBy)
+      ) {
+        this.splitBy = null;
+      }
+
       this.fetchCoverageData();
       this.reportViews = [];
       if (this.selectedReportTypes.length === 1) {
@@ -1905,9 +1937,7 @@ export default {
             } else if (filter.startsWith("date")) {
               this.selectedDateRange = { start: null, end: null };
             } else if (filter.startsWith("dim")) {
-              this.selectedDimValues[
-                Number.parseInt(filter.substring(3, 4)) - 1
-              ] = [];
+              this.selectedDimValues[filter] = [];
             }
           }
         }
