@@ -249,7 +249,7 @@ cs:
                     :attempt="item.attempt"
                     :counter-report-version="item.counter_report_version"
                   />
-                  <div v-if="!!item.attempt.used_url" class="text-truncate">
+                  <div v-if="!!item.attempt.used_url">
                     <strong>{{ $t("used_url") }}</strong
                     >:
                     <a :href="item.attempt.used_url" target="_blank">
@@ -805,5 +805,12 @@ export default {
 }
 .alpha {
   opacity: 0.3;
+}
+.item_expanded_space {
+  td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 0;
+  }
 }
 </style>
