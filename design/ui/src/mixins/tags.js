@@ -24,7 +24,9 @@ export default {
       this.objIdToTags.clear();
     },
     async getTagsForObjectsById(objectType, objectIds) {
-      let cleanObjectIds = objectIds.filter((x) => !this.objIdToTags.has(x));
+      let cleanObjectIds = objectIds.filter(
+        (x) => x && !this.objIdToTags.has(x),
+      );
       if (cleanObjectIds.length === 0) {
         return;
       }
