@@ -230,6 +230,12 @@ class User(AbstractUser):
     def __str__(self) -> str:
         return self.get_usable_name()
 
+    def clean(self):
+        super().clean()
+        # ensure email is always lowercase
+        if self.email and self.email.lower() != self.email:
+            self.email = self.email.lower()
+
     def get_usable_name(self) -> str:
         if self.first_name or self.last_name:
             return "{0} {1}".format(self.first_name, self.last_name)
