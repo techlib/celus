@@ -752,7 +752,7 @@ export default {
       );
       if (res) {
         try {
-          await axios.delete(`/api/flexible-report/${id}`);
+          await axios.delete(`/api/flexible-report/${id}/`);
           // cleanup
           this.reports = this.reports.filter((item) => item.pk !== id);
           if (this.activeReport && this.activeReport.pk === id) {
