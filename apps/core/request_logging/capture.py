@@ -4,7 +4,6 @@ import pickle
 import time
 import urllib
 
-import redis
 from django.conf import settings
 from requestlogs.storages import BaseStorage
 from rest_framework.exceptions import UnsupportedMediaType
@@ -18,6 +17,8 @@ class RedisBufferStorage(BaseStorage):
     def store(self, entry):
         try:
             start = time.time()
+            import redis  # noqa - slow import
+
             r = redis.Redis(
                 host=settings.REQUEST_LOGGING_REDIS_HOST,
                 port=settings.REQUEST_LOGGING_REDIS_PORT,

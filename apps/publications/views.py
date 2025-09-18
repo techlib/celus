@@ -33,7 +33,6 @@ from logs.logic.queries import replace_report_type_with_materialized
 from logs.models import AccessLog, InterestConfig, InterestGroup, Metric, ReportType
 from logs.serializers import ReportTypeExtendedSerializer
 from logs.views import StandardResultsSetPagination
-from nibbler.models import ParserDefinition
 from organizations.logic.queries import (
     extend_query_filter,
     get_organization_related_accesslog_filters_for_interest,
@@ -41,7 +40,6 @@ from organizations.logic.queries import (
 )
 from organizations.models import Organization, OrganizationAltName
 from organizations.serializers import OrganizationAltNameSerializer
-from pandas import DataFrame
 from recache.util import recache_queryset
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -112,6 +110,8 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Returns Platforms which can be displayed to the user"""
+        from nibbler.models import ParserDefinition  # noqa - slow import
+
         organization = self._organization_pk_to_obj(self.kwargs.get("organization_pk"))
 
         return (
@@ -411,6 +411,8 @@ class PlatformInterestViewSet(ViewSet):
         qs = self.get_queryset(request, organization_pk)
         data_format = request.GET.get("format")
         if data_format in ("csv", "xlsx"):
+            from pandas import DataFrame  # noqa - slow import
+
             # when exporting, we want to rename the columns and rows
             data = DataFrame(qs)
             platform_names = {
@@ -643,6 +645,8 @@ class BaseTitleViewSet(ReadOnlyModelViewSet):
             serializer = self.get_serializer(page, many=True)
 
             if self.request.GET.get("format") in ("csv", "xlsx"):
+                from pandas import DataFrame  # noqa - slow import  # noqa - slow import
+
                 # for CSV and XLSX formats, we return a DataFrame and DRF takes care of the rest
                 data = []
                 for rec in serializer.data:

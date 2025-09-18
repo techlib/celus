@@ -9,7 +9,6 @@ from functools import reduce
 from typing import Any, BinaryIO, Callable, Dict, Generator, Iterable, List, Optional, Set
 
 from django.db.models import Q
-from nibbler.logic.dict_reader import get_dict_reader_from_csv
 from publications.logic.title_management import TitleRec
 from publications.logic.validation import normalize_isbn, normalize_issn
 from publications.models import Title
@@ -197,16 +196,22 @@ class CsvReaderMixin:
         self.column_names = {}
 
     def fieldnames(self, source) -> Iterable[str]:
+        from nibbler.logic.dict_reader import get_dict_reader_from_csv  # noqa - slow import
+
         file = self._remove_django_file_wrappers(source)
         reader = get_dict_reader_from_csv(file)
         return reader.fieldnames
 
     def record_count(self, source) -> int:
+        from nibbler.logic.dict_reader import get_dict_reader_from_csv  # noqa - slow import
+
         file = self._remove_django_file_wrappers(source)
         reader = get_dict_reader_from_csv(file)
         return sum(1 for _ in reader)
 
     def parse_data(self, source: Any) -> Generator[TitleTaggingRecord, None, None]:
+        from nibbler.logic.dict_reader import get_dict_reader_from_csv  # noqa - slow import
+
         file = self._remove_django_file_wrappers(source)
         reader = get_dict_reader_from_csv(file)
         # find which columns are present and find the actual form of the name (case and whitespace)

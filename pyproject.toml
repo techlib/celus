@@ -136,6 +136,7 @@ requests-mock = "~1.12.1"
 ruff = "^0.12.7"
 sphinx = "^7.2"
 watchdog = { extras = ["watchmedo"], version = "^6.0.0" }
+tuna = "^0.5.11"
 
 [tool.poetry.extras]
 registry = ["django-celus-registry"]

@@ -9,16 +9,8 @@ from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from logs.logic.export_analytical import HCubeExport
-from logs.logic.export_analytical.exports.hcube import sanitize_identifier
 from logs.models import ImportBatch, ReportType
 
-from ch_export.cubes import (
-    ch_export_database_prefix,
-    create_ch_export_backend,
-    create_ch_export_database,
-    create_ch_export_user,
-)
 from ch_export.helpers import SmarterStringIO
 
 
@@ -50,6 +42,8 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
         return f"AccessLogExport ({note})"
 
     def save(self, *args, **kwargs):
+        from ch_export.cubes import create_ch_export_database, create_ch_export_user  # noqa - slow import
+
         if not self.ch_database:
             self.ch_database = self.db_name()
             create_ch_export_database(self.ch_database)
@@ -62,6 +56,8 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
         return self.accesslogexportbatch_set.order_by("-created").first()
 
     def db_name(self):
+        from ch_export.cubes import ch_export_database_prefix  # noqa - slow import
+
         celus_name = ch_export_database_prefix()
         if self.organization:
             return f"{celus_name}_{self.organization.pk}"
@@ -69,6 +65,8 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
             return celus_name + "_all"
 
     def ch_backend(self):
+        from ch_export.cubes import create_ch_export_backend  # noqa - slow import
+
         return create_ch_export_backend(self.ch_database)
 
     def create_batch(self):
@@ -133,6 +131,9 @@ class AccessLogExportTask(models.Model):
         ]
 
     def export_to_ch(self):
+        from logs.logic.export_analytical import HCubeExport  # noqa - slow import
+        from logs.logic.export_analytical.exports.hcube import sanitize_identifier  # noqa - slow import
+
         with transaction.atomic():
             AccessLogExportTask.objects.filter(pk=self.pk).select_for_update().get()  # lock self
             self.refresh_from_db()

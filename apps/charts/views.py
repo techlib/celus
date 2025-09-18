@@ -4,7 +4,6 @@ from core.renderers import PandasCSVRenderer, PandasExcelRenderer
 from logs.logic.queries import BadRequestError, StatsComputer, TooMuchDataError
 from logs.models import DimensionText, Metric, ReportType
 from logs.serializers import DimensionSerializer, MetricSerializer
-from pandas import DataFrame
 from rest_framework import serializers, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.renderers import JSONRenderer
@@ -103,6 +102,8 @@ class ChartDataView(APIView):
 
         data_format = request.GET.get("format")
         if data_format in ("csv", "xlsx"):
+            from pandas import DataFrame  # noqa - slow import
+
             # for the bare result, we do not add any extra information, just output the list
             data = DataFrame(data)
             new_keys = [computer.io_prim_dim_name]

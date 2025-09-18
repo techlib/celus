@@ -3,7 +3,6 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import List
 
-from celus_nibbler.parsers import get_parsers
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
@@ -64,6 +63,8 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
 
     @atomic
     def handle(self, *args, **options):
+        from celus_nibbler.parsers import get_parsers  # noqa - slow import
+
         stats = Counter()
         fix_it = options["fix_it"]
 

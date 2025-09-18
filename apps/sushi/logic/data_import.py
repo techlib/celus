@@ -9,8 +9,6 @@ import reversion
 from core.logic.dates import last_month, month_end, month_start
 from django.db.models import Count, Q
 from django.utils.timezone import now
-from nibbler.logic.dict_reader import get_dict_reader_from_csv
-from openpyxl import load_workbook
 from organizations.models import Organization
 from publications.models import Platform
 from scheduler.models import FetchIntention, Harvest
@@ -38,6 +36,8 @@ def import_sushi_credentials_from_xlsx(
     reversion_comment: Optional[str] = None,
     harvest_months: Optional[int] = None,
 ) -> dict:
+    from openpyxl import load_workbook  # noqa - slow import
+
     workbook = load_workbook(filename=filename, read_only=True)
     if sheet_no > len(workbook.worksheets):
         raise ValueError("chosen sheet doesn't exist")
@@ -385,6 +385,8 @@ def import_sushi_credentials_from_csv(
     reversion_comment: Optional[str] = None,
     override_organization: Optional[Organization] = None,
 ) -> dict:
+    from nibbler.logic.dict_reader import get_dict_reader_from_csv  # noqa - slow import
+
     reader = get_dict_reader_from_csv(filename)
     records = list(reader)  # read all records from the reader
     return import_sushi_credentials_old(

@@ -10,7 +10,6 @@ from enum import Enum
 from functools import cache
 from pathlib import Path
 
-from celus_nibbler import PoopStats
 from celus_nigiri import CounterRecord
 from core.exceptions import ModelUsageError
 from core.logic.dates import month_end, month_start
@@ -55,16 +54,7 @@ from django.utils.translation import gettext as _
 from export.enums import FileFormat
 from hcube.api.models.aggregation import Count as HCount
 from hcube.api.models.aggregation import Sum as HSum
-from nibbler.logic.dict_reader import get_dict_reader_from_csv
-from nibbler.logic.processing import (
-    celus_format_poops,
-    counter_format_poops,
-    get_months_from_nibbler_output,
-    get_records_from_nibbler_output,
-    is_success,
-)
 from nibbler.logic.utils import all_nibbler_counter_parsers
-from nibbler.models import NibblerOutput, ParserDefinition
 from organizations.models import Organization, OrganizationAltName
 from publications.models import Item, Platform, Title
 
@@ -75,6 +65,7 @@ from .exceptions import OrganizationHasToBeSelected, WrongOrganizations, WrongSt
 logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
+    from nibbler.models import NibblerOutput
     from sushi.models import CounterReportType
 
     from logs.logic.reporting import FlexibleDataSlicer
@@ -1007,6 +998,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
         return self.state == MduState.IMPORTED
 
     def to_record_dicts(self) -> [dict]:
+        from nibbler.logic.dict_reader import get_dict_reader_from_csv  # noqa - slow import
+
         # Unwrap django file abstraction
         file = getattr(self.data_file, "file", self.data_file)
         file = getattr(file, "file", file)
@@ -1032,6 +1025,9 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     def histograms_with_stats(
         self,
     ) -> typing.Tuple[typing.Dict[str, Counter], Counter, typing.List[str]]:
+        from celus_nibbler import PoopStats  # noqa - slow import
+        from nibbler.logic.processing import get_months_from_nibbler_output  # noqa - slow import
+
         stats = PoopStats()
         for record in self.data_to_records():
             stats.process_record(record)
@@ -1048,7 +1044,10 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
         return (stats_dict, Counter(stats_dict["total"]), list(stats_dict["dimensions"].keys()))
 
-    def get_nibbler_output(self) -> typing.Tuple[NibblerOutput, MduMethod]:
+    def get_nibbler_output(self) -> typing.Tuple["NibblerOutput", MduMethod]:
+        from nibbler.logic.processing import celus_format_poops, counter_format_poops, is_success  # noqa - slow import
+        from nibbler.models import ParserDefinition  # noqa - slow import
+
         if self.method == MduMethod.RAW:
             # Parsing raw data using nibbler (user can't pick report type)
 
@@ -1093,6 +1092,8 @@ class ManualDataUpload(SourceFileMixin, models.Model):
 
     def data_to_records(self) -> typing.Generator[CounterRecord, None, None]:
         self.check_self_checksum()  # check the checksum before using the file
+
+        from nibbler.logic.processing import get_records_from_nibbler_output  # noqa - slow import
 
         nibbler_output, _ = self.get_nibbler_output()
         yield from get_records_from_nibbler_output(nibbler_output)

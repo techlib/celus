@@ -3,7 +3,6 @@ from collections import Counter
 from datetime import timedelta
 from typing import List, Optional
 
-import pandas as pd
 from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from django.conf import settings
 from django.db.models import DurationField, ExpressionWrapper, F, FloatField, Min, Value
@@ -63,7 +62,9 @@ def create_table_from_db(platform_id: Optional[int], lookback_days: Optional[int
         .annotate(delay=Min("delay"))
         .order_by("delay")
     )
-    df = pd.DataFrame.from_records(table_values)
+    from pandas import DataFrame  # noqa - slow import
+
+    df = DataFrame.from_records(table_values)
     return df
 
 

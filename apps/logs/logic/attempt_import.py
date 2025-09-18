@@ -19,11 +19,6 @@ from sushi.models import (
 )
 
 from logs.exceptions import DataStructureError, NibblerErrors, ReportDataValidityError
-from logs.logic.data_import import (
-    create_import_batch_or_crash,
-    import_counter_records,
-    wipe_empty_or_partial_import_batches,
-)
 from logs.logic.interest.computation import sync_interest_for_import_batch
 
 logger = logging.getLogger(__name__)
@@ -62,6 +57,12 @@ def import_one_sushi_attempt(
     credentials of the attempt. This can only be used when the attempt does not have credentials.
     (result of deletion of credentials without removal of the data)
     """
+    from logs.logic.data_import import (  # noqa - slow import
+        create_import_batch_or_crash,
+        import_counter_records,
+        wipe_empty_or_partial_import_batches,
+    )
+
     if attempt.credentials is None:
         if counter_version is None or organization is None or platform is None:
             raise ValueError(

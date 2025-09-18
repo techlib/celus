@@ -2,7 +2,6 @@ import logging
 import pathlib
 import typing
 
-from celus_nibbler import NibblerError, Poop, eat
 from core.models import DataSource
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -12,15 +11,18 @@ from pydantic import ValidationError as PydanticValidationError
 
 logger = logging.getLogger(__name__)
 
+if typing.TYPE_CHECKING:
+    from celus_nibbler import NibblerError, Poop
 
-NibblerOutput = typing.List[typing.Union[Poop, NibblerError]]
+NibblerOutput = typing.List[typing.Union["Poop", "NibblerError"]]
 
 
 class ParserDefinitionQuerySet(models.QuerySet):
     def parse_file(self, path: pathlib.Path, platform: str) -> NibblerOutput:
         # Delay nibbler imports to speed up startup
-        from celus_nibbler.definitions import Definition
-        from celus_nibbler.parsers.dynamic import gen_parser
+        from celus_nibbler import eat  # noqa - slow import
+        from celus_nibbler.definitions import Definition  # noqa - slow import
+        from celus_nibbler.parsers.dynamic import gen_parser  # noqa - slow import
 
         definitions = []
         for pd in self:
@@ -62,7 +64,7 @@ class ParserDefinition(models.Model):
 
     def save(self, *args, **kwargs):
         # Delay nibbler imports to speed up startup
-        from celus_nibbler.definitions import Definition
+        from celus_nibbler.definitions import Definition  # noqa - slow import
 
         # try to parse
         try:
@@ -86,13 +88,14 @@ class ParserDefinition(models.Model):
 
     def to_nibbler_definition(self):
         # Delay nibbler imports to speed up startup
-        from celus_nibbler.definitions import Definition
+        from celus_nibbler.definitions import Definition  # noqa - slow import
 
         return Definition.parse(self.definition)
 
 
 def get_report_types_from_nibbler_output(nibbler_output: NibblerOutput) -> models.QuerySet:
-    from logs.models import ReportType
+    from celus_nibbler import Poop  # noqa - slow import
+    from logs.models import ReportType  # noqa - slow import
 
     report_types_ext_ids = [
         e.parser.data_format.id

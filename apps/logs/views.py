@@ -7,7 +7,6 @@ from logging import getLogger
 from pprint import pprint
 from typing import Any, Dict, Optional, Tuple
 
-from celus_nibbler.errors import WrongFileFormatError, XlsError
 from charts.models import ReportDataView
 from core.exceptions import BadRequestException
 from core.filters import PkMultiValueFilterBackend
@@ -55,7 +54,6 @@ from django.views import View
 from hcube.api.models.query import CubeQuery
 from organizations.logic.queries import organization_filter_from_org_id
 from organizations.models import Organization
-from pandas import DataFrame
 from publications.models import Platform, Title
 from rest_framework import mixins, status
 from rest_framework.decorators import action
@@ -163,6 +161,8 @@ class Counter5DataView(APIView):
 
         data_format = request.GET.get("format")
         if data_format in ("csv", "xlsx"):
+            from pandas import DataFrame  # noqa - slow import
+
             # for the bare result, we do not add any extra information, just output the list
             data = DataFrame(data)
             new_keys = [computer.io_prim_dim_name]
@@ -1190,6 +1190,8 @@ class ManualDataUploadViewSet(
             return super().get_permissions()
 
     def perform_create(self, serializer):
+        from celus_nibbler.errors import WrongFileFormatError, XlsError  # noqa - slow import
+
         try:
             return super().perform_create(serializer)
         except NibblerErrors as e:

@@ -27,7 +27,6 @@ from logs.models import (
     ReportType,
     ReportTypeToDimension,
 )
-from nibbler.models import ParserDefinition
 from publications.models import Platform
 from semantic_version import Version
 from sushi.models import AttemptStatus, SushiCredentials, SushiFetchAttempt
@@ -685,6 +684,8 @@ class ParserDefinitionImportAttempt(ImportAttempt):
 
     @transaction.atomic
     def process(self, data: typing.List[dict], merge=ImportAttempt.MergeStrategy.NONE):
+        from nibbler.models import ParserDefinition  # noqa - slow import
+
         # Check whether the data are valid
         ParserDefinitionSerializer(data=data, many=True).is_valid(raise_exception=True)
 

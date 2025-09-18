@@ -12,8 +12,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.translation import gettext as _
-from nibbler.logic.processing import get_errors, output_to_poops
-from nibbler.models import get_report_types_from_nibbler_output
 from organizations.models import Organization
 from organizations.serializers import OrganizationSerializer
 from publications.logic.knowledgebase import (
@@ -478,6 +476,8 @@ class ManualDataUploadSerializer(ModelSerializer):
 
             result = super().create(validated_data)
             try:
+                from nibbler.logic.processing import get_errors, output_to_poops  # noqa - slow import
+
                 # Try to parse
                 nibbler_output, method = result.get_nibbler_output()
 
@@ -487,6 +487,8 @@ class ManualDataUploadSerializer(ModelSerializer):
 
                 # update report type in it wasn't set before
                 if not result.report_type:
+                    from nibbler.models import get_report_types_from_nibbler_output  # noqa - slow import
+
                     # update method for raw => counter transition
                     result.method = method
 

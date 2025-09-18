@@ -19,7 +19,6 @@ from django.utils.functional import cached_property
 from django_celery_results.models import TaskResult
 from events.models import Event, EventCategory, EventImportance
 from logs.exceptions import DataAlreadyPresent
-from logs.logic.data_import import create_import_batch_or_crash
 from logs.logic.interest.computation import sync_interest_for_import_batch
 from logs.models import AccessLog, ImportBatch
 from logs.tasks import import_one_sushi_attempt_task
@@ -715,6 +714,8 @@ class FetchIntention(models.Model):
             settings.AUTO_HARVESTING_PROBABILITIES
         ):
             if final_import_batch:
+                from logs.logic.data_import import create_import_batch_or_crash  # noqa - slow import
+
                 # giving up - last retry will be we showing empty data
                 # represented by empty import batch
                 try:
@@ -1028,7 +1029,7 @@ class Harvest(CreatedUpdatedMixin):
         FetchIntention.objects.bulk_update([rec[0] for rec in fi_to_queue], ["queue"])
 
         if priority >= FetchIntention.PRIORITY_NOW:
-            from .tasks import trigger_scheduler
+            from .tasks import trigger_scheduler  # noqa - slow import
 
             # We need to plan to trigger the schedulers
             # after this transaction is terminated

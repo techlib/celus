@@ -1,14 +1,14 @@
 import logging
 from enum import Enum
 from io import BytesIO
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
+
 from core.models import DATA_SOURCE_TYPE_ORGANIZATION
 from django.conf import settings
 from django.db.models import Q, QuerySet
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
 from organizations.models import Organization
 from publications.models import Platform
 
@@ -96,7 +96,9 @@ class CredentialsDataFrame:
         self,
         sushi_credentials: QuerySet[SushiCredentials],
         accessible_organizations: Optional[QuerySet[Organization]] = None,
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
+        import pandas as pd
+
         sushicred_dict = {col: [] for col in self.cols}
         credentials = sushi_credentials.filter(
             counter_version=self.counter_version
@@ -142,7 +144,7 @@ class CredentialsDataFrame:
         df = pd.DataFrame(sushicred_dict)
         return self.sort(df)
 
-    def sort(self, df) -> pd.DataFrame:
+    def sort(self, df: "pd.DataFrame") -> "pd.DataFrame":
         to_sort_by = [Col.PUBLISHER_VENDOR_PLATFORM.value, Col.TITLE.value]
         if Col.ORGANIZATION.value in df:
             to_sort_by.insert(1, Col.ORGANIZATION.value)
@@ -156,7 +158,9 @@ class OrganizationsDataFrame:
     def __init__(self, admin_organizations: QuerySet[Organization]):
         self.admin_organizations = admin_organizations
 
-    def create(self) -> pd.DataFrame:
+    def create(self) -> "pd.DataFrame":
+        import pandas as pd
+
         return pd.DataFrame(
             {
                 Col.ORGANIZATION.value: [
@@ -167,7 +171,7 @@ class OrganizationsDataFrame:
 
 
 class Sheet:
-    def __init__(self, df: pd.DataFrame, title: str):
+    def __init__(self, df: "pd.DataFrame", title: str):
         self.df = df
         self.title = title
 
@@ -181,7 +185,9 @@ class XlsxFile:
         self.selected_organization_id = selected_organization_id
 
     @staticmethod
-    def adjust_col_widths(worksheet, df: pd.DataFrame):
+    def adjust_col_widths(worksheet, df: "pd.DataFrame"):
+        from openpyxl.utils import get_column_letter  # noqa - slow import
+
         for idx, col in enumerate(df):
             series = df[col]
             max_len = max((series.astype(str).map(len).max(), len(str(series.name)))) + 0.5
@@ -194,6 +200,8 @@ class XlsxFile:
 
     @classmethod
     def use_template(cls, sheets: List[Sheet], selected_organization_id: str):
+        from openpyxl import load_workbook  # noqa - slow import
+
         tmp_file = BytesIO()
         template_file = (
             settings.TEMPLATE_FOR_SUSHI_CRED_IMPORT_CONSORTIUM
@@ -205,6 +213,8 @@ class XlsxFile:
         return cls(tmp_file, sheets, selected_organization_id)
 
     def create(self, mode="w", if_sheet_exists: Optional[str] = None) -> BytesIO:
+        import pandas as pd
+
         with pd.ExcelWriter(
             self.file, engine="openpyxl", mode=mode, if_sheet_exists=if_sheet_exists
         ) as writer:

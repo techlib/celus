@@ -3,10 +3,9 @@ import logging
 import tempfile
 from abc import ABC, abstractmethod
 from itertools import chain, islice
-from typing import Any, Callable, List, Optional, Set, TextIO, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, TextIO, Tuple, Type, Union
 from zipfile import ZIP_DEFLATED, ZipFile
 
-import xlsxwriter
 from cachalot.api import cachalot_disabled
 from core.logic.debug import log_memory
 from core.models import User
@@ -33,6 +32,9 @@ from logs.logic.export_utils import (
 )
 from logs.logic.reporting.slicer import FlexibleDataSlicer, SlicerConfigError, SlicerConfigErrorCode
 from logs.models import AccessLog, DimensionText, ReportType
+
+if TYPE_CHECKING:
+    from xlsxwriter.workbook import Workbook
 
 logger = logging.getLogger(__name__)
 
@@ -586,12 +588,14 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
     def stream_data_to_sink(
         self, sink, progress_monitor: Optional[Callable[[int, int], None]] = None
     ):
+        from xlsxwriter.workbook import Workbook  # noqa - slow import
+
         parts = self.slicer.get_parts_queryset() if self.slicer.split_by else None
         # if we have multipart output
         #  - we will monitor on part basis - not on row basis
         #  - we will generate data for the output part by part
         with tempfile.NamedTemporaryFile("wb") as tmp_file:
-            workbook = xlsxwriter.Workbook(tmp_file.name, {"constant_memory": True})
+            workbook = Workbook(tmp_file.name, {"constant_memory": True})
             # store reference to workbook - we may need it in the methods called later
             self.workbook = workbook
             self.base_fmt = workbook.add_format(self.base_fmt_dict)
@@ -689,11 +693,7 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
         )
 
     def add_chart_sheet(
-        self,
-        workbook: xlsxwriter.Workbook,
-        sheetname: str,
-        row_count: int,
-        max_rows_to_show: int = 30,
+        self, workbook: "Workbook", sheetname: str, row_count: int, max_rows_to_show: int = 30
     ):
         sheet = workbook.add_worksheet(self.unique_sheetname("Chart - " + sheetname))
         chart = workbook.add_chart({"type": "bar"})

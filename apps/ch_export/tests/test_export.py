@@ -38,7 +38,7 @@ class TestAccessLogExportTaskExport:
     def mock_setup(self):
         """Central fixture for all mocking setup"""
         with (
-            patch("ch_export.models.HCubeExport") as mock_hcube,
+            patch("logs.logic.export_analytical.HCubeExport") as mock_hcube,
             patch("ch_export.models.AccessLogExport.ch_backend") as mock_ch_backend,
         ):
             mock_backend = Mock()

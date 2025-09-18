@@ -70,7 +70,7 @@ class TestRequestLogging:
         # The following seems to force the settings to be completely loaded and I can
         # then mock it without trouble
         admin_client.get(reverse("user_api_view"))
-        with patch("core.request_logging.capture.redis.Redis") as redis_mock:
+        with patch("redis.Redis") as redis_mock:
             instance_mock = Mock()
             redis_mock.return_value = instance_mock
             resp = admin_client.get(reverse("user_api_view"))
@@ -83,7 +83,7 @@ class TestRequestLogging:
         Test that the task gets the corresponding data from redis
         :return:
         """
-        with patch("core.tasks.redis.Redis") as redis_mock:
+        with patch("redis.Redis") as redis_mock:
             instance_mock = Mock()
             instance_mock.lpop = MagicMock(side_effect=["a", "b", None])
             redis_mock.return_value = instance_mock
@@ -109,7 +109,7 @@ class TestRequestLogging:
         settings.CLICKHOUSE_CELERY_TASK_LOGGING = False  # need to disable this for the test
         client_obj = admin_client if not anonymous else client
         client_obj.get(reverse("user_api_view"))
-        with patch("core.request_logging.capture.redis.Redis") as redis_mock:
+        with patch("redis.Redis") as redis_mock:
             instance_mock = Mock()
             redis_mock.return_value = instance_mock
             resp = client_obj.get(reverse("user_api_view"))
@@ -118,7 +118,7 @@ class TestRequestLogging:
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             backend_mock = Mock()
@@ -162,7 +162,7 @@ class TestRequestLogging:
         settings.CLICKHOUSE_CELERY_TASK_LOGGING = False  # need to disable this for the test
         client_obj = client
         client_obj.get(reverse("global-platforms-list"))
-        with patch("core.request_logging.capture.redis.Redis") as redis_mock:
+        with patch("redis.Redis") as redis_mock:
             instance_mock = Mock()
             redis_mock.return_value = instance_mock
             resp = client_obj.get(
@@ -173,7 +173,7 @@ class TestRequestLogging:
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             backend_mock = Mock()
@@ -243,7 +243,7 @@ class TestRequestLogging:
         # if we do not do a request first, the mock later will fail with circular import
         # no idea why
         clients["admin1"].get(reverse("user_api_view"))
-        with patch("core.request_logging.capture.redis.Redis") as redis_mock:
+        with patch("redis.Redis") as redis_mock:
             instance_mock = Mock()
             redis_mock.return_value = instance_mock
             celery_task_log(task_id=1, task=Mock(__name__="test_task"))
@@ -251,7 +251,7 @@ class TestRequestLogging:
             redis_stored_record = instance_mock.rpush.call_args[0][1]
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             backend_mock = Mock()
@@ -275,7 +275,7 @@ class TestRequestLogging:
         )
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             # Mock Redis instance
@@ -317,7 +317,7 @@ class TestRequestLogging:
         )
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             # Mock Redis instance
@@ -354,7 +354,7 @@ class TestRequestLogging:
         )
 
         with (
-            patch("core.tasks.redis.Redis") as redis_mock,
+            patch("redis.Redis") as redis_mock,
             patch("core.request_logging.clickhouse.get_logging_backend") as get_backend_mock,
         ):
             # Mock Redis instance

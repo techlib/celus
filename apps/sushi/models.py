@@ -10,12 +10,13 @@ from hashlib import blake2b
 from pathlib import Path
 from tempfile import TemporaryFile
 from time import time
-from typing import IO, Dict, Iterable, List, Optional, Tuple, Union
+from typing import IO, TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from celus_nibbler import Poop
 from urllib.parse import urlencode
 
-import requests
 import reversion
-from celus_nibbler import Poop
 from celus_nigiri.client import (
     CounterVersion,
     Sushi4Client,
@@ -27,7 +28,6 @@ from celus_nigiri.client import (
 from celus_nigiri.client import SushiException as SushiExceptionNigiri
 from celus_nigiri.counter5 import Counter5ReportBase, CounterError, TransportError
 from celus_nigiri.error_codes import ErrorCode
-from celus_pycounter.exceptions import SushiException
 from core.logic import url
 from core.logic.dates import month_end, month_start, parse_date, this_month
 from core.models import (
@@ -66,7 +66,6 @@ from django.utils.translation import gettext_lazy as _
 from events.models import Event, EventCategory, EventImportance
 from logs.exceptions import DataAlreadyPresent
 from logs.models import AccessLog, ImportBatch
-from nibbler.logic.processing import counter_format_poops, output_to_poops
 from organizations.models import Organization
 from publications.logic import knowledgebase
 from publications.logic import knowledgebase as kb
@@ -211,7 +210,7 @@ class CounterReportType(models.Model):
         return f"static\\.counter{self.counter_version}\\.{self.code}\\.{name}"
 
     def get_counter_exporter_class(self):
-        from logs.logic import export_counter
+        from logs.logic import export_counter  # noqa - slow import
 
         if self.counter_version == 5:
             if self.code == "TR":
@@ -625,7 +624,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             )
 
     def perform_auto_update(self, new_url: str) -> bool:
-        from scheduler.models import Automatic, FetchIntention, Harvest
+        from scheduler.models import Automatic, FetchIntention, Harvest  # noqa - slow import
 
         new_url = url.normalize_url(new_url)
         if new_url == self.url:
@@ -827,7 +826,7 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         fetch_attempt.update_broken()
         fetch_attempt.mark_processed()
 
-        from scheduler.logic.automatic import update_verified_for_automatic_scheduling
+        from scheduler.logic.automatic import update_verified_for_automatic_scheduling  # noqa - slow import
 
         # credentials may become verified
         update_verified_for_automatic_scheduling(fetch_attempt)
@@ -849,6 +848,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
         report = None
 
         try:
+            from celus_pycounter.exceptions import SushiException  # noqa - slow import
+
             report = client.get_report_data(
                 counter_report.code, start_date, end_date, output_content=file_data, params=params
             )
@@ -989,6 +990,8 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             used_url=used_url,
         )
         try:
+            import requests
+
             report = self._v5_get_report_data(
                 client, counter_report, start_date, end_date, file_data
             )
@@ -1489,7 +1492,9 @@ class SushiFetchAttempt(SourceFileMixin, models.Model):
             return True
         return False
 
-    def get_nibbler_poop(self, platform: Optional[Platform] = None) -> Poop:
+    def get_nibbler_poop(self, platform: Optional[Platform] = None) -> "Poop":
+        from nibbler.logic.processing import counter_format_poops, output_to_poops  # noqa - slow import
+
         platform = platform or self.credentials.platform
         nibbler_parser = self.counter_report.get_nibbler_parser(json_format=self.file_is_json())
 

@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from time import time
 
 import celery
-import redis
 from celery.signals import task_postrun
 from django.core.cache import cache
 from django.core.mail import mail_admins
@@ -70,6 +69,7 @@ def empty_task_export():
 @logged_task
 @email_if_fails
 def flush_request_logs_to_clickhouse():
+    import redis  # noqa - slow import
     from django.conf import settings
 
     from .request_logging.clickhouse import (

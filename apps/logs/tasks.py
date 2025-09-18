@@ -21,8 +21,6 @@ from django.db import DatabaseError
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.timezone import now
-from nibbler.logic.processing import get_errors, is_success
-from nibbler.models import get_report_types_from_nibbler_output
 from sushi.models import AttemptStatus, SushiFetchAttempt
 
 from logs.exceptions import (
@@ -312,6 +310,9 @@ def prepare_preflight(mdu_id: int):
 
         elif mdu.state == MduState.CONFIRMED:
             if mdu.method == MduMethod.RAW:
+                from nibbler.logic.processing import get_errors, is_success  # noqa - slow import
+                from nibbler.models import get_report_types_from_nibbler_output  # noqa - slow import
+
                 # update method if it was updated
                 nibbler_output, mdu.method = mdu.get_nibbler_output()
 

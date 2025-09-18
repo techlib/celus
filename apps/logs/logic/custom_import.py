@@ -9,7 +9,6 @@ from django.utils.timezone import now
 from organizations.models import Organization
 
 from logs.exceptions import OrganizationNotAllowedToImportRawData, OrganizationNotFound
-from logs.logic.data_import import import_counter_records, import_empty_batches
 from logs.logic.interest.computation import sync_interest_for_import_batch
 from logs.logic.materialized_reports import sync_materialized_reports_for_import_batch
 from logs.models import ManualDataUpload
@@ -99,6 +98,8 @@ def import_custom_data(
     :param empty: If true import only empty import batches based od preflight["months"]
     :return: import statistics
     """
+    from logs.logic.data_import import import_counter_records, import_empty_batches  # noqa - slow import
+
     stats = Counter()
 
     organizations = mdu.preflight.get("organizations", {"": {}}) or {"": {}}

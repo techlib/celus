@@ -2,7 +2,6 @@ import os
 from io import StringIO
 from tempfile import mkstemp
 
-from pandas import DataFrame
 from rest_framework import status
 from rest_framework.renderers import BaseRenderer
 
@@ -17,6 +16,8 @@ class PandasBaseRenderer(BaseRenderer):
     """
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
+        from pandas import DataFrame  # noqa - slow import
+
         if renderer_context and "response" in renderer_context:
             status_code = renderer_context["response"].status_code
             if not status.is_success(status_code):

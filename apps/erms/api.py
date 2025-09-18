@@ -1,8 +1,6 @@
 import logging
 import urllib.parse
 
-import requests
-
 logger = logging.getLogger(__file__)
 
 
@@ -36,6 +34,8 @@ class ERMS:
     def __init__(self, base_url="https://erms.czechelib.cz/api/"):
         ERMS.check_url(base_url)
         self.base_url = base_url.rstrip("/")
+        import requests  # noqa - slow import
+
         self.session = requests.Session()
 
     @staticmethod

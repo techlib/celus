@@ -1,10 +1,8 @@
 import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
-import xlsxwriter
 from django.utils import timezone
 from logs.logic.export_utils import xslx_scale_column_width
-from xlsxwriter.utility import xl_rowcol_to_cell
 
 from reporting.logic.computation import Report, ReportPart, ReportPartStage, ResultRow
 
@@ -42,6 +40,8 @@ class XlsxExporter:
         return name.replace("/", "|")[:31]
 
     def export(self) -> bytes:
+        import xlsxwriter
+
         with tempfile.NamedTemporaryFile("wb") as tmp_file:
             self.workbook = xlsxwriter.Workbook(tmp_file.name, {"constant_memory": True})
             self.base_fmt = self.workbook.add_format(self.base_fmt_dict)
@@ -135,6 +135,8 @@ class XlsxExporter:
     def create_stage_sheet(
         self, part: ReportPart, stage: ReportPartStage, results: [ResultRow], tab_color=None
     ) -> None:
+        from xlsxwriter.utility import xl_rowcol_to_cell  # noqa - slow import
+
         # if the part has the same name as the stage, we don't want to repeat it in the sheet name
         sheet_name = self.sanitize_sheet_name(
             f"{part.name} ({stage.name})" if part.name != stage.name else stage.name
@@ -251,6 +253,8 @@ class XlsxExporter:
         Return a tuple of (formula, sheet_name) for a given cell. Where both are None if
         the cell is not a formula but a simple value.
         """
+        from xlsxwriter.utility import xl_rowcol_to_cell  # noqa - slow import
+
         context_args = (col, row, current_row, part)
         if len(parsed_formula) == 1:
             variable = parsed_formula[0]

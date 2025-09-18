@@ -3,7 +3,6 @@ import pickle
 import time
 from datetime import timedelta
 
-import redis
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.timezone import now
@@ -85,6 +84,8 @@ def celery_task_log(
         start = time.time()
         # Celery logging shares the same infrastructure as request logging, so we use the same
         # redis settings. The only difference is that we use a different redis key as shown below.
+        import redis  # noqa - slow import
+
         r = redis.Redis(
             host=settings.REQUEST_LOGGING_REDIS_HOST,
             port=settings.REQUEST_LOGGING_REDIS_PORT,

@@ -1,7 +1,6 @@
 import logging
 from typing import Optional
 
-import requests
 from django.conf import settings
 from logs.models import FlexibleReport, OrganizationPlatform
 from organizations.models import Organization, UserOrganization
@@ -175,6 +174,8 @@ def sync():
     if not settings.MAXIMUS_URL or not settings.MAXIMUS_TOKEN:
         logger.warning("MAXIMUS_URL/MAXIMUS_TOKEN not set - not syncing")
         return
+
+    import requests  # noqa - slow import
 
     c = requests.session()
     c.headers["Authorization"] = "Api-Key " + settings.MAXIMUS_TOKEN
