@@ -15,6 +15,7 @@ cs:
       <TitleList
         :url="titleListURL"
         titles-on-multiple-platforms
+        order-interest="platform_count"
         :no-data-text="$t('no_overlap_titles')"
       ></TitleList>
     </section>
