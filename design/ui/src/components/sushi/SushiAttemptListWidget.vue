@@ -94,6 +94,9 @@ cs:
                   "
                 ></span>
               </template>
+              <template #item.start_date="{ item }">
+                {{ ymDateFormat(item.start_date) }}
+              </template>
               <template #expanded-row="{ item, columns }">
                 <tr class="item_expanded_space">
                   <td :colspan="columns.length">
@@ -235,6 +238,7 @@ import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
 import TableCustomSort from "../tables/TableCustomSort.vue";
+import { ymDateFormat } from "@/libs/dates";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -311,15 +315,9 @@ export default {
           order: "reverse",
         },
         {
-          title: this.$t("title_fields.start_date"),
+          title: this.$t("month"),
           value: "start_date",
           key: "start_date",
-          order: "reverse",
-        },
-        {
-          title: this.$t("title_fields.end_date"),
-          value: "end_date",
-          key: "end_date",
           order: "reverse",
         },
         {
@@ -346,6 +344,7 @@ export default {
   },
   methods: {
     filesize,
+    ymDateFormat,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

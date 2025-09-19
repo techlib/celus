@@ -223,6 +223,10 @@ cs:
             }}</strong>
           </template>
 
+          <template #item.start_date="{ item }">
+            {{ ymDateFormat(new Date(item.start_date)) }}
+          </template>
+
           <template #item.status="{ item }">
             <FetchIntentionStatusIcon
               :fetch-intention="item"
@@ -379,7 +383,7 @@ import {
 } from "@/libs/intention-state";
 import { counterVersionToStr } from "@/libs/sushi";
 import CheckMark from "@/components/util/CheckMark";
-import { isoDateTimeFormatSpans } from "@/libs/dates";
+import { isoDateTimeFormatSpans, ymDateFormat } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
 import SushiLoaderGame from "@/components/sushi/SushiLoaderGame";
@@ -505,15 +509,9 @@ export default {
           order: "reverse",
         },
         {
-          title: this.$t("title_fields.start_date"),
+          title: this.$t("month"),
           value: "start_date",
           key: "start_date",
-          order: "reverse",
-        },
-        {
-          title: this.$t("title_fields.end_date"),
-          value: "end_date",
-          key: "end_date",
           order: "reverse",
         },
         {
@@ -624,6 +622,7 @@ export default {
 
   methods: {
     filesize,
+    ymDateFormat,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),
