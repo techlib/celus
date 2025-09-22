@@ -222,16 +222,26 @@ cs:
             :label="$t('new_password')"
             :rules="[passwordError, rules.required, rules.min]"
             :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'fa fa-eye' : 'fa fa-eye-slash'"
+            :append-icon-inner="showPassword ? 'fa fa-eye' : 'fa fa-eye-slash'"
             @click:append="showPassword = !showPassword"
             counter
           ></v-text-field>
           <!--v-text-field v-model="password2" type="password" :label="$t('password2')"></v-text-field-->
           <v-alert
-            v-if="
+            v-if="nonFieldError"
+            type="error"
+            variant="outlined"
+            icon="fa fa-exclamation-circle"
+          >
+            <div>
+              {{ nonFieldError }}
+            </div>
+          </v-alert>
+          <v-alert
+            v-else-if="
               signupError &&
-              !emailError &&
-              !passwordError &&
+              emailError === true && // no email error
+              passwordError === true && // no password error
               !emailEdited &&
               !passwordEdited
             "
@@ -239,7 +249,11 @@ cs:
             variant="outlined"
             icon="fa fa-exclamation-circle"
           >
-            {{ $t("signup_error") }}: "<em>{{ signupError }}</em
+            {{ $t("signup_error") }}: "<em>{{
+              signupError.response && signupError.response.data
+                ? signupError.response.data
+                : signupError
+            }}</em
             >"
           </v-alert>
         </v-card-text>
@@ -436,6 +450,17 @@ export default {
         }
       }
       return true;
+    },
+    nonFieldError() {
+      if (this.signupError && !this.emailEdited && !this.passwordEdited) {
+        if (
+          this.signupError.response.data &&
+          this.signupError.response.data.non_field_errors
+        ) {
+          return this.signupError.response.data.non_field_errors[0];
+        }
+      }
+      return null;
     },
   },
 
