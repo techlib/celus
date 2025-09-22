@@ -395,8 +395,8 @@ class SushiCredentialsQuerySet(models.QuerySet):
                 counter_report=crt
             ).select_related("credentials__platform"):
                 kb_crts = kb.get_counter_reports(cr2crt.credentials.platform.knowledgebase)
-                if crt := kb_crts.get((cr2crt.credentials.counter_version, crt.code)):
-                    if not crt.get("whitelisted"):
+                if kb_crt := kb_crts.get((cr2crt.credentials.counter_version, crt.code)):
+                    if not kb_crt.get("whitelisted"):
                         to_remove.add(cr2crt.pk)
                 else:
                     to_remove.add(cr2crt.pk)

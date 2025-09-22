@@ -618,11 +618,16 @@ class TestPlatformImportAttempt:
         )
         assert set(creds_empty.counter_reports.values_list("counter_version", "code")) == set()
 
+    @pytest.mark.parametrize("record_exists", [True, False])
     def test_remove_non_whitelisted_reports_during_sync(
-        self, data_sources, counter_report_types, organizations
+        self, data_sources, counter_report_types, organizations, record_exists
     ):
         """
         Test that non-whitelisted reports are removed from credentials during knowledgebase sync.
+
+        If record_exists is True, the record for DR will be created in the knowledgebase with
+        whitelisting set to False. If record_exists is False, the record for DR will not be created
+        in the knowledgebase.
         """
 
         # Create a platform with knowledgebase data
@@ -654,6 +659,15 @@ class TestPlatformImportAttempt:
             use_counter_reports_from_platform=False,
             report_types=[(5, "TR"), (5, "DR"), (5, "PR")],
         )
+        # create a second set of credentials with TR and DR, this uncovers a bug in the
+        # remove_non_whitelisted_reports_during_sync function which only occurs
+        # when there are more than one set of credentials
+        CredentialsFactory(
+            platform=platform,
+            counter_version=5,
+            use_counter_reports_from_platform=False,
+            report_types=[(5, "TR"), (5, "DR")],
+        )
 
         # Verify all report types are assigned
         assert set(credentials.counter_reports.values_list("code", flat=True)) == {"TR", "DR", "PR"}
@@ -675,7 +689,11 @@ class TestPlatformImportAttempt:
                         "counter_version": 5,
                         "assigned_report_types": [
                             {"report_type": "TR", "whitelisted": True},
-                            {"report_type": "DR", "whitelisted": False},  # Not whitelisted
+                            *(
+                                [{"report_type": "DR", "whitelisted": False}]
+                                if record_exists
+                                else []
+                            ),
                         ],
                     }
                 ],
