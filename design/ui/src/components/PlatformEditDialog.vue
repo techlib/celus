@@ -1,4 +1,5 @@
 <i18n lang="yaml" src="@/locales/dialog.yaml"></i18n>
+<i18n lang="yaml" src="@/locales/sushi.yaml"></i18n>
 
 <i18n lang="yaml">
 en:
@@ -175,7 +176,11 @@ cs:
                 :persistent-hint="!manuallyUpdateCounterReports"
               >
                 <template #item="{ props, item }">
-                  <v-list-item v-bind="props" title>
+                  <v-list-item
+                    v-bind="props"
+                    title
+                    v-if="!isBlacklisted(item.raw)"
+                  >
                     <template v-slot:default>
                       <SushiReportIndicator
                         v-if="item.raw.code"
@@ -184,6 +189,32 @@ cs:
                       ></SushiReportIndicator>
                     </template>
                   </v-list-item>
+                  <v-tooltip location="bottom" max-width="400" v-else>
+                    <template #activator="{ props }">
+                      <span v-bind="props">
+                        <v-list-item title disabled>
+                          <SushiReportIndicator
+                            :report="item.raw"
+                            :blacklisted-fn="isBlacklisted"
+                            show-name
+                          ></SushiReportIndicator>
+                        </v-list-item>
+                      </span>
+                    </template>
+                    <i18n-t
+                      keypath="sushi.blacklisted_report_type_desc"
+                      tag="span"
+                    >
+                      <template #link>
+                        <a
+                          :href="`mailto:${contactEmail}`"
+                          class="text-warning"
+                          target="_blank"
+                          >{{ contactEmail }}</a
+                        >
+                      </template>
+                    </i18n-t>
+                  </v-tooltip>
                 </template>
                 <template #selection="{ item, props, selected }">
                   <v-chip
@@ -316,6 +347,7 @@ export default {
   computed: {
     ...mapGetters({
       selectedOrganization: "selectedOrganization",
+      contactEmail: "contactEmail",
     }),
     isEdit() {
       return !!this.platformId;
@@ -636,6 +668,21 @@ export default {
         }
       });
       return reports;
+    },
+    isBlacklisted(report) {
+      if (!report.requires_whitelisting) {
+        return false;
+      }
+      if (this.platform.knowledgebase) {
+        return !this.platform.knowledgebase.providers.some(
+          (e) =>
+            e.counter_version == report.counter_version &&
+            e.assigned_report_types.some(
+              (e) => e.report_type == report.code && e.whitelisted,
+            ),
+        );
+      }
+      return true;
     },
   },
 
