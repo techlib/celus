@@ -1190,6 +1190,47 @@ class TestSushiCredentialsViewSet:
             == creds_dict["counter_reports_long"][0]["code"]
         )
 
+    @pytest.mark.parametrize("items_enabled", [True, False])
+    @pytest.mark.parametrize("whitelisted", [True, False])
+    def test_clone_to_newer_with_whitelisted_report_type(
+        self, clients, counter_report_types, platforms, settings, items_enabled, whitelisted
+    ):
+        """
+        Test that cloning credentials which have a IR_M1 report type
+        creates a new credential with the IR report type. But only if ITEMS_ENABLED is True
+        and if IR is whitelisted.
+        """
+        ir51 = counter_report_types["ir51"]
+        ir51.requires_whitelisting = True
+        ir51.save()
+        settings.ENABLE_ITEMS = items_enabled
+
+        cr = CredentialsFactory(
+            counter_version=5,
+            report_types=[(5, "IR_M1"), (5, "TR")],
+            platform__knowledgebase={
+                "providers": [
+                    {
+                        "counter_version": 51,
+                        "assigned_report_types": [
+                            {"report_type": "IR", "whitelisted": whitelisted}
+                        ],
+                    }
+                ]
+            },
+        )
+
+        url = reverse("sushi-credentials-clone-to-newer")
+        resp = clients["master_admin"].post(url, [{"credentials_id": cr.pk}], format="json")
+        assert resp.status_code == 200
+        assert len(resp.data) == 1
+
+        new_cr = SushiCredentials.objects.get(counter_version=51)
+        exp_has_ir = items_enabled and whitelisted
+        assert new_cr.counter_reports.count() == (2 if exp_has_ir else 1)
+        assert new_cr.counter_reports.filter(code="IR").exists() == exp_has_ir
+        assert new_cr.counter_reports.filter(code="TR").exists(), "TR should always be cloned"
+
     @pytest.mark.parametrize(
         ["suffix", "exp_end"], [("/r5", "/r51"), ("/c5", "/c5"), ("/r5/", "/r51")]
     )

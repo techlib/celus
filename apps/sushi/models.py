@@ -570,6 +570,17 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
 
         report_type_codes = [e.code for e in self.counter_reports.all()]
 
+        # deal with IR_M1 - it should be cloned as IR, but only if IR is whitelisted
+        # and ITEMS_ENABLED is True
+        if "IR_M1" in report_type_codes and settings.ENABLE_ITEMS:
+            if (
+                provider := kb.get_provider_for_counter_version(
+                    self.platform.knowledgebase, CounterVersionChoices.C51
+                )
+            ) and kb.is_report_type_whitelisted(provider, "IR"):
+                report_type_codes.remove("IR_M1")
+                report_type_codes.append("IR")
+
         self.pk = None
         self.counter_version = CounterVersionChoices.C51
         if self.title:

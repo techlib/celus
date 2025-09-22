@@ -34,7 +34,12 @@ def get_provider_for_counter_version(
 ) -> typing.Optional[dict]:
     """Returns provider for counter version from knowledgebase dict"""
     return next(
-        (e for e in knowledgebase["providers"] if e["counter_version"] == counter_version), None
+        (
+            e
+            for e in knowledgebase.get("providers", [])
+            if e.get("counter_version") == counter_version
+        ),
+        None,
     )
 
 
@@ -43,7 +48,11 @@ def is_report_type_whitelisted(provider: dict, report_type: str) -> bool:
     if not provider:
         return False
     if rec := next(
-        (e for e in provider.get("assigned_report_types", []) if e["report_type"] == report_type),
+        (
+            e
+            for e in provider.get("assigned_report_types", [])
+            if e.get("report_type") == report_type
+        ),
         None,
     ):
         return rec.get("whitelisted", False)
