@@ -1,8 +1,15 @@
 import pytest
+from celus_nigiri import CounterRecord
+from celus_nigiri.counter5 import Counter5IRReport, Counter5TRReport
+from organizations.fake_data import OrganizationFactory
 from organizations.tests.conftest import organizations  # noqa
+from publications.fake_data import PlatformFactory
 from publications.logic.cleanup import sync_platform_title_links
 from publications.models import PlatformTitle
 
+from logs.cubes import AccessLogCube, ch_backend
+from logs.fake_data import ReportTypeFactory
+from logs.logic.cleanup import find_split_accesslogs_with_the_same_title
 from logs.logic.clickhouse import sync_accesslogs_with_clickhouse_superfast
 from logs.logic.data_import import import_counter_records
 from logs.models import AccessLog
@@ -59,3 +66,87 @@ class TestPlatformTitleCleanup:
         sync_platform_title_links()
         assert PlatformTitle.objects.count() == 1, "one platform-title link remains"
         assert PlatformTitle.objects.get().date.isoformat() == "2020-02-01"
+
+
+class TestMergeSplitAccessLogs:
+    @pytest.mark.parametrize(["item_name"], [("Item 1",), (None,)])
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_find_split_accesslogs_with_the_same_title(self, clickhouse_db, item_name):
+        """
+        Test that records for the same title and optionally item in the same import batch are merged
+        together.
+        """
+        rt = ReportTypeFactory(
+            name="Counter 5 - Title report", short_name="TR", dimensions=Counter5TRReport.dimensions
+        )
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        record = CounterRecord(
+            title="Title 1",
+            item=item_name,
+            start="2020-01-01",
+            end="2020-01-31",
+            metric="Total_Item_Requests",
+            value=1,
+        )
+        # import_counter_records merges records automatically, so we cannot create split records
+        # using import_counter_records
+        import_counter_records(rt, organization, platform, [record], skip_clickhouse_sync=True)
+
+        # create a split record
+        assert AccessLog.objects.count() == 1
+        al = AccessLog.objects.get()
+        al.pk = None
+        al.value = 2
+        al.save()
+        assert AccessLog.objects.count() == 2
+        sync_accesslogs_with_clickhouse_superfast()
+        assert ch_backend.get_count(AccessLogCube.query()) == 2
+
+        find_split_accesslogs_with_the_same_title(fix_it=True)
+        assert AccessLog.objects.count() == 1
+        assert AccessLog.objects.get().value == 3
+        al = AccessLog.objects.get()
+        if item_name:
+            assert al.item.name == item_name
+        else:
+            assert al.item is None
+        assert al.target.name == "Title 1"
+
+    @pytest.mark.parametrize(["second_item_name"], [("Item 2",), (None,)])
+    @pytest.mark.clickhouse
+    @pytest.mark.django_db(transaction=True)
+    def test_find_split_accesslogs_with_the_same_title_with_items(
+        self, clickhouse_db, second_item_name
+    ):
+        """
+        Test that records for the same title in the same import batch are not merged together
+        if they are for different items.
+
+        The test is done both with and without the second item. Neither should be merged.
+        """
+        rt = ReportTypeFactory(
+            name="Counter 5 - Item report",
+            short_name="IR",
+            dimensions=Counter5IRReport.dimensions,
+            uses_items=True,
+        )
+        organization = OrganizationFactory()
+        platform = PlatformFactory()
+        crt_base = {
+            "title": "Title 1",
+            "start": "2020-01-01",
+            "end": "2020-01-31",
+            "metric": "Total_Item_Requests",
+        }
+        records = [
+            CounterRecord(value=1, item="Item 1", **crt_base),
+            CounterRecord(value=2, item=second_item_name, **crt_base),
+        ]
+        import_counter_records(rt, organization, platform, records)
+        assert AccessLog.objects.count() == 2
+        assert ch_backend.get_count(AccessLogCube.query()) == 2
+
+        find_split_accesslogs_with_the_same_title(fix_it=True)
+        assert AccessLog.objects.count() == 2, "no merge happened"

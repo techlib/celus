@@ -54,7 +54,7 @@ def find_split_accesslogs_with_the_same_title(fix_it: bool = False) -> Counter:
     stats = Counter()
     # import batch is a substitute for (organization_id, platform_id, report_type and date)
     # and it is slightly more efficient to use it as a key
-    key_dims = ["import_batch_id", "metric_id", "target_id"] + [
+    key_dims = ["import_batch_id", "metric_id", "target_id", "item_id"] + [
         f"dim{i + 1}" for i in range(DIMENSION_COUNT)
     ]
     to_fix = []
