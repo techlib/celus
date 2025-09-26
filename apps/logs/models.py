@@ -129,6 +129,9 @@ class ReportTypeQuerySet(models.QuerySet):
                     )
         return rt
 
+    def get_interest_rt_no_create(self) -> typing.Optional["ReportType"]:
+        return self.filter(short_name="interest", source__isnull=True).first()
+
     def only_materialized(self):
         return self.filter(materialization_spec__isnull=False)
 

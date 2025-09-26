@@ -41,7 +41,7 @@ repos:
         name: Check pyproject.toml dependencies
         entry: poetry run deptry apps
         language: system
-        files: ^pyproject\.toml$
+        files: ^pyproject\.toml|.*\.py$
         pass_filenames: false
 
 

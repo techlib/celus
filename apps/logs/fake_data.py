@@ -138,6 +138,8 @@ class ImportBatchFullFactory(ImportBatchFactory):
                 for item in items
             ]
         AccessLog.objects.bulk_create(als)
+        obj.record_count = len(als)
+        obj.save()
 
         PlatformTitle.objects.bulk_create(
             [

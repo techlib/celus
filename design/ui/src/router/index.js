@@ -400,6 +400,14 @@ const routes = [
     },
   },
   {
+    path: "/admin/ch-export/",
+    name: "ch-export",
+    component: () => import("../pages/ChExportPage.vue"),
+    meta: {
+      title: "pages.ch_export",
+    },
+  },
+  {
     path: "/platforms/:platformId/upload-data/",
     name: "platform-upload-data",
     component: () => import("../pages/CustomDataUploadPage.vue"),

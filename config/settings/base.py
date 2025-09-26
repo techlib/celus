@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "knowledgebase.apps.KnowledgebaseConfig",
     "nibbler.apps.NibblerConfig",
     "export.apps.ExportConfig",
+    "ch_export.apps.ChExportConfig",
     "tags.apps.TagsConfig",
     "releases.apps.ReleasesConfig",
     "necronomicon.apps.NecronomiconConfig",
@@ -485,6 +486,8 @@ CELERY_TASK_ROUTES = {
     "tags.tasks.tagging_batch_preflight_task": {"queue": "celery"},
     "tags.tasks.tagging_batch_unassign_task": {"queue": "celery"},
     "django_celus_registry.tasks.update_registry_models": {"queue": "celery"},
+    "ch_export.tasks.export_to_ch_task": {"queue": "ch_export"},
+    "ch_export.tasks.start_export_tasks": {"queue": "ch_export"},
 }
 
 
@@ -775,6 +778,23 @@ CLICKHOUSE_LOGGING_SECURE = config(
     "CLICKHOUSE_LOGGING_SECURE", default=CLICKHOUSE_SECURE, cast=bool
 )
 CLICKHOUSE_LOGGING_VERIFY = config("CLICKHOUSE_LOGGING_VERIFY", default=False, cast=bool)
+
+CLICKHOUSE_EXPORT_USER = config("CLICKHOUSE_EXPORT_USER", default="")
+CLICKHOUSE_EXPORT_PASSWORD = config("CLICKHOUSE_EXPORT_PASSWORD", default="")
+CLICKHOUSE_EXPORT_HOST = config("CLICKHOUSE_EXPORT_HOST", default="")
+CLICKHOUSE_EXPORT_PORT = config("CLICKHOUSE_EXPORT_PORT", default=9000, cast=int)
+CLICKHOUSE_EXPORT_SECURE = config("CLICKHOUSE_EXPORT_SECURE", default=False, cast=bool)
+CLICKHOUSE_EXPORT_VERIFY = config("CLICKHOUSE_EXPORT_VERIFY", default=False, cast=bool)
+CLICKHOUSE_EXPORT_PASSWORD_LENGTH = config(
+    "CLICKHOUSE_EXPORT_PASSWORD_LENGTH", default=24, cast=int
+)
+
+if CLICKHOUSE_EXPORT_HOST:
+    CELERY_BEAT_SCHEDULE["weekly_export_to_ch"] = {
+        "task": "ch_export.tasks.start_export_tasks",
+        "schedule": crontab(hour="2", minute=randmin(), day_of_week="6"),
+        "options": {"queue": "ch_export"},  # Separate queue
+    }
 
 # we buffer logging messages in redis, so we can send them to clickhouse in batches
 # the following defines the redis instance to use
@@ -1102,6 +1122,7 @@ EXPORTED_SETTINGS = [
     "AUTOMATICALLY_CREATE_METRICS",
     "CELUS_ADMIN_SITE_PATH",
     "CLICKHOUSE_QUERY_ACTIVE",
+    "CLICKHOUSE_EXPORT_HOST",
     "CONSORTIAL_INSTALLATION",
     "CONTACT_EMAIL",
     "ENABLE_ITEMS",

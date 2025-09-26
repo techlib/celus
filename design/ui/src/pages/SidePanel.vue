@@ -279,6 +279,11 @@ export default {
                   show: this.showManagementStuff,
                 },
                 {
+                  title: this.$t("pages.ch_export"),
+                  linkTo: "ch-export",
+                  show: this.showManagementStuff,
+                },
+                {
                   title: this.$t("pages.management_commands"),
                   // icon: "fa fa-terminal",
                   linkTo: "management-commands",

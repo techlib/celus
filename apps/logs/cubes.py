@@ -85,7 +85,7 @@ class AccessLogCube(Cube):
 
         # dictionaries
         _dicts = [
-            ("title", "publications_title", ("name", "issn", "eissn", "doi", "isbn")),
+            ("title", "publications_title", ("name", "issn", "eissn", "doi", "isbn", "pub_type")),
             (
                 "item",
                 "publications_item",

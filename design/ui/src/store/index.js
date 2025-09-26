@@ -1,32 +1,32 @@
-import { createStore } from "vuex";
+import {
+  lastCoveredMonth,
+  lastFinishedMonth,
+  parseDateTime,
+  ymDateFormat,
+} from "@/libs/dates";
+import { sortOrganizations } from "@/libs/organizations";
+import sleep from "@/libs/sleep";
 import axios from "axios";
-import Cookies from "js-cookie";
 import addMonths from "date-fns/addMonths";
 import addYears from "date-fns/addYears";
 import endOfYear from "date-fns/endOfYear";
+import { cs } from "date-fns/locale";
 import startOfYear from "date-fns/startOfYear";
-import {
-  ymDateFormat,
-  parseDateTime,
-  lastFinishedMonth,
-  lastCoveredMonth,
-} from "@/libs/dates";
+import Cookies from "js-cookie";
+import isEqual from "lodash/isEqual";
 import { format as formatNumber } from "mathjs/number";
+import { createStore } from "vuex";
 import VuexPersistence from "vuex-persist";
-import { sortOrganizations } from "@/libs/organizations";
 import cancellation from "./modules/cancellation";
-import interest from "./modules/interest";
-import maintenance from "./modules/maintenance";
-import login from "./modules/login";
 import events from "./modules/events";
+import interest from "./modules/interest";
+import login from "./modules/login";
+import maintenance from "./modules/maintenance";
 import pageSettings from "./modules/page-settings";
 import siteConfig from "./modules/site-config";
-import isEqual from "lodash/isEqual";
-import sleep from "@/libs/sleep";
-import { cs } from "date-fns/locale";
 // import Worker from "@/workers/event-worker";
-import endOfMonth from "date-fns/endOfMonth";
 import router from "@/router";
+import endOfMonth from "date-fns/endOfMonth";
 import { min } from "lodash";
 
 const vuexLocal = new VuexPersistence({
@@ -335,6 +335,12 @@ export default createStore({
         return state.basicInfo["SUBJECT_FOR_IMPORT_CREDENTIALS_EMAIL"];
       }
       return "COUNTER credentials import";
+    },
+    clickhouseExportHost(state) {
+      if ("CLICKHOUSE_EXPORT_HOST" in state.basicInfo) {
+        return state.basicInfo["CLICKHOUSE_EXPORT_HOST"];
+      }
+      return false;
     },
     clickhouseQueryActive(state) {
       if ("CLICKHOUSE_QUERY_ACTIVE" in state.basicInfo) {

@@ -44,6 +44,7 @@ urlpatterns = [
     path("", include("reporting.urls")),
     *local_urls,
     path("export/", include("export.urls")),
+    path("ch-export/", include("ch_export.urls")),
     path("scheduler/", include("scheduler.urls")),
     path("deployment/", include("deployment.urls")),
     path("tags/", include("tags.urls")),

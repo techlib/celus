@@ -20,7 +20,7 @@ tests:run_tests:
   services:
     - postgres
     - redis
-    - name: clickhouse/clickhouse-server:25.7.4
+    - name: clickhouse/clickhouse-server:25.8.4
       alias: clickhouse
   variables:
     FF_NETWORK_PER_BUILD: 1  # to make services see each other
@@ -37,6 +37,10 @@ tests:run_tests:
     CLICKHOUSE_PASSWORD: celus
     CLICKHOUSE_HOST: clickhouse
     CLICKHOUSE_PORT: 9000
+    CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    CLICKHOUSE_EXPORT_HOST: clickhouse
+    CLICKHOUSE_EXPORT_USER: celus
+    CLICKHOUSE_EXPORT_PASSWORD: celus
   before_script:
     - poetry install --no-root
   script:

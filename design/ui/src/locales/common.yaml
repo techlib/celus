@@ -5,6 +5,7 @@ en:
     all_titles: All titles
     analytics: Analytics
     changelog: Changelog
+    ch_export: ClickHouse exports
     configuration: Configuration
     content: Content
     create_report: Create report
@@ -421,6 +422,7 @@ cs:
     admin: Administrace
     all_titles: Všechny tituly
     analytics: Analytické nástroje
+    ch_export: ClickHouse exporty
     changelog: Seznam změn
     configuration: Konfigurace
     content: Obsah
