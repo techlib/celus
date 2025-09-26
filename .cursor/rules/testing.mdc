@@ -1,0 +1,15 @@
+---
+description: How to test the code
+globs:
+alwaysApply: true
+---
+
+When writing tests, try to reuse code by using pytest parametrization. Also, when test data are repeated often, extract them to a fixture and/or a constant.
+
+When running python tests, always call pytest using poetry like this:
+
+```bash
+poetry run pytest
+```
+
+This ensures that the tests are run with the correct environment and dependencies.

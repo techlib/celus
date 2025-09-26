@@ -1,0 +1,25 @@
+---
+description: Python import conventions for this project
+globs:
+alwaysApply: true
+---
+
+This project includes the `apps` directory in the Python path, so all Python imports should be done directly to libraries inside the `apps` directory without including the `apps.` prefix.
+
+**Correct imports:**
+
+```python
+from logs.models import SomeModel
+from core.utils import some_function
+from sushi.models import CounterReport
+```
+
+**Incorrect imports:**
+
+```python
+from apps.logs.models import SomeModel
+from apps.core.utils import some_function
+from apps.sushi.models import CounterReport
+```
+
+Always use the direct import path without the `apps.` prefix when importing from modules within the `apps` directory.
