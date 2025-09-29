@@ -186,6 +186,33 @@ cs:
           </span>
         </template>
 
+        <template #item.coverage="{ item }">
+          <v-progress-circular
+            v-if="coverageData[item.pk] === undefined"
+            color="grey"
+            indeterminate
+            size="16"
+            width="1"
+          ></v-progress-circular>
+          <div v-else-if="coverageData[item.pk]">
+            <v-progress-linear
+              :model-value="Math.round(coverageData[item.pk].ratio * 100)"
+              :color="getCoverageColor(coverageData[item.pk].ratio)"
+              height="20"
+              rounded
+            >
+              <template #default="{ value }">
+                <strong class="text-white text-caption"
+                  >{{ Math.round(value) }}%</strong
+                >
+              </template>
+            </v-progress-linear>
+          </div>
+          <div v-else class="text-center text-grey">
+            <span class="text-caption">{{ $t("no_data") }}</span>
+          </div>
+        </template>
+
         <template
           #body.append="{ columns }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
@@ -278,25 +305,23 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
+import ReportingChart from "@/components/reporting/ReportingChart";
+import TrendArrow from "@/components/reporting/TrendArrow.vue";
+import TableCustomSort from "@/components/tables/TableCustomSort";
+import TagChip from "@/components/tags/TagChip";
+import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
+import { smartMonthRange } from "@/libs/dates";
 import { splitGroup } from "@/libs/group-ids";
 import { formatInteger } from "@/libs/numbers";
-import { mapActions, mapGetters, mapState } from "vuex";
-import translators from "@/mixins/translators";
-import { djangoToDataTableOrderBy } from "@/libs/sorting";
-import { isEqual } from "lodash";
 import { toBase64JSON } from "@/libs/serialization";
+import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import cancellation from "@/mixins/cancellation";
-import TagChip from "@/components/tags/TagChip";
-import ReportingChart from "@/components/reporting/ReportingChart";
 import tags from "@/mixins/tags";
-import TrendArrow from "@/components/reporting/TrendArrow.vue";
-import { smartMonthRange } from "@/libs/dates";
+import translators from "@/mixins/translators";
+import axios from "axios";
+import { isEqual } from "lodash";
 import { useGoTo } from "vuetify";
-import { differenceInMonths, addMonths } from "date-fns";
-import { ymDateFormat } from "@/libs/dates";
-import TableCustomSort from "@/components/tables/TableCustomSort";
-import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "FlexiTableOutput",
@@ -373,6 +398,7 @@ export default {
         organization: "organization",
       },
       popped: false,
+      coverageData: {},
     };
   },
 
@@ -501,6 +527,18 @@ export default {
               },
             ]
           : [];
+        let coverageHeaders =
+          this.row === "platform" && !this.report.trendMode
+            ? [
+                {
+                  title: this.$t("labels.coverage"),
+                  value: "coverage",
+                  sortable: false,
+                  align: "center",
+                  width: "200px",
+                },
+              ]
+            : [];
         let ret = [
           {
             title: this.report.effectivePrimaryDimension.getName(this.$i18n),
@@ -508,6 +546,7 @@ export default {
             sortable: !this.readonly,
           },
           ...tagHeaders,
+          ...coverageHeaders,
           ...titleHeaders,
           ...itemHeaders,
           ...headers,
@@ -765,6 +804,11 @@ export default {
       }
       this.recomputeData();
       this.dataComputing = false;
+
+      if (this.row === "platform" && !this.report.trendMode) {
+        this.fetchCoverageForPlatforms();
+      }
+
       // remainder
       if (this.remainderVisible) {
         this.loadingRemainder = true;
@@ -966,6 +1010,46 @@ export default {
         }
       }
     },
+    getCoverageColor(value) {
+      const hue = value * value * value * 120;
+      return `hsl(${hue}, 50%, 50%)`;
+    },
+    async fetchCoverageForPlatforms() {
+      if (!this.cleanData.length) {
+        return;
+      }
+
+      this.coverageData = {};
+      const baseParams = this.report.urlParams();
+
+      for (const platformRow of this.cleanData) {
+        const platformId = platformRow.pk;
+        const resp = axios
+          .get("/api/flexible-slicer/coverage/", {
+            params: {
+              ...baseParams,
+              filters: toBase64JSON({
+                ...JSON.parse(atob(baseParams.filters)),
+                platform: [platformId],
+              }),
+            },
+          })
+          .then((resp) => {
+            if (resp.data && resp.data.overall) {
+              this.coverageData[platformId] = resp.data.overall;
+            } else {
+              this.coverageData[platformId] = null;
+            }
+          })
+          .catch((error) => {
+            console.warn(
+              `Failed to fetch coverage for platform ${platformId}:`,
+              error,
+            );
+            this.coverageData[platformId] = null;
+          });
+      }
+    },
   },
   watch: {
     showRowTotals(newVal) {
@@ -1042,5 +1126,8 @@ export default {
 .active-button {
   background-color: #00000020;
   border: 1px solid #2b2b2b10;
+}
+:deep(.v-progress-linear__background) {
+  opacity: 0.4 !important;
 }
 </style>
