@@ -610,9 +610,20 @@ class TestSushiFetching:
                 },
                 False,
             ),
+            (
+                # The same author is used twice in the author's list
+                "IR_sample_r51_same-authors.json",
+                "ir51",
+                {
+                    "Created_By": "Sample Publisher",
+                    "Institution_Name": "Sample Institution",
+                    "Institution_ID": {"ISNI": ["1234123412341234"]},
+                },
+                False,
+            ),
         ),
     )
-    def test_c51_ir_without_parent_details_breaks_report(
+    def test_c51_ir(
         self,
         path,
         counter_report,

@@ -478,10 +478,13 @@ class ItemManager:
             )
             self.stats["created"] += 1
             self._item_rec_to_item_cache[cache_key] = item.pk
+            processed_authors = []
             for idx, author in enumerate(record.authors):
-                models.AuthorToItem.objects.create(
-                    position=idx, item=item, author_id=self.authors.get(author)
-                )
+                if author not in processed_authors:
+                    models.AuthorToItem.objects.create(
+                        position=idx, item=item, author_id=self.authors.get(author)
+                    )
+                    processed_authors.append(author)
 
             return item.pk
 
