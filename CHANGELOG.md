@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.0] - 2025-10-10
+
+### Added
+
+#### Frontend
+
+- make it possible to open report based on a chart via a button in the chart
+- show per platform coverage in reporting when platforms define rows in the report
+- remember reporting report configuration in URL arguments
+- add text wrapping for long texts within table cells in SushiFetchIntentionsListWidget
+- when using COUNTER registry as platform knowledgebase, make it possible to link CELUS platforms
+  with COUNTER registry platforms on the COUNTER registry page
+- add impersonation within organization feature
+- add TypeScript support for Vue components
+
+#### Backend
+
+- add periodic export into analytical database (Clickhouse) functionality
+- add whitelisting of reports feature and use it to prevent inconsistencies between IR and TR reports
+- add migration to convert primary dimension from titles to items for stored reports using IR_M1
+- add migration to enable lightweight updates for AccessLogCube in Clickhouse
+- add `skip_2fa` parameter to maximum users export
+- add uses_items and uses_titles attributes to ReportType model and use it in reporting to select
+  which fields to show.
+
+### Changed
+
+#### Frontend
+
+- COUNTER 5 credentials with IR_M1 report type are now cloned to use IR
+- replace "start" and "end" columns with one column "month" when showing sushi fetch attempts
+- change default sort in overlap analysis to platform count
+- the page size options were made more consistent between different pages
+- the "All (-1)" option from pagination was removed
+- limit platforms exported in to the SUSHI import template to prevent export of obscure platforms
+- hide badge with number of unread events when there are no events
+- disable sorting by tags on organization list page
+
+#### Backend
+
+- enable IR by default and use items for IR_M1 imports
+- update Django version to 4.2.24 to mitigate CVE-2025-57833
+- optimize startup time by localizing pandas and other heavy imports
+- remove the rest-pandas dependency
+
+### Fixed
+
+#### Frontend
+
+- fix registry integration not working correctly for COUNTER 5.1 when editing SUSHI credentials
+- fix error message display in login dialog for non-field errors and generic errors
+- fix several issues when more than one report type is used in reporting
+  - fix incorrect handling of explicit dimensions when they do not have consecutive indexes - closes #1507
+  - refactor how explicit dimensions are handled in flexitableeditor
+  - fix issue of incompatible row being left selected when additional report is selected
+  - deactivate invalid filters, columns and split-by when changing RT selection
+- fix sorting by report type in reporting when multiple report types are selected with materialized views
+- fix a typo in the Czech translation
+
+#### Backend
+
+- fix find_split_accesslogs_with_the_same_title to not merge different items
+- fix crash when order_by=organization is passed to title-interest
+- fix missing trailing slash when deleting flexible reports
+- fix tag resolution for null objects in reporting
+- fix counter_registry_id removal when platform is wiped during knowledgebase sync
+- force lowercase email on model level to ensure consistency
+- fix issue with capturing request log when a file was uploaded
+
 ## [9.1.3] - 2025-08-19
 
 ### Added

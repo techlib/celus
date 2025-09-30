@@ -1,3 +1,31 @@
+- version: 10.0.0
+  title:
+    en: Full Item Report support, improved reporting and a slew of other improvements and fixes in CELUS 10.0.0
+    cs: Podpora Item Reportu a mnoho dalších vylepšení a oprav chyb v CELUSu 10.0.0
+  text:
+    en: |
+      - **Full Item Report support** - you can now harvest Item Reports (IR) for platforms which support it. See
+        [our knowledgebase article](https://support.celus.net/en/support/solutions/articles/103000367118) for more details.
+      - Existing IR_M1 reports were converted to use items instead of titles.
+      - **Improved reporting**:
+        - open chart data in reporting using a button in the chart
+        - reports with platforms in rows display per-platform coverage
+        - better handling of multiple report types and explicit dimensions
+      - Many other improvements and bug fixes were introduced
+    cs: |
+      - **Podpora Item Reportu** - nyní můžete sklízet Item Reporty (IR) pro platformy, které je podporují.
+        Podrobnosti naleznete v našem [knowledgebase článku](https://support.celus.net/en/support/solutions/articles/103000367118).
+      - Existující IR_M1 reporty byly převedeny na používání položek místo titulů.
+      - **Vylepšené reportování**:
+        - otevřete data z grafu v reportingu pomocí tlačítka v grafu
+        - reporty s platformami v řádcích zobrazují pokrytí daty po jednotlivých platformách
+        - lepší zpracování více typů reportů a explicitních dimenzí
+      - Bylo provedeno mnoho dalších vylepšení a oprav chyb
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 9.1.3
   title:
     en: Hotfix release 9.1.3
