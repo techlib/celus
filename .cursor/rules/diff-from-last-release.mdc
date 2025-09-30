@@ -1,6 +1,7 @@
 ---
-description:
-globs:
+description: Update the CHANGELOG.md file with the most recent commits
+globs: CHANGELOG.md
 alwaysApply: false
 ---
+
 Look through git history for the most recent release tag - it is always in the form `vX.Y.Z`, for example `v8.0.3`. Then take all commit messages from that commit and use them to update the @CHANGELOG.md file. Use the current structure of the changelog as a guide on how to format the changelog. If you find that some of the features are already mentioned in the changelog in one of the most recent versions, then mark them at the end as `POSSIBLE DUPLICATE`. Always put the newly added changelog entry at the top of the @CHANGELOG.md file.

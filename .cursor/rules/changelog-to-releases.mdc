@@ -1,6 +1,7 @@
 ---
-description:
-globs:
+description: Prepare a summarized version of changes for the RELEASES.yaml file.
+globs: RELEASES.yaml,CHANGELOG.md
 alwaysApply: false
 ---
-Open the [CHANGELOG.md](mdc:CHANGELOG.md) file, read the changes recorded for the most recent version and prepare a summarized version for the [RELEASES.yaml](mdc:RELEASES.yaml) file. Use the existing content of the [RELEASES.yaml](mdc:RELEASES.yaml) file as guide to what format to use. The record in [RELEASES.yaml](mdc:RELEASES.yaml) should have an eye-catching title. It should contains the most important points from the [CHANGELOG.md](mdc:CHANGELOG.md) - mostly added frontend features, but some changes and fixes may also be mentioned. The language of the [RELEASES.yaml](mdc:RELEASES.yaml) file should be more customer oriented and less techical. The generated English and Czech versions should match each other.
+
+Open the [CHANGELOG.md](mdc:CHANGELOG.md) file, read the changes recorded for the most recent version and prepare a summarized version for the [RELEASES.yaml](mdc:RELEASES.yaml) file. Use the existing content of the [RELEASES.yaml](mdc:RELEASES.yaml) file as guide to what format to use. The record in [RELEASES.yaml](mdc:RELEASES.yaml) should have an eye-catching title. It should contain the most important points from the [CHANGELOG.md](mdc:CHANGELOG.md) - mostly added frontend features, but some changes and fixes may also be mentioned. The language of the [RELEASES.yaml](mdc:RELEASES.yaml) file should be more customer oriented and less techical. The generated English and Czech versions should match each other.
