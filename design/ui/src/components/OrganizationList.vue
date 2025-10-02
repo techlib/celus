@@ -158,14 +158,14 @@ cs:
 ></v-icon>
 
 <script>
-import cancellation from "@/mixins/cancellation";
-import { mapActions, mapGetters, mapState } from "vuex";
-import tags from "@/mixins/tags";
-import TagSelector from "@/components/tags/TagSelector";
 import TagCard from "@/components/tags/TagCard";
 import TagChip from "@/components/tags/TagChip";
-import { intersection } from "lodash";
+import TagSelector from "@/components/tags/TagSelector";
+import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
+import tags from "@/mixins/tags";
+import { intersection } from "lodash";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "OrganizationList",
@@ -259,6 +259,7 @@ export default {
         title: this.$i18n.t("labels.tags"),
         value: "tags",
         key: "tags",
+        sortable: false,
       });
       base.unshift({
         title: "",
