@@ -382,9 +382,10 @@ def check_item_and_title_presence(
         if (dt := record.dimension_data.get("Data_Type")) in PARENT_REQUIRING_DATA_TYPES:
             raise ReportDataValidityError(
                 "Parent identificaton is missing in record containing item which requires it "
-                f"(Data_Type={dt}). This is likely caused by the SUSHI provider not respecting "
+                f"(Data_Type={dt}). Item='{record.item}', {record.item_ids}. "
+                "This is likely caused by the SUSHI provider not respecting "
                 "Include_Parent_Details, which means the item level data is unusable as it would "
-                "cause inconsistencies between the item and title reports."
+                "cause inconsistencies between the Item and Title reports."
             )
 
 
