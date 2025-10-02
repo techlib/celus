@@ -96,7 +96,7 @@ cs:
           overlap
           :content="unreadEventCount"
           class="align-self-center mr-2"
-          :value="unreadEventCount"
+          :model-value="unreadEventCount > 0"
         >
           <v-tooltip max-width="600px" location="bottom">
             <template #activator="{ props }">
@@ -267,16 +267,15 @@ cs:
 </template>
 
 <script>
-import SidePanel from "./SidePanel";
-import { mapActions, mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
-import LoginDialog from "@/components/account/LoginDialog";
 import CreateOrganizationDialog from "@/components/account/CreateOrganizationDialog";
+import LoginDialog from "@/components/account/LoginDialog";
+import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import axios from "axios";
-import defaultLogo from "@/assets/celus-dark.png";
 import md5 from "md5";
+import { mapActions, mapGetters, mapState } from "vuex";
 import defaultLogoHorizontal from "../assets/celus-horizontal-dark.svg";
+import SidePanel from "./SidePanel";
 
 import { useDisplay } from "vuetify";
 
