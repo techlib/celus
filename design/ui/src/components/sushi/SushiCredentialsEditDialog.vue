@@ -929,21 +929,21 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions, mapGetters } from "vuex";
 import AddPlatformButton from "@/components/AddPlatformButton";
-import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import validate from "validate.js";
-import { testSushiUrlReport, counterVersionToStr } from "@/libs/sushi";
-import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
-import RegistryIcon from "@/components/sushi/RegistryIcon";
-import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
-import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
-import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
-import ItemBadge from "@/components/util/ItemBadge";
-import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
-import formRulesMixin from "@/mixins/formRulesMixin";
 import PlatformEditDialog from "@/components/PlatformEditDialog";
+import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import DeleteSushiCredentialsDataWidget from "@/components/sushi/DeleteSushiCredentialsDataWidget";
+import HarvesterIPAddressList from "@/components/sushi/HarvesterIPAddressList";
+import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
+import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
+import RegistryIcon from "@/components/sushi/RegistryIcon";
+import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import ItemBadge from "@/components/util/ItemBadge";
+import { counterVersionToStr, testSushiUrlReport } from "@/libs/sushi";
+import formRulesMixin from "@/mixins/formRulesMixin";
+import axios from "axios";
+import validate from "validate.js";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "SushiCredentialsEditDialog",
@@ -1632,7 +1632,8 @@ export default {
       if (reports) {
         return !!reports.find(
           (item) =>
-            item.counter_release == this.counterVersion &&
+            // make sure 5.1 is converted to 51 which is used internally
+            item.counter_release.replace(".", "") == this.counterVersion &&
             item.report_id == report.code,
         );
       }
