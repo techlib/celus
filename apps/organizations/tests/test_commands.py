@@ -134,7 +134,24 @@ class TestLoadSushiCredentialsFromXlsxCommand:
                 "counter_version": 51,
                 "provider": {"url": fake.url()},
                 "assigned_report_types": [
-                    {"not_valid_after": None, "not_valid_before": None, "report_type": "IR"}
+                    {
+                        "not_valid_after": None,
+                        "not_valid_before": None,
+                        "report_type": "TR",
+                        "whitelisted": True,
+                    }
+                ],
+            },
+            {
+                "counter_version": 51,
+                "provider": {"url": fake.url()},
+                "assigned_report_types": [
+                    {
+                        "not_valid_after": None,
+                        "not_valid_before": None,
+                        "report_type": "IR",
+                        "whitelisted": False,
+                    }
                 ],
             },
         ]
@@ -162,7 +179,12 @@ class TestLoadSushiCredentialsFromXlsxCommand:
     def counter_reports(self):
         for code in ["TR", "IR"]:
             CounterReportTypeFactory(code=code, counter_version=5)
-            CounterReportTypeFactory(code=code + "51", counter_version=51)
+            CounterReportTypeFactory(
+                report_type__short_name=code + "51",
+                code=code,
+                counter_version=51,
+                requires_whitelisting=code == "IR",
+            )
 
     def test_load_sushi_credentials_from_xlsx_single_org_sheet_2(self):
         """
@@ -213,6 +235,11 @@ class TestLoadSushiCredentialsFromXlsxCommand:
             "title 1 - 5.1",
             "AMA Guides (C51)",  # auto-generated title
         }
+        # test that only the whitelisted report is loaded
+        for s in SushiCredentials.objects.all():
+            assert list(s.counter_reports.values_list("code", flat=True)) == ["TR"], (
+                "just TR is loaded"
+            )
 
     @pytest.mark.parametrize("harvest_months", [12, 6, 0, None])
     def test_load_sushi_credentials_from_xlsx_autoharvest(self, harvest_months):

@@ -25,11 +25,78 @@ from test_scenarios.basic import (  # noqa - fixtures
     report_types,
 )
 
-from ..fake_data import FetchAttemptFactory
+from ..fake_data import CounterReportTypeFactory, FetchAttemptFactory
 from ..models import SushiCredentials
 
 fake = Faker()
 Faker.seed(0)
+
+
+@pytest.fixture
+def counter_report_types_tr_ir_with_whitelisting():
+    """Counter report types with IR requiring whitelisting"""
+    tr_crt = CounterReportTypeFactory(
+        code="TR", counter_version=51, report_type__short_name="TR51", requires_whitelisting=False
+    )
+    ir_crt = CounterReportTypeFactory(
+        code="IR",
+        counter_version=51,
+        report_type__short_name="IR51",
+        requires_whitelisting=True,  # IR requires whitelisting
+    )
+
+    return {"TR": tr_crt, "IR": ir_crt}
+
+
+@pytest.fixture
+def knowledgebases_with_whitelisting():
+    """Two kb records - one with IR not whitelisted and one with IR whitelisted"""
+    return [
+        {
+            "providers": [
+                {
+                    "counter_version": 51,
+                    "provider": {"url": fake.url()},
+                    "assigned_report_types": [
+                        {
+                            "not_valid_after": None,
+                            "not_valid_before": None,
+                            "report_type": "TR",
+                            "whitelisted": True,
+                        },
+                        {
+                            "not_valid_after": None,
+                            "not_valid_before": None,
+                            "report_type": "IR",
+                            "whitelisted": False,  # Not whitelisted
+                        },
+                    ],
+                }
+            ]
+        },
+        {
+            "providers": [
+                {
+                    "counter_version": 51,
+                    "provider": {"url": fake.url()},
+                    "assigned_report_types": [
+                        {
+                            "not_valid_after": None,
+                            "not_valid_before": None,
+                            "report_type": "TR",
+                            "whitelisted": True,
+                        },
+                        {
+                            "not_valid_after": None,
+                            "not_valid_before": None,
+                            "report_type": "IR",
+                            "whitelisted": True,  # Whitelisted
+                        },
+                    ],
+                }
+            ]
+        },
+    ]
 
 
 @pytest.mark.django_db
@@ -364,6 +431,38 @@ class TestLogicDataImportXLSX:
         assert stats["error"] == error
         assert stats["added"] == added
 
+    def test_sushi_import_with_whitelisting_new(
+        self,
+        records,
+        counter_report_types_tr_ir_with_whitelisting,
+        knowledgebases_with_whitelisting,
+    ):
+        """Test that import_sushi_credentials_new respects whitelisting"""
+        platform_no_ir = PlatformFactory.create(knowledgebase=knowledgebases_with_whitelisting[0])
+        platform_ir = PlatformFactory.create(knowledgebase=knowledgebases_with_whitelisting[1])
+
+        records[0]["publisher/vendor/platform"] = platform_no_ir.name
+        records[1]["publisher/vendor/platform"] = platform_ir.name
+
+        stats = import_sushi_credentials_new(records, counter_version=51)
+
+        assert stats["added"] == 2
+        assert SushiCredentials.objects.count() == 2
+
+        credentials = SushiCredentials.objects.all().order_by("pk")
+
+        # First platform has IR not whitelisted, so only TR should be assigned
+        cred1 = next(c for c in credentials if c.platform == platform_no_ir)
+        assigned_reports = set(cred1.counter_reports.values_list("code", flat=True))
+        assert assigned_reports == {"TR"}, "Only TR should be assigned (IR not whitelisted)"
+
+        # Second platform has IR whitelisted, so both TR and IR should be assigned
+        cred2 = next(c for c in credentials if c.platform == platform_ir)
+        assigned_reports = set(cred2.counter_reports.values_list("code", flat=True))
+        assert assigned_reports == {"TR", "IR"}, (
+            "Both TR and IR should be assigned (both whitelisted)"
+        )
+
 
 @pytest.mark.django_db
 class TestLogicDataImportCSV:
@@ -634,3 +733,57 @@ class TestLogicDataImportCSV:
         assert stats["added"] == 1
         cr1 = SushiCredentials.objects.first()
         assert cr1.counter_version == (5 if default_version is None else default_version)
+
+    def test_sushi_import_with_whitelisting_csv(
+        self, counter_report_types_tr_ir_with_whitelisting, knowledgebases_with_whitelisting
+    ):
+        """Test that CSV import respects whitelisting - non-whitelisted reports are not added"""
+        organizations = OrganizationFactory.create_batch(2)
+
+        platform_no_ir = PlatformFactory.create(
+            short_name="PLAT1", name="Platform 1", knowledgebase=knowledgebases_with_whitelisting[0]
+        )
+        platform_ir = PlatformFactory.create(
+            short_name="PLAT2", name="Platform 2", knowledgebase=knowledgebases_with_whitelisting[1]
+        )
+
+        data = [
+            {
+                "platform": platform_no_ir.short_name,
+                "organization": organizations[0].internal_id,
+                "customer_id": "AAA",
+                "requestor_id": "RRR",
+                "URL": "http://this.is/test/",
+                "version": 51,
+                "counter_reports": "TR, IR",
+            },
+            {
+                "platform": platform_ir.short_name,
+                "organization": organizations[1].internal_id,
+                "customer_id": "BBB",
+                "requestor_id": "RRRX",
+                "URL": "http://this.is/test/2",
+                "version": 51,
+                "counter_reports": "TR, IR",
+            },
+        ]
+
+        stats = import_sushi_credentials_old(data)
+        assert stats["added"] == 2
+        assert SushiCredentials.objects.count() == 2
+
+        credentials = SushiCredentials.objects.all().order_by("pk")
+
+        # First platform has IR not whitelisted, so only TR should be assigned
+        cred1 = credentials[0]
+        assert cred1.platform == platform_no_ir
+        assigned_reports = set(cred1.counter_reports.values_list("code", flat=True))
+        assert assigned_reports == {"TR"}, "Only TR should be assigned (IR not whitelisted)"
+
+        # Second platform has IR whitelisted, so both TR and IR should be assigned
+        cred2 = credentials[1]
+        assert cred2.platform == platform_ir
+        assigned_reports = set(cred2.counter_reports.values_list("code", flat=True))
+        assert assigned_reports == {"TR", "IR"}, (
+            "Both TR and IR should be assigned (both whitelisted)"
+        )

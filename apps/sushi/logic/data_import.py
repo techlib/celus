@@ -10,6 +10,10 @@ from core.logic.dates import last_month, month_end, month_start
 from django.db.models import Count, Q
 from django.utils.timezone import now
 from organizations.models import Organization
+from publications.logic.knowledgebase import (
+    get_provider_for_counter_version,
+    is_report_type_whitelisted,
+)
 from publications.models import Platform
 from scheduler.models import FetchIntention, Harvest
 
@@ -216,17 +220,11 @@ def import_sushi_credentials_new(
 
         if requestor_id := to_clean_str(record.get(Col.REQUESTOR_ID.value)):
             optional["requestor_id"] = requestor_id
-        providers = []
+        provider = None
         if platform.knowledgebase:
-            providers = [
-                p
-                for p in platform.knowledgebase.get("providers", [])
-                if p["counter_version"] == counter_version
-                and "provider" in p
-                and "url" in p["provider"]
-            ]
-        if providers:
-            url = providers[0]["provider"]["url"]
+            provider = get_provider_for_counter_version(platform.knowledgebase, counter_version)
+        if provider and provider.get("provider", {}).get("url"):
+            url = provider["provider"]["url"]
         else:
             log("can't assign url due to missing provider for the platform: '%s'", platform.name_en)
             continue
@@ -305,41 +303,42 @@ def import_sushi_credentials_new(
 
         # report type assignment
         linked_rts = {rt.code for rt in cr.counter_reports.all()}
-        if platform.knowledgebase:
-            if provider := next(
-                (
-                    p
-                    for p in platform.knowledgebase.get("providers", [])
-                    if p["counter_version"] == counter_version and p.get("assigned_report_types")
-                ),
-                None,
-            ):
-                for report_type in provider["assigned_report_types"]:
-                    if rt := CounterReportType.objects.filter(
-                        code=report_type["report_type"], counter_version=counter_version
-                    ).first():
-                        if report_type["report_type"] not in linked_rts:
-                            CounterReportsToCredentials.objects.create(
-                                credentials=cr, counter_report=rt
-                            )
-                            log(
-                                f"Report type {report_type['report_type']} assigned",
-                                stat_name="report_type_assigned",
-                                level=logging.INFO,
-                            )
-                    else:
+        if provider and provider.get("assigned_report_types"):
+            for report_type in provider["assigned_report_types"]:
+                if rt := CounterReportType.objects.filter(
+                    code=report_type["report_type"], counter_version=counter_version
+                ).first():
+                    if rt.requires_whitelisting and not is_report_type_whitelisted(
+                        provider, rt.code
+                    ):
                         log(
-                            f"Report type {report_type['report_type']} not found",
-                            stat_name="report_type_not_found",
+                            f"Report type {rt.code} is not whitelisted for platform",
+                            stat_name="report_type_not_whitelisted",
                             level=logging.WARNING,
                         )
-            else:
-                log(
-                    "No report types assigned to the platform '%s' - no knowledgebase provider",
-                    platform.name_en,
-                    stat_name="report_type_not_assigned",
-                    level=logging.WARNING,
-                )
+                        continue
+                    if report_type["report_type"] not in linked_rts:
+                        CounterReportsToCredentials.objects.create(
+                            credentials=cr, counter_report=rt
+                        )
+                        log(
+                            f"Report type {report_type['report_type']} assigned",
+                            stat_name="report_type_assigned",
+                            level=logging.INFO,
+                        )
+                else:
+                    log(
+                        f"Report type {report_type['report_type']} not found",
+                        stat_name="report_type_not_found",
+                        level=logging.WARNING,
+                    )
+        else:
+            log(
+                "No report types assigned to the platform '%s' - no knowledgebase provider",
+                platform.name_en,
+                stat_name="report_type_not_assigned",
+                level=logging.WARNING,
+            )
     if harvest_months:
         for cr in new_credentials:
             intentions = []
@@ -577,12 +576,37 @@ def import_sushi_credentials_old(
         # link report types
         linked_rts = {rt.code for rt in cr.counter_reports.all()}
         report_types = record.get("counter_reports", "").split(",")
+
+        # Get platform provider for whitelisting checks
+        provider = None
+        if platform.knowledgebase:
+            provider = get_provider_for_counter_version(platform.knowledgebase, version)
         for report_type in report_types:
             report_type = report_type.strip()
             if report_type and report_type not in linked_rts:
                 if rt := CounterReportType.objects.filter(
                     code=report_type, counter_version=version
                 ).first():
+                    # Check whitelisting for reports that require it
+                    if rt.requires_whitelisting:
+                        if not provider:
+                            logger.warning(
+                                '#%03d: Report type "%s" requires whitelisting but platform has no '
+                                "knowledgebase provider",
+                                i + 2,
+                                report_type,
+                            )
+                            stats["report_type_not_whitelisted"] += 1
+                            continue
+                        elif not is_report_type_whitelisted(provider, rt.code):
+                            logger.warning(
+                                '#%03d: Report type "%s" is not whitelisted for platform',
+                                i + 2,
+                                report_type,
+                            )
+                            stats["report_type_not_whitelisted"] += 1
+                            continue
+
                     CounterReportsToCredentials.objects.create(credentials=cr, counter_report=rt)
                     stats["report_type_assigned"] += 1
                 else:

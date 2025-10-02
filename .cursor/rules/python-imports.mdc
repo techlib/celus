@@ -23,3 +23,18 @@ from apps.sushi.models import CounterReport
 ```
 
 Always use the direct import path without the `apps.` prefix when importing from modules within the `apps` directory.
+
+## Using local imports
+
+Unless necessary to avoid circular imports, or when a large module with slow startup time is involved, always use global imports at the top of the file. Only use local imports when necessary to avoid circular imports or when a large module with slow startup time is involved.
+
+Large modules with slow startup time include:
+
+- `requests`
+- `nibbler`
+- `nigiri`
+- `pandas`
+- `redis`
+- `xlsxwriter`
+- `openpyxl`
+- `celus_pycounter`
