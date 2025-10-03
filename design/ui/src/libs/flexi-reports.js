@@ -246,7 +246,9 @@ class FlexiReport {
     let idx = Dimension.explicitIndex(ref);
     if (idx !== null) {
       // we have an explicit dimension - we need to resolve it using the report_type, etc.
-      if (this.reportTypes.length === 1) {
+      // if there are more than one report type, we can use the first one - the dimension should
+      // be common to all report types
+      if (this.reportTypes.length >= 1) {
         return Dimension.fromObject(
           ref,
           this.reportTypes[0].dimensions_sorted[idx],
