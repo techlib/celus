@@ -27,7 +27,7 @@ class Command(BaseCommand):
         for row in reader:
             name = row.get("name")
             if not name:
-                raise ValueError('Row "name" is required')
+                raise ValueError('Column "name" is required')
             name = name.strip()
             short_name = row.get("short_name", name)
             org_params = {"short_name": short_name}
@@ -42,6 +42,6 @@ class Command(BaseCommand):
                 stats["organization_existed"] += 1
                 logger.debug("updating organization %s: %s", name, org_params)
 
-        self.stderr.write(self.style.WARNING(f"Import stats: {stats}"))
+        self.stderr.write(f"Import stats: {stats}")
         if not options["doit"]:
             raise ValueError("preventing db commit, use --do-it to really do it ;)")
