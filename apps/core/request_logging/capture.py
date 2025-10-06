@@ -26,7 +26,7 @@ class RedisBufferStorage(BaseStorage):
             )
             data = entry_to_dict(entry)
         except Exception as e:
-            logger.error(f"Error creating request log: {e}")
+            logger.error(f"Error creating request log: {e}", exc_info=True)
             async_mail_admins.delay(
                 "Error creating request log", f"Error: {str(e)}\nType: {type(e)}"
             )
@@ -75,6 +75,9 @@ def entry_to_dict(entry):
         request_data = getattr(request_info.request, "data", None)
     except UnsupportedMediaType:
         # when UnsupportedMediaType is raised, the request_data is not available
+        request_data = ""
+    except ValueError:
+        # may be operation on closed file when a file is uploaded
         request_data = ""
     request_data = str(request_data) if request_data else ""
     # streaming responses do not have 'content' attribute
