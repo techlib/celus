@@ -16,6 +16,7 @@ from hcube.api.models.dimensions import (
     IntDimension,
     StringDimension,
 )
+from hcube.api.models.metrics import IntMetric, Metric
 from hcube.backends.clickhouse import ClickhouseCubeBackend, IndexDefinition
 from hcube.backends.postgres import PostgresCubeBackend
 
@@ -56,27 +57,49 @@ def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
     assert_valid_identifier(table_name)
 
     class ExportCube(Cube):
-        metric_id = IntDimension(signed=False, bits=32)
-        metric__short_name = StringDimension(clickhouse={"low_cardinality": True})
-        organization_id = IntDimension(signed=False, bits=32)
-        organization__name = StringDimension(clickhouse={"low_cardinality": True})
-        platform_id = IntDimension(signed=False, bits=32)
-        platform__name = StringDimension(clickhouse={"low_cardinality": True})
-        title_id = IntDimension(signed=False, bits=32)
-        title__name = StringDimension()
-        title__pub_type = StringDimension()
-        title__isbn = StringDimension()
-        title__issn = StringDimension()
-        title__eissn = StringDimension()
-        title__doi = StringDimension()
-        value = IntDimension(signed=False, bits=32)
-        date = DateDimension()
-        import_batch_id = IntDimension(signed=False, bits=32)
+        organization_id = IntDimension(
+            signed=False, bits=32, help_text="Internal CELUS id for the organization"
+        )
+        organization__name = StringDimension(
+            clickhouse={"low_cardinality": True}, help_text="Name of the organization"
+        )
+        platform_id = IntDimension(
+            signed=False, bits=32, help_text="Internal CELUS id for the platform"
+        )
+        platform__name = StringDimension(
+            clickhouse={"low_cardinality": True}, help_text="Name of the platform"
+        )
+        date = DateDimension(help_text="Date of the usage")
+        metric_id = IntDimension(
+            signed=False, bits=32, help_text="Internal CELUS id for the metric"
+        )
+        metric__short_name = StringDimension(
+            clickhouse={"low_cardinality": True},
+            help_text="Short name of the metric, for COUNTER matches the COUNTER metric name",
+        )
+        title_id = IntDimension(signed=False, bits=32, help_text="Internal CELUS id of the title")
+        title__name = StringDimension(help_text="Name of the title")
+        title__pub_type = StringDimension(help_text="Publication type of the title")
+        title__isbn = StringDimension(help_text="ISBN of the title")
+        title__issn = StringDimension(help_text="ISSN of the title")
+        title__eissn = StringDimension(help_text="e-ISSN of the title")
+        title__doi = StringDimension(help_text="DOI of the title")
 
+        # explicit dimensions
         for col, translated in cols.items():
             if col.startswith("dim"):
                 assert_valid_identifier(translated)
                 locals()[translated] = StringDimension(clickhouse={"low_cardinality": True})
+
+        value = IntMetric(signed=False, bits=32, help_text="Value of the metric - the usage count")
+        import_batch_id = IntDimension(
+            signed=False,
+            bits=32,
+            help_text="Internal CELUS id of the import batch - this groups together data from one "
+            "import (harvest, manual upload, etc.). One import batch always covers one month.",
+        )
+
+        # tags
         for k in cols:
             if k.endswith("tags"):
                 locals()[k] = ArrayDimension(
@@ -100,7 +123,7 @@ def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
             engine = "MergeTree"
             use_lightweight_deletes = True
 
-    if set(cols.values()) != set(ExportCube._dimensions.keys()):
+    if set(cols.values()) != (set(ExportCube._dimensions.keys()) | set(ExportCube._metrics.keys())):
         raise ValueError("the requested columns do not match the cube")
     return ExportCube
 
@@ -173,6 +196,8 @@ class HCubeExport(AnalyticalExportBackend):
         self.cube = get_dynamic_cube(self.table, self.cols)
         self.record = self.cube.record_type()
         self.cube_backend.initialize_storage(self.cube)
+        # if the table exists, we want to make sure its structure is up to date
+        self.cube_backend.sync_storage(self.cube, drop=True)
         self.stats = {
             "new_records_count": 0,
             "new_ibs_count": 0,
@@ -184,7 +209,9 @@ class HCubeExport(AnalyticalExportBackend):
         for col in self.cols.values():
             self._col_names.append(col)
             dim: Dimension = getattr(self.cube, col)
-            if not dim.null:
+            if isinstance(dim, Metric):
+                self._col_defaults.append(0)
+            elif not dim.null:
                 self._col_defaults.append(dim.default)
             else:
                 self._col_defaults.append(None)

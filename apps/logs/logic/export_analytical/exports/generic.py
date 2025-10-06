@@ -93,7 +93,16 @@ class AnalyticalExportBackend:
             append.update({k: k for k in self._tag_cols})
 
         for n, dim in enumerate(self.rt.dimensions_sorted):
-            self.cols[f"dim{n + 1}"] = str(dim).lower()
+            dim_name = dim.short_name
+            if dim_name.lower() == "platform":
+                # we want to prevent "platform" from being used as a dimension
+                # because there already is an implicit "platform" dimension
+                if dim.name != "platform":
+                    # use the long dimension name instead
+                    dim_name = dim.name.replace(" ", "_")
+                else:
+                    dim_name = "platform_in_counter_data"
+            self.cols[f"dim{n + 1}"] = dim_name.lower()
         self.cols.update(append)
 
     def _pre_export(self, cols: Iterable[str]):

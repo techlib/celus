@@ -1,6 +1,7 @@
 import secrets
 import traceback
-from typing import Optional, Tuple
+from io import StringIO
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from core.models import CreatedUpdatedMixin
 from django.conf import settings
@@ -12,6 +13,9 @@ from django.utils import timezone
 from logs.models import ImportBatch, ReportType
 
 from ch_export.helpers import SmarterStringIO
+
+if TYPE_CHECKING:
+    from logs.logic.export_analytical.exports.hcube import HCubeExport
 
 
 class AccessLogExport(CreatedUpdatedMixin, models.Model):
@@ -141,18 +145,9 @@ class AccessLogExportTask(models.Model):
                 return  # already started
             self.started = timezone.now()
             self.save()
-        kwargs: dict = self.batch.export.settings.get("_default", {})
-        kwargs.update(self.batch.export.settings.get(self.report_type.short_name, {}))
         stream = SmarterStringIO()
+        exp = self.create_exporter(stream)
         try:
-            exp = HCubeExport(
-                table=sanitize_identifier(self.report_type.short_name),
-                **kwargs,
-                report_type=self.report_type,
-                organization=self.batch.export.organization,
-                cube_backend=self.batch.export.ch_backend(),
-                stderr=stream,
-            )
             exp.export(progress_monitor=self._progress)
             self.stats = exp.stats
         except Exception:
@@ -162,6 +157,20 @@ class AccessLogExportTask(models.Model):
         finally:
             self.finished = timezone.now()
             self.save()
+
+    def create_exporter(self, stderr_stream: Optional[StringIO] = None) -> "HCubeExport":
+        from logs.logic.export_analytical import HCubeExport  # noqa - slow import
+        from logs.logic.export_analytical.exports.hcube import sanitize_identifier  # noqa - slow import
+
+        return HCubeExport(
+            table=sanitize_identifier(self.report_type.short_name),
+            **self.batch.export.settings.get("_default", {}),
+            **self.batch.export.settings.get(self.report_type.short_name, {}),
+            report_type=self.report_type,
+            organization=self.batch.export.organization,
+            cube_backend=self.batch.export.ch_backend(),
+            stderr=stderr_stream,
+        )
 
     @property
     def cache_key(self):

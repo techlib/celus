@@ -1,9 +1,28 @@
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from logs.fake_data import ImportBatchFullFactory, InterestGroupFactory, MetricFactory
+from core.models import SourceFileMixin
+from django.core.files.storage.memory import ContentFile
+from django.core.management import call_command
+from logs.fake_data import (
+    ImportBatchFullFactory,
+    InterestGroupFactory,
+    ManualDataUploadFactory,
+    MetricFactory,
+)
+from logs.logic.custom_import import import_custom_data
 from logs.logic.data_import import import_counter_records
-from logs.models import AccessLog, ReportInterestMetric, ReportMaterializationSpec, ReportType
+from logs.logic.export_analytical.exports.generic import AnalyticalExportBackend
+from logs.logic.export_analytical.exports.hcube import get_dynamic_cube
+from logs.models import (
+    AccessLog,
+    MduMethod,
+    MduState,
+    ReportInterestMetric,
+    ReportMaterializationSpec,
+    ReportType,
+)
 from logs.tests.conftest import counter_records, report_type_nd  # noqa - fixture
 from organizations.models import Organization
 from organizations.tests.conftest import organizations  # noqa - fixture
@@ -282,3 +301,193 @@ class TestRealAccessLogExportTaskExport:
         assert not self.table_exists(exp.ch_database, rt2.short_name)
         assert not self.table_exists(exp.ch_database, rt_no_title.short_name)
         assert not self.table_exists(exp.ch_database, int_no_title.short_name)
+
+    @pytest.fixture
+    def tr51_mdu_with_data(self, settings, tmp_path):
+        """
+        Creates all COUNTER reports and imports data for TR51
+        """
+
+        # make sure all reports have the correct dimensions
+        call_command("check_report_type_dimensions", "--fix-it")
+        platform = PlatformFactory.create()
+        organization = Organization.objects.create(name="Test Org", short_name="test")
+        rt = ReportType.objects.get(short_name="TR51")
+
+        settings.MEDIA_ROOT = tmp_path
+        filename = "TR_sample_r51.json"
+
+        with (Path(__file__).parent.parent.parent.parent / "test-data/counter51" / filename).open(
+            "rb"
+        ) as f:
+            data_file = ContentFile(f.read())
+            data_file.name = filename
+        checksum, size = SourceFileMixin.checksum_fileobj(data_file)
+
+        mdu = ManualDataUploadFactory.create(
+            platform=platform,
+            organization=organization,
+            report_type=rt,
+            method=MduMethod.COUNTER,
+            checksum=checksum,
+            file_size=size,
+            data_file=data_file,
+            state=MduState.PREFLIGHT,
+            preflight={"log_count": 1},
+        )
+
+        import_custom_data(mdu, None)
+        mdu.refresh_from_db()
+
+        assert mdu.is_processed
+        assert mdu.import_batches.count() == 12, "12 months of data"
+        assert all(ib.report_type == rt for ib in mdu.import_batches.all())
+
+        return mdu
+
+    def test_export_of_tr_report(self, tr51_mdu_with_data):
+        """
+        Real world export of TR report - check the structure of the exported table,
+        etc.
+        """
+        mdu = tr51_mdu_with_data
+        rt = mdu.report_type
+        organization = mdu.organization
+
+        # let's export the data
+        exp = AccessLogExportFactory.create(organization=organization)
+        assert rt in exp.report_types()
+        export_batch = exp.create_batch()
+        task = AccessLogExportTask.objects.create(
+            batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-1"
+        )
+        task.export_to_ch()
+        task.refresh_from_db()
+        assert task.finished is not None
+        assert task.stats["deleted_ibs_count"] == 0
+        assert task.stats["new_ibs_count"] == 12
+        assert task.stats["total_ib_count"] == 12
+
+        # check that the TR51 table exists
+        assert self.table_exists(exp.ch_database, rt.short_name)
+
+        # check that the columns are as expected
+        table = ch_export_client.execute(
+            "SELECT name,comment FROM system.columns WHERE database = %(db)s AND table = %(table)s",
+            {"db": exp.ch_database, "table": rt.short_name},
+        )
+        assert [row[0] for row in table] == [
+            "organization_id",
+            "organization__name",
+            "platform_id",
+            "platform__name",
+            "date",
+            "metric_id",
+            "metric__short_name",
+            "title_id",
+            "title__name",
+            "title__pub_type",
+            "title__isbn",
+            "title__issn",
+            "title__eissn",
+            "title__doi",
+            "access_type",
+            "access_method",
+            "data_type",
+            "yop",
+            "publisher",
+            "platform_in_counter_data",
+            "import_batch_id",
+            "value",  # metric is last
+        ]
+        # check comments
+        exporter = task.create_exporter()
+        for row in table:
+            if row[0] != "value":
+                assert row[1] == exporter.cube._dimensions[row[0]].help_text
+            else:
+                assert row[1] == exporter.cube._metrics[row[0]].help_text
+
+    def test_tr_structure_with_preexisting_data(self, tr51_mdu_with_data):
+        """
+        Test that the structure of the exported table is updated when it changes.
+        """
+        mdu = tr51_mdu_with_data
+        rt = mdu.report_type
+        organization = mdu.organization
+
+        exp = AccessLogExportFactory.create(organization=organization)
+        ch_backend = exp.ch_backend()
+
+        # create the export table with only part of the columns
+        cube = get_dynamic_cube(
+            rt.short_name, AnalyticalExportBackend.COLS | {"dim2": "access_method", "dim7": "wtf"}
+        )
+        ch_backend.initialize_storage(cube)
+        # check the columns
+        table = ch_export_client.execute(
+            "SELECT name FROM system.columns WHERE database = %(db)s AND table = %(table)s",
+            {"db": exp.ch_database, "table": rt.short_name},
+        )
+        assert [row[0] for row in table] == [
+            "organization_id",
+            "organization__name",
+            "platform_id",
+            "platform__name",
+            "date",
+            "metric_id",
+            "metric__short_name",
+            "title_id",
+            "title__name",
+            "title__pub_type",
+            "title__isbn",
+            "title__issn",
+            "title__eissn",
+            "title__doi",
+            "access_method",
+            "wtf",  # made up column - should be removed after sync
+            "import_batch_id",
+            "value",  # metric is last
+        ]
+
+        # now perform the export and make sure there are all the missing columns
+        export_batch = exp.create_batch()
+        task = AccessLogExportTask.objects.create(
+            batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-1"
+        )
+        task.export_to_ch()
+        task.refresh_from_db()
+        assert task.finished is not None
+        assert task.stats["deleted_ibs_count"] == 0
+        assert task.stats["new_ibs_count"] == 12
+        assert task.stats["total_ib_count"] == 12
+
+        # check that the columns are as expected
+        table = ch_export_client.execute(
+            "SELECT name,comment FROM system.columns WHERE database = %(db)s AND table = %(table)s",
+            {"db": exp.ch_database, "table": rt.short_name},
+        )
+        assert [row[0] for row in table] == [
+            "organization_id",
+            "organization__name",
+            "platform_id",
+            "platform__name",
+            "date",
+            "metric_id",
+            "metric__short_name",
+            "title_id",
+            "title__name",
+            "title__pub_type",
+            "title__isbn",
+            "title__issn",
+            "title__eissn",
+            "title__doi",
+            "access_type",
+            "access_method",
+            "data_type",
+            "yop",
+            "publisher",
+            "platform_in_counter_data",
+            "import_batch_id",
+            "value",  # metric is last
+        ]
