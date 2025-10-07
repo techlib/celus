@@ -1,4 +1,5 @@
 import uuid
+from copy import deepcopy
 from unittest import mock
 
 import pytest
@@ -457,8 +458,10 @@ class TestPlatformAPI:
         tr = counter_report_types["tr"]
         tr.requires_whitelisting = tr_requires_whitelisting
         tr.save()
+
+        kb = deepcopy(KNOWLEDGEBASE)
         if tr_whitelisted_in_kb is not None:
-            for provider in KNOWLEDGEBASE["providers"]:
+            for provider in kb["providers"]:
                 for art in provider["assigned_report_types"]:
                     if art["report_type"] == tr.code:
                         art["whitelisted"] = tr_whitelisted_in_kb
@@ -476,7 +479,7 @@ class TestPlatformAPI:
                     counter_report_types["tr"].pk,
                     counter_report_types["jr1"].pk,
                 ],  # these counter_report_types should be overriden
-                "knowledgebase": KNOWLEDGEBASE,
+                "knowledgebase": kb,
             },
             format="json",
         )
