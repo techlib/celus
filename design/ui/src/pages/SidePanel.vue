@@ -51,12 +51,10 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
-import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import SelectedDateRangeWidget from "@/components/SelectedDateRangeWidget";
+import OrganizationSelector from "@/components/selectors/OrganizationSelector";
 import MenuListItem from "@/components/util/MenuListItem";
-
-import { useDisplay } from "vuetify";
+import { mapGetters, mapState } from "vuex";
 
 export default {
   name: "SidePanel",
@@ -282,6 +280,10 @@ export default {
                   title: this.$t("pages.ch_export"),
                   linkTo: "ch-export",
                   show: this.showManagementStuff,
+                  chip: {
+                    title: this.$t("labels.new_menu_item"),
+                    color: "error",
+                  },
                 },
                 {
                   title: this.$t("pages.management_commands"),

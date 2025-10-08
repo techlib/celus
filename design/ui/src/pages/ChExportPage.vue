@@ -1,6 +1,6 @@
 <i18n lang="yaml">
 en:
-  title: Access Log Exports
+  title: Analytical database configuration
   search: Search exports...
   refresh: Refresh
   error_loading: Failed to load exports
@@ -38,7 +38,7 @@ en:
     info: Use these credentials to connect to the ClickHouse database. TLS/SSL must be enabled for secure connections. The password is sensitive information - keep it secure and do not share it with unauthorized persons.
 
 cs:
-  title: Export přístupových záznamů
+  title: Konfigurace analytické databáze
   search: Hledat exporty...
   refresh: Obnovit
   error_loading: Nepodařilo se načíst exporty
