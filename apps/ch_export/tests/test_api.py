@@ -14,7 +14,7 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-class TestAccessLogExportTaskAPI:
+class TestAccessLogExportAPI:
     @pytest.fixture
     def admin_user(self):
         user = User.objects.create_user(
@@ -55,26 +55,30 @@ class TestAccessLogExportTaskAPI:
             batch=batch, report_type=report_type, task_id="test-task-id"
         )
 
-    def test_admin_can_view_all_tasks(self, clients, admin_user, export_task):
-        response = clients["su"].get(reverse("ch-export-logs"))
+    def test_admin_can_view_all_exports(self, clients, admin_user, export_task):
+        response = clients["su"].get(reverse("ch-export-exports-list"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) >= 1
 
-    def test_org_admin_can_view_own_tasks(self, org_admin_user, export_task):
-        response = make_client(IdentityFactory(user=org_admin_user)).get(reverse("ch-export-logs"))
+    def test_org_admin_can_view_own_exports(self, org_admin_user, export_task):
+        response = make_client(IdentityFactory(user=org_admin_user)).get(
+            reverse("ch-export-exports-list")
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) >= 1
 
     def test_unauthorized_access_denied(self, clients, export_task):
-        response = clients["unauthenticated"].get(reverse("ch-export-logs"))
+        response = clients["unauthenticated"].get(reverse("ch-export-exports-list"))
         assert response.status_code in (401, 404)
-        response = clients["user1"].get(reverse("ch-export-logs"))
+        response = clients["user1"].get(reverse("ch-export-exports-list"))
         assert response.data == []
 
-    def test_task_serialization(self, clients, admin_user, export_task):
-        response = clients["su"].get(reverse("ch-export-logs"))
+    def test_export_serialization(self, clients, export_task):
+        response = clients["su"].get(reverse("ch-export-exports-list"))
         export_data = response.data[0]
 
         assert export_data["id"] == export_task.batch.export.id
         assert export_data["organization"] == export_task.batch.export.organization.name
         assert export_data["status"] == "running"
+        assert export_data["latest_batch"]["id"] == export_task.batch.id
+        assert export_data["latest_batch"]["report_types"] == ["tr"]

@@ -103,20 +103,19 @@ class AccessLogExportBatch(models.Model):
         return f"Batch {self.created}"
 
     def get_status(self):
-        tasks = self.accesslogexporttask_set
-        if not tasks.exists():
+        if not self.tasks.exists():
             return "empty"
 
-        if tasks.exclude(error="").exists():
+        if self.tasks.exclude(error="").exists():
             return "failed"
-        elif tasks.filter(finished__isnull=True).exists():
+        elif self.tasks.filter(finished__isnull=True).exists():
             return "running"
         else:
             return "completed"
 
 
 class AccessLogExportTask(models.Model):
-    batch = models.ForeignKey(AccessLogExportBatch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(AccessLogExportBatch, on_delete=models.CASCADE, related_name="tasks")
     report_type = models.ForeignKey("logs.ReportType", on_delete=models.CASCADE)
     task_id = models.CharField(max_length=128, blank=True)
 

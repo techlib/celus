@@ -91,6 +91,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         to="ch_export.accesslogexportbatch",
+                        related_name="tasks",
                     ),
                 ),
                 (

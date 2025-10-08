@@ -1,5 +1,8 @@
-from django.urls import path
+from rest_framework.routers import SimpleRouter
 
-from .views import AccessLogExportList
+from .views import AccessLogExportViewSet
 
-urlpatterns = [path("logs/", AccessLogExportList.as_view(), name="ch-export-logs")]
+router = SimpleRouter()
+router.register(r"exports", AccessLogExportViewSet, basename="ch-export-exports")
+
+urlpatterns = router.urls

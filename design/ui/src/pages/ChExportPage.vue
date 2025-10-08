@@ -36,6 +36,9 @@ en:
     tls: TLS/SSL
     tls_enabled: Required
     info: Use these credentials to connect to the ClickHouse database. TLS/SSL must be enabled for secure connections. The password is sensitive information - keep it secure and do not share it with unauthorized persons.
+  report_types: Report tables from last sync
+  test_link_text: You can test the connection to the database using {test_link}. It will open a web interface of the database with a sample query.
+  test_link: this link
 
 cs:
   title: Konfigurace analytické databáze
@@ -74,10 +77,13 @@ cs:
     tls: TLS/SSL
     tls_enabled: Povinné
     info: Použijte tyto přihlašovací údaje pro připojení k databázi ClickHouse. TLS/SSL musí být povoleno pro bezpečná připojení. Heslo je citlivá informace - uchovávejte ho v bezpečí a nesdílejte ho s neoprávněnými osobami.
+  report_types: Tabulky reportů z poslední synchronizace
+  test_link_text: Můžete otestovat připojení k databázi pomocí {test_link}. Otevře se webové rozhraní databáze s ukázkovým dotazem.
+  test_link: tohoto odkazu
 </i18n>
 
 <template>
-  <v-container>
+  <v-container fluid>
     <v-row>
       <v-col>
         <h1>{{ $t("title") }}</h1>
@@ -242,6 +248,39 @@ cs:
                         </template>
                         {{ $t("database_connection.info") }}
                       </v-alert>
+
+                      <h3 class="text-h6 mt-8 mb-4" v-if="item.latest_batch">
+                        <v-icon class="me-2" color="grey" size="x-small"
+                          >fa fa-table</v-icon
+                        >
+                        {{ $t("report_types") }}
+                      </h3>
+                      <div v-if="item.latest_batch">
+                        <v-chip
+                          v-for="report_type in item.latest_batch.report_types"
+                          :key="report_type"
+                          class="me-1"
+                          label
+                        >
+                          {{ report_type }}
+                        </v-chip>
+                      </div>
+                      <div
+                        v-if="testLink(item)"
+                        class="mt-4 text-medium-emphasis"
+                      >
+                        <i18n-t keypath="test_link_text" tag="p">
+                          <template #test_link>
+                            <a
+                              :href="testLink(item)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {{ $t("test_link") }}
+                            </a>
+                          </template>
+                        </i18n-t>
+                      </div>
                     </v-card-text>
                   </v-card>
                 </td>
@@ -336,8 +375,9 @@ export default {
 
   computed: {
     ...mapGetters({
-      clickhouseExportHost: "clickhouseExportHost",
+      // clickhouseExportHost: "clickhouseExportHost",
     }),
+    clickhouseExportHost: () => "pubch-01.celus.net",
   },
 
   mounted() {
@@ -351,11 +391,14 @@ export default {
     async loadData() {
       this.loading = true;
       try {
-        const response = await axios.get("/api/ch-export/logs");
+        const response = await axios.get("/api/ch-export/exports/");
         this.exports = response.data.results || response.data;
       } catch (error) {
         console.error("Error loading exports:", error);
-        this.$toast.error(this.$t("error_loading"));
+        this.showSnackbar({
+          content: this.$t("error_loading"),
+          color: "error",
+        });
       } finally {
         this.loading = false;
       }
@@ -398,6 +441,26 @@ export default {
       } finally {
         this.copying = false;
       }
+    },
+
+    testLink(item) {
+      // create a link to the TR table with a sample query
+      for (const rt of ["TR", "TR51"]) {
+        if (item.latest_batch && item.latest_batch.report_types.includes(rt)) {
+          let query =
+            `SELECT platform__name, SUM(value) AS Unique_Item_Requests FROM ${rt} WHERE ` +
+            `metric__short_name='Unique_Item_Requests' GROUP BY 1 ORDER BY 2 DESC LIMIT 50;`;
+          // the url contains the query as a base64 encoded string
+          let base64Query = btoa(query);
+          let url =
+            `https://${this.clickhouseExportHost}:8443/play?user=${item.ch_database}` +
+            `&password=${item.ch_password}&run=1` +
+            `&url=https%3A%2F%2F${this.clickhouseExportHost}%3A8443%2F%3Fdatabase%3D${item.ch_database}` +
+            `#${base64Query}`;
+          return url;
+        }
+      }
+      return null;
     },
   },
 };
