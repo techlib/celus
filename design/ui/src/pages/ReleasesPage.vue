@@ -76,9 +76,16 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss">
 .release_card {
   box-shadow: none !important;
   border: none !important;
+
+  li {
+    ul {
+      margin-top: 0 !important;
+      margin-bottom: 2px !important;
+    }
+  }
 }
 </style>
