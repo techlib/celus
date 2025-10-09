@@ -223,8 +223,16 @@ cs:
           <span>{{ $t("titles") }}</span>
         </v-tab>
         <v-tab value="items" v-if="platform && enableItems">
-          <v-icon class="mr-2">fa fa-list</v-icon>
-          <span>{{ $t("labels.items") }}</span>
+          <v-badge
+            color="error"
+            dot
+            position="top right"
+            offset-x="-10"
+            offset-y="-5"
+          >
+            <v-icon class="mr-2">fa fa-list</v-icon>
+            <span>{{ $t("labels.items") }}</span>
+          </v-badge>
         </v-tab>
         <v-tab value="coverage" v-if="platform">
           <v-icon class="mr-2">fas fa-layer-group</v-icon>
@@ -463,25 +471,25 @@ cs:
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import TitleList from "@/components/TitleList";
-import axios from "axios";
-import CounterChartSet from "@/components/charts/CounterChartSet";
-import { formatInteger } from "@/libs/numbers";
-import AnnotationsWidget from "@/components/AnnotationsWidget";
 import AddAnnotationButton from "@/components/AddAnnotationButton";
-import CounterDataExportWidget from "@/components/CounterDataExportWidget";
-import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
-import RawDataExportWidget from "@/components/RawDataExportWidget";
-import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
 import DeletePlatformDataWidget from "@/components/admin/DeletePlatformDataWidget";
-import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
-import LoaderWidget from "@/components/util/LoaderWidget";
-import TagCard from "@/components/tags/TagCard";
+import AnnotationsWidget from "@/components/AnnotationsWidget";
+import CounterChartSet from "@/components/charts/CounterChartSet";
 import CoverageOverviewWidget from "@/components/charts/CoverageOverviewWidget";
 import SushiArrivalCurve from "@/components/charts/SushiArrivalCurve.vue";
-import stateTracking from "@/mixins/stateTracking";
+import CounterDataExportWidget from "@/components/CounterDataExportWidget";
 import ItemList from "@/components/items/ItemList.vue";
+import RawDataExportWidget from "@/components/RawDataExportWidget";
+import InterestGroupSelector from "@/components/selectors/InterestGroupSelector";
+import SushiCredentialsManagementWidget from "@/components/sushi/SushiCredentialsManagementWidget";
+import TagCard from "@/components/tags/TagCard";
+import TitleList from "@/components/TitleList";
+import ErrorPlaceholder from "@/components/util/ErrorPlaceholder";
+import LoaderWidget from "@/components/util/LoaderWidget";
+import { formatInteger } from "@/libs/numbers";
+import stateTracking from "@/mixins/stateTracking";
+import axios from "axios";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "PlatformDetailPage",

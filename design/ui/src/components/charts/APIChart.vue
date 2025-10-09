@@ -70,7 +70,13 @@
         >
           <v-tooltip location="bottom">
             <template #activator="{ props }">
-              <v-badge color="error" location="top right" dot>
+              <v-badge
+                color="error"
+                location="top right"
+                dot
+                offset-x="2"
+                offset-y="3"
+              >
                 <v-btn
                   size="x-small"
                   variant="text"
