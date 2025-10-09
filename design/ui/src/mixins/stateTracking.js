@@ -1,5 +1,5 @@
-import isEqual from "lodash/isEqual";
 import { fromBase64Object, toBase64Object } from "@/libs/serialization";
+import isEqual from "lodash/isEqual";
 
 export default {
   data() {
@@ -41,46 +41,7 @@ export default {
       },
       set(val) {
         this.watchedAttrs.forEach((attr) => {
-          // the key could be in the .var attr, if not, use the .name
-          const key = attr.var || attr.name;
-          let value = val[key];
-          if (attr.validator) {
-            value = attr.validator(value);
-            if (value === undefined) {
-              console.warn(
-                `the attribute \`validator\` of item \`${attr.name}\` returned an undefined value`,
-              );
-              return;
-            }
-          }
-          if (value !== undefined) {
-            switch (attr.type) {
-              case Object:
-                this[attr.name] = value;
-                break;
-              case Array:
-                this[attr.name] = value;
-                break;
-              case String:
-                this[attr.name] = String(value);
-                break;
-              case Number:
-                this[attr.name] = parseInt(value);
-                break;
-              case Boolean:
-                if (typeof value === "boolean") {
-                  this[attr.name] = value;
-                } else {
-                  this[attr.name] = value === "true";
-                }
-                break;
-              default:
-                this[attr.name] = value;
-                console.warn(
-                  `the attribute \`type\` of item \`${attr.name}\` in \`watchedAttrs\` has not been recognized, thus the \`trackedState\` might not be working properly.`,
-                );
-            }
-          }
+          this._restoreAttr(attr, val);
         });
       },
     },
@@ -90,6 +51,50 @@ export default {
     restoreTrackedState() {
       console.debug("restoring state from query", this.$route.query);
       this.trackedState = fromBase64Object(this.$route.query);
+    },
+    _restoreAttr(attr, val) {
+      // restores attribute `attr` from the val object
+
+      // the key could be in the .var attr, if not, use the .name
+      const key = attr.var || attr.name;
+      let value = val[key];
+      if (attr.validator) {
+        value = attr.validator(value);
+        if (value === undefined) {
+          console.warn(
+            `the attribute \`validator\` of item \`${attr.name}\` returned an undefined value`,
+          );
+          return;
+        }
+      }
+      if (value !== undefined) {
+        switch (attr.type) {
+          case Object:
+            this[attr.name] = value;
+            break;
+          case Array:
+            this[attr.name] = value || [];
+            break;
+          case String:
+            this[attr.name] = String(value);
+            break;
+          case Number:
+            this[attr.name] = parseInt(value);
+            break;
+          case Boolean:
+            if (typeof value === "boolean") {
+              this[attr.name] = value;
+            } else {
+              this[attr.name] = value === "true";
+            }
+            break;
+          default:
+            this[attr.name] = value;
+            console.warn(
+              `the attribute \`type\` of item \`${attr.name}\` in \`watchedAttrs\` has not been recognized, thus the \`trackedState\` might not be working properly.`,
+            );
+        }
+      }
     },
   },
 

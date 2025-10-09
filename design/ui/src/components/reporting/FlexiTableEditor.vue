@@ -979,21 +979,19 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions, mapGetters, mapState } from "vuex";
+import CoverageCard from "@/components/coverage/CoverageCard.vue";
+import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
+import FilterCard from "@/components/reporting/FilterCard.vue";
+import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
+import ReportLoadingWidget from "@/components/reporting/ReportLoadingWidget";
+import ReportNamingWidget from "@/components/reporting/ReportNamingWidget.vue";
+import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import DimensionKeySelector from "@/components/selectors/DimensionKeySelector";
+import TagClassSelector from "@/components/tags/TagClassSelector";
+import TagSelector from "@/components/tags/TagSelector";
+import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
 import FromToMonthEntry from "@/components/util/FromToMonthEntry";
 import FromToYearEntry from "@/components/util/FromToYearEntry";
-import DimensionKeySelector from "@/components/selectors/DimensionKeySelector";
-import ExportMonitorWidget from "@/components/util/ExportMonitorWidget";
-import FlexiTableOutput from "@/components/reporting/FlexiTableOutput";
-import translators from "@/mixins/translators";
-import { dimensionMixin } from "@/mixins/dimensions";
-import reportTypes from "@/mixins/reportTypes";
-import { FlexiReport } from "@/libs/flexi-reports";
-import ReportLoadingWidget from "@/components/reporting/ReportLoadingWidget";
-import isEqual from "lodash/isEqual";
-import AccessLevelSelector from "@/components/reporting/AccessLevelSelector";
-import formRulesMixin from "@/mixins/formRulesMixin";
 import {
   anyDateToYm,
   lastCoveredYearDate,
@@ -1001,22 +999,23 @@ import {
   ymDateFormat,
   ymDateParse,
 } from "@/libs/dates";
+import { explicitDimensions } from "@/libs/dimensions";
+import { FlexiReport } from "@/libs/flexi-reports";
+import { fromBase64Object, toBase64JSON } from "@/libs/serialization";
 import cancellation from "@/mixins/cancellation";
-import { toBase64JSON, fromBase64Object } from "@/libs/serialization";
-import TagSelector from "@/components/tags/TagSelector";
-import TagClassSelector from "@/components/tags/TagClassSelector";
-import CoverageCard from "@/components/coverage/CoverageCard.vue";
-import ReportNamingWidget from "@/components/reporting/ReportNamingWidget.vue";
+import { dimensionMixin } from "@/mixins/dimensions";
+import formRulesMixin from "@/mixins/formRulesMixin";
+import reportTypes from "@/mixins/reportTypes";
+import stateTracking from "@/mixins/stateTracking";
+import translators from "@/mixins/translators";
+import axios from "axios";
+import addYears from "date-fns/addYears";
 import differenceInCalendarMonths from "date-fns/differenceInCalendarMonths";
 import lastDayOfYear from "date-fns/lastDayOfYear";
 import startOfYear from "date-fns/startOfYear";
-import addYears from "date-fns/addYears";
+import isEqual from "lodash/isEqual";
 import { useGoTo } from "vuetify";
-import stateTracking from "@/mixins/stateTracking";
-
-import FilterCard from "@/components/reporting/FilterCard.vue";
-import { explicitDimensions } from "@/libs/dimensions";
-import ReportSpecOverview from "@/components/reporting/ReportSpecOverview.vue";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "FlexiTableEditor",
@@ -1070,7 +1069,7 @@ export default {
         { name: "splitBy", type: String, var: "sb" },
         { name: "orderBy", type: Array, var: "o" },
 
-        { name: "selectedMetrics", type: Array, var: "m" },
+        { name: "selectedMetrics", type: Array, var: "m", alwaysTrack: true },
         { name: "selectedPlatforms", type: Array, var: "p" },
         { name: "selectedOrganizations", type: Array, var: "org" },
         { name: "selectedDateRange", type: Object, var: "dr" },
@@ -1210,12 +1209,9 @@ export default {
         if (this.reportId || this.setupInProgress) {
           return;
         }
-
+        // use the _restoreAttr method from the mixin
         this.watchedAttrs.forEach((attr) => {
-          const key = attr.var || attr.name;
-          if (val[key] !== undefined) {
-            this[attr.name] = this.deserialize(attr, val[key]);
-          }
+          this._restoreAttr(attr, val);
         });
       },
     },
@@ -2259,6 +2255,9 @@ export default {
           this.runReport();
         });
       }
+    },
+    initialLoad(newVal) {
+      console.log("selectedMetrics", this.selectedMetrics);
     },
   },
 };

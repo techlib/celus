@@ -86,10 +86,10 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions } from "vuex";
-import debounce from "lodash/debounce";
 import TwoPaneSelector from "@/components/util/TwoPaneSelector";
+import axios from "axios";
+import debounce from "lodash/debounce";
+import { mapActions } from "vuex";
 
 export default {
   name: "DimensionKeySelector",
