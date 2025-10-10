@@ -2256,9 +2256,6 @@ export default {
         });
       }
     },
-    initialLoad(newVal) {
-      console.log("selectedMetrics", this.selectedMetrics);
-    },
   },
 };
 </script>

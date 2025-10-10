@@ -28,9 +28,9 @@
 </template>
 
 <script>
+import TagChip from "@/components/tags/TagChip.vue";
 import { smartMonthRange } from "@/libs/dates";
 import translators from "@/mixins/translators";
-import TagChip from "@/components/tags/TagChip.vue";
 
 export default {
   name: "FilterSpec",
@@ -52,6 +52,10 @@ export default {
 
   computed: {
     name() {
+      // the following is a special case for title tags when object from FlexiTableEditor is used
+      if (this.fltr.dimension?.ref === "tag__target") {
+        return this.$t("labels.title");
+      }
       return this.fltr.dimension.getName(this.$i18n);
     },
     desc() {
@@ -74,7 +78,9 @@ export default {
 
     let translator = null;
     let toTranslate = [];
-    if (this.fltr.values) {
+    // tag__target is a special case for title tags when object from FlexiTableEditor is used
+    // it is encoded differently in saved objects. Here we handle both cases.
+    if (this.fltr.values && this.fltr.dimension?.ref !== "tag__target") {
       translator = this.getTranslator(this.fltr.dimension);
       toTranslate = this.fltr.values;
       if (translator) {
@@ -84,13 +90,19 @@ export default {
         );
         this.values.sort((a, b) => a.localeCompare(b));
       }
-    } else if (this.fltr.tag_ids || this.fltr.tag_class_ids) {
+    } else if (
+      this.fltr.tag_ids ||
+      this.fltr.tag_class_ids ||
+      this.fltr.dimension?.ref === "tag__target"
+    ) {
       // tags and tag classes get translated into objects, not strings
-      translator = this.fltr.tag_ids
-        ? this.translators.tag
-        : this.translators.tagClass;
-      toTranslate = this.fltr.tag_ids ?? this.fltr.tag_class_ids;
-      this.valueType = this.fltr.tag_ids ? "tag" : "tagClass";
+      const tagIds =
+        this.fltr.dimension?.ref === "tag__target"
+          ? this.fltr.values
+          : this.fltr.tag_ids;
+      translator = tagIds ? this.translators.tag : this.translators.tagClass;
+      toTranslate = tagIds ?? this.fltr.tag_class_ids;
+      this.valueType = tagIds ? "tag" : "tagClass";
       await translator.prepareTranslation(toTranslate);
       this.values = toTranslate.map((item) =>
         translator.translateKey(item, this.$i18n.locale),
