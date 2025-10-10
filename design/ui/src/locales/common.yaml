@@ -765,7 +765,7 @@ cs:
   tag_state:
     initial: Právě nahráno
     preprocessing: Probíhá předzpracování
-    preflight: Připraveno k šťítkování
+    preflight: Připraveno k štítkování
     prefailed: Předzpracování selhalo
     failed: Zpracování selhalo
     importing: Probíhá štítkování
