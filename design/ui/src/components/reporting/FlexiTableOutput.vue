@@ -391,7 +391,6 @@ export default {
       ordering: "-_total",
       baseWidth: 0,
       remainder: null,
-      skipNextAutoFetch: false,
       rowToTagScope: {
         target: "title",
         platform: "platform",
@@ -826,7 +825,6 @@ export default {
           this.loadingRemainder = false;
         }
       }
-      this.skipNextAutoFetch = true;
     },
     async updateTranslators() {
       this.translatorsUpdating = true;
@@ -968,27 +966,44 @@ export default {
         );
       }
     },
+
     updateOptions(newOptions) {
       if (!isEqual(newOptions, this.prevOptions)) {
-        this.page = newOptions.page;
-        this.itemsPerPage = newOptions.itemsPerPage;
+        let change = false;
+
+        if (this.page !== newOptions.page) {
+          this.page = newOptions.page;
+          change = true;
+        }
+
+        if (this.itemsPerPage !== newOptions.itemsPerPage) {
+          this.itemsPerPage = newOptions.itemsPerPage;
+          change = true;
+        }
+
+        let newOrdering = "-_total"; // default ordering
         if (newOptions.sortBy && newOptions.sortBy.length) {
-          this.ordering = newOptions.sortBy
+          newOrdering = newOptions.sortBy
             .map(({ key, order }) => {
               return (order === "desc" ? "-" : "") + key;
             })
             .join("");
-        } else {
-          this.ordering = "-_total";
         }
-        this.$emit("update:ordering", this.ordering);
-        if (!this.loading && !this.skipNextAutoFetch) {
-          this.fetchData();
+        if (newOrdering !== this.ordering) {
+          this.ordering = newOrdering;
+          change = true;
         }
-        this.skipNextAutoFetch = false;
+
+        if (change) {
+          this.$emit("update:ordering", this.ordering);
+          if (!this.loading) {
+            this.fetchData();
+          }
+        }
       }
       this.prevOptions = { ...newOptions };
     },
+
     applyOverridesToReport() {
       if (this.report) {
         if (this.contextOverrideDates) {
