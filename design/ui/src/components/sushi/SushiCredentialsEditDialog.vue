@@ -518,7 +518,7 @@ cs:
                     <v-list-item
                       v-bind="props"
                       title
-                      v-if="!isBlacklisted(item.raw)"
+                      :disabled="isBlacklisted(item.raw)"
                     >
                       <template v-slot:default>
                         <SushiReportIndicator
@@ -528,36 +528,9 @@ cs:
                           :registry-fn="inRegistry"
                           :blacklisted-fn="isBlacklisted"
                           show-name
-                          show-last-harvestable-month
                         ></SushiReportIndicator>
                       </template>
                     </v-list-item>
-                    <v-tooltip location="bottom" max-width="400" v-else>
-                      <template #activator="{ props }">
-                        <span v-bind="props">
-                          <v-list-item title disabled>
-                            <SushiReportIndicator
-                              :report="item.raw"
-                              :blacklisted-fn="isBlacklisted"
-                              show-name
-                            ></SushiReportIndicator>
-                          </v-list-item>
-                        </span>
-                      </template>
-                      <i18n-t
-                        keypath="sushi.blacklisted_report_type_desc"
-                        tag="span"
-                      >
-                        <template #link>
-                          <a
-                            :href="`mailto:${contactEmail}`"
-                            class="text-warning"
-                            target="_blank"
-                            >{{ contactEmail }}</a
-                          >
-                        </template>
-                      </i18n-t>
-                    </v-tooltip>
                   </template>
                   <template #selection="{ item, props, selected }">
                     <v-chip
@@ -574,7 +547,6 @@ cs:
                         :knowledgebase-fn="inKnowledgebase"
                         :registry-fn="inRegistry"
                         :blacklisted-fn="isBlacklisted"
-                        show-last-harvestable-month
                         is-autocomplete
                       ></SushiReportIndicator>
                     </v-chip>

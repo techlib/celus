@@ -5,7 +5,12 @@
     <template v-slot:activator="{ props }">
       <span
         v-bind="props"
-        :style="{ width: '100%', display: 'flex', 'align-items': 'center' }"
+        :style="{
+          width: '100%',
+          display: 'flex',
+          'align-items': 'center',
+          'pointer-events': 'auto',
+        }"
       >
         <span :class="anyIcon ? 'pr-1' : ''">{{ report.code }}</span>
         <span v-if="showVersion"

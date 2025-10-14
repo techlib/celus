@@ -674,7 +674,7 @@ export default {
         return false;
       }
       if (this.platform.knowledgebase) {
-        return !this.platform.knowledgebase.providers.some(
+        return !(this.platform.knowledgebase.providers || []).some(
           (e) =>
             e.counter_version == report.counter_version &&
             e.assigned_report_types.some(

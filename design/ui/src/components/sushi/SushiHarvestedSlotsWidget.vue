@@ -142,10 +142,7 @@ cs:
               variant="outlined"
               label
             >
-              <SushiReportIndicator
-                :report="row.rt"
-                show-last-harvestable-month
-              />
+              <SushiReportIndicator :report="row.rt" />
             </v-chip>
           </td>
           <td
