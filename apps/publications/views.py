@@ -74,7 +74,7 @@ from publications.serializers import (
     UseCaseSerializer,
 )
 
-from .filters import PlatformFilter, PubTypeFilter
+from .filters import HasWhiteListedIrReportFilter, PlatformFilter, PubTypeFilter
 from .logic.use_cases import get_use_cases
 from .serializers import AllPlatformSerializer, PlatformSerializer, TitleSerializer
 from .tasks import (
@@ -92,7 +92,7 @@ class AllPlatformsViewSet(ReadOnlyModelViewSet):
     permission_classes = [ViewPlatformPermission]
 
     serializer_class = AllPlatformSerializer
-    filter_backends = [PlatformFilter]
+    filter_backends = [PlatformFilter, HasWhiteListedIrReportFilter]
 
     @classmethod
     def _organization_pk_to_obj(cls, organization_pk):

@@ -2343,6 +2343,56 @@ class TestAllPlatformsAPI:
         else:
             assert plat_source_type_org.pk in resp_pks
 
+    @pytest.mark.parametrize(
+        "whitelisted_ir,status,count",
+        [(True, 200, 1), (False, 200, 2), (None, 200, 4), ("wrong", 400, 0)],
+    )
+    def test_all_platform_whitelisted_ir_param(
+        self, clients, data_sources, whitelisted_ir, status, count
+    ):
+        # Clean all platforms
+        Platform.objects.all().delete()
+
+        # Make platforms
+        PlatformFactory.create(
+            name="P1", source=data_sources["api"], knowledgebase={"providers": []}
+        )
+        PlatformFactory.create(
+            name="P2",
+            source=data_sources["api"],
+            knowledgebase={
+                "providers": [
+                    {"assigned_report_types": [{"report_type": "IR", "whitelisted": True}]}
+                ]
+            },
+        )
+        PlatformFactory.create(
+            name="P3",
+            source=data_sources["api"],
+            knowledgebase={
+                "providers": [
+                    {"assigned_report_types": [{"report_type": "IR", "whitelisted": False}]}
+                ]
+            },
+        )
+        PlatformFactory.create(
+            name="P4",
+            source=data_sources["api"],
+            knowledgebase={
+                "providers": [
+                    {"assigned_report_types": [{"report_type": "IR", "whitelisted": False}]}
+                ]
+            },
+        )
+
+        resp = clients["admin1"].get(
+            reverse("all-platforms-list", args=[-1]),
+            {"whitelisted_ir": str(whitelisted_ir)} if whitelisted_ir is not None else {},
+        )
+        assert resp.status_code == status
+        if status == 200:
+            assert len(resp.data) == count
+
     @pytest.mark.parametrize("has_event,count", [(True, 1), (False, 1), (None, 2)])
     def test_all_platform_has_event_param(self, clients, has_event, count):
         Platform.objects.all().delete()
