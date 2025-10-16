@@ -4,7 +4,7 @@ import time
 import celery
 from core.logic.error_reporting import email_if_fails
 
-from ch_export.models import AccessLogExport, AccessLogExportBatch, AccessLogExportTask
+from ch_export.models import AccessLogExport, AccessLogExportTask
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +34,4 @@ def export_to_ch_task(task_id: int):
 @email_if_fails
 def start_export_tasks():
     for export in AccessLogExport.objects.filter(enabled=True):
-        batch = AccessLogExportBatch.objects.create(export=export)
-        for report_type in export.report_types():
-            where = {"report_type_id": report_type.pk}
-            if export.organization:
-                where["organization_id"] = export.organization.pk
-
-            task = AccessLogExportTask.objects.create(batch=batch, report_type=report_type)
-            celery_task = export_to_ch_task.apply_async((task.id,), countdown=2)
-            task.task_id = celery_task.id
-            task.save()
+        export.create_batch(start_tasks=True)

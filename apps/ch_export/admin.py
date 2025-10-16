@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 
 from ch_export.models import AccessLogExport, AccessLogExportTask
@@ -8,10 +8,53 @@ from ch_export.models import AccessLogExport, AccessLogExportTask
 class AccessLogExportAdmin(ModelAdmin):
     list_display = ["organization", "enabled", "latest_batch", "status"]
     readonly_fields = ["ch_password"]
+    actions = ["start_export"]
 
     def status(self, obj):
         batch = obj.latest_batch()
         return batch.get_status() if batch else None
+
+    def start_export(self, request, queryset):
+        """
+        Start export by creating a new batch for selected exports.
+        """
+        if not queryset.exists():
+            self.message_user(request, "No exports selected.", level=messages.WARNING)
+            return
+
+        started_count = 0
+        for export in queryset:
+            if not export.enabled:
+                self.message_user(
+                    request,
+                    f"Export for {export.organization or 'consortium'} is disabled. Skipping.",
+                    level=messages.WARNING,
+                )
+                continue
+            try:
+                batch = export.create_batch(start_tasks=True)
+                started_count += 1
+                self.message_user(
+                    request,
+                    f"Started export batch for {export.organization or 'consortium'} "
+                    f"(Batch ID: {batch.id})",
+                    level=messages.SUCCESS,
+                )
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"Failed to start export for {export.organization or 'consortium'}: {str(e)}",
+                    level=messages.ERROR,
+                )
+
+        if started_count > 0:
+            self.message_user(
+                request,
+                f"Successfully started {started_count} export batch(es).",
+                level=messages.SUCCESS,
+            )
+
+    start_export.short_description = "Start export"
 
 
 class ExportTaskFilter(admin.SimpleListFilter):

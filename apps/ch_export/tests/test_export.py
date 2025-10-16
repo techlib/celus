@@ -136,7 +136,7 @@ class TestRealAccessLogExportTaskExport:
         exp = AccessLogExportFactory.create(organization=ib.organization)
         assert not self.table_exists(exp.ch_database, ib.report_type.short_name)
         task = AccessLogExportTask.objects.create(
-            batch=exp.create_batch(), report_type=ib.report_type
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type
         )
         task.export_to_ch()
         task.refresh_from_db()
@@ -150,7 +150,7 @@ class TestRealAccessLogExportTaskExport:
         ib = ImportBatchFullFactory.create()
         exp = AccessLogExportFactory.create(organization=ib.organization)
         task = AccessLogExportTask.objects.create(
-            batch=exp.create_batch(), report_type=ib.report_type, task_id="1"
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type, task_id="1"
         )
         task.export_to_ch()
         count = self.table_count(exp.ch_database, ib.report_type.short_name)
@@ -162,7 +162,7 @@ class TestRealAccessLogExportTaskExport:
         # create new data
         ImportBatchFullFactory.create(organization=ib.organization, report_type=ib.report_type)
         task = AccessLogExportTask.objects.create(
-            batch=exp.create_batch(), report_type=ib.report_type, task_id="2"
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type, task_id="2"
         )
         task.export_to_ch()
         task.refresh_from_db()
@@ -179,7 +179,7 @@ class TestRealAccessLogExportTaskExport:
         ib = ImportBatchFullFactory.create()
         exp = AccessLogExportFactory.create(organization=ib.organization)
         task = AccessLogExportTask.objects.create(
-            batch=exp.create_batch(), report_type=ib.report_type, task_id="1"
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type, task_id="1"
         )
         task.export_to_ch()
         task.refresh_from_db()
@@ -193,7 +193,7 @@ class TestRealAccessLogExportTaskExport:
         # delete the data
         ib.delete()
         task = AccessLogExportTask.objects.create(
-            batch=exp.create_batch(), report_type=ib.report_type, task_id="2"
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type, task_id="2"
         )
         task.export_to_ch()
         task.refresh_from_db()
@@ -255,7 +255,7 @@ class TestRealAccessLogExportTaskExport:
             report_type.short_name,
             interest_rt.short_name,
         }, "only report_type and interest have data and are exportable"
-        export_batch = exp.create_batch()
+        export_batch = exp.create_batch(start_tasks=False)
         for rt in exp.report_types():
             task = AccessLogExportTask.objects.create(
                 batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-1"
@@ -285,7 +285,7 @@ class TestRealAccessLogExportTaskExport:
         crs2 = counter_records(data2, metric="Hits", platform="Platform1")
         ibs, _stats = import_counter_records(report_type, organization, platform, crs2)
         assert len(ibs) == 1, "only one import batch created"
-        export_batch = exp.create_batch()
+        export_batch = exp.create_batch(start_tasks=False)
         for rt in exp.report_types():
             task = AccessLogExportTask.objects.create(
                 batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-2"
@@ -357,7 +357,7 @@ class TestRealAccessLogExportTaskExport:
         # let's export the data
         exp = AccessLogExportFactory.create(organization=organization)
         assert rt in exp.report_types()
-        export_batch = exp.create_batch()
+        export_batch = exp.create_batch(start_tasks=False)
         task = AccessLogExportTask.objects.create(
             batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-1"
         )
@@ -451,7 +451,7 @@ class TestRealAccessLogExportTaskExport:
         ]
 
         # now perform the export and make sure there are all the missing columns
-        export_batch = exp.create_batch()
+        export_batch = exp.create_batch(start_tasks=False)
         task = AccessLogExportTask.objects.create(
             batch=export_batch, report_type=rt, task_id=f"{rt.short_name}-1"
         )

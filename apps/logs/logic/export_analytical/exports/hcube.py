@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import Any, Callable, Dict, List, Optional, Type
 from urllib.parse import parse_qs, urlparse
 
+from core.logic.debug import log_memory
 from core.logic.type_conversion import strtobool
 from django.utils.timezone import now
 from hcube.api.backend import CubeBackend
@@ -229,6 +230,7 @@ class HCubeExport(AnalyticalExportBackend):
             self._write_batch()
 
     def _write_batch(self):
+        log_memory(f"before store_records: {self.stats}")
         self.cube_backend.store_records(self.cube, self.batch, skip_cleanup=True, dict_records=True)
         self.batch = []
 

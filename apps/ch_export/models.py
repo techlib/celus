@@ -73,8 +73,20 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
 
         return create_ch_export_backend(self.ch_database)
 
-    def create_batch(self):
-        return AccessLogExportBatch.objects.create(export=self)
+    def create_batch(self, start_tasks: bool = True):
+        """
+        if start_tasks is true, it will also create and start the tasks for the batch.
+        """
+        batch = AccessLogExportBatch.objects.create(export=self)
+        if start_tasks:
+            from ch_export.tasks import export_to_ch_task  # local import to avoid circular import
+
+            for report_type in self.report_types():
+                task = AccessLogExportTask.objects.create(batch=batch, report_type=report_type)
+                celery_task = export_to_ch_task.apply_async((task.id,), countdown=2)
+                task.task_id = celery_task.id
+                task.save()
+        return batch
 
     def report_types(self):
         """
