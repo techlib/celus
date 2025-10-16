@@ -1012,6 +1012,8 @@ SENTRY_ENVIRONMENT = config("SENTRY_ENVIRONMENT", default="unknown")
 SENTRY_RELEASE = config("SENTRY_RELEASE", default="")
 SENTRY_URL = config("SENTRY_URL", default="")
 if SENTRY_URL:
+    from sentry_sdk.integrations.clickhouse_driver import ClickhouseDriverIntegration
+
     # by default, we take the most frequent transactions and sample them at 1% because they are
     # also one of the most boring ones
     SENTRY_TRANSACTION_SAMPLE_RATES = config(
@@ -1044,9 +1046,14 @@ if SENTRY_URL:
         name = sampling_context.get("transaction_context", {}).get("name")
         return transaction_rates.get(name, 1)
 
+    # we disable the clickhouse driver integration because it captures all the inserted data
+    # which leads to memory issues in production when syncing a lot of data into the public
+    # clickhouse. Similar issues may occur when inserting data to the normal clickhouse,
+    # but the amount is not as big, so we did not spot it there before.
     sentry_sdk.init(
         dsn=SENTRY_URL,
         integrations=[DjangoIntegration(), CeleryIntegration(), RedisIntegration()],
+        disabled_integrations=[ClickhouseDriverIntegration()],
         send_default_pii=True,
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
