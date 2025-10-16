@@ -1,4 +1,4 @@
-import { isoDateTimeFormat, parseDateTime, isoDateFormat } from "@/libs/dates";
+import { isoDateFormat, isoDateTimeFormat, parseDateTime } from "@/libs/dates";
 
 function userToString(user, empty_str, skip_comma) {
   empty_str ??= "-";
@@ -9,9 +9,9 @@ function userToString(user, empty_str, skip_comma) {
   if (user.last_name) {
     if (user.first_name) {
       if (skip_comma) {
-        return `${user.last_name} ${user.first_name}`;
+        return `${user.first_name} ${user.last_name}`;
       } else {
-        return `${user.last_name}, ${user.first_name}`;
+        return `${user.first_name} ${user.last_name}`;
       }
     }
     return user.last_name;
@@ -46,4 +46,4 @@ function dateAndUser(date, user, full_date) {
   }
 }
 
-export { userToString, dateAndUser };
+export { dateAndUser, userToString };
