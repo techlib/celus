@@ -3,6 +3,7 @@ import typing
 
 from core.models import DataSource, User
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.db.models import (
     CASCADE,
     BooleanField,
@@ -34,6 +35,8 @@ from events.models import Event, EventCategory, EventImportance
 from publications import models as publications_models
 from sushi import models as sushi_models
 
+from counter_registry.logic.whitelisted_platforms import Whitelist
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,9 +44,14 @@ class PlatformQueryset(QuerySet):
     def sync_knowledgebase(self):
         from .serializers import KnowledgebaseSerializer
 
+        whitelist = Whitelist(settings.WHITELISTED_OVERRIDE_CSV_PATH)
+
         changes = []
         for platform in Platform.objects.all():
             kb = KnowledgebaseSerializer(platform).data
+            # update whitelisted assigned report types
+            whitelist.update_knowledgebase(platform, kb)
+
             extra, created = PlatformExtras.objects.get_or_create(
                 platform=platform, defaults={"knowledgebase": kb}
             )

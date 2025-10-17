@@ -1086,6 +1086,9 @@ TEMPLATE_FOR_SUSHI_CRED_IMPORT_SINGLE_ORG = (
     / "apps/sushi/templates/Template_for_SushiCredentials_import_singleorg.xlsx"
 )
 
+# overrides whitelisted report type per platform using CSV file
+WHITELISTED_OVERRIDE_CSV_PATH = config("WHITELISTED_OVERRIDE_CSV_PATH", default="")
+
 # Events
 CREATE_USER_WELCOME_EVENTS = config("CREATE_USER_WELCOME_EVENTS", cast=bool, default=True)
 

@@ -180,7 +180,12 @@ class TestCounterRegistryAPI:
             assert new_platform.provider == ""
             assert new_platform.url == "https://example.com", "default fallback"
             assert new_platform.knowledgebase["providers"][0]["assigned_report_types"] == [
-                {"not_valid_after": None, "not_valid_before": None, "report_type": "JR1"}
+                {
+                    "not_valid_after": None,
+                    "not_valid_before": None,
+                    "report_type": "JR1",
+                    "whitelisted": True,
+                }
             ]
             assert new_platform.knowledgebase["providers"][0]["counter_version"] == 4
             assert (

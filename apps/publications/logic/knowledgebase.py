@@ -57,3 +57,16 @@ def is_report_type_whitelisted(provider: dict, report_type: str) -> bool:
     ):
         return rec.get("whitelisted", False)
     return False
+
+
+def update_whitelisted(
+    knowledgebase: dict, counter_version: int, report_code: str, whitelisted: bool
+) -> bool:
+    for provider in knowledgebase["providers"]:
+        if provider["counter_version"] == counter_version:
+            for art in provider["assigned_report_types"]:
+                if art["report_type"] == report_code and art.get("whitelisted") != whitelisted:
+                    art["whitelisted"] = whitelisted
+                    return True
+
+    return False

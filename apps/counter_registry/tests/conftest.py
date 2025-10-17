@@ -32,6 +32,7 @@ def registry_platform_models(counter_report_types):
     dr = ReportFactory(counter_release=5, report_id="DR")
     ir = ReportFactory(counter_release=51, report_id="IR")
     p1 = PlatformExtrasFactory(
+        platform__id="88888888-8888-8888-8888-888888888888",
         platform__name="Plat1",
         platform__abbrev="P1",
         platform__content_provider_name="PROVIDER",

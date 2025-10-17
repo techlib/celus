@@ -25,10 +25,16 @@ class AssignedReportTypeSerializer(ModelSerializer):
     report_type = CharField(source="report_id")
     not_valid_before = ReadOnlyField(default=None)
     not_valid_after = ReadOnlyField(default=None)
+    whitelisted = SerializerMethodField()
 
     class Meta:
         model = Report
-        fields = ("report_type", "not_valid_before", "not_valid_after")
+        fields = ("report_type", "not_valid_before", "not_valid_after", "whitelisted")
+
+    def get_whitelisted(self, obj):
+        if obj.report_id == "IR":
+            return False
+        return True
 
 
 class ProviderDetails(ModelSerializer):
