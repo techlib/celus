@@ -57,6 +57,20 @@
           {{ $t("tagging.data_rows_tt") }}
         </v-tooltip>
       </template>
+      <template #item.matched_rows="{ item }">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              formatInteger(
+                item.state === "imported"
+                  ? item.postflight?.rows_total - item.postflight?.rows_no_match
+                  : item.preflight?.rows_total - item.preflight?.rows_no_match,
+              )
+            }}</span>
+          </template>
+          {{ $t("tagging.matched_rows_tt") }}
+        </v-tooltip>
+      </template>
       <template #item.preflight.unique_matched_titles="{ item }">
         <v-tooltip
           v-if="item.import_count > 1"
@@ -75,7 +89,7 @@
             <span v-bind="props">{{
               formatInteger(
                 item.state === "imported"
-                  ? item.postflight?.tagged_titles
+                  ? item.postflight?.unique_matched_titles
                   : item.preflight?.unique_matched_titles,
               )
             }}</span>
@@ -83,7 +97,7 @@
           <div>
             {{
               item.state === "imported"
-                ? $t("tagging.tagged_titles_tt")
+                ? $t("tagging.total_tagged_titles_tt")
                 : $t("tagging.matched_titles_tt")
             }}
           </div>
@@ -159,15 +173,15 @@
 </template>
 
 <script>
-import cancellation from "@/mixins/cancellation";
 import TaggingBatchProcessingWidget from "@/components/tagging-batches/TaggingBatchProcessingWidget";
-import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
-import TagChip from "@/components/tags/TagChip";
-import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
-import { mapActions, mapState } from "vuex";
-import stateTracking from "@/mixins/stateTracking";
 import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
+import TaggingBatchStats from "@/components/tagging-batches/TaggingBatchStats";
+import TagChip from "@/components/tags/TagChip";
+import { isoDateTimeFormatSpans, parseDateTime } from "@/libs/dates";
 import { formatInteger } from "@/libs/numbers";
+import cancellation from "@/mixins/cancellation";
+import stateTracking from "@/mixins/stateTracking";
+import { mapActions, mapState } from "vuex";
 import { userToString } from "../../libs/user";
 import TableCustomSort from "../tables/TableCustomSort.vue";
 
@@ -263,7 +277,14 @@ export default {
           order: "reverse",
         },
         {
-          title: this.$i18n.t("titles"),
+          title: this.$i18n.t("tagging.matched_rows"),
+          value: "matched_rows",
+          align: "end",
+          sortable: false,
+          width: "130px",
+        },
+        {
+          title: this.$i18n.t("tagging.matched_titles"),
           value: "preflight.unique_matched_titles",
           align: "end",
           key: "preflight.unique_matched_titles",

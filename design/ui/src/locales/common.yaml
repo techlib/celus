@@ -308,18 +308,25 @@ en:
   tagging:
     data_rows: Data rows
     data_rows_tt: Total number of rows found in the source file
+    matched_rows: Matched rows
+    matched_rows_tt: Number of rows that matched at least one title
     matched_titles: Matched titles
+    matched_celus_titles: Matched CELUS titles
     matched_titles_tt: Total number of unique matched titles
     title_number_note: One row may match more than one title, so this number may be higher than the number of matched rows
     tagged_titles: Tagged titles
+    tagged_celus_titles: Tagged CELUS titles
     tagged_titles_tt: Total number of tagged titles.
+    total_tagged_titles_tt: Total number of tagged titles across all repetitions.
     tagged_titles_note: This number may be lower than the number of matched titles, because some titles may have already been tagged with the same or a clashing exclusive tag.
-    actually_tagged_titles: Actually tagged titles
+    actually_tagged_celus_titles: Actually tagged CELUS titles
     no_match_rows: Rows without match
     no_match_rows_tt: The number of rows which did not match any title
     already_tagged_titles: Already tagged titles
+    already_tagged_celus_titles: Already tagged CELUS titles
     already_tagged_titles_tt: Number of titles which had already been tagged with the selected tag
     exclusively_tagged_titles: Exclusively tagged titles
+    exclusively_tagged_celus_titles: Exclusively tagged CELUS titles
     exclusively_tagged_titles_tt: Number of titles which had already been tagged with a clashing exclusive tag
     recognized_columns: Recognized columns
     recognized_columns_tt: Names of columns from the uploaded sheet which were recognized as containing title identifiers
@@ -338,7 +345,7 @@ en:
     tag_stats: Found tags
     tags_read_from_file: Tags are read from file
     show_only_my: Show only my own
-    multi_import_tt: This title list was re-imported multiple times. Statistics show the results of the last import only.
+    multi_import_tt: This title list was re-imported multiple times. Statistics show the results of the most recent import.
     imports: Imports
     import_count: Import count
     import_count_tt: A title list may be imported multiple times to assign tags to newly arrived titles. This number shows the total number of imports.
@@ -725,18 +732,25 @@ cs:
   tagging:
     data_rows: Datové řádky
     data_rows_tt: Celkový počet řádků nalezených ve zdrojovém souboru
+    matched_rows: Nalezené řádky
+    matched_rows_tt: Počet řádků, které našly alespoň jeden titul
     matched_titles: Nalezené tituly
+    matched_celus_titles: Nalezené CELUS tituly
     matched_titles_tt: Počet unikátních identifikovaných titulů
     title_number_note: Jeden řádek může odpovídat více titulům. Je tedy možné, že toto číslo bude větší než počet identifikovaných řádků.
     tagged_titles: Oštítkované tituly
+    tagged_celus_titles: Oštítkované CELUS tituly
     tagged_titles_tt: Celkový počet oštítkovaných titulů.
+    total_tagged_titles_tt: Celkový počet oštítkovaných titulů napříč všemi opakováními.
     tagged_titles_note: Toto číslo může být menší než počet identifikovaných titulů, pokud byly některé tituly již oštítkovány stejným nebo kolidujícím exkluzivním štítkem.
-    actually_tagged_titles: Skutečně oštítkované tituly
+    actually_tagged_celus_titles: Skutečně oštítkované CELUS tituly
     no_match_rows: Řádky bez odpovídajícího titulu
     no_match_rows_tt: Počet řádků, které neodpovídají žádnému titulu v databázi
     already_tagged_titles: Již dříve oštítkované tituly
+    already_tagged_celus_titles: Již dříve oštítkované CELUS tituly
     already_tagged_titles_tt: Počet titulů, které odpovídají nahranému souboru, ale byly již dříve označeny stejným štítkem
     exclusively_tagged_titles: Exklusivně oštítkované tituly
+    exclusively_tagged_celus_titles: Exklusivně oštítkované CELUS tituly
     exclusively_tagged_titles_tt: Počet titulů, které odpovídají nahranému souboru, ale byly již dříve označeny jiným exklusivním štítkem
     recognized_columns: Rozeznané sloupce
     recognized_columns_tt: Názvy sloupců z nahrané tabulky, které byly rozeznány jako použitelné pro identifikaci titulů
@@ -755,7 +769,7 @@ cs:
     tag_stats: Nalezené štítky
     tags_read_from_file: Štítky jsou načteny ze souboru
     show_only_my: Zobrazit jen moje
-    multi_import_tt: Tento seznam titulů byl nahrán vícekrát. Statistiky zobrazují pouze výsledky posledního importu.
+    multi_import_tt: Tento seznam titulů byl nahrán vícekrát. Statistiky zobrazují výsledky nejnovějšího importu.
     imports: Importy
     import_count: Počet importů
     import_count_tt: Seznam titulů může být opakovaně nahrán, aby došlo k přiřazení štítků k novým titulům. Toto číslo zobrazuje celkový počet importů.

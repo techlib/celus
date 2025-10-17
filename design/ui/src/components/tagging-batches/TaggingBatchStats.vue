@@ -148,6 +148,44 @@ cs:
         </v-tooltip>
       </td>
     </tr>
+    <tr v-if="data">
+      <th>
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">{{ $t("tagging.matched_rows") }}</span>
+          </template>
+          {{ $t("tagging.matched_rows_tt") }}
+        </v-tooltip>
+      </th>
+      <td class="text-right">
+        <v-tooltip location="bottom">
+          <template #activator="{ props }">
+            <span v-bind="props">{{
+              data.rows_total - data.rows_no_match
+            }}</span>
+          </template>
+          {{ $t("tagging.matched_rows_tt") }}
+        </v-tooltip>
+      </td>
+      <td class="progress_column">
+        <v-progress-linear
+          :model-value="
+            data.rows_total > 0
+              ? ((data.rows_total - data.rows_no_match) / data.rows_total) * 100
+              : 0
+          "
+          color="success"
+          height="20"
+          rounded
+        >
+          <template #default="{ value }">
+            <strong class="text-white text-caption"
+              >{{ Math.round(10 * value) / 10 }} %</strong
+            >
+          </template>
+        </v-progress-linear>
+      </td>
+    </tr>
     <!-- unmatched row count -->
     <tr v-if="data">
       <th>
@@ -168,13 +206,31 @@ cs:
           {{ $t("tagging.no_match_rows_tt") }}
         </v-tooltip>
       </td>
+      <td class="progress_column">
+        <v-progress-linear
+          :model-value="
+            data.rows_total > 0
+              ? (data.rows_no_match / data.rows_total) * 100
+              : 0
+          "
+          color="error"
+          height="20"
+          rounded
+        >
+          <template #default="{ value }">
+            <strong class="text-white text-caption"
+              >{{ Math.round(10 * value) / 10 }} %</strong
+            >
+          </template>
+        </v-progress-linear>
+      </td>
     </tr>
     <!-- matched titles count -->
     <tr v-if="data">
       <th :class="finished ? 'pt-4' : ''">
         <v-tooltip location="bottom">
           <template #activator="{ props }">
-            <span v-bind="props">{{ $t("tagging.matched_titles") }}</span>
+            <span v-bind="props">{{ $t("tagging.matched_celus_titles") }}</span>
           </template>
           <div>{{ $t("tagging.matched_titles_tt") }}</div>
           <div>{{ $t("tagging.title_number_note") }}</div>
@@ -196,7 +252,7 @@ cs:
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <span v-bind="props">{{
-              $t("tagging.already_tagged_titles")
+              $t("tagging.already_tagged_celus_titles")
             }}</span>
           </template>
           <div>{{ $t("tagging.already_tagged_titles_tt") }}</div>
@@ -217,7 +273,7 @@ cs:
         <v-tooltip location="bottom">
           <template #activator="{ props }">
             <span v-bind="props">{{
-              $t("tagging.exclusively_tagged_titles")
+              $t("tagging.exclusively_tagged_celus_titles")
             }}</span>
           </template>
           <div>{{ $t("tagging.exclusively_tagged_titles_tt") }}</div>
@@ -239,8 +295,8 @@ cs:
           <template #activator="{ props }">
             <span v-bind="props">{{
               data.tagged_titles !== data.unique_matched_titles
-                ? $t("tagging.actually_tagged_titles")
-                : $t("tagging.tagged_titles")
+                ? $t("tagging.actually_tagged_celus_titles")
+                : $t("tagging.tagged_celus_titles")
             }}</span>
           </template>
           <div>{{ $t("tagging.tagged_titles_tt") }}</div>
@@ -359,10 +415,10 @@ cs:
 
 <script>
 import ShortenText from "@/components/ShortenText";
-import TagChip from "@/components/tags/TagChip";
-import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
-import isEmpty from "lodash/isEmpty";
 import TaggingAttemptList from "@/components/tagging-batches/TaggingAttemptList.vue";
+import TaggingBatchStateWidget from "@/components/tagging-batches/TaggingBatchStateWidget.vue";
+import TagChip from "@/components/tags/TagChip";
+import isEmpty from "lodash/isEmpty";
 export default {
   name: "TaggingBatchStats",
 
@@ -426,5 +482,13 @@ tr {
 
 th {
   min-width: 230px;
+}
+
+.progress_column {
+  padding-left: 10px;
+  width: 100px;
+  :deep(.v-progress-linear__background) {
+    opacity: 0.4 !important;
+  }
 }
 </style>
