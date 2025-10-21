@@ -32,7 +32,14 @@
             fontWeight: isSorted(column) ? 'bold' : 'normal',
           }"
         >
-          {{ column.title }}
+          <!-- Check if parent data table has a slot for this column -->
+          <template v-if="hasParentSlot(column)">
+            <component :is="() => getParentSlot(column)" />
+          </template>
+          <!-- Fallback to the title of the column -->
+          <span v-else>
+            {{ column.title }}
+          </span>
         </span>
         <v-icon
           v-if="isSorted(column)"
@@ -78,6 +85,10 @@ export default {
     selectColumnValue: {
       type: String,
       default: "data-table-select",
+    },
+    parentData: {
+      type: Object,
+      default: () => ({}),
     },
   },
   data() {
@@ -161,6 +172,23 @@ export default {
         column.key &&
         !this.isColumnUnsortable(column)
       );
+    },
+    hasParentSlot(column) {
+      const slotName = `header.${column.key || column.value}`;
+      return (
+        this.$parent && this.$parent.$slots && this.$parent.$slots[slotName]
+      );
+    },
+    getParentSlot(column) {
+      const slotName = `header.${column.key || column.value}`;
+      if (
+        this.$parent &&
+        this.$parent.$slots &&
+        this.$parent.$slots[slotName]
+      ) {
+        return this.$parent.$slots[slotName]({ column });
+      }
+      return null;
     },
   },
 };
