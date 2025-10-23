@@ -318,7 +318,7 @@ def create_default_profiles() -> List["InterestProfile"]:
             logger.info("Created interest profile %s", profile)
         if pdef["default"]:
             _ic, created = InterestConfig.objects.get_or_create(
-                organization=None, interest_profile=profile
+                organization=None, defaults={"interest_profile": profile}
             )
             if created:
                 logger.info("Created default interest config")
