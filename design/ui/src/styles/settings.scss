@@ -11,7 +11,8 @@
 
 @use "vuetify/settings" with (
   $input-control-height: 48px,
-  $selection-control-size: 44px
+  $selection-control-size: 44px,
+  $tooltip-background-color: rgba(80, 80, 80, 0.92)
 );
 
 a {
@@ -202,10 +203,6 @@ a {
 .dp__today {
   border: 1px solid #ffb74d;
   border-radius: 50%;
-}
-
-.v-tooltip > .v-overlay__content {
-  background-color: rgba(0, 0, 0, 0.54);
 }
 
 .v-stepper-vertical-actions.v-stepper-actions {
