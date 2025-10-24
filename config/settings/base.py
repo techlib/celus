@@ -427,6 +427,7 @@ CELERY_TASK_ROUTES = {
     "export.tasks.process_flexible_export_task": {"queue": "export"},
     "export.tasks.process_flexible_api_export_task": {"queue": "export"},
     "knowledgebase.tasks.sync_all_with_knowledgebase_task": {"queue": "celery"},
+    "knowledgebase.tasks.knowledgebase_sync_routes_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_platforms_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_report_types_with_knowledgebase_task": {"queue": "celery"},
@@ -521,11 +522,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": schedule(run_every=timedelta(minutes=1)),
         "options": {"expires": 60},
     },
-    "knowledgebase_sync_routes": {
-        "task": "knowledgebase.tasks.sync_routes",
-        "schedule": schedule(run_every=timedelta(minutes=5)),
-        "options": {"expires": 5 * 60},
-    },
     "process_outstanding_import_batch_sync_logs_task": {
         "task": "logs.tasks.process_outstanding_import_batch_sync_logs_task",
         "schedule": schedule(run_every=timedelta(minutes=7)),
@@ -602,11 +598,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour="2", minute="17"),  # every day at 2:17
         "options": {"expires": 24 * 60 * 60},
     },
-    "sync_all_with_knowledgebase_task": {
-        "task": "knowledgebase.tasks.sync_all_with_knowledgebase_task",
-        "schedule": crontab(hour="2", minute=randmin()),  # between 2:00 and 2:59
-        "options": {"expires": 24 * 60 * 60},
-    },
     "delete_expired_flexible_data_exports_task": {
         "task": "export.tasks.delete_expired_flexible_data_exports_task",
         "schedule": crontab(hour="3", minute="0"),  # every day at 3:00
@@ -646,6 +637,20 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"expires": 60 * 60},
     },
 }
+
+
+if not USE_REGISTRY_AS_KNOWLEDGEBASE:
+    # We are using regular knowledgebase => add the sync tasks
+    CELERY_BEAT_SCHEDULE["knowledgebase_sync_routes_task"] = {
+        "task": "knowledgebase.tasks.sync_routes",
+        "schedule": schedule(run_every=timedelta(minutes=5)),
+        "options": {"expires": 5 * 60},
+    }
+    CELERY_BEAT_SCHEDULE["sync_all_with_knowledgebase_task"] = {
+        "task": "knowledgebase.tasks.sync_all_with_knowledgebase_task",
+        "schedule": crontab(hour="2", minute=randmin()),  # between 2:00 and 2:59
+        "options": {"expires": 24 * 60 * 60},
+    }
 
 # add ERMS related tasks
 ERMS_CELERY_SCHEDULE = {
