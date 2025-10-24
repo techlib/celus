@@ -1,15 +1,15 @@
 // Plugins
 import vue from "@vitejs/plugin-vue";
-import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 import ViteFonts from "unplugin-fonts/vite";
 import vueDevTools from "vite-plugin-vue-devtools";
+import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
 // Utilities
-import { defineConfig } from "vite";
 import { fileURLToPath, URL } from "node:url";
+import { defineConfig } from "vite";
 
-import { resolve, dirname } from "node:path";
 import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
+import { dirname, resolve } from "node:path";
 
 process.env.VITE_APP_VERSION = require("./package.json").version;
 
