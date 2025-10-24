@@ -910,7 +910,6 @@ import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
 import RegistryIcon from "@/components/sushi/RegistryIcon";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import ItemBadge from "@/components/util/ItemBadge";
 import { counterVersionToStr, testSushiUrlReport } from "@/libs/sushi";
 import formRulesMixin from "@/mixins/formRulesMixin";
 import axios from "axios";
@@ -932,7 +931,6 @@ export default {
     SushiReportIndicator,
     AddPlatformButton,
     DeleteSushiCredentialsDataWidget,
-    ItemBadge,
   },
   props: {
     credentialsObject: {},

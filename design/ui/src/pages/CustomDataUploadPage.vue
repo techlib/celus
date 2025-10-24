@@ -330,27 +330,14 @@ cs:
                     :loading="!reportTypesFetched"
                   >
                     <template v-slot:item="{ props, item }">
-                      <v-tooltip
-                        v-bind="props"
-                        location="bottom"
-                        max-width="600px"
-                        v-if="badge(item)"
-                      >
-                        <template #activator="{ props }">
-                          <v-badge
-                            inline
-                            :content="$t(badge(item).content)"
-                            :color="badge(item).color"
-                          >
-                            <template v-slot:badge>
-                              <span v-bind="props">{{
-                                $t(badge(item).content)
-                              }}</span>
-                            </template>
-                          </v-badge>
-                        </template>
-                        <span>{{ $t(badge(item).tooltip) }}</span>
-                      </v-tooltip>
+                      <v-list-item v-bind="props" title="">
+                        <v-list-item-title>
+                          <ItemBadge :item="item.raw" tag="span"></ItemBadge>
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ item.raw.short_name }}
+                        </v-list-item-subtitle>
+                      </v-list-item>
                     </template>
                   </v-select>
                 </v-col>
@@ -815,23 +802,23 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions, mapGetters, mapState } from "vuex";
 import AccessLogList from "@/components/AccessLogList";
-import LargeSpinner from "@/components/util/LargeSpinner";
 import CustomUploadInfoWidget from "@/components/CustomUploadInfoWidget";
-import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm";
 import ImportPreflightDataWidget from "@/components/ImportPreflightDataWidget";
-import { counterHeaderRepr } from "@/libs/counter_header.js";
 import MDUChart from "@/components/MDUChart";
+import ReportTypeInfoWidget from "@/components/ReportTypeInfoWidget";
 import ErrorDialog from "@/components/util/ErrorDialog";
-import isEmpty from "lodash/isEmpty";
 import ItemBadge from "@/components/util/ItemBadge";
+import LargeSpinner from "@/components/util/LargeSpinner";
+import { counterHeaderRepr } from "@/libs/counter_header.js";
+import axios from "axios";
+import isEmpty from "lodash/isEmpty";
 import {
   VStepperVertical,
   VStepperVerticalItem,
 } from "vuetify/labs/VStepperVertical";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "CustomDataUploadPage",

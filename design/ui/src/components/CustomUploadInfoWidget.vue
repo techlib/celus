@@ -150,4 +150,10 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style lang="scss">
+// I have no idea why this is needed, but it is,
+// otherwise the expansion panel title is not clickable :/
+.v-expansion-panel-title {
+  pointer-events: auto !important;
+}
+</style>
