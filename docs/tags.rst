@@ -225,37 +225,74 @@ Tagging many titles at once - title lists
 
 It is very common to want to tag many titles at once. Typically you would want to tag all titles
 belonging to one collection. To make this process easier, CELUS allows you to upload a file
-containing a list of titles and then assign a tag to all of them at once.
+containing a list of titles and assign tags to all of them at once.
 
 To create a title list, go to the “Title lists” section of the main menu and click the “Upload
 a new list” button. You will be presented with a form where you can upload a CSV file with the
 titles.
 
-.. image:: images/tagging-batch-upload-5_0.png
+.. image:: images/tagging-batch-upload-10_0.png
    :scale: 60%
 
-The file must contain at least one column with the title IDs. It can be any of ISSN, eISSN,
-ISBN. This means that at least on of the columns should be named "ISSN", "eISSN" or "ISBN"
-(case is not important, so both "issn" and "ISSN" will do).
+As you can see, there are two options for the tag to be used. You can either select the tag
+manually or read it from the file. The two options are described in detail below.
+
+In both cases, the file must contain at least one column with the title IDs. It can be any of ISSN,
+eISSN, ISBN or "Proprietary ID". This means that at least on of the columns should be named
+"ISSN", "eISSN", "ISBN" or "Proprietary ID" (case is not important, so both "issn" and "ISSN" will
+do).
 There may be other columns present, but they will be ignored.
+
+You can include a column with the title name. It is optional and will not be used for the matching.
+However, it can help you to identify the titles in the file if you want to review the results later.
+
+Tagging using a manually selected tag
+=====================================
+
+If you select the tag manually, all the titles matched to the file will be tagged with the selected
+tag.
 
 A example file may look like this:
 
-.. image:: images/tagging-batch-example-5_0.png
+.. image:: images/tagging-batch-example-manual-10_0.png
    :scale: 60%
+
+
+Tagging using a tag read from the file
+======================================
+
+In this case, the file should contain a column named "tag" with the tag name. You will be asked
+to select the parent tag class for the tags in the file.
+
+.. image:: images/tagging-batch-select-tag-class-10_0.png
+   :scale: 60%
+
+If the corresponding tags are not present in the tag class, they will be created automatically
+during the tagging process.
+
+*Tip*: If you want to tag one title with multiple tags, you can add the title on multiple rows
+in the file, each with a different tag.
+
+A example file may look like this:
+
+.. image:: images/tagging-batch-example-file-10_0.png
+   :scale: 60%
+
+
+Title list processing
+=====================
 
 After you upload the file, a preprocessing step will be performed. Depending on the number of
 titles in the file, this may take a few minutes. When the preprocessing is done, you will be
 presented with an overview of how well the titles were matched to the database.
 
-.. image:: images/tagging-batch-preprocess-5_0.png
+.. image:: images/tagging-batch-preprocess-10_0.png
    :scale: 60%
 
-In the example above, you can see that out of a 1000 rows in the file (excluding the header),
-521 titles were matched to the database. Also, there were 530 rows which did not match any titles
+In the example above, you can see that out of a 7 rows in the file (excluding the header),
+25 titles were matched to the database. There were 0 rows which did not match any titles
 in the database. Please note that one row may match more than one title, so the sum of the matched
-titles and the unmatched rows may be higher than the number of rows in the file. If fact, the
-number of matched titles may be higher than the total number of rows in the file.
+titles and the unmatched rows may be higher than the number of rows in the file.
 
 If you wish to review in detail which titles were matched and which were not, there is a link
 to the annotated source file. This file will contain the same rows as the original file, but
@@ -265,21 +302,22 @@ number of matched for that line and contains links to the matched titles.
 You will also be shown which columns were used for the matching. If you find that some of the
 columns you expected to be used were not used, you can recheck and reupload the file.
 
-When you are satisfied with the results, you can select the tag to be used and click the
-“Assign tag” button.
+When the tags are read from the file, you will be shown a list of all the tags found in the file.
 
-.. image:: images/tagging-batch-assign-5_0.png
-   :scale: 60%
+When you are satisfied with the results, you can click the “Assign tags” button.
 
-After some crunching, the tag will be assigned to all titles which were matched
+After some crunching, the tags will be assigned to all titles which were matched
 and the tagging statistics will be updated (the numbers of matched titles may change slightly
 if new titles appeared in the database between the time of upload and time of tagging).
 
-.. image:: images/tagging-batch-done-5_0.png
+.. image:: images/tagging-batch-done-10_0.png
    :scale: 60%
 
-At this point, the tag is already applied to all the matched titles and you can use it everywhere
+At this point, the tags are already applied to all the matched titles and you can use it everywhere
 else in CELUS.
+
+Removing tags
+=============
 
 If you find out that some of the titles were not matched correctly or have some other reason, you
 can remove the tag from all the tagged titles. The title list remembers which titles were tagged
@@ -301,3 +339,18 @@ working with it where you left off.
 
 .. image:: images/tagging-batch-list-2-5_0.png
    :scale: 60%
+
+
+Title list re-processing
+========================
+
+If you want to reprocess the title list, you can click the “Reassign tag” button. This will go
+over the content of the file once again and assign tags to the titles which were not tagged yet.
+(This is useful when new titles have arrived since the last time the title list was processed.)
+
+.. image:: images/tagging-batch-done-10_0.png
+   :scale: 60%
+
+Very often it is useful to do the reprocessing regularly. To make your life easier, you can enable
+automatic reprocessing by turning on the switch "Automatic regular re-processing".
+When this is turned on, CELUS will reprocess the title list automatically every 30 days.
