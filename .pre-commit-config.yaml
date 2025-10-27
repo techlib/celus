@@ -1,4 +1,4 @@
-default_stages: [push, commit]
+default_stages: [pre-push, pre-commit]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
