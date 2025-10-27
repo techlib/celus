@@ -974,6 +974,11 @@ ACTIVE_MATERIALIZED_REPORTS = config(
     "C51 TR without title, YOP, Publisher and COUNTER Platform",
 )
 
+# should specialized reports marked as preview be exposed at all?
+# when True, they will be shown to consortium admins only, otherwise not at all
+SHOW_PREVIEW_SPECIALIZED_REPORTS = config(
+    "SHOW_PREVIEW_SPECIALIZED_REPORTS", cast=bool, default=False
+)
 
 # Email
 ADMINS = config("ADMINS", cast=Csv(cast=Csv(post_process=tuple), delimiter=";"), default="")

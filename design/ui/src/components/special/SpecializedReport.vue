@@ -22,8 +22,8 @@
     </v-card>
     <v-expansion-panels>
       <SpecializedReportPart
-        v-for="(definition, index) in parts"
-        :key="index"
+        v-for="definition in parts"
+        :key="definition.name"
         :name="definition.name"
         :description="definition.description"
         :explanation="definition.explanation"
@@ -38,8 +38,8 @@
 </template>
 
 <script>
-import cancellation from "@/mixins/cancellation";
 import SpecializedReportPart from "@/components/special/SpecializedReportPart";
+import cancellation from "@/mixins/cancellation";
 import { mapGetters } from "vuex";
 
 export default {

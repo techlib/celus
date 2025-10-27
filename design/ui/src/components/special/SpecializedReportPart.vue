@@ -117,12 +117,12 @@ cs:
 </template>
 
 <script>
-import cancellation from "@/mixins/cancellation";
-import { mapGetters } from "vuex";
-import { formatInteger } from "@/libs/numbers";
-import cloneDeep from "lodash/cloneDeep";
 import ReportPartParams from "@/components/special/ReportPartParams";
 import TableCustomSort from "@/components/tables/TableCustomSort";
+import { formatInteger } from "@/libs/numbers";
+import cancellation from "@/mixins/cancellation";
+import cloneDeep from "lodash/cloneDeep";
+import { mapGetters } from "vuex";
 
 export default {
   name: "SpecializedReportPart",
