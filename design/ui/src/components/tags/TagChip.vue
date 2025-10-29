@@ -1,11 +1,11 @@
 <template>
-  <v-tooltip location="bottom" v-if="tag.raw?.desc && !hideTooltip">
+  <v-tooltip location="bottom" v-if="tag.desc && !hideTooltip">
     <template #activator="{ props }">
       <span v-bind="props">
         <TagChipSimple :tag="tag" v-bind="$attrs"></TagChipSimple>
       </span>
     </template>
-    {{ tag.raw.desc }}
+    {{ tag.desc }}
   </v-tooltip>
   <TagChipSimple v-else :tag="tag" v-bind="$attrs"></TagChipSimple>
 </template>
