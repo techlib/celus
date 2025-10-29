@@ -82,9 +82,20 @@ def make_url_params(
                 can_create_tags=AccessibleBy.SYSTEM,
                 default_tag_can_see=AccessibleBy.EVERYBODY,
                 default_tag_can_assign=AccessibleBy.SYSTEM,
+                defaults={"desc": "Tags created by the system for filtering titles"},
             )
             # Reporting is not aware of titles
             # we need to create a tag here and filter accordingly
+            title_ids = []
+            if title.issn:
+                title_ids.append(f"ISSN: {title.issn}")
+            if title.eissn:
+                title_ids.append(f"eISSN: {title.eissn}")
+            if title.isbn:
+                title_ids.append(f"ISBN: {title.isbn}")
+            desc = f"Unique internal tag for title '{title.name}'"
+            if title_ids:
+                desc += f" ({', '.join(title_ids)})"
             title_tag, _ = Tag.objects.get_or_create(
                 name=f"ID_{title.pk}",
                 tag_class=tag_class,
@@ -92,6 +103,7 @@ def make_url_params(
                 owner_org=None,
                 can_see=AccessibleBy.EVERYBODY,
                 can_assign=AccessibleBy.SYSTEM,
+                defaults={"desc": desc},
             )
             TitleTag.objects.get_or_create(target=title, tag=title_tag)
             filters["target"] = title_tag.id

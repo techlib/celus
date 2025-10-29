@@ -34,9 +34,18 @@ class TagAdmin(TagPreviewMixin, admin.ModelAdmin):
 
 @admin.register(models.TagClass)
 class TagClassAdmin(TagPreviewMixin, admin.ModelAdmin):
-    list_display = ["pk", "name", "text_color", "bg_color", "can_create_tags", "rendered"]
+    list_display = [
+        "pk",
+        "name",
+        "text_color",
+        "bg_color",
+        "can_create_tags",
+        "rendered",
+        "internal",
+    ]
     readonly_fields = ["last_updated_by"]
     search_fields = ["name", "text_color", "bg_color"]
+    list_filter = ["internal"]
 
 
 @admin.register(models.TaggingBatch)

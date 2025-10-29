@@ -10,7 +10,7 @@ from tags.fake_data import (
     TaggingAttemptFactory,
     TaggingBatchFactory,
 )
-from tags.models import AccessibleBy, Tag, TagClass, TaggingAttemptOperation, TagScope
+from tags.models import AccessibleBy, Tag, TagClass, TaggingAttemptOperation, TagScope, TitleTag
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     clients,
@@ -340,10 +340,13 @@ class TestTagging:
     def test_add_tag_to_title(self, clients, users):
         tag = TagForTitleFactory.create()
         title = TitleFactory.create()
+        assert title.tags.count() == 0
         resp = clients["user1"].post(
             reverse("tagged-titles-list", args=[tag.pk]) + "add/", data={"item_id": title.pk}
         )
         assert resp.status_code == 201
+        assert TitleTag.objects.filter(tag=tag, target=title).exists()
+        assert title.tags.count() == 1
 
     def test_add_tag_to_title_twice(self, clients, users):
         tag = TagForTitleFactory.create()
