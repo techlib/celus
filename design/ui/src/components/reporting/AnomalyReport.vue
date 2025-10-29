@@ -855,7 +855,7 @@ watch(
         loadingMap.value[id] = true;
         try {
           const resp = await axios.get(
-            "/api/reporting/anomaly-report/details",
+            "/api/reporting/anomaly-report/details/",
             {
               params: {
                 month: anomaly.date,
