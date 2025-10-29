@@ -66,7 +66,7 @@
           cols="auto"
           shrink
           class="pa-0 d-flex align-center justify-center"
-          v-if="showReportingLink && reportingParams"
+          v-if="showReportingLink"
         >
           <v-tooltip location="bottom">
             <template #activator="{ props }">
@@ -83,10 +83,8 @@
                   icon="fa fa-arrow-up-from-bracket"
                   class="text-medium-emphasis"
                   v-bind="props"
-                  :to="{
-                    name: 'flexitable',
-                    query: reportingParams,
-                  }"
+                  @click="goToReporting"
+                  :loading="loadingReportingLink"
                 >
                 </v-btn>
               </v-badge>
@@ -417,7 +415,6 @@ export default {
       loading: true,
       crunchingData: false,
       reportedMetrics: [],
-      reportingParams: null,
       tooMuchData: false,
       displayData: [],
       rawDataLength: 0,
@@ -429,6 +426,7 @@ export default {
       doStack: this.stack,
       coverageData: [],
       showCoverageDialog: false,
+      loadingReportingLink: false,
     };
   },
   computed: {
@@ -1053,18 +1051,14 @@ export default {
       setTimeout(async () => await this.ingestData(response.data.data), 10);
     },
     async loadReportingLink() {
-      if (this.showReportingLink) {
-        const { response, error } = await this.http({ url: this.reportingUrl });
-        this.reportingParams = response.data.params;
-        // Run new report automatically
-        this.reportingParams["run"] = true;
-        // Show collapsed report settings
-        this.reportingParams["col"] = true;
-        // Set the ordering of the output table
-        if (this.primaryDimension === "date") {
-          this.reportingParams["o"] = "--" + toBase64JSON(["date"]);
-        }
+      const { response, error } = await this.http({ url: this.reportingUrl });
+      if (error) return null;
+      let reportingParams = { ...response.data.params, run: true, col: true };
+      // Set the ordering of the output table
+      if (this.primaryDimension === "date") {
+        reportingParams["o"] = "--" + toBase64JSON(["date"]);
       }
+      return reportingParams;
     },
     async loadCoverageData() {
       if (this.shownPrimaryDimension === "date") {
@@ -1113,12 +1107,27 @@ export default {
         this.showCoverageDialog = true;
       }
     },
+    async goToReporting() {
+      // we need to fetch the reporting URL from the server
+      // and then use it to send user to the reporting page
+      this.loadingReportingLink = true;
+      const reportingParams = await this.loadReportingLink();
+      this.loadingReportingLink = false;
+      if (reportingParams) {
+        this.$router.push({
+          name: "flexitable",
+          query: reportingParams,
+        });
+      } else {
+        this.showSnackbar({
+          content: this.$t("chart.reporting_error"),
+          color: "error",
+        });
+      }
+    },
   },
   mounted() {
     this.loadData();
-    if (this.showReportingLink) {
-      this.loadReportingLink();
-    }
     if (!this.noCoverage) {
       this.loadCoverageData();
     }
@@ -1126,10 +1135,6 @@ export default {
   watch: {
     dataURL() {
       this.loadData();
-      if (this.showReportingLink) {
-        this.reportingParams = null;
-        this.loadReportingLink();
-      }
       if (!this.noCoverage) {
         this.loadCoverageData();
       }

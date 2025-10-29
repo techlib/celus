@@ -27,6 +27,7 @@ en:
     request_error: Could not load data due to an error
     missing_data: No data for this month
     reporting: Open report based on this chart.
+    reporting_error: Could not prepare report for opening.
   chart_view:
     table: Table view
     chart: Chart view
@@ -78,6 +79,7 @@ cs:
     request_error: Nebylo možné nahrát data kvůli chybě
     missing_data: Žádná data za tento měsíc
     reporting: Otevřít report vytvořený na základě tohoto grafu.
+    reporting_error: Nepodařilo se připravit report pro otevření.
   chart_view:
     table: Tabulkové zobrazení
     chart: Zobrazení v grafu
