@@ -51,20 +51,20 @@ cs:
         <v-col
           cols="6"
           lg="4"
-          md="4"
+          md="5"
           align-self="auto"
           class="organization_selector"
         >
           <OrganizationSelector
             internal-label
             :lang="appLanguage"
-            style="width: 250px"
+            style="max-width: 480px"
             v-if="showOrganizationSelector"
             class="ml-0"
             :disabled="disableOrganizationSelector"
           ></OrganizationSelector>
         </v-col>
-        <v-col cols="6" lg="8" md="8">
+        <v-col cols="6" lg="8" md="7">
           <SelectedDateRangeWidget
             input-like-label
             class="d-flex"
