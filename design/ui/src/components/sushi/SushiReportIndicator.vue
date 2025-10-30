@@ -73,7 +73,7 @@
       </div>
       <div v-if="derivedFromPlatform">
         <v-icon size="small" color="info" class="mr-1">fa fa-cogs</v-icon>
-        {{ $t("sushi.report_type_from_platform.derived") }}
+        {{ $t("sushi.reports_from_platform.derived") }}
       </div>
       <div v-if="inRegistry">
         <v-icon size="small" v-if="inRegistry" color="counterRegistry"

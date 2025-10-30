@@ -52,10 +52,13 @@ en:
       The consistency of this report with other reports on the platform could not be verified.
       CELUS has blacklisted this report until the consistency is ensured. You can find more information
       in the knowledge base or contact us at {link}.
-    report_type_from_platform:
-      derive: Use reports from platform
+    reports_from_platform:
+      title: Use reports from platform
+      button: Use reports from platform
       derived: List of reports is managed by platform.
-      tooltip: Selected credentials will automatically harvest all reports associated with the corresponding platform.
+      tooltip: Switch credentials to automatically manage active reports using platform metadata.
+      text: "@:sushi.reports_from_platform.tooltip Note that this will override manually selected reports."
+      success: Active reports are now managed using platform metadata.
     knowledgebase_report_type_desc: This report was successfully harvested by other users for this platform.
     registry_report_type_desc: According to the COUNTER registry, this report is supported by the selected platform.
     mark_as_fixed:
@@ -80,12 +83,19 @@ en:
       cannot_update_broken_legend: Credentials are broken and cannot be cloned
       i_am_sure: I really want to clone the selected credentials to COUNTER 5.1, even though the platform may not yet support it.
       harvest_new_credentials: Harvest data for the new credentials
-    set_enabled: Auto harvest on
-    set_enabled_tooltip: Turn on automatic harvesting for selected credentials
-    set_enabled_success: Auto harvest was turned on.
-    unset_enabled: Auto harvest off
-    unset_enabled_tooltip: Turn off automatic harvesting for selected credentials
-    unset_enabled_success: Auto harvest was turned off.
+    auto_off_on:
+      on:
+        title: Auto harvest on
+        success: Auto harvest was turned on for selected credentials.
+        tooltip: Turn on automatic harvesting for selected credentials
+        button: Turn on
+        text: Automatic harvesting will be turned on for selected credentials. This means that CELUS will start to plan harvests for upcoming months from now on.
+      off:
+        title: Auto harvest off
+        success: Auto harvest was turned off for selected credentials.
+        tooltip: Turn off automatic harvesting for selected credentials
+        button: Turn off
+        text: Automatic harvesting will be turned off for selected credentials. This means that CELUS will no longer plan harvests for upcoming months.
 
 cs:
   sushi:
@@ -137,10 +147,13 @@ cs:
       Tento report byl označen jako nefunkční. Většinou je to způsobeno chybami při stahování, které indikují, že
       přihlašovací údaje jsou funkční, ale report není podporovaný.
       Automatické stahování je pro tyto reporty vypnuté.
-    report_type_from_platform:
-      derive: Použít reporty z platformy
+    reports_from_platform:
+      title: Použít reporty z platformy
+      button: Použít reporty z platformy
       derived: Seznam reportů je spravován platformou.
-      tooltip: Pro vybrané přihlašovací údaje budou automaticky stahovány všechny reporty spojené s danou platformou.
+      tooltip: Přepnout přihlašovací údaje na automatickou správu aktivních reportů z metadat platformy.
+      text: "@:sushi.reports_from_platform.tooltip Ruční přiřazení reportů bude nahrazeno."
+      success: Správa aktivních reportů z metadat platformy byla úspěšně zapnuta.
     knowledgebase_report_type_desc: Tento report byl na této platformě úspěšně stažený jiným uživatelem.
     registry_report_type_desc: Podle COUNTER registru je tento report podporován pro vybranou platformu.
     blacklisted_report_type_desc: |
@@ -171,9 +184,14 @@ cs:
       cannot_update_broken_legend: Přístupové údaje jsou nefunkční a nelze je naklonovat
       i_am_sure: Opravdu chci naklonovat vybrané přístupové údaje do COUNTER 5.1, i když platforma nemusí být ještě podporována.
       harvest_new_credentials: Stáhnout data pro nové přístupové údaje
-    set_enabled: Zapnout auto stahování
-    set_enabled_tooltip: Zapne automatické stahování pro vybrané přístupové údaje
-    set_enabled_success: Auto stahování bylo zapnuto.
-    unset_enabled: Vypnout auto stahování
-    unset_enabled_tooltip: Vypne automatické stahování pro vybrané přístupové údaje
-    unset_enabled_success: Auto stahování bylo vypnuto.
+    auto_off_on:
+      on:
+        title: Zapnout auto stahování
+        success: Auto stahování bylo pro vybrané přístupové údaje zapnuto.
+        tooltip: Zapne automatické stahování pro vybrané přístupové údaje
+        text: Automatické stahování bude povoleno pro vybrané přístupové údaje. To znamená, že CELUS začne plánovat stahování pro následující měníce.
+      off:
+        title: Vypnout auto stahování
+        success: Auto stahování bylo pro vybrané přístupové údaje vypnuto.
+        tooltip: Vypne automatické stahování pro vybrané přístupové údaje
+        text: Automatické stahování bude vypnuto pro vybrané přístupové údaje. To znamená, že CELUS přesnane plánovat stahování pro následující měsíce.

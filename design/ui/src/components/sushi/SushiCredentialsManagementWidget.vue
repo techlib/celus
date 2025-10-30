@@ -60,7 +60,6 @@ en:
     can_update_verified: COUNTER 5 credentials which can be cloned to COUNTER 5.1 and platform is known to support COUNTER 5.1
     duplicated: Same credentials are used multiple times
   last_updated_tooltip: Credentials were last updated by {user} on {time}.
-  report_types_derived_from_platform_set: Report types are used from platform for selected credentials.
 
 cs:
   add_new: Přidat nové SUSHI
@@ -118,7 +117,6 @@ cs:
     can_update_verified: COUNTER 5 přístupové údaje, které lze naklonovat do COUNTER 5.1 a platforma má ověřenou podporu COUNTER 5.1
     duplicated: Stejné přístupové údaje jsou použity vícekrát
   last_updated_tooltip: Přístupové údaje byly naposledy upraveny uživatelem {user} dne {time}.
-  report_types_derived_from_platform_set: Typy reportů jsou odvozeny od platformy pro vybrané přístupové údaje.
 </i18n>
 
 <template>
@@ -280,7 +278,7 @@ cs:
                               checkedWithManualReportTypes.length === 0 ||
                               moreActionsLoading
                             "
-                            @click="triggerReportTypesFromPlatform"
+                            @click="showUseReportsFromPlatformDialog = true"
                             v-bind="props"
                           >
                             <v-list-item-title>
@@ -290,7 +288,7 @@ cs:
                                 color="lighterIcons"
                                 >fa fa-cogs</v-icon
                               >
-                              {{ $t("sushi.report_type_from_platform.derive") }}
+                              {{ $t("sushi.reports_from_platform.title") }}
                               <v-badge color="secondary" inline class="mt-1">
                                 <template #badge>
                                   {{ checkedWithManualReportTypes.length }}
@@ -299,7 +297,7 @@ cs:
                             </v-list-item-title>
                           </v-list-item>
                         </template>
-                        {{ $t("sushi.report_type_from_platform.tooltip") }}
+                        {{ $t("sushi.reports_from_platform.tooltip") }}
                       </v-tooltip>
                       <v-tooltip location="bottom">
                         <template #activator="{ props }">
@@ -360,7 +358,7 @@ cs:
                               checkedCredentialsNotEnabled.length === 0 ||
                               moreActionsLoading
                             "
-                            @click="updateEnabled(true)"
+                            @click="showAutoOffOn(false)"
                             v-bind="props"
                           >
                             <v-list-item-title>
@@ -370,7 +368,7 @@ cs:
                                 color="lighterIcons"
                                 >fa fa-play</v-icon
                               >
-                              {{ $t("sushi.set_enabled") }}
+                              {{ $t("sushi.auto_off_on.on.title") }}
                               <v-badge color="secondary" inline class="mt-1">
                                 <template #badge>
                                   {{ checkedCredentialsNotEnabled.length }}
@@ -379,7 +377,7 @@ cs:
                             </v-list-item-title>
                           </v-list-item>
                         </template>
-                        {{ $t("sushi.set_enabled_tooltip") }}
+                        {{ $t("sushi.auto_off_on.on.tooltip") }}
                       </v-tooltip>
                       <v-tooltip location="bottom" max-width="600px">
                         <template #activator="{ props }">
@@ -388,7 +386,7 @@ cs:
                               checkedCredentialsEnabled.length === 0 ||
                               moreActionsLoading
                             "
-                            @click="updateEnabled(false)"
+                            @click="showAutoOffOn(true)"
                             v-bind="props"
                           >
                             <v-list-item-title>
@@ -396,9 +394,9 @@ cs:
                                 class="mr-2"
                                 size="small"
                                 color="lighterIcons"
-                                >fa fa-ban</v-icon
+                                >fa fa-stop</v-icon
                               >
-                              {{ $t("sushi.unset_enabled") }}
+                              {{ $t("sushi.auto_off_on.off.title") }}
                               <v-badge color="secondary" inline class="mt-1">
                                 <template #badge>
                                   {{ checkedCredentialsEnabled.length }}
@@ -407,7 +405,7 @@ cs:
                             </v-list-item-title>
                           </v-list-item>
                         </template>
-                        {{ $t("sushi.unset_enabled_tooltip") }}
+                        {{ $t("sushi.auto_off_on.off.tooltip") }}
                       </v-tooltip>
                     </v-list>
                   </v-menu>
@@ -1009,6 +1007,44 @@ cs:
     </v-dialog>
 
     <v-dialog
+      v-model="showUseReportsFromPlatformDialog"
+      v-if="showUseReportsFromPlatformDialog"
+      max-width="600px"
+    >
+      <UseReportsFromPlatformDialog
+        :credentials="checkedWithManualReportTypes"
+        @close="showUseReportsFromPlatformDialog = false"
+        @triggered="loadSushiCredentialsList"
+      ></UseReportsFromPlatformDialog>
+    </v-dialog>
+
+    <v-dialog
+      v-model="showAutoHarvestOffDialog"
+      v-if="showAutoHarvestOffDialog"
+      max-width="600px"
+    >
+      <AutoHarvestOffOnWidget
+        :off="true"
+        :credentials="checkedCredentialsEnabled"
+        @close="showAutoHarvestOffDialog = false"
+        @triggered="loadSushiCredentialsList"
+      ></AutoHarvestOffOnWidget>
+    </v-dialog>
+
+    <v-dialog
+      v-model="showAutoHarvestOnDialog"
+      v-if="showAutoHarvestOnDialog"
+      max-width="600px"
+    >
+      <AutoHarvestOffOnWidget
+        :off="false"
+        :credentials="checkedCredentialsNotEnabled"
+        @close="showAutoHarvestOnDialog = false"
+        @triggered="loadSushiCredentialsList"
+      ></AutoHarvestOffOnWidget>
+    </v-dialog>
+
+    <v-dialog
       v-model="showCloneToNewerDialog"
       v-if="showCloneToNewerDialog"
       max-width="800px"
@@ -1023,6 +1059,7 @@ cs:
 </template>
 
 <script>
+import AutoHarvestOffOnWidget from "@/components/sushi/AutoHarvestOffOnWidget.vue";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
 import CloneCredentialsToNewerWidget from "@/components/sushi/CloneCredentialsToNewerWidget";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
@@ -1033,6 +1070,7 @@ import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataD
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SelectAllCheckbox from "@/components/tables/SelectAllCheckbox";
+import UseReportsFromPlatformDialog from "@/components/sushi/UseReportsFromPlatformDialog.vue";
 import CheckMark from "@/components/util/CheckMark";
 import { isoDateTimeFormat } from "@/libs/dates";
 import { counterVersionToStr } from "@/libs/sushi";
@@ -1047,6 +1085,7 @@ export default {
   name: "SushiCredentialsManagementWidget",
 
   components: {
+    AutoHarvestOffOnWidget,
     CheckMark,
     HarvestSelectedWidget,
     PlatformSelector,
@@ -1058,6 +1097,7 @@ export default {
     SushiCredentialsDataDialog,
     SushiReportIndicator,
     SelectAllCheckbox,
+    UseReportsFromPlatformDialog,
   },
   mixins: [stateTracking],
 
@@ -1098,6 +1138,9 @@ export default {
       showLastHarvestableMonthDialog: false,
       showMarkAsFixedDialog: false,
       showCloneToNewerDialog: false,
+      showAutoHarvestOffDialog: false,
+      showAutoHarvestOnDialog: false,
+      showUseReportsFromPlatformDialog: false,
       loading: false,
       counterVersion: null,
       withLastHarvestableMonthSet: null,
@@ -1381,6 +1424,14 @@ export default {
         this.sushiCredentialsList.forEach((item) =>
           this.preprocessCredentials(item),
         );
+
+        // Update checked (so they are not deselected)
+        let currentMap = new Map(
+          this.sushiCredentialsList.map((e) => [e.pk, e]),
+        );
+        this.checkedCredentials = this.checkedCredentials.map(
+          (e) => currentMap.get(e.pk) || e,
+        );
       } catch (error) {
         this.showSnackbar({
           content: "Error loading credentials list: " + error,
@@ -1511,73 +1562,11 @@ export default {
         });
       }
     },
-    async triggerReportTypesFromPlatform() {
-      if (this.checkedWithManualReportTypes.length > 0) {
-        this.moreActionsLoading = true;
-        try {
-          let response = await axios.post(
-            "/api/sushi-credentials/switch-to-platforms-report-types/",
-            this.checkedWithManualReportTypes.map((e) => {
-              return {
-                credentials_id: e.pk,
-              };
-            }),
-          );
-          if (response.data.updated > 0) {
-            this.showSnackbar({
-              content: this.$t("report_types_derived_from_platform_set"),
-              color: "success",
-            });
-            this.loadSushiCredentialsList();
-            this.checkedCredentials = [];
-          }
-        } catch (error) {
-          this.showSnackbar({
-            content:
-              "Could not switch credentials to use counter reports from platform: " +
-              error,
-            color: "error",
-          });
-        } finally {
-          this.moreActionsLoading = false;
-        }
-      }
-    },
-    async updateEnabled(enabled) {
-      const credentials = enabled
-        ? this.checkedCredentialsNotEnabled
-        : this.checkedCredentialsEnabled;
-      const credentials_ids = credentials.map((e) => e.pk);
-      if (credentials_ids.length == 0) {
-        return;
-      }
-
-      this.moreActionsLoading = true;
-      try {
-        let response = await axios.post(
-          "/api/sushi-credentials/update-enabled/",
-          {
-            enabled: enabled,
-            credentials: credentials_ids,
-          },
-        );
-        if (response.data.updated > 0) {
-          this.showSnackbar({
-            content: enabled
-              ? this.$t("sushi.set_enabled_success")
-              : this.$t("sushi.unset_enabled_success"),
-            color: "success",
-          });
-          this.loadSushiCredentialsList();
-          this.checkedCredentials = [];
-        }
-      } catch (error) {
-        this.showSnackbar({
-          content: "Could not update credentials: " + error,
-          color: "error",
-        });
-      } finally {
-        this.moreActionsLoading = false;
+    async showAutoOffOn(off) {
+      if (off) {
+        this.showAutoHarvestOffDialog = true;
+      } else {
+        this.showAutoHarvestOnDialog = true;
       }
     },
     triggerCloneToNewer() {
