@@ -6,3 +6,7 @@
 ---
 
 {{ notification.message }}
+
+---
+
+**Note**: This event was created automatically from a [COUNTER Registry](https://registry.countermetrics.org) notification. See the [list of notifications](https://registry.countermetrics.org/notifications).
