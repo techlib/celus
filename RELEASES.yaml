@@ -1,3 +1,25 @@
+- version: 10.1.0
+  title:
+    en: Detection of anomalies in usage data, multi-index reporting, notifications from COUNTER registry and much more
+    cs: Detekce anomálií v datech, multi-index v reportingu, notifikace z COUNTER registru a mnohem víc
+  text:
+    en: |
+      - **Anomaly insights** - new anomaly report page and anomaly summary added to the monthly harvesting report
+      - **Multi-index reporting** - build reports with more than one row-defining dimension
+      - **SUSHI management improvements** - server-side pagination for SUSHI credentials for faster browsing + more bulk actions
+      - **COUNTER registry integration** - events are created automatically from registry notifications
+      - Many other improvements and bug fixes were introduced
+    cs: |
+      - **Přehled anomálií** - nová stránka s anomáliemi a souhrn anomálií v měsíčním reportu sklízení
+      - **Multi-index v reportingu** - sestavujte reporty s více než jedním rozměrem definujícím řádky
+      - **Vylepšená správa SUSHI** - stránkování na serveru pro rychlejší procházení + více hromadných akcí
+      - **Integrace s COUNTER registrem** - automatické vytváření událostí z notifikací v COUNTER registru
+      - Bylo provedeno mnoho dalších vylepšení a oprav chyb
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 10.0.0
   title:
     en: Full Item Report support, improved reporting and a slew of other improvements and fixes in CELUS 10.0.0
