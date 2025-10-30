@@ -8,10 +8,8 @@ import pytest
 from core.models import User
 from django.urls import reverse
 from freezegun import freeze_time
-from logs.cubes import ch_backend
 from logs.fake_data import ImportBatchFactory, ImportBatchFullFactory
 from organizations.models import Organization, UserOrganization
-from reporting.apps import ensure_accesslog_zero_fill_view
 
 from sushi import tasks
 from sushi.fake_data import CounterReportsToCredentialsFactory, FetchAttemptFactory
@@ -109,19 +107,6 @@ def report_data(organizations, platforms, report_types, counter_report_types, me
     )
 
 
-@pytest.fixture(autouse=True)
-def ensure_view(clickhouse_db):
-    """
-    Ensure the AccessLogCubeZeroFillView is created and destroyed after the test.
-    """
-    try:
-        ensure_accesslog_zero_fill_view()
-        yield
-    finally:
-        with ch_backend.pool.get_client() as client:
-            client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
-
-
 @pytest.mark.django_db
 class TestMakingReports:
     @freeze_time("2025-03-05")
@@ -170,7 +155,10 @@ class TestMakingReports:
         assert reports[2].data_counts.missing == 1
 
 
-@pytest.mark.django_db
+# uses clickhouse for anomaly reporting
+@pytest.mark.usefixtures("clickhouse_db")
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
 class TestSendingEmails:
     @freeze_time("2025-03-05")
     def test_email_was_sent(self, users, report_data, organizations, mailoutbox):
@@ -196,7 +184,10 @@ class TestSendingEmails:
         assert len(mailoutbox) == 1
 
 
-@pytest.mark.django_db
+# uses clickhouse for anomaly reporting
+@pytest.mark.usefixtures("clickhouse_db")
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
 class TestTask:
     @freeze_time("2025-03-05")
     @pytest.mark.parametrize(
@@ -347,6 +338,9 @@ class TestApi:
         assert resp.status_code == status_code
         assert len(x) == 1, "report was planned to sent"
 
+    # uses clickhouse for anomaly reporting
+    @pytest.mark.usefixtures("clickhouse_db")
+    @pytest.mark.clickhouse
     @pytest.mark.parametrize(
         "user,organization,enabled,status_code,sent_count",
         (
@@ -389,6 +383,9 @@ class TestApi:
         tasks.send_harvesting_reports_task()
         assert len(mailoutbox) == sent_count
 
+    # uses clickhouse for anomaly reporting
+    @pytest.mark.usefixtures("clickhouse_db")
+    @pytest.mark.clickhouse
     @pytest.mark.parametrize(
         "user,enabled,status_code,sent_count",
         (

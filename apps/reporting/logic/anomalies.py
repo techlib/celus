@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Sequence
 
 from logs.cubes import AccessLogCube, create_ch_backend
+from logs.logic.clickhouse import ZERO_FILL_VIEW_NAME
 from logs.models import ReportType
 
 logger = logging.getLogger(__name__)
@@ -336,7 +337,7 @@ class AnomalyDetector:
         Returns mapping: anomaly_id -> list of {month: YYYY-MM-DD, total_value: int}
         """
 
-        query = """
+        query = f"""
         WITH
             tuples AS (SELECT arrayJoin(%(combos)s) AS t),
             expanded AS (
@@ -356,7 +357,7 @@ class AnomalyDetector:
             a.date AS month,
             a.value AS value
         FROM expanded e
-        JOIN AccessLogCubeZeroFillView a
+        JOIN {ZERO_FILL_VIEW_NAME} a
             ON a.platform_id = e.platform_id
         AND a.organization_id = e.organization_id
         AND a.report_type_id = e.report_type_id
@@ -411,7 +412,7 @@ class AnomalyDetector:
                     quantilesExact(0.25, 0.5, 0.75)(v.value) AS q,
                     count(v.value) AS num_values
                 FROM cutoffs c
-                JOIN AccessLogCubeZeroFillView v
+                JOIN {ZERO_FILL_VIEW_NAME} v
                 ON v.date >= subtractYears(c.cutoff_date, 1)
                 AND v.date < c.cutoff_date
                 {"AND organization_id IN %(organization_ids)s" if self.organization_ids else ""}
@@ -455,7 +456,7 @@ class AnomalyDetector:
                 (v.value - q.q[2]) AS median_diff,
                 abs(v.value - q.q[2]) AS abs_median_diff
             FROM cutoffs c
-            JOIN AccessLogCubeZeroFillView v
+            JOIN {ZERO_FILL_VIEW_NAME} v
             ON v.date = c.cutoff_date
             JOIN quantiles_per_group q
             ON q.cutoff_date = c.cutoff_date

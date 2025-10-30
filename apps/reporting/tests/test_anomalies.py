@@ -3,11 +3,11 @@ import random
 import pytest
 from django.urls import reverse
 from logs.cubes import AccessLogCube, AccessLogCubeRecord, ch_backend
+from logs.logic.clickhouse import force_refresh_accesslog_zero_fill_view
 from logs.models import Dimension, DimensionText, Metric, ReportType, ReportTypeToDimension
 from organizations.models import Organization, UserOrganization
 from publications.models import Platform, Title
 
-from reporting.apps import ensure_accesslog_zero_fill_view
 from test_scenarios.basic import (  # noqa - fixtures
     basic1,
     client_by_user_type,
@@ -53,43 +53,11 @@ def anomaly_test_data():
         client.execute("SYSTEM RELOAD DICTIONARY dim")
         client.execute("SYSTEM RELOAD DICTIONARY title")
 
-    try:
-        records = []
-        record_id = 1
-        for month in range(1, 13):
-            records.append(
-                AccessLogCubeRecord(
-                    id=record_id,
-                    report_type_id=report_type.id,
-                    metric_id=metric.id,
-                    organization_id=organization.id,
-                    platform_id=platform.id,
-                    target_id=title.id,
-                    item_id=0,
-                    date=f"2020-{month:02d}-01",
-                    import_batch_id=1,
-                    value=200 if month <= 6 else 220,
-                    dim1=dim_text.id,
-                    dim2=0,
-                    dim3=0,
-                    dim4=0,
-                    dim5=0,
-                    dim6=0,
-                    dim7=0,
-                    dim8=0,
-                )
-            )
-            record_id += 1
-
-        # Seed initial historical data into ClickHouse once
-        ch_backend.initialize_storage(AccessLogCube)
-        ch_backend.store_records(AccessLogCube, records)
-        ensure_accesslog_zero_fill_view()
-
-        def add_value(mdate, value):
-            """Insert a value for a given month date"""
-            record_id = random.randint(20, 1000000)
-            new_record = AccessLogCubeRecord(
+    records = []
+    record_id = 1
+    for month in range(1, 13):
+        records.append(
+            AccessLogCubeRecord(
                 id=record_id,
                 report_type_id=report_type.id,
                 metric_id=metric.id,
@@ -97,9 +65,9 @@ def anomaly_test_data():
                 platform_id=platform.id,
                 target_id=title.id,
                 item_id=0,
-                date=mdate,
+                date=f"2020-{month:02d}-01",
                 import_batch_id=1,
-                value=value,
+                value=200 if month <= 6 else 220,
                 dim1=dim_text.id,
                 dim2=0,
                 dim3=0,
@@ -109,21 +77,41 @@ def anomaly_test_data():
                 dim7=0,
                 dim8=0,
             )
-            ch_backend.store_records(AccessLogCube, [new_record])
-            # delete the view and recreate it to reflect the new value
-            with ch_backend.pool.get_client() as client:
-                client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
-            ensure_accesslog_zero_fill_view()
+        )
+        record_id += 1
 
-        yield add_value, platform, organization, report_type, metric, title
-    finally:
-        # clean the test setup
-        with ch_backend.pool.get_client() as client:
-            client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
-            ch_backend.delete_records(AccessLogCube.query())
-            client.execute(
-                f"TRUNCATE TABLE IF EXISTS {ch_backend.cube_to_table_name(AccessLogCube)}"
-            )
+    # Seed initial historical data into ClickHouse once
+    ch_backend.initialize_storage(AccessLogCube)
+    ch_backend.store_records(AccessLogCube, records)
+    force_refresh_accesslog_zero_fill_view()
+
+    def add_value(mdate, value):
+        """Insert a value for a given month date"""
+        record_id = random.randint(20, 1000000)
+        new_record = AccessLogCubeRecord(
+            id=record_id,
+            report_type_id=report_type.id,
+            metric_id=metric.id,
+            organization_id=organization.id,
+            platform_id=platform.id,
+            target_id=title.id,
+            item_id=0,
+            date=mdate,
+            import_batch_id=1,
+            value=value,
+            dim1=dim_text.id,
+            dim2=0,
+            dim3=0,
+            dim4=0,
+            dim5=0,
+            dim6=0,
+            dim7=0,
+            dim8=0,
+        )
+        ch_backend.store_records(AccessLogCube, [new_record])
+        force_refresh_accesslog_zero_fill_view()
+
+    yield add_value, platform, organization, report_type, metric, title
 
 
 @pytest.mark.clickhouse
@@ -169,7 +157,7 @@ class TestAnomaliesAccessOrganizationFiltering:
                 )
                 rec_id += 1
         ch_backend.store_records(AccessLogCube, records)
-        ensure_accesslog_zero_fill_view()
+        force_refresh_accesslog_zero_fill_view()
 
         # Add outlier only for Org B at 2021-01
         outlier = AccessLogCubeRecord(
@@ -193,9 +181,7 @@ class TestAnomaliesAccessOrganizationFiltering:
             dim8=0,
         )
         ch_backend.store_records(AccessLogCube, [outlier])
-        with ch_backend.pool.get_client() as client:
-            client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
-        ensure_accesslog_zero_fill_view()
+        force_refresh_accesslog_zero_fill_view()
 
         return org_a, org_b
 
@@ -237,23 +223,12 @@ class TestAnomaliesAccessOrganizationFiltering:
 
 
 @pytest.mark.clickhouse
+@pytest.mark.usefixtures("clickhouse_db")
 @pytest.mark.django_db(transaction=True)
 class TestAnomalyReportAccess:
     """
     Test access to the anomaly-report endpoint for different user types.
     """
-
-    @pytest.fixture(autouse=True)
-    def ensure_view(self, clickhouse_db):
-        """
-        Ensure the AccessLogCubeZeroFillView is created and destroyed after the test.
-        """
-        try:
-            ensure_accesslog_zero_fill_view()
-            yield
-        finally:
-            with ch_backend.pool.get_client() as client:
-                client.execute("DROP VIEW IF EXISTS AccessLogCubeZeroFillView")
 
     @pytest.mark.parametrize(
         ["user_type", "expected_status"],

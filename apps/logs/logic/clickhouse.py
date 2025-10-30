@@ -19,6 +19,9 @@ from ..models import AccessLog, ImportBatch, ImportBatchSyncLog, ReportType
 logger = logging.getLogger(__name__)
 
 
+ZERO_FILL_VIEW_NAME = "AccessLogCubeZeroFillView"
+
+
 @needs_clickhouse_sync
 def initialize_clickhouse():
     # because the database name that is actually used is not known on module initialization
@@ -29,6 +32,7 @@ def initialize_clickhouse():
         if isinstance(dict_def.source, PostgresqlSource):
             dict_def.source.database = django_db
     ch_backend.initialize_storage(AccessLogCube)
+    create_accesslog_zero_fill_view()
 
 
 @needs_clickhouse_sync
@@ -419,3 +423,132 @@ def deal_with_comparison_results(results: ComparisonResult, delete_batch_size=1_
     while batch := list(islice(iterator, delete_batch_size)):
         logger.debug("Deleting batch %s", batch)
         ch_backend.delete_records(AccessLogCube.query().filter(import_batch_id__in=list(batch)))
+
+
+@needs_clickhouse_sync
+def create_accesslog_zero_fill_view():
+    """Ensure the AccessLogCube zero-fill materialized view exists.
+
+    - Skips if ClickHouse sync is disabled in settings.
+    - Checks for existence of the materialized view first and logs an
+      appropriate message.
+    - Creates the view if missing.
+
+    Can be called both from Django app startup (AppConfig.ready) and from
+    test fixtures after ClickHouse storage is initialized.
+    """
+    table_name = ch_backend.cube_to_table_name(AccessLogCube)
+
+    create_query = f"""
+    CREATE MATERIALIZED VIEW IF NOT EXISTS {ZERO_FILL_VIEW_NAME}
+    REFRESH EVERY 30 MINUTE
+    ENGINE = ReplacingMergeTree
+    ORDER BY (date, platform_id, organization_id, report_type_id, metric_id)
+    SETTINGS allow_nullable_key = 1
+    POPULATE AS
+    WITH
+        -- derive full month range from data
+        (SELECT toStartOfMonth(min(date)) FROM {table_name}) AS first_month,
+        (SELECT toStartOfMonth(max(date)) FROM {table_name}) AS last_month_start,
+        dateDiff('month', first_month, last_month_start) + 1 AS months_count,
+
+        -- generate month starts across full range (oldest -> newest)
+        months_data AS (
+            SELECT arrayJoin(
+                arrayMap(i -> addMonths(first_month, i), range(months_count))
+            ) AS date
+        ),
+
+        -- distinct platform, organization, report_type, metric combinations
+        combo_table AS (
+            SELECT DISTINCT
+                platform_id,
+                organization_id,
+                report_type_id,
+                metric_id
+            FROM {table_name}
+        ),
+
+        -- pre-aggregate sums per month + (platform, organization, report_type, metric)
+        agg_table AS (
+            SELECT
+                toStartOfMonth(date) AS date,
+                platform_id,
+                organization_id,
+                report_type_id,
+                metric_id,
+                SUM(value) AS total_value
+            FROM {table_name}
+            GROUP BY date, platform_id, organization_id, report_type_id, metric_id
+        ),
+
+        -- all month x (platform, organization, report_type, metric) pairs
+        months_combos AS (
+            SELECT
+                m.date,
+                d.platform_id,
+                d.organization_id,
+                d.report_type_id,
+                d.metric_id
+            FROM months_data AS m
+            CROSS JOIN combo_table AS d
+        )
+
+    -- final join: will produce NULL total_value when the pair has no data
+    SELECT
+        md.date,
+        md.platform_id,
+        md.organization_id,
+        md.report_type_id,
+        md.metric_id,
+        if(
+        isNull(a.total_value)
+        AND dictHas(
+            'import_batch_rev',
+            tuple(
+            toString(md.report_type_id), /* todo make the keys not strings*/
+            toString(md.organization_id),
+            toString(md.platform_id),
+            toDate(md.date)
+            )
+        ) = 1,
+        0,
+        a.total_value
+        ) AS value
+
+    FROM months_combos AS md
+    LEFT JOIN agg_table AS a
+        ON a.date = md.date
+    AND a.platform_id = md.platform_id
+    AND a.organization_id = md.organization_id
+    AND a.report_type_id = md.report_type_id
+    AND a.metric_id = md.metric_id
+    SETTINGS join_use_nulls = 1;
+    """
+
+    try:
+        with ch_backend.pool.get_client() as client:
+            exists = bool(client.execute(f"EXISTS TABLE {ZERO_FILL_VIEW_NAME}")[0][0])
+            if exists:
+                logger.info("%s already present", ZERO_FILL_VIEW_NAME)
+                return
+
+            client.execute(create_query)
+            logger.info("%s created", ZERO_FILL_VIEW_NAME)
+    except Exception as e:
+        logger.error("Could not create %s: %s", ZERO_FILL_VIEW_NAME, e, exc_info=True)
+        raise
+
+
+@needs_clickhouse_sync
+def force_refresh_accesslog_zero_fill_view():
+    with ch_backend.pool.get_client() as client:
+        client.execute(f"SYSTEM REFRESH VIEW {ZERO_FILL_VIEW_NAME}")
+        # wait for the view to be refreshed
+        client.execute(f"SYSTEM WAIT VIEW {ZERO_FILL_VIEW_NAME}")
+
+
+@needs_clickhouse_sync
+def drop_accesslog_zero_fill_view():
+    with ch_backend.pool.get_client() as client:
+        client.execute(f"DROP VIEW IF EXISTS {ZERO_FILL_VIEW_NAME}")
