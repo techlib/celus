@@ -1856,9 +1856,10 @@ export default {
       if (!this.credentialsObject) {
         // we need organizations first before all the rest is loaded
         await this.loadOrganizations();
+        //loadExistingCredentials has to be performed before loadPlatforms
+        await this.loadExistingCredentials();
         promises.push(this.loadPlatforms());
         promises.push(this.loadUseCases());
-        promises.push(this.loadExistingCredentials());
       }
       await Promise.all(promises);
     } finally {
