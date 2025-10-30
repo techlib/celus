@@ -14,7 +14,10 @@ from tags.models import AccessibleBy, Tag, TagScope
 
 from logs.cubes import AccessLogCube, ch_backend
 from logs.fake_data import MetricFactory
-from logs.logic.materialized_reports import recompute_materialized_reports
+from logs.logic.materialized_reports import (
+    recompute_materialized_reports,
+    sync_materialized_reports,
+)
 from logs.logic.reporting.export import (
     FlexibleDataExcelExporter,
     FlexibleDataSimpleCSVExporter,
@@ -403,9 +406,9 @@ class TestFlexibleDataSlicerComputations:
         mat_spec = ReportMaterializationSpec.objects.create(
             base_report_type=base_rt, name="Test Mat", keep_target=False
         )
-        mat_rt = ReportType.objects.create(
-            short_name="MAT_TEST", materialization_spec=mat_spec, approx_record_count=100
-        )
+        mat_rt = ReportType.objects.create(short_name="MAT_TEST", materialization_spec=mat_spec)
+        sync_materialized_reports()
+        assert mat_rt.accesslog_set.count() > 0
 
         slicer = FlexibleDataSlicer(primary_dimensions=["report_type"])
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", [base_rt.pk]))
@@ -417,6 +420,8 @@ class TestFlexibleDataSlicerComputations:
         # check that the reports are properly mapped
         assert mat_rt.pk in slicer._mat_reports_map
         assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+
+        assert len(data) > 0
 
         for row in data:
             assert row["pk"] == base_rt.pk
@@ -430,9 +435,9 @@ class TestFlexibleDataSlicerComputations:
         mat_spec = ReportMaterializationSpec.objects.create(
             base_report_type=base_rt, name="Test Mat", keep_target=False
         )
-        mat_rt = ReportType.objects.create(
-            short_name="MAT_TEST", materialization_spec=mat_spec, approx_record_count=100
-        )
+        mat_rt = ReportType.objects.create(short_name="MAT_TEST", materialization_spec=mat_spec)
+        sync_materialized_reports()
+        assert mat_rt.accesslog_set.count() > 0
 
         slicer = FlexibleDataSlicer(primary_dimensions=["platform", "report_type"])
         # we must filter down to one RT, otherwise materialized report types will not kick in
@@ -443,6 +448,8 @@ class TestFlexibleDataSlicerComputations:
 
         assert mat_rt.pk in slicer._mat_reports_map
         assert slicer._mat_reports_map[mat_rt.pk] == base_rt.pk
+
+        assert len(data) > 0, "we need some data to test"
 
         for row in data:
             # report type must be one of the normal (non-materialized report types)

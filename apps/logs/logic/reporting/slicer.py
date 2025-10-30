@@ -424,7 +424,15 @@ class FlexibleDataSlicer:
             # we need to use the new multi-index logic
             annots = {}
             for i, dim in enumerate(self.primary_dimensions):
-                annots[self.get_pk_key(i)] = F(dim)
+                dim_key = self.get_pk_key(i)
+                annot = F(dim)
+                if dim == "report_type" and self._mat_reports_map:
+                    whens = [
+                        When(then=Value(orig), report_type_id=pk)
+                        for pk, orig in self._mat_reports_map.items()
+                    ]
+                    annot = Case(*whens, default=annot, output_field=IntegerField())
+                annots[dim_key] = annot
 
             qs = (
                 AccessLog.objects.filter(**filters)
