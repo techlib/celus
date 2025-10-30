@@ -641,7 +641,7 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"expires": 60 * 60},
     },
     "update_registry_models_task": {
-        "task": "update_registry_models.tasks.update_registry_models",
+        "task": "django_celus_registry.tasks.update_registry_models",
         "schedule": crontab(hour="2", minute=randmin()),  # between 2:00 and 2:59
         "options": {"expires": 60 * 60},
     },
