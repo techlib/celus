@@ -435,7 +435,7 @@ cs:
     all_titles: Všechny tituly
     analytics: Analytické nástroje
     ch_export: ClickHouse exporty
-    anomaly_report: Přehled anomálií
+    anomaly_report: Anomálie v datech
     changelog: Seznam změn
     configuration: Konfigurace
     content: Obsah

@@ -131,6 +131,10 @@ export default {
               title: this.$i18n.t("pages.interest_overview"),
               icon: "far fa-flag",
               linkTo: "interest-overview",
+              chip: {
+                title: this.$t("labels.new_menu_item"),
+                color: "error",
+              },
             },
             {
               title: this.$i18n.t("pages.heatmap"),
@@ -156,14 +160,14 @@ export default {
                 {
                   title: this.$i18n.t("pages.create_report"),
                   linkTo: "flexitable",
-                },
-                {
-                  title: this.$i18n.t("pages.flexi_reports"),
-                  linkTo: "flexireports",
                   chip: {
                     title: this.$t("labels.new_menu_item"),
                     color: "error",
                   },
+                },
+                {
+                  title: this.$i18n.t("pages.flexi_reports"),
+                  linkTo: "flexireports",
                 },
                 {
                   title: this.$t("pages.exports"),
