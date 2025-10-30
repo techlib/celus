@@ -145,20 +145,12 @@ cs:
         {{ ymDateFormat(item.date) }}
       </template>
 
-      <template v-slot:item.platform="{ item }">
-        {{ item.platform.name }}
-      </template>
-
       <template v-slot:item.value="{ item }">
         <span class="font-weight-bold">{{ item.value.toLocaleString() }}</span>
       </template>
 
       <template v-slot:item.median="{ item }">
         {{ item.median.toLocaleString() }}
-      </template>
-
-      <template v-slot:item.reportType="{ item }">
-        {{ item.reportType.name }}
       </template>
 
       <template v-slot:item.differenceFromMedian="{ item }">
@@ -440,12 +432,14 @@ const headers = computed(() => {
       align: "start" as const,
       sortable: true,
       key: "platform",
+      value: "platform.name",
     },
     {
       title: t("labels.report_type"),
       align: "start" as const,
       sortable: true,
       key: "reportType",
+      value: "reportType.name",
     },
     {
       title: t("labels.metric"),
@@ -498,10 +492,7 @@ const headers = computed(() => {
   return filtered;
 });
 
-const sortBy = ref([
-  { key: "significance", order: "desc" as const },
-  { key: "date", order: "asc" as const },
-]);
+const sortBy = ref([{ key: "significance", order: "desc" as const }]);
 
 const expandedRows = ref([]);
 
