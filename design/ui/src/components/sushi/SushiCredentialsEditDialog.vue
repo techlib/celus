@@ -1197,7 +1197,7 @@ export default {
             (cred) =>
               cred.organization.pk === this.organization?.pk &&
               this.platform &&
-              cred.platform.pk === this.platform?.pk &&
+              cred.platform === this.platform?.pk &&
               (!this.credentials || cred.pk !== this.credentials?.pk),
           )
           .map((cred) => cred.counter_version);

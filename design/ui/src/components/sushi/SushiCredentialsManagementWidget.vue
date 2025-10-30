@@ -930,7 +930,7 @@ cs:
         @update-credentials="updateCredentials"
         @deleted="deleteCredentials"
         key="create"
-        :fixed-platform="platformId"
+        :fixed-platform="fixedPlatformId"
       ></SushiCredentialsEditDialog>
     </v-dialog>
     <v-dialog v-model="showDetailsDialog">
@@ -1284,8 +1284,8 @@ export default {
       if (this.searchDebounced) {
         params.search = this.searchDebounced;
       }
-      if (this.platformFilter) {
-        params.platform = this.platformFilter;
+      if (this.currentPlatformFilter) {
+        params.platform = this.currentPlatformFilter;
       }
       if (this.organizationId) {
         params.organization = this.organizationId;
