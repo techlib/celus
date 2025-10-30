@@ -1660,7 +1660,6 @@ export default {
       }
     },
     async updateReport() {
-      // used when only sorting is changed, nothing else
       await this.$refs.outputTable.updateOutput(this.reportObject);
     },
     async runExport(format) {

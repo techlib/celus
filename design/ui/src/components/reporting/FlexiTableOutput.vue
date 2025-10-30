@@ -481,18 +481,6 @@ export default {
             sortable: true,
             align: "end",
             order: "reverse",
-            sortRaw(a, b) {
-              if (
-                Number(a._total.replace(/\s/g, "")) <
-                Number(b._total.replace(/\s/g, ""))
-              )
-                return -1;
-              if (
-                Number(a._total.replace(/\s/g, "")) >
-                Number(b._total.replace(/\s/g, ""))
-              )
-                return 1;
-            },
           });
         }
         this.headersFromData.forEach((item) =>
@@ -664,7 +652,7 @@ export default {
   methods: {
     ...mapActions(["showSnackbar"]),
     formatInteger,
-    async updateOutput(report, clean = true) {
+    async updateOutput(report) {
       this.report = report;
 
       // if we are in the split mode, we need to check the possible splits first
@@ -697,11 +685,12 @@ export default {
 
       this.errorCode = null;
       this.errorDetails = null;
-      if (clean) {
-        this.data = [];
-        this.cleanData = [];
-        this.setOrdering(report);
-      }
+
+      // clear the data
+      this.data = [];
+      this.cleanData = [];
+      this.setOrdering(report);
+
       await this.fetchData();
     },
     async getSplitParts() {
@@ -1010,12 +999,15 @@ export default {
       this.errorDetails = details;
     },
     setOrdering(report) {
-      this.sortBy = djangoToDataTableOrderBy(report.orderBy);
+      // if the report has order by, we use it, otherwise we set a default ordering
       if (report.orderBy && report.orderBy.length) {
+        this.sortBy = djangoToDataTableOrderBy(report.orderBy);
         // set ordering immediately, otherwise it would be done after the
         // table calls updateOptions, which would cause inconsistency
-        // in the fetchData call immediately after setOrdering
+        // in the fetchData call immediately after setOrdering and cause double loading of data
         this.ordering = report.orderBy[0];
+      } else {
+        this.sortBy = [{ key: "_total", order: "desc" }];
       }
     },
     updateSize() {
