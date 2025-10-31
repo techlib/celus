@@ -375,9 +375,8 @@ export default {
 
   computed: {
     ...mapGetters({
-      // clickhouseExportHost: "clickhouseExportHost",
+      clickhouseExportHost: "clickhouseExportHost",
     }),
-    clickhouseExportHost: () => "pubch-01.celus.net",
   },
 
   mounted() {

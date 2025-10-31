@@ -338,9 +338,11 @@ export default createStore({
     },
     clickhouseExportHost(state) {
       if ("CLICKHOUSE_EXPORT_HOST" in state.basicInfo) {
-        return state.basicInfo["CLICKHOUSE_EXPORT_HOST"];
+        const host = state.basicInfo["CLICKHOUSE_EXPORT_HOST"];
+        // if the host is localhost, we should return the current host
+        return host === "localhost" ? window.location.hostname : host;
       }
-      return false;
+      return null;
     },
     clickhouseQueryActive(state) {
       if ("CLICKHOUSE_QUERY_ACTIVE" in state.basicInfo) {
