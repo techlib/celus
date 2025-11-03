@@ -85,6 +85,7 @@ class TestReportMailingModel:
                     FrequencyChoices.YEARLY,
                 ],
                 [end_monthly, end_quarterly, end_half_yearly, end_yearly],
+                strict=True,
             ):
                 fru = FlexibleReportUserEmail.objects.create(
                     user=flexible_reports["user"], flexible_report=fr, frequency=period
@@ -123,6 +124,7 @@ class TestReportMailingModel:
                     FrequencyChoices.YEARLY,
                 ],
                 [end_monthly, end_quarterly, end_half_yearly, end_yearly],
+                strict=True,
             ):
                 fru = FlexibleReportUserEmail.objects.create(
                     user=flexible_reports["user"],
@@ -160,6 +162,7 @@ class TestReportMailingModel:
                     FrequencyChoices.YEARLY,
                 ],
                 [exp_monthly, exp_quarterly, exp_half_yearly, exp_yearly],
+                strict=True,
             ):
                 fru = FlexibleReportUserEmail.objects.create(
                     user=flexible_reports["user"], flexible_report=fr, frequency=period
@@ -194,6 +197,7 @@ class TestReportMailingModel:
                     FrequencyChoices.YEARLY,
                 ],
                 [exp_monthly, exp_quarterly, exp_half_yearly, exp_yearly],
+                strict=True,
             ):
                 fru = FlexibleReportUserEmail.objects.create(
                     user=flexible_reports["user"], flexible_report=fr, frequency=period

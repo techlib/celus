@@ -291,7 +291,7 @@ class FlexibleDataSlicer:
 
         filters = {**self.filters}
         if part:
-            for dim, value in zip(self.split_by, part):
+            for dim, value in zip(self.split_by, part, strict=True):
                 fltr = self.filter_instance(dim, value)
                 filters.update(fltr.query_params())
 
@@ -851,7 +851,7 @@ class FlexibleDataSlicer:
                 # but then aggregate everything to a single row
                 filters = {**self.filters}
                 if self.split_by and part:
-                    for dim, value in zip(self.split_by, part):
+                    for dim, value in zip(self.split_by, part, strict=True):
                         fltr = self.filter_instance(dim, value)
                         filters.update(fltr.query_params())
                 final_annotations = self._prepare_annotations()

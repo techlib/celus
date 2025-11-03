@@ -55,7 +55,7 @@ def remap_row_keys_to_short_names(
         if key.startswith("grp-"):
             parts = key[4:].split(",")
             new_key_parts = []
-            for part, dimension in zip(parts, dimensions):
+            for part, dimension in zip(parts, dimensions, strict=True):
                 obj = dimension.objects.get(pk=int(part))
                 if hasattr(obj, "short_name"):
                     new_key_parts.append(obj.short_name)
@@ -638,7 +638,7 @@ class TestFlexibleDataSlicerComputations:
         platforms = flexible_slicer_test_data["platforms"][1:]
         tc = TagClassFactory(scope=TagScope.PLATFORM)
         tags = TagFactory.create_batch(3, name="my_platforms", tag_class=tc)
-        for tag, platform in zip(tags, platforms):
+        for tag, platform in zip(tags, platforms, strict=True):
             tag.tag(platform, admin_user)
         slicer.add_filter(TagClassDimensionFilter("platform", tc), add_group=True)
         slicer.include_all_zero_rows = show_zero
@@ -1399,7 +1399,9 @@ class TestFlexibleDataSlicerOther:
         assert new_slicer.group_by == slicer.group_by
         assert new_slicer.order_by == slicer.order_by
         assert len(new_slicer.dimension_filters) == len(slicer.dimension_filters)
-        for new_fltr, old_fltr in zip(new_slicer.dimension_filters, slicer.dimension_filters):
+        for new_fltr, old_fltr in zip(
+            new_slicer.dimension_filters, slicer.dimension_filters, strict=True
+        ):
             assert new_fltr.config() == old_fltr.config()
 
     def test_computation_from_config(self, flexible_slicer_test_data):
@@ -1833,6 +1835,7 @@ class TestFlexibleDataSimpleCSVExporter:
         report_type = flexible_slicer_test_data["report_types"][0]
         slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
         slicer.add_group_by("date__year")
+        slicer.order_by = ["platform"]
         exporter = FlexibleDataSimpleCSVExporter(slicer)
         out = StringIO()
         exporter.stream_data_to_sink(out)

@@ -1,7 +1,6 @@
 FROM ubuntu:24.04 as celus-test
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG POETRY_VERSION
 
 # install basic packages
 RUN \
@@ -27,7 +26,8 @@ RUN \
 ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
-# install poetry
+
+# install poetry - used by legacy pre-uv jobs
 RUN curl -sSL https://install.python-poetry.org | python - --version "${POETRY_VERSION}"
 ENV PATH="${PATH}:/root/.local/bin"
 RUN poetry --version
@@ -40,7 +40,12 @@ ENV PATH "/env/bin:${PATH}"
 # install latest pip
 RUN pip install --upgrade pip
 
+# install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="${PATH}:/root/.local/bin"
+RUN uv --version
+
 # install dependencies
-COPY poetry.lock poetry.lock
+COPY uv.lock uv.lock
 COPY pyproject.toml pyproject.toml
-RUN poetry install
+RUN uv sync

@@ -196,7 +196,7 @@ def import_counter_records(
         writer = csv.writer(csv_data)
         target_ids = set()
         for i, (key, value) in enumerate(ib_id_to_key_to_value[ib.pk].items()):
-            rec = dict(zip(ib_id_to_key_structure, key))
+            rec = dict(zip(ib_id_to_key_structure, key, strict=True))
             rec["value"] = value
             if rec["target_id"]:
                 target_ids.add(rec["target_id"])
@@ -424,7 +424,7 @@ def _preprocess_counter_records(
 
     record: CounterRecord
     last_log = time()
-    for title_id, item_id, record in zip(title_ids, item_ids, records):
+    for title_id, item_id, record in zip(title_ids, item_ids, records, strict=True):
         # check if the record is valid first
         check_item_and_title_presence(record, title_id, item_id)
         # attributes that define the identity of the log

@@ -374,7 +374,7 @@ For more info see Django admin: {
         # handle interest config
         ic_filters = {}
         ic_neg_filters = {}
-        for negated, fltrs in zip((False, True), ic.get_interest_filters()):
+        for negated, fltrs in zip((False, True), ic.get_interest_filters(), strict=True):
             for fltr, values in fltrs.items():
                 if negated:
                     ic_neg_filters[fltr] = values

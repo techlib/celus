@@ -1,10 +1,109 @@
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+[project]
+name = "celus"
+version = "10.1.0"
+description = "web application for harvesting and visualization of usage data of electronic information sources"
+authors = [
+    { name = "Beda Kosata", email = "beda@bigdigdata.com" },
+    { name = "Stepan Henek", email = "stepan@bigdigdata.com" },
+]
+requires-python = ">=3.12.3,<4"
+license = "MIT"
+dependencies = [
+    "celery~=5.5.3",
+    "celus-nibbler~=12.2.3",
+    "celus-nigiri==4.1.2",
+    "celus-pycounter~=4.1.0",
+    "clickhouse-driver==0.2.9",
+    "colorlog>=6.7.0,<7",
+    "dj-rest-auth~=7.0.1",
+    "Django~=5.2.7",
+    "django-allauth~=64.2.1",
+    "django-anymail>=13.0.1,<14",
+    "django-autocomplete-light~=3.12.1",
+    "django-cachalot~=2.8.0",
+    "django-celery-results~=2.6.0",
+    "django-celus-registry~=0.4.0",
+    "django-colorfield>=0.14.0,<0.15",
+    "django-impersonate~=1.9.1",
+    "django-import-export>=4.3.9,<5",
+    "django-ipware>=7.0.1,<8",
+    "django-modeltranslation~=0.19.16",
+    "django-mptt~=0.18.0",
+    "django-ntfy~=0.1.1",
+    "django-otp~=1.6.1",
+    "django-postgres-copy>=2.7.0,<3",
+    "django-redis>=6.0.0,<7",
+    "django-requestlogs>=0.8.3,<0.9",
+    "django-reversion~=6.0.0",
+    "django-test-migrations>=1.4.0,<2",
+    "djangorestframework~=3.16.0",
+    "djangorestframework-api-key>=3.0.0,<4",
+    "drf-nested-routers~=0.95.0",
+    "hcube==0.99.0",
+    "isbnlib>=3.10.3,<4",
+    "lz4~=4.4.4",
+    "mrml~=0.2.0",
+    "numpy==2.3.4",
+    "openpyxl~=3.1.2",
+    "pandas>=2.3.0,<3",
+    "pillow>=12.0.0,<13",
+    "prometheus-client>=0.23.1,<0.24",
+    "psutil~=7.1.3",
+    "psycopg2-binary~=2.9.1",
+    "pycountry==24.6.1",
+    "pydantic>=2,<3",
+    "pyparsing>=3.0.9,<4",
+    "python-dateutil>=2.8.2,<3",
+    "python-decouple~=3.3",
+    "python-magic~=0.4.15",
+    "pytz",
+    "pyyaml>=6.0.1,<7",
+    "redis>=7.0.1,<8",
+    "requests>=2.31.0,<3",
+    "semantic-version~=2.10.0",
+    "sentry-sdk>=2.34.1,<3",
+    "toml>=0.10.2,<0.11",
+    "XlsxWriter>=3.2.5,<4",
+    "zstandard>=0.25.0,<0.26",
+    "django-sesame>=3.2.1,<4",
+    "websockets>=15.0.1,<16",
+    "pyarrow>=22.0.0,<23",
+]
+
+[dependency-groups]
+dev = [
+    "deptry>=0.23.1,<0.24",
+    "dj-inmemorystorage>=2.1.0,<3",
+    "django-debug-toolbar>=6.0.0,<7",
+    "django-extensions~=4.1",
+    "django-query-counter~=0.4.0",
+    "django-webtest>=1.9.7,<2",
+    "factory-boy>=3.2.1,<4",
+    "faker>=37.5.3,<38",
+    "filelock>=3.12.2,<4",
+    "freezegun>=1.2.2,<2",
+    "pre-commit>=4.2.0,<5",
+    "pydot>=4.0.1,<5",
+    "pyfakefs>=5.0.0,<6",
+    "pytest>=8.3.3,<9",
+    "pytest-cov>=7.0.0,<8",
+    "pytest-django>=4.11.1,<5",
+    "pytest-env>=1.1.5,<2",
+    "pytest-random-order>=1.1.0,<2",
+    "pytest-xdist>=3.3.0,<4",
+    "requests-mock~=1.12.1",
+    "ruff>=0.14.3,<0.15",
+    "sphinx~=8.2",
+    "watchdog[watchmedo]>=6.0.0,<7",
+    "tuna>=0.5.11,<0.6",
+]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py312"
+
+[tool.uv]
+package = false
 
 [tool.ruff.lint]
 ignore = [
@@ -36,107 +135,6 @@ split-on-trailing-comma = false
 
 [tool.ruff.format]
 skip-magic-trailing-comma = true
-
-
-[tool.poetry]
-name = "celus"
-version = "10.1.0"
-description = "web application for harvesting and visualization of usage data of electronic information sources"
-authors = [
-    "Beda Kosata <beda@bigdigdata.com>",
-    "Stepan Henek <stepan@bigdigdata.com>",
-]
-license = "MIT"
-package-mode = false
-
-[tool.poetry.dependencies]
-python = "^3.9.6"
-
-celery = "~5.5.3"
-celus-nibbler = "~12.2.3"
-celus-nigiri = "4.1.2"
-celus-pycounter = "~4.1.0"
-clickhouse-driver = "0.2.9"
-colorlog = "^6.7.0"
-dj-rest-auth = "~7.0.1"
-Django = "~4.2.24"
-django-allauth = "~64.2.1"             # 65 is not compatible with dj-rest-auth 7.0.1
-django-anymail = "^13.0.1"
-django-autocomplete-light = "~3.12.1"
-django-cachalot = "~2.8.0"
-django-celery-results = "~2.6.0"
-django-celus-registry = "~0.4.0"
-django-colorfield = "^0.14.0"
-django-impersonate = "~1.9.1"
-django-import-export = "^4.3.9"
-django-ipware = "^7.0.1"
-django-modeltranslation = "~0.19.16"
-django-mptt = "~0.17.0"
-django-ntfy = "~0.1.1"
-django-otp = "~1.6.1"
-django-postgres-copy = "^2.7.0"
-django-redis = "^6.0.0"
-django-requestlogs = "^0.8.3"
-django-reversion = "~5.1.0"
-django-test-migrations = "^1.4.0"
-djangorestframework = "~3.16.0"
-djangorestframework-api-key = "^3.0.0"
-drf-nested-routers = "~0.94.2"
-hcube = "0.33.0"
-isbnlib = "^3.10.3"
-lz4 = "~4.4.4"
-mrml = "~0.2.0"
-numpy = "<2"
-openpyxl = "~3.1.2"
-pandas = "^2.3.0"
-pillow = "^11.3.0"
-prometheus-client = "^0.22.1"
-psutil = "~7.0.0"
-psycopg2-binary = "~2.9.1"
-pycountry = "24.6.1"
-pydantic = "^2"
-pyparsing = "^3.0.9"
-python-dateutil = "^2.8.2"
-python-decouple = "^3.3"
-python-magic = "~0.4.15"
-pytz = "*"
-pyyaml = "^6.0.1"
-redis = "^6.2.0"
-requests = "^2.31.0"
-semantic-version = "~2.10.0"
-sentry-sdk = "^2.34.1"
-toml = "^0.10.2"
-XlsxWriter = "^3.2.5"
-zstandard = "^0.23.0"
-django-sesame = "^3.2.1"
-websockets = "^15.0.1"
-pyarrow = "^21.0.0"
-
-[tool.poetry.group.dev.dependencies]
-deptry = "^0.23.1"
-dj-inmemorystorage = "^2.1.0"
-django-debug-toolbar = "^6.0.0"
-django-extensions = "^4.1"
-django-query-counter = "~0.4.0"
-django-webtest = "^1.9.7"
-factory-boy = "^3.2.1"
-faker = "^37.5.3"
-filelock = "^3.12.2"
-freezegun = "^1.2.2"
-pre-commit = "^4.2.0"
-pydot = "^4.0.1"
-pyfakefs = "^5.0.0"
-pytest = "^8.3.3"
-pytest-cov = "^6.2.1"
-pytest-django = "^4.11.1"
-pytest-env = "^1.1.5"
-pytest-random-order = "^1.1.0"
-pytest-xdist = "^3.3.0"
-requests-mock = "~1.12.1"
-ruff = "^0.12.7"
-sphinx = "^7.2"
-watchdog = { extras = ["watchmedo"], version = "^6.0.0" }
-tuna = "^0.5.11"
 
 [tool.deptry]
 known_first_party = ["test_scenarios"]

@@ -293,7 +293,7 @@ class TestFlexibleDataExport:
         export.create_output_file(raise_exception=True)
         assert export.output_file.name.endswith(".zip" if fmt == FileFormat.ZIP_CSV else ".xlsx")
         # both .zip and .xlsx are zip files
-        with ZipFile(export.output_file.file, "r") as zipfile:
+        with ZipFile(export.output_file.file.name, "r") as zipfile:
             if fmt == FileFormat.ZIP_CSV:
                 for archname in zipfile.namelist():
                     assert archname.endswith(".csv")
@@ -302,7 +302,7 @@ class TestFlexibleDataExport:
                 assert "[Content_Types].xml" in zipfile.namelist(), (
                     "XLSX should contain [Content_Types].xml"
                 )
-                workbook = openpyxl.load_workbook(export.output_file.file)
+                workbook = openpyxl.load_workbook(export.output_file.file.name)
                 assert "metadata" in workbook.sheetnames
 
 
@@ -661,7 +661,7 @@ class TestFlexibleDataExportMultiindex:
         export = FlexibleDataExport.create_from_slicer(slicer, admin_user, fmt=FileFormat.ZIP_CSV)
         export.create_output_file(raise_exception=True)
         # Verify the file was created and has multiple CSV files
-        with ZipFile(export.output_file.file, "r") as zipfile:
+        with ZipFile(export.output_file.file.name, "r") as zipfile:
             csv_files = [name for name in zipfile.namelist() if name.endswith(".csv")]
             # Should have metadata + one file per title (3 titles)
             assert len(csv_files) >= 3

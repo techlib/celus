@@ -636,7 +636,7 @@ class TestFetchIntention:
             if automatic:
                 harvest = AutomaticFactory().harvest
             else:
-                harvest = HarvestFactory(automatic=None)
+                harvest = HarvestFactory()
             fi = FetchIntentionFactory(
                 attempt=None,
                 harvest=harvest,
@@ -694,7 +694,7 @@ class TestFetchIntention:
                 if automatic:
                     harvest = AutomaticFactory().harvest
                 else:
-                    harvest = HarvestFactory(automatic=None)
+                    harvest = HarvestFactory()
                 return FetchIntentionFactory(
                     attempt=None,
                     start_date="2019-04-01",
@@ -844,7 +844,7 @@ class TestFetchIntention:
 
         def create_fetch_intention(when) -> FetchIntention:
             with freeze_time(when):
-                harvest = HarvestFactory(automatic=None)
+                harvest = HarvestFactory()
                 return FetchIntentionFactory(
                     attempt=None,
                     start_date="2019-04-01",
@@ -1353,11 +1353,11 @@ class TestHarvest:
         assert urls == {credentials["standalone_tr"].url, credentials["standalone_br1_jr1"].url}
 
     def test_stats(self, counter_report_types, credentials, settings):
-        harvest1 = HarvestFactory(automatic=None)
-        harvest2 = HarvestFactory(automatic=None)
-        harvest3 = HarvestFactory(automatic=None)
-        harvest4 = HarvestFactory(automatic=None)
-        harvest5 = HarvestFactory(automatic=None)
+        harvest1 = HarvestFactory()
+        harvest2 = HarvestFactory()
+        harvest3 = HarvestFactory()
+        harvest4 = HarvestFactory()
+        harvest5 = HarvestFactory()
 
         FetchIntentionFactory(
             credentials=credentials["standalone_tr"],

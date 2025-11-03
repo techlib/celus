@@ -296,7 +296,7 @@ class DataCoverageExtractor:
                     super_key = (month, *key)
                     if super_key not in data:
                         data[super_key] = {
-                            **dict(zip(split_by, super_key)),  # the key as dict
+                            **dict(zip(split_by, super_key, strict=True)),  # the key as dict
                             "ib_count": 0,
                             "ratio": 0,
                             **max_stats,
@@ -330,7 +330,7 @@ class DataCoverageExtractor:
                     )
                 else:
                     data[key] = {
-                        **dict(zip(split_by, key)),  # the key as dict
+                        **dict(zip(split_by, key, strict=True)),  # the key as dict
                         "ib_count": 0,
                         "ratio": 0,
                         **max_stats,

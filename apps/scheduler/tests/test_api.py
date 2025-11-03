@@ -1,5 +1,6 @@
 import json
 from datetime import date, datetime
+from datetime import timezone as pytimezone
 
 import pytest
 from core.logic.dates import last_month, month_end
@@ -315,7 +316,7 @@ class TestHarvestAPI:
         harvests_count = Harvest.objects.count()
 
         with freeze_time(
-            datetime(today.year, today.month, today.day, 0, 0, 0, 0, tzinfo=timezone.utc)
+            datetime(today.year, today.month, today.day, 0, 0, 0, 0, tzinfo=pytimezone.utc)
         ):
             resp = clients["master_admin"].post(
                 url,

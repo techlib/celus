@@ -539,10 +539,11 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
                 self.broken = None
                 self.first_broken_attempt = None
 
-                # remove broken from all reports to credentials
-                CounterReportsToCredentials.objects.filter(credentials=self).update(
-                    first_broken_attempt=None, broken=None
-                )
+                if self._is_pk_set():
+                    # remove broken from all reports to credentials, but only for saved instances
+                    CounterReportsToCredentials.objects.filter(credentials=self).update(
+                        first_broken_attempt=None, broken=None
+                    )
 
             super().save(*args, **kwargs)
 

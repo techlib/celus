@@ -506,7 +506,7 @@ def flexible_slicer_test_data_with_items(report_type_nd):
                     value_key = dimension_texts[(rt.dimensions_sorted[i].pk, value_str)]
                     dim_data[attr] = value_key.pk
                 title_items = [items[0], items[1]] if target == targets[0] else [items[2]]
-                for item, value in zip(title_items, values):
+                for item, value in zip(title_items, values, strict=False):
                     accesslogs.append(
                         AccessLog(
                             report_type=rt,

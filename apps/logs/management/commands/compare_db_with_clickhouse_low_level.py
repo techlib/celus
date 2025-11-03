@@ -82,7 +82,10 @@ class Command(BaseCommand):
                     logger.info("CH missing: %s", drec)
                     seen_ibs_ids = set()
                     for al in AccessLog.objects.filter(
-                        **{k if v != 0 else f"{k}__isnull": v or True for k, v in zip(fields, drec)}
+                        **{
+                            k if v != 0 else f"{k}__isnull": v or True
+                            for k, v in zip(fields, drec, strict=True)
+                        }
                     ):
                         logger.info("  %s", al_info(al))
                         ch_missing_ibs[al.import_batch_id] += 1

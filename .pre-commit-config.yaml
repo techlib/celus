@@ -10,17 +10,23 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.9.7
+    hooks:
+      - id: uv-lock
+
   - repo: local
     hooks:
       - id: ruff-format
         name: ruff formatter
-        entry: poetry run ruff format
+        entry: uv run ruff format
         language: system
         types: [python]
 
       - id: ruff
         name: ruff linter
-        entry: poetry run ruff check --fix
+        entry: uv run ruff check --fix
         language: system
         types: [python]
 
@@ -32,14 +38,14 @@ repos:
 
       - id: django-migrations
         name: Check django migrations
-        entry: poetry run python manage.py makemigrations --check --no-input
+        entry: uv run python manage.py makemigrations --check --no-input
         language: system
         types: [python]
         pass_filenames: false
 
       - id: deptry
         name: Check pyproject.toml dependencies
-        entry: poetry run deptry apps
+        entry: uv run deptry apps
         language: system
         files: ^pyproject\.toml|.*\.py$
         pass_filenames: false

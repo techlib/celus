@@ -247,7 +247,7 @@ class TestClickhouseSync:
         assert len(list(ch_backend.get_records(AccessLogCube.query()))) == 0
         assert ImportBatchSyncLog.objects.count() == len(ibs)
         ibs.sort(key=lambda obj: obj.date)
-        for ib, al_count in zip(ibs, [3 + 2, 5 + 4, 6 + 5]):
+        for ib, al_count in zip(ibs, [3 + 2, 5 + 4, 6 + 5], strict=True):
             sync_log = ImportBatchSyncLog.objects.get(import_batch_id=ib.pk)
             sync_log.state = ImportBatchSyncLog.STATE_SYNC
             sync_log.save()

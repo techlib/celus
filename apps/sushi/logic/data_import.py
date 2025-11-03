@@ -91,7 +91,7 @@ def import_sushi_credentials_from_xlsx(
     start_row = 2
     end_row = credentials_sheet.max_row
     rows = credentials_sheet.iter_rows(min_row=start_row, max_row=end_row, values_only=True)
-    records = [dict(zip(headers, row)) for row in rows]
+    records = [dict(zip(headers, row, strict=True)) for row in rows]
 
     return import_sushi_credentials_new(
         records,

@@ -305,7 +305,7 @@ class NotificationQuerySet(QuerySet):
         # create notification to event link
         created_events = Event.objects.bulk_create(events)
         new_notification_events = []
-        for notification_id, event in zip(notification_ids, created_events):
+        for notification_id, event in zip(notification_ids, created_events, strict=True):
             new_notification_events.append(
                 NotificationEvent(notification_id=notification_id, event_id=event.id)
             )

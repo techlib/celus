@@ -2443,7 +2443,9 @@ class TestAllPlatformsAPI:
         if available is not None:
             resp_data = resp.json()
             assert len(resp_data) == len(available)
-            for data, platform in zip(resp_data, [platforms[e] for e in sorted(available)]):
+            for data, platform in zip(
+                resp_data, [platforms[e] for e in sorted(available)], strict=True
+            ):
                 assert data["pk"] == platform.pk
                 if platform.name == "brain":
                     assert data["has_raw_parser"] is True
@@ -3088,7 +3090,7 @@ class TestItemViewSet:
         )
 
         assert len(data) == len(ordered)
-        for rec, value in zip(data, ordered):
+        for rec, value in zip(data, ordered, strict=True):
             assert rec[order_by] == value
 
     @pytest.mark.parametrize(

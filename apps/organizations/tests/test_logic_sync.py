@@ -93,7 +93,7 @@ class TestLogicSync:
 
     def test_organization_sync_translation(self, data_source):
         syncer = OrganizationSyncer(data_source)
-        for rec_in, rec_out in zip(self.src_data, self.trans_data):
+        for rec_in, rec_out in zip(self.src_data, self.trans_data, strict=True):
             tr_rec = syncer.translate_record(rec_in)
             assert tr_rec == rec_out
 

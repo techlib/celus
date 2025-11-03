@@ -166,7 +166,7 @@ class Platform(models.Model):
         probabs = self.sushi_arrival_stats.get("probabs", DEFAULT_ARRIVAL_STATS["probabs"])
         min_day = 0.0
         min_probab = 0.0
-        for day, probab in zip(curve, probabs):
+        for day, probab in zip(curve, probabs, strict=True):
             # Exact match
             if day == curve_day:
                 return probab
@@ -184,7 +184,7 @@ class Platform(models.Model):
         probabs = self.sushi_arrival_stats.get("probabs", DEFAULT_ARRIVAL_STATS["probabs"])
         min_day = 0.0
         min_probab = 0.0
-        for day, probab in zip(curve, probabs):
+        for day, probab in zip(curve, probabs, strict=True):
             # Exact match
             if probab == curve_probab:
                 return day

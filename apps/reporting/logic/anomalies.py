@@ -278,7 +278,7 @@ class AnomalyDetector:
             )
 
             for row in rows:
-                rec = dict(zip(col_names, row))
+                rec = dict(zip(col_names, row, strict=True))
                 anomaly_id = rec.get("anomaly_id")
                 # Pick correct dimension label for this report type and dim index
                 dim_names = rt_id_to_dim_names.get(rec["report_type_id"], [])
@@ -316,7 +316,7 @@ class AnomalyDetector:
 
         by_anomaly: dict[int, list[dict]] = defaultdict(list)
         for row in rows:
-            rec = dict(zip(col_names, row))
+            rec = dict(zip(col_names, row, strict=True))
             anomaly_id = rec.get("anomaly_id")
             item = {
                 "type": "title",
@@ -483,7 +483,7 @@ class AnomalyDetector:
                 f"Clickhouse anomaly report query took {time.monotonic() - start:.2f} seconds"
             )
         column_names = [name for name, _ in columns]
-        res = [dict(zip(column_names, row)) for row in rows]
+        res = [dict(zip(column_names, row, strict=True)) for row in rows]
         # Add simple sequential ids 1..N
         for idx, r in enumerate(res, start=1):
             r["id"] = idx

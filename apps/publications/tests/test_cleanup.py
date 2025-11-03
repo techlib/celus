@@ -66,7 +66,8 @@ class TestDeletePlatformData:
         # fetch intention without attempt - it will be kept for future
         FetchIntentionFactory(attempt=None, credentials=fi.credentials)
         # check the data before delete
-        fltr = {"organization": ib.organization, "platform": ib.platform}
+        platform_id = ib.platform_id  # store the id to be able to use it after deleting it
+        fltr = {"organization": ib.organization, "platform_id": platform_id}
         cr_fltr = {"credentials": fi.credentials}
         assert AccessLog.objects.filter(**fltr).count() > 0
         assert ImportBatch.objects.filter(**fltr).count() > 0
@@ -96,7 +97,7 @@ class TestDeletePlatformData:
             delete_credentials=delete_credentials,
         )
 
-        assert not Platform.objects.filter(pk=platform.pk).exists() == platform_deleted
+        assert not Platform.objects.filter(pk=platform_id).exists() == platform_deleted
         assert AccessLog.objects.filter(**fltr).count() == 0
         assert ImportBatch.objects.filter(**fltr).count() == 0
         assert PlatformTitle.objects.filter(**fltr).count() == 0
@@ -108,13 +109,13 @@ class TestDeletePlatformData:
         if delete_credentials or platform_deleted:
             # when platform is deleted, credentials are deleted too, otherwise the unrelated
             # credentials should be kept
-            assert SushiCredentials.objects.filter(platform=ib.platform).count() == (
+            assert SushiCredentials.objects.filter(platform_id=platform_id).count() == (
                 0 if platform_deleted else 1
             )
         else:
             assert (
                 set(
-                    SushiCredentials.objects.filter(platform=ib.platform).values_list(
+                    SushiCredentials.objects.filter(platform_id=platform_id).values_list(
                         "pk", flat=True
                     )
                 )

@@ -290,7 +290,7 @@ class TestLogicDataImportXLSX:
             assert SushiCredentials.objects.count() == 2
             credentials = SushiCredentials.objects.all().order_by("pk")
 
-            for cr, rec, kb in zip(credentials, records, knowledgebases):
+            for cr, rec, kb in zip(credentials, records[:2], knowledgebases, strict=True):
                 assert cr.title == rec["title"]
                 assert cr.organization.name_en == rec["organization"]
                 assert cr.platform.name_en == rec["publisher/vendor/platform"]
@@ -364,9 +364,10 @@ class TestLogicDataImportXLSX:
             assert SushiCredentials.objects.count() == 2
             for cr, updated_rec, updated, rec in zip(
                 [cr_not_verified, cr_verified],
-                updated_records,
+                updated_records[:2],
                 [cr_not_verified_updated, cr_verified_updated],
-                records,
+                records[:2],
+                strict=True,
             ):
                 cr.refresh_from_db()
                 assert cr.title == (updated_rec["title"] if updated else rec["title"])

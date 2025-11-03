@@ -248,7 +248,7 @@ class FlexibleDataExporter(ABC):
         # Create fields for all primary dimensions
         fields = []
         for key, (explicit, remapped, _model, dim_name) in zip(
-            self.primary_dim_keys, self.primary_dim_metadata
+            self.primary_dim_keys, self.primary_dim_metadata, strict=True
         ):
             # Add the main column for this primary dimension
             fields.append((key, self.dimension_output_name(dim_name)))
@@ -324,7 +324,7 @@ class FlexibleDataExporter(ABC):
             if self.include_tags:
                 self._tag_cache = {}  # Maps (dim_key, pk_value) to list of tags
                 for key, (_explicit, _remapped, _model, dim_name) in zip(
-                    self.primary_dim_keys, self.primary_dim_metadata
+                    self.primary_dim_keys, self.primary_dim_metadata, strict=True
                 ):
                     if dim_name not in self.taggable_rows:
                         continue
@@ -375,7 +375,7 @@ class FlexibleDataExporter(ABC):
     def writerow(self, writer, row):
         # Remap all primary dimensions and add their tags
         for key, (explicit, remapped, _model, dim_name) in zip(
-            self.primary_dim_keys, self.primary_dim_metadata
+            self.primary_dim_keys, self.primary_dim_metadata, strict=True
         ):
             if key not in row:
                 continue
@@ -398,7 +398,7 @@ class FlexibleDataExporter(ABC):
                         prim_text, *extra_data = remap_data
                         row[key] = prim_text
                         # remap all other keys for this dimension
-                        for extra_key, text in zip(extra_keys, extra_data):
+                        for extra_key, text in zip(extra_keys, extra_data, strict=True):
                             # For backward compatibility, only prefix with key when multiindex
                             if self.multiindex:
                                 row[f"{key}_{extra_key}"] = text
