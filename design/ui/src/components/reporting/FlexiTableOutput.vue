@@ -207,8 +207,7 @@ cs:
             <v-progress-linear
               :model-value="Math.round(coverageData[item.pk].ratio * 100)"
               :color="getCoverageColor(coverageData[item.pk].ratio)"
-              height="20"
-              rounded
+              height="16"
             >
               <template #default="{ value }">
                 <strong class="text-white text-caption"
@@ -326,6 +325,7 @@ import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
 import { smartMonthRange } from "@/libs/dates";
 import { splitGroup } from "@/libs/group-ids";
 import { formatInteger } from "@/libs/numbers";
+import { echartPalette } from "@/libs/palettes";
 import { toBase64JSON } from "@/libs/serialization";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import cancellation from "@/mixins/cancellation";
@@ -524,7 +524,7 @@ export default {
                 value: "coverage",
                 sortable: false,
                 align: "center",
-                width: "200px",
+                width: "100px",
               },
             ]
           : [];
