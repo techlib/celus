@@ -1,16 +1,16 @@
-import format from "date-fns/format";
-import getYear from "date-fns/getYear";
-import getMonth from "date-fns/getMonth";
-import parseISO from "date-fns/parseISO";
-import isValid from "date-fns/isValid";
 import addMonths from "date-fns/addMonths";
-import lastDayOfYear from "date-fns/lastDayOfYear";
-import isEqual from "lodash/isEqual";
-import startOfMonth from "date-fns/startOfMonth";
-import endOfMonth from "date-fns/endOfMonth";
-import endOfDay from "date-fns/endOfDay";
-import startOfYear from "date-fns/startOfYear";
 import addYears from "date-fns/addYears";
+import endOfDay from "date-fns/endOfDay";
+import endOfMonth from "date-fns/endOfMonth";
+import format from "date-fns/format";
+import getMonth from "date-fns/getMonth";
+import getYear from "date-fns/getYear";
+import isValid from "date-fns/isValid";
+import lastDayOfYear from "date-fns/lastDayOfYear";
+import parseISO from "date-fns/parseISO";
+import startOfMonth from "date-fns/startOfMonth";
+import startOfYear from "date-fns/startOfYear";
+import isEqual from "lodash/isEqual";
 
 function isoDateFormat(date) {
   return format(date, "yyyy-MM-dd");
@@ -126,7 +126,11 @@ function smartMonthRange({ start, end }) {
 function lastFinishedMonthDate() {
   // the last month which is already over and therefore SUSHI data can be
   // harvested for it
-  return addMonths(new Date(), -1).setDate(1);
+  let out = addMonths(new Date(), -1);
+  // setDate() does a in-place mutation and returns a timestamp as a number
+  // so we call it separately and return the date object
+  out.setDate(1);
+  return out;
 }
 
 function lastFinishedMonth() {
@@ -172,26 +176,26 @@ function getMonthAbbreviation(monthNumber, locale = "en") {
 }
 
 export {
+  anyDateToYm,
+  counterGuaranteedPeriodStart,
+  counterGuaranteedPeriodStartDate,
+  getMonthAbbreviation,
   isoDateFormat,
+  isoDateTimeFormat,
+  isoDateTimeFormatSpans,
+  lastCoveredMonth,
+  lastCoveredMonthDate,
+  lastCoveredYearDate,
+  lastFinishedMonth,
+  lastFinishedMonthDate,
   monthFirstDay,
   monthLastDay,
+  monthsBetween,
+  parseDateTime,
+  smartDateParse,
+  smartMonthRange,
   ymDateFormat,
   ymDateParse,
   ymFirstDay,
   ymLastDay,
-  parseDateTime,
-  isoDateTimeFormat,
-  isoDateTimeFormatSpans,
-  monthsBetween,
-  smartDateParse,
-  smartMonthRange,
-  anyDateToYm,
-  lastFinishedMonth,
-  lastFinishedMonthDate,
-  lastCoveredMonth,
-  lastCoveredMonthDate,
-  lastCoveredYearDate,
-  counterGuaranteedPeriodStartDate,
-  counterGuaranteedPeriodStart,
-  getMonthAbbreviation,
 };

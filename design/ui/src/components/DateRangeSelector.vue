@@ -66,7 +66,7 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import { ymDateParse } from "@/libs/dates";
+import { ymDateParse, smartDateParse } from "@/libs/dates";
 import DateRangeText from "@/components/util/DateRangeText";
 import DatePicker from "@/components/DatePicker.vue";
 
@@ -146,7 +146,7 @@ export default {
     }),
     formatDate(dateString) {
       if (dateString) {
-        const date = new Date(dateString);
+        const date = new smartDateParse(dateString);
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         return `${year}-${month}`;

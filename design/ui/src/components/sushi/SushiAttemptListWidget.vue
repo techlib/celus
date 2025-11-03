@@ -95,7 +95,7 @@ cs:
                 ></span>
               </template>
               <template #item.start_date="{ item }">
-                {{ ymDateFormat(item.start_date) }}
+                {{ anyDateToYm(item.start_date) }}
               </template>
               <template #expanded-row="{ item, columns }">
                 <tr class="item_expanded_space">
@@ -238,7 +238,7 @@ import { isoDateTimeFormatSpans } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
 import TableCustomSort from "../tables/TableCustomSort.vue";
-import { ymDateFormat } from "@/libs/dates";
+import { anyDateToYm } from "@/libs/dates";
 
 export default {
   name: "SushiAttemptListWidget",
@@ -344,7 +344,7 @@ export default {
   },
   methods: {
     filesize,
-    ymDateFormat,
+    anyDateToYm,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

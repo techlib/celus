@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { ymDateFormat } from "@/libs/dates";
+import { anyDateToYm } from "@/libs/dates";
 
 export default {
   name: "DateRangeText",
@@ -30,13 +30,13 @@ export default {
     },
     startDate() {
       if (this.start) {
-        return ymDateFormat(this.start);
+        return anyDateToYm(this.start);
       }
       return "";
     },
     endDate() {
       if (this.end) {
-        return ymDateFormat(this.end);
+        return anyDateToYm(this.end);
       }
       return this.$t("labels.today");
     },

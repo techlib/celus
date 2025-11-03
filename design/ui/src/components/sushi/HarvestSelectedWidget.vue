@@ -161,22 +161,19 @@ cs:
 </template>
 
 <script>
-import { mapActions } from "vuex";
-import axios from "axios";
+import DatePicker from "@/components/DatePicker.vue";
+import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm.vue";
+import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
+import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
 import {
-  lastFinishedMonth,
   lastFinishedMonthDate,
   monthFirstDay,
   monthLastDay,
-  ymDateFormat,
   ymDateParse,
 } from "@/libs/dates";
-import SushiFetchIntentionsListWidget from "@/components/sushi/SushiFetchIntentionsListWidget";
-import SushiHarvestedSlotsWidget from "@/components/sushi/SushiHarvestedSlotsWidget";
-import ImportBatchesDeleteConfirm from "@/components/ImportBatchesDeleteConfirm.vue";
+import axios from "axios";
 import addMonths from "date-fns/addMonths";
-import DatePicker from "@/components/DatePicker.vue";
-import { mapState } from "vuex";
+import { mapActions, mapState } from "vuex";
 export default {
   name: "HarvestSelectedWidget",
 
@@ -392,20 +389,20 @@ export default {
 
   mounted() {
     if (this.startDate === null) {
-      this.startDate = ymDateFormat(addMonths(lastFinishedMonthDate(), -11));
+      const startDate = addMonths(lastFinishedMonthDate(), -11);
       this.startDate = {
-        month: new Date(this.startDate).getMonth(),
-        year: new Date(this.startDate).getFullYear(),
+        month: startDate.getMonth(),
+        year: startDate.getFullYear(),
       };
     }
     if (this.endDate === null) {
-      this.endDate = lastFinishedMonth();
+      const endDate = lastFinishedMonthDate();
       this.endDate = {
-        month: new Date(this.endDate).getMonth(),
-        year: new Date(this.endDate).getFullYear(),
+        month: endDate.getMonth(),
+        year: endDate.getFullYear(),
       };
     }
-    this.finishedMonth = new Date(lastFinishedMonth());
+    this.finishedMonth = lastFinishedMonthDate();
   },
 };
 </script>

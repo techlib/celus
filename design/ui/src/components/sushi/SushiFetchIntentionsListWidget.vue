@@ -224,7 +224,7 @@ cs:
           </template>
 
           <template #item.start_date="{ item }">
-            {{ ymDateFormat(new Date(item.start_date)) }}
+            {{ anyDateToYm(item.start_date) }}
           </template>
 
           <template #item.status="{ item }">
@@ -383,7 +383,7 @@ import {
 } from "@/libs/intention-state";
 import { counterVersionToStr } from "@/libs/sushi";
 import CheckMark from "@/components/util/CheckMark";
-import { isoDateTimeFormatSpans, ymDateFormat } from "@/libs/dates";
+import { isoDateTimeFormatSpans, anyDateToYm } from "@/libs/dates";
 import AttemptExtractedData from "@/components/sushi/AttemptExtractedData";
 import { filesize } from "filesize";
 import SushiLoaderGame from "@/components/sushi/SushiLoaderGame";
@@ -622,7 +622,7 @@ export default {
 
   methods: {
     filesize,
-    ymDateFormat,
+    anyDateToYm,
     ...mapActions({
       showSnackbar: "showSnackbar",
     }),

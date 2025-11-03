@@ -9,6 +9,7 @@
 
 <script>
 import format from "date-fns/format";
+import { smartDateParse } from "@/libs/dates";
 
 export default {
   name: "DateWithTooltip",
@@ -25,7 +26,7 @@ export default {
       if (!this.date) {
         return "";
       }
-      const dateObj = new Date(this.date);
+      const dateObj = smartDateParse(this.date);
       return format(dateObj, "PP");
     },
   },
