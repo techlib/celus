@@ -637,7 +637,7 @@ class TestFlexibleDataSlicerComputations:
         slicer = FlexibleDataSlicer(["organization"])
         platforms = flexible_slicer_test_data["platforms"][1:]
         tc = TagClassFactory(scope=TagScope.PLATFORM)
-        tags = TagFactory.create_batch(3, name="my_platforms", tag_class=tc)
+        tags = TagFactory.create_batch(2, name="my_platforms", tag_class=tc)
         for tag, platform in zip(tags, platforms, strict=True):
             tag.tag(platform, admin_user)
         slicer.add_filter(TagClassDimensionFilter("platform", tc), add_group=True)

@@ -397,13 +397,23 @@ class FlexibleDataExporter(ABC):
                         _prim_key, *extra_keys = dim_remap_keys
                         prim_text, *extra_data = remap_data
                         row[key] = prim_text
-                        # remap all other keys for this dimension
-                        for extra_key, text in zip(extra_keys, extra_data, strict=True):
-                            # For backward compatibility, only prefix with key when multiindex
-                            if self.multiindex:
-                                row[f"{key}_{extra_key}"] = text
-                            else:
-                                row[extra_key] = text
+                        if self.slicer.tag_roll_up:
+                            # when tag_roll_up is enabled, the primary dimension is the tagged
+                            # dimension. But we cannot assign its extra attributes to the tag
+                            # (for example, ISSN, EISSN, ISBN for title)
+                            # so we skip the whole extra attributes assignment
+                            # This section is here so that we have explicit comment about this
+                            # situation and to provide a place for possible future implementation
+                            # of tag-related extra attributes.
+                            pass
+                        else:
+                            # remap all other keys for this dimension
+                            for extra_key, text in zip(extra_keys, extra_data, strict=True):
+                                # For backward compatibility, only prefix with key when multiindex
+                                if self.multiindex:
+                                    row[f"{key}_{extra_key}"] = text
+                                else:
+                                    row[extra_key] = text
             else:
                 # For non-remapped fields (like date fields), preserve the value as-is
                 # The value is already in the correct format from the database query
