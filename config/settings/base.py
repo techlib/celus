@@ -427,7 +427,6 @@ CELERY_TASK_ROUTES = {
     "export.tasks.process_flexible_export_task": {"queue": "export"},
     "export.tasks.process_flexible_api_export_task": {"queue": "export"},
     "knowledgebase.tasks.sync_all_with_knowledgebase_task": {"queue": "celery"},
-    "knowledgebase.tasks.knowledgebase_sync_routes_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_parser_definitions_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_platforms_with_knowledgebase_task": {"queue": "celery"},
     "knowledgebase.tasks.sync_report_types_with_knowledgebase_task": {"queue": "celery"},
