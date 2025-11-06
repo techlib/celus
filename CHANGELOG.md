@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.1] - 2025-11-06
+
+### Added
+
+#### Backend
+
+- add description for title filter internal tags
+- improve tag class django admin by adding internal column and filter
+
+### Changed
+
+#### Backend
+
+- update Django version to 4.2.26 to fix security issues
+- refactor AccessLogExport to make it possible to start export directly from the class
+
+### Fixed
+
+#### Frontend
+
+- fix display of months in several places where they were off by one in timezone west of UTC
+- fix error in reporting where default ordering was removed for new reports
+- fix display of tooltips on tags
+- fix display of report types when uploading data in the CELUS format + fix dead expander in the same place
+- fix ordering of data in reporting output skipping each second ordering click
+- fix regression in custom table sort to preserve custom templates for header slots
+- add lazy loading of reporting link in charts - fixes issue with internal title tags being created automatically on page visit
+
+#### Backend
+
+- fix update_registry_models_task celery beat configuration preventing it from being scheduled
+- disable clickhouse Sentry integration to prevent OOM errors in production when syncing data to public clickhouse
+
 ## [10.1.0] - 2025-10-31
 
 This is an intermediate release for CzechELib. It will be released later as part of 11.0.0.

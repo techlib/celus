@@ -1,3 +1,25 @@
+- version: 10.0.1
+  title:
+    en: Bugfix release 10.0.1
+    cs: Opravná verze 10.0.1
+  text:
+    en: |
+      - Several issues in reporting were fixed, including ordering problems and display of report types
+      - Django was updated to version 4.2.26 to address security vulnerabilities
+      - Tag tooltips display was fixed
+      - An issue with internal title tags being automatically created was resolved
+      - Several other small improvements and bug fixes were introduced
+    cs: |
+      - Byly opraveny různé problémy v reportingu, včetně problémů s řazením a zobrazením typů reportů
+      - Django bylo aktualizováno na verzi 4.2.26 pro řešení bezpečnostních zranitelností
+      - Bylo opraveno zobrazení tooltipů u štítků
+      - Byla vyřešena chyba s automatickým vytvářením interních štítků titulů
+      - Bylo provedeno několik dalších drobných vylepšení a oprav chyb
+  is_new_feature: FALSE
+  is_update: FALSE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 10.1.0
   title:
     en: Detection of anomalies in usage data, multi-index reporting, notifications from COUNTER registry and much more
