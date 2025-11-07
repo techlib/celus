@@ -24,3 +24,10 @@ def test_celerybeat_schedule(settings):
         module_str, function_str = record["task"].rsplit(".", 1)
         module = import_module(module_str)
         assert hasattr(module, function_str), f"Checking {record['task']}"
+
+
+def test_all_celerybeat_schedule_tasks_have_task_route(settings):
+    tasks_in_routes = set(settings.CELERY_TASK_ROUTES.keys())
+    for record in settings.CELERY_BEAT_SCHEDULE.values():
+        assert "task" in record
+        assert record["task"] in tasks_in_routes, f"Task {record['task']} not in routes"

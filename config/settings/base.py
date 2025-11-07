@@ -467,6 +467,7 @@ CELERY_TASK_ROUTES = {
     "publications.tasks.process_title_overlap_batch_task": {"queue": "celery"},
     "publications.tasks.update_all_arrival_curves_task": {"queue": "celery"},
     "publications.tasks.erms_sync_platforms_task": {"queue": "celery"},
+    "recache.tasks.find_and_renew_first_due_cached_query_task": {"queue": "celery"},
     "recache.tasks.renew_cached_query_task": {"queue": "celery"},
     "recache.tasks.remove_old_cached_queries_task": {"queue": "celery"},
     "scheduler.tasks.plan_schedulers_triggering": {"queue": "sushi"},
