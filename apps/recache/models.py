@@ -180,15 +180,16 @@ class CachedQuery(models.Model):
         caught and re-raised as `RenewError`. This is useful when renewing querysets from old
         Django versions which raise errors due to queryset interface changes.
         """
+        start = monotonic()
         try:
             queryset = self.get_fresh_queryset()
+            self.queryset_pickle = pickle.dumps(queryset)
+
         except Exception as exc:
             if catch_refresh_errors:
                 raise RenewalError(f"Could not renew queryset because of error: {exc}") from None
             raise
 
-        start = monotonic()
-        self.queryset_pickle = pickle.dumps(queryset)
         self.last_updated = now()
         self.query_durations.append(monotonic() - start)
         orig_django_version = self.django_version
