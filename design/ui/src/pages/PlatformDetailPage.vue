@@ -242,7 +242,7 @@ cs:
           <v-icon class="mr-2">fa fa-download</v-icon>
           <span>{{ $t("sushi") }}</span>
         </v-tab>
-        <v-tab v-if="showAdminStuff && platform" value="admin">
+        <v-tab v-if="platform" value="admin">
           <v-icon class="mr-2">fas fa-tools</v-icon>
           <span>{{ $t("data_management") }}</span>
         </v-tab>
@@ -341,12 +341,12 @@ cs:
             </v-expansion-panels>
           </div>
         </v-window-item>
-        <v-window-item value="admin" v-if="showAdminStuff">
+        <v-window-item value="admin" v-if="platform">
           <v-sheet class="ma-1">
             <v-card>
               <v-card-text>
                 <v-container class="pa-2 pb-2">
-                  <section v-if="showAdminStuff" class="pb-8">
+                  <section class="pb-8">
                     <!-- raw data export -->
                     <v-row>
                       <v-col>
