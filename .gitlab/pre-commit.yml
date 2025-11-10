@@ -10,9 +10,16 @@ lints:pre_commit:
     POSTGRES_USER: celus
     POSTGRES_PASSWORD: celus
     POSTGRES_HOST: postgres
+    UV_CACHE_DIR: .uv-cache
   before_script:
     - cp .env.example .env
   script:
-    - uv run pre-commit run --hook-stage push --all-files
+    - uv run --active pre-commit run --hook-stage push --all-files
   tags:
     - bdd
+  cache:
+    - key:
+        files:
+          - uv.lock
+      paths:
+        - $UV_CACHE_DIR

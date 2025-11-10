@@ -37,9 +37,6 @@ RUN virtualenv env
 ENV VIRTUAL_ENV /env
 ENV PATH "/env/bin:${PATH}"
 
-# install latest pip
-RUN pip install --upgrade pip
-
 # install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="${PATH}:/root/.local/bin"
@@ -48,4 +45,4 @@ RUN uv --version
 # install dependencies
 COPY uv.lock uv.lock
 COPY pyproject.toml pyproject.toml
-RUN uv sync
+RUN uv sync --active
