@@ -39,6 +39,7 @@ class MyUserResource(ModelResource):
             "is_active",
             "is_staff",
             "source",
+            "email_verified",
         )
         export_order = fields
 
