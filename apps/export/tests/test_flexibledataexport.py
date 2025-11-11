@@ -836,6 +836,29 @@ class TestFlexibleDataExportExcel:
             ["Total", "=SUM(B2:B4)", "=SUM(C2:C4)", "=SUM(D2:D4)"],
         ]
 
+    @pytest.mark.parametrize("multiindex", [True, False])
+    def test_dates_have_correct_format(self, flexible_slicer_test_data, multiindex):
+        """
+        Tests that dates have correct format
+        """
+        slicer = FlexibleDataSlicer(["organization", "date"] if multiindex else ["date"])
+        slicer.add_group_by("platform")
+        slicer.order_by = ["date"]
+        exporter = FlexibleDataExcelExporter(slicer, include_charts=False, include_col_totals=True)
+        out = BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+        workbook = openpyxl.load_workbook(out)
+        sheet = workbook["report"]
+        # we need to check that the dates are correctly formatted
+        # (they are numbers with the date format, which openpyxl converts to datetime)
+        date_col = 1 if multiindex else 0
+        org_multiplier = 3 if multiindex else 1
+        for row in sheet.iter_rows(min_row=2, max_row=1 + org_multiplier * 4):  # 4 months
+            cell = row[date_col]
+            assert isinstance(cell.value, datetime)
+            assert cell.number_format == "yyyy-mm"
+
     def test_create_output_file_with_item(
         self, flexible_slicer_test_data_with_items, admin_user, export_output
     ):

@@ -816,7 +816,8 @@ class FlexibleDataExcelExporter(FlexibleDataExporter):
             )
         }
         if "date" in self.slicer.primary_dimensions:
-            col_formats["date"] = self.workbook.add_format(
+            idx = self.slicer.primary_dimensions.index("date")
+            col_formats[self.slicer.get_pk_key(idx)] = self.workbook.add_format(
                 {"num_format": "yyyy-mm", **self.base_fmt_dict}
             )
         if self.slicer.trend_mode:
