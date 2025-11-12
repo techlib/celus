@@ -634,18 +634,14 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
         # Apply ordering
         qs = filters.OrderByFilter().filter_queryset(request, qs, self)
         # Optimizations
-        qs = (
-            qs.select_related(
-                "user",
-                "platform",
-                "platform__source",
-                "organization",
-                "report_type",
-                "sushifetchattempt",
-            )
-            .prefetch_related("mdu")
-            .annotate(accesslog_count=Count("accesslog"))
-        )
+        qs = qs.select_related(
+            "user",
+            "platform",
+            "platform__source",
+            "organization",
+            "report_type",
+            "sushifetchattempt",
+        ).prefetch_related("mdu")
         return Response(ImportBatchVerboseSerializer(qs, many=True).data)
 
     class PurgeSerializer(Serializer):
