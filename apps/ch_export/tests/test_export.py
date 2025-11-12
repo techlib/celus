@@ -381,6 +381,7 @@ class TestRealAccessLogExportTaskExport:
             "organization__name",
             "platform_id",
             "platform__name",
+            "platform__counter_registry_id",
             "date",
             "metric_id",
             "metric__short_name",
@@ -420,8 +421,14 @@ class TestRealAccessLogExportTaskExport:
         ch_backend = exp.ch_backend()
 
         # create the export table with only part of the columns
+        COLS = {
+            **AnalyticalExportBackend.BASIC_COLS,
+            **AnalyticalExportBackend.TITLE_COLS,
+            **AnalyticalExportBackend.APPEND_COLS,
+        }
+
         cube = get_dynamic_cube(
-            rt.short_name, AnalyticalExportBackend.COLS | {"dim2": "access_method", "dim7": "wtf"}
+            rt.short_name, COLS | {"dim2": "access_method", "dim7": "wtf"}, dim_help_texts={}
         )
         ch_backend.initialize_storage(cube)
         # check the columns
@@ -434,6 +441,7 @@ class TestRealAccessLogExportTaskExport:
             "organization__name",
             "platform_id",
             "platform__name",
+            "platform__counter_registry_id",
             "date",
             "metric_id",
             "metric__short_name",
@@ -472,6 +480,7 @@ class TestRealAccessLogExportTaskExport:
             "organization__name",
             "platform_id",
             "platform__name",
+            "platform__counter_registry_id",
             "date",
             "metric_id",
             "metric__short_name",

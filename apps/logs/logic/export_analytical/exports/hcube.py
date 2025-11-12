@@ -53,7 +53,9 @@ def valid_identifier(iden: str) -> bool:
     return re.fullmatch("[a-zA-Z0-9_]*", iden) is not None
 
 
-def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
+def get_dynamic_cube(
+    table_name: str, cols: Dict[str, str], dim_help_texts: Dict[str, str]
+) -> Type[Cube]:
     tn = table_name  # scope workaround
     assert_valid_identifier(table_name)
 
@@ -70,6 +72,9 @@ def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
         platform__name = StringDimension(
             clickhouse={"low_cardinality": True}, help_text="Name of the platform"
         )
+        platform__counter_registry_id = StringDimension(  # TODO UUID Dimension
+            clickhouse={"low_cardinality": True}, help_text="Counter registry ID of the platform"
+        )
         date = DateDimension(help_text="Date of the usage")
         metric_id = IntDimension(
             signed=False, bits=32, help_text="Internal CELUS id for the metric"
@@ -78,19 +83,34 @@ def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
             clickhouse={"low_cardinality": True},
             help_text="Short name of the metric, for COUNTER matches the COUNTER metric name",
         )
-        title_id = IntDimension(signed=False, bits=32, help_text="Internal CELUS id of the title")
-        title__name = StringDimension(help_text="Name of the title")
-        title__pub_type = StringDimension(help_text="Publication type of the title")
-        title__isbn = StringDimension(help_text="ISBN of the title")
-        title__issn = StringDimension(help_text="ISSN of the title")
-        title__eissn = StringDimension(help_text="e-ISSN of the title")
-        title__doi = StringDimension(help_text="DOI of the title")
+
+        if "title_id" in cols.values():
+            title_id = IntDimension(
+                signed=False, bits=32, help_text="Internal CELUS id of the title"
+            )
+            title__name = StringDimension(help_text="Name of the title")
+            title__pub_type = StringDimension(help_text="Publication type of the title")
+            title__isbn = StringDimension(help_text="ISBN of the title")
+            title__issn = StringDimension(help_text="ISSN of the title")
+            title__eissn = StringDimension(help_text="e-ISSN of the title")
+            title__doi = StringDimension(help_text="DOI of the title")
+
+        if "item_id" in cols.values():
+            item_id = IntDimension(signed=False, bits=32, help_text="Internal CELUS id of the item")
+            item__name = StringDimension(help_text="Name of the item")
+            item__publication_date = DateDimension(help_text="Publication date of the item")
+            item__isbn = StringDimension(help_text="ISBN of the item")
+            item__eissn = StringDimension(help_text="e-ISSN of the item")
+            item__doi = StringDimension(help_text="DOI of the item")
 
         # explicit dimensions
         for col, translated in cols.items():
             if col.startswith("dim"):
                 assert_valid_identifier(translated)
-                locals()[translated] = StringDimension(clickhouse={"low_cardinality": True})
+                help_text = dim_help_texts.get(translated, "")
+                locals()[translated] = StringDimension(
+                    clickhouse={"low_cardinality": True}, help_text=help_text
+                )
 
         value = IntMetric(signed=False, bits=32, help_text="Value of the metric - the usage count")
         import_batch_id = IntDimension(
@@ -110,7 +130,12 @@ def get_dynamic_cube(table_name: str, cols: Dict[str, str]) -> Type[Cube]:
         class Clickhouse:
             table_name = tn
             primary_key = ["organization_id", "platform_id", "date", "metric_id"]
-            sorting_key = ["organization_id", "platform_id", "date", "metric_id", "title_id"]
+            sorting_key = ["organization_id", "platform_id", "date", "metric_id"]
+            if "title_id" in cols.values():
+                sorting_key.append("title_id")
+            if "item_id" in cols.values():
+                sorting_key.append("item_id")
+
             partition_key = ["toYear(date)"]
             indexes = [
                 # skipping index to make finding data by import batch faster
@@ -174,6 +199,8 @@ class HCubeExport(AnalyticalExportBackend):
         self.record: Optional[namedtuple] = None
         self.batch: List[Optional[namedtuple]] = []
         self.batch_size = kwargs.get("batch_size", 100_000)
+        # We dont want tag cols here, as they will be exported as separate tables
+        self.tags = False
 
         self.import_batch_ids: Optional[List[int]] = None
         self.cube_backend: Optional[CubeBackend] = None
@@ -194,11 +221,14 @@ class HCubeExport(AnalyticalExportBackend):
 
         self.cols = {k: sanitize_identifier(v) for k, v in self.cols.items()}
         assert_valid_identifier(self.table)
-        self.cube = get_dynamic_cube(self.table, self.cols)
+        dim_help_texts = self._get_dim_help_texts()
+        self.cube = get_dynamic_cube(self.table, self.cols, dim_help_texts=dim_help_texts)
         self.record = self.cube.record_type()
         self.cube_backend.initialize_storage(self.cube)
         # if the table exists, we want to make sure its structure is up to date
-        self.cube_backend.sync_storage(self.cube, drop=True)
+        # `recreate=True` ensures that the table is dropped and recreated with the new schema
+        # if it cannot be synced otherwise (e.g. when dropping sorting key columns)
+        self.cube_backend.sync_storage(self.cube, drop=True, recreate=True)
         self.stats = {
             "new_records_count": 0,
             "new_ibs_count": 0,
@@ -216,6 +246,15 @@ class HCubeExport(AnalyticalExportBackend):
                 self._col_defaults.append(dim.default)
             else:
                 self._col_defaults.append(None)
+
+    def _get_dim_help_texts(self) -> Dict[str, str]:
+        dim_help_texts: Dict[str, str] = {}
+        for i, dim in enumerate(self.rt.dimensions_sorted):
+            col_key = f"dim{i + 1}"
+            translated = self.cols.get(col_key)
+            if translated:
+                dim_help_texts[translated] = getattr(dim, "desc", "")
+        return dim_help_texts
 
     def _export_row(self, row: Dict[str, Any]):
         # fill empty values

@@ -11,7 +11,9 @@ from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from logs.models import ImportBatch, ReportType
+from tags.models import AccessibleBy, OrganizationTag, PlatformTag, Tag, TitleTag
 
+from ch_export.cubes import OrganizationTagCube, PlatformTagCube, TitleTagCube
 from ch_export.helpers import SmarterStringIO
 
 if TYPE_CHECKING:
@@ -46,7 +48,10 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
         return f"AccessLogExport ({note})"
 
     def save(self, *args, **kwargs):
-        from ch_export.cubes import create_ch_export_database, create_ch_export_user  # noqa - slow import
+        from ch_export.cubes import (  # noqa - slow import
+            create_ch_export_database,
+            create_ch_export_user,
+        )
 
         if not self.ch_database:
             self.ch_database = self.db_name()
@@ -111,6 +116,10 @@ class AccessLogExportBatch(models.Model):
     export = models.ForeignKey(AccessLogExport, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-created"]
+        verbose_name_plural = "Access log export batches"
+
     def __str__(self):
         return f"Batch {self.created}"
 
@@ -124,6 +133,149 @@ class AccessLogExportBatch(models.Model):
             return "running"
         else:
             return "completed"
+
+    def visibility_tag_qs(self):
+        no_internal_tags = self.export.settings.get("_default", {}).get("no_internal_tags", False)
+        filters = Q(can_see=AccessibleBy.EVERYBODY)
+        if self.export.organization:
+            filters |= Q(can_see=AccessibleBy.ORG_ADMINS, owner_org=self.export.organization)
+        else:
+            filters |= Q(can_see=AccessibleBy.ORG_ADMINS)
+            filters |= Q(can_see=AccessibleBy.CONS_ADMINS)
+        if no_internal_tags:
+            filters &= Q(tag_class__internal=False)
+        return Tag.objects.prefetch_related("tag_class").filter(filters)
+
+    def refresh_export_tags(self, backend=None, organization=None):
+        """
+        Rebuild title/organization/platform tag helper tables for this batch's export.
+
+        Args:
+            backend: Optional backend to use (defaults to export.ch_backend())
+            organization: Optional organization for visibility (defaults to export.organization)
+        """
+        if backend is None:
+            backend = self.export.ch_backend()
+        if organization is None:
+            organization = self.export.organization
+
+        # Build visibility queryset
+        no_internal_tags = self.export.settings.get("_default", {}).get("no_internal_tags", False)
+        filters = Q(can_see=AccessibleBy.EVERYBODY)
+        if organization:
+            filters |= Q(can_see=AccessibleBy.ORG_ADMINS, owner_org=organization)
+        else:
+            filters |= Q(can_see=AccessibleBy.ORG_ADMINS)
+            filters |= Q(can_see=AccessibleBy.CONS_ADMINS)
+        if no_internal_tags:
+            filters &= Q(tag_class__internal=False)
+        tag_qs = Tag.objects.prefetch_related("tag_class").filter(filters)
+
+        # Title tags
+        backend.initialize_storage(TitleTagCube)
+        backend.sync_storage(TitleTagCube, drop=True)
+        backend.delete_records(TitleTagCube.query())
+
+        title_count = 0
+        buf = []
+        for title_id, tag_id, tag_name, tag_class_id, tag_class_name in (
+            TitleTag.objects.filter(tag__in=tag_qs)
+            .select_related("tag", "tag__tag_class")
+            .values_list(
+                "target_id", "tag_id", "tag__name", "tag__tag_class_id", "tag__tag_class__name"
+            )
+            .iterator()
+        ):
+            buf.append(
+                dict(
+                    title_id=title_id,
+                    tag_id=tag_id,
+                    tag__name=tag_name,
+                    tag_class_id=tag_class_id,
+                    tag_class__name=tag_class_name,
+                )
+            )
+            title_count += 1
+
+            if len(buf) >= 10000:
+                backend.store_records(TitleTagCube, buf, dict_records=True, skip_cleanup=True)
+                buf = []
+
+        if buf:  # Flush the remainder
+            backend.store_records(TitleTagCube, buf, dict_records=True, skip_cleanup=True)
+
+        # Organization tags - only for consortium exports
+        org_count = 0
+        if organization is None:  # only for consortium exports
+            backend.initialize_storage(OrganizationTagCube)
+            backend.sync_storage(OrganizationTagCube, drop=True)
+            backend.delete_records(OrganizationTagCube.query())
+
+            buf = []
+            for org_id, tag_id, tag_name, tag_class_id, tag_class_name in (
+                OrganizationTag.objects.filter(tag__in=tag_qs)
+                .select_related("tag", "tag__tag_class")
+                .values_list(
+                    "target_id", "tag_id", "tag__name", "tag__tag_class_id", "tag__tag_class__name"
+                )
+                .iterator()
+            ):
+                buf.append(
+                    dict(
+                        organization_id=org_id,
+                        tag_id=tag_id,
+                        tag__name=tag_name,
+                        tag_class_id=tag_class_id,
+                        tag_class__name=tag_class_name,
+                    )
+                )
+                org_count += 1
+
+                if len(buf) >= 10000:
+                    backend.store_records(
+                        OrganizationTagCube, buf, dict_records=True, skip_cleanup=True
+                    )
+                    buf = []
+
+            if buf:  # Flush the remainder
+                backend.store_records(
+                    OrganizationTagCube, buf, dict_records=True, skip_cleanup=True
+                )
+
+        # Platform tags
+        platform_count = 0
+        backend.initialize_storage(PlatformTagCube)
+        backend.sync_storage(PlatformTagCube, drop=True)
+        backend.delete_records(PlatformTagCube.query())
+
+        buf = []
+        for platform_id, tag_id, tag_name, tag_class_id, tag_class_name in (
+            PlatformTag.objects.filter(tag__in=tag_qs)
+            .select_related("tag", "tag__tag_class")
+            .values_list(
+                "target_id", "tag_id", "tag__name", "tag__tag_class_id", "tag__tag_class__name"
+            )
+            .iterator()
+        ):
+            buf.append(
+                dict(
+                    platform_id=platform_id,
+                    tag_id=tag_id,
+                    tag__name=tag_name,
+                    tag_class_id=tag_class_id,
+                    tag_class__name=tag_class_name,
+                )
+            )
+            platform_count += 1
+
+            if len(buf) >= 10000:
+                backend.store_records(PlatformTagCube, buf, dict_records=True, skip_cleanup=True)
+                buf = []
+
+        if buf:  # Flush the remainder
+            backend.store_records(PlatformTagCube, buf, dict_records=True, skip_cleanup=True)
+
+        return {"title_rows": title_count, "org_rows": org_count, "platform_rows": platform_count}
 
 
 class AccessLogExportTask(models.Model):
@@ -157,8 +309,8 @@ class AccessLogExportTask(models.Model):
             self.started = timezone.now()
             self.save()
         stream = SmarterStringIO()
-        exp = self.create_exporter(stream)
         try:
+            exp = self.create_exporter(stream)
             exp.export(progress_monitor=self._progress)
             self.stats = exp.stats
         except Exception:
@@ -168,6 +320,13 @@ class AccessLogExportTask(models.Model):
         finally:
             self.finished = timezone.now()
             self.save()
+            # If all tasks in the batch finished, trigger tag refresh
+            if not self.batch.tasks.filter(finished__isnull=True).exists():
+                from celery import current_app
+
+                current_app.send_task(
+                    "ch_export.tasks.refresh_export_tags_task", args=(self.batch.pk,), countdown=2
+                )
 
     def create_exporter(self, stderr_stream: Optional[StringIO] = None) -> "HCubeExport":
         from logs.logic.export_analytical import HCubeExport  # noqa - slow import

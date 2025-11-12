@@ -36,13 +36,19 @@ class AnalyticalExportBackend:
     # These are the columns to be exported from AccessLogs, order-sensitive.
     # Dimension columns are included and named automatically through report_type.
     # key -> attribute on AccessLog, value -> column name in the export
-    COLS = {
+
+    # Basic columns always present
+    BASIC_COLS = {
         "metric_id": "metric_id",
         "metric__short_name": "metric__short_name",
         "organization_id": "organization_id",
         "organization__name": "organization__name",
         "platform_id": "platform_id",
         "platform__name": "platform__name",
+        "platform__counter_registry_id": "platform__counter_registry_id",
+    }
+
+    TITLE_COLS = {
         "target_id": "title_id",
         "target__name": "title__name",
         "target__pub_type": "title__pub_type",
@@ -50,10 +56,20 @@ class AnalyticalExportBackend:
         "target__issn": "title__issn",
         "target__eissn": "title__eissn",
         "target__doi": "title__doi",
-        "value": "value",
-        "date": "date",
-        "import_batch_id": "import_batch_id",
     }
+
+    # Item columns (included when report_type.uses_items is True)
+    ITEM_COLS = {
+        "item_id": "item_id",
+        "item__name": "item__name",
+        "item__publication_date": "item__publication_date",
+        "item__doi": "item__doi",
+        "item__isbn": "item__isbn",
+        "item__eissn": "item__eissn",
+    }
+
+    # Columns to append after dimensions
+    APPEND_COLS = {"value": "value", "date": "date", "import_batch_id": "import_batch_id"}
 
     # These columns will be taken out and placed after dimension columns
     DIM_BEFORE = ("value", "date", "import_batch_id")
@@ -78,19 +94,28 @@ class AnalyticalExportBackend:
         self.output = output
         self.stderr = kwargs.get("stderr", Noop)
         self.style = kwargs.get("style", Noop)
-        self.cols: Dict[str, str] = self.COLS.copy()
         self._tag_cols = []
 
-        append = {k: self.cols.pop(k) for k in self.DIM_BEFORE}
+        self.cols: Dict[str, str] = {}
+        self.cols.update(self.BASIC_COLS)
+
+        if self.rt.uses_titles:
+            self.cols.update(self.TITLE_COLS)
+
+        if self.rt.uses_items:
+            self.cols.update(self.ITEM_COLS)
+
         if self.tags:
-            self._tag_cols.append("tags")
-            if not self.no_internal_tags:
-                self._tag_cols.append("internal_tags")
+            # Only include title tags when the report type uses titles
+            if self.rt.uses_titles:
+                self._tag_cols.append("tags")
+                if not self.no_internal_tags:
+                    self._tag_cols.append("internal_tags")
             if not self.organization:
                 self._tag_cols.append("organization_tags")
             if not self.platform:
                 self._tag_cols.append("platform_tags")
-            append.update({k: k for k in self._tag_cols})
+            self.cols.update({k: k for k in self._tag_cols})
 
         for n, dim in enumerate(self.rt.dimensions_sorted):
             dim_name = dim.short_name
@@ -103,7 +128,9 @@ class AnalyticalExportBackend:
                 else:
                     dim_name = "platform_in_counter_data"
             self.cols[f"dim{n + 1}"] = dim_name.lower()
-        self.cols.update(append)
+
+        # Add append columns at the end
+        self.cols.update(self.APPEND_COLS)
 
     def _pre_export(self, cols: Iterable[str]):
         pass
@@ -225,7 +252,9 @@ class AnalyticalExportBackend:
             if self.tags:
                 row_dict.update(
                     self.get_tags(
-                        row_dict["title_id"], row_dict["organization_id"], row_dict["platform_id"]
+                        row_dict.get("title_id", None),
+                        row_dict["organization_id"],
+                        row_dict["platform_id"],
                     )
                 )
 
@@ -289,7 +318,16 @@ class AnalyticalExportBackend:
             target__isbn=StoredMap("target_id", "title", "isbn"),
             target__doi=StoredMap("target_id", "title", "doi"),
             target__pub_type=StoredMap("target_id", "title", "pub_type"),
+            item__name=StoredMap("item_id", "item", "name"),
+            item__issn=StoredMap("item_id", "item", "issn"),
+            item__eissn=StoredMap("item_id", "item", "eissn"),
+            item__isbn=StoredMap("item_id", "item", "isbn"),
+            item__doi=StoredMap("item_id", "item", "doi"),
+            item__publication_date=StoredMap("item_id", "item", "publication_date"),
             platform__name=StoredMap("platform_id", "platform", "name"),
+            platform__counter_registry_id=StoredMap(
+                "platform_id", "platform", "counter_registry_id"
+            ),
             organization__name=StoredMap("organization_id", "organization", "name"),
             metric__short_name=StoredMap("metric_id", "metric", "short_name"),
         )

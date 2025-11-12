@@ -24,12 +24,16 @@ class ParquetExport(AnalyticalExportBackend):
         self._schema = None
         self._batch_size = 10000  # Write in batches for memory efficiency
         self._current_batch = []
+        self._cols = []
 
     def _pre_export(self, cols):
+        # Remember the exact column order for stable row writing
+        self._cols = list(cols)
+
         # Create schema based on column types
         schema_fields = []
-        for col in cols:
-            if col in ("internal_tags", "tags"):
+        for col in self._cols:
+            if col in ("internal_tags", "tags", "organization_tags", "platform_tags"):
                 # Tags will be list of strings
                 schema_fields.append(pa.field(col, pa.list_(pa.string())))
             elif col in [
@@ -57,7 +61,8 @@ class ParquetExport(AnalyticalExportBackend):
     def _export_row(self, row: Dict[str, Any]):
         # Convert row data to appropriate types for Arrow
         arrow_row = []
-        for i, value in enumerate(row.values()):
+        for i, col_name in enumerate(self._cols):
+            value = row.get(col_name)
             field_type = self._schema.field(i).type
 
             if field_type == pa.list_(pa.string()):

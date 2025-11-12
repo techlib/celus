@@ -92,7 +92,7 @@ class AccessLogCube(Cube):
                 ("name", "issn", "eissn", "doi", "isbn", "publication_date"),
             ),
             ("organization", "organizations_organization", ("short_name", "name")),
-            ("platform", "publications_platform", ("short_name", "name")),
+            ("platform", "publications_platform", ("short_name", "name", "counter_registry_id")),
             ("report_type", "logs_reporttype", ("short_name", "name")),
             ("metric", "logs_metric", ("short_name", "name")),
             ("dim", "logs_dimensiontext", ("text",)),

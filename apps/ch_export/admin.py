@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 
-from ch_export.models import AccessLogExport, AccessLogExportTask
+from ch_export.models import AccessLogExport, AccessLogExportBatch, AccessLogExportTask
 
 
 @admin.register(AccessLogExport)
@@ -138,3 +138,15 @@ class AccessLogExportTaskAdmin(ModelAdmin):
 
     def has_add_permission(self, request, obj=None):
         return False
+
+
+@admin.register(AccessLogExportBatch)
+class AccessLogExportBatchAdmin(ModelAdmin):
+    list_display = ["id", "export", "created", "status"]
+    list_filter = ["export", "created"]
+    list_select_related = ["export", "export__organization"]
+    ordering = ["-created"]
+    readonly_fields = ["export", "created"]
+
+    def status(self, obj):
+        return obj.get_status()

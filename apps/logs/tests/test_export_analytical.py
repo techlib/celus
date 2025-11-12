@@ -2,7 +2,10 @@ import csv
 
 import pyarrow.parquet as pq
 import pytest
+from ch_export.cubes import OrganizationTagCube, PlatformTagCube, TitleTagCube
+from ch_export.models import AccessLogExport, AccessLogExportBatch
 from core.fake_data import UserFactory
+from django.db.models import Q
 from tags.fake_data import TagClassFactory, TagFactory
 from tags.models import AccessibleBy, OrganizationTag, PlatformTag, TitleTag
 
@@ -94,9 +97,12 @@ class TestAnalyticalExport:
             reader = csv.DictReader(fp)
             header = (
                 "metric_id,metric__short_name,organization_id,organization__name,platform_id,"
-                "platform__name,title_id,title__name,title__pub_type,title__isbn,title__issn,"
-                "title__eissn,title__doi,dim1name,dim2name,value,date,import_batch_id".split(",")
+                "platform__name,platform__counter_registry_id,title_id,title__name,title__pub_type,"
+                "title__isbn,title__issn,title__eissn,title__doi,dim1name,dim2name,value,date,import_batch_id".split(
+                    ","
+                )
             )
+            print(f"reader fieldnames: {reader.fieldnames}")
             assert reader.fieldnames == header
 
             count = {k: {} for k in self.EXPECTED_DATA_SLICER.keys()}
@@ -133,18 +139,21 @@ class TestAnalyticalExport:
 
             # we're dealing with 100 rows from ImportBatches, so it's not slow
             count = 0
+            INT_HEADERS = {h for h in expected_header if h.endswith("_id") and "__" not in h}
             for row in reader:
                 count += 1
-                assert (
-                    AccessLog.objects.filter(
-                        **{
-                            fields_reverse[k]: (int(row[k]) if k.endswith("_id") else row[k])
-                            for k in expected_header
-                            if k not in dimensions
-                        }
-                    ).count()
-                    == 1
-                ), "row not found in db"
+                # Build filter kwargs accounting for optional UUID in platform__counter_registry_id
+                q = Q()
+                for k in expected_header:
+                    if k in dimensions:
+                        continue
+                    if k == "platform__counter_registry_id" and row[k] == "":
+                        # UUID cannot be filtered using empty string
+                        q &= Q(**{f"{fields_reverse[k]}__isnull": True})
+                        continue
+                    else:
+                        q &= Q(**{fields_reverse[k]: int(row[k]) if k in INT_HEADERS else row[k]})
+                assert AccessLog.objects.filter(q).count() == 1, "row not found in db"
 
                 # check for translations of DimensionText
                 if int(row["import_batch_id"]) == ibs[0].id:
@@ -198,7 +207,7 @@ class TestAnalyticalExport:
         table = pq.read_table(path)
         expected_columns = (
             "metric_id,metric__short_name,organization_id,organization__name,platform_id,"
-            "platform__name,title_id,title__name,title__pub_type,title__isbn,title__issn,"
+            "platform__name,platform__counter_registry_id,title_id,title__name,title__pub_type,title__isbn,title__issn,"
             "title__eissn,title__doi,dim1name,dim2name,value,date,import_batch_id".split(",")
         )
         assert list(table.column_names) == expected_columns
@@ -216,6 +225,7 @@ class TestAnalyticalExport:
         metric_ids = table.column("metric_id").to_pylist()
         title_ids = table.column("title_id").to_pylist()
         values = table.column("value").to_pylist()
+        plat_cr_ids = table.column("platform__counter_registry_id").to_pylist()
         assert all(isinstance(x, int) for x in metric_ids), (
             f"Expected integers for metric_id, got {[type(x) for x in metric_ids[:3]]}"
         )
@@ -224,6 +234,10 @@ class TestAnalyticalExport:
         )
         assert all(isinstance(x, int) for x in values), (
             f"Expected integers for value, got {[type(x) for x in values[:3]]}"
+        )
+        assert all(isinstance(x, str) for x in plat_cr_ids), (
+            f"Expected strings for platform__counter_registry_id,\
+            got {[type(x) for x in plat_cr_ids[:3]]}"
         )
 
     def test_parquet_with_tags(self, tag_data):
@@ -254,13 +268,31 @@ class TestAnalyticalExport:
 @pytest.mark.usefixtures("clickhouse_db")
 @pytest.mark.django_db(transaction=True)
 class TestHCubeExport:
-    def test_hcube_clickhouse(self, flexible_slicer_test_data):
-        table = "test_hcube_export_clickhouse"
+    _export_table_name = "test_hcube_export_clickhouse"
+
+    @pytest.fixture
+    def export_table(self):
+        """
+        We need to ensure proper cleanup of the exported tables.
+        We export into the same datatabase as the main database, but the automatic cleanup
+        (done in the `clickhouse_db` fixture) only takes care of the normal tables -
+        not the export tables. So we need to drop them here.
+        """
+        with ch_backend.pool.get_client() as client:
+            for table in [
+                self._export_table_name,
+                OrganizationTagCube.Clickhouse.table_name,
+                PlatformTagCube.Clickhouse.table_name,
+                TitleTagCube.Clickhouse.table_name,
+            ]:
+                client.execute(f"DROP TABLE IF EXISTS {ch_backend.database}.{table}")
+                ch_backend._table_exists.pop(table, None)
+        yield self._export_table_name
+
+    def test_hcube_clickhouse(self, flexible_slicer_test_data, export_table):
         rt = flexible_slicer_test_data["report_types"][1]
 
-        export = HCubeExport(cube_backend=ch_backend, table=table, report_type=rt)
-        export.cube_backend.drop_storage(export.cube)
-        export.cube_backend.initialize_storage(export.cube)
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=rt)
         export.export()
 
         count = {k: {} for k in TestAnalyticalExport.EXPECTED_DATA_SLICER.keys()}
@@ -274,32 +306,225 @@ class TestHCubeExport:
         with export.cube_backend.pool.get_client() as client:
             comment = client.execute(
                 "SELECT comment FROM system.tables WHERE database = %(db)s AND name = %(table)s;",
-                {"db": export.cube_backend.database, "table": table},
+                {"db": export.cube_backend.database, "table": export_table},
             )[0][0]
             assert "last update: " in comment, "Expected the comment to be set on the table"
             assert rt.name in comment, "Expected the report type name to be in the comment"
 
-        export = HCubeExport(cube_backend=ch_backend, table=table, report_type=rt)
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=rt)
         assert export.export() == 0, "exporting twice shouldn't update anything"
 
-        export.cube_backend.drop_storage(export.cube)
-
-    def test_hcube_clickhouse_tags(self, tag_data):
+    def test_hcube_title_tags(self, tag_data, export_table):
+        """
+        Test that correct title tags are exported and that no internal tags are exported
+        with "no_internal_tags": True.
+        """
         tr = tag_data["tr"]
         access_logs = tag_data["access_logs"]
 
-        table = "test_hcube_export_clickhouse"
-        export = HCubeExport(cube_backend=ch_backend, table=table, report_type=tr, tags=True)
-        export.cube_backend.drop_storage(export.cube)
-        export.cube_backend.initialize_storage(export.cube)
+        # Export the main data
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
         export.export()
 
-        for row in export.cube_backend.get_records(export.cube.query()):
-            if row.title_id == access_logs[0].target_id:
-                assert row.tags == ["Test Tag Class / Tag1"]
-            elif row.title_id == access_logs[1].target_id:
-                assert row.tags == ["Test Tag Class / Tag1", "Test Tag Class / Tag2"]
-            else:
-                assert row.tags == []
+        # Populate tag tables using the batch refresh method
+        export_obj = AccessLogExport(
+            organization=None, settings={"_default": {"no_internal_tags": True}}
+        )
+        batch = AccessLogExportBatch(export=export_obj)
 
-        export.cube_backend.drop_storage(export.cube)
+        # Call refresh_export_tags with the test backend
+        batch.refresh_export_tags(backend=export.cube_backend, organization=None)
+
+        # Query title_tags table and verify it's populated correctly
+        title_tags_map = {}
+        for row in export.cube_backend.get_records(TitleTagCube.query()):
+            if row.title_id not in title_tags_map:
+                title_tags_map[row.title_id] = []
+            title_tags_map[row.title_id].append(f"{row.tag_class__name} / {row.tag__name}")
+
+        # Sort tags for consistent comparison
+        for title_id in title_tags_map:
+            title_tags_map[title_id].sort()
+
+        # Verify tags match expectations
+        assert access_logs[0].target_id in title_tags_map
+        assert title_tags_map[access_logs[0].target_id] == ["Test Tag Class / Tag1"]
+
+        assert access_logs[1].target_id in title_tags_map
+        assert title_tags_map[access_logs[1].target_id] == [
+            "Test Tag Class / Tag1",
+            "Test Tag Class / Tag2",
+        ]
+
+        # only owner tag - should not appear
+        assert access_logs[2].target_id not in title_tags_map
+
+    def test_hcube_title_tags_internal(self, tag_data, export_table):
+        """
+        Test that internal tags are also exported with "no_internal_tags": False.
+        """
+        tr = tag_data["tr"]
+        access_logs = tag_data["access_logs"]
+
+        # Export the main data
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
+        export.export()
+
+        # Populate tag tables using the batch refresh method
+        export_obj = AccessLogExport(
+            organization=None, settings={"_default": {"no_internal_tags": False}}
+        )
+        batch = AccessLogExportBatch(export=export_obj)
+
+        # Call refresh_export_tags with the test backend
+        batch.refresh_export_tags(backend=export.cube_backend, organization=None)
+
+        # Query title_tags table and verify it's populated correctly
+        title_tags_map = {}
+        for row in export.cube_backend.get_records(TitleTagCube.query()):
+            if row.title_id not in title_tags_map:
+                title_tags_map[row.title_id] = []
+            title_tags_map[row.title_id].append(f"{row.tag_class__name} / {row.tag__name}")
+
+        # Sort tags for consistent comparison
+        for title_id in title_tags_map:
+            title_tags_map[title_id].sort()
+
+        # Verify tags match expectations
+        assert access_logs[0].target_id in title_tags_map
+        assert title_tags_map[access_logs[0].target_id] == [
+            "INTERNAL TAG CLASS / INTERNAL TAG",
+            "Test Tag Class / Tag1",
+        ]
+
+        assert access_logs[1].target_id in title_tags_map
+        assert title_tags_map[access_logs[1].target_id] == [
+            "Test Tag Class / Tag1",
+            "Test Tag Class / Tag2",
+        ]
+        # only owner tag
+        assert access_logs[2].target_id not in title_tags_map
+
+    def test_hcube_title_tags_join(self, tag_data, export_table):
+        """
+        Test that the tag table can be joined with the main export table.
+        """
+        tr = tag_data["tr"]
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
+        export.export()
+
+        # Populate tag tables using the batch refresh method
+        export_obj = AccessLogExport(organization=None, settings={})
+        batch = AccessLogExportBatch(export=export_obj)
+        batch.refresh_export_tags(backend=export.cube_backend, organization=None)
+
+        tags_title_ids = set()
+        for row in export.cube_backend.get_records(TitleTagCube.query()):
+            tags_title_ids.add(row.title_id)
+
+        main_table_title_ids = set()
+        for row in export.cube_backend.get_records(export.cube.query()):
+            main_table_title_ids.add(row.title_id)
+
+        for title_id in tags_title_ids:
+            assert title_id in main_table_title_ids, (
+                f"Title {title_id} has tags but doesn't exist in main export"
+            )
+
+    def test_hcube_platform_tags(self, tag_data, export_table):
+        """
+        Test that platform tags are populated correctly.
+        """
+
+        tr = tag_data["tr"]
+        access_logs = tag_data["access_logs"]
+
+        # Export the main data
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
+        export.export()
+
+        # Populate tag tables using the batch refresh method
+        # Create minimal export objects to use the refresh method
+        export_obj = AccessLogExport(organization=None, settings={})
+        batch = AccessLogExportBatch(export=export_obj)
+
+        # Call refresh_export_tags with the test backend
+        batch.refresh_export_tags(backend=export.cube_backend, organization=None)
+
+        # Query tag tables and verify they're populated correctly
+        platform_tags = {}
+        for row in export.cube_backend.get_records(PlatformTagCube.query()):
+            if row.platform_id not in platform_tags:
+                platform_tags[row.platform_id] = []
+            platform_tags[row.platform_id].append(f"{row.tag_class__name} / {row.tag__name}")
+
+        assert access_logs[0].platform_id in platform_tags.keys()
+        assert len(platform_tags[access_logs[0].platform_id]) == 1
+        assert platform_tags[access_logs[0].platform_id][0] == "Test Tag Class / Tag1"
+
+    def test_hcube_organization_tags(self, tag_data, export_table):
+        """
+        Test that tag tables (title_tags, organization_tags, platform_tags) are populated
+        correctly and can be queried alongside the main export table.
+        """
+
+        tr = tag_data["tr"]
+        access_logs = tag_data["access_logs"]
+
+        # Export the main data
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
+        export.export()
+
+        # Populate tag tables using the batch refresh method
+        # Create minimal export objects to use the refresh method
+        export_obj = AccessLogExport(organization=None, settings={})
+        batch = AccessLogExportBatch(export=export_obj)
+
+        # Call refresh_export_tags with the test backend
+        batch.refresh_export_tags(backend=export.cube_backend, organization=None)
+
+        # Query tag tables and verify they're populated correctly
+        organization_tags = {}
+        for row in export.cube_backend.get_records(OrganizationTagCube.query()):
+            if row.organization_id not in organization_tags:
+                organization_tags[row.organization_id] = []
+            organization_tags[row.organization_id].append(
+                f"{row.tag_class__name} / {row.tag__name}"
+            )
+
+        assert access_logs[0].organization_id in organization_tags.keys()
+        assert len(organization_tags[access_logs[0].organization_id]) == 1
+        assert organization_tags[access_logs[0].organization_id][0] == "Test Tag Class / Tag1"
+
+    def test_hcube_one_organization(self, tag_data, export_table):
+        """
+        Test that when we create export for 1 organization,
+        the organization tag table does not get created.
+        """
+        tr = tag_data["tr"]
+        access_logs = tag_data["access_logs"]
+        organization = access_logs[0].organization
+
+        # Export the main data
+        export = HCubeExport(cube_backend=ch_backend, table=export_table, report_type=tr)
+        export.export()
+
+        # Populate tag tables using the batch refresh method
+        export_obj = AccessLogExport(organization=organization, settings={})
+        batch = AccessLogExportBatch(export=export_obj)
+        batch.refresh_export_tags(backend=export.cube_backend, organization=organization)
+
+        # verify that the organization tags table does not exist
+        with export.cube_backend.pool.get_client() as client:
+            exists = (
+                client.execute(
+                    "EXISTS TABLE {db:Identifier}.{table:Identifier}",
+                    {
+                        "db": export.cube_backend.database,
+                        "table": OrganizationTagCube.Clickhouse.table_name,
+                    },
+                    settings={"server_side_params": True},
+                )[0][0]
+                == 1
+            )
+        assert not exists

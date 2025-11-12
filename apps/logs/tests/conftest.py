@@ -203,8 +203,16 @@ def flexible_slicer_test_data(report_type_nd):
             name="Platform 1",
             counter_registry_id="11111111-1111-1111-1111-111111111111",
         ),
-        Platform.objects.create(short_name="pl2", name="Platform 2"),
-        Platform.objects.create(short_name="pl3", name="Platform 3"),
+        Platform.objects.create(
+            short_name="pl2",
+            name="Platform 2",
+            counter_registry_id="22222222-2222-2222-2222-222222222222",
+        ),
+        Platform.objects.create(
+            short_name="pl3",
+            name="Platform 3",
+            counter_registry_id="33333333-3333-3333-3333-333333333333",
+        ),
     ]
     metrics = [
         Metric.objects.create(short_name="m1", name="Metric 1"),

@@ -3,6 +3,8 @@ from typing import Optional
 from clickhouse_driver import Client
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from hcube.api.models.cube import Cube
+from hcube.api.models.dimensions import IntDimension, StringDimension
 from hcube.backends.clickhouse import ClickhouseCubeBackend
 from logs.logic.export_analytical.exports.hcube import assert_valid_identifier, sanitize_identifier
 
@@ -56,3 +58,48 @@ def create_ch_export_user(db: str, username: str, password: str) -> str:
     )
     ch_export_client.execute(f"GRANT SELECT ON {db}.* TO {username}")
     return password
+
+
+class TitleTagCube(Cube):
+    title_id = IntDimension(signed=False, bits=32)
+    tag_id = IntDimension(signed=False, bits=32)
+    tag__name = StringDimension(clickhouse={"low_cardinality": True})
+    tag_class_id = IntDimension(signed=False, bits=32)
+    tag_class__name = StringDimension(clickhouse={"low_cardinality": True})
+
+    class Clickhouse:
+        table_name = "title_tags"
+        primary_key = ["tag_class_id", "tag_id", "title_id"]
+        sorting_key = ["tag_class_id", "tag_id", "title_id"]
+        engine = "MergeTree"
+        use_lightweight_deletes = True
+
+
+class OrganizationTagCube(Cube):
+    organization_id = IntDimension(signed=False, bits=32)
+    tag_id = IntDimension(signed=False, bits=32)
+    tag__name = StringDimension(clickhouse={"low_cardinality": True})
+    tag_class_id = IntDimension(signed=False, bits=32)
+    tag_class__name = StringDimension(clickhouse={"low_cardinality": True})
+
+    class Clickhouse:
+        table_name = "organization_tags"
+        primary_key = ["tag_class_id", "tag_id", "organization_id"]
+        sorting_key = ["tag_class_id", "tag_id", "organization_id"]
+        engine = "MergeTree"
+        use_lightweight_deletes = True
+
+
+class PlatformTagCube(Cube):
+    platform_id = IntDimension(signed=False, bits=32)
+    tag_id = IntDimension(signed=False, bits=32)
+    tag__name = StringDimension(clickhouse={"low_cardinality": True})
+    tag_class_id = IntDimension(signed=False, bits=32)
+    tag_class__name = StringDimension(clickhouse={"low_cardinality": True})
+
+    class Clickhouse:
+        table_name = "platform_tags"
+        primary_key = ["tag_class_id", "tag_id", "platform_id"]
+        sorting_key = ["tag_class_id", "tag_id", "platform_id"]
+        engine = "MergeTree"
+        use_lightweight_deletes = True

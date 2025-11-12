@@ -760,7 +760,13 @@ LOGGING = {
         "celus_nibbler": {"level": "INFO"},
         "factory": {"level": "INFO"},
         "faker": {"level": "INFO"},
-        "clickhouse_driver": {"level": "INFO"},
+        "clickhouse_driver": {
+            "level": config(
+                "CLICKHOUSE_DRIVER_LOG_LEVEL",
+                default="INFO",
+                cast=Choices(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+            )
+        },
     },
     "formatters": {
         "colored": {"()": "colorlog.ColoredFormatter", "format": "%(log_color)s%(message)s"}
