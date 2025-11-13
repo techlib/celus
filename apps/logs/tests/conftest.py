@@ -163,7 +163,7 @@ def report_type_nd():
             else:
                 dim_short_name = f"dim{i}"
             dim, _ = Dimension.objects.get_or_create(
-                short_name=dim_short_name, name=f"dimension-{i}"
+                short_name=dim_short_name, defaults={"name": f"dimension-{i}"}
             )
             ReportTypeToDimension.objects.create(report_type=rt, dimension=dim, position=i)
         return rt
@@ -242,6 +242,7 @@ def flexible_slicer_test_data(report_type_nd):
             ib = ImportBatchFactory(
                 report_type=rt, organization=organization, platform=platform, date=date
             )
+            record_count = 0
             for metric, target, *dim_values in product(metrics, targets, *dim_options):
                 dim_data = {}
                 for i, value_str in enumerate(dim_values):
@@ -262,6 +263,9 @@ def flexible_slicer_test_data(report_type_nd):
                         **dim_data,
                     )
                 )
+                record_count += 1
+            ib.record_count = record_count
+            ib.save(update_fields=["record_count"])
             # create OrganizationPlatform if necessary
             if (organization.pk, platform.pk) not in ops:
                 ops[(organization.pk, platform.pk)] = OrganizationPlatform(

@@ -137,7 +137,7 @@ class ForeignKeyDimensionFilter(DimensionFilter):
 
     @property
     def value_str(self) -> str:
-        field, modifier = AccessLog.get_dimension_field(self.dimension)
+        field, _modifier = AccessLog.get_dimension_field(self.dimension)
         objs = field.related_model.objects.filter(pk__in=self.values)
         values = [obj.name or obj.short_name for obj in objs]
         return "; ".join(str(val) for val in values)

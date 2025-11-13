@@ -304,6 +304,9 @@ class FlexibleDataExporter(ABC):
         # sort columns by their remapped name
         other_fields.sort(key=lambda x: (x[1], x[0]))
         fields += other_fields
+        # add Used reports column if merge_report_types is enabled (as the last column)
+        if self.slicer.merge_report_types:
+            fields.append(("used_rts", _("Used reports")))
         self._fields = fields
         writer = self.create_writer(output, fields)
         count = 0
@@ -432,6 +435,25 @@ class FlexibleDataExporter(ABC):
                     sorted(t.full_name for t in self._tag_cache.get(cache_key, []))
                 )
 
+        # Remap report type IDs to names if merge_report_types is enabled
+        if self.slicer.merge_report_types and "used_rts" in row:
+            if rt_ids := row.get("used_rts", []):
+                # Create a mapping of RT IDs to names for efficient lookup
+                rt_id_to_name = {rt.pk: rt.name for rt in self.involved_report_types}
+                rt_names = [
+                    rt_id_to_name.get(rt_id, str(rt_id))
+                    for rt_id in rt_ids
+                    if rt_id in rt_id_to_name
+                ]
+                # Sort to ensure consistent ordering
+                rt_names.sort()
+                row["used_rts"] = ", ".join(rt_names) if rt_names else "-"
+            else:
+                row["used_rts"] = "-"
+        elif self.slicer.merge_report_types:
+            # If merge_report_types is enabled but used_rts is not in the row, add empty value
+            row["used_rts"] = "-"
+
         writer.writerow(row)
 
     def translate_part_key(self, part_key: [Tuple[str, Any]]):
@@ -547,6 +569,16 @@ class FlexibleDataExporter(ABC):
             writer.writerow(
                 [_("Applied filters") if i == 0 else "", self.slicer.filter_to_str(fltr)]
             )
+        # Add merged report types information if merge_report_types is enabled
+        if self.slicer.merge_report_types:
+            rt_names = [rt.name for rt in self.involved_report_types]
+            writer.writerow(
+                [
+                    _("Merged report types"),
+                    _("Primary report: %(primary)s") % {"primary": rt_names[0]},
+                ]
+            )
+            writer.writerow(["", _("Fallback report: %(fallback)s") % {"fallback": rt_names[1]}])
         # print out organizations for which the report was created in case they would be "hidden"
         # (not present in rows, cols, split_by or filter)
         dim = "organization"
@@ -641,14 +673,19 @@ class FlexibleDataExporter(ABC):
             if self.include_tags and dim_name in self.taggable_rows:
                 skip += 1
 
+        # Note: Used reports column (if merge_report_types is enabled) is added as the last column
+        # after grouped columns, so it doesn't affect skip count here. It's excluded from totals
+        # by being positioned after all numeric columns.
+
         return skip
 
     def _check_maximum_parts_number(self, total: int):
         if total > self.slicer.MAXIMUM_POSSIBLE_PARTS:
             raise SlicerConfigError(
-                f"Too many parts to export ({total}). Please refine you report to lower "
-                f"the number of parts.",
-                code=SlicerConfigErrorCode.E112,
+                SlicerConfigErrorCode.E112,
+                message=f"There are too many ({total}) possible parts, please refine your report "
+                "configuration to reduce the number of parts.",
+                details={"total": total},
             )
 
 

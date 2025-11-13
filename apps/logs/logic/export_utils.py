@@ -135,7 +135,7 @@ class MappingXlsxDictWriter(DictWriter):
             else:
                 self.sheet.write(self._current_row, i, value, fmt)
             self._widths[i] = max(self._widths[i], len(str(value)))
-            if self.include_col_totals and i >= self.sum_row_skip_cols:
+            if self.include_col_totals and i >= self.sum_row_skip_cols and col != "used_rts":
                 self._column_totals[col] += value or 0
         self._current_row += 1
 
@@ -153,7 +153,7 @@ class MappingXlsxDictWriter(DictWriter):
                 if i == 0:
                     value = "Total"
                     self.sheet.write(self._current_row, i, value, self.header_format)
-                elif i >= self.sum_row_skip_cols:
+                elif i >= self.sum_row_skip_cols and col != "used_rts":
                     fmt = self.col_formats.get(col, self.header_format)
                     if formula := self.row_formulas.get(col):
                         # if there is a formula assigned to the column, we use it in the totals row
@@ -203,7 +203,7 @@ class MappingCSVDictWriter(DictWriter):
             # present, the value stored in the row data is used as-is
             if (formula := self.row_formulas.get(col)) and formula.fn:
                 value = formula.fn(*[values.get(ref) for ref in formula.refs])
-            if self.include_col_totals and i >= self.sum_row_skip_cols:
+            if self.include_col_totals and i >= self.sum_row_skip_cols and col != "used_rts":
                 self._column_totals[col] += value or 0
             row.append(value)
         self.writer.writerow(row)
@@ -215,7 +215,7 @@ class MappingCSVDictWriter(DictWriter):
                 value = ""
                 if i == 0:
                     value = "Total"
-                elif i >= self.sum_row_skip_cols:
+                elif i >= self.sum_row_skip_cols and col != "used_rts":
                     if (formula := self.row_formulas.get(col)) and formula.fn:
                         # if there is a formula assigned to the column, we use it in the totals row
                         # as well

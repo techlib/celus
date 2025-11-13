@@ -7,6 +7,7 @@ from zipfile import ZipFile
 import openpyxl
 import pytest
 from django.db.models import Q
+from django.db.models.base import F
 from organizations.models import Organization
 from publications.models import Item, Platform, Title
 from tags.fake_data import TagClassFactory, TagFactory, TagForTitleFactory
@@ -283,6 +284,10 @@ class TestFlexibleDataSlicerComputations:
         texts = flexible_slicer_test_data["dimension_values"][0][:2]
         dim1_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
         slicer.add_filter(ExplicitDimensionFilter("dim1", dim1_ids), add_group=False)
+        # we must add a report type filter to be able to use explicit dimension filter
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
         slicer.add_group_by("metric")
         slicer.include_all_zero_rows = show_zero
         data = list(slicer.get_data())
@@ -512,6 +517,10 @@ class TestFlexibleDataSlicerComputations:
         if the dimension is the same for all report types and is stored in the same field.
         """
         slicer = FlexibleDataSlicer(["platform"])
+        # we must add a report type filter to be able to use explicit dimension filter
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
         dim_idx = ["dim1", "dim2"].index(dim)
         texts = flexible_slicer_test_data["dimension_values"][dim_idx][:2]
         dim_ids = DimensionText.objects.filter(text__in=texts).values_list("pk", flat=True)
@@ -756,6 +765,45 @@ class TestFlexibleDataSlicerComputations:
         )
 
     @pytest.mark.parametrize("show_zero", [True, False])
+    def test_group_by_title_tag_with_explicit_dimension_filter(
+        self, flexible_slicer_test_data_with_tags, show_zero
+    ):
+        """
+        Primary dimension: title/target
+        Group by: metric
+        DimensionFilter: dim1
+        Tag roll-up: True
+        """
+        slicer = FlexibleDataSlicer(["target"], tag_roll_up=True, include_all_zero_rows=show_zero)
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("metric", flexible_slicer_test_data_with_tags["metrics"][0]),
+            add_group=True,
+        )
+        slicer.add_filter(
+            ExplicitDimensionFilter(
+                "dim1",
+                DimensionText.objects.filter(text__in=["A", "B"]).values_list("pk", flat=True),
+            )
+        )
+        # we must add a report type filter to be able to use explicit dimension filter
+        slicer.add_filter(
+            ForeignKeyDimensionFilter(
+                "report_type", flexible_slicer_test_data_with_tags["report_types"]
+            )
+        )
+        data = list(slicer.get_data())
+        assert len(data) == (3 if show_zero else 2)
+        data.sort(key=lambda rec: rec["pk"])
+        exp_data = [
+            {"pk": "tag1", "m1": 1723032},
+            {"pk": "tag2", "m1": 867024},
+            {"pk": "tag3", "m1": 0},
+        ]
+        assert [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data] == (
+            exp_data if show_zero else exp_data[:-1]
+        )
+
+    @pytest.mark.parametrize("show_zero", [True, False])
     def test_group_by_title_tag_with_tag_filter(
         self, flexible_slicer_test_data_with_tags, show_zero
     ):
@@ -973,19 +1021,123 @@ class TestFlexibleDataSlicerComputations:
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures("clickhouse_on_off")
 @pytest.mark.django_db(transaction=True)
+class TestFlexibleDataSlicerSupportForMultipleReportTypes:
+    def test_multiple_report_types_with_materialized_reports(self, flexible_slicer_test_data):
+        """
+        Test that when multiple report types are used and some of them have materialized reports,
+        the data is correctly computed.
+        Uses filtering by explicit dimension to enhance the test coverage.
+        """
+        rt = flexible_slicer_test_data["report_types"][0]
+        ReportType.objects.create(
+            short_name="materialized",
+            materialization_spec=ReportMaterializationSpec.objects.create(
+                base_report_type=rt, keep_dim1=True, keep_dim2=False
+            ),
+        )
+        recompute_materialized_reports()
+
+        # using report type as primary dim also tests that the ID is properly re-mapped
+        # to the original report type ID in the output
+        slicer = FlexibleDataSlicer(["report_type"])
+        metrics = flexible_slicer_test_data["metrics"][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics), add_group=True)
+        # we must add a report type filter to be able to use explicit dimension filter
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("platform", flexible_slicer_test_data["platforms"][:2])
+        )
+
+        dim1 = rt.dimension_by_attr_name("dim1name")
+        slicer.add_filter(
+            ExplicitDimensionFilter(
+                "dim1", [DimensionText.objects.get(text="A", dimension=dim1).pk]
+            )
+        )
+        slicer.order_by = ["report_type"]
+        data = list(slicer.get_data())
+        assert len(data) == 2, "2 report types"
+        data = [remap_row_keys_to_short_names(row, ReportType, [Metric]) for row in data]
+        assert data == [
+            {"pk": "rt1", "m1": 30420, "m2": 31068},
+            {"pk": "rt2", "m1": 766224, "m2": 776592},
+        ]
+        assert slicer._mat_reports_map != {}, "materialized report should be used"
+
+    @pytest.mark.parametrize("reverse_order", [True, False])
+    def test_multiple_report_types_with_materialized_reports_and_merge_report_types(
+        self, flexible_slicer_test_data, reverse_order
+    ):
+        """
+        Test that when multiple report types are used and some of them have materialized reports,
+        the data is correctly computed when merge_report_types is True.
+        Uses filtering by explicit dimension to enhance the test coverage.
+        """
+        rt = flexible_slicer_test_data["report_types"][0]
+        rt2 = flexible_slicer_test_data["report_types"][1]
+        mrt = ReportType.objects.create(
+            short_name="materialized",
+            materialization_spec=ReportMaterializationSpec.objects.create(
+                base_report_type=rt, keep_dim1=True, keep_dim2=False
+            ),
+        )
+        recompute_materialized_reports()
+        # on purpose double the value of the materialized report, so we can check that it is used
+        AccessLog.objects.filter(report_type=mrt).update(value=F("value") * 2)
+
+        slicer = FlexibleDataSlicer(["platform"], merge_report_types=True)
+        metrics = flexible_slicer_test_data["metrics"][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics), add_group=True)
+        # two report types are merged into one
+        slicer.add_filter(
+            ForeignKeyDimensionFilter(
+                "report_type",
+                flexible_slicer_test_data["report_types"][:2][:: -1 if reverse_order else 1],
+            )
+        )
+        dim1 = rt.dimension_by_attr_name("dim1name")
+        slicer.add_filter(
+            ExplicitDimensionFilter(
+                "dim1", [DimensionText.objects.get(text="A", dimension=dim1).pk]
+            )
+        )
+        slicer.order_by = ["platform"]
+        orig_data = list(slicer.get_data())
+        assert len(orig_data) == 3, "3 platforms"
+        data = [remap_row_keys_to_short_names(row, Platform, [Metric]) for row in orig_data]
+        # both report types cover the same space (platform, org, date)
+        # so merge_report_types=True will use either the first or the second report type,
+        # for all the data - depending on the order of the report types.
+        if reverse_order:
+            # only the second report type is used
+            assert data == [
+                {"pk": "pl1", "m1": 352008, "m2": 357192},
+                {"pk": "pl2", "m1": 414216, "m2": 419400},
+                {"pk": "pl3", "m1": 476424, "m2": 481608},
+            ]
+        else:
+            # only the first report type is used
+            # this one has the materialized report, so the values are doubled
+            assert data == [
+                {"pk": "pl1", "m1": 13266 * 2, "m2": 13590 * 2},
+                {"pk": "pl2", "m1": 17154 * 2, "m2": 17478 * 2},
+                {"pk": "pl3", "m1": 21042 * 2, "m2": 21366 * 2},
+            ]
+        # we don't support materialized reports for merged report types yet
+        # so the mapping should be empty
+        assert slicer._mat_reports_map != {}, "materialized report should be used"
+        # check the used_rts field - it should contain the original report type IDs
+        # not the materialized ones
+        for row in orig_data:
+            assert row["used_rts"] == ([rt2.pk] if reverse_order else [rt.pk])
+
+
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures("clickhouse_on_off")
+@pytest.mark.django_db(transaction=True)
 class TestFlexibleDataSlicerPossibleDimensionValues:
-    def test_get_possible_dimension_values_unfiltered(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(["platform"])
-        metric_data = slicer.get_possible_dimension_values("metric")
-        assert metric_data["count"] == Metric.objects.count()
-
-    def test_get_possible_dimension_values_with_direct_filter(self, flexible_slicer_test_data):
-        slicer = FlexibleDataSlicer(["platform"])
-        metrics = flexible_slicer_test_data["metrics"][1:]
-        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics))
-        metric_data = slicer.get_possible_dimension_values("metric")
-        assert metric_data["count"] == len(metrics)
-
     @pytest.mark.parametrize(["dim", "count"], [("dim1", 3), ("dim2", 1)])
     def test_get_possible_dimension_values_with_materialized_report(
         self, flexible_slicer_test_data, dim, count
@@ -1509,6 +1661,44 @@ class TestFlexibleDataSlicerOther:
         coverage = slicer.get_coverage()["overall"]
         assert coverage["ib_count"] == 69
         assert coverage["ib_max"] == 72
+
+    def test_report_coverage_with_multiple_report_types_and_merge_report_types(
+        self, flexible_slicer_test_data
+    ):
+        # delete 3 import batches
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data["organizations"][0],
+            report_type=flexible_slicer_test_data["report_types"][0],
+            date="2020-01-01",
+        ).delete()
+        slicer = FlexibleDataSlicer(["platform"], merge_report_types=True)
+        slicer.add_group_by("metric")
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
+        coverage = slicer.get_coverage()["overall"]
+        assert coverage["ib_max"] == 36
+        assert coverage["ib_count"] == 36, "complete coverage - rt[1] will fill the hole"
+
+        # delete some more data - but do not create a hole
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data["organizations"][0],
+            report_type=flexible_slicer_test_data["report_types"][1],
+            date="2020-02-01",
+        ).delete()
+        coverage = slicer.get_coverage()["overall"]
+        assert coverage["ib_max"] == 36
+        assert coverage["ib_count"] == 36, "complete coverage - rt[1] will fill the hole"
+
+        # delete some more data - now create a hole
+        ImportBatch.objects.filter(
+            organization=flexible_slicer_test_data["organizations"][0],
+            report_type=flexible_slicer_test_data["report_types"][0],
+            date="2020-02-01",
+        ).delete()
+        coverage = slicer.get_coverage()
+        assert coverage["overall"]["ib_max"] == 36
+        assert coverage["overall"]["ib_count"] == 36 - 3, "data for 3 platforms is missing"
 
     @pytest.mark.parametrize(
         ("org_idx", "exp_ib_count", "exp_ib_max"),

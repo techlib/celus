@@ -30,6 +30,7 @@ class DataCoverageExtractor:
     def __init__(
         self,
         report_type: ReportType,
+        fallback_report_type: Optional[ReportType] = None,
         organization: Optional[Organization] = None,
         platform: Optional[Platform] = None,
         title: Optional[Title] = None,
@@ -42,6 +43,9 @@ class DataCoverageExtractor:
     ):
         """
         :param report_type:
+        :param fallback_report_type: when given, should be considered as a fallback for the
+        `report_type` when no data is found for the `report_type`. In such case, fallback data
+        will be used to compute the coverage.
         :param organization: limit the data to this organization
         :param platform: limit the data to this platform
         :param title: limit the data to this title by only considering platforms having that title
@@ -53,6 +57,7 @@ class DataCoverageExtractor:
         :param accessible_organizations: organization accessible by the user at hand (if any)
         """
         self.report_type = report_type
+        self.fallback_report_type = fallback_report_type
         self.organization = organization
         self.platform = platform
         self.title = title
@@ -116,18 +121,45 @@ class DataCoverageExtractor:
 
     def create_rt_qs(self) -> QuerySet[ReportType]:
         if self.report_type.is_interest_rt:
+            raise NotImplementedError("Interest report types are not supported yet")
+            # return ReportType.objects.filter(
+            #     reportinterestmetric__isnull=False, superseded_by__isnull=True
+            # )
+        elif self.fallback_report_type:
             return ReportType.objects.filter(
-                reportinterestmetric__isnull=False, superseded_by__isnull=True
+                pk__in=[self.report_type.pk, self.fallback_report_type.pk]
             )
         else:
             return ReportType.objects.filter(pk=self.report_type.pk)
 
-    def get_basic_ib_qs(self) -> QuerySet[ImportBatch]:
-        return ImportBatch.objects.filter(
-            *self.extra_filters,
-            report_type__in=self.create_rt_qs(),
-            organization__in=self.accessible_organizations,
-        )
+    def get_basic_ib_qs(self, ignore_fallback_report_type: bool = False) -> QuerySet[ImportBatch]:
+        """
+        :param ignore_fallback_report_type: if True, the fallback report type will not be considered
+        This is useful when we want to get the date range from the data itself and we want
+        just the main report type data.
+        :return: QuerySet of ImportBatches
+        """
+        if self.fallback_report_type and not ignore_fallback_report_type:
+            # we should add import batches for the fallback report type if the main report type
+            # has no import batch for the given organization-platform-date combination
+            fallback_query = ImportBatch.objects.filter(
+                report_type=self.report_type,
+                organization=OuterRef("organization"),
+                platform=OuterRef("platform"),
+                date=OuterRef("date"),
+            )
+            return ImportBatch.objects.filter(
+                *self.extra_filters,
+                Q(report_type=self.report_type)
+                | (Q(report_type=self.fallback_report_type) & ~Exists(fallback_query)),
+                organization__in=self.accessible_organizations,
+            )
+        else:
+            return ImportBatch.objects.filter(
+                *self.extra_filters,
+                report_type=self.report_type,
+                organization__in=self.accessible_organizations,
+            )
 
     def _check_dates(self) -> bool:
         """
@@ -137,7 +169,7 @@ class DataCoverageExtractor:
         """
         if not (self.start_month and self.end_month):
             # we need to get the data range from the data itself
-            date_range = self.get_basic_ib_qs().aggregate(
+            date_range = self.get_basic_ib_qs(ignore_fallback_report_type=True).aggregate(
                 min_date=Min("date"), max_date=Max("date")
             )
             if date_range["min_date"]:

@@ -43,6 +43,7 @@ en:
   tags: tags
   name_the_report: Name the report
   coverage_tt: Data coverage for the selected report(s) and applied filters.
+  coverage_merge_report_types_tt: Data coverage for the combination of primary and fallback reports and applied filters.
   coverage_base_tt: Data coverage in the base period.
   coverage_compared_tt: Data coverage in the compared period.
   coverage_title_tt: Data coverage shows how many months of data from a possible maximum are available for the selected report(s) and applied filters. Numbers below 100% indicate that some data is missing. Click on the number to go to a detailed breakdown.
@@ -55,6 +56,11 @@ en:
   invalid_url_parameters: Invalid URL parameters detected. Using default settings.
   trend_mode_muliindex_tt: Trend mode is not supported when multiple dimensions are used for defining rows.
   trend_mode_tt: Trend mode makes it possible to compare usage between two time periods.
+  merge_report_types: Merge reports
+  merge_report_types_tt: |
+    When two reports are selected, merging them will preferentially use the data from the first report (highlighted) and use the second report as a fallback for missing months.
+  merge_report_types_tt_primary: This report will be used as the primary source of data.
+  merge_report_types_tt_secondary: This report will be used as a fallback for missing months.
 
 cs:
   run_report: Spustit report
@@ -94,6 +100,7 @@ cs:
   tags: štítky
   name_the_report: Zvolte název reportu
   coverage_tt: Pokrytí daty pro zvolené reporty a aplikované filtry.
+  coverage_merge_report_types_tt: Pokrytí daty pro kombinaci hlavního a záložního reportu a aplikovaných filtrů.
   coverage_base_tt: Pokrytí daty v základním období.
   coverage_compared_tt: Pokrytí daty v porovnávaném období.
   coverage_title_tt: Pokrytí daty ukazuje, kolik měsíců dat z možného maxima je k dispozici pro zvolené reporty a aplikované filtry. Číslo pod 100% značí, že některá data chybí. Kliknutí na číslo vás přenese na podrobný rozpis.
@@ -106,6 +113,11 @@ cs:
   invalid_url_parameters: Detekovány neplatné URL parametry. Používají se výchozí hodnoty.
   trend_mode_muliindex_tt: Trend mode není podporován, pokud je vybrán více než jeden rozměr pro definici řádků.
   trend_mode_tt: Trend mode umožňuje porovnávat využití mezi dvěma časovými obdobími.
+  merge_report_types: Sloučit reporty
+  merge_report_types_tt: |
+    Při výběru dvou reportů budou preferována data z prvního reportu (zvýrazněného) a data z druhého reportu se použijí jako záložní pro chybějící měsíce.
+  merge_report_types_tt_primary: Tento report bude použit jako hlavní zdroj dat.
+  merge_report_types_tt_secondary: Tento report bude použit jako záložní pro chybějící měsíce.
 </i18n>
 
 <template>
@@ -253,7 +265,7 @@ cs:
       </div>
       <v-form v-model="formValid">
         <v-row v-if="!collapsed">
-          <v-col class="d-flex">
+          <v-col class="d-flex align-self-end">
             <v-autocomplete
               v-model="selectedReportTypes"
               :items="allReportTypes"
@@ -267,10 +279,30 @@ cs:
               closable-chips
               class="report_type"
               :disabled="readOnly"
-            ></v-autocomplete>
+            >
+              <template
+                #chip="{ item, index, props }"
+                v-if="canMergeReportTypes && mergeReportTypes"
+              >
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-chip
+                      v-bind="{ ...props, ...tooltipProps }"
+                      :color="index === 0 ? 'primary' : ''"
+                      :variant="index === 0 ? 'flat' : 'tonal'"
+                    ></v-chip>
+                  </template>
+                  {{
+                    index === 0
+                      ? $t("merge_report_types_tt_primary")
+                      : $t("merge_report_types_tt_secondary")
+                  }}
+                </v-tooltip>
+              </template>
+            </v-autocomplete>
           </v-col>
           <v-col
-            class="align-self-center"
+            class="align-self-end"
             v-if="selectedReportTypes.length === 0 && !collapsed"
           >
             <span>
@@ -279,6 +311,19 @@ cs:
               >
               {{ $t("select_report_type") }}
             </span>
+          </v-col>
+          <v-col v-if="canMergeReportTypes" class="align-self-end" cols="auto">
+            <v-tooltip location="bottom" max-width="600px">
+              <template #activator="{ props }">
+                <v-checkbox
+                  v-model="mergeReportTypes"
+                  :label="$t('merge_report_types')"
+                  v-bind="props"
+                  density="compact"
+                ></v-checkbox>
+              </template>
+              {{ $t("merge_report_types_tt") }}
+            </v-tooltip>
           </v-col>
           <v-col class="align-self-end">
             <v-select
@@ -805,7 +850,11 @@ cs:
                     <CoverageCard
                       :label="$t('labels.total_coverage')"
                       :selectedDateRange="selectedDateRange"
-                      :tooltip="$t('coverage_tt')"
+                      :tooltip="
+                        mergeReportTypes
+                          ? $t('coverage_merge_report_types_tt')
+                          : $t('coverage_tt')
+                      "
                       :coverage-data="coverageData.overall"
                       :elevation="0"
                       clickable
@@ -1162,6 +1211,7 @@ export default {
       filterPlatformsByTag: false,
       filterTitlesByClass: false,
       trendMode: false,
+      mergeReportTypes: true,
       tmBaseDateRange: {
         start: ymDateFormat(baseStart),
         end: ymDateFormat(baseEnd),
@@ -1373,6 +1423,9 @@ export default {
         filters: toBase64JSON(this.appliedFilters),
         base_period_filters: toBase64JSON(this.tmBaseDateRange),
         compared_period_filters: toBase64JSON(this.tmComparedDateRange),
+        merge_report_types: this.canMergeReportTypes && this.mergeReportTypes,
+        has_report_types: this.allReportTypes.length > 0, // ensure change when rts are loaded
+        trend_mode: this.trendMode, // ensure change when trend mode changes
       };
     },
     selectorBaseUrl() {
@@ -1393,10 +1446,12 @@ export default {
       return this.selectedReportTypes.length > 0;
     },
     showItems() {
-      return this.selectedReportTypeObjs.every((rt) => rt.uses_items);
+      // for some reason, the `rt` could be undefined here, so there is an extra check
+      return this.selectedReportTypeObjs.every((rt) => rt?.uses_items);
     },
     showTitles() {
-      return this.selectedReportTypeObjs.every((rt) => rt.uses_titles);
+      // for some reason, the `rt` could be undefined here, so there is an extra check
+      return this.selectedReportTypeObjs.every((rt) => rt?.uses_titles);
     },
     disableDimValuesSelectors() {
       return this.selectedReportTypes.length === 0;
@@ -1436,9 +1491,9 @@ export default {
       return [];
     },
     selectedReportTypeObjs() {
-      return this.allReportTypes.filter(
-        (item) => this.selectedReportTypes.indexOf(item.pk) >= 0,
-      );
+      return this.selectedReportTypes
+        .map((pk) => this.allReportTypes.find((item) => item.pk === pk))
+        .filter((rt) => !!rt);
     },
     reportObject() {
       let rt = new FlexiReport();
@@ -1476,6 +1531,7 @@ export default {
       rt.tagClass = this.selectedTagClass?.pk;
       rt.showUntaggedRemainder = this.showRemainder;
       rt.trendMode = this.trendMode;
+      rt.mergeReportTypes = this.canMergeReportTypes && this.mergeReportTypes;
       rt.baseSubsetDateRange = this.tmBaseDateRange;
       rt.comparedSubsetDateRange = this.tmComparedDateRange;
       return rt;
@@ -1593,6 +1649,13 @@ export default {
     },
     usesMultiIndex() {
       return this.rows.length > 1;
+    },
+    canMergeReportTypes() {
+      // TODO: we need more sophisticated check here
+      // probably based on report type superseding configuration
+      // or simply predefined in a constant here
+      // We probably want this only for TR and TR51, DR and DR51, and PR and PR51
+      return this.selectedReportTypes.length === 2;
     },
   },
 
@@ -2322,6 +2385,12 @@ export default {
         // switch off all things not compatible with multiindex
         this.tagRollUp = false;
         this.showZeroRows = false;
+      }
+    },
+    canMergeReportTypes() {
+      if (!this.canMergeReportTypes) {
+        // reset to false if merge report types is not possible
+        this.mergeReportTypes = false;
       }
     },
   },

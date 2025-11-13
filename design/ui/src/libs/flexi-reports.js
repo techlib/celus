@@ -111,6 +111,7 @@ class FlexiReport {
     this.includeZeroRows = false;
     this.includeTotals = false;
     this.tagRollUp = false;
+    this.mergeReportTypes = false;
     this._tagDimension = new Dimension("tag");
     this._tagDimension.shortName = "tag";
     this._tagDimension.name = "labels.tag";
@@ -232,6 +233,7 @@ class FlexiReport {
     this.tagRollUp = config.tag_roll_up ?? false;
     this.tagClass = config.tag_class ?? null;
     this.showUntaggedRemainder = config.show_untagged_remainder ?? false;
+    this.mergeReportTypes = config.merge_report_types ?? false;
     // trend mode
     this.trendMode = config.trend_mode ?? false;
     this.baseSubsetDateRange = dateRangeFromFilters(config.base_subset_filters);
@@ -388,6 +390,7 @@ class FlexiReport {
       tag_class: this.tagClass,
       show_untagged_remainder: this.showUntaggedRemainder,
       trend_mode: this.trendMode,
+      merge_report_types: this.mergeReportTypes,
       base_subset_filters: this.trendMode
         ? toBase64JSON(baseFilters)
         : undefined, // undefined means "do not send this parameter"

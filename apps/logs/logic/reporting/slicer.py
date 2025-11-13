@@ -3,17 +3,19 @@ import operator
 from collections import OrderedDict
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional, Set, Type
+from typing import Iterable, List, Optional, Set, Tuple, Type
 
 from core.logic.dates import date_range_from_params, month_end, parse_month
 from core.logic.serialization import parse_b64json
 from core.logic.type_conversion import to_bool
 from django.conf import settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import EmptyResultSet
 from django.db.models import (
     Case,
     CharField,
     DateField,
+    Exists,
     F,
     FilteredRelation,
     ForeignKey,
@@ -47,7 +49,7 @@ from logs.logic.reporting.filters import (
     TagClassDimensionFilter,
     TagDimensionFilter,
 )
-from logs.models import AccessLog, Dimension, DimensionText, ReportType
+from logs.models import AccessLog, Dimension, DimensionText, ImportBatch, ReportType
 
 
 class FlexibleDataSlicer:
@@ -81,6 +83,7 @@ class FlexibleDataSlicer:
         trend_mode=False,
         base_subset_filters: Optional[List[DimensionFilter]] = None,
         compared_subset_filters: Optional[List[DimensionFilter]] = None,
+        merge_report_types=False,
         use_clickhouse=None,
     ):
         """
@@ -97,6 +100,8 @@ class FlexibleDataSlicer:
             subsets of data will be compared - `base_subset` and `compared_subset`
         :param base_subset_filters: list of filters applied to the base subset in trend mode
         :param compared_subset_filters: list of filters applied to the compared subset in trend
+        :param merge_report_types: if True, the report types will be merged into a single one
+            with the same dimensions and filters
         :param use_clickhouse: whether to use ClickHouse for queries where it is supported
         """
         self.use_clickhouse = (
@@ -134,6 +139,7 @@ class FlexibleDataSlicer:
         self.include_all_zero_rows = include_all_zero_rows
         self.include_row_totals = include_row_totals
         self.include_col_totals = include_col_totals
+        self.merge_report_types = merge_report_types
         self.tag_roll_up = tag_roll_up
         self.tag_filter: Optional[Q] = None
         self.tag_class: Optional[int] = None
@@ -164,13 +170,15 @@ class FlexibleDataSlicer:
             "trend_mode": self.trend_mode,
             "base_subset_filters": [fltr.config() for fltr in self.base_subset_filters],
             "compared_subset_filters": [fltr.config() for fltr in self.compared_subset_filters],
+            "merge_report_types": self.merge_report_types,
         }
 
-    @property
-    def filters(self) -> dict:
-        return self.create_filters()
-
-    def create_filters(self, ignore_dimensions=None, use_clickhouse=False):
+    def create_filters(
+        self, ignore_dimensions=None, use_clickhouse=False
+    ) -> Tuple[dict, list, list]:
+        """
+        Returns a dict with filters in the kwargs format and a list with Q-based filters.
+        """
         if ignore_dimensions:
             if type(ignore_dimensions) in (list, tuple, set):
                 ignore_dimensions = set(ignore_dimensions)
@@ -179,11 +187,48 @@ class FlexibleDataSlicer:
         else:
             ignore_dimensions = set()
         ret = {}
+        q_filters = []
+        prefixed_q_filters = []
+        filter_prefix = self._get_relevant_accesslog_filter_prefix()
         for df in self.dimension_filters:
-            if df.dimension not in ignore_dimensions or isinstance(df, TagDimensionFilter):
+            if df.dimension in ignore_dimensions and not isinstance(df, TagDimensionFilter):
                 # tag filters are not ignored even if they are for an ignored dimension
-                ret.update(df.query_params(clickhouse_compatible=use_clickhouse))
+                continue
+            # here a special case is when two report types are merged into one
+            if (
+                self.merge_report_types
+                and isinstance(df, ForeignKeyDimensionFilter)
+                and df.dimension == "report_type"
+            ):
+                if len(df.values) != 2:
+                    raise SlicerConfigError(SlicerConfigErrorCode.E117)
+                # we need to create a Q-based filter that will be used to filter the report types
+                # that are involved in the query
+                # we use the order of the report types to determine the main and fallback rts.
+                rt1, rt2 = df.values
+                # in import batch filters, we need to use the original report type ID,
+                # not the materialized one, otherwise the check will fail
+                orig_rt1 = self._mat_reports_map.get(rt1, rt1)
+                fallback_rt_subquery = ImportBatch.objects.filter(
+                    report_type_id=orig_rt1,
+                    platform_id=OuterRef("platform_id"),
+                    organization_id=OuterRef("organization_id"),
+                    date=OuterRef("date"),
+                    record_count__gt=0,
+                )
+                q_filters.append(
+                    Q(report_type_id=rt1) | (Q(report_type_id=rt2) & ~Exists(fallback_rt_subquery))
+                )
+                prefixed_q_filters.append(
+                    Q(**{f"{filter_prefix}report_type_id": rt1})
+                    | (Q(**{f"{filter_prefix}report_type_id": rt2}) & ~Exists(fallback_rt_subquery))
+                )
+                continue
+            # normal case
+            ret.update(df.query_params(clickhouse_compatible=use_clickhouse))
         logger.debug("filters: %s", ret)
+        logger.debug("q_filters: %s", q_filters)
+        logger.debug("prefixed_q_filters: %s", prefixed_q_filters)
         if self.organization_filter is not None:
             # convert organization filter to a list of ids for easier compatibility with
             # clickhouse and for simpler query (even though that is not a big deal)
@@ -194,7 +239,7 @@ class FlexibleDataSlicer:
             else:
                 ret["organization_id__in"] = list(org_filter_pks)
         logger.debug("filters with org: %s", ret)
-        return ret
+        return ret, q_filters, prefixed_q_filters
 
     def _resolve_extra_organization_filter_to_pks(self) -> Set[int]:
         if self.organization_filter is None:
@@ -221,14 +266,12 @@ class FlexibleDataSlicer:
     def add_split_by(self, dimension):
         self.split_by.append(dimension)
 
-    def _validate_dim_compatible_with_all_rts(self, dim_name: str, rts: List[ReportType]):
-        dims = {e.dimension_by_attr_name(dim_name) for e in rts}
-        if len(dims) > 1:
-            raise SlicerConfigError(
-                "It is not possible to group by explicit dimension unless that "
-                "dimension is exactly the same for all selected report types",
-                SlicerConfigErrorCode.E100,
-            )
+    @classmethod
+    def _validate_dim_compatible_with_all_rts(cls, dim_name: str, rts: List[ReportType]):
+        dim_obj = rts[0].dimension_by_attr_name(dim_name)
+        for rt in rts[1:]:
+            if dim_obj not in rt.dimensions_sorted:
+                raise SlicerConfigError(SlicerConfigErrorCode.E100)
 
     def check_params(self):
         """
@@ -239,6 +282,9 @@ class FlexibleDataSlicer:
             if isinstance(fltr, ForeignKeyDimensionFilter) and fltr.dimension == "report_type":
                 rt_filter = fltr.values
         if len(rt_filter) != 1:
+            if not rt_filter and self.merge_report_types:
+                # there must be a filter on report type when merging report types
+                raise SlicerConfigError(SlicerConfigErrorCode.E119)
             # more than one RT is selected, we need to make sure explicit dimensions are the
             # same for all RTs
             rts = ReportType.objects.all()
@@ -254,24 +300,13 @@ class FlexibleDataSlicer:
         # if multiple primary dimensions are used, some features are not supported
         if len(self.primary_dimensions) > 1:
             if self.tag_roll_up:
-                raise SlicerConfigError(
-                    "Tag roll up is not supported when multiple primary dimensions are used",
-                    SlicerConfigErrorCode.E114,
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E114)
             if self.include_all_zero_rows and not self.trend_mode:
-                raise SlicerConfigError(
-                    "Include all zero rows is not supported when multiple primary dimensions are "
-                    "used",
-                    SlicerConfigErrorCode.E115,
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E115)
 
         if self.trend_mode:
             if not self.base_subset_filters or not self.compared_subset_filters:
-                raise SlicerConfigError(
-                    "Both base and compared subset filters must be specified when trend_mode is "
-                    "True",
-                    SlicerConfigErrorCode.E111,
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E120)
 
     def check_params_for_data_query(self):
         """
@@ -279,21 +314,35 @@ class FlexibleDataSlicer:
         functions, such as getting possible dimension values.
         """
         if not self.group_by and not self.trend_mode:
-            raise SlicerConfigError(
-                'At least one "group" dimension must be given to define the output columns',
-                SlicerConfigErrorCode.E106,
+            raise SlicerConfigError(SlicerConfigErrorCode.E106)
+
+    def _get_relevant_accesslog_filter_prefix(self) -> str:
+        if self.tag_roll_up:
+            assert len(self.primary_dimensions) == 1, "one primary dimension is enforced elsewhere"
+            field, _ = AccessLog.get_dimension_field(self.primary_dimensions[0])
+            assert isinstance(field, ForeignKey), (
+                "When tag roll up is active, the primary dimension must be a foreign key"
             )
+            primary_cls = field.remote_field.model
+            tag_scope = TagClass.tag_scope_from_target_class(primary_cls)
+            target_attr = Tag.target_attr_from_scope(tag_scope)
+            return f"{target_attr}__accesslog__"
+        return "accesslog__"
 
     def get_queryset(self, part: Optional[list] = None):
         self.check_params()
         self.check_params_for_data_query()
         self.check_part(part)
 
-        filters = {**self.filters}
+        filters, q_filters, prefixed_q_filters = self.create_filters()
         if part:
             for dim, value in zip(self.split_by, part, strict=True):
                 fltr = self.filter_instance(dim, value)
                 filters.update(fltr.query_params())
+
+        # parameter to remember if we are going to query the accesslog table directly or
+        # use a related model (e.g. Tag or Organization) and join accesslog to it.
+        direct_accesslog_query = True
 
         if len(self.primary_dimensions) == 1:
             # we can use the old single-dimension logic
@@ -305,8 +354,8 @@ class FlexibleDataSlicer:
                     # we will be summing up by tag, so the query is a bit different
                     # (slightly similar to mapped primary dimension)
                     tag_scope = TagClass.tag_scope_from_target_class(primary_cls)
-                    target_attr = Tag.target_attr_from_scope(tag_scope)
                     tag_filters = [self.tag_filter] if self.tag_filter else []
+                    relevant_accesslog_filter_prefix = self._get_relevant_accesslog_filter_prefix()
                     if self.tag_class:
                         tag_filters.append(Q(tag_class_id=self.tag_class))
                     # if we apply the tag filter on the qs itself, it for some reason creates
@@ -322,24 +371,26 @@ class FlexibleDataSlicer:
                         Tag.objects.filter(pk__in=tag_ids)
                         .annotate(
                             relevant_accesslogs=FilteredRelation(
-                                f"{target_attr}__accesslog",
+                                relevant_accesslog_filter_prefix.rstrip("_"),
                                 condition=Q(
-                                    **extend_query_filter(filters, f"{target_attr}__accesslog__")
+                                    *prefixed_q_filters,
+                                    **extend_query_filter(
+                                        filters, relevant_accesslog_filter_prefix
+                                    ),
                                 ),
                             )
                         )
                         .values("pk")
-                        .annotate(**self._prepare_annotations())
                     )
-                elif (self.include_all_zero_rows and not self.trend_mode) or primary_dim in [
-                    ob.lstrip("-").split("__")[0] for ob in self.order_by
-                ]:
+                    direct_accesslog_query = False
+                elif self.include_all_zero_rows and not self.trend_mode:
                     # we need to put the primary dimension model into play because zero usage is
                     # requested, or we are sorting by the primary dimension
                     qs = primary_cls.objects.all()
                     if primary_cls is Organization and self.organization_filter is not None:
                         qs = qs.filter(pk__in=self.organization_filter)
                     pk_annotation = {}
+                    # deal with materialized report type mapping
                     if primary_dim == "report_type" and self._mat_reports_map:
                         whens = [
                             When(then=Value(orig), pk=pk)
@@ -348,24 +399,31 @@ class FlexibleDataSlicer:
                         pk_annotation["pk"] = Case(
                             *whens, default=F("pk"), output_field=IntegerField()
                         )
+                    relevant_accesslog_filter_prefix = self._get_relevant_accesslog_filter_prefix()
 
                     qs = (
                         qs.filter(**self._primary_dimension_filter())
                         .annotate(
                             relevant_accesslogs=FilteredRelation(
-                                "accesslog",
-                                condition=Q(**extend_query_filter(filters, "accesslog__")),
+                                relevant_accesslog_filter_prefix.rstrip("_"),
+                                condition=Q(
+                                    *prefixed_q_filters,
+                                    **extend_query_filter(
+                                        filters, relevant_accesslog_filter_prefix
+                                    ),
+                                ),
                             )
                         )
                         .annotate(**pk_annotation)
                         .values("pk")
-                        .annotate(**self._prepare_annotations())
                     )
                     self._primary_dimension_query = True
+                    direct_accesslog_query = False
                 else:
                     # zero usage is not needed - we can just aggregate the accesslogs, which can be
                     # much faster
                     pk_def = F(primary_dim)
+                    # deal with materialized report type mapping
                     if primary_dim == "report_type" and self._mat_reports_map:
                         whens = [
                             When(then=Value(orig), **{primary_dim: pk})
@@ -374,19 +432,17 @@ class FlexibleDataSlicer:
                         pk_def = Case(*whens, default=pk_def, output_field=IntegerField())
 
                     qs = (
-                        AccessLog.objects.filter(**filters)
+                        AccessLog.objects.filter(*q_filters, **filters)
                         .annotate(pk=pk_def)
                         .values("pk")
                         .distinct()
-                        .annotate(**self._prepare_annotations(accesslog_prefix=""))
                     )
             elif field and primary_dim.startswith("dim"):
                 qs = (
-                    AccessLog.objects.filter(**filters)
+                    AccessLog.objects.filter(*q_filters, **filters)
                     .annotate(pk=F(primary_dim))
                     .values("pk")
                     .distinct()
-                    .annotate(**self._prepare_annotations(accesslog_prefix=""))
                 )
             elif field and isinstance(field, DateField):
                 if modifier and modifier != "year":
@@ -394,38 +450,30 @@ class FlexibleDataSlicer:
                         'The only modifier allowed for date is "year", i.e. date__year'
                     )
                 qs = (
-                    AccessLog.objects.filter(**filters)
+                    AccessLog.objects.filter(*q_filters, **filters)
                     .annotate(pk=F(primary_dim))
                     .values("pk")
                     .distinct()
-                    .annotate(**self._prepare_annotations(accesslog_prefix=""))
                 )
             elif field:
                 raise SlicerConfigError(
-                    f"Primary dimension {primary_dim} is not supported",
                     SlicerConfigErrorCode.E102,
+                    message=f"Primary dimension {primary_dim} is not supported",
                     details={"dimension": primary_dim},
                 )
             else:
                 raise SlicerConfigError(
-                    f"Primary dimension {primary_dim} is not valid",
                     SlicerConfigErrorCode.E103,
+                    message=f"Primary dimension {primary_dim} is not valid",
                     details={"dimension": primary_dim},
                 )
-            if not self.include_all_zero_rows:
-                # total is added in _prepare_annotations and is a sum of all the value columns
-                qs = qs.filter(_total__gt=0)
-            elif self.trend_mode:
-                # in trend mode, we need to filter out rows where both base and compared are zero
-                # even if include_all_zero_rows is True
-                qs = qs.exclude(base=0, compared=0)
-            return qs
         else:
             # we need to use the new multi-index logic
             annots = {}
             for i, dim in enumerate(self.primary_dimensions):
                 dim_key = self.get_pk_key(i)
                 annot = F(dim)
+                # deal with materialized report type mapping
                 if dim == "report_type" and self._mat_reports_map:
                     whens = [
                         When(then=Value(orig), report_type_id=pk)
@@ -435,20 +483,37 @@ class FlexibleDataSlicer:
                 annots[dim_key] = annot
 
             qs = (
-                AccessLog.objects.filter(**filters)
+                AccessLog.objects.filter(*q_filters, **filters)
                 .annotate(**annots)
                 .values(*annots.keys())
                 .distinct()
-                .annotate(**self._prepare_annotations(accesslog_prefix=""))
             )
-            if not self.include_all_zero_rows:
-                # total is added in _prepare_annotations and is a sum of all the value columns
-                qs = qs.filter(_total__gt=0)
-            elif self.trend_mode:
-                # in trend mode, we need to filter out rows where both base and compared are zero
-                # even if include_all_zero_rows is True
-                qs = qs.exclude(base=0, compared=0)
-            return qs
+        # common stuff for both single and multi-index logic
+        qs = qs.annotate(
+            **self._prepare_annotations(
+                accesslog_prefix="" if direct_accesslog_query else "relevant_accesslogs__"
+            )
+        )
+        if not self.include_all_zero_rows:
+            # total is added in _prepare_annotations and is a sum of all the value columns
+            qs = qs.filter(_total__gt=0)
+        elif self.trend_mode:
+            # in trend mode, we need to filter out rows where both base and compared are zero
+            # even if include_all_zero_rows is True
+            qs = qs.exclude(base=0, compared=0)
+        if self.merge_report_types:
+            # we need to remap used materialized report type IDs to the original ones
+            qs = qs.alias(
+                orig_report_type_id=Case(
+                    *[
+                        When(report_type_id=pk, then=Value(orig))
+                        for pk, orig in self._mat_reports_map.items()
+                    ],
+                    default=F("report_type_id"),
+                    output_field=IntegerField(),
+                )
+            ).annotate(used_rts=ArrayAgg("orig_report_type_id", distinct=True))
+        return qs
 
     def _primary_dimension_filter(self) -> dict:
         ret = {}
@@ -493,9 +558,9 @@ class FlexibleDataSlicer:
                 }
             if gb_query.count() > self.MAXIMUM_POSSIBLE_GROUPS:
                 raise SlicerConfigError(
-                    f"There are too many ({gb_query.count()}) possible groups, please refine "
-                    f"you configuration",
                     SlicerConfigErrorCode.E101,
+                    message=f"There are too many ({gb_query.count()}) possible groups, please "
+                    "refine your configuration",
                     details={"group_count": gb_query.count()},
                 )
             if gb_query.count() == 0:
@@ -564,9 +629,7 @@ class FlexibleDataSlicer:
                 subfilter = list(subfilter)
             extra_filter = {f"{dimension}__in": subfilter}
         else:
-            raise SlicerConfigError(
-                "The requested dimension is not supported", SlicerConfigErrorCode.E107
-            )
+            raise SlicerConfigError(SlicerConfigErrorCode.E107)
         return extra_filter
 
     @classmethod
@@ -581,9 +644,7 @@ class FlexibleDataSlicer:
         elif field and dimension.startswith("dim"):
             extra_filter = {f"{dimension}__in": pks}
         else:
-            raise SlicerConfigError(
-                "The requested dimension is not supported", SlicerConfigErrorCode.E107
-            )
+            raise SlicerConfigError(SlicerConfigErrorCode.E107)
         return extra_filter
 
     def get_possible_dimension_values_clickhouse(
@@ -677,10 +738,11 @@ class FlexibleDataSlicer:
             dimensions = [dimensions]
         ignore_dimensions = dimensions if ignore_self else None
         self.check_params()
-        query_params = self.create_filters(
+        query_params, q_filters, _ = self.create_filters(
             ignore_dimensions=ignore_dimensions, use_clickhouse=use_clickhouse
         )
-        if use_clickhouse:
+        if use_clickhouse and not q_filters:
+            # TODO: clickhouse version is not compatible with q_filters at this point
             # clickhouse uses column names with the _id suffix
             dims = [
                 f"{dim}_id" if f"{dim}_id" in AccessLogCube._dimensions else dim
@@ -707,7 +769,9 @@ class FlexibleDataSlicer:
                 ]
                 if new_rt := find_best_materialized_view(rt, used_dimensions):
                     query_params["report_type_id__in"] = [new_rt.pk]
-            query = AccessLog.objects.filter(**query_params).values(*dimensions).distinct()
+            query = (
+                AccessLog.objects.filter(*q_filters, **query_params).values(*dimensions).distinct()
+            )
 
         return query
 
@@ -757,7 +821,7 @@ class FlexibleDataSlicer:
                 # when sorting by dimX we need to map the IDs to the corresponding texts
                 # because the mapping does not use a Foreign key relationship, we use a subquery
                 dt_query = DimensionText.objects.filter(id=OuterRef(ob)).values("text")[:1]
-                qs = qs.annotate(**{ob + "sort": Subquery(dt_query)})
+                qs = qs.alias(**{ob + "sort": Subquery(dt_query)})
                 obs.append(prefix + ob + "sort")
             elif ob.startswith("grp-"):
                 if ob not in self._annotations:
@@ -849,7 +913,7 @@ class FlexibleDataSlicer:
                     qs = qs.filter(pk__in=self.organization_filter)
                 # use the same query as for the main query when the primary object are annotated
                 # but then aggregate everything to a single row
-                filters = {**self.filters}
+                filters, _, prefixed_q_filters = self.create_filters()
                 if self.split_by and part:
                     for dim, value in zip(self.split_by, part, strict=True):
                         fltr = self.filter_instance(dim, value)
@@ -865,7 +929,10 @@ class FlexibleDataSlicer:
                     qs.filter(**self._primary_dimension_filter())
                     .annotate(
                         relevant_accesslogs=FilteredRelation(
-                            "accesslog", condition=Q(**extend_query_filter(filters, "accesslog__"))
+                            "accesslog",
+                            condition=Q(
+                                *prefixed_q_filters, **extend_query_filter(filters, "accesslog__")
+                            ),
                         )
                     )
                     .values("pk")
@@ -891,22 +958,14 @@ class FlexibleDataSlicer:
         """
         if self.split_by:
             if not part:
-                raise SlicerConfigError(
-                    code=SlicerConfigErrorCode.E108,
-                    message="`part` argument must be given when `split_by` is used",
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E108)
             if len(self.split_by) != len(part):
                 raise SlicerConfigError(
-                    "The `part` value must be the same length as `split_by`",
-                    code=SlicerConfigErrorCode.E109,
-                    details={"split_by": self.split_by, "part": part},
+                    SlicerConfigErrorCode.E109, details={"split_by": self.split_by, "part": part}
                 )
         elif part:
             # part cannot be used if `split_by` is not set up
-            raise SlicerConfigError(
-                code=SlicerConfigErrorCode.E110,
-                message="`split_by` must be set up when `part` argument is given",
-            )
+            raise SlicerConfigError(SlicerConfigErrorCode.E110)
 
     def resolve_explicit_dimension(self, dim_ref: str) -> Optional[Dimension]:
         rts = self.involved_report_types()
@@ -915,10 +974,7 @@ class FlexibleDataSlicer:
             # but we want to ensure that
             dims = {rt.dimension_by_attr_name(dim_ref) for rt in rts}
             if len(dims) > 1:
-                raise SlicerConfigError(
-                    code=SlicerConfigErrorCode.E113,
-                    message="Dimension is not common to all used report types",
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E113)
             return dims.pop()
         return None
 
@@ -941,12 +997,7 @@ class FlexibleDataSlicer:
     ):
         rts = self.involved_report_types()
         for rt in rts:
-            dimensions = {fltr.dimension for fltr in self.dimension_filters}
-            if not ignore_primary:
-                dimensions.update(self.primary_dimensions)
-            dimensions |= {dim.lstrip("-") for dim in self.order_by}
-            dimensions |= set(self.group_by)
-            dimensions |= set(self.split_by)
+            dimensions = self._involved_dimensions(ignore_primary=ignore_primary)
             if extra_dimensions_to_preserve:
                 dimensions |= set(extra_dimensions_to_preserve)
             materialized_report = find_best_materialized_view(rt, dimensions)
@@ -958,6 +1009,18 @@ class FlexibleDataSlicer:
                         fltr.values = [
                             materialized_report.pk if rt.pk == val else val for val in fltr.values
                         ]
+
+    def _involved_dimensions(self, ignore_primary=False) -> Set[str]:
+        """
+        Returns a set of dimensions that are involved in the query.
+        """
+        dimensions = {fltr.dimension for fltr in self.dimension_filters}
+        if not ignore_primary:
+            dimensions.update(self.primary_dimensions)
+        dimensions.update({dim.lstrip("-") for dim in self.order_by})
+        dimensions.update(self.group_by)
+        dimensions.update(self.split_by)
+        return dimensions
 
     @classmethod
     def filter_class(cls, dimension) -> Type[DimensionFilter]:
@@ -1018,11 +1081,8 @@ class FlexibleDataSlicer:
             primary_dimensions = parse_b64json(primary_dimensions)
         else:
             primary_dimensions = params.get("primary_dimension")
-            if not primary_dimensions:
-                raise SlicerConfigError(
-                    '"primary_dimensions" or "primary_dimension" key must be present',
-                    SlicerConfigErrorCode.E104,
-                )
+        if not primary_dimensions:
+            raise SlicerConfigError(SlicerConfigErrorCode.E104)
         slicer = cls(primary_dimensions)
         # filters
         filters = params.get("filters")
@@ -1039,10 +1099,11 @@ class FlexibleDataSlicer:
             slicer.trend_mode = trend_mode
 
             def make_filters(params_name):
-                if filters := params.get(params_name):
-                    filters = parse_b64json(filters)
-                    if "date" in filters:
-                        return [cls.filter_instance("date", filters["date"])]
+                if fltrs := params.get(params_name):
+                    fltrs = parse_b64json(fltrs)
+                    if "date" in fltrs:
+                        return [cls.filter_instance("date", fltrs["date"])]
+                return None
 
             slicer.base_subset_filters = (
                 make_filters("base_subset_filters") or slicer.base_subset_filters
@@ -1067,6 +1128,7 @@ class FlexibleDataSlicer:
         if tag_class := params.get("tag_class"):
             slicer.tag_class = int(tag_class)
         slicer.show_untagged_remainder = to_bool(params.get("show_untagged_remainder", ""))
+        slicer.merge_report_types = to_bool(params.get("merge_report_types", ""))
         return slicer
 
     @classmethod
@@ -1080,10 +1142,7 @@ class FlexibleDataSlicer:
             # Fallback to old parameter name for backward compatibility
             primary_dimensions = params.get("primary_dimension")
             if not primary_dimensions:
-                raise SlicerConfigError(
-                    '"primary_dimensions" or "primary_dimension" key must be present',
-                    SlicerConfigErrorCode.E104,
-                )
+                raise SlicerConfigError(SlicerConfigErrorCode.E104)
         slicer = cls(primary_dimensions)
         # filters
         filters = params.get("filters", [])
@@ -1112,6 +1171,8 @@ class FlexibleDataSlicer:
                 cls._config_dict_to_filter(fltr)
                 for fltr in params.get("compared_subset_filters", [])
             ]
+        # merge_report_types
+        slicer.merge_report_types = params.get("merge_report_types", False)
         return slicer
 
     @classmethod
@@ -1177,6 +1238,28 @@ class FlexibleDataSlicer:
             coverage["ratio"] = None
         return coverage
 
+    def _get_coverage_for_filters_merged_report_types(self, **fltrs):
+        """
+        Applies the filters to `DataCoverageExtractor` and returns the total coverage over
+        all report types involved in the slicer.
+        This version is used when merge_report_types is True. It merges the coverage data
+        together by individual months.
+        """
+        rts = self.involved_report_types()
+        assert len(rts) == 2, (
+            "Exactly two RTs must be involved when merging RTs - this is enforced elsewhere"
+        )
+        # we need to preserve the order of the report types as they are in the filter
+        rt_filter = next(fltr for fltr in self.dimension_filters if fltr.dimension == "report_type")
+        rt1, rt2 = rts
+        if rt_filter.values[0] == rt2.pk:
+            rt1, rt2 = rt2, rt1
+        comp = DataCoverageExtractor(
+            report_type=rt1, fallback_report_type=rt2, split_by_date=False, **fltrs
+        )
+        cov = comp.get_coverage_data()
+        return cov.get((), {})
+
     def get_coverage(self) -> Optional[dict]:
         """
         Returns the result of data coverage computation based on the filters applied to the slicer
@@ -1222,6 +1305,11 @@ class FlexibleDataSlicer:
         if organization_ids is not None:
             coverage_filters.update({"organization": organization_ids})
 
+        cov_method = (
+            self._get_coverage_for_filters_merged_report_types
+            if self.merge_report_types
+            else self._get_coverage_for_filters
+        )
         if self.trend_mode:
             # in trend mode, we need to calculate coverage for both base and compared periods
             # separately
@@ -1232,13 +1320,12 @@ class FlexibleDataSlicer:
                 return {}
 
             base_range = subset_filters(self.base_subset_filters)
-            base_cov = self._get_coverage_for_filters(**base_range, **coverage_filters)
+            base_cov = cov_method(**base_range, **coverage_filters)
             compared_range = subset_filters(self.compared_subset_filters)
-            compared_cov = self._get_coverage_for_filters(**compared_range, **coverage_filters)
+            compared_cov = cov_method(**compared_range, **coverage_filters)
             return {"base": base_cov, "compared": compared_cov}
         else:
-            cov = self._get_coverage_for_filters(**coverage_filters)
-            return {"overall": cov}
+            return {"overall": cov_method(**coverage_filters)}
 
 
 class SlicerConfigErrorCode(Enum):
@@ -1259,35 +1346,68 @@ class SlicerConfigErrorCode(Enum):
     E114 = "E114"
     E115 = "E115"
     E116 = "E116"
+    E117 = "E117"
+    E118 = "E118"
+    E119 = "E119"
+    E120 = "E120"
 
     def __str__(self):
         return self.value
 
 
 class SlicerConfigError(Exception):
-    """
-    E100: It is not possible to group by explicit dimension unless exactly one report
-          type is selected by a filter
-    E101: There are too many possible groups, please refine you configuration,
-    E102: The specified primary dimension is not supported.
-    E103: The specified primary dimension is not valid.
-    E104: The attribute 'primary_dimension' must be present in the request.
-    E105: The attribute 'dimension' must be present in the request.
-    E106: At least one dimension must be selected to define the output columns.
-    E107: The queried dimension is not supported.
-    E108: Part is not specified and `split_by` is used.
-    E109: Part specification is incompatible with `split_by`.
-    E110: Part was specified without `split_by` being active.
-    E111: Only date filters are supported for subsets in trend mode.
-    E112: There are too many possible parts, please refine you configuration.
-    E113: Dimension is not common to all used report types.
-    E114: Tag roll up is not supported when multiple primary dimensions are used.
-    E115: Include all zero rows is not supported when multiple primary dimensions are used.
-    E116: Trend mode is not supported when multiple primary dimensions are used.
-    """
+    code_to_message = {
+        SlicerConfigErrorCode.E100: (
+            "It is not possible to group by explicit dimension unless that dimension is shared by "
+            "all selected report types."
+        ),
+        SlicerConfigErrorCode.E101: (
+            "There are too many possible groups, please refine your configuration."
+        ),
+        SlicerConfigErrorCode.E102: "The specified primary dimension is not supported.",
+        SlicerConfigErrorCode.E103: "The specified primary dimension is not valid.",
+        SlicerConfigErrorCode.E104: (
+            "The attribute 'primary_dimension' or 'primary_dimensions' must be present in the "
+            "request and not be empty."
+        ),
+        SlicerConfigErrorCode.E105: "The attribute 'dimension' must be present in the request.",
+        SlicerConfigErrorCode.E106: (
+            "At least one dimension must be selected to define the output columns."
+        ),
+        SlicerConfigErrorCode.E107: "The queried dimension is not supported.",
+        SlicerConfigErrorCode.E108: "Part is not specified and `split_by` is used.",
+        SlicerConfigErrorCode.E109: "Part specification is incompatible with `split_by`.",
+        SlicerConfigErrorCode.E110: "Part was specified without `split_by` being active.",
+        SlicerConfigErrorCode.E111: "Only date filters are supported for subsets in trend mode.",
+        SlicerConfigErrorCode.E112: (
+            "There are too many possible parts, please refine you configuration."
+        ),
+        SlicerConfigErrorCode.E113: "Dimension is not common to all used report types.",
+        SlicerConfigErrorCode.E114: (
+            "Tag roll up is not supported when multiple primary dimensions are used."
+        ),
+        SlicerConfigErrorCode.E115: (
+            "Include all zero rows is not supported when multiple primary dimensions are used."
+        ),
+        SlicerConfigErrorCode.E116: (
+            "Trend mode is not supported when multiple primary dimensions are used."
+        ),
+        SlicerConfigErrorCode.E117: (
+            "When merge_report_types is True, exactly two report types must be selected."
+        ),
+        SlicerConfigErrorCode.E118: (
+            "Report type filter must be specified when explicit dimension filter is used."
+        ),
+        SlicerConfigErrorCode.E119: (
+            "When merging report types, an explicit report type filter must be specified."
+        ),
+        SlicerConfigErrorCode.E120: (
+            "Both base and compared subset filters must be specified when trend_mode is True"
+        ),
+    }
 
-    def __init__(self, message, code: SlicerConfigErrorCode, *args, details=None, **kwargs):
-        self.message = message
+    def __init__(self, code: SlicerConfigErrorCode, *args, message=None, details=None, **kwargs):
+        self.message = message or self.code_to_message[code]
         self.code = code.value
         self.details = details
         super().__init__(*args, **kwargs)

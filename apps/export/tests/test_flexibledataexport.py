@@ -1207,3 +1207,154 @@ class TestFlexibleDataExportExcel:
         assert first_data_row[2] != ""
         assert first_data_row[3] != ""
         assert first_data_row[4] != ""
+
+
+@pytest.mark.django_db
+class TestFlexibleDataExportMergeReportTypes:
+    def test_cover_sheet_metadata_shows_merged_report_types(
+        self, flexible_slicer_test_data, admin_user
+    ):
+        """
+        Test that cover sheet metadata shows merged report types when merge_report_types is True
+        """
+        slicer = FlexibleDataSlicer(["platform"], merge_report_types=True)
+        report_types = flexible_slicer_test_data["report_types"]
+        # Need exactly 2 report types for merge_report_types
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_types[:2]))
+        slicer.add_group_by("metric")
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        export.file_format = FileFormat.ZIP_CSV
+        out = BytesIO()
+        export.write_data(out)
+        out.seek(0)
+
+        with ZipFile(out, "r") as zipfile:
+            with zipfile.open("_metadata.csv", "r") as infile:
+                metadata_content = infile.read().decode("utf-8")
+                lines = metadata_content.splitlines()
+
+        # Check that "Merged report types" appears in metadata
+        merged_rt_line_idx = 0
+        for idx, line in enumerate(lines):
+            if "Merged report types" in line or "merged report types" in line.lower():
+                merged_rt_line_idx = idx
+                break
+        else:
+            assert False, "Merged report types line not found in metadata"
+
+        # Check that both report type names are present
+        assert report_types[0].name in lines[merged_rt_line_idx]
+        assert report_types[1].name in lines[merged_rt_line_idx + 1]
+
+    @pytest.mark.parametrize("include_row_totals", [True, False])
+    @pytest.mark.parametrize("include_col_totals", [True, False])
+    def test_export_contains_report_types_column(
+        self,
+        flexible_slicer_test_data,
+        admin_user,
+        export_output,
+        include_row_totals,
+        include_col_totals,
+    ):
+        """
+        Test that exported data contains Used reports column when merge_report_types is True
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform"],
+            merge_report_types=True,
+            include_row_totals=include_row_totals,
+            include_col_totals=include_col_totals,
+        )
+        report_types = flexible_slicer_test_data["report_types"]
+        # Need exactly 2 report types for merge_report_types
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_types[:2]))
+        slicer.add_group_by("metric")
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+
+        # Check header contains Used reports column
+        header = lines[0]
+        assert "Used reports" in header
+
+        # Check that data rows have Used reports column with values
+        # The column should be the last column in the output
+        header_parts = header.split(",")
+        rt_col_index = header_parts.index("Used reports")
+
+        # Verify it's the last column
+        assert rt_col_index == len(header_parts) - 1, "Used reports should be the last column"
+
+        assert len(lines) > 1, "No data rows found in exported data"
+        # Check at least one data row has report type names
+        found_rt_values = False
+        for line in lines[1:]:
+            parts = line.split(",")
+            if len(parts) > rt_col_index:
+                rt_value = parts[rt_col_index]
+                # Should contain at least one report type name
+                if rt_value and rt_value != "-":
+                    assert report_types[0].name in rt_value or report_types[1].name in rt_value
+                    found_rt_values = True
+
+        assert found_rt_values, "No report type values found in exported data"
+
+    def test_export_without_merge_report_types_no_column(
+        self, flexible_slicer_test_data, admin_user, export_output
+    ):
+        """
+        Test that Used reports column is NOT present when merge_report_types is False
+        """
+        slicer = FlexibleDataSlicer(["platform"], merge_report_types=False)
+        report_type = flexible_slicer_test_data["report_types"][0]
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_type))
+        slicer.add_group_by("metric")
+
+        export = FlexibleDataExport.create_from_slicer(slicer, admin_user)
+        data = export_output(export)
+        lines = data.splitlines()
+
+        # Check header does NOT contain Used reports column
+        header = lines[0]
+        assert "Used reports" not in header
+
+        # Also check metadata doesn't contain merged report types info
+        export.file_format = FileFormat.ZIP_CSV
+        out = BytesIO()
+        export.write_data(out)
+        out.seek(0)
+        with ZipFile(out, "r") as zipfile:
+            with zipfile.open("_metadata.csv", "r") as infile:
+                metadata_content = infile.read().decode("utf-8")
+                assert "merged report types" not in metadata_content.lower()
+
+    @pytest.mark.parametrize(
+        "exporter_cls", [FlexibleDataSimpleCSVExporter, FlexibleDataZipCSVExporter]
+    )
+    def test_report_types_column_in_all_formats(self, flexible_slicer_test_data, exporter_cls):
+        """
+        Test that Used reports column works in both CSV and ZIP CSV formats
+        """
+        slicer = FlexibleDataSlicer(["platform"], merge_report_types=True)
+        report_types = flexible_slicer_test_data["report_types"]
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_types[:2]))
+        slicer.add_group_by("metric")
+
+        exporter = exporter_cls(slicer)
+        out = StringIO() if exporter_cls == FlexibleDataSimpleCSVExporter else BytesIO()
+        exporter.stream_data_to_sink(out)
+        out.seek(0)
+
+        if exporter_cls == FlexibleDataZipCSVExporter:
+            with ZipFile(out, "r") as zipfile:
+                names = [name for name in zipfile.namelist() if name != "_metadata.csv"]
+                with zipfile.open(names[0], "r") as csvfile:
+                    content = csvfile.read().decode("utf-8")
+        else:
+            content = out.read()
+
+        lines = content.splitlines()
+        header = lines[0]
+        assert "Used reports" in header

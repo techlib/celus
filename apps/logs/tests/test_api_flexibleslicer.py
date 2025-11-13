@@ -530,6 +530,105 @@ class TestSlicerAPI:
         assert data["ib_count"] == exp_ib_count
         assert data["ib_max"] == exp_ib_max
 
+    def test_report_coverage_with_multiple_report_types(self, flexible_slicer_test_data, clients):
+        """
+        Test that the report coverage endpoint works with multiple report types.
+        """
+        # make some holes in the data to test that the coverage is computed correctly
+        # delete rt1, org1, 2020-01-01 and all platforms
+        # and    rt2, org1, 2020-02-01 and pl1
+        rt1, rt2 = flexible_slicer_test_data["report_types"]
+        ImportBatch.objects.filter(
+            report_type=rt1,
+            organization=flexible_slicer_test_data["organizations"][0],
+            date="2020-01-01",
+        ).delete()
+        ImportBatch.objects.filter(
+            report_type=rt2,
+            organization=flexible_slicer_test_data["organizations"][0],
+            platform=flexible_slicer_test_data["platforms"][0],
+            date="2020-02-01",
+        ).delete()
+        fltrs = {}
+        resp = clients["su"].get(
+            reverse("flexible-slicer-coverage"),
+            {
+                "primary_dimension": "platform",
+                "groups": b64json(["metric"]),
+                "filters": b64json(
+                    {
+                        "metric": [flexible_slicer_test_data["metrics"][0].pk],
+                        "report_type": [rt1.pk, rt2.pk],
+                        **fltrs,
+                    }
+                ),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()["overall"]
+        # 2 rts, 3 orgs, 3 pls, 4 months
+        assert data["ib_max"] == 2 * 3 * 3 * 4
+        # 1 month for 3 platforms, 1 month for 1 platform
+        assert data["ib_count"] == data["ib_max"] - 3 - 1
+
+    def test_report_coverage_with_multiple_report_types_and_merge_report_types(
+        self, flexible_slicer_test_data, clients
+    ):
+        """
+        Test that the report coverage endpoint works with multiple report types and
+        merge_report_types is True.
+        """
+        # make some holes in the data to test that the coverage is computed correctly
+        # delete rt1, org1, 2020-01-01 and all platforms
+        # and    rt2, org1, 2020-02-01 and pl1
+        rt1, rt2 = flexible_slicer_test_data["report_types"]
+        ImportBatch.objects.filter(
+            report_type=rt1,
+            organization=flexible_slicer_test_data["organizations"][0],
+            date="2020-01-01",
+        ).delete()
+        ImportBatch.objects.filter(
+            report_type=rt2,
+            organization=flexible_slicer_test_data["organizations"][0],
+            platform=flexible_slicer_test_data["platforms"][0],
+            date="2020-02-01",
+        ).delete()
+
+        attrs = {
+            "primary_dimension": "platform",
+            "groups": b64json(["metric"]),
+            "filters": b64json(
+                {
+                    "metric": [flexible_slicer_test_data["metrics"][0].pk],
+                    "report_type": [rt1.pk, rt2.pk],
+                }
+            ),
+            "merge_report_types": True,
+        }
+        resp = clients["su"].get(reverse("flexible-slicer-coverage"), attrs)
+        assert resp.status_code == 200
+        data = resp.json()["overall"]
+        # 1 joined rt, 3 orgs, 3 pls, 4 months
+        assert data["ib_max"] == 1 * 3 * 3 * 4
+        # the missing data are complementary, so nothing should be missing in the joined rt
+        assert data["ib_count"] == data["ib_max"]
+
+        # delete some more data to really create a hole
+        # rt2 does not have data for 2020-02-01 for one platform, so it cannot fill the hole
+        # if we remove all ibs for rt1 for all platforms
+        ImportBatch.objects.filter(
+            report_type=rt1,
+            organization=flexible_slicer_test_data["organizations"][0],
+            date="2020-02-01",
+        ).delete()
+        resp = clients["su"].get(reverse("flexible-slicer-coverage"), attrs)
+        assert resp.status_code == 200
+        data = resp.json()["overall"]
+        # 1 joined rt, 3 orgs, 3 pls, 4 months
+        assert data["ib_max"] == 1 * 3 * 3 * 4
+        # in 2020-02 data for one platform cannot be filled
+        assert data["ib_count"] == data["ib_max"] - 1
+
     @pytest.mark.parametrize(["end_date", "exp_ib_max"], (("2020-02-28", 2), (None, 0)))
     def test_report_coverage_no_data(
         self,

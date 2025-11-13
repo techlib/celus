@@ -18,6 +18,8 @@ en:
   pop_out: Expand to full screen
   parts_cropped: There are too many parts ({count}), showing only the first {max}. Note - unless the number of parts is reduced, export will fail.
   no_data_for_chart: No data to display in the chart.
+  merge_report_types_tt_primary: Primary report has been used for the data.
+  merge_report_types_tt_secondary: Fallback report has been used for the data.
 cs:
   detail: Detail
   error: Chyba
@@ -33,6 +35,8 @@ cs:
   pop_out: Roztáhnout na celou obrazovku
   parts_cropped: Report obsahuje příliš mnoho částí ({count}), zobrazuji pouze prvních {max}. Poznámka - pokud počet částí nesnížíte, export selže.
   no_data_for_chart: Žádná data pro zobrazení v grafu.
+  merge_report_types_tt_primary: Hlavní report byl použit pro data.
+  merge_report_types_tt_secondary: Záložní report byl použit pro data.
 </i18n>
 
 <template>
@@ -221,6 +225,32 @@ cs:
           </div>
         </template>
 
+        <template #item.used_rts="{ item }">
+          <v-tooltip
+            location="bottom"
+            max-width="600px"
+            v-for="rt in item.used_rts"
+            :key="rt"
+          >
+            <template #activator="{ props }">
+              <span v-bind="props">
+                <v-chip
+                  size="x-small"
+                  class="mr-1"
+                  :color="isPrimaryReportType(rt) ? 'primary' : ''"
+                  :variant="isPrimaryReportType(rt) ? 'flat' : 'tonal'"
+                  >{{ rt }}</v-chip
+                >
+              </span>
+            </template>
+            {{
+              isPrimaryReportType(rt)
+                ? $t("merge_report_types_tt_primary")
+                : $t("merge_report_types_tt_secondary")
+            }}
+          </v-tooltip>
+        </template>
+
         <template
           #body.append="{ columns }"
           v-if="remainderVisible && (remainder || loadingRemainder)"
@@ -325,7 +355,6 @@ import OutlinedContainer from "@/components/util/OutlinedContainer.vue";
 import { smartMonthRange } from "@/libs/dates";
 import { splitGroup } from "@/libs/group-ids";
 import { formatInteger } from "@/libs/numbers";
-import { echartPalette } from "@/libs/palettes";
 import { toBase64JSON } from "@/libs/serialization";
 import { djangoToDataTableOrderBy } from "@/libs/sorting";
 import cancellation from "@/mixins/cancellation";
@@ -911,6 +940,18 @@ export default {
         }
       }
       await Promise.all(promises);
+      // if mergeReportTypes is active, we need to translate the report types from ids to names
+      if (this.report.mergeReportTypes) {
+        let rt_ids = [];
+        this.data.forEach((item) => {
+          for (let rt of item.used_rts) {
+            if (!rt_ids.includes(rt)) {
+              rt_ids.push(rt);
+            }
+          }
+        });
+        await this.translators["report_type"].prepareTranslation(rt_ids);
+      }
       this.translatorsUpdating = false;
     },
     recomputeData() {
@@ -993,6 +1034,22 @@ export default {
       this.extractedHeaders = extractedHeaders.sort((a, b) =>
         a.title.localeCompare(b.title),
       );
+      // if mergeReportTypes is active, we add a column with the used report types
+      // we need to translate the report types from ids to names
+      if (this.report.mergeReportTypes) {
+        this.cleanData.forEach((item) => {
+          item.used_rts = item.used_rts.map((rt) =>
+            this.translators["report_type"].translateKeyToString(
+              rt,
+              this.$i18n.locale,
+            ),
+          );
+        });
+        this.extractedHeaders.push({
+          title: "Used report types",
+          value: "used_rts",
+        });
+      }
     },
     showError(code, details) {
       this.errorCode = code;
@@ -1133,6 +1190,11 @@ export default {
             this.coverageData[platformId] = null;
           });
       }
+    },
+    isPrimaryReportType(rt) {
+      return (
+        this.report.reportTypes.findIndex((item) => item.name === rt) === 0
+      );
     },
   },
   watch: {

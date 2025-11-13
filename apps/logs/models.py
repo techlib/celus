@@ -72,9 +72,6 @@ if typing.TYPE_CHECKING:
 
 DIMENSION_COUNT = 8
 
-if typing.TYPE_CHECKING:
-    from sushi.models import CounterReportType
-
 
 class OrganizationPlatform(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -191,7 +188,7 @@ class ReportType(models.Model):
 
     @cached_property
     def dimension_short_names(self) -> typing.List[str]:
-        return [dim.short_name for dim in self.dimensions.all()]
+        return [dim.short_name for dim in self.dimensions_sorted]
 
     @cached_property
     def dimensions_sorted(self) -> typing.List["Dimension"]:
@@ -1527,10 +1524,7 @@ class FlexibleReport(models.Model):
                 if len(dims) > 1:
                     from logs.logic.reporting.slicer import SlicerConfigError, SlicerConfigErrorCode
 
-                    raise SlicerConfigError(
-                        code=SlicerConfigErrorCode.E113,
-                        message="Dimension is not common to all used report types",
-                    )
+                    raise SlicerConfigError(SlicerConfigErrorCode.E113)
                 return dims.pop()
         return None
 

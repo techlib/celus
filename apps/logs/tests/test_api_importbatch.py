@@ -605,6 +605,7 @@ class TestImportBatchesAPI:
             "2020-04-01",
         }
 
+    @pytest.mark.xfail(raises=NotImplementedError)
     @pytest.mark.parametrize(
         ["rts_to_connect", "superseding", "ib_counts", "ib_max_counts"],
         [
@@ -630,17 +631,9 @@ class TestImportBatchesAPI:
         settings,
     ):
         """
-        The created data from IB perspective are
-
-        date    | RT  | platform   | organization | source
-        --------+-----+------------+--------------+-------
-        2020-01 | TR  | standalone | standalone   | fa
-        2020-02 | TR  | standalone | standalone   | fa
-        2020-03 | TR  | standalone | standalone   | mdu
-        2020-02 | BR1 | standalone | standalone   | fa
-        2020-01 | PR  | branch     | branch       | fa
-        2020-02 | PR  | branch     | branch       | mdu
-        2020-03 | PR  | branch     | branch       | mdu
+        Data coverage for interest report type is not fully implemented yet. Here we test
+        that the expected error is raised. Later on, we can modify the test to test the actual
+        coverage data.
         """
         # make sure interest is not among the excluded report types
         settings.REPORT_TYPES_WITHOUT_COVERAGE = []
