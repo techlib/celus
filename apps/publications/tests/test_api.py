@@ -3155,10 +3155,24 @@ class TestItemViewSet:
         """
         pl = PlatformFactory()
         org = OrganizationFactory()
-        items = ItemFactory.create_batch(10, usage__platform=pl, usage__organization=org)
+        # make sure there are no clashing import batches by using different dates for each item
+        items = [
+            ItemFactory.create(
+                usage__platform=pl, usage__organization=org, usage__date=f"2020-{(i + 1):02d}-01"
+            )
+            for i in range(10)
+        ]
         # create some extra items that should not be in the response
-        ItemFactory.create_batch(3, usage__platform=pl)
-        ItemFactory.create_batch(4, usage__organization=org)
+        org2 = OrganizationFactory()
+        pl2 = PlatformFactory()
+        for i in range(3):
+            ItemFactory.create(
+                usage__platform=pl, usage__organization=org2, usage__date=f"2020-{(i + 1):02d}-01"
+            )
+        for i in range(4):
+            ItemFactory.create(
+                usage__platform=pl2, usage__organization=org, usage__date=f"2020-{(i + 1):02d}-01"
+            )
         params = {}
         if interest is not None:
             params["interest"] = interest

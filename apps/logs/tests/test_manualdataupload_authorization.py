@@ -48,6 +48,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
             report_type=rt,
             owner_level=UL_ORG_ADMIN,
             state=state,
+            import_batches__date="2020-01-01",
         )
         mdu_unrel_admin = ManualDataUploadFullFactory(
             organization=organizations[1],
@@ -55,6 +56,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
             report_type=rt,
             owner_level=UL_ORG_ADMIN,
             state=state,
+            import_batches__date="2020-02-01",
         )
         mdu_master = ManualDataUploadFullFactory(
             organization=org,
@@ -62,6 +64,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
             report_type=rt,
             owner_level=UL_CONS_STAFF,
             state=state,
+            import_batches__date="2020-03-01",
         )
         mdu_super = ManualDataUploadFullFactory(
             organization=org,
@@ -69,6 +72,7 @@ def mdu_with_user_levels(platforms, report_type_nd, identity_by_user_type, organ
             report_type=rt,
             owner_level=UL_CONS_ADMIN,
             state=state,
+            import_batches__date="2020-04-01",
         )
         return MDUSet(
             rel_admin=mdu_rel_admin, unrel_admin=mdu_unrel_admin, master=mdu_master, super=mdu_super

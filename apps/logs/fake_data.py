@@ -81,7 +81,6 @@ class ImportBatchFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ImportBatch
-        django_get_or_create = ("organization", "platform", "report_type", "date")
 
     organization = factory.SubFactory(OrganizationFactory)
     platform = factory.SubFactory(PlatformFactory)
@@ -197,7 +196,10 @@ class ManualDataUploadFullFactory(ManualDataUploadFactory):
 
         if obj.is_processed:
             ib = ImportBatchFullFactory(
-                organization=obj.organization, platform=obj.platform, report_type=obj.report_type
+                organization=obj.organization,
+                platform=obj.platform,
+                report_type=obj.report_type,
+                **kwargs,
             )
             obj.import_batches.set([ib])
 
