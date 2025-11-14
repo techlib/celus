@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.0.0] - 2025-11-21
+
+### Added
+
+#### Frontend
+
+- add anomaly report page and include anomaly summary in the monthly harvesting report
+- add support for multiindex (more than one row-defining dimension) in reporting
+- add support for merging two reports into one in reporting - fallback report fills in missing data from the main report
+- add report type hierarchy view to Interest overview
+- enhance the report-metric view in interest overview with filter info
+- add new filters and organization-specific record counts to Interest overview
+- redesign information shown about title list tagging to show total counts primarily
+- make tooltips less transparent to improve readability
+
+#### Backend
+
+- create Events automatically from COUNTER registry notifications
+- add whitelisted overrides for the COUNTER registry knowledgebase
+- add item number to prometheus monitoring
+- support for items was added to the analytical database export
+- title is newly exported to the analytical database only if it is used in the report
+- export to analytical database (Clickhouse) newly contains tags for titles, platforms and organizations
+- COUNTER registry ID was added to the analytical database export
+
+### Changed
+
+#### Frontend
+
+- add server-side pagination to the `sushi-credentials` API endpoint, making it much faster to load
+- make organization selector wider to better accommodate longer organization names
+- show 'Data management' tab to read only users, but hide destructive operations
+- the maximum number of columns in reporting was increased to 200
+- update Vuetify from 3.8 to 3.10
+- change user string formatting in `user.js` to `first_name, last_name`
+- update the side panel
+
+#### Backend
+
+- update Django version to 5.2
+- raise minimum Python version to 3.12.3
+- switch to `uv` for package management
+
+### Fixed
+
+#### Frontend
+
+- do not add internal title tags to titles when their page is visited by using lazy loading of the reporting link in charts
+- fix display of report types when uploading data in the CELUS format and fix a dead expander in the same place
+- fix ordering in reporting output where each second ordering click was skipped
+- fix regression in custom table sort to preserve custom templates for header slots
+- fix display of tooltips on tags
+- show tooltip for disabled report types in SUSHI edit and platform edit dialogs
+- fix default ordering for new reports in reporting
+- fix regression in date formatting in reporting excel export
+- fix error in reharvesting when delete dialog was closed by user before data were actually deleted
+
+#### Backend
+
+- deleting of SUSHI credentials was reworked to wait for running harvests to finish and prevent race conditions
+- fix `update_registry_models_task` celery beat configuration so it is actually scheduled
+- add celery queue to find_and_renew_first_due_cached_query_task and add a test to check all beat schedules have the task registered
+- disable Clickhouse Sentry integration to prevent OOM errors during sync to public Clickhouse
+- fix recache renewal to correctly catch all types of exceptions during renewal between django versions
+- don't try to send data to knowledgebase when using registry as knowledgebase
+
 ## [10.0.1] - 2025-11-06
 
 ### Added

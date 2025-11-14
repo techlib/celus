@@ -1,3 +1,31 @@
+- version: 11.0.0
+  title:
+    en: Two new HUGE reporting features, anomaly detection, improved interest overview and much more in CELUS 11.0.0
+    cs: Dvě OBŘÍ nové funkce v reportingu, detekce anomálií, vylepšený přehled zájmu a mnohem víc v CELUSu 11.0.0
+  text:
+    en: |
+      - **Anomaly insights** - find anomalies in your data with a new anomaly report page + get monthly email with newly found anomalies
+      - **Multi-index reporting** - build reports with more than one row-defining dimension
+      - **COUNTER version continuity** - in reporting, you can now merge two reports into one - the fallback report fills in missing data from the main report
+      - **Enhanced Interest overview** - new report type hierarchy view, enhanced report-metric view with filter information, and organization-specific record counts
+      - **SUSHI management improvements** - server-side pagination for SUSHI credentials for faster browsing
+      - **COUNTER registry integration** - events are created automatically from registry notifications
+      - Improved tooltips visibility and better display of title list tagging information
+      - Many other improvements and bug fixes were introduced
+    cs: |
+      - **Přehled anomálií** - najděte anomálie ve svých datech s novou stránkou s anomáliemi a dostávejte měsíční email s nově nalezenými anomáliemi
+      - **Multi-index v reportingu** - sestavujte reporty s více než jedním rozměrem definujícím řádky
+      - **Kontinuita verzí COUNTER** - v reportingu nyní můžete sloučit dva reporty do jednoho - náhradní report doplní chybějící data z hlavního reportu
+      - **Vylepšený přehled zájmu** - nový hierarchický pohled na typy reportů, vylepšený pohled report-metrika s informacemi o filtrech a počty záznamů specifické pro organizace
+      - **Vylepšená správa SUSHI** - stránkování na serveru pro rychlejší procházení
+      - **Integrace s COUNTER registrem** - automatické vytváření událostí z notifikací v COUNTER registru
+      - Vylepšená viditelnost tooltipů a lepší zobrazení informací o štítkování seznamů titulů
+      - Bylo provedeno mnoho dalších vylepšení a oprav chyb
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 10.0.1
   title:
     en: Bugfix release 10.0.1
