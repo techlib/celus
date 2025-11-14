@@ -95,6 +95,12 @@ def db_title_num():
     return Title.objects.count()
 
 
+def db_item_num():
+    from publications.models import Item
+
+    return Item.objects.count()
+
+
 def db_platform_num():
     from publications.models import Platform
 
@@ -306,6 +312,7 @@ CACHE_STORED_GAUAGES = {
         "func": db_user_num,
     },
     "celus_db_title_num": {"desc": "Number of titles in the database", "func": db_title_num},
+    "celus_db_item_num": {"desc": "Number of items in the database", "func": db_item_num},
     "celus_db_platform_num": {
         "desc": "Number of platforms in the database",
         "dims": ["source_type"],
