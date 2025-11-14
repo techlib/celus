@@ -144,12 +144,9 @@ cs:
         </v-col>
       </v-row>
     </template>
-    <v-dialog
-      v-if="showDeleteDialog"
-      v-model="showDeleteDialog"
-      max-width="1100px"
-    >
+    <v-dialog v-model="showDeleteDialog" max-width="1100px">
       <ImportBatchesDeleteConfirm
+        v-show="showDeleteDialog"
         :import-batch-slices="importBatchSlicesToDelete"
         :intention-slices="intentionSlicesToDelete"
         @cancel="showDeleteDialog = false"

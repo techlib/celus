@@ -96,9 +96,9 @@ cs:
 </template>
 
 <script>
+import ImportBatchesList from "@/components/ImportBatchesList";
 import axios from "axios";
 import { mapActions } from "vuex";
-import ImportBatchesList from "@/components/ImportBatchesList";
 
 export default {
   name: "ImportBatchesDeleteConfirm",
@@ -171,12 +171,13 @@ export default {
       this.deleting = false;
     },
     async deleteImportBatches() {
+      const deleteOkMessage = this.$t("confirm_delete.delete_ok");
       try {
         await axios.post(this.deleteImportBatchesUrl, {
           batches: this.importBatchesKeys,
         });
         this.showSnackbar({
-          content: this.$t("confirm_delete.delete_ok"),
+          content: deleteOkMessage,
           color: "success",
         });
       } catch (error) {
