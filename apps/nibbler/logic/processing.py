@@ -96,3 +96,7 @@ def get_months_from_nibbler_output(nibbler_output: NibblerOutput) -> typing.Set[
     return unique_flatten(
         unique_flatten(e.get_months()) for e in nibbler_output if isinstance(e, Poop)
     )
+
+
+def get_parser_names_from_nibbler_output(nibbler_output: NibblerOutput) -> typing.List[str]:
+    return list({e.parser.name for e in nibbler_output if isinstance(e, Poop)})

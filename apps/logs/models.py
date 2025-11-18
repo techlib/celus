@@ -25,6 +25,7 @@ from core.models import where_to_store as core_where_to_store
 from core.validators import validate_mime_type_based_on_extension as validate_mime_type
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import BrinIndex
 from django.core.exceptions import (
     FieldDoesNotExist,
@@ -930,6 +931,12 @@ class ManualDataUpload(SourceFileMixin, models.Model):
     )
     state = models.CharField(max_length=20, choices=MduState.choices, default=MduState.INITIAL)
     method = models.CharField(max_length=20, choices=MduMethod.choices, default=MduMethod.COUNTER)
+    nibbler_parser_names = ArrayField(
+        models.CharField(max_length=200),
+        default=list,
+        help_text="Parser names used to extract data",
+        blank=True,
+    )
 
     class Meta:
         constraints = (

@@ -32,16 +32,16 @@ from test_scenarios.basic import (  # noqa - fixtures
 class TestManualUploadForCounterData:
     @pytest.mark.parametrize(["hash_matches"], [(True,), (False,)])
     @pytest.mark.parametrize(
-        ["filename", "report_code"],
+        ["filename", "report_code", "parser_name"],
         (
-            ("counter4/counter4_br2.tsv", "br2"),
-            ("counter5/counter5_table_dr.csv", "dr"),
-            ("counter5/counter5_table_dr.tsv", "dr"),
-            ("counter5/counter5_table_pr.csv", "pr"),
-            ("counter5/counter5_tr_test1.json", "tr"),
-            ("counter51/DR_sample_r51.json", "dr"),
-            ("counter51/PR_sample_r51.json", "pr"),
-            ("counter51/TR_sample_r51.json", "tr"),
+            ("counter4/counter4_br2.tsv", "br2", "static.counter4.BR2.Tabular"),
+            ("counter5/counter5_table_dr.csv", "dr", "static.counter5.DR.Tabular"),
+            ("counter5/counter5_table_dr.tsv", "dr", "static.counter5.DR.Tabular"),
+            ("counter5/counter5_table_pr.csv", "pr", "static.counter5.PR.Tabular"),
+            ("counter5/counter5_tr_test1.json", "tr", "static.counter5.TR.Json"),
+            ("counter51/DR_sample_r51.json", "dr", "static.counter51.DR.Json"),
+            ("counter51/PR_sample_r51.json", "pr", "static.counter51.PR.Json"),
+            ("counter51/TR_sample_r51.json", "tr", "static.counter51.TR.Json"),
         ),
     )
     def test_counter_uploads(
@@ -55,6 +55,7 @@ class TestManualUploadForCounterData:
         settings,
         filename,
         report_code,
+        parser_name,
         hash_matches,
     ):
         with (Path(__file__).parent / "data" / filename).open() as f:
@@ -78,6 +79,7 @@ class TestManualUploadForCounterData:
         assert response.status_code == 201
 
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == [parser_name]
 
         # confirm report type
         response = clients["master_admin"].post(
@@ -118,16 +120,16 @@ class TestManualUploadForCounterData:
 
     @pytest.mark.parametrize(["hash_matches"], [(True,), (False,)])
     @pytest.mark.parametrize(
-        ["filename", "report_code"],
+        ["filename", "report_code", "parser_name"],
         (
-            ("counter4/counter4_br2.tsv", "br2"),
-            ("counter5/counter5_table_dr.csv", "dr"),
-            ("counter5/counter5_table_dr.tsv", "dr"),
-            ("counter5/counter5_table_pr.csv", "pr"),
-            ("counter5/counter5_tr_test1.json", "tr"),
-            ("counter51/DR_sample_r51.json", "dr51"),
-            ("counter51/PR_sample_r51.json", "pr51"),
-            ("counter51/TR_sample_r51.json", "tr51"),
+            ("counter4/counter4_br2.tsv", "br2", "static.counter4.BR2.Tabular"),
+            ("counter5/counter5_table_dr.csv", "dr", "static.counter5.DR.Tabular"),
+            ("counter5/counter5_table_dr.tsv", "dr", "static.counter5.DR.Tabular"),
+            ("counter5/counter5_table_pr.csv", "pr", "static.counter5.PR.Tabular"),
+            ("counter5/counter5_tr_test1.json", "tr", "static.counter5.TR.Json"),
+            ("counter51/DR_sample_r51.json", "dr51", "static.counter51.DR.Json"),
+            ("counter51/PR_sample_r51.json", "pr51", "static.counter51.PR.Json"),
+            ("counter51/TR_sample_r51.json", "tr51", "static.counter51.TR.Json"),
         ),
     )
     def test_counter_manual_import(
@@ -141,6 +143,7 @@ class TestManualUploadForCounterData:
         settings,
         filename,
         report_code,
+        parser_name,
         hash_matches,
         interest_rt,
     ):
@@ -164,6 +167,7 @@ class TestManualUploadForCounterData:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == [parser_name]
 
         # check report type
         response = clients["master_admin"].get(reverse("manual-data-upload-detail", args=(mdu.pk,)))
@@ -728,6 +732,7 @@ class TestManualUploadForRaw:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == ["dynamic.non_counter.custom1.Tabular"]
 
         # confirm report type
         response = clients["admin2"].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
@@ -786,6 +791,7 @@ class TestManualUploadForRaw:
         response = clients["master_admin"].post(reverse("manual-data-upload-list"), data=post_data)
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == ["dynamic.non_counter.custom1.Tabular"]
 
         # confirm report type
         response = clients["master_admin"].post(
@@ -935,6 +941,7 @@ class TestManualUploadForRaw:
             return
 
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == ["dynamic.non_counter.custom1.Tabular"]
 
         # confirm report type
         response = clients["admin2"].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
@@ -1009,6 +1016,7 @@ class TestManualUploadForRaw:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == ["static.counter5.DR.Tabular"]
 
         # confirm report type
         response = clients[owner].post(reverse("manual-data-upload-confirm", args=(mdu.pk,)))
@@ -1093,11 +1101,29 @@ class TestManualUploadForRaw:
         assert response.status_code == status
 
     @pytest.mark.parametrize(
-        "file_path,report_type,batch_count,new_method",
+        "file_path,report_type,batch_count,parser,new_method",
         [
-            ("data/counter5/counter5_table_dr.csv", "dr", 11, MduMethod.COUNTER),
-            ("data/custom/custom_data-nibbler-simple.csv", "custom1", 1, MduMethod.RAW),
-            ("data/counter51/TR_sample_r51.json", "tr51", 12, MduMethod.COUNTER),
+            (
+                "data/counter5/counter5_table_dr.csv",
+                "dr",
+                11,
+                "static.counter5.DR.Tabular",
+                MduMethod.COUNTER,
+            ),
+            (
+                "data/custom/custom_data-nibbler-simple.csv",
+                "custom1",
+                1,
+                "dynamic.non_counter.custom1.parser1",
+                MduMethod.RAW,
+            ),
+            (
+                "data/counter51/TR_sample_r51.json",
+                "tr51",
+                12,
+                "static.counter51.TR.Json",
+                MduMethod.COUNTER,
+            ),
         ],
         ids=("counter5", "non-counter", "counter51"),
     )
@@ -1115,6 +1141,7 @@ class TestManualUploadForRaw:
         file_path,
         report_type,
         batch_count,
+        parser,
         new_method,
     ):
         with (Path(__file__).parent / file_path).open() as f:
@@ -1137,6 +1164,7 @@ class TestManualUploadForRaw:
         )
         assert response.status_code == 201
         mdu = ManualDataUpload.objects.get(pk=response.json()["pk"])
+        assert mdu.nibbler_parser_names == [parser]
 
         # confirm report type
         response = clients["master_admin"].post(

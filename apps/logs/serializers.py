@@ -498,7 +498,11 @@ class ManualDataUploadSerializer(ModelSerializer):
 
             result = super().create(validated_data)
             try:
-                from nibbler.logic.processing import get_errors, output_to_poops  # noqa - slow import
+                from nibbler.logic.processing import (
+                    get_errors,
+                    get_parser_names_from_nibbler_output,
+                    output_to_poops,
+                )  # noqa - slow import
 
                 # Try to parse
                 nibbler_output, method = result.get_nibbler_output()
@@ -506,6 +510,7 @@ class ManualDataUploadSerializer(ModelSerializer):
                 # test whether parsing passes
                 # (should raise exception when nothing is found)
                 poops = output_to_poops(nibbler_output)
+                result.nibbler_parser_names = get_parser_names_from_nibbler_output(nibbler_output)
 
                 # update report type in it wasn't set before
                 if not result.report_type:

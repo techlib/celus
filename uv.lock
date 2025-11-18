@@ -192,7 +192,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "celery", specifier = "~=5.5.3" },
-    { name = "celus-nibbler", specifier = "~=12.2.3" },
+    { name = "celus-nibbler", specifier = "~=12.3.0" },
     { name = "celus-nigiri", specifier = "==4.1.2" },
     { name = "celus-pycounter", specifier = "~=4.1.0" },
     { name = "clickhouse-driver", specifier = "==0.2.10" },
@@ -282,7 +282,7 @@ dev = [
 
 [[package]]
 name = "celus-nibbler"
-version = "12.2.3"
+version = "12.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celus-nigiri" },
@@ -295,9 +295,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "unidecode" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/85/e1284401a82d4d7c36db5da6a9557c7be4121238dd5b74914e8e558c9ede/celus_nibbler-12.2.3.tar.gz", hash = "sha256:34da65d5790e531752e0882349048daa06f9ed8c5d79a97049f42999e67e4e23", size = 41364, upload-time = "2025-11-03T16:16:08.897Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/2e/ff57a6106bd39e8fbb485330aadb6677743d956fff42d124e67d68a46fce/celus_nibbler-12.3.0.tar.gz", hash = "sha256:c4c3fa71494a778a5a06960e34874adb360083bb8cf1c8b2e453368b1946bf2e", size = 39739, upload-time = "2025-11-19T10:08:14.11Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/7c/fcc84a9c8c07156f65d797f25cb3e3eef2dfc1b10bfdb3055ec949739f7d/celus_nibbler-12.2.3-py3-none-any.whl", hash = "sha256:109be288027304df9bf2602a8cc1f091b48c553d5c5271c97c646ade885c1eb6", size = 55147, upload-time = "2025-11-03T16:16:07.786Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/24/c7ccd7ab3243b3c7e88b51bf82b76304460f970d3ad680f7bc51dccddb68/celus_nibbler-12.3.0-py3-none-any.whl", hash = "sha256:457891889d029e2ca996938d9e4f8a869e162a51e666ffffa998b2af24ff6411", size = 55114, upload-time = "2025-11-19T10:08:12.988Z" },
 ]
 
 [[package]]
