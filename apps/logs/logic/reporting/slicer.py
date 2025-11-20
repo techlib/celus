@@ -59,7 +59,6 @@ class FlexibleDataSlicer:
     COL_DIFF = "diff"
     COL_REL_DIFF = "reldiff"
     COL_TOTAL = "_total"
-    MAXIMUM_POSSIBLE_GROUPS = 100
     MAXIMUM_POSSIBLE_PARTS = 1000
 
     TREND_MODE_COLS = (COL_BASE, COL_COMPARED, COL_DIFF, COL_REL_DIFF)
@@ -556,7 +555,7 @@ class FlexibleDataSlicer:
                     "total": Coalesce(Sum(f"{accesslog_prefix}value"), 0),
                     self.COL_TOTAL: Coalesce(Sum(f"{accesslog_prefix}value"), 0),
                 }
-            if gb_query.count() > self.MAXIMUM_POSSIBLE_GROUPS:
+            if gb_query.count() > settings.REPORTING_MAXIMUM_POSSIBLE_COLUMNS:
                 raise SlicerConfigError(
                     SlicerConfigErrorCode.E101,
                     message=f"There are too many ({gb_query.count()}) possible groups, please "

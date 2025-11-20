@@ -1000,9 +1000,9 @@ class TestFlexibleDataExportExcel:
             exporter.stream_data_to_sink(out)
 
     @pytest.mark.parametrize(["max_cols", "error"], [(2, True), (3, False)])
-    def test_maximum_column_number(self, flexible_slicer_test_data, max_cols, error):
+    def test_maximum_column_number(self, flexible_slicer_test_data, max_cols, error, settings):
         slicer = FlexibleDataSlicer(["platform"])
-        slicer.MAXIMUM_POSSIBLE_GROUPS = max_cols
+        settings.REPORTING_MAXIMUM_POSSIBLE_COLUMNS = max_cols
         slicer.add_group_by("metric")
         exporter = FlexibleDataExcelExporter(slicer, include_tags=False, include_charts=False)
         out = BytesIO()

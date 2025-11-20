@@ -948,6 +948,11 @@ AUTO_HARVESTING_PROBABILITIES = config(
 # item support
 ENABLE_ITEMS = config("ENABLE_ITEMS", cast=bool, default=True)
 
+# maximum number of columns allowed in reporting queries
+REPORTING_MAXIMUM_POSSIBLE_COLUMNS = config(
+    "REPORTINGMAXIMUM_POSSIBLE_COLUMNS", cast=int, default=200
+)
+
 # social authentication providers
 SITE_ID = config("SITE_ID", cast=int, default=1)
 
