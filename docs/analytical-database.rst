@@ -40,6 +40,14 @@ Each table has the same basic structure, with some report-specific columns. The 
 - ``date`` (``date``) - the date of the usage
 - ``metric_id`` (``integer``) - internal CELUS id of the metric that the report belongs to
 - ``metric__short_name`` (``string``) - the short name of the metric, for COUNTER matches the COUNTER metric name
+- ``import_batch_id`` (``integer``) - internal CELUS id of the import batch - this groups together data from one
+    import (harvest, manual upload, etc.). One import batch always covers one month. This column is intended
+    mainly for internal use.
+- ``value`` (``integer``) - the value of the metric - the usage count
+
+If the report type uses titles, the following columns are added for titles (for example the Platform Report
+does not use titles, but the Title Report does):
+
 - ``title_id`` (``integer``) - internal CELUS id of the title that the report belongs to
 - ``title__name`` (``string``) - the name of the title
 - ``title__pub_type`` (``string``) - the publication type of the title
@@ -47,10 +55,15 @@ Each table has the same basic structure, with some report-specific columns. The 
 - ``title__issn`` (``string``) - the ISSN of the title
 - ``title__eissn`` (``string``) - the e-ISSN of the title
 - ``title__doi`` (``string``) - the DOI of the title
-- ``import_batch_id`` (``integer``) - internal CELUS id of the import batch - this groups together data from one
-    import (harvest, manual upload, etc.). One import batch always covers one month. This column is intended
-    mainly for internal use.
-- ``value`` (``integer``) - the value of the metric - the usage count
+
+
+If the report type uses items, the following columns are added for items:
+- ``item_id`` (``integer``) - internal CELUS id of the item that the report belongs to
+- ``item__name`` (``string``) - the name of the item
+- ``item__isbn`` (``string``) - the ISBN of the item
+- ``item__issn`` (``string``) - the ISSN of the item
+- ``item__eissn`` (``string``) - the e-ISSN of the item
+- ``item__doi`` (``string``) - the DOI of the item
 
 The extra columns/dimensions correspond to the COUNTER specification of that report. For example,
 COUNTER 5.1 TR report (stored in ``TR51`` table) has the following extra columns:
