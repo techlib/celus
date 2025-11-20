@@ -65,6 +65,7 @@ class AnalyticalExportBackend:
         "item__publication_date": "item__publication_date",
         "item__doi": "item__doi",
         "item__isbn": "item__isbn",
+        "item__issn": "item__issn",
         "item__eissn": "item__eissn",
     }
 

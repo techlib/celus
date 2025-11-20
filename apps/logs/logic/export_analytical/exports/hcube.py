@@ -100,6 +100,7 @@ def get_dynamic_cube(
             item__name = StringDimension(help_text="Name of the item")
             item__publication_date = DateDimension(help_text="Publication date of the item")
             item__isbn = StringDimension(help_text="ISBN of the item")
+            item__issn = StringDimension(help_text="ISSN of the item")
             item__eissn = StringDimension(help_text="e-ISSN of the item")
             item__doi = StringDimension(help_text="DOI of the item")
 
