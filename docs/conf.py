@@ -24,7 +24,7 @@ copyright = f"{date.today().year}, BigDigData"
 author = "Beda Kosata"
 
 # The full version, including alpha/beta/rc tags
-release = "5.3.0"
+release = "11.0.0"
 
 
 # -- General configuration ---------------------------------------------------

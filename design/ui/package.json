@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "version": "10.1.0",
+  "version": "11.0.0",
   "private": true,
   "scripts": {
     "dev": "vite --port 8080",

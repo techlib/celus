@@ -1,6 +1,6 @@
 [project]
 name = "celus"
-version = "10.1.0"
+version = "11.0.0"
 description = "web application for harvesting and visualization of usage data of electronic information sources"
 authors = [
     { name = "Beda Kosata", email = "beda@bigdigdata.com" },
