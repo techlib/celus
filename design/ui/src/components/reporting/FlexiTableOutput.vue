@@ -512,31 +512,37 @@ export default {
             order: "reverse",
           });
         }
-        this.headersFromData.forEach((item) =>
-          headers.push({
-            ...item,
-            sortable: !this.readonly,
-            headerProps: {
-              class: "data-col",
-            },
-            cellProps: {
-              class: "data-col",
-            },
-            order: "reverse",
-            sortRaw(a, b) {
-              if (
-                Number(a[item.value].replace(/\s/g, "")) <
-                Number(b[item.value].replace(/\s/g, ""))
-              )
-                return -1;
-              if (
-                Number(a[item.value].replace(/\s/g, "")) >
-                Number(b[item.value].replace(/\s/g, ""))
-              )
-                return 1;
-            },
-          }),
-        );
+        this.headersFromData.forEach((item) => {
+          if (item.sortable !== false) {
+            headers.push({
+              ...item,
+              sortable: !this.readonly,
+              headerProps: {
+                class: "data-col",
+              },
+              cellProps: {
+                class: "data-col",
+              },
+              order: "reverse",
+              sortRaw(a, b) {
+                if (
+                  Number(a[item.value].replace(/\s/g, "")) <
+                  Number(b[item.value].replace(/\s/g, ""))
+                )
+                  return -1;
+                if (
+                  Number(a[item.value].replace(/\s/g, "")) >
+                  Number(b[item.value].replace(/\s/g, ""))
+                )
+                  return 1;
+              },
+            });
+          } else {
+            headers.push({
+              ...item,
+            });
+          }
+        });
         let titleHeaders = this.activeTitleColumns.map((key) => ({
           title: this.$t("title_fields." + key),
           value: "target__" + key,
@@ -1048,6 +1054,7 @@ export default {
         this.extractedHeaders.push({
           title: "Used report types",
           value: "used_rts",
+          sortable: false,
         });
       }
     },
