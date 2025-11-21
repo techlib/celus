@@ -33,7 +33,7 @@ export default {
   name: "TagChipSimple",
 
   props: {
-    tag: { required: true, type: [Object, Number] },
+    tag: { required: true, type: Object },
     showClass: {
       default: false,
       type: Boolean,

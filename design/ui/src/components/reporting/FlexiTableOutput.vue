@@ -565,7 +565,7 @@ export default {
           : [];
         // Handle multiple primary dimensions
         let primaryDimensionHeaders = [];
-        this.report.effectivePrimaryDimensions.forEach((dim, index) => {
+        this.report.effectivePrimaryDimensions.forEach((dim) => {
           primaryDimensionHeaders.push({
             title: dim.getName(this.$i18n),
             value: dim.ref,
@@ -595,11 +595,10 @@ export default {
       return [];
     },
     rows() {
-      // Return all primary dimensions for multiindex support
-      if (this.report?.primaryDimensions?.length > 0) {
-        return this.report.primaryDimensions.map((dim) => dim.ref);
+      if (this.report?.effectivePrimaryDimensions?.length > 0) {
+        return this.report.effectivePrimaryDimensions.map((dim) => dim.ref);
       }
-      return [this.report?.effectivePrimaryDimension?.ref].filter(Boolean);
+      return [];
     },
     usesMultiIndex() {
       return this.report?.primaryDimensions?.length > 1;
@@ -714,7 +713,7 @@ export default {
         });
 
       // Set up translators for all primary dimensions
-      this.report.primaryDimensions.forEach((dim) => {
+      this.report.effectivePrimaryDimensions.forEach((dim) => {
         this.translators[dim.ref] = this.getTranslator(dim);
       });
 
@@ -914,7 +913,7 @@ export default {
       let promises = [];
 
       // update translators for all primary dimensions
-      this.report.primaryDimensions.forEach((dim, index) => {
+      this.report.effectivePrimaryDimensions.forEach((dim, index) => {
         const pkField = this.getPkField(index);
         const dimRef = dim.ref;
 

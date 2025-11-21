@@ -1,5 +1,5 @@
-import IdTranslation from "@/libs/id-translation";
 import { explicitDimensions } from "@/libs/dimensions";
+import IdTranslation from "@/libs/id-translation";
 
 export default {
   data() {
