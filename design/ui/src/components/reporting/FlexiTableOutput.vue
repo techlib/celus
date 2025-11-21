@@ -675,10 +675,14 @@ export default {
       return this.totalParts > this.splitParts.length;
     },
     showCoverageColumn() {
+      // coverage should only be shown if there is only one primary dimension and it is platform
+      // and the report is not in trend mode and the report type is not "interest"
+      // (interest does not support coverage)
       return (
         !this.usesMultiIndex &&
         this.rows[0] === "platform" &&
-        !this.report.trendMode
+        !this.report.trendMode &&
+        !this.report.reportTypes.some((rt) => rt.short_name === "interest")
       );
     },
   },
@@ -1198,6 +1202,8 @@ export default {
       }
     },
     isPrimaryReportType(rt) {
+      // this is a helper function to check if a report type is a primary report type
+      // it is used to color the report type chip in the used_rts column
       return (
         this.report.reportTypes.findIndex((item) => item.name === rt) === 0
       );
