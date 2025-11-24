@@ -126,14 +126,6 @@ class Scheduler(models.Model):
         This function can take a while so it should be run only in celery.
         And should not be run within transaction.
         """
-        # Check whether scheduler is in cooldown period
-        if self.last_time:
-            last_plus_cooldown = self.last_time + timedelta(seconds=self.cooldown)
-            if last_plus_cooldown > timezone.now():
-                self.when_ready = last_plus_cooldown
-                self.save()
-                return RunResponse.COOLDOWN
-
         # Locking scheduler
         with transaction.atomic():
             try:
@@ -144,6 +136,15 @@ class Scheduler(models.Model):
             except (Scheduler.DoesNotExist, DatabaseError):
                 # Locked - currently processing data
                 return RunResponse.BUSY
+
+            # Check whether scheduler is in cooldown period
+            self.refresh_from_db()
+            if self.last_time:
+                last_plus_cooldown = self.last_time + timedelta(seconds=self.cooldown)
+                if last_plus_cooldown > timezone.now():
+                    self.when_ready = last_plus_cooldown
+                    self.save()
+                    return RunResponse.COOLDOWN
 
             with transaction.atomic():
                 # Takes the first intention
