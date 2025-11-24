@@ -75,6 +75,27 @@ class TestFlexibleReport:
         assert fr.report_config["filters"][0]["dimension"] == "report_type"
         assert fr.report_config["filters"][0]["values"] == [report_type.short_name]
 
+    @pytest.mark.parametrize("reverse_order", [True, False])
+    def test_config_serialization_multiple_report_types(
+        self, flexible_slicer_test_data, reverse_order
+    ):
+        """
+        Test that when serializing multiple report types, the order of report types is preserved.
+        """
+        slicer = FlexibleDataSlicer(["platform"])
+        report_types = flexible_slicer_test_data["report_types"][:2]
+        if reverse_order:
+            report_types.reverse()
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_types))
+        slicer.add_group_by("metric")
+        fr = FlexibleReport.create_from_slicer(slicer)
+        assert fr.report_config["filters"][0]["dimension"] == "report_type"
+        assert fr.report_config["filters"][0]["values"] == [rt.short_name for rt in report_types]
+        # test deserialization as well
+        config = fr.deserialize_slicer_config()
+        assert config["filters"][0]["dimension"] == "report_type"
+        assert config["filters"][0]["values"] == [rt.pk for rt in report_types]
+
     def test_config_serialization_metric(self, flexible_slicer_test_data):
         slicer = FlexibleDataSlicer(["platform"])
         metric = flexible_slicer_test_data["metrics"][0]

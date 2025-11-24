@@ -6,6 +6,7 @@ from organizations.models import UserOrganization
 from organizations.tests.conftest import organizations  # noqa
 from tags.fake_data import TagForTitleFactory
 
+from logs.fake_data import ReportTypeFactory
 from logs.models import FlexibleReport, FlexibleReportUserEmail
 from test_scenarios.basic import users  # noqa
 
@@ -220,6 +221,36 @@ class TestFlexibleReportAPI:
         assert report.report_config["group_by"] == ["metric"]
         assert report.report_config["filters"][0]["dimension"] == "target"
         assert report.report_config["filters"][0]["tag_ids"] == [tag.pk]
+
+    @pytest.mark.parametrize("reverse_order", [True, False])
+    def test_create_with_filter_preserves_order(self, admin_client, admin_user, reverse_order):
+        """
+        Test that when creating a report with a filter, the order of the filter values is preserved.
+        """
+        report_types = [
+            ReportTypeFactory.create(short_name="A"),
+            ReportTypeFactory.create(short_name="B"),
+            ReportTypeFactory.create(short_name="C"),
+        ]
+        if reverse_order:
+            report_types.reverse()
+        resp = admin_client.post(
+            reverse("flexible-report-list"),
+            {
+                "name": "test report",
+                "config": {
+                    "primary_dimensions": b64json(["platform"]),
+                    "groups": b64json(["metric"]),
+                    "filters": b64json({"report_type": [rt.pk for rt in report_types]}),
+                },
+            },
+            content_type="application/json",
+        )
+        assert resp.status_code == 201
+        assert resp.json()["config"]["filters"][0]["values"] == [rt.pk for rt in report_types]
+        assert resp.json()["report_config"]["filters"][0]["values"] == [
+            rt.short_name for rt in report_types
+        ]
 
     def test_create_in_trend_mode(self, admin_client, admin_user):
         resp = admin_client.post(

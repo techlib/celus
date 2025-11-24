@@ -1478,10 +1478,12 @@ class FlexibleReport(models.Model):
         if model_desc:
             model_cls = model_desc["model"]
             key_attr = model_desc["key"]
-            fltr["values"] = [
-                obj[key_attr]
-                for obj in model_cls.objects.filter(pk__in=fltr["values"]).values(key_attr)
-            ]
+            pk_to_key = {
+                obj["pk"]: obj[key_attr]
+                for obj in model_cls.objects.filter(pk__in=fltr["values"]).values("pk", key_attr)
+            }
+            # translate pks while preserving the order, if pk is not found, it is not included
+            fltr["values"] = [pk_to_key.get(pk) for pk in fltr["values"] if pk_to_key.get(pk)]
         return fltr
 
     def deserialize_slicer_config(self):
@@ -1499,11 +1501,17 @@ class FlexibleReport(models.Model):
                     dim = self.resolve_explicit_dimension(dim_name)
                     if dim:
                         extra_filters = {"dimension_id": dim.pk}
-                fltr["values"] = list(
-                    model_cls.objects.filter(
+                # we use a dictionary to map the key to the pk to preserve the order of the values
+                key_to_pk = {
+                    obj[key_attr]: obj["pk"]
+                    for obj in model_cls.objects.filter(
                         **{f"{key_attr}__in": fltr["values"]}, **extra_filters
-                    ).values_list("pk", flat=True)
-                )
+                    ).values("pk", key_attr)
+                }
+                # if the value is not found, it is not included
+                fltr["values"] = [
+                    key_to_pk.get(val) for val in fltr["values"] if key_to_pk.get(val)
+                ]
         return config
 
     @property
