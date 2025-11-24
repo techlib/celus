@@ -1133,6 +1133,33 @@ class TestFlexibleDataSlicerSupportForMultipleReportTypes:
         for row in orig_data:
             assert row["used_rts"] == ([rt2.pk] if reverse_order else [rt.pk])
 
+    @pytest.mark.parametrize("merge_report_types", [True, False])
+    def test_multiple_report_types_with_merge_report_types_cannot_split_by_report_type(
+        self, flexible_slicer_test_data, merge_report_types
+    ):
+        """
+        Test that when multiple report types are used and merge_report_types is True,
+        split by report type is not supported and returns an error.
+        """
+        slicer = FlexibleDataSlicer(["report_type"], merge_report_types=merge_report_types)
+        metrics = flexible_slicer_test_data["metrics"][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics), add_group=True)
+        # we must add a report type filter to be able to use explicit dimension filter
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"])
+        )
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("platform", flexible_slicer_test_data["platforms"][:2])
+        )
+        slicer.split_by = ["report_type"]
+        if merge_report_types:
+            with pytest.raises(SlicerConfigError) as exc:
+                slicer.get_data(part=[flexible_slicer_test_data["report_types"][0].pk])
+            assert exc.value.code == SlicerConfigErrorCode.E121.value
+        else:
+            # should not raise an exception
+            slicer.get_data(part=[flexible_slicer_test_data["report_types"][0].pk])
+
 
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures("clickhouse_on_off")

@@ -329,7 +329,7 @@ cs:
             <v-select
               v-model="splitBy"
               :label="$t('split_to_parts')"
-              :items="[{ id: null, name: $t('dont_split') }, ...possibleRows]"
+              :items="[{ id: null, name: $t('dont_split') }, ...possibleSplits]"
               item-title="name"
               style="min-width: 265px"
               item-value="id"
@@ -1327,6 +1327,14 @@ export default {
         base = base.filter((d) => d.id !== "target");
       }
       return base;
+    },
+    possibleSplits() {
+      // when merging report types, we cannot split by report type
+      const mergingReportTypes =
+        this.canMergeReportTypes && this.mergeReportTypes;
+      return this.possibleRows.filter(
+        (d) => d.id !== "report_type" || !mergingReportTypes,
+      );
     },
     appliedFilters() {
       let ret = {};
@@ -2391,6 +2399,12 @@ export default {
       if (!this.canMergeReportTypes) {
         // reset to false if merge report types is not possible
         this.mergeReportTypes = false;
+      }
+    },
+    mergeReportTypes() {
+      if (this.mergeReportTypes && this.splitBy === "report_type") {
+        // reset split by to null if merge report types is enabled
+        this.splitBy = null;
       }
     },
   },

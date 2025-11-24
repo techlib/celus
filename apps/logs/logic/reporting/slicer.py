@@ -307,6 +307,10 @@ class FlexibleDataSlicer:
             if not self.base_subset_filters or not self.compared_subset_filters:
                 raise SlicerConfigError(SlicerConfigErrorCode.E120)
 
+        # when merge_report_types is True, split by report type is not supported
+        if self.merge_report_types and "report_type" in self.split_by:
+            raise SlicerConfigError(SlicerConfigErrorCode.E121)
+
     def check_params_for_data_query(self):
         """
         Extra checks to be performed before data query is run. These do not apply to other
@@ -1349,6 +1353,7 @@ class SlicerConfigErrorCode(Enum):
     E118 = "E118"
     E119 = "E119"
     E120 = "E120"
+    E121 = "E121"
 
     def __str__(self):
         return self.value
@@ -1402,6 +1407,9 @@ class SlicerConfigError(Exception):
         ),
         SlicerConfigErrorCode.E120: (
             "Both base and compared subset filters must be specified when trend_mode is True"
+        ),
+        SlicerConfigErrorCode.E121: (
+            "Split by report type is not supported when merge_report_types is True."
         ),
     }
 
