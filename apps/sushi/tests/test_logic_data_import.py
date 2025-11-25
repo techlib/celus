@@ -53,6 +53,7 @@ def knowledgebases_with_whitelisting():
     """Two kb records - one with IR not whitelisted and one with IR whitelisted"""
     return [
         {
+            "platform_filter": "fltr",
             "providers": [
                 {
                     "counter_version": 51,
@@ -72,7 +73,7 @@ def knowledgebases_with_whitelisting():
                         },
                     ],
                 }
-            ]
+            ],
         },
         {
             "providers": [
@@ -119,6 +120,7 @@ class TestLogicDataImportXLSX:
     def knowledgebases(self):
         return [
             {
+                "platform_filter": "fltr",
                 "providers": [
                     {
                         "counter_version": 5,
@@ -134,7 +136,7 @@ class TestLogicDataImportXLSX:
                             {"not_valid_after": None, "not_valid_before": None, "report_type": "IR"}
                         ],
                     },
-                ]
+                ],
             },
             {
                 "providers": [
@@ -297,9 +299,12 @@ class TestLogicDataImportXLSX:
                 assert cr.requestor_id == rec["requestor id"]
                 assert cr.customer_id == rec["customer id"]
                 assert cr.api_key == rec["api key"]
-                assert cr.extra_params == (
-                    {"platform": rec["platform filter"]} if rec["platform filter"] else {}
-                )
+                if platform_filter := rec["platform filter"]:
+                    assert cr.extra_params == {"platform": platform_filter}
+                elif platform_filter_kb := kb.get("platform_filter"):
+                    assert cr.extra_params == {"platform": platform_filter_kb}
+                else:
+                    assert cr.extra_params == {}
                 assert cr.counter_version == counter5_version
                 provider = [e for e in kb["providers"] if e["counter_version"] == counter5_version][
                     0
@@ -497,7 +502,7 @@ class TestLogicDataImportCSV:
                 "requestor_id": "RRRY",
                 "URL": "http://this.is/test/3",
                 "version": 51,
-                "extra_attrs": f"api_key={'key' * 100};foot=ball",
+                "extra_attrs": f"api_key={'key' * 100};foot=ball;platform_filter=plt",
                 "counter_reports": "IR",
             },
             {
@@ -508,7 +513,9 @@ class TestLogicDataImportCSV:
                 "URL": "http://this.is/test/",
             },
         ]
-        Platform.objects.create(short_name="XXX", name="XXXX")
+        Platform.objects.create(
+            short_name="XXX", name="XXXX", knowledgebase={"platform_filter": "fltr"}
+        )
         stats = import_sushi_credentials_old(data)
         assert (
             CounterReportsToCredentials.objects.filter(
@@ -532,7 +539,7 @@ class TestLogicDataImportCSV:
         assert cr2.http_username == "un"
         assert cr2.http_password == "pass"
         assert cr2.api_key == "key" * 100
-        assert cr2.extra_params == {"foo": "bar"}
+        assert cr2.extra_params == {"foo": "bar", "platform_filter": "fltr"}
         assert cr2.counter_reports.count() == 2
         assert {crt.code for crt in cr2.counter_reports.all()} == {"TR", "DR"}
         cr3 = credentials[2]
@@ -540,7 +547,7 @@ class TestLogicDataImportCSV:
         assert cr3.url == "https://this.is/test/3"
         assert cr3.organization == organizations[1]
         assert cr3.api_key == "key" * 100
-        assert cr3.extra_params == {"foot": "ball"}
+        assert cr3.extra_params == {"foot": "ball", "platform_filter": "plt"}
         assert cr3.counter_reports.count() == 1
         assert {crt.code for crt in cr3.counter_reports.all()} == {"IR"}
         # retry

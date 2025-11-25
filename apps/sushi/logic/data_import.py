@@ -214,6 +214,9 @@ def import_sushi_credentials_new(
 
         if platform_filter := to_clean_str(record.get(Col.PLATFORM_FILTER.value)):
             optional["extra_params"] = {"platform": platform_filter}
+        elif platform.knowledgebase:
+            if platform_filter_kb := platform.knowledgebase.get("platform_filter"):
+                optional["extra_params"] = {"platform": platform_filter_kb}
 
         if api_key := to_clean_str(record.get(Col.API_KEY.value)):
             optional["api_key"] = api_key
@@ -488,6 +491,9 @@ def import_sushi_credentials_old(
         extra_params = record.get("extra_params", {})
         if extra_params:
             extra_attrs.update(json.loads(extra_params))
+        if "platform_filter" not in extra_attrs and platform.knowledgebase:
+            if platform_filter_kb := platform.knowledgebase.get("platform_filter"):
+                extra_attrs["platform_filter"] = platform_filter_kb
 
         optional = {}
         if "auth" in extra_attrs:
