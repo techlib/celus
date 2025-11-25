@@ -22,6 +22,7 @@ from scheduler.models import FetchIntention
 from sushi.fake_data import CredentialsFactory, FetchAttemptFactory
 from sushi.models import AttemptStatus, CounterReportPlatform, SushiCredentials
 
+from knowledgebase import models as kb_models
 from knowledgebase.models import (
     ParserDefinitionImportAttempt,
     PlatformImportAttempt,
@@ -1011,6 +1012,7 @@ class TestParserDefinitionImportAttempt:
         metrics,
         interests,
         settings,
+        monkeypatch,
     ):
         settings.DISABLE_NIBBLER_PARSER_VERSION_CHECK = False
 
@@ -1047,6 +1049,7 @@ class TestParserDefinitionImportAttempt:
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition))])
         assert attempt.stats == {"created": 1, "total": 1, "wiped": 1}, "One deleted one created"
 
+        monkeypatch.setattr(kb_models, "version", lambda _name: "2.3.2")
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1")])
@@ -1054,11 +1057,23 @@ class TestParserDefinitionImportAttempt:
 
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
-        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "1.9.9")])
         assert attempt.stats == {"total": 1, "wiped": 1}, "nibbler version out of range"
+
+        monkeypatch.setattr(kb_models, "version", lambda _name: "2.2.3")
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
+        assert attempt.stats == {"total": 1, "created": 1}, "next patch should be ok"
+
+        monkeypatch.setattr(kb_models, "version", lambda _name: "2.3.0")
+        attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
+        attempt.save()
+        attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
+        assert attempt.stats == {"total": 1, "same": 1}, "next minor should be ok"
 
         settings.DISABLE_NIBBLER_PARSER_VERSION_CHECK = True
         attempt = ParserDefinitionImportAttempt(source=data_sources["brain"])
         attempt.save()
         attempt.process([fill_in_nibbler_versions(copy.deepcopy(definition), "1.1.1", "2.2.2")])
-        assert attempt.stats == {"total": 1, "created": 1}, "version checks were disabled"
+        assert attempt.stats == {"total": 1, "same": 1}, "version checks were disabled"

@@ -700,11 +700,13 @@ class ParserDefinitionImportAttempt(ImportAttempt):
             lowest_nibbler_version = definition.pop("lowest_nibbler_version")
             highest_nibbler_version = definition.pop("highest_nibbler_version")
 
+            lowest_version = Version(lowest_nibbler_version)
+            lowest_limit = Version(major=lowest_version.major, minor=lowest_version.minor, patch=0)
             # Check version
             if not (
-                Version(lowest_nibbler_version)
+                lowest_limit
                 <= Version(nibbler_version)
-                <= Version(highest_nibbler_version)
+                < Version(highest_nibbler_version).next_major()
             ):
                 logger.warning(
                     "Parser definition %s is incompatible current nibbler version %s",
