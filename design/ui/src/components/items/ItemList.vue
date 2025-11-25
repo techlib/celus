@@ -146,16 +146,16 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions, mapGetters } from "vuex";
-import debounce from "lodash/debounce";
+import ShortenText from "@/components/ShortenText";
+import TableCustomSort from "@/components/tables/TableCustomSort";
+import DoiLink from "@/components/util/DoiLink.vue";
 import { formatInteger } from "@/libs/numbers";
 import { iconForPubType, pubTypes, titleForPubType } from "@/libs/pub-types";
-import ShortenText from "@/components/ShortenText";
 import cancellation from "@/mixins/cancellation";
 import stateTracking from "@/mixins/stateTracking";
-import DoiLink from "@/components/util/DoiLink.vue";
-import TableCustomSort from "@/components/tables/TableCustomSort";
+import axios from "axios";
+import debounce from "lodash/debounce";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "ItemList",
@@ -202,6 +202,7 @@ export default {
         {
           name: "orderBy",
           type: Object,
+          var: "item_orderBy",
         },
         {
           name: "page",

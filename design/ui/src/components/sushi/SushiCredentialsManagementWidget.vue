@@ -598,45 +598,50 @@ cs:
             :transition="false"
             :model-value="index < immediateRenderCount"
           >
-            <v-tooltip location="bottom" v-if="item.can_update && !item.broken">
-              <template v-slot:activator="{ props }">
-                <span v-bind="props">
-                  <strong>{{
-                    counterVersionToStr(item.counter_version)
-                  }}</strong>
-                  <i
-                    class="fa-arrow-alt-circle-up ml-1"
-                    :class="
-                      item.has_51_provider ? 'text-info fas' : 'text-info far'
-                    "
-                  ></i>
-                </span>
-              </template>
-              {{
-                item.has_51_provider
-                  ? $t("sushi.update.can_update_verified_legend")
-                  : $t("sushi.update.can_update_legend")
-              }}
-            </v-tooltip>
+            <span>
+              <v-tooltip
+                location="bottom"
+                v-if="item.can_update && !item.broken"
+              >
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props">
+                    <strong>{{
+                      counterVersionToStr(item.counter_version)
+                    }}</strong>
+                    <i
+                      class="fa-arrow-alt-circle-up ml-1"
+                      :class="
+                        item.has_51_provider ? 'text-info fas' : 'text-info far'
+                      "
+                    ></i>
+                  </span>
+                </template>
+                {{
+                  item.has_51_provider
+                    ? $t("sushi.update.can_update_verified_legend")
+                    : $t("sushi.update.can_update_legend")
+                }}
+              </v-tooltip>
 
-            <v-tooltip
-              location="bottom"
-              v-else-if="item.can_update && item.broken"
-            >
-              <template v-slot:activator="{ props }">
-                <span v-bind="props">
-                  <strong>{{
-                    counterVersionToStr(item.counter_version)
-                  }}</strong>
-                  <i class="far fa-arrow-alt-circle-left ml-1 text-error"></i>
-                </span>
-              </template>
-              {{ $t("sushi.update.cannot_update_broken_tt") }}
-            </v-tooltip>
+              <v-tooltip
+                location="bottom"
+                v-else-if="item.can_update && item.broken"
+              >
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props">
+                    <strong>{{
+                      counterVersionToStr(item.counter_version)
+                    }}</strong>
+                    <i class="far fa-arrow-alt-circle-left ml-1 text-error"></i>
+                  </span>
+                </template>
+                {{ $t("sushi.update.cannot_update_broken_tt") }}
+              </v-tooltip>
 
-            <strong v-else>{{
-              counterVersionToStr(item.counter_version)
-            }}</strong>
+              <strong v-else>{{
+                counterVersionToStr(item.counter_version)
+              }}</strong>
+            </span>
           </v-lazy>
         </template>
         <template #item.last_harvestable_month="{ item, index }">
@@ -711,23 +716,21 @@ cs:
             :model-value="index < immediateRenderCount"
           >
             <span>
-              <v-tooltip
-                v-if="warnSameCredentials(item)"
-                max-width="400"
-                location="bottom"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-icon
-                    color="warning"
-                    class="pe-1"
-                    size="small"
-                    v-bind="props"
-                    >fa fa-copy</v-icon
-                  >
-                  {{ item.title }}
-                </template>
-                {{ $t(warnSameCredentialsText(item)) }}
-              </v-tooltip>
+              <div v-if="warnSameCredentials(item)" class="d-flex align-center">
+                <v-tooltip max-width="400" location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      color="warning"
+                      class="pe-1 mb-1 mr-1"
+                      size="small"
+                      v-bind="props"
+                      >fa fa-copy</v-icon
+                    >
+                  </template>
+                  {{ $t(warnSameCredentialsText(item)) }}
+                </v-tooltip>
+                {{ item.title }}
+              </div>
               <span v-else>
                 {{ item.title }}
               </span>
@@ -1035,8 +1038,8 @@ cs:
 </template>
 
 <script>
-import AutoHarvestOffOnWidget from "@/components/sushi/AutoHarvestOffOnWidget.vue";
 import PlatformSelector from "@/components/selectors/PlatformSelector.vue";
+import AutoHarvestOffOnWidget from "@/components/sushi/AutoHarvestOffOnWidget.vue";
 import CloneCredentialsToNewerWidget from "@/components/sushi/CloneCredentialsToNewerWidget";
 import HarvestSelectedWidget from "@/components/sushi/HarvestSelectedWidget";
 import LastHarvestableMonthWidget from "@/components/sushi/LastHarvestableMonthWidget";
@@ -1045,8 +1048,8 @@ import SushiAttemptListWidget from "@/components/sushi/SushiAttemptListWidget";
 import SushiCredentialsDataDialog from "@/components/sushi/SushiCredentialsDataDialog";
 import SushiCredentialsEditDialog from "@/components/sushi/SushiCredentialsEditDialog";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
-import SelectAllCheckbox from "@/components/tables/SelectAllCheckbox";
 import UseReportsFromPlatformDialog from "@/components/sushi/UseReportsFromPlatformDialog.vue";
+import SelectAllCheckbox from "@/components/tables/SelectAllCheckbox";
 import CheckMark from "@/components/util/CheckMark";
 import cancellation from "@/mixins/cancellation";
 import { isoDateTimeFormat } from "@/libs/dates";
@@ -1165,6 +1168,7 @@ export default {
         {
           name: "orderBy",
           type: Object,
+          var: "sushi_orderBy",
           alwaysTrack: true,
         },
         // {

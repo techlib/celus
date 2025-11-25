@@ -308,6 +308,7 @@ export default {
         {
           name: "orderBy",
           type: Array,
+          var: "title_orderBy",
           validator: (value) => {
             // should return a fixed value
             // when a string is passed in, we will set it as the `key` of the first item
