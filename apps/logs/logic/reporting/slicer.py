@@ -14,6 +14,7 @@ from django.core.exceptions import EmptyResultSet
 from django.db.models import (
     Case,
     CharField,
+    Count,  # noqa: F401
     DateField,
     Exists,
     F,
@@ -173,11 +174,16 @@ class FlexibleDataSlicer:
         }
 
     def create_filters(
-        self, ignore_dimensions=None, use_clickhouse=False
+        self, ignore_dimensions=None, use_clickhouse=False, remainder=False
     ) -> Tuple[dict, list, list]:
         """
         Returns a dict with filters in the kwargs format and a list with Q-based filters.
+
+        When `remainder` is True, the filters are created for the remainder calculation.
+        This means that in tag_roll_up mode, the prefix related to titles, not tags.
         """
+        if remainder and not self.tag_roll_up:
+            raise ValueError("Remainder can only be computed when `tag_roll_up` is active")
         if ignore_dimensions:
             if type(ignore_dimensions) in (list, tuple, set):
                 ignore_dimensions = set(ignore_dimensions)
@@ -188,7 +194,7 @@ class FlexibleDataSlicer:
         ret = {}
         q_filters = []
         prefixed_q_filters = []
-        filter_prefix = self._get_relevant_accesslog_filter_prefix()
+        filter_prefix = self._get_relevant_accesslog_filter_prefix(remainder=remainder)
         for df in self.dimension_filters:
             if df.dimension in ignore_dimensions and not isinstance(df, TagDimensionFilter):
                 # tag filters are not ignored even if they are for an ignored dimension
@@ -208,6 +214,7 @@ class FlexibleDataSlicer:
                 # in import batch filters, we need to use the original report type ID,
                 # not the materialized one, otherwise the check will fail
                 orig_rt1 = self._mat_reports_map.get(rt1, rt1)
+                filter_prefix2 = "relevant_accesslogs__"
                 fallback_rt_subquery = ImportBatch.objects.filter(
                     report_type_id=orig_rt1,
                     platform_id=OuterRef("platform_id"),
@@ -215,12 +222,19 @@ class FlexibleDataSlicer:
                     date=OuterRef("date"),
                     record_count__gt=0,
                 )
+                prefixed_rt_subquery = ImportBatch.objects.filter(
+                    report_type_id=orig_rt1,
+                    platform_id=OuterRef(f"{filter_prefix2}platform_id"),
+                    organization_id=OuterRef(f"{filter_prefix2}organization_id"),
+                    date=OuterRef(f"{filter_prefix2}date"),
+                    record_count__gt=0,
+                )
                 q_filters.append(
                     Q(report_type_id=rt1) | (Q(report_type_id=rt2) & ~Exists(fallback_rt_subquery))
                 )
                 prefixed_q_filters.append(
                     Q(**{f"{filter_prefix}report_type_id": rt1})
-                    | (Q(**{f"{filter_prefix}report_type_id": rt2}) & ~Exists(fallback_rt_subquery))
+                    | (Q(**{f"{filter_prefix}report_type_id": rt2}) & ~Exists(prefixed_rt_subquery))
                 )
                 continue
             # normal case
@@ -319,13 +333,20 @@ class FlexibleDataSlicer:
         if not self.group_by and not self.trend_mode:
             raise SlicerConfigError(SlicerConfigErrorCode.E106)
 
-    def _get_relevant_accesslog_filter_prefix(self) -> str:
+    def _get_relevant_accesslog_filter_prefix(self, remainder: bool = False) -> str:
+        """
+        Returns the prefix for the accesslog filter.
+        When `remainder` is True, the prefix is "accesslog__" instead of "target__accesslog__",
+        because the remainder is calculated relative to the tagged objects, not the tag itself.
+        """
         if self.tag_roll_up:
             assert len(self.primary_dimensions) == 1, "one primary dimension is enforced elsewhere"
             field, _ = AccessLog.get_dimension_field(self.primary_dimensions[0])
             assert isinstance(field, ForeignKey), (
                 "When tag roll up is active, the primary dimension must be a foreign key"
             )
+            if remainder:
+                return "accesslog__"
             primary_cls = field.remote_field.model
             tag_scope = TagClass.tag_scope_from_target_class(primary_cls)
             target_attr = Tag.target_attr_from_scope(tag_scope)
@@ -506,13 +527,17 @@ class FlexibleDataSlicer:
             qs = qs.exclude(base=0, compared=0)
         if self.merge_report_types:
             # we need to remap used materialized report type IDs to the original ones
+            relevant_accesslog_filter_prefix = "relevant_accesslogs__" if self.tag_roll_up else ""
             qs = qs.alias(
                 orig_report_type_id=Case(
                     *[
-                        When(report_type_id=pk, then=Value(orig))
+                        When(
+                            then=Value(orig),
+                            **{f"{relevant_accesslog_filter_prefix}report_type_id": pk},
+                        )
                         for pk, orig in self._mat_reports_map.items()
                     ],
-                    default=F("report_type_id"),
+                    default=F(f"{relevant_accesslog_filter_prefix}report_type_id"),
                     output_field=IntegerField(),
                 )
             ).annotate(used_rts=ArrayAgg("orig_report_type_id", distinct=True))
@@ -893,7 +918,7 @@ class FlexibleDataSlicer:
         by `get_data`, we have a separate method for it.
 
         :param part: when `split_by` is set, this defines for which part the result should be
-                     obtained. It should be a list of the same length as `split_by`
+        obtained. It should be a list of the same length as `split_by`
         """
         # handle part and split_by
         self.check_part(part)
@@ -916,7 +941,7 @@ class FlexibleDataSlicer:
                     qs = qs.filter(pk__in=self.organization_filter)
                 # use the same query as for the main query when the primary object are annotated
                 # but then aggregate everything to a single row
-                filters, _, prefixed_q_filters = self.create_filters()
+                filters, _, prefixed_q_filters = self.create_filters(remainder=True)
                 if self.split_by and part:
                     for dim, value in zip(self.split_by, part, strict=True):
                         fltr = self.filter_instance(dim, value)

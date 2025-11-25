@@ -1160,6 +1160,43 @@ class TestFlexibleDataSlicerSupportForMultipleReportTypes:
             # should not raise an exception
             slicer.get_data(part=[flexible_slicer_test_data["report_types"][0].pk])
 
+    @pytest.mark.parametrize("merge_report_types", [True, False])
+    def test_multiple_report_types_with_merge_report_types_and_tag_roll_up(
+        self, flexible_slicer_test_data_with_tags, merge_report_types
+    ):
+        """
+        Test that when multiple report types are used merge rows by tag is supported -
+        regardless of the value of merge_report_types.
+        """
+        slicer = FlexibleDataSlicer(
+            ["target"], merge_report_types=merge_report_types, tag_roll_up=True
+        )
+        metrics = flexible_slicer_test_data_with_tags["metrics"][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics), add_group=True)
+        slicer.add_filter(
+            ForeignKeyDimensionFilter(
+                "report_type", flexible_slicer_test_data_with_tags["report_types"][:2]
+            )
+        )
+        slicer.order_by = ["tag"]
+        data = list(slicer.get_data())
+        assert len(data) == 2
+        data = [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data]
+        if merge_report_types:
+            assert data == [
+                {"pk": "tag1", "m1": 102816, "m2": 104760},
+                {"pk": "tag2", "m1": 51894, "m2": 52866},
+            ]
+        else:
+            assert data == [
+                {"pk": "tag1", "m1": 2586384, "m2": 2619432},
+                {"pk": "tag2", "m1": 1301454, "m2": 1317978},
+            ]
+
+        # check the remainder - it should not fail
+        remainder = slicer.get_remainder()
+        assert all(value == 0 for value in remainder.values()), "remainder should be zero"
+
 
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures("clickhouse_on_off")
