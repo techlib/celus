@@ -61,6 +61,7 @@ en:
     When two reports are selected, merging them will preferentially use the data from the first report (highlighted) and use the second report as a fallback for missing months.
   merge_report_types_tt_primary: This report will be used as the primary source of data.
   merge_report_types_tt_secondary: This report will be used as a fallback for missing months.
+  switch_report_type_order_tt: Switch report type order
 
 cs:
   run_report: Spustit report
@@ -118,6 +119,7 @@ cs:
     Při výběru dvou reportů budou preferována data z prvního reportu (zvýrazněného) a data z druhého reportu se použijí jako záložní pro chybějící měsíce.
   merge_report_types_tt_primary: Tento report bude použit jako hlavní zdroj dat.
   merge_report_types_tt_secondary: Tento report bude použit jako záložní pro chybějící měsíce.
+  switch_report_type_order_tt: Prohodit pořadí reportů
 </i18n>
 
 <template>
@@ -297,6 +299,23 @@ cs:
                       ? $t("merge_report_types_tt_primary")
                       : $t("merge_report_types_tt_secondary")
                   }}
+                </v-tooltip>
+              </template>
+
+              <template #append v-if="canMergeReportTypes && mergeReportTypes">
+                <v-tooltip location="bottom" max-width="600px">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="fas fa-exchange-alt"
+                      size="x-small"
+                      color="secondary"
+                      variant="text"
+                      class="align-self-end mb-0"
+                      @click="switchReportTypeOrder"
+                    ></v-btn>
+                  </template>
+                  {{ $t("switch_report_type_order_tt") }}
                 </v-tooltip>
               </template>
             </v-autocomplete>
@@ -2138,6 +2157,9 @@ export default {
           color: "warning",
         });
       }
+    },
+    switchReportTypeOrder() {
+      this.selectedReportTypes = this.selectedReportTypes.reverse();
     },
   },
 
