@@ -306,7 +306,7 @@ cs:
                               checkedCredentials.length === 0 ||
                               moreActionsLoading
                             "
-                            @click="$refs.exportSubmit.submit()"
+                            @click="triggerExport"
                             v-bind="props"
                           >
                             <v-list-item-title>
@@ -323,30 +323,6 @@ cs:
                                 </template>
                               </v-badge>
                             </v-list-item-title>
-                            <form
-                              :action="exportUrl"
-                              method="post"
-                              ref="exportSubmit"
-                            >
-                              <input
-                                type="hidden"
-                                name="csrfmiddlewaretoken"
-                                style="display: none"
-                                :value="getCSRFToken"
-                              />
-                              <div
-                                v-for="checkedCredential in checkedCredentials"
-                                :key="checkedCredential.pk"
-                                style="display: none"
-                              >
-                                <input
-                                  type="hidden"
-                                  :id="checkedCredential.pk"
-                                  name="pk"
-                                  :value="checkedCredential.pk"
-                                />
-                              </div>
-                            </form>
                           </v-list-item>
                         </template>
                         {{ $t("export_selected_tooltip") }}
@@ -1072,6 +1048,7 @@ import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
 import SelectAllCheckbox from "@/components/tables/SelectAllCheckbox";
 import UseReportsFromPlatformDialog from "@/components/sushi/UseReportsFromPlatformDialog.vue";
 import CheckMark from "@/components/util/CheckMark";
+import cancellation from "@/mixins/cancellation";
 import { isoDateTimeFormat } from "@/libs/dates";
 import { counterVersionToStr } from "@/libs/sushi";
 import { userToString } from "@/libs/user";
@@ -1099,7 +1076,7 @@ export default {
     SelectAllCheckbox,
     UseReportsFromPlatformDialog,
   },
-  mixins: [stateTracking],
+  mixins: [stateTracking, cancellation],
 
   props: {
     dialogMaxWidth: {
@@ -1211,10 +1188,6 @@ export default {
       contactEmail: "contactEmail",
       subjectForImportCredEmail: "subjectForImportCredEmail",
     }),
-    getCSRFToken() {
-      let csrftoken = Cookies.get("csrftoken");
-      return csrftoken;
-    },
     headers() {
       const large = this.$vuetify.display.lgAndUp;
       let allHeaders = [
@@ -1589,6 +1562,15 @@ export default {
           width: 600,
           color: "warning",
           icon: "fa fa-warning",
+        });
+      }
+    },
+    triggerExport() {
+      if (this.checkedCredentials.length > 0) {
+        this.http_download({
+          url: this.exportUrl,
+          data: this.checkedCredentials.map((e) => e.pk),
+          method: "post",
         });
       }
     },

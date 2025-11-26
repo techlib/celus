@@ -404,7 +404,7 @@ class TestSushiCredentialsExport:
         organization_id = organizations[organization].pk if organization else -1
         url = reverse("sushi-credentials-export-credentials")
         url += f"?organization={organization_id}"
-        resp = clients[identity].post(url, data={"pk": [x.pk for x in credentials.values()]})
+        resp = clients[identity].post(url, data=[x.pk for x in credentials.values()], format="json")
         assert resp.status_code == status_code
 
     @pytest.mark.parametrize(
@@ -430,7 +430,7 @@ class TestSushiCredentialsExport:
         organization_id = organizations[organization].pk if organization else -1
         url = reverse("sushi-credentials-export-credentials")
         url += f"?organization={organization_id}"
-        resp = clients[identity].post(url, data={"pk": [x.pk for x in credentials.values()]})
+        resp = clients[identity].post(url, data=[x.pk for x in credentials.values()], format="json")
         resp_workbook = load_workbook(filename=BytesIO(resp.content), read_only=True)
         sheetnames = {"Credentials-COUNTER4", "Credentials-COUNTER5", "Credentials-COUNTER5.1"}
         assert sheetnames == set(resp_workbook.sheetnames)

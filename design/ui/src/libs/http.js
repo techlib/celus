@@ -108,27 +108,8 @@ axios.interceptors.request.use(async (config) => {
   }
 });
 
-/**
- * Wrapper for Axios with cancellation per component.
- * @param {string} url - (axios) URL
- * @param {Object} [params] - (axios) GET query parameters
- * @param {string} [method] - (axios) HTTP method "get" by default
- * @param {string} [label] - Description of resource in case of error
- * @param {boolean} [raise] - Throw the exception
- * @param {string} [component] - A unique component identifier for cancellation
- * @param {string} [group] - Mutually exclusive group of requests
- * @returns {Object} - { response, error }
- */
-const http = async (args) => {
-  const {
-    label,
-    raise,
-    component,
-    group,
-    dontShowError,
-    errorTexts,
-    ...config
-  } = args;
+const http_config = async (args) => {
+  const { component, group, ...config } = args;
 
   if (!config["signal"] && component) {
     let grp = group || "";
@@ -144,41 +125,109 @@ const http = async (args) => {
     config["signal"] =
       store.state.cancellation.controllers[component][grp].signal;
   }
+  return config;
+};
+
+const http_error = async (args, e) => {
+  const { label, raise, dontShowError, errorTexts, ...config } = args;
+  if (axios.isCancel(e)) {
+    return { response: null, error: e.message };
+  }
+
+  if (raise) {
+    throw e;
+  }
+
+  let error;
+  if (e.response && e.response.data) {
+    const { status, data } = e.response;
+    if (status === 400) {
+      error = data.error;
+    }
+  }
+  if (!dontShowError) {
+    if (e?.response?.status && errorTexts?.[e.response.status]) {
+      store.dispatch("showError", { message: errorTexts[e.response.status] });
+    } else {
+      store.dispatch("showError", {
+        label,
+        error: error || e,
+      });
+    }
+  }
+  return { response: null, error: error || e };
+};
+
+/**
+ * Wrapper for Axios with cancellation per component.
+ * @param {string} url - (axios) URL
+ * @param {Object} [params] - (axios) GET query parameters
+ * @param {string} [method] - (axios) HTTP method "get" by default
+ * @param {string} [label] - Description of resource in case of error
+ * @param {boolean} [raise] - Throw the exception
+ * @param {string} [component] - A unique component identifier for cancellation
+ * @param {string} [group] - Mutually exclusive group of requests
+ * @returns {Object} - { response, error }
+ */
+const http = async (args) => {
+  const { label, raise, dontShowError, errorTexts, ...config } = args;
+
+  const axios_config = await http_config(args);
 
   try {
     return {
-      response: await axios(config),
+      response: await axios(axios_config),
       error: null,
     };
   } catch (e) {
-    if (axios.isCancel(e)) {
-      return { response: null, error: e.message };
-    }
-
-    if (raise) {
-      throw e;
-    }
-
-    let error;
-    if (e.response && e.response.data) {
-      const { status, data } = e.response;
-      if (status === 400) {
-        error = data.error;
-      }
-    }
-    if (!dontShowError) {
-      if (e?.response?.status && errorTexts?.[e.response.status]) {
-        store.dispatch("showError", { message: errorTexts[e.response.status] });
-      } else {
-        store.dispatch("showError", {
-          label,
-          error: error || e,
-        });
-      }
-    }
-
-    return { response: null, error: error || e };
+    return http_error(args, e);
   }
 };
 
-export default http;
+/**
+ * Wrapper for Axios with cancellation with http download download per component.
+ * @param {string} url - (axios) URL
+ * @param {Object} [params] - (axios) GET query parameters
+ * @param {string} [method] - (axios) HTTP method "get" by default
+ * @param {string} [label] - Description of resource in case of error
+ * @param {boolean} [raise] - Throw the exception
+ * @param {string} [component] - A unique component identifier for cancellation
+ * @param {string} [group] - Mutually exclusive group of requests
+ * @returns {Object} - { response, error }
+ */
+const http_download = async (args) => {
+  const { label, raise, dontShowError, errorTexts, ...config } = args;
+
+  let axios_config = await http_config(args);
+  axios_config.responseType = "blob";
+
+  try {
+    const response = await axios(axios_config);
+
+    // extract filename
+    const fileName = response.headers["content-disposition"]
+      .split("filename=")[1]
+      .replaceAll('"', "");
+
+    // prepare download link and click it
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+
+    // cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return {
+      response,
+      error: null,
+    };
+  } catch (e) {
+    return http_error(args, e);
+  }
+};
+
+export { http, http_download };

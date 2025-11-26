@@ -1,4 +1,4 @@
-import http from "@/libs/http";
+import { http } from "@/libs/http";
 
 export default {
   namespaced: true,

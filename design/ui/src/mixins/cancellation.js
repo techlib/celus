@@ -12,7 +12,7 @@
  * await http({url, component: this._cid})
  */
 
-import http from "@/libs/http";
+import { http, http_download } from "@/libs/http";
 import { randomString } from "@/libs/strings";
 
 export default {
@@ -30,6 +30,9 @@ export default {
   methods: {
     http: async function (request) {
       return await http({ ...request, component: this._cid });
+    },
+    http_download: async function (request) {
+      return await http_download({ ...request, component: this._cid });
     },
   },
 };

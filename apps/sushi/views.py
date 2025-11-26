@@ -404,7 +404,7 @@ class SushiCredentialsViewSet(ModelViewSet):
 
     @action(detail=False, methods=["post", "get"], url_path="export-credentials")
     def export_credentials(self, request):
-        pks = request.data.getlist("pk")
+        pks = request.data
         selected_organization_id = request.GET.get("organization", "-1")
         qs = self.get_queryset()
         if pks:
