@@ -1852,6 +1852,17 @@ class TestFlexibleDataSlicerOther:
             slicer.resolve_explicit_dimension("dim2")
             assert exc_info.value.code == SlicerConfigErrorCode.E113
 
+    @pytest.mark.parametrize("reverse_order", [True, False])
+    def test_involved_report_types_order_preservation(
+        self, flexible_slicer_test_data, reverse_order
+    ):
+        report_types = flexible_slicer_test_data["report_types"][:2]
+        if reverse_order:
+            report_types.reverse()
+        slicer = FlexibleDataSlicer(["platform"])
+        slicer.add_filter(ForeignKeyDimensionFilter("report_type", report_types))
+        assert slicer.involved_report_types() == report_types
+
 
 @pytest.mark.django_db
 class TestFlexibleDataSimpleCSVExporter:

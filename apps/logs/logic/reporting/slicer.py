@@ -984,15 +984,18 @@ class FlexibleDataSlicer:
     def involved_report_types(self) -> List[ReportType]:
         """
         Returns a list of report types that are part of the query if there is any filter on them.
-        If there is no filter, None is returned.
+        If there is no filter, all report types are returned.
+        This method preserves the order of the report types as they are defined in the filter.
         """
-        query_params = {}
+        rt_fltr = None
         for fltr in self.dimension_filters:
             if fltr.dimension == "report_type":
-                query_params = fltr.query_params(primary_filter=True)
+                rt_fltr = fltr
                 break
-        if query_params:
-            return list(ReportType.objects.filter(**query_params))
+        if rt_fltr:
+            query_params = rt_fltr.query_params(primary_filter=True)
+            pk_to_rt = {rt.pk: rt for rt in ReportType.objects.filter(**query_params)}
+            return [pk_to_rt[pk] for pk in rt_fltr.values if pk in pk_to_rt]
         return list(ReportType.objects.exclude_materialized())
 
     def _replace_report_type_with_materialized(
@@ -1252,11 +1255,9 @@ class FlexibleDataSlicer:
         assert len(rts) == 2, (
             "Exactly two RTs must be involved when merging RTs - this is enforced elsewhere"
         )
-        # we need to preserve the order of the report types as they are in the filter
-        rt_filter = next(fltr for fltr in self.dimension_filters if fltr.dimension == "report_type")
+        # `involved_report_types` preserves the order of the report types as they are defined in the
+        # filter, so we can just use them as they are
         rt1, rt2 = rts
-        if rt_filter.values[0] == rt2.pk:
-            rt1, rt2 = rt2, rt1
         comp = DataCoverageExtractor(
             report_type=rt1, fallback_report_type=rt2, split_by_date=False, **fltrs
         )
