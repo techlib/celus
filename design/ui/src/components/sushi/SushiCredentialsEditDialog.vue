@@ -515,21 +515,15 @@ cs:
                   :persistent-hint="useCounterReportsFromPlatform"
                 >
                   <template #item="{ props, item }">
-                    <v-list-item
-                      v-bind="props"
-                      title
-                      :disabled="isBlacklisted(item.raw)"
-                    >
-                      <template v-slot:default>
-                        <SushiReportIndicator
-                          :report="item.raw"
-                          :broken-fn="isBroken"
-                          :knowledgebase-fn="inKnowledgebase"
-                          :registry-fn="inRegistry"
-                          :blacklisted-fn="isBlacklisted"
-                          show-name
-                        ></SushiReportIndicator>
-                      </template>
+                    <v-list-item v-bind="props" title>
+                      <SushiReportIndicator
+                        :report="item.raw"
+                        :broken-fn="isBroken"
+                        :knowledgebase-fn="inKnowledgebase"
+                        :registry-fn="inRegistry"
+                        :blacklisted-fn="isBlacklisted"
+                        show-name
+                      ></SushiReportIndicator>
                     </v-list-item>
                   </template>
                   <template #selection="{ item, props, selected }">
@@ -1315,6 +1309,11 @@ export default {
     reportTypesSorted() {
       let reports = [...this.reportTypes];
       reports.sort((a, b) => a.code.localeCompare(b.code));
+      reports.forEach((report) => {
+        if (this.isBlacklisted(report)) {
+          report.props = { disabled: true };
+        }
+      });
       return reports;
     },
     reportTypesFromPlatform() {
