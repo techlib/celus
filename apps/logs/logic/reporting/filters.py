@@ -213,9 +213,7 @@ class TagDimensionFilter(DimensionFilter):
         # and clickhouse will fail with a query string length limit.
         # Therefore, we use this only for tags with less than 20k titles in PG,
         # or `CLICKHOUSE_ID_COUNT_LIMIT` in CH.
-        size_limit = (
-            CLICKHOUSE_ID_COUNT_LIMIT if clickhouse_compatible else 20
-        )  # TODO: put back 20_000
+        size_limit = CLICKHOUSE_ID_COUNT_LIMIT if clickhouse_compatible else 20_000
         if obj_ids_qs.count() > size_limit:
             if clickhouse_compatible:
                 # when clickhouse compatibility is requested, we have to raise an error

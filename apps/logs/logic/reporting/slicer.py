@@ -14,7 +14,6 @@ from django.core.exceptions import EmptyResultSet
 from django.db.models import (
     Case,
     CharField,
-    Count,  # noqa: F401
     DateField,
     Exists,
     F,
