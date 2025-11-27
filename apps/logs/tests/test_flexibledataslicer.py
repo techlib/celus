@@ -1179,14 +1179,19 @@ class TestFlexibleDataSlicerSupportForMultipleReportTypes:
             )
         )
         slicer.order_by = ["tag"]
-        data = list(slicer.get_data())
-        assert len(data) == 2
-        data = [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in data]
+        raw_data = list(slicer.get_data())
+        assert len(raw_data) == 2
+        data = [remap_row_keys_to_short_names(row, Tag, [Metric]) for row in raw_data]
         if merge_report_types:
             assert data == [
                 {"pk": "tag1", "m1": 102816, "m2": 104760},
                 {"pk": "tag2", "m1": 51894, "m2": 52866},
             ]
+            # check that the used report types are the ones we expect
+            for row in raw_data:
+                assert row["used_rts"] == [
+                    flexible_slicer_test_data_with_tags["report_types"][0].pk
+                ]
         else:
             assert data == [
                 {"pk": "tag1", "m1": 2586384, "m2": 2619432},

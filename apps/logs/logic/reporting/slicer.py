@@ -539,7 +539,13 @@ class FlexibleDataSlicer:
                     default=F(f"{relevant_accesslog_filter_prefix}report_type_id"),
                     output_field=IntegerField(),
                 )
-            ).annotate(used_rts=ArrayAgg("orig_report_type_id", distinct=True))
+            ).annotate(
+                used_rts=ArrayAgg(
+                    "orig_report_type_id",
+                    distinct=True,
+                    filter=Q(orig_report_type_id__isnull=False),
+                )
+            )
         return qs
 
     def _primary_dimension_filter(self) -> dict:
