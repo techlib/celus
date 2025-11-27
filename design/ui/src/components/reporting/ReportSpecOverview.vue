@@ -70,6 +70,9 @@
         <th class="align-top">{{ $t("labels.settings") }}:</th>
         <td>
           <ul class="unobtrusive-bullets">
+            <li v-if="report.mergeReportTypes">
+              {{ $t("merge_report_types") }}
+            </li>
             <li>
               {{
                 report.includeZeroRows

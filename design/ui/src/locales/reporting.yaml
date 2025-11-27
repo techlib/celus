@@ -88,6 +88,7 @@ en:
   next_send_tt: Next send date is one month after the end of the most recent period.
   fiscal_period: Fiscal period
   fiscal_period_tt: Base period calculation on fiscal year rather than calendar year
+  merge_report_types: Reports are merged (first is primary, second is fallback)
 cs:
   access_level_tt:
     user: Soukromý report - viditelný pouze pro vás
@@ -177,3 +178,4 @@ cs:
   next_send_tt: Následující odeslání proběhne měsíc po skončení předchozího období.
   fiscal_period: Fiskální období
   fiscal_period_tt: Má být výpočet období založen na fiskálním roku místo kalendářního?
+  merge_report_types: Reporty jsou sloučeny (první je hlavní, druhý je záložní)
