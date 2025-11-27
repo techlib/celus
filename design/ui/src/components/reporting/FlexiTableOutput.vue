@@ -147,6 +147,7 @@ cs:
         :height="popped ? 'calc(100vh - 72px)' : null"
         @update:options="updateOptions"
         v-model:sort-by="sortBy"
+        hover
         :style="
           popped
             ? {
@@ -168,9 +169,10 @@ cs:
           />
         </template>
 
-        <template #item.tag="{ item }">
+        <template #item.tag="{ item, isHighlighted }">
           <TagChip :tag="item.tag" show-class small v-if="item.pk"></TagChip>
           <span v-else class="text--secondary">{{ item.tag }}</span>
+          {{ isHighlighted }}
         </template>
 
         <!-- create columns for each row that is taggable -->
@@ -1263,10 +1265,6 @@ export default {
 :deep(.data-col) {
   background-color: #f5f5f5;
   color: rgba(0, 0, 0, 0.6);
-}
-
-:deep(tr:hover td.data-col) {
-  background-color: #e0e0e0;
 }
 
 :deep(.v-data-table__tr) {
