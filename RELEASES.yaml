@@ -1,3 +1,21 @@
+- version: 11.0.1
+  title:
+    en: Bugfix release 11.0.1
+    cs: Opravná verze 11.0.1
+  text:
+    en: |
+      - Several issues in reporting were fixed, including ordering of report types when merging reports
+      - A button for easy switching of report type order in reporting was added
+      - Several other small improvements and bug fixes were introduced
+    cs: |
+      - Bylo opraveno několik chyb v reportingu, včetně řazení typů reportů při sloučení reportů
+      - Bylo přidáno tlačítko pro snadné přepínání pořadí typů reportů v reportingu
+      - Bylo provedeno několik dalších drobných vylepšení a oprav chyb
+  is_new_feature: FALSE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: FALSE
+
 - version: 11.0.0
   title:
     en: Two new HUGE reporting features, anomaly detection, improved interest overview and much more in CELUS 11.0.0

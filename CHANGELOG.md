@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.0.1] - 2025-11-27
+
+### Added
+
+#### Frontend
+
+- add button for easy switching of report type order in reporting
+
+### Fixed
+
+#### Frontend
+
+- fix hover highlighting of rows in reporting output to cover the entire row
+- do not allow splitting by report type when merging report types
+
+#### Backend
+
+- fix order of report types not being preserved when saving reports merging report types
+- fix order of report types not being preserved in reporting export when merging report types
+- fix reporting crash when merging report types together with tag roll-up
+- fix race condition in harvesting which caused slowdowns when many harvests for the same organization were running simultaneously
+
 ## [11.0.0] - 2025-11-21
 
 ### Added
