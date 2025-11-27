@@ -1983,6 +1983,7 @@ export default {
       this.reportPk = settings.pk;
       this.owner = settings.owner;
       this.ownerOrganization = settings.owner_organization;
+      this.mergeReportTypes = config.merge_report_types ?? false;
       // trend mode
       this.trendMode = config.trend_mode ?? false;
       if (config.base_subset_filters) {
