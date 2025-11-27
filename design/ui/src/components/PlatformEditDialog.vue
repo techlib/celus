@@ -189,32 +189,17 @@ cs:
                       ></SushiReportIndicator>
                     </template>
                   </v-list-item>
-                  <v-tooltip location="bottom" max-width="400" v-else>
-                    <template #activator="{ props }">
-                      <span v-bind="props">
-                        <v-list-item title disabled>
-                          <SushiReportIndicator
-                            :report="item.raw"
-                            :blacklisted-fn="isBlacklisted"
-                            show-name
-                          ></SushiReportIndicator>
-                        </v-list-item>
-                      </span>
-                    </template>
-                    <i18n-t
-                      keypath="sushi.blacklisted_report_type_desc"
-                      tag="span"
-                    >
-                      <template #link>
-                        <a
-                          :href="`mailto:${contactEmail}`"
-                          class="text-warning"
-                          target="_blank"
-                          >{{ contactEmail }}</a
-                        >
-                      </template>
-                    </i18n-t>
-                  </v-tooltip>
+                  <v-list-item title disabled v-else>
+                    <!-- interesting fact - by not binding props to the component, the component
+                    will not be clickable which is in fact what we want when using disabled
+                    (because disabled normally just makes the text greyed out but does not really
+                    prevent clicking)-->
+                    <SushiReportIndicator
+                      :report="item.raw"
+                      :blacklisted-fn="isBlacklisted"
+                      show-name
+                    ></SushiReportIndicator>
+                  </v-list-item>
                 </template>
                 <template #selection="{ item, props, selected }">
                   <v-chip
@@ -306,12 +291,12 @@ cs:
 </template>
 
 <script>
-import axios from "axios";
-import { mapActions, mapGetters } from "vuex";
-import validate from "validate.js";
-import stringSimilarity from "string-similarity";
-import formRulesMixin from "@/mixins/formRulesMixin";
 import SushiReportIndicator from "@/components/sushi/SushiReportIndicator";
+import formRulesMixin from "@/mixins/formRulesMixin";
+import axios from "axios";
+import stringSimilarity from "string-similarity";
+import validate from "validate.js";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "PlatformEditDialog",
