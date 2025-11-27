@@ -97,7 +97,7 @@ wheels = [
 
 [[package]]
 name = "celus"
-version = "11.0.0"
+version = "11.0.1"
 source = { virtual = "." }
 dependencies = [
     { name = "celery" },
