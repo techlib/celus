@@ -1,3 +1,4 @@
+import os
 import secrets
 import traceback
 from typing import Optional, Tuple, Union
@@ -39,11 +40,16 @@ class ExportBase(models.Model):
         (ERROR, "error"),
     )
 
+    EXPORT_DIR = "export"
+
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES, default=NOT_STARTED)
     extra_info = models.JSONField(default=dict, help_text="Internal stuff", blank=True)
-    output_file = models.FileField(upload_to="export", null=True, blank=True)
+    # note, we are generating the filename in the `generate_filename` method, so `upload_to` is
+    # not used here. It is here for documentation purposes only, because we use it in the
+    # `generate_filename` method.
+    output_file = models.FileField(upload_to=EXPORT_DIR, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -97,6 +103,7 @@ class ExportBase(models.Model):
     def create_output_file(self, progress_monitor=None, raise_exception=False):
         self.status = self.IN_PROGRESS
         self.save()
+        os.makedirs(os.path.join(settings.MEDIA_ROOT, self.EXPORT_DIR), exist_ok=True)
         self.output_file.name = self.generate_filename()
         try:
             with self.output_file.open("wb") as outfile:
@@ -192,7 +199,9 @@ class FlexibleDataExport(ExportBase):
     def generate_filename(self):
         ts = now().strftime("%Y%m%d-%H%M%S")
         ext = FileFormat.file_extension(self.file_format)
-        return f"export-{self.pk}-{ts}.{ext}"
+        # let's add some more randomness to the filename
+        rand_token = secrets.token_hex(4)
+        return os.path.join(self.EXPORT_DIR, f"export-{self.pk}-{ts}-{rand_token}.{ext}")
 
 
 class FlexibleDataAPIExport(ExportBase):
@@ -265,4 +274,4 @@ class FlexibleDataAPIExport(ExportBase):
         ext = FileFormat.file_extension(self.file_format)
         # let's add some more randomness to the filename
         rand_token = secrets.token_hex(4)
-        return f"api-export-{self.report_id}-{ts}-{rand_token}.{ext}"
+        return os.path.join(self.EXPORT_DIR, f"api-export-{self.report_id}-{ts}-{rand_token}.{ext}")
