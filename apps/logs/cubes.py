@@ -89,7 +89,7 @@ class AccessLogCube(Cube):
             (
                 "item",
                 "publications_item",
-                ("name", "issn", "eissn", "doi", "isbn", "publication_date"),
+                ("name", "issn", "eissn", "doi", "isbn", ("publication_date", "Date")),
             ),
             ("organization", "organizations_organization", ("short_name", "name")),
             ("platform", "publications_platform", ("short_name", "name", "counter_registry_id")),
@@ -104,7 +104,12 @@ class AccessLogCube(Cube):
                 source=PostgresqlSource(django_db["NAME"], table=table_name, **postgresql_attrs),
                 key="id",
                 layout="hashed",
-                attrs=[DictionaryAttr(name=attr_name, type="String") for attr_name in attrs],
+                attrs=[
+                    DictionaryAttr(name=attr_name[0], type=attr_name[1])
+                    if isinstance(attr_name, tuple)
+                    else DictionaryAttr(name=attr_name, type="String")
+                    for attr_name in attrs
+                ],
             )
             for name, table_name, attrs in _dicts
         ]

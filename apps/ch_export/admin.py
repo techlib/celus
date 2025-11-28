@@ -150,3 +150,9 @@ class AccessLogExportBatchAdmin(ModelAdmin):
 
     def status(self, obj):
         return obj.get_status()
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False

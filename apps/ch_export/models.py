@@ -298,9 +298,6 @@ class AccessLogExportTask(models.Model):
         ]
 
     def export_to_ch(self):
-        from logs.logic.export_analytical import HCubeExport  # noqa - slow import
-        from logs.logic.export_analytical.exports.hcube import sanitize_identifier  # noqa - slow import
-
         with transaction.atomic():
             AccessLogExportTask.objects.filter(pk=self.pk).select_for_update().get()  # lock self
             self.refresh_from_db()

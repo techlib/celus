@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from core.models import SourceFileMixin
+from django.conf import ImproperlyConfigured
 from django.core.files.storage.memory import ContentFile
 from django.core.management import call_command
 from logs.fake_data import (
@@ -117,6 +118,23 @@ class TestAccessLogExportTaskExport:
         assert task.error != original_values["error"]
         assert task.started < task.finished
         assert "XXX Test error" in task.error
+
+
+@pytest.mark.clickhouse
+@pytest.mark.usefixtures("ch_export_clickhouse")
+@pytest.mark.django_db(transaction=True)
+class TestWithoutClickhouse:
+    def test_export_without_clickhouse_fails(self, settings):
+        settings.CLICKHOUSE_SYNC_ACTIVE = False
+        settings.CLICKHOUSE_QUERY_ACTIVE = False
+
+        ib = ImportBatchFullFactory.create()
+        exp = AccessLogExportFactory.create(organization=ib.organization)
+        task = AccessLogExportTask.objects.create(
+            batch=exp.create_batch(start_tasks=False), report_type=ib.report_type, task_id="1"
+        )
+        with pytest.raises(ImproperlyConfigured):
+            task.export_to_ch()
 
 
 @pytest.mark.clickhouse

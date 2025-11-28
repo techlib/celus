@@ -7,6 +7,8 @@ from urllib.parse import parse_qs, urlparse
 
 from core.logic.debug import log_memory
 from core.logic.type_conversion import strtobool
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.timezone import now
 from hcube.api.backend import CubeBackend
 from hcube.api.models.cube import Cube
@@ -317,6 +319,10 @@ class HCubeExport(AnalyticalExportBackend):
             self.stats["deleted_ibs_count"] = len(to_delete)
 
     def export(self, progress_monitor: Optional[Callable[[int, int], None]] = None):
+        if not settings.CLICKHOUSE_QUERY_ACTIVE:
+            raise ImproperlyConfigured(
+                "Clickhouse query is not active, cannot export using this backend"
+            )
         count = self._export(progress_monitor=progress_monitor)
         self._write_batch()
 
