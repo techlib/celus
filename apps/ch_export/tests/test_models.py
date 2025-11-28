@@ -38,6 +38,21 @@ class TestAccessLogExport:
         assert exp.ch_database == original_ch_database
         assert exp.ch_password == original_ch_password
 
+    def test_export_ensures_creation_of_clickhouse_database_and_user(
+        self, organization, ch_export_clickhouse
+    ):
+        """
+        Test that if the database or user disappear after the export is created,
+        it will be recreated before new data export is started.
+        """
+        exp = AccessLogExport.objects.create(organization=organization)
+        ch_export_client.execute(f"DROP DATABASE {exp.ch_database}")
+        ch_export_client.execute(f"DROP USER {exp.ch_database}")
+        assert not ch_export_client.execute(f"EXISTS DATABASE {exp.ch_database}")[0][0]
+        exp.create_batch(start_tasks=False)
+        assert ch_export_client.execute(f"EXISTS DATABASE {exp.ch_database}")[0][0]
+        assert exp.ch_database in [user[0] for user in ch_export_client.execute("SHOW USERS")]
+
     def test_cannot_create_multiple_exports_without_organization(self):
         AccessLogExport.objects.create()
         with pytest.raises(IntegrityError):

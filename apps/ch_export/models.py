@@ -78,10 +78,17 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
 
         return create_ch_export_backend(self.ch_database)
 
+    def _ensure_ch_database_and_user_exists(self):
+        from ch_export.cubes import create_ch_export_database, create_ch_export_user  # noqa - slow import
+
+        create_ch_export_database(self.ch_database)
+        create_ch_export_user(self.ch_database, self.ch_database, self.ch_password)
+
     def create_batch(self, start_tasks: bool = True):
         """
         if start_tasks is true, it will also create and start the tasks for the batch.
         """
+        self._ensure_ch_database_and_user_exists()
         batch = AccessLogExportBatch.objects.create(export=self)
         if start_tasks:
             from ch_export.tasks import export_to_ch_task  # local import to avoid circular import
