@@ -20,18 +20,18 @@ class OrganizationAdmin(NecronomiconAdminMixin, ImportExportMixin, TranslationAd
     import_formats = [CSV, XLSX]
     export_formats = [CSV, XLSX]
     form = forms.OrganizationForm
-    list_display = ["short_name", "internal_id", "name", "ico", "source", "country", "state"] + (
+    list_display = ["short_name", "internal_id", "name", "ico", "source", "country"] + (
         ["raw_data_import_enabled"] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
     search_fields = ["internal_id", "short_name", "name", "ico"]
     list_filter = ["source"] + (
         ["raw_data_import_enabled"] if settings.ENABLE_RAW_DATA_IMPORT == "PerOrg" else []
     )
-    list_select_related = ["source"]
+    list_select_related = ["source", "source__organization"]
     ordering = ["name"]
     readonly_fields = ("created", "last_modified")
     resource_class = OrganizationResource
-    list_editable = ["country", "state"]
+    list_editable = ["country"]
 
 
 @admin.register(models.UserOrganization)
