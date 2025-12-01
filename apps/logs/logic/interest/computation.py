@@ -11,7 +11,7 @@ from time import time
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from django.conf import settings
-from django.db.models import Case, Count, Exists, F, Max, OuterRef, Q, QuerySet, Sum, Value, When
+from django.db.models import Case, Exists, F, Max, OuterRef, Q, QuerySet, Sum, Value, When
 from django.db.transaction import atomic, on_commit
 from django.utils.timezone import now
 from hcube.api.models.aggregation import Sum as HSum
@@ -51,11 +51,7 @@ def sync_interest_by_import_batches(queryset=None) -> Counter:
     interest_rt = ReportType.objects.get_interest_rt()
     # we want to make sure that the ImportBatch has some accesslogs because otherwise it might
     # be that we caught it just after creation before any AccessLogs are added to it
-    queryset = (
-        queryset.filter(interest_timestamp__isnull=True)
-        .annotate(accesslog_count=Count("accesslog"))
-        .filter(accesslog_count__gt=0)
-    )
+    queryset = queryset.filter(interest_timestamp__isnull=True).filter(record_count__gt=0)
     total_count = queryset.count()
     logger.info("Found %d unprocessed import batches", total_count)
     interest_computer = InterestComputer(interest_rt)

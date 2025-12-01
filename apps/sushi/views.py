@@ -559,7 +559,7 @@ class SushiCredentialsViewSet(ModelViewSet):
                 year_result[f"{i:02d}"] = {}
                 for crt, broken in report_types_and_broken:
                     if entry := data_matrix_map.get((crt.report_type.pk, year, i)):
-                        status = "success" if entry.has_logs else "no_data"
+                        status = "success" if bool(entry.record_count) else "no_data"
                         can_harvest = False
                     else:
                         status = "untried"

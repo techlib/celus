@@ -311,6 +311,7 @@ def create_interest_for_title(
     if create_no_license:
         metrics.append(no_license_metric)
     for ib_idx, ib in enumerate(ibs):
+        record_count = 0
         for m_idx, m in enumerate(metrics):
             AccessLogFactory(
                 import_batch=ib,
@@ -319,6 +320,7 @@ def create_interest_for_title(
                 metric=m,
                 **{at_attr: at_controlled.pk},
             )
+            record_count += 1
             if create_oa:
                 AccessLogFactory(
                     import_batch=ib,
@@ -327,6 +329,11 @@ def create_interest_for_title(
                     metric=m,
                     **{at_attr: at_oa.pk},
                 )
+                record_count += 1
+        # update import batches count
+        ib.record_count = record_count
+        ib.save()
+
     sync_interest_by_import_batches()
     create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
     return {"import_batches": ibs, "organization": org, "platforms": platforms}

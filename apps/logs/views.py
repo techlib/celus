@@ -592,9 +592,6 @@ class ImportBatchViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = self.queryset
-        if "pk" in self.kwargs:
-            # we only add accesslog_count if only one object was requested
-            qs = qs.annotate(accesslog_count=Count("accesslog"))
         qs = qs.select_related("organization", "platform", "report_type")
         return qs
 

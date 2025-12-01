@@ -177,9 +177,7 @@ class SushiFetchAttemptSerializer(ModelSerializer):
                 counter_report=counter_report,
                 start_date=start_date,
                 end_date=end_date,
-            ).annotate(accesslog_count=Count("import_batch__accesslog")).filter(
-                accesslog_count__gt=0
-            ).get(), False
+            ).filter(record_count__gt=0).get(), False
         except SushiFetchAttempt.DoesNotExist:
             pass
 

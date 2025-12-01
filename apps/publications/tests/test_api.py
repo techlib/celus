@@ -1150,7 +1150,7 @@ class TestPlatformTitleAPI:
         metric = MetricFactory(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         import_batch = ImportBatchFactory(
-            platform=platform, organization=organization, report_type=rt
+            platform=platform, organization=organization, report_type=rt, record_count=2
         )
         al1 = AccessLog.objects.create(
             platform=platform,
@@ -1214,10 +1214,10 @@ class TestPlatformTitleAPI:
         metric = MetricFactory(short_name="m1", name="Metric1")
         ReportInterestMetric.objects.create(report_type=rt, metric=metric, interest_group=ig)
         import_batch1 = ImportBatchFactory(
-            platform=platform, organization=organization, report_type=rt
+            platform=platform, organization=organization, report_type=rt, record_count=1
         )
         import_batch2 = ImportBatchFactory(
-            platform=platform, report_type=rt, organization=other_organization
+            platform=platform, report_type=rt, organization=other_organization, record_count=1
         )
         al1 = AccessLog.objects.create(
             platform=platform,
@@ -1506,6 +1506,8 @@ class TestPlatformTitleAPI:
                 **accesslog_basics,
             ),
         ]
+        import_batch2.record_count = len(accesslogs)
+        import_batch2.save()
         create_platformtitle_links_from_accesslogs(accesslogs)
         sync_interest_by_import_batches()
 
@@ -1570,6 +1572,11 @@ class TestPlatformTitleAPI:
             platform=platform3, organization=org2, report_type=rt, date="2023-01-01"
         )
         AccessLogFactory.create(import_batch=ib3, value=5, target=title, metric=metric)
+
+        for ib in [ib1, ib2, ib3]:
+            ib.record_count = ib.accesslog_set.count()
+            ib.save()
+
         create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
         sync_interest_by_import_batches()
         assert interest_rt.accesslog_set.aggregate(Sum("value"))["value__sum"] == 8
@@ -1906,6 +1913,9 @@ class TestTitlesOnMultiplePlatforms:
                 metric=metric,
                 **{yop_attr: yop_2011.pk},
             )
+        for ib in [ib1, ib2]:
+            ib.record_count = ib.accesslog_set.count()
+            ib.save()
         sync_interest_by_import_batches()
         create_platformtitle_links_from_accesslogs(AccessLog.objects.all())
         return {
@@ -2772,6 +2782,8 @@ def accesslogs_with_interest(organizations, platforms, titles, report_type_nd, i
             **accesslog_basics,
         ),
     ]
+    import_batch.record_count = len(accesslogs)
+    import_batch.save()
     create_platformtitle_links_from_accesslogs(accesslogs)
     sync_interest_by_import_batches()
     return {

@@ -136,27 +136,6 @@ class AllPlatformSerializer(ModelSerializer):
         )
 
 
-class DetailedPlatformSerializer(ModelSerializer):
-    title_count = IntegerField(read_only=True)
-    interests = JSONField(read_only=True)
-    has_data = BooleanField(read_only=True)
-
-    class Meta:
-        model = Platform
-        fields = (
-            "pk",
-            "ext_id",
-            "short_name",
-            "name",
-            "provider",
-            "url",
-            "title_count",
-            "interests",
-            "has_data",
-            "counter_registry_id",
-        )
-
-
 class PlatformSushiCredentialsSerializer(ModelSerializer):
     count = IntegerField(read_only=True, source="sushi_credentials_count")
 

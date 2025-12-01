@@ -34,18 +34,7 @@ from django.core.exceptions import (
 )
 from django.core.mail import EmailMessage
 from django.db import models, transaction
-from django.db.models import (
-    Count,
-    Exists,
-    Field,
-    Index,
-    Max,
-    OuterRef,
-    Q,
-    QuerySet,
-    Sum,
-    UniqueConstraint,
-)
+from django.db.models import Count, Field, Index, Max, Q, QuerySet, Sum, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -428,7 +417,6 @@ class ImportBatchQuerySet(models.QuerySet):
             self.filter(**filter)
             .order_by("date")
             .annotate(
-                has_logs=Exists(AccessLog.objects.filter(import_batch=OuterRef("pk"))),
                 mdu_id=Max("mdu"),  # max is fine here, there can be only one mdu
                 attempt_id=Max("sushifetchattempt__pk"),
             )
@@ -496,10 +484,6 @@ class ImportBatch(models.Model):
         indexes = (BrinIndex(fields=("date",)),)
         ordering = ("id",)
         unique_together = ("report_type", "organization", "platform", "date")
-
-    @cached_property
-    def accesslog_count(self):
-        return self.accesslog_set.count()
 
 
 class AccessLogQuerySet(QuerySet):

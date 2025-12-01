@@ -54,10 +54,8 @@ cs:
           :model-value="!!item.sushifetchattempt"
         ></CheckMark>
       </template>
-      <template #item.accesslog_count="{ item }">
-        <span class="text-right">{{
-          formatInteger(item.accesslog_count)
-        }}</span>
+      <template #item.record_count="{ item }">
+        <span class="text-right">{{ formatInteger(item.record_count) }}</span>
       </template>
     </v-data-table>
   </v-container>
@@ -123,7 +121,7 @@ export default {
         },
         {
           title: this.$i18n.t("import_batches_list.header.record_count"),
-          value: "accesslog_count",
+          value: "record_count",
           align: "right",
         },
       ];

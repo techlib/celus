@@ -356,7 +356,6 @@ class ImportBatchVerboseSerializer(ModelSerializer):
     report_type = ReportTypeSimpleSerializer(read_only=True)
     sushifetchattempt = SushiFetchAttemptFlatSerializer(read_only=True)
     mdu = ManualDataUploadSimpleSerializer(read_only=True, many=True)
-    accesslog_count = SerializerMethodField()
 
     class Meta:
         model = ImportBatch
@@ -368,18 +367,11 @@ class ImportBatchVerboseSerializer(ModelSerializer):
             "report_type",
             "user",
             "owner_level",
-            "accesslog_count",
+            "record_count",
             "mdu",
             "date",
             "sushifetchattempt",
         )
-
-    def get_accesslog_count(self, obj: ImportBatch):
-        """
-        `record_count` is a good approximation of the number of access logs, and it does not require
-        a separate query to the database, which may be super-slow for large datasets.
-        """
-        return obj.record_count
 
 
 class ClashingMonthsSerializer(Serializer):

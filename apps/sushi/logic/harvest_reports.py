@@ -23,7 +23,7 @@ class DataCounts:
     def process(self, annotated_ib: Optional[ImportBatch]):
         self.total += 1
         if ib := annotated_ib:
-            self.empty += 0 if ib.has_logs else 1
+            self.empty += int(not bool(ib.record_count))
             self.manual += 1 if ib.mdu_id else 0
             self.sushi += 1 if ib.attempt_id else 0
         else:
@@ -85,7 +85,7 @@ def make_harvest_reports(
     for organization_id, platform_id, report_type_id in data_matrix:
         matrix_record = matrix.get((organization_id, platform_id, report_type_id))
         data_counts[org_map[organization_id]].process(matrix_record)
-        if matrix_record and not matrix_record.has_logs and matrix_record.attempt_id:
+        if matrix_record and not bool(matrix_record.record_count) and matrix_record.attempt_id:
             empty_credentials_ids.add(matrix_record.sushifetchattempt.credentials_id)
 
     cred_qs = (
