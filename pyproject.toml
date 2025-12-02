@@ -16,7 +16,7 @@ dependencies = [
     "clickhouse-driver==0.2.10",
     "colorlog>=6.7.0,<7",
     "dj-rest-auth~=7.0.1",
-    "Django~=5.2.7",
+    "Django~=5.2.9",
     "django-allauth~=64.2.1",
     "django-anymail>=13.0.1,<14",
     "django-autocomplete-light~=3.12.1",
