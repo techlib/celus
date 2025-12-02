@@ -1477,9 +1477,13 @@ class TestSushiCredentialsViewSet:
         self, clients, counter_report_types, platforms, settings, items_enabled, whitelisted
     ):
         """
-        Test that cloning credentials which have a IR_M1 report type
-        creates a new credential with the IR report type. But only if ITEMS_ENABLED is True
-        and if IR is whitelisted.
+        Test that cloning credentials which have an IR_M1 report type
+        creates a new credential with the IR_M1 report type. It should not created IR
+        report type - regardless of whether IR is whitelisted.
+
+        Note: this test is so complex because formerly, IR_M1 was upgraded to IR
+        during cloning. And with introduction of the standalone IR_M1 for C5.1, we reused
+        this test to check that the previous behavior was replaced.
         """
         ir51 = counter_report_types["ir51"]
         ir51.requires_whitelisting = True
@@ -1507,10 +1511,9 @@ class TestSushiCredentialsViewSet:
         assert len(resp.data) == 1
 
         new_cr = SushiCredentials.objects.get(counter_version=51)
-        exp_has_ir = items_enabled and whitelisted
-        assert new_cr.counter_reports.count() == (2 if exp_has_ir else 1)
-        assert new_cr.counter_reports.filter(code="IR").exists() == exp_has_ir
-        assert new_cr.counter_reports.filter(code="TR").exists(), "TR should always be cloned"
+        assert new_cr.counter_reports.count() == 2, "IR_M1 and TR should be cloned"
+        assert new_cr.counter_reports.filter(code="IR_M1").exists()
+        assert new_cr.counter_reports.filter(code="TR").exists()
 
     @pytest.mark.parametrize(
         ["suffix", "exp_end"], [("/r5", "/r51"), ("/c5", "/c5"), ("/r5/", "/r51")]

@@ -25,7 +25,7 @@ def map_dimensions(
 
 
 @pytest.fixture
-def counter_report_types(tr, dr, pr, ir_m1, ir, tr51, dr51, pr51, ir51):
+def counter_report_types(tr, dr, pr, ir_m1, ir, tr51, dr51, pr51, ir51, ir51_m1):
     tr = CounterReportTypeFactory(counter_version=5, code=tr.short_name, report_type=tr)
     dr = CounterReportTypeFactory(counter_version=5, code=dr.short_name, report_type=dr)
     pr = CounterReportTypeFactory(counter_version=5, code=pr.short_name, report_type=pr)
@@ -35,6 +35,7 @@ def counter_report_types(tr, dr, pr, ir_m1, ir, tr51, dr51, pr51, ir51):
     dr51 = CounterReportTypeFactory(counter_version=51, code=dr51.short_name, report_type=dr51)
     pr51 = CounterReportTypeFactory(counter_version=51, code=pr51.short_name, report_type=pr51)
     ir51 = CounterReportTypeFactory(counter_version=51, code=ir51.short_name, report_type=ir51)
+    ir51_m1 = CounterReportTypeFactory(counter_version=51, code="IR_M1", report_type=ir51_m1)
     return locals()
 
 
@@ -133,12 +134,16 @@ def dimension_texts(dimensions):
         },
         "Data_Type": {
             "Article": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Article"),
+            "Audiovisual": DimensionTextFactory(
+                dimension=dimensions["Data_Type"], text="Audiovisual"
+            ),
             "Book": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Book"),
             "Book_Segment": DimensionTextFactory(
                 dimension=dimensions["Data_Type"], text="Book_Segment"
             ),
             "Database": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Database"),
             "Dataset": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Dataset"),
+            "Image": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Image"),
             "Journal": DimensionTextFactory(dimension=dimensions["Data_Type"], text="Journal"),
             "Multimedia": DimensionTextFactory(
                 dimension=dimensions["Data_Type"], text="Multimedia"
@@ -322,6 +327,15 @@ def ir51(dimensions):
 
 
 @pytest.fixture
+def ir51_m1(dimensions):
+    return ReportTypeFactory(
+        name="Counter 5.1 - Multimedia Item Report 1",
+        short_name="IR51_M1",
+        dimensions=[dimensions["Publisher"], dimensions["Platform"], dimensions["Data_Type"]],
+    )
+
+
+@pytest.fixture
 def tr_dim(tr, dimension_texts):
     def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
         return map_dimensions(tr, dimension_texts, kwargs)
@@ -389,6 +403,14 @@ def pr51_dim(pr51, dimension_texts):
 def ir51_dim(ir51, dimension_texts):
     def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
         return map_dimensions(ir51, dimension_texts, kwargs)
+
+    return mapper
+
+
+@pytest.fixture
+def ir51_m1_dim(ir51_m1, dimension_texts):
+    def mapper(**kwargs: typing.Dict[str, str]) -> typing.Dict[str, int]:
+        return map_dimensions(ir51_m1, dimension_texts, kwargs)
 
     return mapper
 
@@ -920,6 +942,124 @@ def ir_m1_ibs(organization, ir_m1, ir_m1_dim, platform, targets, metrics):
         value=19,
         target=targets["target1"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
+        metric=metrics["total_item_requests"],
+    )
+
+    return ib1, ib2, ib3, ib4
+
+
+@pytest.fixture
+def ir51_m1_ibs(organization, ir51_m1, ir51_m1_dim, platform, items, metrics):
+    ib1 = ImportBatchFactory(
+        date="2020-02-01", organization=organization, platform=platform, report_type=ir51_m1
+    )
+    ib2 = ImportBatchFactory(
+        date="2020-04-01", organization=organization, platform=platform, report_type=ir51_m1
+    )
+    ib3 = ImportBatchFactory(
+        date="2019-12-01", organization=organization, platform=platform, report_type=ir51_m1
+    )
+    ib4 = ImportBatchFactory(
+        date="2021-01-01", organization=organization, platform=platform, report_type=ir51_m1
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=1,
+        item=items["item11"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=3,
+        item=items["item11"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["unique_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=23,
+        item=items["item21"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Audiovisual"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib1,
+        date="2020-02-01",
+        value=29,
+        item=items["item21"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Audiovisual"),
+        metric=metrics["unique_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=5,
+        item=items["item12"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=7,
+        item=items["item12"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["unique_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=31,
+        item=items["item31"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Image"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib2,
+        date="2020-04-01",
+        value=37,
+        item=items["item31"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Image"),
+        metric=metrics["unique_item_requests"],
+    )
+
+    # before
+    AccessLogFactory(
+        import_batch=ib3,
+        date="2019-12-01",
+        value=11,
+        item=items["item11"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["total_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib3,
+        date="2019-12-01",
+        value=13,
+        item=items["item11"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["unique_item_requests"],
+    )
+
+    # after
+    AccessLogFactory(
+        import_batch=ib4,
+        date="2021-01-01",
+        value=17,
+        item=items["item12"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
+        metric=metrics["unique_item_requests"],
+    )
+    AccessLogFactory(
+        import_batch=ib4,
+        date="2021-01-01",
+        value=19,
+        item=items["item12"],
+        **ir51_m1_dim(Publisher="Pub1", Platform="Plat1", Data_Type="Multimedia"),
         metric=metrics["total_item_requests"],
     )
 

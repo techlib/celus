@@ -204,7 +204,7 @@ def get_empty_credentials_c5():
 def get_empty_credentials_c51():
     empty_credentials_c51 = get_core_attrs_credentials()
     empty_credentials_c51.update(
-        {key: None for key in ["api key", "platform filter", "DR", "IR", "PR", "TR"]}
+        {key: None for key in ["api key", "platform filter", "DR", "IR", "IR_M1", "PR", "TR"]}
     )
     return empty_credentials_c51
 

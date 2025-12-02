@@ -404,7 +404,7 @@ COUNTER_REPORT_DATA_VIEWS = [
         True,
         101,
         name="COUNTER 5.1 - Multimedia Report 1",
-        desc="Multimedia Item Requests",
+        desc="Multimedia Item Requests - computed from full IR report",
         metric_allowed_values=["Total_Item_Requests", "Unique_Items_Requests"],
         filters=[
             CounterDimensionFilter(
@@ -412,6 +412,14 @@ COUNTER_REPORT_DATA_VIEWS = [
             ),
             CounterDimensionFilter("Access_Method", ["Regular"]),
         ],
+    ),
+    CounterReportDataView(
+        "IR51_M1",
+        "IR_M1",
+        True,
+        105,
+        name="COUNTER 5.1 - Multimedia Report 1",
+        desc="Multimedia Item Requests - standalone report",
     ),
     CounterReportDataView(
         "IR51", "IR", False, 120, name="COUNTER 5.1 - Item Report Full", desc="Item Report"

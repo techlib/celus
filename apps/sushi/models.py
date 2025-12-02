@@ -137,6 +137,7 @@ COUNTER_REPORTS = (
     (51, "PR51", "PR", "COUNTER 5.1 - Platform Report"),
     (51, "DR51", "DR", "COUNTER 5.1 - Database Report"),
     (51, "IR51", "IR", "COUNTER 5.1 - Item Report"),
+    (51, "IR51_M1", "IR_M1", "COUNTER 5.1 - Multimedia Item Requests"),
 )
 
 COUNTER_REPORTS_REQUIRING_WHITELISTING = [(51, "IR")]
@@ -239,6 +240,8 @@ class CounterReportType(models.Model):
                 return export_counter.PRCounter51Export
             elif self.code == "IR":
                 return export_counter.IRCounter51Export
+            elif self.code == "IR_M1":
+                return export_counter.IR_M1Counter51Export
 
         return None
 
@@ -606,17 +609,6 @@ class SushiCredentials(BrokenCredentialsMixin, CreatedUpdatedMixin):
             return None
 
         report_type_codes = [e.code for e in self.counter_reports.all()]
-
-        # deal with IR_M1 - it should be cloned as IR, but only if IR is whitelisted
-        # and ITEMS_ENABLED is True
-        if "IR_M1" in report_type_codes and settings.ENABLE_ITEMS:
-            if (
-                provider := kb.get_provider_for_counter_version(
-                    self.platform.knowledgebase, CounterVersionChoices.C51
-                )
-            ) and kb.is_report_type_whitelisted(provider, "IR"):
-                report_type_codes.remove("IR_M1")
-                report_type_codes.append("IR")
 
         self.pk = None
         self.counter_version = CounterVersionChoices.C51

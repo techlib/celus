@@ -633,7 +633,7 @@ export default {
     exportableReportCodes() {
       let out = ["PR", "DR", "TR", "IR_M1"];
       if (this.enableItems) {
-        out.splice(out.indexOf("IR_M1"), 0, "IR");
+        out.push("IR");
       }
       return out;
     },

@@ -29,6 +29,14 @@ class Usage:
         return cls()
 
 
+def c51_to_c5_short_name(c51_short_name: str) -> str:
+    if c51_short_name.endswith("51"):
+        return c51_short_name[:-2]
+    elif c51_short_name == "IR51_M1":
+        return "IR_M1"
+    return c51_short_name
+
+
 def make_dimension_c51_based_on_c5(rt5: ReportType, rt51: ReportType, dimensions: List[str]):
     # We know that there are no textra dimesions in C5.1
     # only Section_Type dimesion was removed for TR in C5.1
@@ -100,7 +108,9 @@ ChartDefinitions are properly defined (with correct dimensions, names, filters, 
                         uses_titles=usage.uses_titles,
                     )
                     if version == 51:
-                        if rt5 := ReportType.objects.filter(short_name=rt_short_name[:-2]).first():
+                        if rt5 := ReportType.objects.filter(
+                            short_name=c51_to_c5_short_name(rt_short_name)
+                        ).first():
                             make_dimension_c51_based_on_c5(rt5, rt, dimensions)
                 else:
                     stats["missing_crt"] += 1

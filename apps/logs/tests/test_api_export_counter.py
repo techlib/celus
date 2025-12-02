@@ -26,11 +26,15 @@ from test_scenarios.counter_data import (
     ir51,  # noqa
     ir51_dim,  # noqa
     ir51_ibs,  # noqa
+    ir51_m1,  # noqa
+    ir51_m1_dim,  # noqa
+    ir51_m1_ibs,  # noqa
     ir_dim,  # noqa
     ir_ibs,  # noqa
     ir_m1,  # noqa
     ir_m1_dim,  # noqa
     ir_m1_ibs,  # noqa
+    items,  # noqa
     metrics,  # noqa
     pr,  # noqa
     pr51,  # noqa
@@ -113,8 +117,10 @@ class TestExportDownloadCounterEndpoint:
             ("dr", None, None, 20),
             ("pr", "2020-02-01", "2020-02-01", 18),
             ("pr", None, None, 20),
-            ("ir_m1", "2020-02-01", "2020-02-01", 18),
-            ("ir_m1", None, None, 20),
+            ("ir_m1", "2020-02-01", "2020-02-01", 16),
+            ("ir_m1", None, None, 17),
+            ("ir51_m1", "2020-02-01", "2020-02-01", 19),
+            ("ir51_m1", None, None, 23),
         ),
     )
     def test_download(
@@ -128,13 +134,14 @@ class TestExportDownloadCounterEndpoint:
         pr_ibs,
         dr_ibs,
         ir_m1_ibs,
+        ir51_m1_ibs,
         counter_report_type,
         start_date,
         end_date,
         output_size,
     ):
         data = {"platform": platform.id, "organization": organization.pk}
-        sync_import_batches_with_clickhouse(*tr_ibs, *dr_ibs, *pr_ibs, *ir_m1_ibs)
+        sync_import_batches_with_clickhouse(*tr_ibs, *dr_ibs, *pr_ibs, *ir_m1_ibs, *ir51_m1_ibs)
 
         if start_date:
             data["start_date"] = start_date

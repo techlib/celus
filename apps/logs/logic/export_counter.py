@@ -125,6 +125,14 @@ class Counter5Export(metaclass=ABCMeta):
     def extras(self) -> Dict[str, Any]:
         return {}
 
+    @property
+    def metric_types_row(self) -> str:
+        return ""
+
+    @property
+    def report_filters_row(self) -> str:
+        return ""
+
     def make_file_header(self) -> List[List[str]]:
         """Prepare file header"""
         attrs = (
@@ -139,8 +147,8 @@ class Counter5Export(metaclass=ABCMeta):
             ["Release", "5"],
             ["Institution_Name", self.organization.name],
             ["Institution_ID", f"CELUS:{this_celus_domain()}-{self.organization.pk}"],
-            ["Metric_Types", ""],
-            ["Report_Filters", ""],
+            ["Metric_Types", self.metric_types_row],
+            ["Report_Filters", self.report_filters_row],
             ["Report_Attributes", ";".join(e for e in [attrs] + extras if e)],
             ["Exceptions", ""],
             [
@@ -569,8 +577,8 @@ class Counter51ExportMixin:
             ["Release", "5.1"],
             ["Institution_Name", self.organization.name],
             ["Institution_ID", f"CELUS:{this_celus_domain()}-{self.organization.pk}"],
-            ["Metric_Types", ""],
-            ["Report_Filters", ""],
+            ["Metric_Types", self.metric_types_row],
+            ["Report_Filters", self.report_filters_row],
             ["Report_Attributes", ";".join(e for e in [attrs] + extras if e)],
             ["Exceptions", ""],
             [
@@ -648,3 +656,62 @@ class IRCounter51Export(Counter51ExportMixin, IRCounter5Export):
         "Access_Type",
         "Access_Method",
     ]
+
+
+class IR_M1Counter51Export(Counter51ExportMixin, IR_M1Counter5Export):
+    report_name = "Multimedia Item Requests"
+    report_id = "IR_M1"
+    attributes_to_show = []
+
+    @property
+    def metric_types_row(self) -> str:
+        return "Total_Item_Requests; Unique_Item_Requests"
+
+    @property
+    def report_filters_row(self) -> str:
+        return (
+            "Access_Method=Regular; "
+            "Data_Type=Audiovisual|Image|Interactive_Resource|Multimedia|Sound"
+        )
+
+    def get_record_error(self, record: AccessLogCubeRecord) -> Optional[str]:
+        if not record.item_id:
+            return "Missing Item for IR_M1"
+
+    def get_target_ids(self, record: AccessLogCubeRecord) -> Iterable[str]:
+        # For IR_M1, we use items instead of targets
+        # proprietary_ID and uri are empty
+        return (
+            record.item or "",
+            record.item__doi or "",
+            "",  # Proprietary_ID
+            "",  # URI
+        )
+
+    def make_record_header(self) -> List[str]:
+        return [
+            "Item",
+            "Publisher",
+            "Publisher_ID",
+            "Platform",
+            "DOI",
+            "Proprietary_ID",
+            "URI",
+            "Data_Type",
+            "Metric_Type",
+            "Reporting_Period_Total",
+        ] + [e.strftime("%b-%Y") for e in self.months]
+
+    def make_record_line(self, record: AccessLogCubeRecord, month_values: List[int]) -> List[str]:
+        item, *item_ids = self.get_target_ids(record)
+        return (
+            item,
+            self.get_dimension_value(record, "Publisher"),
+            "",  # Publisher_ID
+            self.get_dimension_value(record, "Platform"),
+            *item_ids,
+            self.get_dimension_value(record, "Data_Type"),
+            record.metric,
+            sum(month_values),
+            *month_values,
+        )

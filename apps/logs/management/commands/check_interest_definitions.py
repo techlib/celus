@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 def convert_short_name(code: str, counter_version: int) -> str:
     """short_name conversion for Counter 5.1"""
     if counter_version == 51:
+        if code == "IR_M1":
+            return "IR51_M1"
         return code + "51"
     else:
         return code

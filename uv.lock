@@ -192,13 +192,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "celery", specifier = "~=5.5.3" },
-    { name = "celus-nibbler", specifier = "~=12.3.0" },
-    { name = "celus-nigiri", specifier = "==4.1.2" },
+    { name = "celus-nibbler", specifier = "~=12.4.0" },
+    { name = "celus-nigiri", specifier = "==4.2.0" },
     { name = "celus-pycounter", specifier = "~=4.1.0" },
     { name = "clickhouse-driver", specifier = "==0.2.10" },
     { name = "colorlog", specifier = ">=6.7.0,<7" },
     { name = "dj-rest-auth", specifier = "~=7.0.1" },
-    { name = "django", specifier = "~=5.2.9" },
+    { name = "django", specifier = "~=5.2.7" },
     { name = "django-allauth", specifier = "~=64.2.1" },
     { name = "django-anymail", specifier = ">=13.0.1,<14" },
     { name = "django-autocomplete-light", specifier = "~=3.12.1" },
@@ -282,7 +282,7 @@ dev = [
 
 [[package]]
 name = "celus-nibbler"
-version = "12.3.0"
+version = "12.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celus-nigiri" },
@@ -295,14 +295,14 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "unidecode" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/2e/ff57a6106bd39e8fbb485330aadb6677743d956fff42d124e67d68a46fce/celus_nibbler-12.3.0.tar.gz", hash = "sha256:c4c3fa71494a778a5a06960e34874adb360083bb8cf1c8b2e453368b1946bf2e", size = 39739, upload-time = "2025-11-19T10:08:14.11Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/a7/9747f4f35b8f5406a15c94f9d52a4c51538b4681eac83292634923d3b397/celus_nibbler-12.4.0.tar.gz", hash = "sha256:f0eca280da99c147009343bfa023460dda932f1653713926e6b10e14bd18e376", size = 39899, upload-time = "2025-12-03T12:42:43.732Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/24/c7ccd7ab3243b3c7e88b51bf82b76304460f970d3ad680f7bc51dccddb68/celus_nibbler-12.3.0-py3-none-any.whl", hash = "sha256:457891889d029e2ca996938d9e4f8a869e162a51e666ffffa998b2af24ff6411", size = 55114, upload-time = "2025-11-19T10:08:12.988Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/a2/ada29a6dfd11e83273394e067b9336321c58ac57a5853e8ea4472816ca91/celus_nibbler-12.4.0-py3-none-any.whl", hash = "sha256:2c1534c7b00a325c4a90f7c2a0fc006e341715d9be47b313d6f9901171a54984", size = 55316, upload-time = "2025-12-03T12:42:42.315Z" },
 ]
 
 [[package]]
 name = "celus-nigiri"
-version = "4.1.2"
+version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celus-pycounter" },
@@ -312,9 +312,9 @@ dependencies = [
     { name = "python-decouple" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/02/72c7dae822da24951973924957e29c50aa9a80631837bbf8cf515d9d5b01/celus_nigiri-4.1.2.tar.gz", hash = "sha256:01ad165fd93fb9c4ae77a31239238f772a0c03b7cc04a39bd0d18811937faf59", size = 20360, upload-time = "2025-08-25T10:19:31.924Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/d7/fb20d43585dec4120e5cb5cc169ec34cac15a305da3c668fc10f67b82893/celus_nigiri-4.2.0.tar.gz", hash = "sha256:6ba577f780cb51cb5415f31be25ad01d279a68e584ecc240a7af010ddbe3fdd8", size = 19539, upload-time = "2025-12-03T10:09:28.47Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/07/e68a6202839f3529cbd531fdbefc1bb56c1ce17f533f6dca059b5772f478/celus_nigiri-4.1.2-py3-none-any.whl", hash = "sha256:a75228ce16866a74f6e39dc25b4a0dd264171edc92401b6439f3e9cd3f09bb99", size = 27231, upload-time = "2025-08-25T10:19:30.721Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/a0/f2f0ee3d4ac6670223c1c7f0e18b324e5b4ab87045604fc84321a13c8d98/celus_nigiri-4.2.0-py3-none-any.whl", hash = "sha256:be0c08464161b9b40f756252cd73b9a66f0a0a3fbd4cbf7eb8fb75844a2d7edc", size = 27135, upload-time = "2025-12-03T10:09:27.155Z" },
 ]
 
 [[package]]
@@ -695,16 +695,16 @@ sdist = { url = "https://files.pythonhosted.org/packages/b7/19/00150c8bedf7b6d4c
 
 [[package]]
 name = "django"
-version = "5.2.9"
+version = "5.2.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "sqlparse" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/1c/188ce85ee380f714b704283013434976df8d3a2df8e735221a02605b6794/django-5.2.9.tar.gz", hash = "sha256:16b5ccfc5e8c27e6c0561af551d2ea32852d7352c67d452ae3e76b4f6b2ca495", size = 10848762, upload-time = "2025-12-02T14:01:08.418Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/a2/933dbbb3dd9990494960f6e64aca2af4c0745b63b7113f59a822df92329e/django-5.2.8.tar.gz", hash = "sha256:23254866a5bb9a2cfa6004e8b809ec6246eba4b58a7589bc2772f1bcc8456c7f", size = 10849032, upload-time = "2025-11-05T14:07:32.778Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/b0/7f42bfc38b8f19b78546d47147e083ed06e12fc29c42da95655e0962c6c2/django-5.2.9-py3-none-any.whl", hash = "sha256:3a4ea88a70370557ab1930b332fd2887a9f48654261cdffda663fef5976bb00a", size = 8290652, upload-time = "2025-12-02T14:01:03.485Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/3d/a035a4ee9b1d4d4beee2ae6e8e12fe6dee5514b21f62504e22efcbd9fb46/django-5.2.8-py3-none-any.whl", hash = "sha256:37e687f7bd73ddf043e2b6b97cfe02fcbb11f2dbb3adccc6a2b18c6daa054d7f", size = 8289692, upload-time = "2025-11-05T14:07:28.761Z" },
 ]
 
 [[package]]

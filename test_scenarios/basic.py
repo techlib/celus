@@ -223,6 +223,7 @@ def report_types(data_sources):
     dr51 = ReportTypeFactory(name="COUNTER 5.1 - Database report", short_name="DR51")
     pr51 = ReportTypeFactory(name="COUNTER 5.1 - Platform report", short_name="PR51")
     ir51 = ReportTypeFactory(name="COUNTER 5.1 - Item report", short_name="IR51")
+    ir51_m1 = ReportTypeFactory(name="COUNTER 5.1 - Multimedia Item Requests", short_name="IR51_M1")
 
     # Counter 4
     br1 = ReportTypeFactory(name="COUNTER 4 - Book report 1", short_name="BR1")
@@ -271,6 +272,9 @@ def counter_report_types(report_types):
     dr51 = CounterReportTypeFactory(counter_version=51, code="DR", report_type=report_types["dr51"])
     pr51 = CounterReportTypeFactory(counter_version=51, code="PR", report_type=report_types["pr51"])
     ir51 = CounterReportTypeFactory(counter_version=51, code="IR", report_type=report_types["ir51"])
+    ir51_m1 = CounterReportTypeFactory(
+        counter_version=51, code="IR_M1", report_type=report_types["ir51_m1"]
+    )
 
     # counter 4
     br1 = CounterReportTypeFactory(

@@ -3220,10 +3220,19 @@ class TestItemViewSet:
         """
         pl = PlatformFactory()
         org = OrganizationFactory()
-        items = ItemFactory.create_batch(10, usage__platform=pl, usage__organization=org)
+        # by explicitly setting the date, we make sure that conflicting IBs are not created
+        items = [
+            ItemFactory.create(
+                usage__platform=pl, usage__organization=org, usage__date=f"2020-{(n + 1):02d}-01"
+            )
+            for n in range(3)
+        ]
         # create some extra items that should not be in the response
-        ItemFactory.create_batch(3, usage__platform=pl)
-        ItemFactory.create_batch(4, usage__organization=org)
+        pl2 = PlatformFactory()
+        org2 = OrganizationFactory()
+        ItemFactory.create(usage__platform=pl, usage__organization=org2, usage__date="2020-01-01")
+        ItemFactory.create(usage__platform=pl2, usage__organization=org, usage__date="2020-01-01")
+
         params = {}
         if interest is not None:
             params["interest"] = interest

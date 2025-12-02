@@ -12,6 +12,7 @@ from logs.logic.export_counter import (
     DRCounter5Export,
     DRCounter51Export,
     IR_M1Counter5Export,
+    IR_M1Counter51Export,
     IRCounter5Export,
     IRCounter51Export,
     PRCounter5Export,
@@ -32,6 +33,9 @@ from test_scenarios.counter_data import (
     ir51,  # noqa
     ir51_dim,  # noqa
     ir51_ibs,  # noqa
+    ir51_m1,  # noqa
+    ir51_m1_dim,  # noqa
+    ir51_m1_ibs,  # noqa
     ir_dim,  # noqa
     ir_ibs,  # noqa
     ir_m1,  # noqa
@@ -1091,6 +1095,131 @@ J21,Pub1,,Plat1,,,,10.2222/1111.2222.1111,,,,,,target2,,,,Book,,,978-1-4920-8488
         sync_import_batches_with_clickhouse(*ir51_ibs)
 
         export = IRCounter51Export(organization, platform, ir51, None, None)
+
+        "".join(x.decode("utf-8") for x in export.csv())
+        assert caplog.records[-1].msg == "There are structural errors in the data"
+
+
+@pytest.mark.clickhouse
+@pytest.mark.django_db(transaction=True)
+class TestIR_M1Counter51Export:
+    @pytest.mark.parametrize(
+        "title_preload_size,csv_line_batch",
+        [
+            [10, 10],
+            [2, 10],  # title_preload_size >= 2 (peeking at next record)
+            [10, 1],
+            [2, 1],
+        ],
+    )
+    def test_single_month(
+        self,
+        organization,
+        platform,
+        ir51_m1,
+        ir51_m1_ibs,
+        settings,
+        title_preload_size,
+        csv_line_batch,
+        clickhouse_db,
+    ):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        settings.CELUS_VERSION = "X.Y.Z"
+        sync_import_batches_with_clickhouse(*ir51_m1_ibs)
+
+        export = IR_M1Counter51Export(
+            organization, platform, ir51_m1, date(2020, 2, 1), date(2020, 2, 1)
+        )
+        export.TITLE_PRELOAD_SIZE = title_preload_size
+        export.CSV_LINE_BATCH = csv_line_batch
+
+        parts = list(export.csv())
+        assert parts[0].startswith(codecs.BOM_UTF8)
+
+        assert (
+            fixed_created("".join(x.decode("utf-8") for x in parts))
+            == f"""\
+\ufeffReport_Name,Multimedia Item Requests\r
+Report_ID,IR_M1\r
+Release,5.1\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
+Institution_ID,{get_institution_id_in_csv(organization)}\r
+Metric_Types,Total_Item_Requests; Unique_Item_Requests\r
+Report_Filters,Access_Method=Regular; Data_Type=Audiovisual|Image|Interactive_Resource|Multimedia|Sound\r
+Report_Attributes,\r
+Exceptions,\r
+Reporting_Period,Begin_Date=2020-02-01; End_Date=2020-02-29\r
+Created,2024-01-01T00:00:00Z\r
+Created_By,Celus X.Y.Z\r
+Registry_Record,https://registry.projectcounter.org/platform/99999999-9999-9999-9999-999999999999\r
+\r
+Item,Publisher,Publisher_ID,Platform,DOI,Proprietary_ID,URI,Data_Type,Metric_Type,Reporting_Period_Total,Feb-2020\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Multimedia,Total_Item_Requests,1,1\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Multimedia,Unique_Item_Requests,3,3\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Audiovisual,Total_Item_Requests,23,23\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Audiovisual,Unique_Item_Requests,29,29\r
+"""  # noqa: E501 - cannot get rid of the too long line error
+        )
+
+    def test_no_months(self, organization, platform, ir51_m1, ir51_m1_ibs, settings, clickhouse_db):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        settings.CELUS_VERSION = "X.Y.Z"
+        sync_import_batches_with_clickhouse(*ir51_m1_ibs)
+
+        export = IR_M1Counter51Export(organization, platform, ir51_m1, None, None)
+
+        parts = list(export.csv())
+        assert parts[0].startswith(codecs.BOM_UTF8)
+
+        assert (
+            fixed_created("".join(x.decode("utf-8") for x in parts))
+            == f"""\
+\ufeffReport_Name,Multimedia Item Requests\r
+Report_ID,IR_M1\r
+Release,5.1\r
+Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
+Institution_ID,{get_institution_id_in_csv(organization)}\r
+Metric_Types,Total_Item_Requests; Unique_Item_Requests\r
+Report_Filters,Access_Method=Regular; Data_Type=Audiovisual|Image|Interactive_Resource|Multimedia|Sound\r
+Report_Attributes,\r
+Exceptions,\r
+Reporting_Period,Begin_Date=2019-12-01; End_Date=2021-01-31\r
+Created,2024-01-01T00:00:00Z\r
+Created_By,Celus X.Y.Z\r
+Registry_Record,https://registry.projectcounter.org/platform/99999999-9999-9999-9999-999999999999\r
+\r
+Item,Publisher,Publisher_ID,Platform,DOI,Proprietary_ID,URI,Data_Type,Metric_Type,Reporting_Period_Total,Dec-2019,Jan-2020,Feb-2020,Mar-2020,Apr-2020,May-2020,Jun-2020,Jul-2020,Aug-2020,Sep-2020,Oct-2020,Nov-2020,Dec-2020,Jan-2021\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Multimedia,Total_Item_Requests,12,11,0,1,0,0,0,0,0,0,0,0,0,0,0\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Multimedia,Unique_Item_Requests,16,13,0,3,0,0,0,0,0,0,0,0,0,0,0\r
+J12,Pub1,,Plat1,10.1111/1111.1111.2222,,,Multimedia,Total_Item_Requests,24,0,0,0,0,5,0,0,0,0,0,0,0,0,19\r
+J12,Pub1,,Plat1,10.1111/1111.1111.2222,,,Multimedia,Unique_Item_Requests,24,0,0,0,0,7,0,0,0,0,0,0,0,0,17\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Audiovisual,Total_Item_Requests,23,0,0,23,0,0,0,0,0,0,0,0,0,0,0\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Audiovisual,Unique_Item_Requests,29,0,0,29,0,0,0,0,0,0,0,0,0,0,0\r
+M31,Pub1,,Plat1,,,,Image,Total_Item_Requests,31,0,0,0,0,31,0,0,0,0,0,0,0,0,0\r
+M31,Pub1,,Plat1,,,,Image,Unique_Item_Requests,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
+"""  # noqa: E501 - cannot get rid of the too long line error
+        )
+
+    def test_empty(self, organization, platform, ir51_m1, settings, clickhouse_db):
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+        export = IR_M1Counter51Export(organization, platform, ir51_m1, None, None)
+        content = "".join(x.decode("utf-8") for x in export.csv()).splitlines()
+        end_date = month_end(date.today()).strftime("%Y-%m-%d")
+        assert content[1] == "Report_ID,IR_M1"
+        assert content[9] == f"Reporting_Period,Begin_Date=1970-01-01; End_Date={end_date}"
+        assert content[-1].startswith("Item")
+        # Verify Data_Type is in the header
+        assert "Data_Type" in content[-1]
+
+    def test_errors(
+        self, organization, platform, ir51_m1, ir51_m1_ibs, settings, clickhouse_db, caplog
+    ):
+        ir51_m1_ibs[0].accesslog_set.update(item_id=None)
+        settings.CLICKHOUSE_SYNC_ACTIVE = True
+
+        sync_import_batches_with_clickhouse(*ir51_m1_ibs)
+
+        export = IR_M1Counter51Export(organization, platform, ir51_m1, None, None)
 
         "".join(x.decode("utf-8") for x in export.csv())
         assert caplog.records[-1].msg == "There are structural errors in the data"

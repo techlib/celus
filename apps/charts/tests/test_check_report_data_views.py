@@ -16,7 +16,7 @@ from charts.models import (
 class TestCheckReportDataViews:
     @pytest.mark.parametrize(
         "items_enabled,count",
-        ((True, len(COUNTER_REPORT_DATA_VIEWS)), (False, len(COUNTER_REPORT_DATA_VIEWS) - 3)),
+        ((True, len(COUNTER_REPORT_DATA_VIEWS)), (False, len(COUNTER_REPORT_DATA_VIEWS) - 4)),
     )
     def test_trigger(self, settings, items_enabled, count):
         settings.ENABLE_ITEMS = items_enabled

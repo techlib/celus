@@ -10,8 +10,8 @@ requires-python = ">=3.12.3,<4"
 license = "MIT"
 dependencies = [
     "celery~=5.5.3",
-    "celus-nibbler~=12.3.0",
-    "celus-nigiri==4.1.2",
+    "celus-nibbler~=12.4.0",
+    "celus-nigiri==4.2.0",
     "celus-pycounter~=4.1.0",
     "clickhouse-driver==0.2.10",
     "colorlog>=6.7.0,<7",

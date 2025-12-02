@@ -30,7 +30,12 @@ from publications.tests.test_api import (  # noqa - fixtures
     real_world_data_with_interest_and_configs,
 )
 from sushi.fake_data import CounterReportTypeFactory, CredentialsFactory, FetchAttemptFactory
-from sushi.models import AttemptStatus, CounterReportsToCredentials, SushiFetchAttempt
+from sushi.models import (
+    COUNTER_REPORTS,
+    AttemptStatus,
+    CounterReportsToCredentials,
+    SushiFetchAttempt,
+)
 
 from logs.fake_data import (
     ImportBatchFactory,
@@ -1161,7 +1166,7 @@ class TestReportInterestMetricAPI:
         resp = master_admin_client.get(reverse("report-interest-metric-list"))
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 19
+        assert len(data) == len(COUNTER_REPORTS), "all report types should be present"
         tr = next(tr for tr in data if tr["short_name"] == "TR")
         assert tr is not None
         tr_metrics = {m["metric"]["short_name"] for m in tr["interest_metric_set"]}
@@ -1223,7 +1228,7 @@ class TestReportInterestMetricAPI:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 19
+        assert len(data) == len(COUNTER_REPORTS), "all report types should be present"
         tr = next(tr for tr in data if tr["short_name"] == "TR")
         assert tr is not None
         tr_metrics = {m["metric"]["short_name"] for m in tr["interest_metric_set"]}

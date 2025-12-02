@@ -25,24 +25,31 @@ class TestCheckReportTypeDimensions:
         assert ReportType.objects.get(short_name="TR").uses_titles
         assert not ReportType.objects.get(short_name="IR_M1").uses_titles
         assert ReportType.objects.get(short_name="IR_M1").uses_items
+        assert not ReportType.objects.get(short_name="IR51_M1").uses_titles
+        assert ReportType.objects.get(short_name="IR51_M1").uses_items
+
+        # check that only item report types use items
+        item_short_names = ["IR51", "IR_M1", "IR51_M1"]
         assert all(
-            ReportType.objects.filter(short_name__in=["IR51", "IR_M1"]).values_list(
+            ReportType.objects.filter(short_name__in=item_short_names).values_list(
                 "uses_items", flat=True
             )
         ), "only IR_M1 and IR51 use items"
         assert not any(
-            ReportType.objects.exclude(short_name__in=["IR51", "IR_M1"]).values_list(
+            ReportType.objects.exclude(short_name__in=item_short_names).values_list(
                 "uses_items", flat=True
             )
         ), "others should not use items"
 
+        # check that non-title report types don't use titles and other do
+        non_title_short_names = ["PR", "PR1", "PR51", "IR51_M1", "IR_M1"]
         assert not any(
-            ReportType.objects.filter(short_name__in=["PR", "PR1", "PR51", "IR_M1"]).values_list(
+            ReportType.objects.filter(short_name__in=non_title_short_names).values_list(
                 "uses_titles", flat=True
             )
         ), "PR, PR1 and IR_M1 should not use titles"
         assert all(
-            ReportType.objects.exclude(short_name__in=["PR", "PR1", "PR51", "IR_M1"]).values_list(
+            ReportType.objects.exclude(short_name__in=non_title_short_names).values_list(
                 "uses_titles", flat=True
             )
         ), "others should use titles"
@@ -81,24 +88,31 @@ class TestCheckReportTypeDimensions:
         assert ReportType.objects.get(short_name="TR").uses_titles
         assert not ReportType.objects.get(short_name="IR_M1").uses_titles
         assert ReportType.objects.get(short_name="IR_M1").uses_items
+        assert not ReportType.objects.get(short_name="IR51_M1").uses_titles
+        assert ReportType.objects.get(short_name="IR51_M1").uses_items
+
+        # check that only item report types use items
+        item_short_names = ["IR51", "IR_M1", "IR51_M1"]
         assert all(
-            ReportType.objects.filter(short_name__in=["IR51", "IR_M1"]).values_list(
+            ReportType.objects.filter(short_name__in=item_short_names).values_list(
                 "uses_items", flat=True
             )
         ), "only IR_M1 and IR51 use items"
         assert not any(
-            ReportType.objects.exclude(short_name__in=["IR51", "IR_M1"]).values_list(
+            ReportType.objects.exclude(short_name__in=item_short_names).values_list(
                 "uses_items", flat=True
             )
         ), "others should not use items"
 
+        # check that non-title report types don't use titles and other do
+        non_title_short_names = ["PR", "PR1", "PR51", "IR_M1", "IR51_M1"]
         assert not any(
-            ReportType.objects.filter(short_name__in=["PR", "PR1", "PR51", "IR_M1"]).values_list(
+            ReportType.objects.filter(short_name__in=non_title_short_names).values_list(
                 "uses_titles", flat=True
             )
         ), "PR, PR1 and IR_M1 should not use titles"
         assert all(
-            ReportType.objects.exclude(short_name__in=["PR", "PR1", "PR51", "IR_M1"]).values_list(
+            ReportType.objects.exclude(short_name__in=non_title_short_names).values_list(
                 "uses_titles", flat=True
             )
         ), "others should use titles"

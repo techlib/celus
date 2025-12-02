@@ -771,7 +771,8 @@ class TestRealWorldInterestCalculation:
             ("DB1", ["DR51", "DR"]),
             ("DR51", []),
             ("DR", ["DR51"]),
-            ("IR_M1", ["IR51"]),
+            ("IR_M1", ["IR51", "IR51_M1"]),
+            ("IR51_M1", ["IR51"]),
         ],
     )
     def test_get_report_type_superseding_report_types(
@@ -790,12 +791,13 @@ class TestRealWorldInterestCalculation:
         [
             ("TR", ["JR1", "JR1a", "JR2", "BR2", "BR3"]),
             ("TR51", ["TR", "JR1", "JR1a", "JR2", "BR2", "BR3"]),
-            ("IR51", ["TR51", "IR_M1", "TR", "JR1", "JR1a", "JR2", "BR2", "BR3"]),
+            ("IR51", ["TR51", "IR51_M1", "TR", "IR_M1", "JR1", "JR1a", "JR2", "BR2", "BR3"]),
             ("DR51", ["DR", "DB1"]),
             ("DR", ["DB1"]),
             ("JR1", []),
             ("BR2", []),
             ("IR_M1", []),
+            ("IR51_M1", ["IR_M1"]),
         ],
     )
     def test_get_report_types_superseded_by_report_type(

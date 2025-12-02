@@ -152,6 +152,14 @@ INTEREST_DEFAULT_REPORT_TYPES = {
         },
         "mappings": {"Access_Method": C51_MAPPINGS["Access_Method"]},  # Access_Type is not used
     },
+    (51, "IR_M1"): {
+        "interest": {
+            "multimedia": {
+                "metrics": {"Total_Item_Requests": "total", "Unique_Item_Requests": "unique"}
+            }
+        },
+        "superseded_by": (51, "IR"),
+    },
     (51, "PR"): {},  # no interest for PR, this ensures deletion of obsolete RIMs
     # The following is a sketch of how PR interest could be computed. But because it is superseded
     # by both TR and DR, it would need a change to the whole interest computation code.
@@ -217,7 +225,7 @@ INTEREST_DEFAULT_REPORT_TYPES = {
                 "metrics": {"Total_Item_Requests": "total", "Unique_Item_Requests": "unique"}
             }
         },
-        "superseded_by": (51, "IR"),
+        "superseded_by": (51, "IR_M1"),
     },
     (5, "DR"): {
         "interest": {
