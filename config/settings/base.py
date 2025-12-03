@@ -1047,21 +1047,6 @@ SENTRY_URL = config("SENTRY_URL", default="")
 if SENTRY_URL:
     from sentry_sdk.integrations.clickhouse_driver import ClickhouseDriverIntegration
 
-    # by default, we take the most frequent transactions and sample them at 1% because they are
-    # also one of the most boring ones
-    SENTRY_TRANSACTION_SAMPLE_RATES = config(
-        "SENTRY_TRANSACTION_SAMPLE_RATES",
-        cast=Csv(cast=Csv(post_process=tuple), delimiter=";"),
-        default="scheduler.tasks.trigger_scheduler,0.001;"
-        "scheduler.tasks.plan_schedulers_triggering,0.01;"
-        "core.tasks.flush_request_logs_to_clickhouse,0.01;"
-        "knowledgebase.tasks.sync_routes,0.01;"
-        "core.tasks.empty_task_export,0",
-    )
-    transaction_rates = {
-        transaction.strip(): float(rate) for transaction, rate in SENTRY_TRANSACTION_SAMPLE_RATES
-    }
-
     def filter_events(event, hint):
         """
         The /metrics endpoint is called very often and it is not necessary to send all of them
@@ -1069,17 +1054,30 @@ if SENTRY_URL:
         """
         if event.get("type") == "transaction" and event.get("transaction") == "/metrics":
             # I am not sure if the type=transaction is necessary, but I want to make sure
-            # that other events related to metrics are not filtered out
+            # that other events are not filtered out by mistake
             return None
         return event
 
     def traces_sampler(sampling_context):
         """
-        This function is used to sample traces. For some very often occuring transactions,
-         we only want a very small sample rate to reduce the overhead.
+        This function is used to sample traces. We use it to drop traces for celery tasks.
+        In thoery, this could be done by using just `before_send_transaction` filter,
+        (as `filter_events` does), but from my testing, it looks like the event filtering
+        does not work without the sampling function being present (or other source of sampling).
+        So we do the sampling here - it may have an added benefit of making the decision
+        earlier and thus saving some CPU cycles.
         """
-        name = sampling_context.get("transaction_context", {}).get("name")
-        return transaction_rates.get(name, 1)
+        if ps := sampling_context.get("parent_sampled"):
+            # use the parent's sampling decision if it is available
+            # recommended by Sentry documentation (https://docs.sentry.io/platforms/python/sampling/)
+            return ps
+        if sampling_context.get("transaction_context", {}).get("op") == "queue.task.celery":
+            # drop traces for celery tasks
+            name = sampling_context.get("transaction_context", {}).get("name")
+            logger.debug("sentry: dropping trace for celery task: %s", name)
+            return 0
+        # default to 1 (sample all)
+        return 1
 
     # we disable the clickhouse driver integration because it captures all the inserted data
     # which leads to memory issues in production when syncing a lot of data into the public
@@ -1092,8 +1090,8 @@ if SENTRY_URL:
         send_default_pii=True,
         environment=SENTRY_ENVIRONMENT,
         release=f"celus-{SENTRY_RELEASE}" if SENTRY_RELEASE else None,
-        traces_sampler=traces_sampler,
         before_send_transaction=filter_events,
+        traces_sampler=traces_sampler,
     )
     # ignore pycounter errors
     ignore_logger("celus_pycounter.sushi")
