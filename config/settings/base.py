@@ -1052,9 +1052,11 @@ if SENTRY_URL:
     SENTRY_TRANSACTION_SAMPLE_RATES = config(
         "SENTRY_TRANSACTION_SAMPLE_RATES",
         cast=Csv(cast=Csv(post_process=tuple), delimiter=";"),
-        default="scheduler.tasks.trigger_scheduler,0.01;"
+        default="scheduler.tasks.trigger_scheduler,0.001;"
         "scheduler.tasks.plan_schedulers_triggering,0.01;"
-        "core.tasks.flush_request_logs_to_clickhouse,0.01",
+        "core.tasks.flush_request_logs_to_clickhouse,0.01;"
+        "knowledgebase.tasks.sync_routes,0.01;"
+        "core.tasks.empty_task_export,0",
     )
     transaction_rates = {
         transaction.strip(): float(rate) for transaction, rate in SENTRY_TRANSACTION_SAMPLE_RATES
