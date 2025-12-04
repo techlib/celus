@@ -30,7 +30,7 @@ cs:
       <v-card-title>{{ ig.name }}</v-card-title>
       <v-card-text class="d-flex flex-row flex-wrap ga-4 align-center">
         <template v-for="(rts, index) in ig.report_type_groups" :key="index">
-          <v-card>
+          <v-card :style="{ backgroundColor: reportToColor(rts[0]) }">
             <v-card-text>
               <div v-for="rt in rts" :key="rt.pk">
                 {{ rt.name }}
@@ -108,6 +108,19 @@ export default {
         );
       }
       return out;
+    },
+
+    reportToColor(rt) {
+      if (rt.name.includes("COUNTER 5.1")) {
+        // light green
+        return "#d7f8d7";
+      } else if (rt.name.includes("COUNTER 5")) {
+        // light yellow
+        return "#fcf7c4";
+      } else {
+        // light red
+        return "#ffe3eb";
+      }
     },
   },
 
