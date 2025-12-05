@@ -869,6 +869,21 @@ cs:
             </span>
           </v-lazy>
         </template>
+        <template #item.platform__name="{ item, index }">
+          <v-lazy
+            :transition="false"
+            :model-value="index < immediateRenderCount"
+          >
+            <span>
+              <router-link
+                :to="`/platforms/${item.platform.pk}`"
+                class="hover-underline text-high-emphasis"
+                >{{ item.platform.name }}</router-link
+              >
+            </span>
+          </v-lazy>
+        </template>
+
         <template #header.data-table-select>
           <SelectAllCheckbox
             :selected-count="checkedCredentials.length"
@@ -1688,5 +1703,12 @@ export default {
 
 .mt_without_label {
   margin-top: 3px;
+}
+
+.hover-underline {
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 </style>
