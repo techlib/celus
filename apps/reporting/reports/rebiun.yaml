@@ -1,0 +1,115 @@
+name: Rebiun report
+description: Standardized report used in Spain to report usage of electronic resources.
+position: 75
+dataSources:
+  - id: TR_JOURNAL
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: Controlled
+  - reportType: JR1
+    metric: FT Article Requests
+    fallbackFor: TR_JOURNAL
+  - id: JR1GOA_SUB
+    reportType: JR1GOA
+    metric: FT Article Requests
+    fallbackFor: TR_JOURNAL
+  - id: TR_JOA
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: OA_Gold
+  - reportType: JR1GOA
+    metric: FT Article Requests
+    fallbackFor: TR_JOA
+  - reportType: PR
+    metric: Searches_Platform
+    filters:
+      Access_Method: Regular
+  - reportType: DB1
+    metric: Regular Searches
+    fallbackFor: PR
+  - id: TR_BOOKS
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Book
+      Access_Type: Controlled
+  - reportType: BR1
+    metric: Book Title Requests
+    fallbackFor: TR_BOOKS
+  - id: TR_BOOKS_OA
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Book
+      Access_Type: OA_Gold
+  - id: TR_OTHER
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+        - Article
+        - Book Segment
+        - Conferences
+        - Database
+        - Dataset
+        - Multimedia
+        - Platform
+        - Other
+        - Report
+        - Standards
+        # we keep the versions with spaces for compatibility with some strange reports
+        # which incorrectly use spaces instead of underscores
+        - Newspaper or Newsletter
+        - Newspaper_or_Newsletter
+        - Repository Item
+        - Repository_Item
+        - Thesis or Dissertation
+        - Thesis_or_Dissertation
+  - reportType: MR1
+    metric: null
+    fallbackFor: TR_OTHER
+parts:
+  - name: NCONSULRECPAGOCOUNT
+    description: "6.5.1.1.Búsquedas en recursos electrónicos de pago o con licencia a lo largo del año:datos Counter."
+    explanation: "COUNTER 5 PR report is used to get information about searches. If it is not available, COUNTER 4 DB1 report is used instead."
+    stages:
+      - name: NCONSULRECPAGOCOUNT
+        formula: PR | DB1
+  - name: NVISDESREVCOUNTPAG
+    description: "6.5.2.1.1.1. Vistas y descargas del texto completo de artículos de revistas de pago: datos Counter"
+    explanation: "COUNTER 5 TR report is used to get information about journal usage without open access. If it is not available, COUNTER 4 JR1 report is used with data from the COUNTER 4 JR1GOA report subtracted from it to remove open access usage."
+    stages:
+      - name: NVISDESREVCOUNTPAG
+        formula: TR_JOURNAL | (JR1 - JR1GOA_SUB)
+  - name: NVISDESREVCOUNTOP
+    description: "6.5.2.1.1.2. Vistas y descargas del texto completo de artículos de revistas de open access: datos Counter"
+    explanation: "COUNTER 5 TR report is used to get information about journal open-access usage. If it is not available, COUNTER 4 JR1GOA is used instead."
+    stages:
+      - name: NVISDESREVCOUNTOP
+        formula: TR_JOA | JR1GOA
+  - name: NVISDESLIBRCOUNTPAG
+    description: "6.5.2.1.2.1. Vistas y descargas del texto completo de libros de pago: datos Counter"
+    explanation: "COUNTER 5 TR report is used to get information about book usage. If it is not available, COUNTER 4 BR1 report is used instead."
+    stages:
+      - name: NVISDESLIBRCOUNTPAG
+        formula: TR_BOOKS | BR1
+  - name: NVISDESLIBRCOUNTOP
+    description: "6.5.2.1.2.2. Vistas y descargas del texto completo de libros open access: datos Counter"
+    explanation: "COUNTER 5 TR report is used to get information about open-access book usage."
+    stages:
+      - name: NVISDESLIBRCOUNTOP
+        formula: TR_BOOKS_OA
+  - name: NVISDESDISTCOUNT
+    description: "6.5.2.1.3. Vistas y descargas del texto completo de tipologías de datos (Data type) distintas de libros y revistas: datos Counter"
+    explanation: "COUNTER 5 TR report is used to get information about usage of specified data types excluding journal and books. If it is TR report is not available, COUNTER 4 MR1 report is used instead."
+    stages:
+      - name: NVISDESDISTCOUNT
+        formula: TR_OTHER | MR1

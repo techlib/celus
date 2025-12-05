@@ -1,0 +1,85 @@
+name: ACRL IPEDS 2022
+description: ACRL IPEDS report - used in the US - 2022 version
+position: 40
+dataSources:
+  - id: tr_b1
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Book
+  - id: ir_m1
+    reportType: IR_M1
+    metric: Total_Item_Requests
+  - id: br1
+    reportType: BR1
+    metric: Book Title Requests
+    fallbackFor: tr_b1
+  - id: br2
+    reportType: BR2
+    metric: Book Section Requests
+    fallbackFor: br1
+  - id: mr1
+    reportType: MR1
+    metric: Multimedia Downloads
+    fallbackFor: ir_m1
+  - id: mr2
+    reportType: MR2
+    metric: Multimedia Downloads
+    fallbackFor: mr1
+  - id: tr_j
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Access_Type:
+        - Controlled
+        - OA_Gold
+      Data_Type: Journal
+  - id: jr1
+    reportType: JR1
+    metric: Full Text Article Requests
+    fallbackFor: tr_j
+parts:
+  - name: "60B"
+    description: Total Digital/Electronic Circulation or Usage
+    explanation: "Information about book usage from COUNTER 5 TR report is summed up together with information about multimedia usage from COUNTER 5 IR_M1 report."
+    stages:
+      - id: TR_B1
+        name: TR
+        formula: tr_b1
+      - name: IR_M1
+        formula: ir_m1
+      - name: TR + IR_M1
+        formula: TR_B1 + IR_M1
+  - name: "61B"
+    description: COUNTER Release 4 Circulation or Usage
+    explanation: "For platforms which do not support COUNTER 5 in part 60B, information about book usage from COUNTER 4 BR1 report is summed up together with information about multimedia usage from COUNTER 4 MR1 report."
+    stages:
+      - name: BR1
+        formula: br1
+      - name: MR1
+        formula: mr1
+      - name: BR1 + MR1
+        formula: BR1 + MR1
+  - name: "62B"
+    description: COUNTER Release 4 Circulation or Usage - fallback
+    explanation: "For platforms which support neither COUNTER 5 in part 60B, nor the COUNTER 4 reports used in part 61B, this entry combines information about book usage from COUNTER 4 BR2 report with information about multimedia usage from COUNTER 4 MR2 report."
+    stages:
+      - name: BR2
+        formula: br2
+      - name: MR2
+        formula: mr2
+      - name: BR2 + MR2
+        formula: BR2 + MR2
+  - name: "63B"
+    description: E-serials Usage (COUNTER 5, COUNTER 4, or other if needed)
+    explanation: "COUNTER 5 TR report is used to get information about journal usage. If it is not available, COUNTER 4 JR1 report is used instead."
+    stages:
+      - id: TR_J
+        name: TR
+        formula: tr_j
+      - name: JR1
+        formula: jr1
+      - name: TR & JR1
+        formula: TR_J | JR1

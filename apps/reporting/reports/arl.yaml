@@ -1,0 +1,56 @@
+name: ARL Statistics survey
+description: A standardized report used in the US
+position: 55
+dataSources:
+- reportType: TR
+  metric: Unique_Item_Requests
+  filters:  # TR_J3 or TR_J1 + OpenAccess
+    Access_Method: Regular
+    Data_Type: Journal
+- reportType: DR  # DR_D1
+  metric: Searches_Regular
+  filters:
+    Access_Method: Regular
+- reportType: PR # PR_P1
+  metric: Searches_Platform
+  filters:
+    Access_Method: Regular
+  fallbackFor: DR
+- id: dr_federated
+  reportType: DR  # DR_D1
+  metric: Searches_Federated
+  filters:
+    Access_Method: Regular
+parts:
+- name: Question 18
+  description: Number of successful full-text article requests (journals)
+  explanation: COUNTER 5 TR report is used to get information about journal usage
+    - regardless of licensing.
+  stages:
+  - id: tr_stage
+    name: TR
+    formula: TR
+- name: Question 19
+  description: Number of regular searches (databases)
+  explanation: COUNTER 5 DR report is used to get information about searches. If it
+    is not available, COUNTER 4 PR report is used instead.
+  stages:
+  - id: dr
+    name: DR
+    formula: DR
+  - id: pr
+    name: PR
+    formula: PR
+  - name: DR & PR
+    formula: dr | pr
+- name: Question 20
+  description: Number of federated searches (databases)
+  explanation: COUNTER 5 DR report is used to get information about federated searches.
+  implementationNote: The specification states that "Metric options include “Searches_Federated”,
+    “Total_Item_Requests for full text databases”, and “Total_Item_Investigations
+    for non-full text databases”." CELUS cannot automatically assign the database
+    type to decide which metric to use, so only "Searches_Federated" is reported.
+  stages:
+  - id: dr_stage
+    name: DR
+    formula: dr_federated

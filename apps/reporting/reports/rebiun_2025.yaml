@@ -1,0 +1,156 @@
+name: Rebiun report 2025
+description: Standardized report used in Spain to report usage of electronic resources. Updated to use COUNTER 5.1 with fallback to COUNTER 5.
+position: 70
+dataSources:
+  - id: TR51_JOURNAL
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: Controlled
+  - id: TR_JOURNAL
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: Controlled
+    fallbackFor: TR51_JOURNAL
+  - id: TR51_JOA
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: Open
+  - id: TR_JOA
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+      Access_Type: OA_Gold
+    fallbackFor: TR51_JOA
+  - id: PR51
+    reportType: PR51
+    metric: Searches_Platform
+    filters:
+      Access_Method: Regular
+  - id: PR
+    reportType: PR
+    metric: Searches_Platform
+    filters:
+      Access_Method: Regular
+    fallbackFor: PR51
+  - id: TR51_BOOKS
+    reportType: TR51
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type:
+        - Book
+        - Reference_Work
+      Access_Type: Controlled
+  - id: TR_BOOKS
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Book
+      Access_Type: Controlled
+    fallbackFor: TR51_BOOKS
+  - id: TR51_BOOKS_OA
+    reportType: TR51
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type:
+        - Book
+        - Reference_Work
+      Access_Type: Open
+  - id: TR_BOOKS_OA
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Book
+      Access_Type: OA_Gold
+    fallbackFor: TR51_BOOKS_OA
+  - id: TR51_OTHER
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+      - Book_Segment
+      - Conference
+      - Dataset
+      - Interactive_Resource
+      - Newspaper_Or_Newsletter
+      - Other
+      - Patent
+      - Platform
+      - Report
+      - Reference_Work
+      - Software
+      - Standard
+
+  - id: TR_OTHER
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+        - Article
+        - Book Segment
+        - Conferences
+        - Database
+        - Dataset
+        - Multimedia
+        - Platform
+        - Other
+        - Report
+        - Standards
+        - Newspaper or Newsletter
+        - Newspaper_or_Newsletter
+        - Repository Item
+        - Repository_Item
+        - Thesis or Dissertation
+        - Thesis_or_Dissertation
+    fallbackFor: TR51_OTHER
+parts:
+  - name: NCONSULRECPAGOCOUNT
+    description: "6.5.1.1.Búsquedas en recursos electrónicos de pago o con licencia a lo largo del año:datos Counter."
+    explanation: "COUNTER 5.1 PR report is used to get information about searches. If it is not available, COUNTER 5 PR report is used instead."
+    stages:
+      - name: NCONSULRECPAGOCOUNT
+        formula: PR51 | PR
+  - name: NVISDESREVCOUNTPAG
+    description: "6.5.2.1.1.1. Vistas y descargas del texto completo de artículos de revistas de pago: datos Counter"
+    explanation: "COUNTER 5.1 TR report is used to get information about journal usage without open access. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - name: NVISDESREVCOUNTPAG
+        formula: TR51_JOURNAL | TR_JOURNAL
+  - name: NVISDESREVCOUNTOP
+    description: "6.5.2.1.1.2. Vistas y descargas del texto completo de artículos de revistas de open access: datos Counter"
+    explanation: "COUNTER 5.1 TR report is used to get information about journal open-access usage. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - name: NVISDESREVCOUNTOP
+        formula: TR51_JOA | TR_JOA
+  - name: NVISDESLIBRCOUNTPAG
+    description: "6.5.2.1.2.1. Vistas y descargas del texto completo de libros de pago: datos Counter"
+    explanation: "COUNTER 5.1 TR report is used to get information about book usage. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - name: NVISDESLIBRCOUNTPAG
+        formula: TR51_BOOKS | TR_BOOKS
+  - name: NVISDESLIBRCOUNTOP
+    description: "6.5.2.1.2.2. Vistas y descargas del texto completo de libros open access: datos Counter"
+    explanation: "COUNTER 5.1 TR report is used to get information about open-access book usage. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - name: NVISDESLIBRCOUNTOP
+        formula: TR51_BOOKS_OA | TR_BOOKS_OA
+  - name: NVISDESDISTCOUNT
+    description: "6.5.2.1.3. Vistas y descargas del texto completo de tipologías de datos (Data type) distintas de libros y revistas: datos Counter"
+    explanation: "COUNTER 5.1 TR report is used to get information about usage of specified data types excluding journal and books. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - name: NVISDESDISTCOUNT
+        formula: TR51_OTHER | TR_OTHER

@@ -25,15 +25,17 @@ class TestReportsAPI:
         settings.SHOW_PREVIEW_SPECIALIZED_REPORTS = False
         response = admin_client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == 6
-        assert response.data[0]["name"] == "ACRL IPEDS 2024"
+        assert len(response.data) == 8
+        assert response.data[0]["name"] == "ACRL IPEDS 2024/2025"
         assert response.data[1]["name"] == "ACRL IPEDS 2023"
         assert response.data[2]["name"] == "ACRL IPEDS 2022"
-        assert response.data[3]["name"] == "ARL Statistics survey"
+        assert response.data[3]["name"] == "ARL Statistics survey 2025"
+        assert response.data[4]["name"] == "ARL Statistics survey"
         assert (
-            response.data[4]["name"] == "CAUL (Council of Australian University Librarians) report"
+            response.data[5]["name"] == "CAUL (Council of Australian University Librarians) report"
         )
-        assert response.data[5]["name"] == "Rebiun report"
+        assert response.data[6]["name"] == "Rebiun report 2025"
+        assert response.data[7]["name"] == "Rebiun report"
         # check structure of the first report
         r1 = response.data[0]
         for key in ["name", "description", "dataSources", "parts", "infoUrl"]:
@@ -77,11 +79,11 @@ class TestReportsAPI:
         client, _org = client_by_user_type(user_type)
         response = client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == (7 if show_preview_reports and can_see_preview else 6)
+        assert len(response.data) == (9 if show_preview_reports and can_see_preview else 8)
         if show_preview_reports and can_see_preview:
             assert response.data[0]["name"] == "CzechELib report"
         else:
-            assert response.data[0]["name"] == "ACRL IPEDS 2024"
+            assert response.data[0]["name"] == "ACRL IPEDS 2024/2025"
 
     @pytest.mark.parametrize(
         ["language", "expected_in_desc"], [("en", "interest"), ("cs", "zájmu"), ("de", "interest")]
@@ -99,7 +101,7 @@ class TestReportsAPI:
         client.force_login(user)
         response = client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == 7
+        assert len(response.data) == 9
         assert response.data[0]["name"] == "CzechELib report"
         assert expected_in_desc in response.data[0]["description"]
 

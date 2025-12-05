@@ -1,0 +1,119 @@
+name: CzechELib report
+preview: true
+position: 10
+description:
+  en: Demo report for the CzechELib consortium - inspired by interest calculations
+  cs: Demo report pro CzechELib - inspirovaný výpočtem zájmu
+dataSources:
+  - id: tr51_b1
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Access_Type: Controlled
+      Data_Type: Book
+  - id: tr_b1
+    fallbackFor: tr51_b1
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Access_Type: Controlled
+      Data_Type: Book
+  - id: tr51_j
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Access_Type: Controlled
+      Data_Type: Journal
+  - id: tr_j
+    fallbackFor: tr51_j
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Access_Type: Controlled
+      Data_Type: Journal
+  - id: ir51
+    reportType: IR51
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+        - Multimedia
+        - Audiovisual
+        - Image
+        - Interactive_Resource
+        - Sound
+      Access_Method: Regular
+      Access_Type: Controlled
+  - id: ir_m1
+    reportType: IR_M1
+    metric: Unique_Item_Requests
+    fallbackFor: ir51
+  - id: dr51
+    reportType: DR51
+    metric: Searches_Regular
+    filters:
+      Access_Method: Regular
+  - id: dr
+    reportType: DR
+    metric: Searches_Regular
+    filters:
+      Access_Method: Regular
+    fallbackFor: dr51
+parts:
+  - name:
+      en: Full text interest
+      cs: Plný text
+    description:
+      en: Total interest for full-text split to Books and Journals
+      cs: Celkový zájem o plný text rozdělený na knihy a časopisy
+    explanation:
+      en: "Information about journal and book usage from COUNTER 5.1 TR report. When not available, the TR report from COUNTER 5 is used as a fallback."
+      cs: "Informace o používání časopisů a knih z COUNTER 5.1 TR reportu. Pokud není dostupný, použije se TR report z COUNTER 5 jako záložní."
+    stages:
+      - id: TR_B1
+        name:
+          en: Books
+          cs: Knihy
+        formula: tr51_b1 | tr_b1
+      - id: TR_J1
+        name:
+          en: Journals
+          cs: Časopisy
+        formula: tr51_j | tr_j
+      - name:
+          en: Books + Journals
+          cs: Knihy + Časopisy
+        formula: TR_B1 + TR_J1
+  - name:
+      en: Search
+      cs: Hledání
+    description:
+      en: Total interest for searches from COUNTER 5.1 and COUNTER 5 DR reports
+      cs: Celkový zájem o vyhledávání z DR reportů pro COUNTER 5.1 a COUNTER 5
+    explanation:
+      en: "Information about search usage from COUNTER 5.1 DR report. When not available, the DR report from COUNTER 5 is used as a fallback."
+      cs: "Informace o využití vyhledávání z reportu COUNTER 5.1 DR. Pokud není dostupný, použije se DR report z COUNTER 5 jako záložní."
+    stages:
+      - id: DR
+        name:
+          en: DR
+          cs: DR
+        formula: dr51 | dr
+  - name:
+      en: Multimedia
+      cs: Multimédia
+    description:
+      en: "Total interest for multimedia from COUNTER 5.1 IR and COUNTER 5 IR_M1 reports"
+      cs: Celkový zájem o multimédia z reportů COUNTER 5.1 IR a COUNTER 5 IR_M1
+    explanation:
+      en: "Information about multimedia usage from COUNTER 5.1 IR report. When not available, the IR_M1 report from COUNTER 5 is used as a fallback."
+      cs: "Informace o využití multimédií z reportu COUNTER 5.1 IR. Pokud není dostupný, použije se IR_M1 report z COUNTER 5 jako záložní."
+    stages:
+      - id: IR
+        name:
+          en: IR
+          cs: IR
+        formula: ir51 | ir_m1

@@ -94,10 +94,35 @@ class ReportingContext:
             left_data = self.perform_computation([left])
             right_data = self.perform_computation([right])
             if op == "|":
-                # use the left value if the total is different from 0, otherwise use the right one
-                # we copy the source name from the source data in order to preserve the original
-                # source name after merging
-                return left_data.where(left_data[self.report.total_col] != 0, right_data)
+                # use the left value for each cell if it's non-zero, otherwise use the right value
+                # ensure right_data has the same index as left_data for proper alignment
+                right_data_aligned = right_data.reindex(left_data.index)
+                out = left_data.copy()
+                # merge cell-by-cell: for each monthly column, use right value if left is zero
+                for col in self.covered_months:
+                    out[col] = left_data[col].where(left_data[col] != 0, right_data_aligned[col])
+                # recompute total from the merged monthly data
+                out[self.report.total_col] = out[self.covered_months].sum(axis=1)
+                # update source_name based on merging:
+                # - if left total was 0 and merged total > 0:
+                #   all data came from right, use right name
+                # - if left total > 0 and merged total > left total: partial merge, join names
+                # - otherwise: keep left name
+                left_total = left_data[self.report.total_col]
+                merged_total = out[self.report.total_col]
+                # all data from right
+                all_from_right = (left_total == 0) & (merged_total > 0)
+                out.loc[all_from_right, "source_name"] = right_data_aligned.loc[
+                    all_from_right, "source_name"
+                ]
+                # partial merge (left had data, but some zeros were replaced)
+                partial_merge = (left_total > 0) & (merged_total > left_total)
+                out.loc[partial_merge, "source_name"] = (
+                    left_data.loc[partial_merge, "source_name"]
+                    + " | "
+                    + right_data_aligned.loc[partial_merge, "source_name"]
+                )
+                return out
             if op == "-":
                 out = left_data.copy()
                 # the following uses dataframe operations, so the references to the `source_name`
@@ -382,9 +407,6 @@ class ReportDataSource:
         self.fallback_for: str = fallback_for
         # the following are computed data filled in later
         self.fallback_for_report: ReportDataSource = None
-        # will contain the ids of the primary dimension that returned non-zero data
-        # in this data source - this is used to create input `primary_ids` in the fallback source
-        self.used_ids_: set = set()
         self.report_data_: Optional[pd.DataFrame] = None
 
     @classmethod
@@ -400,12 +422,6 @@ class ReportDataSource:
             filters=s.validated_data.get("filters"),
             fallback_for=s.validated_data.get("fallbackFor"),
         )
-
-    @property
-    def resolved_primary_ids(self) -> set:
-        if self.fallback_for_report:
-            return self.used_ids_ | self.fallback_for_report.resolved_primary_ids
-        return self.used_ids_
 
     def resolve_report_type(self) -> Optional[ReportType]:
         try:
@@ -450,15 +466,16 @@ class ReportDataSource:
         )
 
         context = self.report.context
-        primary_ids = context.primary_ids - self.resolved_primary_ids
         rt_obj = self.resolve_report_type()
         metric_obj = self.resolve_metric() if self.metric else None
-        if not primary_ids or not rt_obj or (self.metric and not metric_obj):
+        if not context.primary_ids or not rt_obj or (self.metric and not metric_obj):
             # no data to return - we either do not have the data for the remaining primary ids
             # or the report type or metric does not exist
             self.report_data_ = self.slicer_result_to_df([])
             return
-        slicer.add_filter(ExplicitDimensionFilter(self.report.primary_dimension, primary_ids))
+        slicer.add_filter(
+            ExplicitDimensionFilter(self.report.primary_dimension, context.primary_ids)
+        )
         slicer.add_filter(
             DateDimensionFilter("date", context.start_date, context.end_date), add_group=True
         )
@@ -479,12 +496,7 @@ class ReportDataSource:
                 raise ValueError(f'Unknown dimension "{dim_name}" for rt "{self.report_type}"')
         # store the resulting data into a pandas DataFrame and remember the primary ids for
         # which we have data
-        out = []
-        self.used_ids_ = set()
-        for row in slicer.get_data():
-            if row["_total"] > 0:
-                self.used_ids_.add(row["pk"])
-            out.append(row)
+        out = list(slicer.get_data())
         self.report_data_ = self.slicer_result_to_df(out)
 
 

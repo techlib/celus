@@ -1,0 +1,79 @@
+name: ARL Statistics survey 2025
+description: A standardized report used in the US. Updated to use COUNTER 5.1 with fallback to COUNTER 5.
+position: 45
+dataSources:
+  - id: tr51
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+  - id: tr
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Access_Method: Regular
+      Data_Type: Journal
+    fallbackFor: tr51
+  - id: dr51
+    reportType: DR51
+    metric: Searches_Regular
+    filters:
+      Access_Method: Regular
+  - id: dr
+    reportType: DR
+    metric: Searches_Regular
+    filters:
+      Access_Method: Regular
+    fallbackFor: dr51
+  - id: pr51
+    reportType: PR51
+    metric: Searches_Platform
+    filters:
+      Access_Method: Regular
+    fallbackFor: dr
+  - id: pr
+    reportType: PR
+    metric: Searches_Platform
+    filters:
+      Access_Method: Regular
+    fallbackFor: pr51
+  - id: dr51_federated
+    reportType: DR51
+    metric: Searches_Federated
+    filters:
+      Access_Method: Regular
+  - id: dr_federated
+    reportType: DR
+    metric: Searches_Federated
+    filters:
+      Access_Method: Regular
+    fallbackFor: dr51_federated
+parts:
+  - name: Question 18
+    description: Number of successful full-text article requests (journals)
+    explanation: "COUNTER 5.1 TR report is used to get information about journal usage - regardless of licensing. If it is not available, COUNTER 5 TR report is used instead."
+    stages:
+      - id: tr_stage
+        name: TR
+        formula: tr51 | tr
+  - name: Question 19
+    description: Number of regular searches (databases)
+    explanation: "COUNTER 5.1 reports (DR51 and PR51) are used to get information about searches. If they are not available, COUNTER 5 reports (DR and PR) are used instead."
+    stages:
+      - id: counter51_stage
+        name: COUNTER 5.1
+        formula: dr51 | pr51
+      - id: counter5_stage
+        name: COUNTER 5
+        formula: dr | pr
+      - name: COUNTER 5.1 & COUNTER 5
+        formula: counter51_stage | counter5_stage
+  - name: Question 20
+    description: Number of federated searches (databases)
+    explanation: "COUNTER 5.1 DR report is used to get information about federated searches. If it is not available, COUNTER 5 DR report is used instead."
+    implementationNote: 'The specification states that "Metric options include "Searches_Federated", "Total_Item_Requests for full text databases", and "Total_Item_Investigations for non-full text databases"." CELUS cannot automatically assign the database type to decide which metric to use, so only "Searches_Federated" is reported.'
+    stages:
+      - id: dr_stage
+        name: DR
+        formula: dr51_federated | dr_federated

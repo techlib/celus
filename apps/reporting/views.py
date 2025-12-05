@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from .logic.anomalies import AnomalyDetector, AnomalySource
 from .logic.computation import Report
 from .logic.export import XlsxExporter
-from .logic.report_definitions import REPORTS, get_report_def_by_name
+from .logic.report_definitions import get_report_def_by_name, get_reports
 from .serializers import AnomalyDetailsSerializer, AnomalySerializer, ReportSerializer
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def visible_reports(request):
     show_preview = settings.SHOW_PREVIEW_SPECIALIZED_REPORTS and (
         request.user.is_superuser or request.user.is_admin_of_master_organization
     )
-    return [rep for rep in REPORTS if not rep.get("preview", False) or show_preview]
+    return [rep for rep in get_reports() if not rep.get("preview", False) or show_preview]
 
 
 class ReportListView(APIView):
