@@ -512,10 +512,10 @@ class FlexibleDataSlicer:
                 .distinct()
             )
         # common stuff for both single and multi-index logic
+        relevant_accesslog_filter_prefix = "" if direct_accesslog_query else "relevant_accesslogs__"
+
         qs = qs.annotate(
-            **self._prepare_annotations(
-                accesslog_prefix="" if direct_accesslog_query else "relevant_accesslogs__"
-            )
+            **self._prepare_annotations(accesslog_prefix=relevant_accesslog_filter_prefix)
         )
         if not self.include_all_zero_rows:
             # total is added in _prepare_annotations and is a sum of all the value columns
@@ -526,7 +526,6 @@ class FlexibleDataSlicer:
             qs = qs.exclude(base=0, compared=0)
         if self.merge_report_types:
             # we need to remap used materialized report type IDs to the original ones
-            relevant_accesslog_filter_prefix = "relevant_accesslogs__" if self.tag_roll_up else ""
             qs = qs.alias(
                 orig_report_type_id=Case(
                     *[

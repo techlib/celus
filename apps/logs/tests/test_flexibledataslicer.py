@@ -1202,6 +1202,34 @@ class TestFlexibleDataSlicerSupportForMultipleReportTypes:
         remainder = slicer.get_remainder()
         assert all(value == 0 for value in remainder.values()), "remainder should be zero"
 
+    @pytest.mark.parametrize("merge_report_types", [True, False])
+    @pytest.mark.parametrize("add_rt_to_cols", [True, False])
+    def test_multiple_report_types_with_merge_report_types_and_include_all_zero_rows(
+        self, flexible_slicer_test_data, merge_report_types, add_rt_to_cols
+    ):
+        """
+        Test that when multiple report types are used and include_all_zero_rows is True,
+        the result is correct in both merged and non-merged cases.
+
+        We also make sure that using the report type column in the output does not
+        mess up the query.
+
+        We mostly test that it does not raise an exception. Computation correctness is
+        tested elsewhere.
+        """
+        slicer = FlexibleDataSlicer(
+            ["platform"], merge_report_types=merge_report_types, include_all_zero_rows=True
+        )
+        metrics = flexible_slicer_test_data["metrics"][:2]
+        slicer.add_filter(ForeignKeyDimensionFilter("metric", metrics), add_group=True)
+        slicer.add_filter(
+            ForeignKeyDimensionFilter("report_type", flexible_slicer_test_data["report_types"][:2]),
+            add_group=add_rt_to_cols,
+        )
+        slicer.order_by = ["metric"]
+        data = list(slicer.get_data())
+        assert len(data) == 3, "3 platforms"
+
 
 @pytest.mark.clickhouse
 @pytest.mark.usefixtures("clickhouse_on_off")
