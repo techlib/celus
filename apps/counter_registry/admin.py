@@ -162,7 +162,10 @@ class CounterRegistryProfileAdmin(admin.ModelAdmin):
     def has_add_permission(self, *args, **kwargs):
         return False
 
-    def has_delete_permission(self, *args, **kwargs):
+    def has_delete_permission(self, request, obj=None):
+        if request.resolver_match.view_name == "admin:core_user_changelist":
+            # allow deleting counter registry profiles in cascade when deleting users
+            return super().has_delete_permission(request, obj)
         return False
 
 
