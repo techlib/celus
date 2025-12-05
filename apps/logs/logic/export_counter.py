@@ -418,15 +418,24 @@ class IR_M1Counter5Export(BaseIRCounter5Export):
     report_id = "IR_M1"
     attributes_to_show = []
 
+    @property
+    def metric_types_row(self) -> str:
+        return "Total_Item_Requests"
+
+    @property
+    def report_filters_row(self) -> str:
+        return "Data_Type=Multimedia; Access_Method=Regular"
+
     def get_record_error(self, record: AccessLogCubeRecord) -> Optional[str]:
-        if not record.target_id:
+        if not record.item_id:
             return "Missing Item for IR_M1"
 
     def get_target_ids(self, record: AccessLogCubeRecord) -> Iterable[str]:
+        # For IR_M1, we use items instead of targets
         # proprietary_ID and uri are empty
         return (
-            record.target or "",
-            record.target__doi or "",
+            record.item or "",
+            record.item__doi or "",
             "",  # Proprietary_ID
             "",  # URI
         )

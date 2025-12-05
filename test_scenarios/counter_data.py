@@ -831,7 +831,7 @@ def pr_ibs(organization, pr, pr_dim, platform, targets, metrics):
 
 
 @pytest.fixture
-def ir_m1_ibs(organization, ir_m1, ir_m1_dim, platform, targets, metrics):
+def ir_m1_ibs(organization, ir_m1, ir_m1_dim, platform, items, metrics):
     ib1 = ImportBatchFactory(
         date="2020-02-01", organization=organization, platform=platform, report_type=ir_m1
     )
@@ -848,65 +848,33 @@ def ir_m1_ibs(organization, ir_m1, ir_m1_dim, platform, targets, metrics):
         import_batch=ib1,
         date="2020-02-01",
         value=1,
-        target=targets["target1"],
+        item=items["item11"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
-    )
-    AccessLogFactory(
-        import_batch=ib1,
-        date="2020-02-01",
-        value=3,
-        target=targets["target1"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
     )
     AccessLogFactory(
         import_batch=ib1,
         date="2020-02-01",
         value=23,
-        target=targets["target2"],
+        item=items["item21"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
-    )
-    AccessLogFactory(
-        import_batch=ib1,
-        date="2020-02-01",
-        value=29,
-        target=targets["target2"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
     )
     AccessLogFactory(
         import_batch=ib2,
         date="2020-04-01",
         value=5,
-        target=targets["target1"],
+        item=items["item11"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
-    )
-    AccessLogFactory(
-        import_batch=ib2,
-        date="2020-04-01",
-        value=7,
-        target=targets["target1"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
     )
     AccessLogFactory(
         import_batch=ib2,
         date="2020-04-01",
         value=31,
-        target=targets["target3"],
+        item=items["item31"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
-    )
-    AccessLogFactory(
-        import_batch=ib2,
-        date="2020-04-01",
-        value=37,
-        target=targets["target3"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
     )
 
     # before
@@ -914,33 +882,17 @@ def ir_m1_ibs(organization, ir_m1, ir_m1_dim, platform, targets, metrics):
         import_batch=ib3,
         date="2019-12-01",
         value=11,
-        target=targets["target1"],
+        item=items["item11"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
-    )
-    AccessLogFactory(
-        import_batch=ib3,
-        date="2019-12-01",
-        value=13,
-        target=targets["target1"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
     )
 
     # after
     AccessLogFactory(
         import_batch=ib4,
         date="2021-01-01",
-        value=17,
-        target=targets["target1"],
-        **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
-        metric=metrics["no_license"],
-    )
-    AccessLogFactory(
-        import_batch=ib4,
-        date="2021-01-01",
         value=19,
-        target=targets["target1"],
+        item=items["item11"],
         **ir_m1_dim(Publisher="Pub1", Platform="Plat1"),
         metric=metrics["total_item_requests"],
     )

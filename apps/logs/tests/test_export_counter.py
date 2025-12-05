@@ -455,8 +455,8 @@ Report_ID,IR_M1\r
 Release,5\r
 Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
-Metric_Types,\r
-Report_Filters,\r
+Metric_Types,Total_Item_Requests\r
+Report_Filters,Data_Type=Multimedia; Access_Method=Regular\r
 Report_Attributes,\r
 Exceptions,\r
 Reporting_Period,Begin_Date=2020-02-01; End_Date=2020-02-29\r
@@ -464,10 +464,8 @@ Created,2024-01-01T00:00:00Z\r
 Created_By,CELUS X.Y.Z\r
 \r
 Item,Publisher,Publisher_ID,Platform,DOI,Proprietary_ID,URI,Metric_Type,Reporting_Period_Total,Feb-2020\r
-target1,Pub1,,Plat1,10.4324/9781003185581,,,Total_Item_Requests,1,1\r
-target1,Pub1,,Plat1,10.4324/9781003185581,,,No_License,3,3\r
-target2,Pub1,,Plat1,,,,Total_Item_Requests,23,23\r
-target2,Pub1,,Plat1,,,,No_License,29,29\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Total_Item_Requests,1,1\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Total_Item_Requests,23,23\r
 """
         )
 
@@ -486,8 +484,8 @@ Report_ID,IR_M1\r
 Release,5\r
 Institution_Name,{f'"{organization.name}"' if "," in organization.name else organization.name}\r
 Institution_ID,{get_institution_id_in_csv(organization)}\r
-Metric_Types,\r
-Report_Filters,\r
+Metric_Types,Total_Item_Requests\r
+Report_Filters,Data_Type=Multimedia; Access_Method=Regular\r
 Report_Attributes,\r
 Exceptions,\r
 Reporting_Period,Begin_Date=2019-12-01; End_Date=2021-01-31\r
@@ -495,12 +493,9 @@ Created,2024-01-01T00:00:00Z\r
 Created_By,CELUS X.Y.Z\r
 \r
 Item,Publisher,Publisher_ID,Platform,DOI,Proprietary_ID,URI,Metric_Type,Reporting_Period_Total,Dec-2019,Jan-2020,Feb-2020,Mar-2020,Apr-2020,May-2020,Jun-2020,Jul-2020,Aug-2020,Sep-2020,Oct-2020,Nov-2020,Dec-2020,Jan-2021\r
-target1,Pub1,,Plat1,10.4324/9781003185581,,,Total_Item_Requests,36,11,0,1,0,5,0,0,0,0,0,0,0,0,19\r
-target1,Pub1,,Plat1,10.4324/9781003185581,,,No_License,40,13,0,3,0,7,0,0,0,0,0,0,0,0,17\r
-target2,Pub1,,Plat1,,,,Total_Item_Requests,23,0,0,23,0,0,0,0,0,0,0,0,0,0,0\r
-target2,Pub1,,Plat1,,,,No_License,29,0,0,29,0,0,0,0,0,0,0,0,0,0,0\r
-target3,Pub1,,Plat1,,,,Total_Item_Requests,31,0,0,0,0,31,0,0,0,0,0,0,0,0,0\r
-target3,Pub1,,Plat1,,,,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
+J11,Pub1,,Plat1,10.1111/1111.1111.1111,,,Total_Item_Requests,36,11,0,1,0,5,0,0,0,0,0,0,0,0,19\r
+J21,Pub1,,Plat1,10.2222/1111.2222.1111,,,Total_Item_Requests,23,0,0,23,0,0,0,0,0,0,0,0,0,0,0\r
+M31,Pub1,,Plat1,,,,Total_Item_Requests,31,0,0,0,0,31,0,0,0,0,0,0,0,0,0\r
 """
         )
 
@@ -516,7 +511,7 @@ target3,Pub1,,Plat1,,,,No_License,37,0,0,0,0,37,0,0,0,0,0,0,0,0,0\r
     def test_errors(
         self, organization, platform, ir_m1, ir_m1_ibs, settings, clickhouse_db, caplog
     ):
-        ir_m1_ibs[0].accesslog_set.update(target_id=None)
+        ir_m1_ibs[0].accesslog_set.update(item_id=None)
         settings.CLICKHOUSE_SYNC_ACTIVE = True
 
         sync_import_batches_with_clickhouse(*ir_m1_ibs)
