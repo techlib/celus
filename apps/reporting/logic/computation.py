@@ -174,10 +174,11 @@ class Report:
     primary_dimension = "platform"
     total_col = "_total_"
 
-    def __init__(self, name: str, description: str, info_url: str = None):
+    def __init__(self, name: str, description: str, info_url: str = None, general_info: str = None):
         self.name = name
         self.description = description
         self.info_url = info_url
+        self.general_info = general_info
         self.parts = []
         # computed data
         self.sources_by_id = {}
@@ -191,8 +192,9 @@ class Report:
         s.is_valid(raise_exception=True)
         out = cls(
             s.validated_data["name"],
-            s.validated_data["description"],
+            s.validated_data.get("description", ""),
             info_url=s.validated_data.get("infoUrl"),
+            general_info=s.validated_data.get("generalInfo"),
         )
         for value in s.validated_data["dataSources"]:
             data_source = ReportDataSource.from_dict(value, out)
@@ -330,7 +332,7 @@ class ReportPart:
         out = cls(
             report,
             s.validated_data["name"],
-            s.validated_data["description"],
+            s.validated_data.get("description", ""),
             implementation_note=s.validated_data.get("implementationNote"),
             explanation=s.validated_data.get("explanation"),
         )

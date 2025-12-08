@@ -29,6 +29,7 @@ class ReportPartSerializer(s.Serializer):
 class ReportSerializer(s.Serializer):
     name = s.CharField()
     description = s.CharField()
+    generalInfo = s.CharField(source="general_info")
     parts = ReportPartSerializer(many=True)
     dataSources = ReportDataSourceSerializer(source="sorted_sources", many=True)
     infoUrl = s.URLField(source="info_url")

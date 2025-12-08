@@ -2,6 +2,15 @@
 
 <template>
   <div class="pt-2">
+    <v-alert
+      v-if="definition.generalInfo"
+      type="info"
+      class="mb-4"
+      variant="tonal"
+    >
+      {{ definition.generalInfo }}
+    </v-alert>
+
     <v-card v-if="usedOrganization" class="mb-6">
       <v-card-text>
         <table class="overview">
@@ -22,16 +31,16 @@
     </v-card>
     <v-expansion-panels>
       <SpecializedReportPart
-        v-for="definition in parts"
-        :key="definition.name"
-        :name="definition.name"
-        :description="definition.description"
-        :explanation="definition.explanation"
-        :stages="definition.stages"
-        :data="resultData[definition.name] ? resultData[definition.name] : {}"
+        v-for="part in parts"
+        :key="part.name"
+        :name="part.name"
+        :description="part.description"
+        :explanation="part.explanation"
+        :stages="part.stages"
+        :data="resultData[part.name] ? resultData[part.name] : {}"
         :loading="loading"
         :reportDataSources="sourceReportsObj"
-        :implementationNote="definition.implementationNote"
+        :implementationNote="part.implementationNote"
       ></SpecializedReportPart>
     </v-expansion-panels>
   </div>

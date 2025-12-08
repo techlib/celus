@@ -25,7 +25,7 @@ class TestReportsAPI:
         settings.SHOW_PREVIEW_SPECIALIZED_REPORTS = False
         response = admin_client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == 8
+        assert len(response.data) == 9
         assert response.data[0]["name"] == "ACRL IPEDS 2024/2025"
         assert response.data[1]["name"] == "ACRL IPEDS 2023"
         assert response.data[2]["name"] == "ACRL IPEDS 2022"
@@ -34,8 +34,9 @@ class TestReportsAPI:
         assert (
             response.data[5]["name"] == "CAUL (Council of Australian University Librarians) report"
         )
-        assert response.data[6]["name"] == "Rebiun report 2025"
-        assert response.data[7]["name"] == "Rebiun report"
+        assert response.data[6]["name"] == "Deutsche Bibliotheksstatistik (DBS) - 2025"
+        assert response.data[7]["name"] == "Rebiun report 2025"
+        assert response.data[8]["name"] == "Rebiun report"
         # check structure of the first report
         r1 = response.data[0]
         for key in ["name", "description", "dataSources", "parts", "infoUrl"]:
@@ -79,7 +80,7 @@ class TestReportsAPI:
         client, _org = client_by_user_type(user_type)
         response = client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == (9 if show_preview_reports and can_see_preview else 8)
+        assert len(response.data) == (10 if show_preview_reports and can_see_preview else 9)
         if show_preview_reports and can_see_preview:
             assert response.data[0]["name"] == "CzechELib report"
         else:
@@ -101,7 +102,7 @@ class TestReportsAPI:
         client.force_login(user)
         response = client.get(reverse("report-list"))
         assert response.status_code == 200
-        assert len(response.data) == 9
+        assert len(response.data) == 10
         assert response.data[0]["name"] == "CzechELib report"
         assert expected_in_desc in response.data[0]["description"]
 

@@ -1,0 +1,201 @@
+name: Deutsche Bibliotheksstatistik (DBS) - 2025
+description: Report for the German National Library Statistic - 2025 version
+generalInfo: |
+  Bitte nicht vergessen: Non-COUNTER-Daten, die nicht in Celus geladen sind, müssen manuell
+  hinzugezählt werden. Derzeit betrifft das z.B. GBI/Genios WISO, Kohlhammer, VR. Das betrifft
+  auch Datenbanken auf eigenen Servern (Repositorien).
+position: 65
+dataSources:
+  # for question 180
+  - id: pr
+    reportType: PR
+    metric: Unique_Item_Investigations
+  - id: pr51
+    reportType: PR51
+    metric: Unique_Item_Investigations
+
+  # for question 184
+  - id: tr51_b1_titles
+    reportType: TR51
+    metric: Unique_Title_Requests
+    filters:
+      Data_Type:
+        - Book
+  - id: tr_b1_titles
+    fallbackFor: tr51_b1_titles
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Data_Type: Book
+
+  - id: tr51_b1_items
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type: Book
+  - id: tr_b1_items
+    fallbackFor: tr51_b1_items
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type: Book
+
+  # for question 184.1
+  - id: tr51_b1_controlled_titles
+    reportType: TR51
+    metric: Unique_Title_Requests
+    filters:
+      Data_Type: Book
+      Access_Type: Controlled
+  - id: tr_b1_controlled_titles
+    fallbackFor: tr51_b1_controlled_titles
+    reportType: TR
+    metric: Unique_Title_Requests
+    filters:
+      Data_Type: Book
+      Access_Type: Controlled
+
+  - id: tr51_b1_controlled_items
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type: Book
+      Access_Type: Controlled
+  - id: tr_b1_controlled_items
+    fallbackFor: tr51_b1_controlled_items
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type: Book
+      Access_Type: Controlled
+
+  # for question 183
+  - id: tr51_j
+    reportType: TR51
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+        - Journal
+        - Conference
+        - Newspaper_Or_Newsletter
+  - id: tr_j
+    fallbackFor: tr51_j
+    reportType: TR
+    metric: Unique_Item_Requests
+    filters:
+      Data_Type:
+        - Journal
+        - Other
+        - Newspaper_Or_Newsletter
+parts:
+  - name: "180 - Suchanfragen in Datenbanken und Plattformen"
+    explanation: |
+      Hier sollen die Suchanfragen in den in (118) gezählten Datenbanken erfasst werden.
+      Für Datenbanken und Plattformen, die auf Servern des Anbieters aufliegen, sollten diese
+      Statistiken durch den Anbieter geliefert werden. Falls Anbieter für ihre Datenbanken COUNTER
+      kompatible Statistiken zur Verfügung stellen, soll der Metric Type "Unique_Item_Investigations"
+      verwendet werden (vgl. www.projectcounter.org). Soweit die Bibliothek Datenbanken auf eigenen
+      Servern aufliegen hat, sind Statistiken für diese Titel durch die Bibliothek selbst zu
+      ermitteln.
+    stages:
+      - name: PR & PR51
+        formula: pr | pr51
+
+  - name: "183 - Vollanzeigen von Zeitschriftenartikeln"
+    explanation: |
+      Hier soll die Zahl der Vollanzeigen von Artikeln in lizenzierten, elektronischen Zeitschriften
+      gezählt werden, die unter (131) erfasst sind. Für Zeitschriftentitel, die auf Servern eines
+      Anbieters aufliegen, sollten diese Statistiken durch den Anbieter geliefert werden. Falls
+      Anbieter für ihre Datenbanken COUNTER kompatible Statistiken zur Verfügung stellen, soll
+      der Metric Type "Unique_Item_Requests" verwendet werden (vgl. www.projectcounter.org).
+      Soweit die Bibliothek Zeitschriften auf eigenen Servern aufliegen hat, sind Statistiken
+      für diese Titel durch die Bibliothek selbst zu ermitteln. Eine Vollanzeige ("Download")
+      ist die Auslieferung eines internetbasierten Dokuments oder Dokumentteils
+      (z.B. eines Zeitschriftenartikels, digitalen Einzeldokuments oder eines Kapitels
+      daraus einschließlich evtl. eingebetteter Elemente wie Grafiken und Verweise).
+      Das Dokumentformat (z.B. pdf, html, ps) ist dabei unerheblich."
+    implementationNote: |
+      Bei Verwendung von COUTER 5.0 Daten werden auch die Unique Item Request des Data Types
+      „Other“ mitgezählt, um die Nutzung der Conference Proceedings abbilden zu können.
+      Ab COUNTER 5.1 Daten wird es explizit nach dem Data Type „Conference“ gefiltert.
+    stages:
+      - name: TR51 & TR
+        formula: tr51_j | tr_j
+
+  - name: "184 - Vollanzeigen von digitalen Einzeldokumenten / Titel"
+    explanation: |
+      Hier sollen die Vollanzeigen der in (110) definierten digitalen Einzeldokumente
+      (nur Netzpublikationen) gezählt werden. Für digitale Einzeldokumente, die auf Servern eines
+      Anbieters aufliegen, sollten diese Statistiken durch den Anbieter geliefert werden. Bieten
+      Anbieter für ihre digitalen Einzeldokumente (z.B. E-Books) COUNTER-kompatible Statistiken an,
+      dann sollen nur diese Nutzungszahlen verwendet werden (vgl. http://www.projectcounter.org).
+      Liegen Daten nach COUNTER vor, soll der Metric Type "Unique_Title_Requests" verwendet werden.
+      Die Zählung nach Metric Type "Unique-Item-Requests" ist dann möglich, wenn keine Daten nach
+      "Unique_Title_Requests" zu ermitteln sind. In jedem Fall sollten die Zahlen für E-Books in
+      (184) und (184.1) nicht mit unterschiedlichen Metriken ermittelt werden. Soweit die
+      Bibliothek Einzeldokumente (z.B. elektronische Dissertationen, eigene Digitalisate) auf
+      eigenen Servern bzw. dem institutionellen Repositorium bereitstellt, sind Statistiken für
+      diese Titel durch die Bibliothek selbst zu ermitteln. Eine Vollanzeige ("Download") ist
+      die Auslieferung eines internetbasierten Dokuments oder Dokumentteils (z.B. eines digitalen
+      Einzeldokuments oder eines Kapitels daraus einschließlich evtl. eingebetteter Elemente wie
+      Grafiken und Verweise). Das Dokumentformat (z.B. pdf, html, ps) ist dabei unerheblich.
+    stages:
+      - name: TR51 & TR
+        formula: tr51_b1_titles | tr_b1_titles
+
+  - name: "184 - Vollanzeigen von digitalen Einzeldokumenten / Items"
+    explanation: |
+      Hier sollen die Vollanzeigen der in (110) definierten digitalen Einzeldokumente
+      (nur Netzpublikationen) gezählt werden. Für digitale Einzeldokumente, die auf Servern eines
+      Anbieters aufliegen, sollten diese Statistiken durch den Anbieter geliefert werden. Bieten
+      Anbieter für ihre digitalen Einzeldokumente (z.B. E-Books) COUNTER-kompatible Statistiken an,
+      dann sollen nur diese Nutzungszahlen verwendet werden (vgl. http://www.projectcounter.org).
+      Liegen Daten nach COUNTER vor, soll der Metric Type "Unique_Title_Requests" verwendet werden.
+      Die Zählung nach Metric Type "Unique-Item-Requests" ist dann möglich, wenn keine Daten nach
+      "Unique_Title_Requests" zu ermitteln sind. In jedem Fall sollten die Zahlen für E-Books in
+      (184) und (184.1) nicht mit unterschiedlichen Metriken ermittelt werden. Soweit die
+      Bibliothek Einzeldokumente (z.B. elektronische Dissertationen, eigene Digitalisate) auf
+      eigenen Servern bzw. dem institutionellen Repositorium bereitstellt, sind Statistiken für
+      diese Titel durch die Bibliothek selbst zu ermitteln. Eine Vollanzeige ("Download") ist
+      die Auslieferung eines internetbasierten Dokuments oder Dokumentteils (z.B. eines digitalen
+      Einzeldokuments oder eines Kapitels daraus einschließlich evtl. eingebetteter Elemente wie
+      Grafiken und Verweise). Das Dokumentformat (z.B. pdf, html, ps) ist dabei unerheblich.
+    stages:
+      - name: TR51 & TR
+        formula: tr51_b1_items | tr_b1_items
+
+  - name: "184.1 - Vollanzeigen von digitalen Einzeldokumenten, darunter: Vollanzeigen aus kommerziell vertriebenen E-Books / Titel"
+    explanation: |
+      Hier soll die Zahl der Vollanzeigen von Artikeln/Kapiteln in lizenzierten kommerziell
+      vertriebenen E-Books gezählt werden, die unter (113.1) erfasst sind. Für E-Books, die auf
+      Servern eines Anbieters aufliegen, sollten diese Statistiken durch den Anbieter geliefert
+      werden. Bieten Anbieter für ihre E-Books COUNTER-kompatible Statistiken an, dann sollen nur
+      diese Nutzungszahlen verwendet werden (vgl. http://www.projectcounter.org). Die Werte werden
+      mit dem COUNTER R5 Metric Type Unique_Title_Requests ermittelt. Soweit die Bibliothek
+      kommerziell vertriebene E-Books auf eigenen Servern aufliegen hat, sind Statistiken für
+      diese Titel durch die Bibliothek selbst zu ermitteln. Eine Vollanzeige ("Download") ist
+      die Auslieferung eines vollständigen E-Books oder eines E-Book-Kapitels. Das Dokumentformat
+      (z.B. pdf, html, ps) ist dabei unerheblich. Temporäre Zugriffe auf E-Books werden hier
+      ebenfalls angegeben. Gleichzeitig sind temporär vorgehaltene E-Books in (110) und
+      (113.1) mitzuzählen.
+    stages:
+      - name: TR51 & TR
+        formula: tr51_b1_controlled_titles | tr_b1_controlled_titles
+
+  - name: "184.1 - Vollanzeigen von digitalen Einzeldokumenten, darunter: Vollanzeigen aus kommerziell vertriebenen E-Books / Items"
+    explanation: |
+      Hier soll die Zahl der Vollanzeigen von Artikeln/Kapiteln in lizenzierten kommerziell
+      vertriebenen E-Books gezählt werden, die unter (113.1) erfasst sind. Für E-Books, die auf
+      Servern eines Anbieters aufliegen, sollten diese Statistiken durch den Anbieter geliefert
+      werden. Bieten Anbieter für ihre E-Books COUNTER-kompatible Statistiken an, dann sollen nur
+      diese Nutzungszahlen verwendet werden (vgl. http://www.projectcounter.org). Die Werte werden
+      mit dem COUNTER R5 Metric Type Unique_Title_Requests ermittelt. Soweit die Bibliothek
+      kommerziell vertriebene E-Books auf eigenen Servern aufliegen hat, sind Statistiken für
+      diese Titel durch die Bibliothek selbst zu ermitteln. Eine Vollanzeige ("Download") ist
+      die Auslieferung eines vollständigen E-Books oder eines E-Book-Kapitels. Das Dokumentformat
+      (z.B. pdf, html, ps) ist dabei unerheblich. Temporäre Zugriffe auf E-Books werden hier
+      ebenfalls angegeben. Gleichzeitig sind temporär vorgehaltene E-Books in (110) und
+      (113.1) mitzuzählen.
+    stages:
+      - name: TR51 & TR
+        formula: tr51_b1_controlled_items | tr_b1_controlled_items

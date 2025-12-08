@@ -32,12 +32,38 @@ class XlsxExporter:
         self.include_part_definition = include_part_definition
         self.report_output = None
         self.workbook = None
-        self.sheet_names: Dict[Tuple[str, str], str] = {}  # key will be (part_name, stage_name)
+        self._sheet_names: Dict[Tuple[str, str], str] = {}  # key will be (part_name, stage_name)
         self.sheet_first_row: Dict[str, int] = {}  # key will be sheet name
 
-    @classmethod
-    def sanitize_sheet_name(cls, name: str) -> str:
-        return name.replace("/", "|")[:31]
+    def _stringify(self, value: str | List[str]) -> str:
+        """
+        Used to stringify a value that can be a string or a list of strings.
+        Used in the export to stringify filter values.
+        """
+        if isinstance(value, str):
+            return value
+        return ",".join(self._stringify(item) for item in value)
+
+    def create_sheet_name(self, stage: ReportPartStage, part: ReportPart) -> str:
+        """
+        Creates a unique sheet name for a given stage and part. Ensures that the name is
+        usable as a sheet name in Excel.
+        """
+        sheet_name = f"{part.name} ({stage.name})" if part.name != stage.name else stage.name
+        sheet_name = sheet_name.replace("/", "|")[:31]
+        used_sheet_names = set(self._sheet_names.values())
+        if sheet_name in used_sheet_names:
+            i = 1
+            while (sheet_name := f"{sheet_name[:28]}_{i}") in used_sheet_names:
+                i += 1
+        self._sheet_names[(part.name, stage.name)] = sheet_name
+        return sheet_name
+
+    def get_sheet_name(self, part: ReportPart, stage: ReportPartStage) -> str:
+        """
+        Returns the sheet name for a given stage and part.
+        """
+        return self._sheet_names[(part.name, stage.name)]
 
     def export(self) -> bytes:
         import xlsxwriter
@@ -99,7 +125,7 @@ class XlsxExporter:
                 {"bg_color": color, "font_color": "#ffffff", "bold": True, **self.base_fmt_dict}
             )
             stage = part.stages[-1]
-            sheet_name = self.sheet_names[(part.name, stage.name)]
+            sheet_name = self.get_sheet_name(part, stage)
             first_row = self.sheet_first_row[sheet_name]
             stage_data = self.report_output[part.name]["stages"][-1]["data"]
             last_row = first_row + len(stage_data) - 1
@@ -138,10 +164,7 @@ class XlsxExporter:
         from xlsxwriter.utility import xl_rowcol_to_cell  # noqa - slow import
 
         # if the part has the same name as the stage, we don't want to repeat it in the sheet name
-        sheet_name = self.sanitize_sheet_name(
-            f"{part.name} ({stage.name})" if part.name != stage.name else stage.name
-        )
-        self.sheet_names[(part.name, stage.name)] = sheet_name
+        sheet_name = self.create_sheet_name(stage, part)
         sheet = self.workbook.add_worksheet(sheet_name)
         if tab_color:
             sheet.set_tab_color(tab_color)
@@ -161,7 +184,9 @@ class XlsxExporter:
                 sheet.write_string(current_row, 0, report_title, self.header_fmt)
                 sheet.write_string(current_row, 1, source.name, self.base_fmt)
                 # write description of the filters
-                filters = ", ".join(f"{k}={v}" for k, v in source.filters.items()) or "-"
+                filters = (
+                    ", ".join(f"{k}={self._stringify(v)}" for k, v in source.filters.items()) or "-"
+                )
                 sheet.merge_range(
                     current_row,
                     2,
@@ -261,7 +286,7 @@ class XlsxExporter:
             if isinstance(variable, list):
                 return self.construct_formula(variable, *context_args)
             if stage_ref := self.report.context.get_stage_for_current_part(variable):
-                stage_sheet = self.sheet_names[(part.name, stage_ref.name)]
+                stage_sheet = self.get_sheet_name(part, stage_ref)
                 fr = self.sheet_first_row[stage_sheet]
                 # -1 because of different indexing
                 cell = xl_rowcol_to_cell(fr + row - 1, col + self.data_col_shift)
