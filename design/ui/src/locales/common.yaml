@@ -184,6 +184,7 @@ en:
     metric: Metric
     months: Months
     new_menu_item: new
+    beta_menu_item: beta
     new_tag: New tag
     new_tag_class: New tag class
     no_tags: Click edit to add a tag.
@@ -617,6 +618,7 @@ cs:
     metric: Metrika
     months: Měsíce
     new_menu_item: novinka
+    beta_menu_item: beta
     new_tag: Nový štítek
     new_tag_class: Nový typ štítku
     no_tags: Klikněte na editaci k přidání štítku.

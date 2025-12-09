@@ -116,7 +116,8 @@ class AccessLogExportTaskAdmin(ModelAdmin):
         return str(obj.eta).split(".")[0]
 
     def progress(self, obj):
-        current, total = obj.progress_info
+        current = obj.progress_current
+        total = obj.progress_total
         if not total or current is None:
             return "-"
         return f"{current} / {total} ({current / total * 100:.2f}%)"

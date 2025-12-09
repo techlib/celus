@@ -1,7 +1,8 @@
+import datetime
 import secrets
 import traceback
 from io import StringIO
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 from core.models import CreatedUpdatedMixin
 from django.conf import settings
@@ -84,7 +85,7 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
         create_ch_export_database(self.ch_database)
         create_ch_export_user(self.ch_database, self.ch_database, self.ch_password)
 
-    def create_batch(self, start_tasks: bool = True):
+    def create_batch(self, start_tasks: bool = True) -> "AccessLogExportBatch":
         """
         if start_tasks is true, it will also create and start the tasks for the batch.
         """
@@ -117,6 +118,54 @@ class AccessLogExport(CreatedUpdatedMixin, models.Model):
         if interest_rt := ReportType.objects.get_interest_rt_no_create():
             condition |= Q(pk=interest_rt.pk)
         return ReportType.objects.exclude_materialized().filter(condition)
+
+    @property
+    def has_running_tasks(self) -> bool:
+        """
+        Check if any batch has tasks that are currently running (not finished).
+        Uses the latest_batch status to determine this.
+        """
+        if latest_batch := self.latest_batch():
+            return latest_batch.get_status() == "running"
+        return False
+
+    def can_start_export(self, user):
+        """
+        Check if the export can be started by the given user.
+        Superusers can start if no task is running.
+        Normal admins can start if no task is running and cooldown period has passed.
+        """
+        if self.has_running_tasks:
+            return False
+
+        if user.is_superuser:
+            return True
+
+        # Check cooldown period
+        if not (last_batch := self.latest_batch()):
+            return True  # No previous export, can start
+        return (timezone.now() - last_batch.created) >= datetime.timedelta(
+            hours=settings.CLICKHOUSE_EXPORT_MANUAL_COOLDOWN_HOURS
+        )
+
+    def get_next_export_available_at(self, user) -> datetime.datetime | None:
+        """
+        Get the datetime when the next export will be available for the given user.
+        Returns None if export can be started now, or if it's a superuser with running tasks.
+        """
+        if self.can_start_export(user):
+            return None
+
+        if user.is_superuser and self.has_running_tasks:
+            # Can't predict when task finishes
+            return None
+
+        # Normal admin: calculate based on cooldown
+        if not (last_batch := self.latest_batch()):
+            return None
+
+        cooldown_hours = settings.CLICKHOUSE_EXPORT_MANUAL_COOLDOWN_HOURS
+        return last_batch.created + datetime.timedelta(hours=cooldown_hours)
 
 
 class AccessLogExportBatch(models.Model):
@@ -351,12 +400,17 @@ class AccessLogExportTask(models.Model):
         return f"ch_export_task_{self.pk}"
 
     @property
-    def progress_info(self) -> Tuple[Optional[int], Optional[int]]:
-        return cache.get(self.cache_key + "_current"), cache.get(self.cache_key + "_total")
+    def progress_current(self) -> Optional[int]:
+        return cache.get(self.cache_key + "_current")
 
     @property
-    def eta(self) -> Optional[str]:
-        current, total = self.progress_info
+    def progress_total(self) -> Optional[int]:
+        return cache.get(self.cache_key + "_total")
+
+    @property
+    def eta(self) -> Optional[datetime.timedelta]:
+        current = self.progress_current
+        total = self.progress_total
         if not total or current is None:
             return None
         time_since_start = timezone.now() - self.started

@@ -19,26 +19,17 @@ en:
     running: Running
     completed: Completed
     failed: Failed
-  password_modal:
-    title: Password
-    warning: This is your password for the database. Keep it secret and do not share it with unauthorized persons.
-    close: Close
-    copied: Password copied to clipboard
-    copy_failed: Failed to copy password
-  database_connection:
-    title: Database Connection Information
-    host: Host
-    port: Port
-    port_value: 9440 (TCP) or 8443 (HTTPS)
-    database: Database
-    username: Username
-    password: Password
-    tls: TLS/SSL
-    tls_enabled: Required
-    info: Use these credentials to connect to the ClickHouse database. TLS/SSL must be enabled for secure connections. The password is sensitive information - keep it secure and do not share it with unauthorized persons.
-  report_types: Report tables from last sync
-  test_link_text: You can test the connection to the database using {test_link}. It will open a web interface of the database with a sample query.
-  test_link: this link
+  no_exports_found: Analytical database export is not configured for this organization. Please contact us at {email} to have it set up.
+  info_text: |
+    Analytical database export is a powerful feature for those of you who want to analyze the data stored in CELUS themselves.
+  info_text_2: |
+    The data is exported regularly into a powerful dedicated analytical database {chLink} running on our infrastructure.
+    It is a suitable source for ingestion into Power BI, Superset, Metabase and other analytical tools.
+  info_text_3: |
+    You can read more about this feature in our {link}.
+  info_text_beta: |
+    This feature is currently in beta. Please contact us at {email} if you would like to test it.
+  info_link_text: documentation
 
 cs:
   title: Konfigurace analytické databáze
@@ -60,26 +51,17 @@ cs:
     running: Běží
     completed: Dokončeno
     failed: Selhalo
-  password_modal:
-    title: Heslo
-    warning: Toto je vaše heslo pro databázi. Uchovávejte ho v tajnosti a nesdílejte ho s neoprávněnými osobami.
-    close: Zavřít
-    copied: Heslo zkopírováno do schránky
-    copy_failed: Nepodařilo se zkopírovat heslo
-  database_connection:
-    title: Informace o připojení k databázi
-    host: Hostitel
-    port: Port
-    port_value: 9440 (TCP) nebo 8443 (HTTPS)
-    database: Databáze
-    username: Uživatelské jméno
-    password: Heslo
-    tls: TLS/SSL
-    tls_enabled: Povinné
-    info: Použijte tyto přihlašovací údaje pro připojení k databázi ClickHouse. TLS/SSL musí být povoleno pro bezpečná připojení. Heslo je citlivá informace - uchovávejte ho v bezpečí a nesdílejte ho s neoprávněnými osobami.
-  report_types: Tabulky reportů z poslední synchronizace
-  test_link_text: Můžete otestovat připojení k databázi pomocí {test_link}. Otevře se webové rozhraní databáze s ukázkovým dotazem.
-  test_link: tohoto odkazu
+  no_exports_found: Export do analytické databáze není pro tuto organizaci nastaven. Kontaktujte nás na {email}, pokud ji chcete otestovat.
+  info_text: |
+    Export do analytické databáze je výkonná funkce pro ty z vás, kteří chtějí analyzovat data uložená v CELUSu sami.
+  info_text_2: |
+    Data jsou exportována pravidelně do výkonné dedikované analytické databáze {chLink} běžící na naší infrastruktuře.
+    Je vhodným zdrojem pro propojení do Power BI, Superset, Metabase a dalších analytických nástrojů.
+  info_text_3: |
+    Více informací o této funkci naleznete v naší {link}.
+  info_link_text: dokumentaci
+  info_text_beta: |
+    Tato funkce je momentálně ve fázi beta. Kontaktujte nás na {email}, pokud ji chcete vyzkoušet.
 </i18n>
 
 <template>
@@ -87,14 +69,72 @@ cs:
     <v-row>
       <v-col>
         <h1>{{ $t("title") }}</h1>
+
+        <v-alert variant="tonal" class="ma-4">
+          <p class="mb-2">{{ $t("info_text") }}</p>
+
+          <i18n-t keypath="info_text_2" tag="p" class="mb-2">
+            <template #chLink>
+              <a
+                href="https://clickhouse.com/"
+                target="_blank"
+                class="text-info active_link"
+                >Clickhouse</a
+              >
+            </template>
+          </i18n-t>
+          <i18n-t keypath="info_text_3" tag="p" class="mb-2">
+            <template #link>
+              <a
+                href="https://docs.celus.net/analytical-database.html"
+                target="_blank"
+                class="text-info active_link"
+              >
+                {{ $t("info_link_text") }}
+              </a>
+            </template>
+          </i18n-t>
+
+          <i18n-t
+            keypath="info_text_beta"
+            tag="p"
+            class="mt-2"
+            v-if="!exports.length"
+          >
+            <template #email>
+              <a :href="`mailto:${contactEmail}`" class="text-info active_link">
+                {{ contactEmail }}
+              </a>
+            </template>
+          </i18n-t>
+        </v-alert>
+
         <v-card>
           <v-card-title>
             <v-btn @click="loadData" :loading="loading" color="primary">
+              <v-icon start size="x-small">fa fa-refresh</v-icon>
               {{ $t("refresh") }}
             </v-btn>
           </v-card-title>
 
+          <div v-if="!showManagementStuff">
+            <ChExportDatabaseConnectionCard
+              v-if="!loading && exports.length > 0"
+              :export-obj="exports[0]"
+              @export-finished="loadData"
+              @export-started="loadData"
+            />
+            <div v-else-if="loading" class="text-center">
+              <v-progress-circular indeterminate color="primary" />
+            </div>
+            <div v-else class="text-center">
+              <v-alert type="info" variant="tonal" class="ma-4">
+                {{ $t("no_exports_found", { email: contactEmail }) }}
+              </v-alert>
+            </div>
+          </div>
           <v-data-table
+            v-else
             :headers="headers"
             :items="exports"
             :loading="loading"
@@ -158,131 +198,11 @@ cs:
             <template #expanded-row="{ item }">
               <tr>
                 <td :colspan="headers.length">
-                  <v-card
-                    class="ma-4"
-                    elevation="0"
-                    style="border-color: #e0e0e0"
-                  >
-                    <v-card-title class="text-h6">
-                      <v-icon class="me-2" color="grey" size="x-small"
-                        >fa fa-database</v-icon
-                      >
-                      {{ $t("database_connection.title") }}
-                    </v-card-title>
-                    <v-card-text>
-                      <v-table density="compact" class="mb-4">
-                        <tbody>
-                          <tr>
-                            <td
-                              class="text-subtitle-2 font-weight-medium"
-                              style="width: 200px"
-                            >
-                              {{ $t("database_connection.host") }}
-                            </td>
-                            <td class="font-family-monospace">
-                              {{ clickhouseExportHost }}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-subtitle-2 font-weight-medium">
-                              {{ $t("database_connection.port") }}
-                            </td>
-                            <td class="font-family-monospace">
-                              {{ $t("database_connection.port_value") }}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-subtitle-2 font-weight-medium">
-                              {{ $t("database_connection.database") }}
-                            </td>
-                            <td class="font-family-monospace">
-                              {{ item.ch_database }}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-subtitle-2 font-weight-medium">
-                              {{ $t("database_connection.username") }}
-                            </td>
-                            <td class="font-family-monospace">
-                              {{ item.ch_database }}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-subtitle-2 font-weight-medium">
-                              {{ $t("database_connection.password") }}
-                            </td>
-                            <td>
-                              <div class="d-flex align-center">
-                                <v-btn
-                                  @click="showPasswordModal(item.ch_password)"
-                                  variant="text"
-                                  size="small"
-                                  icon="fa fa-eye"
-                                  color="primary"
-                                  class="ml-2"
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-subtitle-2 font-weight-medium">
-                              {{ $t("database_connection.tls") }}
-                            </td>
-                            <td>
-                              <v-chip
-                                color="success"
-                                size="small"
-                                variant="flat"
-                                class="px-4"
-                              >
-                                <v-icon start size="x-small">fa fa-lock</v-icon>
-                                {{ $t("database_connection.tls_enabled") }}
-                              </v-chip>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </v-table>
-                      <v-alert type="info" variant="tonal" class="mt-4">
-                        <template #prepend>
-                          <v-icon>fa fa-info-circle</v-icon>
-                        </template>
-                        {{ $t("database_connection.info") }}
-                      </v-alert>
-
-                      <h3 class="text-h6 mt-8 mb-4" v-if="item.latest_batch">
-                        <v-icon class="me-2" color="grey" size="x-small"
-                          >fa fa-table</v-icon
-                        >
-                        {{ $t("report_types") }}
-                      </h3>
-                      <div v-if="item.latest_batch">
-                        <v-chip
-                          v-for="report_type in item.latest_batch.report_types"
-                          :key="report_type"
-                          class="me-1"
-                          label
-                        >
-                          {{ report_type }}
-                        </v-chip>
-                      </div>
-                      <div
-                        v-if="testLink(item)"
-                        class="mt-4 text-medium-emphasis"
-                      >
-                        <i18n-t keypath="test_link_text" tag="p">
-                          <template #test_link>
-                            <a
-                              :href="testLink(item)"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {{ $t("test_link") }}
-                            </a>
-                          </template>
-                        </i18n-t>
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <ChExportDatabaseConnectionCard
+                    :export-obj="item"
+                    @export-finished="loadData"
+                    @export-started="loadData"
+                  />
                 </td>
               </tr>
             </template>
@@ -290,68 +210,27 @@ cs:
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- Password Modal Dialog -->
-    <v-dialog v-model="passwordModal" max-width="500">
-      <v-card>
-        <v-card-title class="d-flex align-center">
-          <v-icon class="me-2" size="x-small" color="grey">fa fa-key</v-icon>
-          {{ $t("password_modal.title") }}
-        </v-card-title>
-
-        <v-card-text>
-          <div class="mb-4">
-            <p class="text-body-2">
-              {{ $t("password_modal.warning") }}
-            </p>
-          </div>
-
-          <div
-            class="d-flex align-center pa-3 border rounded"
-            @click="copyPassword"
-            style="cursor: pointer"
-          >
-            <span class="font-family-monospace flex-grow-1">{{
-              selectedPassword
-            }}</span>
-            <v-btn
-              icon="fa fa-copy"
-              size="small"
-              variant="text"
-              color="grey"
-              :loading="copying"
-              @click.stop="copyPassword"
-            />
-          </div>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="passwordModal = false" variant="text">
-            {{ $t("password_modal.close") }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
 <script>
-import axios from "axios";
+import ChExportDatabaseConnectionCard from "@/components/ch-export/ChExportDatabaseConnectionCard.vue";
+import cancellation from "@/mixins/cancellation";
 import { format } from "date-fns";
-import { mapActions, mapGetters } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "ExportTasksPage",
+  components: {
+    ChExportDatabaseConnectionCard,
+  },
+  mixins: [cancellation],
 
   data() {
     return {
       exports: [],
       loading: false,
       search: "",
-      passwordModal: false,
-      selectedPassword: "",
-      copying: false,
       headers: [
         {
           title: this.$t("headers.organization"),
@@ -375,12 +254,24 @@ export default {
 
   computed: {
     ...mapGetters({
-      clickhouseExportHost: "clickhouseExportHost",
+      showManagementStuff: "showManagementStuff",
+      contactEmail: "contactEmail",
     }),
-  },
-
-  mounted() {
-    this.loadData();
+    ...mapState({
+      organizationId: "selectedOrganizationId",
+    }),
+    url() {
+      // when normal user is viewing one organization, we only want to show the
+      // export for that organization;
+      // for managers, we want to show all exports - regardless of organization;
+      if (this.showManagementStuff) {
+        return "/api/ch-export/exports/";
+      }
+      if (this.organizationId) {
+        return `/api/ch-export/exports/?organization=${this.organizationId}`;
+      }
+      return null;
+    },
   },
 
   methods: {
@@ -388,19 +279,24 @@ export default {
       showSnackbar: "showSnackbar",
     }),
     async loadData() {
+      if (!this.url) {
+        this.exports = [];
+        return;
+      }
       this.loading = true;
-      try {
-        const response = await axios.get("/api/ch-export/exports/");
-        this.exports = response.data.results || response.data;
-      } catch (error) {
-        console.error("Error loading exports:", error);
+      const { response, error } = await this.http({
+        url: this.url,
+        dontShowError: true,
+      });
+      if (error) {
         this.showSnackbar({
           content: this.$t("error_loading"),
           color: "error",
         });
-      } finally {
-        this.loading = false;
+      } else if (response) {
+        this.exports = response.data;
       }
+      this.loading = false;
     },
 
     getStatusColor(status) {
@@ -417,49 +313,16 @@ export default {
       if (!dateString) return "-";
       return format(new Date(dateString), "yyyy-MM-dd HH:mm:ss");
     },
+  },
 
-    showPasswordModal(password) {
-      this.selectedPassword = password;
-      this.passwordModal = true;
-    },
-
-    async copyPassword() {
-      this.copying = true;
-      try {
-        await navigator.clipboard.writeText(this.selectedPassword);
-        this.showSnackbar({
-          content: this.$t("password_modal.copied"),
-          color: "success",
-        });
-      } catch (error) {
-        console.error("Failed to copy password:", error);
-        this.showSnackbar({
-          content: this.$t("password_modal.copy_failed"),
-          color: "error",
-        });
-      } finally {
-        this.copying = false;
-      }
-    },
-
-    testLink(item) {
-      // create a link to the TR table with a sample query
-      for (const rt of ["TR", "TR51"]) {
-        if (item.latest_batch && item.latest_batch.report_types.includes(rt)) {
-          let query =
-            `SELECT platform__name, SUM(value) AS Unique_Item_Requests FROM ${rt} WHERE ` +
-            `metric__short_name='Unique_Item_Requests' GROUP BY 1 ORDER BY 2 DESC LIMIT 50;`;
-          // the url contains the query as a base64 encoded string
-          let base64Query = btoa(query);
-          let url =
-            `https://${this.clickhouseExportHost}:8443/play?user=${item.ch_database}` +
-            `&password=${item.ch_password}&run=1` +
-            `&url=https%3A%2F%2F${this.clickhouseExportHost}%3A8443%2F%3Fdatabase%3D${item.ch_database}` +
-            `#${base64Query}`;
-          return url;
+  watch: {
+    url: {
+      immediate: true,
+      handler() {
+        if (this.url) {
+          this.loadData();
         }
-      }
-      return null;
+      },
     },
   },
 };

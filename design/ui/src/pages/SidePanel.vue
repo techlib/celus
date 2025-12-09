@@ -209,6 +209,16 @@ export default {
                 color: "error",
               },
             },
+            {
+              title: this.$t("pages.ch_export"),
+              icon: "fa fa-database",
+              linkTo: "ch-export",
+              chip: {
+                title: this.$t("labels.beta_menu_item"),
+                color: "warning",
+              },
+              show: this.showAdminStuff,
+            },
           ],
           show: true,
         },
@@ -288,15 +298,6 @@ export default {
                   // icon: "fa fa-toolbox",
                   linkTo: "maintenance",
                   show: this.showManagementStuff,
-                },
-                {
-                  title: this.$t("pages.ch_export"),
-                  linkTo: "ch-export",
-                  show: this.showManagementStuff,
-                  chip: {
-                    title: this.$t("labels.new_menu_item"),
-                    color: "error",
-                  },
                 },
                 {
                   title: this.$t("pages.management_commands"),

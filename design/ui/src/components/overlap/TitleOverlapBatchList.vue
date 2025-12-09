@@ -168,18 +168,17 @@ cs:
 </template>
 
 <script>
-import cancellation from "@/mixins/cancellation";
-import { mapActions, mapGetters, mapState } from "vuex";
+import TitleOverlapUploadFileDialog from "@/components/overlap/TitleOverlapUploadFileDialog";
+import ServerTaskMonitor from "@/components/tasks/ServerTaskMonitor.vue";
 import {
   isoDateTimeFormat,
   isoDateTimeFormatSpans,
   parseDateTime,
 } from "@/libs/dates";
-import ServerTaskMonitor from "@/components/tasks/ServerTaskMonitor.vue";
 import ServerTask from "@/libs/server-task";
-import formatRelative from "date-fns/formatRelative";
+import cancellation from "@/mixins/cancellation";
 import { formatDistance } from "date-fns";
-import TitleOverlapUploadFileDialog from "@/components/overlap/TitleOverlapUploadFileDialog";
+import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
   name: "TitleOverlapBatchList",
@@ -244,7 +243,6 @@ export default {
 
   methods: {
     isoDateTimeFormat,
-    formatRelative,
     ...mapActions({ showSnackbar: "showSnackbar" }),
     isoDateTimeFormatSpans,
     async fetchBatches() {
