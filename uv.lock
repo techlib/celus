@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12.3, <4"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -193,7 +193,7 @@ dev = [
 requires-dist = [
     { name = "celery", specifier = "~=5.5.3" },
     { name = "celus-nibbler", specifier = "~=12.4.0" },
-    { name = "celus-nigiri", specifier = "==4.2.0" },
+    { name = "celus-nigiri", specifier = "~=4.2.1" },
     { name = "celus-pycounter", specifier = "~=4.1.0" },
     { name = "clickhouse-driver", specifier = "==0.2.10" },
     { name = "colorlog", specifier = ">=6.7.0,<7" },
@@ -302,7 +302,7 @@ wheels = [
 
 [[package]]
 name = "celus-nigiri"
-version = "4.2.0"
+version = "4.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celus-pycounter" },
@@ -312,9 +312,9 @@ dependencies = [
     { name = "python-decouple" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2d/d7/fb20d43585dec4120e5cb5cc169ec34cac15a305da3c668fc10f67b82893/celus_nigiri-4.2.0.tar.gz", hash = "sha256:6ba577f780cb51cb5415f31be25ad01d279a68e584ecc240a7af010ddbe3fdd8", size = 19539, upload-time = "2025-12-03T10:09:28.47Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/92/e7838a6597b0df75205a9ca1f4de97b252f60799c38727cea93949b86149/celus_nigiri-4.2.1.tar.gz", hash = "sha256:4defaef260a5c469fce766ae1758a0dd596daafc4a563ca80b0c068cd67299f8", size = 19574, upload-time = "2025-12-10T13:03:15.582Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/a0/f2f0ee3d4ac6670223c1c7f0e18b324e5b4ab87045604fc84321a13c8d98/celus_nigiri-4.2.0-py3-none-any.whl", hash = "sha256:be0c08464161b9b40f756252cd73b9a66f0a0a3fbd4cbf7eb8fb75844a2d7edc", size = 27135, upload-time = "2025-12-03T10:09:27.155Z" },
+    { url = "https://files.pythonhosted.org/packages/21/c5/e6b5861c9b2e874d24b03a5ef337527485ca282acc78a94270413608430f/celus_nigiri-4.2.1-py3-none-any.whl", hash = "sha256:52f477ed4586803c7cd99ac2976aaf17f1df858a3fb14412ece519c5f38ad20b", size = 27172, upload-time = "2025-12-10T13:03:14.344Z" },
 ]
 
 [[package]]
