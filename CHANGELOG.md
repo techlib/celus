@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.1.0] - 2025-12-15
+
+### Added
+
+#### Frontend
+
+- add COUNTER 5.1 IR_M1 support for all platforms
+- add colors distinguishing counter versions to interest overview
+- make platform on SUSHI management page clickable and pointing to platform
+- create Deutsche Bibliotheksstatistik (DBS) 2025 custom report
+- add information about analytical database export to the UI for organization admins
+- make it possible to start sync with analytical database from the UI and monitor its progress
+
+#### Backend
+
+- a workaround for issue with ProQuest COUNTER 5 SUSHI server not accepting valid begin and end dates has been added
+- add nibbler_parser_names to ManualDataUpload model
+- when importing new credentials use platform_filter from kb when platform filter is empty
+- ease nibbler parser version requirements
+
+### Changed
+
+#### Frontend
+
+- algorithm for merging main and fallback reports in specialized reports was changed
+  to work on a month-by-month basis, similarly to how merging works in reporting
+
+#### Backend
+
+- bump django to 5.2.9 to mitigate CVE-2025-13372 and other less severe issues
+- completely ignore celery tasks when sending traces to sentry (errors from celery are still sent)
+- remove state from organization admin list to make the page rendering faster
+- optimize the `data_matrix` function by removing using `record_count` from import batch rather than querying accesslogs directly
+- export of SUSHI credentials was optimized to allow unlimited number of credentials to be exported at once
+
+### Fixed
+
+#### Frontend
+
+- fix orderBy for individual tabs in platformDetail getting mixed up
+- fix warnings about non-element root node on Sushi management widget
+- fix disabled report type being selectable in SUSHI editor
+- fix double tooltip on disabled report types in edit platform dialog
+- add info about report type merging into the report overview component
+- fix IR_M1 COUNTER format export for COUNTER 5 - export items, not titles
+- add proper filter and metric headers to IR_M1 COUNTER format export
+- fix report merging when include_all_zero_rows is used
+
+#### Backend
+
+- exclude null from used_rts when using tag_roll_up
+- export reporting exports into a media subdirectory, rather than to the root
+- add random suffix to export filenames to enhance security
+- fix public clickhouse export of publication date by using the proper datatype
+- make sure public export using clickhouse as source is not possible when clickhouse query is not active
+- ensure that public clickhouse database is recreated if it disappears between exports
+- admin: allow deleting counter registry profiles in cascade when deleting users, but don't allow direct deleting
+
 ## [11.0.1] - 2025-11-27
 
 ### Added

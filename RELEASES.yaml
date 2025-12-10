@@ -1,3 +1,23 @@
+- version: 11.1.0
+  title:
+    en: COUNTER 5.1 IR_M1 support for all platforms, improved IPEDS, and more in CELUS 11.1.0
+    cs: Podpora COUNTER 5.1 IR_M1 pro všechny platformy, vylepšený IPEDS, a další vylepšení v CELUSu 11.1.0
+  text:
+    en: |
+      - **COUNTER 5.1 IR_M1 support** - IR_M1 is enabled for all platforms regardless of the full IR report whitelisting policy
+      - **Improved specialized reports** - the algorithm for merging main and fallback reports in IPEDS, etc. now works on a month-by-month basis, making transition between COUNTER 5 and COUNTER 5.1 seamless
+      - **ProQuest SUSHI fix** - a workaround for issue with ProQuest COUNTER 5 SUSHI server not accepting valid begin and end dates has been added
+      - Many bug fixes and improvements across the application
+    cs: |
+      - **Podpora COUNTER 5.1 IR_M1** - IR_M1 je povolen pro všechny platformy bez ohledu na stav podpory plného IR reportu
+      - **Vylepšené specializované reporty** - algoritmus pro sloučení hlavního a náhradního reportu v IPEDS, atd. nyní pracuje měsíc po měsíci, což poskytuje přesnější výsledky
+      - **Oprava ProQuest SUSHI** - byl vytvořen workaround pro problém s ProQuest COUNTER 5 SUSHI serverem, který nepřijímá platné počáteční a koncové datum
+      - Bylo provedeno mnoho dalších vylepšení a oprav chyb
+  is_new_feature: TRUE
+  is_update: TRUE
+  is_bug_fix: TRUE
+  notify_users: TRUE
+
 - version: 11.0.1
   title:
     en: Bugfix release 11.0.1
