@@ -83,7 +83,7 @@ export default {
     },
     dataUrl() {
       return this.$router.resolve({
-        path: `/api/reporting/reports/${this.definition.name}/`,
+        path: `/api/reporting/reports/${this.definition.id}/`,
         query: {
           start_date: this.dateRangeStart + "-01",
           end_date: this.dateRangeEnd + "-01",

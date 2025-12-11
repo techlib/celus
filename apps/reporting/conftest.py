@@ -7,6 +7,7 @@ from organizations.fake_data import OrganizationFactory
 from publications.fake_data import PlatformFactory, TitleFactory
 
 TEST_REPORT = {
+    "id": "test_report",
     "name": "Test report",
     "description": "Test report description",
     "dataSources": [

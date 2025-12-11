@@ -138,7 +138,7 @@ export default {
     exportUrl() {
       if (this.selectedReport) {
         return this.$router.resolve({
-          path: `/api/reporting/reports/${this.selectedReport.name}/export/`,
+          path: `/api/reporting/reports/${this.selectedReport.id}/export/`,
           query: {
             start_date: this.dateRangeStart,
             end_date: this.dateRangeEnd,

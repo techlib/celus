@@ -174,7 +174,10 @@ class Report:
     primary_dimension = "platform"
     total_col = "_total_"
 
-    def __init__(self, name: str, description: str, info_url: str = None, general_info: str = None):
+    def __init__(
+        self, id: str, name: str, description: str, info_url: str = None, general_info: str = None
+    ):
+        self.id = id
         self.name = name
         self.description = description
         self.info_url = info_url
@@ -191,6 +194,7 @@ class Report:
         s = ReportSerializer(data=definition)
         s.is_valid(raise_exception=True)
         out = cls(
+            s.validated_data["id"],
             s.validated_data["name"],
             s.validated_data.get("description", ""),
             info_url=s.validated_data.get("infoUrl"),

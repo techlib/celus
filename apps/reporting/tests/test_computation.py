@@ -19,6 +19,7 @@ class TestComputationMerge:
         """Test that merge works cell-by-cell, replacing zeros from left with right values"""
         # Create a simple report definition
         report_def = {
+            "id": "test_merge_report",
             "name": "Test merge report",
             "description": "Test description",
             "dataSources": [
@@ -106,6 +107,7 @@ class TestComputationMerge:
     def test_merge_all_zeros_in_left(self):
         """Test that when left has all zeros, all values come from right"""
         report_def = {
+            "id": "test_merge_report",
             "name": "Test merge report",
             "description": "Test description",
             "dataSources": [
@@ -166,6 +168,7 @@ class TestComputationMerge:
     def test_merge_no_zeros_in_left(self):
         """Test that when left has no zeros, all values come from left"""
         report_def = {
+            "id": "test_merge_report",
             "name": "Test merge report",
             "description": "Test description",
             "dataSources": [
@@ -226,6 +229,7 @@ class TestComputationMerge:
     def test_merge_zeros_in_both(self):
         """Test that when both left and right have zeros, source_name is not joined"""
         report_def = {
+            "id": "test_merge_report",
             "name": "Test merge report",
             "description": "Test description",
             "dataSources": [
@@ -287,6 +291,7 @@ class TestComputationMerge:
     def test_merge_mixed_zeros(self):
         """Test that source_name is joined only when zeros are actually replaced"""
         report_def = {
+            "id": "test_merge_report",
             "name": "Test merge report",
             "description": "Test description",
             "dataSources": [

@@ -1,3 +1,4 @@
+import re
 from unittest import mock
 
 import pytest
@@ -27,6 +28,7 @@ class TestReportsAPI:
         assert response.status_code == 200
         assert len(response.data) == 9
         assert response.data[0]["name"] == "ACRL IPEDS 2024/2025"
+        assert response.data[0]["id"] == "ipeds_2024"
         assert response.data[1]["name"] == "ACRL IPEDS 2023"
         assert response.data[2]["name"] == "ACRL IPEDS 2022"
         assert response.data[3]["name"] == "ARL Statistics survey 2025"
@@ -55,6 +57,22 @@ class TestReportsAPI:
         s1 = p1["stages"][0]
         for key in ["id", "name", "description", "formula", "usedDataSources"]:
             assert key in s1
+
+    @pytest.mark.parametrize("view", ["data", "export"])
+    def test_report_data_and_export_with_ids(self, admin_client, view):
+        """
+        Test that the report data and export views do not return 404 or 500 errors.
+        It is supposed to return 400 instead, because the required params are missing,
+        but the report should be found and returned.
+        """
+        response = admin_client.get(reverse("report-list"))
+        assert response.status_code == 200
+        for report in response.data:
+            response = admin_client.get(reverse(f"report-{view}", args=[report["id"]]))
+            assert response.status_code == 400
+            assert response.data["start_date"], "start_date is required"
+            assert response.data["end_date"], "end_date is required"
+            assert response.data["organization"], "organization is required"
 
     @pytest.mark.parametrize("show_preview_reports", [True, False])
     @pytest.mark.parametrize(
@@ -117,11 +135,11 @@ class TestReportsAPI:
             org = OrganizationFactory()
         else:
             org = report_data_tr_jr1["org"]
-        with mock.patch("reporting.views.get_report_def_by_name") as mock_get_report_def_by_name:
+        with mock.patch("reporting.views.get_report_def_by_id") as mock_get_report_def_by_id:
             # we replace the stored report by our own
-            mock_get_report_def_by_name.return_value = report_def_tr_jr1
+            mock_get_report_def_by_id.return_value = report_def_tr_jr1
             response = admin_client.get(
-                reverse("report-data", args=["Test report"]),
+                reverse("report-data", args=["test_report"]),
                 {"start_date": "2022-01", "end_date": "2022-03", "organization": org.pk},
             )
         assert response.status_code == 200
@@ -158,11 +176,11 @@ class TestReportsAPI:
 
     def test_report_export(self, admin_client, report_data_tr_jr1, report_def_tr_jr1):
         org = report_data_tr_jr1["org"]
-        with mock.patch("reporting.views.get_report_def_by_name") as mock_get_report_def_by_name:
+        with mock.patch("reporting.views.get_report_def_by_id") as mock_get_report_def_by_id:
             # we replace the stored report by our own
-            mock_get_report_def_by_name.return_value = report_def_tr_jr1
+            mock_get_report_def_by_id.return_value = report_def_tr_jr1
             response = admin_client.get(
-                reverse("report-export", args=["Test report"]),
+                reverse("report-export", args=["test_report"]),
                 {"start_date": "2022-01", "end_date": "2022-03", "organization": org.pk},
             )
         assert response.status_code == 200
@@ -170,4 +188,6 @@ class TestReportsAPI:
             response["Content-Type"]
             == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        assert response["Content-Disposition"] == 'attachment; filename="Test report.xlsx"'
+        assert re.match(
+            r'attachment; filename="Test report \d{8}-\d{6}\.xlsx"', response["Content-Disposition"]
+        )

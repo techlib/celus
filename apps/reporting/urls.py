@@ -4,11 +4,9 @@ from . import views
 
 urlpatterns = [
     path("reporting/reports/", views.ReportListView.as_view(), name="report-list"),
+    path("reporting/reports/<str:report_id>/", views.ReportDataView.as_view(), name="report-data"),
     path(
-        "reporting/reports/<str:report_name>/", views.ReportDataView.as_view(), name="report-data"
-    ),
-    path(
-        "reporting/reports/<str:report_name>/export/",
+        "reporting/reports/<str:report_id>/export/",
         views.ReportExportView.as_view(),
         name="report-export",
     ),

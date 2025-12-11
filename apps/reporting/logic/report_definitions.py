@@ -28,9 +28,7 @@ def get_reports() -> list[dict]:
     # Load all YAML files from the reports directory
     for yaml_file in sorted(_REPORTS_DIR.glob("*.yaml")):
         try:
-            with yaml_file.open("rt", encoding="utf-8") as f:
-                if report := yaml.safe_load(f):
-                    reports.append(report)
+            reports.append(load_report_def_from_yaml(yaml_file))
         except Exception as e:
             logger.error(f"Failed to load report from {yaml_file}: {e}", exc_info=True)
 
@@ -40,12 +38,20 @@ def get_reports() -> list[dict]:
     return reports
 
 
-def get_report_def_by_name(name: str) -> dict | None:
+def load_report_def_from_yaml(yaml_file: Path) -> dict:
+    with yaml_file.open("rt", encoding="utf-8") as f:
+        report = yaml.safe_load(f)
+        report["id"] = yaml_file.stem
+        return report
+
+
+def get_report_def_by_id(id: str) -> dict | None:
     """
-    Get a report definition by its name.
+    Get a report definition by its id.
     Returns the report dictionary if found, None otherwise.
     """
-    for report in get_reports():
-        if report.get("name") == name:
-            return report
+    try:
+        return load_report_def_from_yaml(Path(_REPORTS_DIR) / f"{id}.yaml")
+    except Exception as e:
+        logger.error(f"Failed to load report from {id}: {e}", exc_info=True)
     return None

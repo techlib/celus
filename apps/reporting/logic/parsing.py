@@ -75,6 +75,7 @@ class ReportPartSerializer(s.Serializer):
 
 
 class ReportSerializer(s.Serializer):
+    id = s.CharField(required=True)
     name = s.CharField()
     description = s.CharField(required=False)
     generalInfo = s.CharField(required=False)

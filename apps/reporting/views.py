@@ -1,10 +1,12 @@
 import logging
+import re
 from copy import deepcopy
 
 from core.logic.dates import month_end, parse_month
 from core.validators import month_validator
 from django.conf import settings
 from django.http import HttpResponse
+from django.utils.timezone import now
 from organizations.models import Organization
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
@@ -15,7 +17,7 @@ from rest_framework.views import APIView
 from .logic.anomalies import AnomalyDetector, AnomalySource
 from .logic.computation import Report
 from .logic.export import XlsxExporter
-from .logic.report_definitions import get_report_def_by_name, get_reports
+from .logic.report_definitions import get_report_def_by_id, get_reports
 from .serializers import AnomalyDetailsSerializer, AnomalySerializer, ReportSerializer
 
 logger = logging.getLogger(__name__)
@@ -69,10 +71,10 @@ class ReportDataView(APIView):
         end_date = serializers.CharField(validators=[month_validator], required=True)
         organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
 
-    def create_report(self, report_name, lang) -> Report:
-        report_def = get_report_def_by_name(report_name)
+    def create_report(self, report_id, lang) -> Report:
+        report_def = get_report_def_by_id(report_id)
         if report_def is None:
-            raise NotFound(f'Report with name "{report_name}" not found')
+            raise NotFound(f'Report with id "{report_id}" not found')
         return Report.from_dict(localize_report_definition(report_def, lang))
 
     def get_params(self, request) -> dict:
@@ -91,8 +93,8 @@ class ReportDataView(APIView):
         data["end_date"] = month_end(parse_month(data["end_date"]))
         return data
 
-    def get(self, request, report_name):
-        report = self.create_report(report_name, request.LANGUAGE_CODE)
+    def get(self, request, report_id):
+        report = self.create_report(report_id, request.LANGUAGE_CODE)
         params = self.get_params(request)
         report.retrieve_data(**params)
         out = report.get_output(as_dicts=True)
@@ -100,16 +102,20 @@ class ReportDataView(APIView):
 
 
 class ReportExportView(ReportDataView):
-    def get(self, request, report_name):
-        report = self.create_report(report_name, request.LANGUAGE_CODE)
+    def get(self, request, report_id):
+        report = self.create_report(report_id, request.LANGUAGE_CODE)
         params = self.get_params(request)
         report.retrieve_data(**params)
         exporter = XlsxExporter(report)
         export_data = exporter.export()
+        # derive the filename from the report name and the current date and time
+        # the name has to be sanitized to be a valid filename
+        filename = re.sub(r"[^a-zA-Z0-9 _-]", "-", report.name).strip("-")
+        filename = f"{filename} {now().strftime('%Y%m%d-%H%M%S')}.xlsx"
         return HttpResponse(
             export_data,
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f'attachment; filename="{report.name}.xlsx"'},
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
 

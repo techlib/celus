@@ -132,6 +132,7 @@ class TestReportParsing:
             # 2: this is OK
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [],
@@ -142,6 +143,7 @@ class TestReportParsing:
             # 3: data source is missing reportType
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{}],
@@ -153,6 +155,7 @@ class TestReportParsing:
             # (even if all metrics should be accepted, it's still required and may be None)
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR"}],
@@ -163,6 +166,7 @@ class TestReportParsing:
             # 5: this is OK
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -173,6 +177,7 @@ class TestReportParsing:
             # 6: data source reportType / id must be unique
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [
@@ -186,6 +191,7 @@ class TestReportParsing:
             # 7: part is missing required attrs
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -196,6 +202,7 @@ class TestReportParsing:
             # 8: stages must not be empty
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -206,6 +213,7 @@ class TestReportParsing:
             # 9: stage must have a formula
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -216,6 +224,7 @@ class TestReportParsing:
             # 10: stage must have a name
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -228,6 +237,7 @@ class TestReportParsing:
             # 11: this would be OK, but formula has incorrect reference
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -244,6 +254,7 @@ class TestReportParsing:
             # 12: stage must not have the same name as a data source
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],
@@ -260,6 +271,7 @@ class TestReportParsing:
             # 13: two stages must not have the same id (by default it's the name)
             (
                 {
+                    "id": "test_report",
                     "name": "Test report",
                     "description": "Test report description",
                     "dataSources": [{"reportType": "TR", "metric": "Unique_Item_Requests"}],

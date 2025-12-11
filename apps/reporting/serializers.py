@@ -27,6 +27,7 @@ class ReportPartSerializer(s.Serializer):
 
 
 class ReportSerializer(s.Serializer):
+    id = s.CharField()  # id is derived from the YAML file name
     name = s.CharField()
     description = s.CharField()
     generalInfo = s.CharField(source="general_info")
