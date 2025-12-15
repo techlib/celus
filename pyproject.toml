@@ -11,7 +11,7 @@ license = "MIT"
 dependencies = [
     "celery~=5.6.0",
     "celus-nibbler~=12.4.0",
-    "celus-nigiri~=4.2.1",
+    "celus-nigiri~=4.2.2",
     "celus-pycounter~=4.1.0",
     "clickhouse-driver==0.2.10",
     "colorlog>=6.7.0,<7",

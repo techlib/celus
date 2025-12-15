@@ -195,7 +195,7 @@ dev = [
 requires-dist = [
     { name = "celery", specifier = "~=5.6.0" },
     { name = "celus-nibbler", specifier = "~=12.4.0" },
-    { name = "celus-nigiri", specifier = "~=4.2.1" },
+    { name = "celus-nigiri", specifier = "~=4.2.2" },
     { name = "celus-pycounter", specifier = "~=4.1.0" },
     { name = "clickhouse-driver", specifier = "==0.2.10" },
     { name = "colorlog", specifier = ">=6.7.0,<7" },
@@ -304,7 +304,7 @@ wheels = [
 
 [[package]]
 name = "celus-nigiri"
-version = "4.2.1"
+version = "4.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celus-pycounter" },
@@ -314,9 +314,9 @@ dependencies = [
     { name = "python-decouple" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/62/92/e7838a6597b0df75205a9ca1f4de97b252f60799c38727cea93949b86149/celus_nigiri-4.2.1.tar.gz", hash = "sha256:4defaef260a5c469fce766ae1758a0dd596daafc4a563ca80b0c068cd67299f8", size = 19574, upload-time = "2025-12-10T13:03:15.582Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/bc/8fda6849ab6bf5f16114ba50af61ea22e54882d8b881b27763353413ed4c/celus_nigiri-4.2.2.tar.gz", hash = "sha256:e9caf07b5256141a1dc673e083b58cf87ba7ed0cc8c650ac152aec0b81d4115c", size = 19656, upload-time = "2025-12-15T10:40:42.03Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/c5/e6b5861c9b2e874d24b03a5ef337527485ca282acc78a94270413608430f/celus_nigiri-4.2.1-py3-none-any.whl", hash = "sha256:52f477ed4586803c7cd99ac2976aaf17f1df858a3fb14412ece519c5f38ad20b", size = 27172, upload-time = "2025-12-10T13:03:14.344Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/d5/f049e0526fb362ca8a1bb0cdbd2a310e5d7780e08312e4f509a51d79493f/celus_nigiri-4.2.2-py3-none-any.whl", hash = "sha256:d7ede65b1fc56f4ea77439ec14385deb4b3b3f8f556d76f80305e001db516073", size = 27246, upload-time = "2025-12-15T10:40:40.784Z" },
 ]
 
 [[package]]
